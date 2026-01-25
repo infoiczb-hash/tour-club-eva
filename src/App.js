@@ -1,311 +1,432 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, X, CheckCircle, AlertCircle, Trash2, User, Phone, Plus, Lock, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useReducer } from 'react';
+import { Calendar, MapPin, Clock, Filter, X, Grid, CalendarDays, ChevronLeft, ChevronRight, Sparkles, TrendingUp, Award, Globe, Wifi, WifiOff, Download, CheckCircle, AlertCircle, Loader, Settings, Plus, Trash2, CheckSquare, Square, Phone, User, Lock } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
-// --- ХУКИ (Логика работы с базой) ---
-const useEvents = () => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  const loadEvents = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('events').select('*').order('date', { ascending: true });
-    if (!error) setEvents(data || []);
-    setLoading(false);
-  };
-  
-  useEffect(() => { loadEvents(); }, []);
-  
-  const addEvent = async (eventData) => {
-    const { error } = await supabase.from('events').insert([eventData]);
-    if (!error) await loadEvents();
-    return { error };
-  };
+// ============ CONSTANTS & CONFIG ============
+const EventTypes = { RAFTING: 'rafting', HIKING: 'hiking', CYCLING: 'cycling' };
+const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
+const Languages = { RU: 'ru', EN: 'en', RO: 'ro' };
 
-  const deleteEvent = async (id) => { 
-    const r = await supabase.from('events').delete().eq('id', id); 
-    if (!r.error) await loadEvents(); 
-    return r; 
-  };
-  
-  return { events, loading, addEvent, deleteEvent, refetch: loadEvents };
+// ============ TRANSLATIONS (i18n) ============
+const translations = {
+  ru: {
+    header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные 🌄' },
+    stats: { events: 'Мероприятий', spots: 'Свободных мест', activities: 'Активностей' },
+    filters: { all: 'Все', rafting: 'Сплавы', hiking: 'Походы', cycling: 'Велотуры' },
+    event: { register: 'Записаться', spotsLeft: 'мест', lastSpots: '🔥 Последние места!', included: 'Что включено:', route: 'Маршрут:' },
+    form: { name: 'Ваше имя *', phone: 'Телефон *', email: 'Email', ticketType: 'Тип билета', quantity: 'Количество', total: 'Итого:', submit: 'Зарегистрироваться', adult: 'Взрослый', child: 'Детский', family: 'Семейный' },
+    validation: { nameRequired: 'Укажите имя', phoneRequired: 'Укажите телефон', invalidPhone: 'Некорректный формат', invalidEmail: 'Некорректный email' },
+    messages: { success: 'Спасибо за регистрацию! ✓', error: 'Ошибка регистрации ✗', loading: 'Загрузка...', offline: 'Нет подключения', online: 'Подключение восстановлено' },
+    pwa: { install: 'Установить', installed: '✓ Установлено' },
+    views: { grid: 'Сетка', calendar: 'Календарь' },
+    admin: { title: 'Панель управления', tours: 'Туры', bookings: 'Заявки', back: 'На сайт', add: 'Добавить тур', login: 'Вход админа' }
+  },
+  en: {
+    header: { title: 'Tour Club "Eva"', subtitle: 'Adventures every weekend 🌄' },
+    stats: { events: 'Events', spots: 'Spots', activities: 'Activities' },
+    filters: { all: 'All', rafting: 'Rafting', hiking: 'Hiking', cycling: 'Cycling' },
+    event: { register: 'Register', spotsLeft: 'spots', lastSpots: '🔥 Last spots!', included: "What's included:", route: 'Route:' },
+    form: { name: 'Your name *', phone: 'Phone *', email: 'Email', ticketType: 'Ticket type', quantity: 'Quantity', total: 'Total:', submit: 'Register', adult: 'Adult', child: 'Child', family: 'Family' },
+    validation: { nameRequired: 'Enter name', phoneRequired: 'Enter phone', invalidPhone: 'Invalid format', invalidEmail: 'Invalid email' },
+    messages: { success: 'Registration successful! ✓', error: 'Registration error ✗', loading: 'Loading...', offline: 'No connection', online: 'Connection restored' },
+    pwa: { install: 'Install', installed: '✓ Installed' },
+    views: { grid: 'Grid', calendar: 'Calendar' },
+    admin: { title: 'Admin Panel', tours: 'Tours', bookings: 'Bookings', back: 'To Site', add: 'Add Tour', login: 'Admin Login' }
+  },
+  ro: {
+    header: { title: 'Club turistic "Eva"', subtitle: 'Aventuri în fiecare weekend 🌄' },
+    stats: { events: 'Evenimente', spots: 'Locuri', activities: 'Activități' },
+    filters: { all: 'Toate', rafting: 'Rafting', hiking: 'Drumeții', cycling: 'Ciclism' },
+    event: { register: 'Înscrie-te', spotsLeft: 'locuri', lastSpots: '🔥 Ultimele!', included: 'Inclus:', route: 'Rută:' },
+    form: { name: 'Nume *', phone: 'Telefon *', email: 'Email', ticketType: 'Tip bilet', quantity: 'Cantitate', total: 'Total:', submit: 'Înregistrare', adult: 'Adult', child: 'Copil', family: 'Familie' },
+    validation: { nameRequired: 'Introdu nume', phoneRequired: 'Introdu telefon', invalidPhone: 'Format invalid', invalidEmail: 'Email invalid' },
+    messages: { success: 'Înregistrare reușită! ✓', error: 'Eroare ✗', loading: 'Se încarcă...', offline: 'Fără conexiune', online: 'Conexiune OK' },
+    pwa: { install: 'Instalează', installed: '✓ Instalat' },
+    views: { grid: 'Grilă', calendar: 'Calendar' },
+    admin: { title: 'Panou Admin', tours: 'Tururi', bookings: 'Rezervări', back: 'Site', add: 'Adaugă', login: 'Login' }
+  }
 };
 
-const useRegistrations = () => {
-  const [registrations, setRegistrations] = useState([]);
-  
-  const fetchRegistrations = async () => {
-    const { data } = await supabase.from('registrations').select(`*, events(title)`).order('created_at', { ascending: false });
-    if (data) setRegistrations(data);
-  };
-
-  const createRegistration = async (d) => await supabase.from('registrations').insert([d]);
-
-  const updateStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === 'new' ? 'done' : 'new';
-    const { error } = await supabase.from('registrations').update({ status: newStatus }).eq('id', id);
-    if (!error) await fetchRegistrations();
-  };
-
-  const deleteRegistration = async (id) => {
-    const { error } = await supabase.from('registrations').delete().eq('id', id);
-    if (!error) await fetchRegistrations();
-  };
-  
-  return { registrations, fetchRegistrations, createRegistration, updateStatus, deleteRegistration };
+// ============ UTILS ============
+const ValidationUtils = {
+  validateForm(data, max) {
+    const e = {};
+    if (!data.name.trim()) e.name = 'nameRequired';
+    if (!data.phone.trim()) e.phone = 'phoneRequired';
+    if (data.tickets < 1 || data.tickets > max) e.tickets = `Доступно 1-${max}`;
+    return e;
+  }
 };
 
-// --- КОМПОНЕНТЫ ---
-
-// 1. Модалка входа (Пароль)
-const LoginModal = ({ onClose, onLogin }) => {
-  const [pass, setPass] = useState('');
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (pass.toLowerCase() === 'admin') { // ПАРОЛЬ: admin
-      onLogin();
-    } else {
-      alert('Неверный пароль!');
-    }
-  };
-  return (
-    <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Lock className="text-teal-600"/> Вход для администратора</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input autoFocus type="password" placeholder="Введите пароль..." className="w-full p-3 border rounded-xl text-center text-lg tracking-widest" value={pass} onChange={e=>setPass(e.target.value)}/>
-          <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="flex-1 py-3 text-gray-500">Отмена</button>
-            <button type="submit" className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold">Войти</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// 2. Модалка создания тура
-const CreateEventModal = ({ onClose, onSubmit }) => {
-  const [form, setForm] = useState({
-    title: '', date: '', time: '08:00', location: '', 
-    price_adult: '', spots_left: 10, 
-    image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b'
-  });
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Новое приключение</h2>
-          <button onClick={onClose}><X className="text-gray-400 hover:text-red-500"/></button>
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
-          <input required className="w-full p-2 border rounded-lg" value={form.title} onChange={e=>setForm({...form, title: e.target.value})} placeholder="Название тура"/>
-          <div className="grid grid-cols-2 gap-4">
-            <input required type="date" className="w-full p-2 border rounded-lg" value={form.date} onChange={e=>setForm({...form, date: e.target.value})}/>
-            <input type="time" className="w-full p-2 border rounded-lg" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
-          </div>
-          <input required className="w-full p-2 border rounded-lg" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} placeholder="Место сбора"/>
-          <div className="grid grid-cols-2 gap-4">
-            <input required type="number" className="w-full p-2 border rounded-lg" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} placeholder="Цена"/>
-            <input required type="number" className="w-full p-2 border rounded-lg" value={form.spots_left} onChange={e=>setForm({...form, spots_left: e.target.value})} placeholder="Мест"/>
-          </div>
-          <input required className="w-full p-2 border rounded-lg" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})} placeholder="Ссылка на фото"/>
-          <button type="submit" className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold hover:bg-teal-700 mt-4">Создать</button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// 3. Таблица заявок (с кнопками статуса)
-const AdminRegistrations = ({ registrations, onToggleStatus, onDelete }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div className="p-4 bg-gray-50 border-b font-bold">Заявки ({registrations.length})</div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-gray-50 text-gray-600">
-          <tr><th className="p-4">Статус</th><th className="p-4">Клиент</th><th className="p-4">Тур</th><th className="p-4">Сумма</th><th className="p-4">Действия</th></tr>
-        </thead>
-        <tbody className="divide-y">
-          {registrations.map((reg) => (
-            <tr key={reg.id} className={`hover:bg-gray-50 ${reg.status === 'done' ? 'bg-green-50/50' : ''}`}>
-              <td className="p-4 cursor-pointer" onClick={() => onToggleStatus(reg.id, reg.status || 'new')}>
-                {reg.status === 'done' ? 
-                  <span className="inline-flex items-center gap-1 text-green-600 font-bold bg-green-100 px-2 py-1 rounded-md"><CheckSquare size={14}/> Оплачено</span> : 
-                  <span className="inline-flex items-center gap-1 text-orange-600 font-bold bg-orange-100 px-2 py-1 rounded-md"><Square size={14}/> Новая</span>
-                }
-              </td>
-              <td className="p-4">
-                <div className="font-bold">{reg.name}</div>
-                <div className="text-blue-600">{reg.phone}</div>
-              </td>
-              <td className="p-4 text-gray-600">{reg.events?.title || 'Удален'}</td>
-              <td className="p-4 font-bold">{reg.total_price}₽</td>
-              <td className="p-4">
-                <button onClick={() => { if(window.confirm('Удалить заявку?')) onDelete(reg.id) }} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+// ============ UI COMPONENTS ============
+const Toast = ({ message, type, onClose }) => (
+  <div className={`fixed top-4 right-4 z-[100] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-slideIn ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`}>
+    {type === 'success' && <CheckCircle size={24} />} {type === 'error' && <AlertCircle size={24} />} {type === 'info' && <Loader size={24} className="animate-spin" />}
+    <span className="font-semibold">{message}</span>
+    <button onClick={onClose} className="ml-4 hover:opacity-80"><X size={20} /></button>
   </div>
 );
 
-// 4. Модалка записи
-const BookingModal = ({ event, onClose, onSubmit, isSubmitting }) => {
-  const [formData, setFormData] = useState({ name: '', phone: '', tickets: 1 });
-  if (!event) return null;
-  const totalPrice = event.price_adult * formData.tickets;
+const LanguageSwitcher = ({ currentLang, onChange }) => (
+  <div className="flex gap-1 bg-white/20 backdrop-blur rounded-xl p-1">
+    {Object.values(Languages).map(lang => (
+      <button key={lang} onClick={() => onChange(lang)} className={`px-2 py-1 rounded-lg font-bold text-xs transition-all ${currentLang === lang ? 'bg-white text-teal-600 shadow-lg' : 'text-white hover:bg-white/10'}`}>
+        {lang.toUpperCase()}
+      </button>
+    ))}
+  </div>
+);
 
+// --- КАРТОЧКА ТУРА (С АДАПТАЦИЕЙ ПОД SUPABASE) ---
+const EventCard = ({ event, onSelect, index, t }) => {
+  const [hover, setHover] = useState(false);
+  const typeLabels = { [EventTypes.RAFTING]: t.filters.rafting, [EventTypes.HIKING]: t.filters.hiking, [EventTypes.CYCLING]: t.filters.cycling };
+  const typeColors = { [EventTypes.RAFTING]: 'from-blue-500 to-cyan-500', [EventTypes.HIKING]: 'from-green-500 to-emerald-500', [EventTypes.CYCLING]: 'from-orange-500 to-red-500' };
+  const defaultType = EventTypes.HIKING;
+  const pct = ((event.spotsLeft / (event.spots || 20)) * 100).toFixed(0);
+  
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24} /></button>
-        <h2 className="text-2xl font-bold mb-1">Запись на тур</h2>
-        <p className="text-teal-600 font-medium mb-6">{event.title}</p>
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="space-y-4">
-          <input required type="text" className="w-full p-3 border rounded-xl" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Имя"/>
-          <input required type="tel" className="w-full p-3 border rounded-xl" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="Телефон"/>
-          <input type="number" min="1" max={event.spots_left} className="w-full p-3 border rounded-xl" value={formData.tickets} onChange={e => setFormData({...formData, tickets: parseInt(e.target.value)})} />
-          <div className="pt-4 border-t flex justify-between items-center">
-            <p className="text-2xl font-bold text-teal-600">{totalPrice}₽</p>
-            <button disabled={isSubmitting} type="submit" className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50">Записаться</button>
+    <article className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group animate-fadeInUp" style={{ animationDelay: `${index * 100}ms` }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      <div className="relative h-56 overflow-hidden bg-gray-200">
+        <img src={event.image} alt={event.title} className={`w-full h-full object-cover transition-transform duration-700 ${hover ? 'scale-110' : 'scale-100'}`} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+        <div className={`absolute top-4 left-4 bg-gradient-to-r ${typeColors[event.type || defaultType]} text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg`}>
+            {typeLabels[event.type] || t.filters.hiking}
+        </div>
+        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full animate-pulse ${pct > 50 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-sm font-bold text-gray-800">{event.spotsLeft} {t.event.spotsLeft}</span>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-teal-600 transition-colors line-clamp-1">{event.title}</h3>
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-3 text-gray-600"><Calendar size={18} className="text-teal-500" /><span className="text-sm font-medium">{new Date(event.date).toLocaleDateString()} {event.time && `в ${event.time.slice(0,5)}`}</span></div>
+          <div className="flex items-center gap-3 text-gray-600"><MapPin size={18} className="text-teal-500" /><span className="text-sm truncate">{event.location}</span></div>
+        </div>
+        <div className="flex justify-between items-center mb-4">
+           <div className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">{event.price.adult}₽</div>
+        </div>
+        <button onClick={() => onSelect(event)} className="w-full bg-gradient-to-r from-teal-600 to-blue-600 text-white py-3.5 rounded-xl font-bold hover:from-teal-700 hover:to-blue-700 transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center justify-center gap-2">
+          <Sparkles size={18} />{t.event.register}
+        </button>
+      </div>
+    </article>
   );
 };
 
-// --- ГЛАВНОЕ ПРИЛОЖЕНИЕ ---
-function App() {
-  const { events, loading, addEvent, deleteEvent, refetch } = useEvents();
-  const { registrations, fetchRegistrations, createRegistration, updateStatus, deleteRegistration } = useRegistrations();
-  
+// --- АДМИН МОДУЛИ (ВСТРОЕНЫ) ---
+const LoginModal = ({ onClose, onLogin }) => {
+    const [pass, setPass] = useState('');
+    return (
+      <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Lock className="text-teal-600"/> Вход для администратора</h2>
+          <form onSubmit={(e)=>{e.preventDefault(); if(pass==='admin') onLogin(); else alert('Error');}} className="space-y-4">
+            <input autoFocus type="password" placeholder="Пароль (admin)" className="w-full p-3 border rounded-xl text-center" value={pass} onChange={e=>setPass(e.target.value)}/>
+            <div className="flex gap-2"><button type="button" onClick={onClose} className="flex-1 py-3 text-gray-500">Отмена</button><button type="submit" className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold">Войти</button></div>
+          </form>
+        </div>
+      </div>
+    );
+};
+
+const AdminRegistrations = ({ t }) => {
+    const [regs, setRegs] = useState([]);
+    useEffect(() => {
+        const fetch = async () => {
+            const { data } = await supabase.from('registrations').select(`*, events(title)`).order('created_at', { ascending: false });
+            if(data) setRegs(data);
+        };
+        fetch();
+    }, []);
+    const toggle = async (id, st) => {
+        const ns = st === 'new' ? 'done' : 'new';
+        await supabase.from('registrations').update({status: ns}).eq('id', id);
+        setRegs(regs.map(r => r.id === id ? {...r, status: ns} : r));
+    }
+    const del = async (id) => {
+        if(window.confirm('Удалить?')) {
+            await supabase.from('registrations').delete().eq('id', id);
+            setRegs(regs.filter(r => r.id !== id));
+        }
+    }
+    return (
+        <div className="bg-white rounded-2xl shadow p-4 overflow-x-auto">
+             <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50"><tr><th className="p-3">Статус</th><th className="p-3">Имя</th><th className="p-3">Тур</th><th className="p-3">Сумма</th><th className="p-3">Del</th></tr></thead>
+                <tbody>
+                    {regs.map(r => (
+                        <tr key={r.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3 cursor-pointer" onClick={()=>toggle(r.id, r.status||'new')}>{r.status==='done' ? <CheckSquare className="text-green-500"/> : <Square className="text-orange-500"/>}</td>
+                            <td className="p-3 font-bold">{r.name}<div className="text-xs text-blue-500">{r.phone}</div></td>
+                            <td className="p-3">{r.events?.title}</td>
+                            <td className="p-3">{r.total_price}₽</td>
+                            <td className="p-3"><button onClick={()=>del(r.id)}><Trash2 size={16} className="text-red-400"/></button></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+const CreateEventModal = ({ onClose, onRefresh }) => {
+    const [form, setForm] = useState({ title: '', date: '', time: '08:00', location: '', price_adult: '', spots_left: 10, image_url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d' });
+    const submit = async (e) => {
+        e.preventDefault();
+        const { error } = await supabase.from('events').insert([form]);
+        if(!error) { onRefresh(); onClose(); }
+    }
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                <h2 className="text-xl font-bold mb-4">Новый тур</h2>
+                <form onSubmit={submit} className="space-y-3">
+                    <input className="w-full p-2 border rounded" placeholder="Название" value={form.title} onChange={e=>setForm({...form, title: e.target.value})} required/>
+                    <div className="grid grid-cols-2 gap-2">
+                        <input type="date" className="w-full p-2 border rounded" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} required/>
+                        <input type="time" className="w-full p-2 border rounded" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
+                    </div>
+                    <input className="w-full p-2 border rounded" placeholder="Локация" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
+                    <div className="grid grid-cols-2 gap-2">
+                         <input type="number" className="w-full p-2 border rounded" placeholder="Цена" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
+                         <input type="number" className="w-full p-2 border rounded" placeholder="Мест" value={form.spots_left} onChange={e=>setForm({...form, spots_left: e.target.value})} required/>
+                    </div>
+                    <input className="w-full p-2 border rounded" placeholder="Ссылка на фото" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
+                    <button className="w-full bg-teal-600 text-white py-3 rounded font-bold">Создать</button>
+                    <button type="button" onClick={onClose} className="w-full text-gray-500 py-2">Отмена</button>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+// ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
+const TourClubWebsite = () => {
+  const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showLogin, setShowLogin] = useState(false); // Показать ввод пароля
-  
-  const [viewMode, setViewMode] = useState('client'); // client, admin_events, admin_bookings
+  const [filterType, setFilterType] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState(ViewModes.GRID); // grid, calendar, admin_tours, admin_bookings
+  const [language, setLanguage] = useState(Languages.RU);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [regForm, setRegForm] = useState({ name: '', phone: '', tickets: 1 });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => { if (viewMode === 'admin_bookings') fetchRegistrations(); }, [viewMode]);
+  const t = translations[language];
 
-  const showToast = (msg, type = 'success') => {
-    setToast({ message: msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleAdminClick = (mode) => {
-    // Если уже в админке - просто переключаем
-    if (viewMode.startsWith('admin_')) {
-      setViewMode(mode);
-    } else {
-      // Если клиент - просим пароль
-      setShowLogin(mode); // Сохраняем, куда хотел попасть
+  // ЗАГРУЗКА ДАННЫХ ИЗ SUPABASE
+  const loadEvents = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('events').select('*').order('date', { ascending: true });
+    if (!error && data) {
+        // Адаптируем данные под формат старого кода
+        const formatted = data.map(e => ({
+            ...e,
+            price: { adult: e.price_adult, child: Math.round(e.price_adult*0.8), family: Math.round(e.price_adult*2.5) },
+            spotsLeft: e.spots_left,
+            spots: 20, // default
+            image: e.image_url,
+            type: e.title.toLowerCase().includes('сплав') ? 'rafting' : e.title.toLowerCase().includes('вел') ? 'cycling' : 'hiking',
+            difficulty: 'средняя',
+            description: 'Потрясающее приключение...',
+            included: ['Трансфер', 'Гид', 'Фотоотчет']
+        }));
+        setEvents(formatted);
     }
+    setLoading(false);
   };
 
-  const handleLoginSuccess = () => {
-    const targetMode = showLogin; // Куда хотел юзер
-    setShowLogin(false);
-    setViewMode(targetMode);
-    showToast('Добро пожаловать, Админ!');
-  };
+  useEffect(() => { loadEvents(); }, []);
 
-  const handleRegister = async (formData) => {
-    setIsSubmitting(true);
-    const regData = { event_id: selectedEvent.id, name: formData.name, phone: formData.phone, tickets: formData.tickets, total_price: selectedEvent.price_adult * formData.tickets, status: 'new' };
-    const { error } = await createRegistration(regData);
-    if (!error) { showToast('Вы успешно записаны!'); await refetch(); setShowModal(false); } 
-    else { showToast('Ошибка при записи', 'error'); }
-    setIsSubmitting(false);
-  };
+  const handleRegister = async (e) => {
+      e.preventDefault();
+      setIsSubmitting(true);
+      const regData = {
+          event_id: selectedEvent.id,
+          name: regForm.name,
+          phone: regForm.phone,
+          tickets: regForm.tickets,
+          total_price: selectedEvent.price.adult * regForm.tickets,
+          status: 'new'
+      };
+      const { error } = await supabase.from('registrations').insert([regData]);
+      if(!error) {
+          setToast({ message: t.messages.success, type: 'success' });
+          setShowModal(false);
+          loadEvents(); // обновить места
+      } else {
+          setToast({ message: t.messages.error, type: 'error' });
+      }
+      setIsSubmitting(false);
+  }
 
-  const handleCreateEvent = async (data) => {
-    const { error } = await addEvent(data);
-    if (!error) { showToast('Тур создан!'); setShowCreateModal(false); } 
-    else { showToast('Ошибка создания', 'error'); }
-  };
+  const handleDeleteEvent = async (id) => {
+      if(window.confirm('Удалить?')) {
+          await supabase.from('events').delete().eq('id', id);
+          loadEvents();
+      }
+  }
 
-  const handleDelete = async (id) => {
-    if(window.confirm('Удалить этот тур?')) { await deleteEvent(id); showToast('Тур удален'); }
-  };
+  const filteredEvents = useMemo(() => {
+    if (filterType === 'all') return events;
+    return events.filter(e => e.type === filterType);
+  }, [filterType, events]);
 
-  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-teal-600">Загрузка...</div>;
+  // RENDER HELPERS
+  const isAdmin = viewMode.startsWith('admin');
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      {/* Шапка */}
-      <header className={`text-white shadow-xl sticky top-0 z-40 ${viewMode !== 'client' ? 'bg-slate-800' : 'bg-teal-700'}`}>
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold truncate">{viewMode !== 'client' ? 'Панель управления' : 'Турклуб "Эва" 🏔️'}</h1>
-          <div className="flex bg-black/20 rounded-lg p-1 gap-1">
-            <button onClick={() => setViewMode('client')} className={`px-2 md:px-3 py-1 rounded text-sm ${viewMode === 'client' ? 'bg-white text-teal-700 font-bold' : 'hover:bg-white/10'}`}>Сайт</button>
-            <button onClick={() => handleAdminClick('admin_events')} className={`px-2 md:px-3 py-1 rounded text-sm ${viewMode === 'admin_events' ? 'bg-white text-slate-800 font-bold' : 'hover:bg-white/10'}`}>Туры</button>
-            <button onClick={() => handleAdminClick('admin_bookings')} className={`px-2 md:px-3 py-1 rounded text-sm ${viewMode === 'admin_bookings' ? 'bg-white text-slate-800 font-bold' : 'hover:bg-white/10'}`}>Заявки</button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 font-sans">
+      {/* ФОНОВЫЕ ЭФФЕКТЫ */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+        <div className="absolute top-40 right-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+      </div>
+
+      {/* HEADER */}
+      <header className={`relative text-white shadow-2xl transition-colors duration-500 ${isAdmin ? 'bg-slate-800' : 'bg-gradient-to-r from-teal-600 via-blue-600 to-cyan-600'}`}>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex justify-between items-center">
+             <div className="flex items-center gap-3 animate-fadeInLeft">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                  <Sparkles size={24} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tight">{isAdmin ? t.admin.title : t.header.title}</h1>
+                  {!isAdmin && <p className="text-sm opacity-90">{t.header.subtitle}</p>}
+                </div>
+             </div>
+
+             <div className="flex flex-col items-end gap-2 animate-fadeInRight">
+                <div className="flex gap-2 items-center">
+                    <LanguageSwitcher currentLang={language} onChange={setLanguage} />
+                    {/* КНОПКА АДМИНКИ */}
+                    <button onClick={() => isAdmin ? setViewMode('grid') : setShowLogin(true)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition text-white">
+                        {isAdmin ? <X size={16}/> : <Settings size={16}/>}
+                    </button>
+                </div>
+                {isAdmin && (
+                    <div className="flex gap-2 mt-2">
+                        <button onClick={()=>setViewMode('admin_tours')} className={`px-3 py-1 rounded text-sm font-bold ${viewMode==='admin_tours' ? 'bg-white text-slate-800' : 'bg-slate-700'}`}>{t.admin.tours}</button>
+                        <button onClick={()=>setViewMode('admin_bookings')} className={`px-3 py-1 rounded text-sm font-bold ${viewMode==='admin_bookings' ? 'bg-white text-slate-800' : 'bg-slate-700'}`}>{t.admin.bookings}</button>
+                    </div>
+                )}
+             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* АДМИНКА ЗАЯВОК */}
-        {viewMode === 'admin_bookings' && <AdminRegistrations registrations={registrations} onToggleStatus={updateStatus} onDelete={deleteRegistration} />}
+      {/* CONTENT */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
         
-        {/* КАРТОЧКИ ТУРОВ */}
-        {viewMode !== 'admin_bookings' && (
-          <>
-            {viewMode === 'admin_events' && (
-              <div className="mb-6 flex justify-end">
-                <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg transform active:scale-95 transition">
-                  <Plus size={20}/> Добавить тур
-                </button>
-              </div>
-            )}
+        {/* РЕЖИМ АДМИНА: ЗАЯВКИ */}
+        {viewMode === 'admin_bookings' && <AdminRegistrations t={t} />}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => (
-                <article key={event.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition overflow-hidden group">
-                  <div className="relative h-48 bg-gray-200 overflow-hidden">
-                    <img src={event.image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-                    <div className="absolute top-3 right-3 bg-white/90 px-3 py-1 rounded-full text-sm font-bold text-teal-700 shadow-sm">{event.price_adult} ₽</div>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">{event.title}</h3>
-                    <div className="space-y-2 mb-6 text-gray-600 text-sm">
-                      <div className="flex items-center gap-2"><Calendar size={16} className="text-teal-500" /><span>{formatDate(event.date)}</span></div>
-                      <div className="flex items-center gap-2"><MapPin size={16} className="text-teal-500" /><span>{event.location}</span></div>
+        {/* РЕЖИМ КЛИЕНТА ИЛИ АДМИНА ТУРОВ */}
+        {viewMode !== 'admin_bookings' && (
+            <>
+                 {/* ПАНЕЛЬ ФИЛЬТРОВ И ВИДА (ТОЛЬКО ДЛЯ КЛИЕНТА) */}
+                {!isAdmin && (
+                    <div className="flex justify-between items-center mb-8 flex-wrap gap-4 animate-fadeIn">
+                        <div className="flex gap-2">
+                            <button onClick={() => setViewMode(ViewModes.GRID)} className={`p-2 rounded-lg ${viewMode === ViewModes.GRID ? 'bg-white text-teal-600 shadow' : 'text-gray-500'}`}><Grid size={20}/></button>
+                            <button onClick={() => setViewMode(ViewModes.CALENDAR)} className={`p-2 rounded-lg ${viewMode === ViewModes.CALENDAR ? 'bg-white text-teal-600 shadow' : 'text-gray-500'}`}><CalendarDays size={20}/></button>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                            {['all', 'rafting', 'hiking', 'cycling'].map(type => (
+                                <button key={type} onClick={()=>setFilterType(type)} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${filterType===type ? 'bg-teal-600 text-white shadow-lg' : 'bg-white text-gray-600'}`}>
+                                    {t.filters[type]}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    {viewMode === 'admin_events' ? (
-                      <button onClick={() => handleDelete(event.id)} className="w-full bg-red-50 text-red-600 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-red-100 transition"><Trash2 size={18} /> Удалить тур</button>
-                    ) : (
-                      <button onClick={() => { setSelectedEvent(event); setShowModal(true); }} className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold hover:bg-teal-700 transition shadow-teal-200 hover:shadow-lg active:scale-95">Записаться</button>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </>
+                )}
+
+                {/* КНОПКА ДОБАВИТЬ ТУР (ТОЛЬКО АДМИН) */}
+                {isAdmin && (
+                    <button onClick={()=>setShowCreate(true)} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2">
+                        <Plus/> {t.admin.add}
+                    </button>
+                )}
+
+                {/* СПИСОК ТУРОВ */}
+                {loading ? <div className="flex justify-center py-20"><Loader className="animate-spin text-teal-600" size={40}/></div> : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {filteredEvents.map((event, idx) => (
+                            <div key={event.id} className="relative group">
+                                <EventCard event={event} onSelect={(e)=>{setSelectedEvent(e); setRegForm({name:'', phone:'', tickets:1}); setShowModal(true);}} index={idx} t={t} />
+                                {isAdmin && (
+                                    <button onClick={()=>handleDeleteEvent(event.id)} className="absolute top-2 right-2 bg-red-100 p-2 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition shadow-lg z-10">
+                                        <Trash2 size={20}/>
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </>
         )}
       </main>
 
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleLoginSuccess} />}
-      {showModal && <BookingModal event={selectedEvent} onClose={() => setShowModal(false)} onSubmit={handleRegister} isSubmitting={isSubmitting} />}
-      {showCreateModal && <CreateEventModal onClose={() => setShowCreateModal(false)} onSubmit={handleCreateEvent} />}
+      {/* МОДАЛКИ */}
+      {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setViewMode('admin_tours');}} />}
+      {showCreate && <CreateEventModal onClose={()=>setShowCreate(false)} onRefresh={loadEvents} />}
       
-      {toast && (
-        <div className={`fixed bottom-8 right-4 z-[70] px-6 py-4 rounded-xl shadow-2xl text-white font-medium animate-bounce-in ${toast.type === 'success' ? 'bg-gray-800' : 'bg-red-600'}`}>
-          {toast.message}
+      {showModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={()=>setShowModal(false)}>
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
+                <h2 className="text-2xl font-bold mb-1">{selectedEvent.title}</h2>
+                <p className="text-teal-600 font-medium mb-6">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                <form onSubmit={handleRegister} className="space-y-4">
+                    <div>
+                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.name}</label>
+                        <input required value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500"/>
+                    </div>
+                    <div>
+                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.phone}</label>
+                        <input required type="tel" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone: e.target.value})} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500"/>
+                    </div>
+                    <div>
+                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.quantity}</label>
+                        <input type="number" min="1" max={selectedEvent.spotsLeft} value={regForm.tickets} onChange={e=>setRegForm({...regForm, tickets: +e.target.value})} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500"/>
+                    </div>
+                    <div className="pt-4 border-t flex justify-between items-center">
+                        <div><p className="text-sm text-gray-500">{t.form.total}</p><p className="text-2xl font-bold text-teal-600">{selectedEvent.price.adult * regForm.tickets}₽</p></div>
+                        <button disabled={isSubmitting} className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50">
+                            {isSubmitting ? <Loader className="animate-spin"/> : t.event.register}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
       )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes blob { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } }
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out; animation-fill-mode: both; }
+        .animate-fadeInLeft { animation: fadeInLeft 0.8s ease-out; }
+        .animate-fadeInRight { animation: fadeInRight 0.8s ease-out; }
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+      `}</style>
     </div>
   );
-}
+};
 
-export default App;
+export default TourClubWebsite;
