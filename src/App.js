@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Settings, X, CheckCircle, AlertCircle, Trash2, Edit2, User, Phone, Mail, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Settings, X, CheckCircle, AlertCircle, Trash2, Edit2, User, Phone, Ticket } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
-// --- Хуки (оставляем как есть, они хорошие) ---
+// --- ХУКИ ---
 const useEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const loadEvents = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('events').select('*').order('date', { ascending: true });
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('date', { ascending: true });
+      
     if (!error) setEvents(data || []);
     setLoading(false);
   };
   
   useEffect(() => { loadEvents(); }, []);
   
-  // Добавляем функции удаления
   const deleteEvent = async (id) => { 
     const r = await supabase.from('events').delete().eq('id', id); 
     if (!r.error) await loadEvents(); 
@@ -31,18 +34,22 @@ const useRegistrations = () => {
   return { createRegistration };
 };
 
-// --- Компонент Модального окна (НОВЫЙ) ---
+// --- КОМПОНЕНТ МОДАЛЬНОГО ОКНА ---
 const BookingModal = ({ event, onClose, onSubmit, isSubmitting }) => {
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', tickets: 1, ticketType: 'adult' });
 
   if (!event) return null;
 
-  const totalPrice = (formData.ticketType === 'adult' ? event.price_adult : event.price_child || event.price_adult) * formData.tickets;
+  const price = event.price_adult; 
+  const totalPrice = price * formData.tickets;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
           <X size={24} />
         </button>
         
@@ -51,21 +58,45 @@ const BookingModal = ({ event, onClose, onSubmit, isSubmitting }) => {
 
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 flex gap-2"><User size={16}/> Имя</label>
-            <input required type="text" className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" 
-              value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Иван Иванов"/>
+            <label className="text-sm font-medium text-gray-700 flex gap-2">
+              <User size={16}/> Имя
+            </label>
+            <input 
+              required 
+              type="text" 
+              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})} 
+              placeholder="Иван Иванов"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700 flex gap-2"><Phone size={16}/> Телефон</label>
-              <input required type="tel" className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" 
-                value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+7..."/>
+              <label className="text-sm font-medium text-gray-700 flex gap-2">
+                <Phone size={16}/> Телефон
+              </label>
+              <input 
+                required 
+                type="tel" 
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" 
+                value={formData.phone} 
+                onChange={e => setFormData({...formData, phone: e.target.value})} 
+                placeholder="+7..."
+              />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700 flex gap-2"><Ticket size={16}/> Билетов</label>
-              <input type="number" min="1" max={event.spots_left} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" 
-                value={formData.tickets} onChange={e => setFormData({...formData, tickets: parseInt(e.target.value)})} />
+              <label className="text-sm font-medium text-gray-700 flex gap-2">
+                <Ticket size={16}/> Билетов
+              </label>
+              <input 
+                type="number" 
+                min="1" 
+                max={event.spots_left} 
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" 
+                value={formData.tickets} 
+                onChange={e => setFormData({...formData, tickets: parseInt(e.target.value)})} 
+              />
             </div>
           </div>
 
@@ -74,7 +105,11 @@ const BookingModal = ({ event, onClose, onSubmit, isSubmitting }) => {
               <p className="text-sm text-gray-500">Итого к оплате:</p>
               <p className="text-2xl font-bold text-teal-600">{totalPrice}₽</p>
             </div>
-            <button disabled={isSubmitting} type="submit" className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 transition disabled:opacity-50">
+            <button 
+              disabled={isSubmitting} 
+              type="submit" 
+              className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 transition disabled:opacity-50"
+            >
               {isSubmitting ? 'Запись...' : 'Подтвердить'}
             </button>
           </div>
@@ -84,14 +119,14 @@ const BookingModal = ({ event, onClose, onSubmit, isSubmitting }) => {
   );
 };
 
-// --- Основной компонент ---
+// --- ОСНОВНОЙ КОМПОНЕНТ ---
 function App() {
   const { events, loading, deleteEvent, refetch } = useEvents();
   const { createRegistration } = useRegistrations();
   
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' или 'admin'
+  const [viewMode, setViewMode] = useState('grid');
   const [toast, setToast] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -102,7 +137,7 @@ function App() {
       name: formData.name,
       phone: formData.phone,
       tickets: formData.tickets,
-      total_price: selectedEvent.price_adult * formData.tickets, // Упростил для примера
+      total_price: selectedEvent.price_adult * formData.tickets,
       status: 'new'
     };
     
@@ -110,7 +145,7 @@ function App() {
     
     if (!error) {
       setToast({ message: 'Вы успешно записаны!', type: 'success' });
-      await refetch(); // Обновляем места
+      await refetch();
       setShowModal(false);
     } else {
       setToast({ message: 'Ошибка при записи :(', type: 'error' });
@@ -125,14 +160,22 @@ function App() {
         setToast({ message: 'Тур удален', type: 'success' });
         setTimeout(() => setToast(null), 3000);
     }
-  }
-
-  // Красивое форматирование даты
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-teal-600">Загрузка туров...</div>;
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString('ru-RU', { 
+      day: 'numeric', 
+      month: 'long', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center text-teal-600">
+      Загрузка туров...
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -144,7 +187,9 @@ function App() {
           </div>
           <button 
             onClick={() => setViewMode(viewMode === 'admin' ? 'grid' : 'admin')} 
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${viewMode === 'admin' ? 'bg-red-500 text-white' : 'bg-white/10 hover:bg-white/20'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+              viewMode === 'admin' ? 'bg-red-500 text-white' : 'bg-white/10 hover:bg-white/20'
+            }`}
           >
             <Settings size={16} />
             {viewMode === 'admin' ? 'Режим Админа' : 'Войти как админ'}
@@ -180,9 +225,11 @@ function App() {
 
                 <div className="mt-auto">
                   {viewMode === 'admin' ? (
-                    // КНОПКИ АДМИНА
                     <div className="flex gap-2">
-                      <button onClick={() => handleDelete(event.id)} className="flex-1 bg-red-100 text-red-600 py-2 rounded-xl font-medium hover:bg-red-200 transition flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => handleDelete(event.id)} 
+                        className="flex-1 bg-red-100 text-red-600 py-2 rounded-xl font-medium hover:bg-red-200 transition flex items-center justify-center gap-2"
+                      >
                         <Trash2 size={18} /> Удалить
                       </button>
                       <button className="flex-1 bg-blue-100 text-blue-600 py-2 rounded-xl font-medium hover:bg-blue-200 transition flex items-center justify-center gap-2">
@@ -190,7 +237,6 @@ function App() {
                       </button>
                     </div>
                   ) : (
-                    // КНОПКА КЛИЕНТА
                     <button 
                       onClick={() => { setSelectedEvent(event); setShowModal(true); }} 
                       className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold hover:bg-teal-700 transition shadow-teal-200 hover:shadow-lg active:scale-95 transform duration-100"
@@ -205,7 +251,7 @@ function App() {
         </div>
       </main>
 
-      {/* МОДАЛЬНОЕ ОКНО (Было пропущено) */}
+      {/* Модальное окно */}
       {showModal && (
         <BookingModal 
           event={selectedEvent} 
@@ -215,9 +261,11 @@ function App() {
         />
       )}
 
-      {/* Тосты уведомлений */}
+      {/* Тосты */}
       {toast && (
-        <div className={`fixed bottom-8 right-4 md:right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-bounce-in ${toast.type === 'success' ? 'bg-gray-900 text-green-400' : 'bg-red-600 text-white'}`}>
+        <div className={`fixed bottom-8 right-4 md:right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
+          toast.type === 'success' ? 'bg-gray-900 text-green-400' : 'bg-red-600 text-white'
+        }`}>
           {toast.type === 'success' ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
           <span className="font-medium">{toast.message}</span>
         </div>
