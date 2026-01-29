@@ -13,21 +13,23 @@ export const useEvents = () => {
             .order('date', { ascending: true });
 
         if (!error && data) {
-            // Адаптер данных (змеиный_регистр -> верблюжийРегистр + доп. поля)
             const formatted = data.map(e => ({
                 ...e,
-                // UI ожидает объект цен
                 price: { 
                     adult: e.price_adult, 
                     child: e.price_child || Math.round(e.price_adult * 0.8), 
                     family: e.price_family || Math.round(e.price_adult * 2.5) 
                 },
-                // UI ожидает spotsLeft
                 spotsLeft: e.spots_left,
-                spots: e.spots || 20, 
+                spots: e.spots, 
                 image: e.image_url,
-                // Определяем тип, если он не задан явно в БД
-                type: e.type || (e.title.toLowerCase().includes('сплав') ? 'rafting' : e.title.toLowerCase().includes('вел') ? 'cycling' : 'hiking'),
+                // Определяем тип
+                type: e.type || 'hiking_1',
+                // Новые поля
+                guide: e.guide,
+                difficulty: e.difficulty,
+                duration: e.duration,
+                included: e.included || []
             }));
             setEvents(formatted);
         }
@@ -40,16 +42,30 @@ export const useEvents = () => {
         events, 
         loading, 
         refreshEvents: loadEvents,
-        // Методы для админки
+        
         deleteEvent: async (id) => {
             const { error } = await supabase.from('events').delete().eq('id', id);
             if (!error) loadEvents();
             return { error };
         },
-        createEvent: async (formData) => {
-            const { error } = await supabase.from('events').insert([formData]);
-            if (!error) loadEvents();
-            return { error };
+
+        // БЕЗОПАСНАЯ ЗАПИСЬ ЧЕРЕЗ RPC
+        bookEvent: async ({ eventId, formData, totalPrice }) => {
+            const { data, error } = await supabase.rpc('book_event', {
+                event_id_input: eventId,
+                user_name: formData.name,
+                user_phone: formData.phone,
+                ticket_count: formData.tickets,
+                total_price_input: totalPrice
+            });
+
+            // RPC возвращает ошибку внутри data.error, если логика проверки не прошла
+            if (data && data.error) {
+                return { error: { message: data.error } };
+            }
+            
+            if (!error) loadEvents(); // Обновляем места сразу
+            return { data, error };
         }
     };
 };
@@ -59,7 +75,6 @@ export const ValidationUtils = {
         const e = {};
         if (!data.name?.trim()) e.name = t.validation.nameRequired;
         if (!data.phone?.trim()) e.phone = t.validation.phoneRequired;
-        else if (!/^\+?[\d\s\-()]{7,}$/.test(data.phone)) e.phone = t.validation.invalidPhone;
         
         if (data.tickets < 1 || data.tickets > maxSpots) e.tickets = `1-${maxSpots}`;
         return e;
