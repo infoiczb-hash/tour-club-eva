@@ -1,6 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback, useReducer } from 'react';
-import { Calendar, MapPin, Clock, Filter, X, Grid, CalendarDays, ChevronLeft, ChevronRight, Sparkles, TrendingUp, Award, Globe, Wifi, WifiOff, Download, CheckCircle, AlertCircle, Loader, Settings, Plus, Trash2, CheckSquare, Square, Phone, User, Lock } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader } from 'lucide-react';
 import { supabase } from './lib/supabase';
+
+// UI Components
+import Toast from './components/Toast';
+import LanguageSwitcher from './components/LanguageSwitcher';
+import EventCard from './components/EventCard';
+import LoginModal from './components/LoginModal';
 
 // ============ CONSTANTS & CONFIG ============
 const EventTypes = { RAFTING: 'rafting', HIKING: 'hiking', CYCLING: 'cycling' };
@@ -48,6 +54,7 @@ const translations = {
 };
 
 // ============ UTILS ============
+// Пока оставил здесь, так как это не совсем компонент
 const ValidationUtils = {
   validateForm(data, max) {
     const e = {};
@@ -58,81 +65,7 @@ const ValidationUtils = {
   }
 };
 
-// ============ UI COMPONENTS ============
-const Toast = ({ message, type, onClose }) => (
-  <div className={`fixed top-4 right-4 z-[100] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl animate-slideIn ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`}>
-    {type === 'success' && <CheckCircle size={24} />} {type === 'error' && <AlertCircle size={24} />} {type === 'info' && <Loader size={24} className="animate-spin" />}
-    <span className="font-semibold">{message}</span>
-    <button onClick={onClose} className="ml-4 hover:opacity-80"><X size={20} /></button>
-  </div>
-);
-
-const LanguageSwitcher = ({ currentLang, onChange }) => (
-  <div className="flex gap-1 bg-white/20 backdrop-blur rounded-xl p-1">
-    {Object.values(Languages).map(lang => (
-      <button key={lang} onClick={() => onChange(lang)} className={`px-2 py-1 rounded-lg font-bold text-xs transition-all ${currentLang === lang ? 'bg-white text-teal-600 shadow-lg' : 'text-white hover:bg-white/10'}`}>
-        {lang.toUpperCase()}
-      </button>
-    ))}
-  </div>
-);
-
-// --- КАРТОЧКА ТУРА (С АДАПТАЦИЕЙ ПОД SUPABASE) ---
-const EventCard = ({ event, onSelect, index, t }) => {
-  const [hover, setHover] = useState(false);
-  const typeLabels = { [EventTypes.RAFTING]: t.filters.rafting, [EventTypes.HIKING]: t.filters.hiking, [EventTypes.CYCLING]: t.filters.cycling };
-  const typeColors = { [EventTypes.RAFTING]: 'from-blue-500 to-cyan-500', [EventTypes.HIKING]: 'from-green-500 to-emerald-500', [EventTypes.CYCLING]: 'from-orange-500 to-red-500' };
-  const defaultType = EventTypes.HIKING;
-  const pct = ((event.spotsLeft / (event.spots || 20)) * 100).toFixed(0);
-  
-  return (
-    <article className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group animate-fadeInUp" style={{ animationDelay: `${index * 100}ms` }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-      <div className="relative h-56 overflow-hidden bg-gray-200">
-        <img src={event.image} alt={event.title} className={`w-full h-full object-cover transition-transform duration-700 ${hover ? 'scale-110' : 'scale-100'}`} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-        <div className={`absolute top-4 left-4 bg-gradient-to-r ${typeColors[event.type || defaultType]} text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg`}>
-            {typeLabels[event.type] || t.filters.hiking}
-        </div>
-        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${pct > 50 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-sm font-bold text-gray-800">{event.spotsLeft} {t.event.spotsLeft}</span>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-teal-600 transition-colors line-clamp-1">{event.title}</h3>
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-3 text-gray-600"><Calendar size={18} className="text-teal-500" /><span className="text-sm font-medium">{new Date(event.date).toLocaleDateString()} {event.time && `в ${event.time.slice(0,5)}`}</span></div>
-          <div className="flex items-center gap-3 text-gray-600"><MapPin size={18} className="text-teal-500" /><span className="text-sm truncate">{event.location}</span></div>
-        </div>
-        <div className="flex justify-between items-center mb-4">
-           <div className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">{event.price.adult}₽</div>
-        </div>
-        <button onClick={() => onSelect(event)} className="w-full bg-gradient-to-r from-teal-600 to-blue-600 text-white py-3.5 rounded-xl font-bold hover:from-teal-700 hover:to-blue-700 transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center justify-center gap-2">
-          <Sparkles size={18} />{t.event.register}
-        </button>
-      </div>
-    </article>
-  );
-};
-
-// --- АДМИН МОДУЛИ (ВСТРОЕНЫ) ---
-const LoginModal = ({ onClose, onLogin }) => {
-    const [pass, setPass] = useState('');
-    return (
-      <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Lock className="text-teal-600"/> Вход для администратора</h2>
-          <form onSubmit={(e)=>{e.preventDefault(); if(pass==='admin') onLogin(); else alert('Error');}} className="space-y-4">
-            <input autoFocus type="password" placeholder="Пароль (admin)" className="w-full p-3 border rounded-xl text-center" value={pass} onChange={e=>setPass(e.target.value)}/>
-            <div className="flex gap-2"><button type="button" onClick={onClose} className="flex-1 py-3 text-gray-500">Отмена</button><button type="submit" className="flex-1 bg-teal-600 text-white py-3 rounded-xl font-bold">Войти</button></div>
-          </form>
-        </div>
-      </div>
-    );
-};
-
+// --- АДМИН МОДУЛИ (ПОКА ОСТАВЛЯЕМ ЗДЕСЬ, Т.К. СОДЕРЖАТ SUPABASE ЛОГИКУ) ---
 const AdminRegistrations = ({ t }) => {
     const [regs, setRegs] = useState([]);
     useEffect(() => {
@@ -211,7 +144,7 @@ const TourClubWebsite = () => {
   const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState(ViewModes.GRID); // grid, calendar, admin_tours, admin_bookings
+  const [viewMode, setViewMode] = useState(ViewModes.GRID); 
   const [language, setLanguage] = useState(Languages.RU);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
@@ -227,12 +160,12 @@ const TourClubWebsite = () => {
     setLoading(true);
     const { data, error } = await supabase.from('events').select('*').order('date', { ascending: true });
     if (!error && data) {
-        // Адаптируем данные под формат старого кода
+        // Адаптация данных
         const formatted = data.map(e => ({
             ...e,
             price: { adult: e.price_adult, child: Math.round(e.price_adult*0.8), family: Math.round(e.price_adult*2.5) },
             spotsLeft: e.spots_left,
-            spots: 20, // default
+            spots: 20, 
             image: e.image_url,
             type: e.title.toLowerCase().includes('сплав') ? 'rafting' : e.title.toLowerCase().includes('вел') ? 'cycling' : 'hiking',
             difficulty: 'средняя',
@@ -261,7 +194,7 @@ const TourClubWebsite = () => {
       if(!error) {
           setToast({ message: t.messages.success, type: 'success' });
           setShowModal(false);
-          loadEvents(); // обновить места
+          loadEvents(); 
       } else {
           setToast({ message: t.messages.error, type: 'error' });
       }
@@ -280,7 +213,6 @@ const TourClubWebsite = () => {
     return events.filter(e => e.type === filterType);
   }, [filterType, events]);
 
-  // RENDER HELPERS
   const isAdmin = viewMode.startsWith('admin');
 
   return (
@@ -308,7 +240,6 @@ const TourClubWebsite = () => {
              <div className="flex flex-col items-end gap-2 animate-fadeInRight">
                 <div className="flex gap-2 items-center">
                     <LanguageSwitcher currentLang={language} onChange={setLanguage} />
-                    {/* КНОПКА АДМИНКИ */}
                     <button onClick={() => isAdmin ? setViewMode('grid') : setShowLogin(true)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition text-white">
                         {isAdmin ? <X size={16}/> : <Settings size={16}/>}
                     </button>
@@ -333,7 +264,7 @@ const TourClubWebsite = () => {
         {/* РЕЖИМ КЛИЕНТА ИЛИ АДМИНА ТУРОВ */}
         {viewMode !== 'admin_bookings' && (
             <>
-                 {/* ПАНЕЛЬ ФИЛЬТРОВ И ВИДА (ТОЛЬКО ДЛЯ КЛИЕНТА) */}
+                 {/* ПАНЕЛЬ ФИЛЬТРОВ */}
                 {!isAdmin && (
                     <div className="flex justify-between items-center mb-8 flex-wrap gap-4 animate-fadeIn">
                         <div className="flex gap-2">
