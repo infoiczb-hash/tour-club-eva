@@ -23,9 +23,7 @@ export const useEvents = () => {
                 spotsLeft: e.spots_left,
                 spots: e.spots, 
                 image: e.image_url,
-                // Определяем тип
                 type: e.type || 'hiking_1',
-                // Новые поля
                 guide: e.guide,
                 difficulty: e.difficulty,
                 duration: e.duration,
@@ -49,7 +47,6 @@ export const useEvents = () => {
             return { error };
         },
 
-        // БЕЗОПАСНАЯ ЗАПИСЬ ЧЕРЕЗ RPC
         bookEvent: async ({ eventId, formData, totalPrice }) => {
             const { data, error } = await supabase.rpc('book_event', {
                 event_id_input: eventId,
@@ -59,13 +56,30 @@ export const useEvents = () => {
                 total_price_input: totalPrice
             });
 
-            // RPC возвращает ошибку внутри data.error, если логика проверки не прошла
             if (data && data.error) {
                 return { error: { message: data.error } };
             }
             
-            if (!error) loadEvents(); // Обновляем места сразу
+            if (!error) loadEvents();
             return { data, error };
+        },
+
+        // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ
+        uploadImage: async (file) => {
+            // Генерируем уникальное имя: timestamp_имяфайла (удаляем пробелы)
+            const fileName = `${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+            
+            const { error } = await supabase.storage
+                .from('tours-images')
+                .upload(fileName, file);
+
+            if (error) return { error };
+
+            const { data } = supabase.storage
+                .from('tours-images')
+                .getPublicUrl(fileName);
+                
+            return { url: data.publicUrl };
         }
     };
 };
