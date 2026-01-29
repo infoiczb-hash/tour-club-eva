@@ -10,66 +10,57 @@ import EventCard from './components/EventCard';
 import LoginModal from './components/LoginModal';
 import CalendarView from './components/CalendarView';
 
-// ============ CONSTANTS & CONFIG ============
+// ============ CONSTANTS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
 const Languages = { RU: 'ru', EN: 'en', RO: 'ro' };
-
-// Новые типы событий для фильтрации
 const EventTypes = { 
-    WATER: 'water',       // На воде
-    HIKING_1: 'hiking_1', // Походы на 1 день
-    KIDS: 'kids',         // Детям
-    WEEKEND: 'weekend',   // Поход на выходные
-    EXPEDITION: 'expedition', // Экспедиции
-    // Оставляем старые для совместимости, если в БД они есть
-    RAFTING: 'rafting',
-    HIKING: 'hiking',
-    CYCLING: 'cycling'
+    WATER: 'water',       
+    HIKING_1: 'hiking_oneday', 
+    KIDS: 'kids',         
+    WEEKEND: 'weekend',   
+    EXPEDITION: 'expedition' 
 };
 
-// ============ TRANSLATIONS (i18n) ============
+// ============ TRANSLATIONS ============
 const translations = {
   ru: {
-    header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные 🌄' },
+    header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные выходные' },
     filters: { 
         all: 'Все', 
         [EventTypes.WATER]: 'На воде 🛶', 
-        [EventTypes.HIKING_1]: 'Походы на 1 ден', 
-        [EventTypes.KIDS]: 'Детям',
-        [EventTypes.WEEKEND]: 'Поход на выходные',
-        [EventTypes.EXPEDITION]: 'Экспедиции',
-        // Fallback для старых типов
-        [EventTypes.RAFTING]: 'Сплавы',
-        [EventTypes.HIKING]: 'Походы',
-        [EventTypes.CYCLING]: 'Вело'
+        [EventTypes.HIKING_1]: 'Выезды на 1 день', 
+        [EventTypes.KIDS]: 'Подростка',
+        [EventTypes.WEEKEND]: 'Походы на выходные',
+        [EventTypes.EXPEDITION]: 'Экспедиции ',
+        'hiking': 'Походы' // fallback
     },
-    event: { register: 'Записаться', spotsLeft: 'мест', registerBtn: 'Записаться', spots: 'мест' },
+    event: { register: 'Записаться', spots: 'мест', registerBtn: 'Записаться' },
     form: { name: 'Ваше имя *', phone: 'Телефон *', quantity: 'Количество', total: 'Итого:', submit: 'Зарегистрироваться' },
     validation: { nameRequired: 'Укажите имя', phoneRequired: 'Укажите телефон', invalidPhone: 'Некорректный формат' },
-    messages: { success: 'Спасибо за регистрацию! ✓', error: 'Ошибка регистрации ✗' },
+    messages: { success: 'Спасибо за регистрацию! ✓', error: 'Ошибка регистрации ✗', full: 'Места закончились 😔' },
     admin: { title: 'Панель управления', tours: 'Туры', bookings: 'Заявки', add: 'Добавить тур' }
   },
   en: {
     header: { title: 'Tour Club "Eva"', subtitle: 'Adventures every weekend 🌄' },
-    filters: { all: 'All', water: 'Water', hiking_1: '1 Day', kids: 'Kids', weekend: 'Weekend', expedition: 'Expedition', rafting: 'Rafting', hiking: 'Hiking', cycling: 'Cycling' },
-    event: { register: 'Register', spotsLeft: 'spots', registerBtn: 'Register', spots: 'spots' },
+    filters: { all: 'All', water: 'Water', hiking_1: '1 Day', kids: 'Kids', weekend: 'Weekend', expedition: 'Expedition' },
+    event: { register: 'Register', spots: 'spots', registerBtn: 'Register' },
     form: { name: 'Your name *', phone: 'Phone *', quantity: 'Quantity', total: 'Total:', submit: 'Register' },
     validation: { nameRequired: 'Enter name', phoneRequired: 'Enter phone', invalidPhone: 'Invalid format' },
-    messages: { success: 'Registration successful!', error: 'Error' },
+    messages: { success: 'Registration successful!', error: 'Error', full: 'No spots left' },
     admin: { title: 'Admin Panel', tours: 'Tours', bookings: 'Bookings', add: 'Add Tour' }
   },
   ro: {
     header: { title: 'Club turistic "Eva"', subtitle: 'Aventuri în fiecare weekend 🌄' },
-    filters: { all: 'Toate', water: 'Apă', hiking_1: '1 Zi', kids: 'Copii', weekend: 'Weekend', expedition: 'Expediție', rafting: 'Rafting', hiking: 'Drumeții', cycling: 'Ciclism' },
-    event: { register: 'Înscrie-te', spotsLeft: 'locuri', registerBtn: 'Înregistrare', spots: 'locuri' },
+    filters: { all: 'Toate', water: 'Apă', hiking_1: '1 Zi', kids: 'Copii', weekend: 'Weekend', expedition: 'Expediție' },
+    event: { register: 'Înscrie-te', spots: 'locuri', registerBtn: 'Înregistrare' },
     form: { name: 'Nume *', phone: 'Telefon *', quantity: 'Cantitate', total: 'Total:', submit: 'Înregistrare' },
     validation: { nameRequired: 'Introdu nume', phoneRequired: 'Introdu telefon', invalidPhone: 'Format invalid' },
-    messages: { success: 'Înregistrare reușită!', error: 'Eroare' },
+    messages: { success: 'Înregistrare reușită!', error: 'Eroare', full: 'Fără locuri' },
     admin: { title: 'Panou Admin', tours: 'Tururi', bookings: 'Rezervări', add: 'Adaugă' }
   }
 };
 
-// --- АДМИН МОДУЛИ ---
+// --- АДМИН: СПИСОК ЗАЯВОК ---
 const AdminRegistrations = () => {
     const [regs, setRegs] = useState([]);
     useEffect(() => {
@@ -110,17 +101,17 @@ const AdminRegistrations = () => {
     )
 }
 
+// --- АДМИН: СОЗДАНИЕ ТУРА ---
 const CreateEventModal = ({ onClose, onRefresh }) => {
-    // Включаем дефолтные значения
     const [form, setForm] = useState({ 
-        title: '', date: '', time: '08:00', location: '', 
+        title: '', date: '', time: '08:00', location: '', guide: '',
         price_adult: '', spots_left: 20, spots: 20, 
-        image_url: '', type: 'hiking_1' 
+        image_url: '', type: 'hiking_1',
+        duration: '', difficulty: 'средняя'
     });
     
     const submit = async (e) => {
         e.preventDefault();
-        // Дублируем spots в spots_left при создании
         const dataToSend = { ...form, spots_left: form.spots };
         const { error } = await supabase.from('events').insert([dataToSend]);
         if(!error) { onRefresh(); onClose(); }
@@ -150,30 +141,41 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
                         <input type="time" className="w-full p-2 border rounded" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
                     </div>
 
+                    {/* НОВОЕ ПОЛЕ: ГИД */}
+                    <input className="w-full p-2 border rounded" placeholder="Имя гида (напр. Александр)" value={form.guide} onChange={e=>setForm({...form, guide: e.target.value})} />
+
+                    <div className="grid grid-cols-2 gap-2">
+                         <input className="w-full p-2 border rounded" placeholder="Длительность (7ч)" value={form.duration} onChange={e=>setForm({...form, duration: e.target.value})} />
+                         <select className="w-full p-2 border rounded bg-white" value={form.difficulty} onChange={e=>setForm({...form, difficulty: e.target.value})}>
+                            <option value="легкая">Легкая</option>
+                            <option value="средняя">Средняя</option>
+                            <option value="сложная">Сложная</option>
+                        </select>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-2">
                          <input type="number" className="w-full p-2 border rounded" placeholder="Цена" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
                          <input type="number" className="w-full p-2 border rounded" placeholder="Всего мест" value={form.spots} onChange={e=>setForm({...form, spots: e.target.value})} required/>
                     </div>
                     
                     {/* ЗАГРУЗКА ФОТО (UI) */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative group">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative group">
                         <input 
                             type="file" 
                             accept="image/*"
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             onChange={(e) => {
                                 const file = e.target.files[0];
-                                if(file) alert(`Файл "${file.name}" выбран! \n(Логика отправки в Supabase будет добавлена следующим шагом)`);
+                                if(file) alert(`Выбран файл: ${file.name} (Загрузка будет на след. этапе)`);
                             }} 
                         />
-                        <div className="flex flex-col items-center text-gray-400 group-hover:text-teal-600 transition">
-                            <UploadCloud size={32} className="mb-2"/>
-                            <p className="text-sm font-medium">Перетащите фото сюда</p>
-                            <p className="text-xs opacity-70">или нажмите для выбора</p>
+                        <div className="flex flex-col items-center text-gray-400">
+                            <UploadCloud size={24} className="mb-1"/>
+                            <p className="text-xs">Фото тура</p>
                         </div>
                     </div>
                     
-                    <input className="w-full p-2 border rounded text-sm text-gray-500" placeholder="Или ссылка на фото (временно)" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
+                    <input className="w-full p-2 border rounded text-sm text-gray-500" placeholder="Или ссылка URL" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
                     
                     <button className="w-full bg-teal-600 text-white py-3 rounded font-bold">Создать</button>
                     <button type="button" onClick={onClose} className="w-full text-gray-500 py-2">Отмена</button>
@@ -185,7 +187,8 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
 
 // ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
 const TourClubWebsite = () => {
-  const { events, loading, refreshEvents, deleteEvent } = useEvents();
+  // Используем bookEvent из хука
+  const { events, loading, refreshEvents, deleteEvent, bookEvent } = useEvents();
   
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -203,35 +206,31 @@ const TourClubWebsite = () => {
   const t = translations[language];
   const isAdmin = viewMode.startsWith('admin');
 
-  // Регистрация
+  // РЕГИСТРАЦИЯ (С ЗАЩИТОЙ)
   const handleRegister = async (e) => {
       e.preventDefault();
       
       const errors = ValidationUtils.validateRegistration(regForm, selectedEvent.spotsLeft, t);
       setRegErrors(errors);
-      
       if(Object.keys(errors).length > 0) return;
 
       setIsSubmitting(true);
-      const regData = {
-          event_id: selectedEvent.id,
-          name: regForm.name,
-          phone: regForm.phone,
-          tickets: regForm.tickets,
-          total_price: selectedEvent.price.adult * regForm.tickets,
-          status: 'new'
-      };
-      
-      // ВНИМАНИЕ: Здесь пока обычный insert.
-      // После выполнения SQL-скрипта мы заменим это на вызов RPC функции book_event
-      const { error } = await supabase.from('registrations').insert([regData]);
+
+      // ВЫЗОВ БЕЗОПАСНОЙ ФУНКЦИИ
+      const { error } = await bookEvent({
+          eventId: selectedEvent.id,
+          formData: regForm,
+          totalPrice: selectedEvent.price.adult * regForm.tickets
+      });
       
       if(!error) {
           setToast({ message: t.messages.success, type: 'success' });
           setShowModal(false);
-          refreshEvents(); 
+          // refreshEvents() вызывается внутри хука
       } else {
-          setToast({ message: t.messages.error, type: 'error' });
+          // Если ошибка пришла из базы (например "Места закончились")
+          const msg = error.message === 'Not enough spots available' ? t.messages.full : t.messages.error;
+          setToast({ message: msg, type: 'error' });
       }
       setIsSubmitting(false);
   }
@@ -254,12 +253,10 @@ const TourClubWebsite = () => {
       setShowModal(true);
   };
 
-  // Список фильтров для отображения (берем только новые основные категории)
   const filterCategories = ['all', EventTypes.WATER, EventTypes.HIKING_1, EventTypes.KIDS, EventTypes.WEEKEND, EventTypes.EXPEDITION];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 font-sans">
-      {/* HEADER */}
       <header className={`relative text-white shadow-2xl transition-colors duration-500 ${isAdmin ? 'bg-slate-800' : 'bg-gradient-to-r from-teal-600 via-blue-600 to-cyan-600'}`}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex justify-between items-center">
@@ -291,24 +288,19 @@ const TourClubWebsite = () => {
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         
-        {/* АДМИН: ЗАЯВКИ */}
         {viewMode === 'admin_bookings' && <AdminRegistrations />}
 
-        {/* ОСНОВНОЙ КОНТЕНТ */}
         {viewMode !== 'admin_bookings' && (
             <>
                 {!isAdmin && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-fadeIn">
-                         {/* Кнопки вида */}
                         <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm">
                             <button onClick={() => setViewMode(ViewModes.GRID)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.GRID ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><Grid size={20}/></button>
                             <button onClick={() => setViewMode(ViewModes.CALENDAR)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.CALENDAR ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><CalendarDays size={20}/></button>
                         </div>
                         
-                        {/* Фильтры */}
                         <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide">
                             {filterCategories.map(type => (
                                 <button 
@@ -333,7 +325,6 @@ const TourClubWebsite = () => {
                     <div className="flex justify-center py-20"><Loader className="animate-spin text-teal-600" size={40}/></div>
                 ) : (
                     <>
-                        {/* ВИД: СЕТКА */}
                         {viewMode === ViewModes.GRID || isAdmin ? (
                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredEvents.map((event, idx) => (
@@ -353,7 +344,6 @@ const TourClubWebsite = () => {
                                 )}
                             </div>
                         ) : (
-                        // ВИД: КАЛЕНДАРЬ
                             <CalendarView events={filteredEvents} onSelect={openRegModal} currentLang={language} />
                         )}
                     </>
@@ -362,7 +352,6 @@ const TourClubWebsite = () => {
         )}
       </main>
 
-      {/* МОДАЛКИ */}
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setViewMode('admin_tours');}} />}
       {showCreate && <CreateEventModal onClose={()=>setShowCreate(false)} onRefresh={refreshEvents} />}
       
