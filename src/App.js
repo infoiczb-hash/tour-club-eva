@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, UploadCloud } from 'lucide-react';
+import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, UploadCloud, Image as ImageIcon } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useEvents, ValidationUtils } from './lib/hooks';
 
@@ -15,7 +15,7 @@ const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
 const Languages = { RU: 'ru', EN: 'en', RO: 'ro' };
 const EventTypes = { 
     WATER: 'water',       
-    HIKING_1: 'hiking_oneday', 
+    HIKING_1: 'hiking_1', 
     KIDS: 'kids',         
     WEEKEND: 'weekend',   
     EXPEDITION: 'expedition' 
@@ -24,7 +24,7 @@ const EventTypes = {
 // ============ TRANSLATIONS ============
 const translations = {
   ru: {
-    header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные выходные' },
+    header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные 🌄' },
     filters: { 
         all: 'Все', 
         [EventTypes.WATER]: 'На воде', 
@@ -32,7 +32,6 @@ const translations = {
         [EventTypes.KIDS]: 'Подросткам',
         [EventTypes.WEEKEND]: 'Походы на выходные',
         [EventTypes.EXPEDITION]: 'Экспедиции ',
-        'hiking': 'Походы' // fallback
     },
     event: { register: 'Записаться', spots: 'мест', registerBtn: 'Записаться' },
     form: { name: 'Ваше имя *', phone: 'Телефон *', quantity: 'Количество', total: 'Итого:', submit: 'Зарегистрироваться' },
@@ -102,13 +101,15 @@ const AdminRegistrations = () => {
 }
 
 // --- АДМИН: СОЗДАНИЕ ТУРА ---
-const CreateEventModal = ({ onClose, onRefresh }) => {
+const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
     const [form, setForm] = useState({ 
         title: '', date: '', time: '08:00', location: '', guide: '',
         price_adult: '', spots_left: 20, spots: 20, 
         image_url: '', type: 'hiking_1',
         duration: '', difficulty: 'средняя'
     });
+    
+    const [uploading, setUploading] = useState(false);
     
     const submit = async (e) => {
         e.preventDefault();
@@ -117,6 +118,22 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
         if(!error) { onRefresh(); onClose(); }
         else alert(error.message);
     }
+
+    const handleFile = async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+
+        setUploading(true);
+        // Вызываем функцию загрузки из хука
+        const { url, error } = await onUpload(file);
+        
+        if (error) {
+            alert('Ошибка загрузки: ' + error.message);
+        } else {
+            setForm({...form, image_url: url});
+        }
+        setUploading(false);
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
@@ -141,7 +158,6 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
                         <input type="time" className="w-full p-2 border rounded" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
                     </div>
 
-                    {/* НОВОЕ ПОЛЕ: ГИД */}
                     <input className="w-full p-2 border rounded" placeholder="Имя гида (напр. Александр)" value={form.guide} onChange={e=>setForm({...form, guide: e.target.value})} />
 
                     <div className="grid grid-cols-2 gap-2">
@@ -158,26 +174,45 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
                          <input type="number" className="w-full p-2 border rounded" placeholder="Всего мест" value={form.spots} onChange={e=>setForm({...form, spots: e.target.value})} required/>
                     </div>
                     
-                    {/* ЗАГРУЗКА ФОТО (UI) */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative group">
-                        <input 
-                            type="file" 
-                            accept="image/*"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            onChange={(e) => {
-                                const file = e.target.files[0];
-                                if(file) alert(`Выбран файл: ${file.name} (Загрузка будет на след. этапе)`);
-                            }} 
-                        />
-                        <div className="flex flex-col items-center text-gray-400">
-                            <UploadCloud size={24} className="mb-1"/>
-                            <p className="text-xs">Фото тура</p>
-                        </div>
+                    {/* ЗАГРУЗКА ФОТО (С ИНТЕГРАЦИЕЙ) */}
+                    <div className={`border-2 border-dashed rounded-lg p-4 text-center transition relative group overflow-hidden ${form.image_url ? 'border-teal-500 bg-teal-50' : 'border-gray-300 hover:bg-gray-50'}`}>
+                        {uploading ? (
+                            <div className="flex flex-col items-center justify-center py-4">
+                                <Loader className="animate-spin text-teal-600 mb-2"/>
+                                <span className="text-xs text-teal-600 font-bold">Загрузка...</span>
+                            </div>
+                        ) : (
+                            <>
+                                <input 
+                                    type="file" 
+                                    accept="image/*"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                    onChange={handleFile}
+                                />
+                                {form.image_url ? (
+                                    <div className="relative h-32 w-full">
+                                        <img src={form.image_url} alt="Preview" className="w-full h-full object-cover rounded"/>
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+                                            <p className="text-white text-xs font-bold flex items-center gap-1"><UploadCloud size={16}/> Изменить</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center text-gray-400 py-4">
+                                        <ImageIcon size={24} className="mb-2"/>
+                                        <p className="text-xs">Нажмите или перетащите фото</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                     
-                    <input className="w-full p-2 border rounded text-sm text-gray-500" placeholder="Или ссылка URL" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
+                    {!uploading && (
+                         <input className="w-full p-2 border rounded text-sm text-gray-500" placeholder="Или прямая ссылка" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
+                    )}
                     
-                    <button className="w-full bg-teal-600 text-white py-3 rounded font-bold">Создать</button>
+                    <button disabled={uploading} className="w-full bg-teal-600 text-white py-3 rounded font-bold disabled:opacity-50">
+                        {uploading ? 'Загрузка...' : 'Создать'}
+                    </button>
                     <button type="button" onClick={onClose} className="w-full text-gray-500 py-2">Отмена</button>
                 </form>
             </div>
@@ -187,8 +222,8 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
 
 // ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
 const TourClubWebsite = () => {
-  // Используем bookEvent из хука
-  const { events, loading, refreshEvents, deleteEvent, bookEvent } = useEvents();
+  // Достаем uploadImage из хука
+  const { events, loading, refreshEvents, deleteEvent, bookEvent, uploadImage } = useEvents();
   
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -206,7 +241,6 @@ const TourClubWebsite = () => {
   const t = translations[language];
   const isAdmin = viewMode.startsWith('admin');
 
-  // РЕГИСТРАЦИЯ (С ЗАЩИТОЙ)
   const handleRegister = async (e) => {
       e.preventDefault();
       
@@ -216,7 +250,6 @@ const TourClubWebsite = () => {
 
       setIsSubmitting(true);
 
-      // ВЫЗОВ БЕЗОПАСНОЙ ФУНКЦИИ
       const { error } = await bookEvent({
           eventId: selectedEvent.id,
           formData: regForm,
@@ -226,9 +259,7 @@ const TourClubWebsite = () => {
       if(!error) {
           setToast({ message: t.messages.success, type: 'success' });
           setShowModal(false);
-          // refreshEvents() вызывается внутри хука
       } else {
-          // Если ошибка пришла из базы (например "Места закончились")
           const msg = error.message === 'Not enough spots available' ? t.messages.full : t.messages.error;
           setToast({ message: msg, type: 'error' });
       }
@@ -353,7 +384,7 @@ const TourClubWebsite = () => {
       </main>
 
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setViewMode('admin_tours');}} />}
-      {showCreate && <CreateEventModal onClose={()=>setShowCreate(false)} onRefresh={refreshEvents} />}
+      {showCreate && <CreateEventModal onClose={()=>setShowCreate(false)} onRefresh={refreshEvents} onUpload={uploadImage} />}
       
       {showModal && selectedEvent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={()=>setShowModal(false)}>
