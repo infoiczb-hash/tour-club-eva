@@ -27,9 +27,9 @@ const translations = {
     header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные выходные' },
     filters: { 
         all: 'Все', 
-        [EventTypes.WATER]: 'На воде 🛶', 
+        [EventTypes.WATER]: 'На воде', 
         [EventTypes.HIKING_1]: 'Выезды на 1 день', 
-        [EventTypes.KIDS]: 'Подростка',
+        [EventTypes.KIDS]: 'Подросткам',
         [EventTypes.WEEKEND]: 'Походы на выходные',
         [EventTypes.EXPEDITION]: 'Экспедиции ',
         'hiking': 'Походы' // fallback
