@@ -9,6 +9,7 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 import EventCard from './components/EventCard';
 import LoginModal from './components/LoginModal';
 import CalendarView from './components/CalendarView';
+import EventDetailsModal from './components/EventDetailsModal'; // ✅ НОВЫЙ ИМПОРТ
 
 // ============ CONSTANTS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
@@ -59,7 +60,7 @@ const translations = {
   }
 };
 
-// --- АДМИН: СПИСОК ЗАЯВОК ---
+// --- АДМИН МОДУЛИ (Оставляем тут для компактности, потом вынесем) ---
 const AdminRegistrations = () => {
     const [regs, setRegs] = useState([]);
     useEffect(() => {
@@ -100,20 +101,22 @@ const AdminRegistrations = () => {
     )
 }
 
-// --- АДМИН: СОЗДАНИЕ ТУРА ---
 const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
     const [form, setForm] = useState({ 
         title: '', date: '', time: '08:00', location: '', guide: '',
         price_adult: '', spots_left: 20, spots: 20, 
         image_url: '', type: 'hiking_1',
-        duration: '', difficulty: 'средняя'
+        duration: '', difficulty: 'средняя', description: '', route: '', included: ''
     });
     
     const [uploading, setUploading] = useState(false);
     
     const submit = async (e) => {
         e.preventDefault();
-        const dataToSend = { ...form, spots_left: form.spots };
+        // Преобразуем included из строки в массив (через запятую)
+        const includedArray = form.included ? form.included.split(',').map(s => s.trim()) : [];
+        const dataToSend = { ...form, spots_left: form.spots, included: includedArray };
+        
         const { error } = await supabase.from('events').insert([dataToSend]);
         if(!error) { onRefresh(); onClose(); }
         else alert(error.message);
@@ -122,16 +125,10 @@ const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
     const handleFile = async (e) => {
         const file = e.target.files[0];
         if(!file) return;
-
         setUploading(true);
-        // Вызываем функцию загрузки из хука
         const { url, error } = await onUpload(file);
-        
-        if (error) {
-            alert('Ошибка загрузки: ' + error.message);
-        } else {
-            setForm({...form, image_url: url});
-        }
+        if (error) alert('Ошибка загрузки: ' + error.message);
+        else setForm({...form, image_url: url});
         setUploading(false);
     };
 
@@ -141,7 +138,6 @@ const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
                 <h2 className="text-xl font-bold mb-4">Новый тур</h2>
                 <form onSubmit={submit} className="space-y-3">
                     <input className="w-full p-2 border rounded" placeholder="Название" value={form.title} onChange={e=>setForm({...form, title: e.target.value})} required/>
-                    
                     <div className="grid grid-cols-2 gap-2">
                         <select className="w-full p-2 border rounded bg-white" value={form.type} onChange={e=>setForm({...form, type: e.target.value})}>
                             <option value="hiking_1">🎒 1 день</option>
@@ -152,67 +148,40 @@ const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
                         </select>
                         <input className="w-full p-2 border rounded" placeholder="Локация" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
                     </div>
-
                     <div className="grid grid-cols-2 gap-2">
                         <input type="date" className="w-full p-2 border rounded" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} required/>
                         <input type="time" className="w-full p-2 border rounded" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
                     </div>
-
-                    <input className="w-full p-2 border rounded" placeholder="Имя гида (напр. Александр)" value={form.guide} onChange={e=>setForm({...form, guide: e.target.value})} />
+                    <input className="w-full p-2 border rounded" placeholder="Имя гида" value={form.guide} onChange={e=>setForm({...form, guide: e.target.value})} />
+                    
+                    {/* НОВЫЕ ПОЛЯ ДЛЯ ОПИСАНИЯ */}
+                    <textarea className="w-full p-2 border rounded h-24" placeholder="Описание тура..." value={form.description} onChange={e=>setForm({...form, description: e.target.value})} />
+                    <input className="w-full p-2 border rounded" placeholder="Маршрут (напр. Старт - Лес - Финиш)" value={form.route} onChange={e=>setForm({...form, route: e.target.value})} />
+                    <input className="w-full p-2 border rounded" placeholder="Включено (через запятую: Обед, Трансфер)" value={form.included} onChange={e=>setForm({...form, included: e.target.value})} />
 
                     <div className="grid grid-cols-2 gap-2">
-                         <input className="w-full p-2 border rounded" placeholder="Длительность (7ч)" value={form.duration} onChange={e=>setForm({...form, duration: e.target.value})} />
+                         <input className="w-full p-2 border rounded" placeholder="Длительность" value={form.duration} onChange={e=>setForm({...form, duration: e.target.value})} />
                          <select className="w-full p-2 border rounded bg-white" value={form.difficulty} onChange={e=>setForm({...form, difficulty: e.target.value})}>
                             <option value="легкая">Легкая</option>
                             <option value="средняя">Средняя</option>
                             <option value="сложная">Сложная</option>
                         </select>
                     </div>
-
                     <div className="grid grid-cols-2 gap-2">
                          <input type="number" className="w-full p-2 border rounded" placeholder="Цена" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
                          <input type="number" className="w-full p-2 border rounded" placeholder="Всего мест" value={form.spots} onChange={e=>setForm({...form, spots: e.target.value})} required/>
                     </div>
                     
-                    {/* ЗАГРУЗКА ФОТО (С ИНТЕГРАЦИЕЙ) */}
                     <div className={`border-2 border-dashed rounded-lg p-4 text-center transition relative group overflow-hidden ${form.image_url ? 'border-teal-500 bg-teal-50' : 'border-gray-300 hover:bg-gray-50'}`}>
-                        {uploading ? (
-                            <div className="flex flex-col items-center justify-center py-4">
-                                <Loader className="animate-spin text-teal-600 mb-2"/>
-                                <span className="text-xs text-teal-600 font-bold">Загрузка...</span>
-                            </div>
-                        ) : (
+                        {uploading ? <Loader className="animate-spin mx-auto text-teal-600"/> : (
                             <>
-                                <input 
-                                    type="file" 
-                                    accept="image/*"
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                                    onChange={handleFile}
-                                />
-                                {form.image_url ? (
-                                    <div className="relative h-32 w-full">
-                                        <img src={form.image_url} alt="Preview" className="w-full h-full object-cover rounded"/>
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                                            <p className="text-white text-xs font-bold flex items-center gap-1"><UploadCloud size={16}/> Изменить</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center text-gray-400 py-4">
-                                        <ImageIcon size={24} className="mb-2"/>
-                                        <p className="text-xs">Нажмите или перетащите фото</p>
-                                    </div>
-                                )}
+                                <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={handleFile}/>
+                                {form.image_url ? <img src={form.image_url} alt="Preview" className="h-32 w-full object-cover rounded"/> : <div className="text-gray-400"><ImageIcon size={24} className="mx-auto mb-2"/><span className="text-xs">Фото</span></div>}
                             </>
                         )}
                     </div>
                     
-                    {!uploading && (
-                         <input className="w-full p-2 border rounded text-sm text-gray-500" placeholder="Или прямая ссылка" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
-                    )}
-                    
-                    <button disabled={uploading} className="w-full bg-teal-600 text-white py-3 rounded font-bold disabled:opacity-50">
-                        {uploading ? 'Загрузка...' : 'Создать'}
-                    </button>
+                    <button disabled={uploading} className="w-full bg-teal-600 text-white py-3 rounded font-bold disabled:opacity-50">{uploading ? '...' : 'Создать'}</button>
                     <button type="button" onClick={onClose} className="w-full text-gray-500 py-2">Отмена</button>
                 </form>
             </div>
@@ -222,11 +191,14 @@ const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
 
 // ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
 const TourClubWebsite = () => {
-  // Достаем uploadImage из хука
   const { events, loading, refreshEvents, deleteEvent, bookEvent, uploadImage } = useEvents();
   
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null); // Текущее выбранное событие
+  
+  // СОСТОЯНИЯ МОДАЛОК
+  const [showDetails, setShowDetails] = useState(false); // ✅ Показывать детали?
+  const [showRegModal, setShowRegModal] = useState(false); // ✅ Показывать регистрацию?
+  
   const [filterType, setFilterType] = useState('all');
   const [viewMode, setViewMode] = useState(ViewModes.GRID); 
   const [language, setLanguage] = useState(Languages.RU);
@@ -241,15 +213,27 @@ const TourClubWebsite = () => {
   const t = translations[language];
   const isAdmin = viewMode.startsWith('admin');
 
+  // 1. Открытие деталей (при клике на карточку)
+  const openDetails = (event) => {
+      setSelectedEvent(event);
+      setShowDetails(true);
+  };
+
+  // 2. Переход от деталей к регистрации
+  const openRegistration = () => {
+      setShowDetails(false); // Закрываем детали
+      setRegForm({name:'', phone:'', tickets:1}); 
+      setRegErrors({});
+      setShowRegModal(true); // Открываем форму
+  };
+
   const handleRegister = async (e) => {
       e.preventDefault();
-      
       const errors = ValidationUtils.validateRegistration(regForm, selectedEvent.spotsLeft, t);
       setRegErrors(errors);
       if(Object.keys(errors).length > 0) return;
 
       setIsSubmitting(true);
-
       const { error } = await bookEvent({
           eventId: selectedEvent.id,
           formData: regForm,
@@ -258,7 +242,7 @@ const TourClubWebsite = () => {
       
       if(!error) {
           setToast({ message: t.messages.success, type: 'success' });
-          setShowModal(false);
+          setShowRegModal(false);
       } else {
           const msg = error.message === 'Not enough spots available' ? t.messages.full : t.messages.error;
           setToast({ message: msg, type: 'error' });
@@ -277,13 +261,6 @@ const TourClubWebsite = () => {
     return events.filter(e => e.type === filterType);
   }, [filterType, events]);
 
-  const openRegModal = (event) => {
-      setSelectedEvent(event); 
-      setRegForm({name:'', phone:'', tickets:1}); 
-      setRegErrors({});
-      setShowModal(true);
-  };
-
   const filterCategories = ['all', EventTypes.WATER, EventTypes.HIKING_1, EventTypes.KIDS, EventTypes.WEEKEND, EventTypes.EXPEDITION];
 
   return (
@@ -300,7 +277,6 @@ const TourClubWebsite = () => {
                   {!isAdmin && <p className="text-sm opacity-90">{t.header.subtitle}</p>}
                 </div>
              </div>
-
              <div className="flex flex-col items-end gap-2 animate-fadeInRight">
                 <div className="flex gap-2 items-center">
                     <LanguageSwitcher currentLang={language} onChange={setLanguage} />
@@ -320,9 +296,7 @@ const TourClubWebsite = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
-        
         {viewMode === 'admin_bookings' && <AdminRegistrations />}
-
         {viewMode !== 'admin_bookings' && (
             <>
                 {!isAdmin && (
@@ -331,27 +305,16 @@ const TourClubWebsite = () => {
                             <button onClick={() => setViewMode(ViewModes.GRID)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.GRID ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><Grid size={20}/></button>
                             <button onClick={() => setViewMode(ViewModes.CALENDAR)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.CALENDAR ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><CalendarDays size={20}/></button>
                         </div>
-                        
                         <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide">
                             {filterCategories.map(type => (
-                                <button 
-                                    key={type} 
-                                    onClick={()=>setFilterType(type)} 
-                                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition border ${filterType===type ? 'bg-teal-600 text-white border-teal-600 shadow-lg' : 'bg-white text-gray-600 border-gray-100 hover:border-teal-200'}`}
-                                >
-                                    {t.filters[type] || type}
-                                </button>
+                                <button key={type} onClick={()=>setFilterType(type)} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition border ${filterType===type ? 'bg-teal-600 text-white border-teal-600 shadow-lg' : 'bg-white text-gray-600 border-gray-100 hover:border-teal-200'}`}>{t.filters[type] || type}</button>
                             ))}
                         </div>
                     </div>
                 )}
-
                 {isAdmin && (
-                    <button onClick={()=>setShowCreate(true)} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2 transition">
-                        <Plus/> {t.admin.add}
-                    </button>
+                    <button onClick={()=>setShowCreate(true)} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2 transition"><Plus/> {t.admin.add}</button>
                 )}
-
                 {loading ? (
                     <div className="flex justify-center py-20"><Loader className="animate-spin text-teal-600" size={40}/></div>
                 ) : (
@@ -360,22 +323,16 @@ const TourClubWebsite = () => {
                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredEvents.map((event, idx) => (
                                     <div key={event.id} className="relative group">
-                                        <EventCard event={event} onSelect={openRegModal} index={idx} t={t} />
+                                        <EventCard event={event} onSelect={openDetails} index={idx} t={t} />
                                         {isAdmin && (
-                                            <button onClick={()=>handleDelete(event.id)} className="absolute top-2 right-2 bg-white p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition shadow-lg z-10 hover:bg-red-50">
-                                                <Trash2 size={20}/>
-                                            </button>
+                                            <button onClick={(e)=>{e.stopPropagation(); handleDelete(event.id);}} className="absolute top-2 right-2 bg-white p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition shadow-lg z-10 hover:bg-red-50"><Trash2 size={20}/></button>
                                         )}
                                     </div>
                                 ))}
-                                {filteredEvents.length === 0 && (
-                                    <div className="col-span-full text-center py-20 text-gray-400">
-                                        В этой категории пока нет туров 🏔️
-                                    </div>
-                                )}
+                                {filteredEvents.length === 0 && <div className="col-span-full text-center py-20 text-gray-400">В этой категории пока нет туров 🏔️</div>}
                             </div>
                         ) : (
-                            <CalendarView events={filteredEvents} onSelect={openRegModal} currentLang={language} />
+                            <CalendarView events={filteredEvents} onSelect={openDetails} currentLang={language} />
                         )}
                     </>
                 )}
@@ -383,40 +340,35 @@ const TourClubWebsite = () => {
         )}
       </main>
 
+      {/* МОДАЛКИ */}
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setViewMode('admin_tours');}} />}
       {showCreate && <CreateEventModal onClose={()=>setShowCreate(false)} onRefresh={refreshEvents} onUpload={uploadImage} />}
       
-      {showModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={()=>setShowModal(false)}>
+      {/* 1. ДЕТАЛИ ТУРА */}
+      {showDetails && selectedEvent && (
+          <EventDetailsModal 
+            event={selectedEvent} 
+            onClose={() => setShowDetails(false)} 
+            onRegister={openRegistration} 
+            t={t} 
+          />
+      )}
+
+      {/* 2. РЕГИСТРАЦИЯ */}
+      {showRegModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={()=>setShowRegModal(false)}>
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onClick={e=>e.stopPropagation()}>
-                <button onClick={()=>setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
-                <h2 className="text-2xl font-bold mb-1 pr-8">{selectedEvent.title}</h2>
-                <div className="flex gap-2 text-sm mb-6">
-                    <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded font-medium">{new Date(selectedEvent.date).toLocaleDateString()}</span>
-                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">{selectedEvent.time?.slice(0,5)}</span>
-                </div>
+                <button onClick={()=>setShowRegModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
+                <h2 className="text-xl font-bold mb-1 pr-8 text-gray-500">Регистрация</h2>
+                <h3 className="text-2xl font-bold mb-4">{selectedEvent.title}</h3>
                 
                 <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.name}</label>
-                        <input value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.name ? 'border-red-500' : 'border-gray-200'}`}/>
-                        {regErrors.name && <p className="text-red-500 text-xs mt-1">{regErrors.name}</p>}
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.phone}</label>
-                        <input type="tel" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.phone ? 'border-red-500' : 'border-gray-200'}`}/>
-                        {regErrors.phone && <p className="text-red-500 text-xs mt-1">{regErrors.phone}</p>}
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.quantity} <span className="text-gray-400 font-normal">({t.event.spots} {selectedEvent.spotsLeft})</span></label>
-                        <input type="number" min="1" max={selectedEvent.spotsLeft} value={regForm.tickets} onChange={e=>setRegForm({...regForm, tickets: +e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.tickets ? 'border-red-500' : 'border-gray-200'}`}/>
-                        {regErrors.tickets && <p className="text-red-500 text-xs mt-1">{regErrors.tickets}</p>}
-                    </div>
+                    <div><label className="text-sm font-bold text-gray-700 block mb-1">{t.form.name}</label><input value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.name ? 'border-red-500' : 'border-gray-200'}`}/>{regErrors.name && <p className="text-red-500 text-xs mt-1">{regErrors.name}</p>}</div>
+                    <div><label className="text-sm font-bold text-gray-700 block mb-1">{t.form.phone}</label><input type="tel" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.phone ? 'border-red-500' : 'border-gray-200'}`}/>{regErrors.phone && <p className="text-red-500 text-xs mt-1">{regErrors.phone}</p>}</div>
+                    <div><label className="text-sm font-bold text-gray-700 block mb-1">{t.form.quantity}</label><input type="number" min="1" max={selectedEvent.spotsLeft} value={regForm.tickets} onChange={e=>setRegForm({...regForm, tickets: +e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.tickets ? 'border-red-500' : 'border-gray-200'}`}/></div>
                     <div className="pt-4 border-t flex justify-between items-center">
                         <div><p className="text-sm text-gray-500">{t.form.total}</p><p className="text-2xl font-bold text-teal-600">{selectedEvent.price.adult * regForm.tickets}₽</p></div>
-                        <button disabled={isSubmitting} className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50 transition shadow-lg shadow-teal-200">
-                            {isSubmitting ? <Loader className="animate-spin"/> : t.event.registerBtn}
-                        </button>
+                        <button disabled={isSubmitting} className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50 transition shadow-lg shadow-teal-200">{isSubmitting ? <Loader className="animate-spin"/> : t.event.registerBtn}</button>
                     </div>
                 </form>
             </div>
