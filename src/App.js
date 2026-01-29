@@ -1,25 +1,49 @@
-import React, { useState, useMemo } from 'react';
-import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, UploadCloud } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { useEvents, ValidationUtils } from './lib/hooks'; // Импорт логики
+import { useEvents, ValidationUtils } from './lib/hooks';
 
 // UI Components
 import Toast from './components/Toast';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import EventCard from './components/EventCard';
 import LoginModal from './components/LoginModal';
-import CalendarView from './components/CalendarView'; // Импорт календаря
+import CalendarView from './components/CalendarView';
 
 // ============ CONSTANTS & CONFIG ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
 const Languages = { RU: 'ru', EN: 'en', RO: 'ro' };
 
-// ============ TRANSLATIONS ============
+// Новые типы событий для фильтрации
+const EventTypes = { 
+    WATER: 'water',       // На воде
+    HIKING_1: 'hiking_1', // Походы на 1 день
+    KIDS: 'kids',         // Детям
+    WEEKEND: 'weekend',   // Поход на выходные
+    EXPEDITION: 'expedition', // Экспедиции
+    // Оставляем старые для совместимости, если в БД они есть
+    RAFTING: 'rafting',
+    HIKING: 'hiking',
+    CYCLING: 'cycling'
+};
+
+// ============ TRANSLATIONS (i18n) ============
 const translations = {
   ru: {
     header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные 🌄' },
-    filters: { all: 'Все', rafting: 'Сплавы', hiking: 'Походы', cycling: 'Велотуры' },
-    event: { register: 'Записаться', spotsLeft: 'мест', registerBtn: 'Записаться' },
+    filters: { 
+        all: 'Все', 
+        [EventTypes.WATER]: 'На воде 🛶', 
+        [EventTypes.HIKING_1]: 'Походы на 1 ден', 
+        [EventTypes.KIDS]: 'Детям',
+        [EventTypes.WEEKEND]: 'Поход на выходные',
+        [EventTypes.EXPEDITION]: 'Экспедиции',
+        // Fallback для старых типов
+        [EventTypes.RAFTING]: 'Сплавы',
+        [EventTypes.HIKING]: 'Походы',
+        [EventTypes.CYCLING]: 'Вело'
+    },
+    event: { register: 'Записаться', spotsLeft: 'мест', registerBtn: 'Записаться', spots: 'мест' },
     form: { name: 'Ваше имя *', phone: 'Телефон *', quantity: 'Количество', total: 'Итого:', submit: 'Зарегистрироваться' },
     validation: { nameRequired: 'Укажите имя', phoneRequired: 'Укажите телефон', invalidPhone: 'Некорректный формат' },
     messages: { success: 'Спасибо за регистрацию! ✓', error: 'Ошибка регистрации ✗' },
@@ -27,8 +51,8 @@ const translations = {
   },
   en: {
     header: { title: 'Tour Club "Eva"', subtitle: 'Adventures every weekend 🌄' },
-    filters: { all: 'All', rafting: 'Rafting', hiking: 'Hiking', cycling: 'Cycling' },
-    event: { register: 'Register', spotsLeft: 'spots', registerBtn: 'Register' },
+    filters: { all: 'All', water: 'Water', hiking_1: '1 Day', kids: 'Kids', weekend: 'Weekend', expedition: 'Expedition', rafting: 'Rafting', hiking: 'Hiking', cycling: 'Cycling' },
+    event: { register: 'Register', spotsLeft: 'spots', registerBtn: 'Register', spots: 'spots' },
     form: { name: 'Your name *', phone: 'Phone *', quantity: 'Quantity', total: 'Total:', submit: 'Register' },
     validation: { nameRequired: 'Enter name', phoneRequired: 'Enter phone', invalidPhone: 'Invalid format' },
     messages: { success: 'Registration successful!', error: 'Error' },
@@ -36,8 +60,8 @@ const translations = {
   },
   ro: {
     header: { title: 'Club turistic "Eva"', subtitle: 'Aventuri în fiecare weekend 🌄' },
-    filters: { all: 'Toate', rafting: 'Rafting', hiking: 'Drumeții', cycling: 'Ciclism' },
-    event: { register: 'Înscrie-te', spotsLeft: 'locuri', registerBtn: 'Înregistrare' },
+    filters: { all: 'Toate', water: 'Apă', hiking_1: '1 Zi', kids: 'Copii', weekend: 'Weekend', expedition: 'Expediție', rafting: 'Rafting', hiking: 'Drumeții', cycling: 'Ciclism' },
+    event: { register: 'Înscrie-te', spotsLeft: 'locuri', registerBtn: 'Înregistrare', spots: 'locuri' },
     form: { name: 'Nume *', phone: 'Telefon *', quantity: 'Cantitate', total: 'Total:', submit: 'Înregistrare' },
     validation: { nameRequired: 'Introdu nume', phoneRequired: 'Introdu telefon', invalidPhone: 'Format invalid' },
     messages: { success: 'Înregistrare reușită!', error: 'Eroare' },
@@ -45,10 +69,10 @@ const translations = {
   }
 };
 
-// --- АДМИН МОДУЛИ (Оставляем пока здесь, следующим этапом вынесем в admin/) ---
+// --- АДМИН МОДУЛИ ---
 const AdminRegistrations = () => {
     const [regs, setRegs] = useState([]);
-    React.useEffect(() => {
+    useEffect(() => {
         const fetch = async () => {
             const { data } = await supabase.from('registrations').select(`*, events(title)`).order('created_at', { ascending: false });
             if(data) setRegs(data);
@@ -87,28 +111,70 @@ const AdminRegistrations = () => {
 }
 
 const CreateEventModal = ({ onClose, onRefresh }) => {
-    const [form, setForm] = useState({ title: '', date: '', time: '08:00', location: '', price_adult: '', spots_left: 10, image_url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d' });
+    // Включаем дефолтные значения
+    const [form, setForm] = useState({ 
+        title: '', date: '', time: '08:00', location: '', 
+        price_adult: '', spots_left: 20, spots: 20, 
+        image_url: '', type: 'hiking_1' 
+    });
+    
     const submit = async (e) => {
         e.preventDefault();
-        const { error } = await supabase.from('events').insert([form]);
+        // Дублируем spots в spots_left при создании
+        const dataToSend = { ...form, spots_left: form.spots };
+        const { error } = await supabase.from('events').insert([dataToSend]);
         if(!error) { onRefresh(); onClose(); }
+        else alert(error.message);
     }
+
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
                 <h2 className="text-xl font-bold mb-4">Новый тур</h2>
                 <form onSubmit={submit} className="space-y-3">
                     <input className="w-full p-2 border rounded" placeholder="Название" value={form.title} onChange={e=>setForm({...form, title: e.target.value})} required/>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                        <select className="w-full p-2 border rounded bg-white" value={form.type} onChange={e=>setForm({...form, type: e.target.value})}>
+                            <option value="hiking_1">🎒 1 день</option>
+                            <option value="water">🛶 На воде</option>
+                            <option value="kids">👶 Детский</option>
+                            <option value="weekend">🏕️ Выходные</option>
+                            <option value="expedition">🏔️ Экспедиция</option>
+                        </select>
+                        <input className="w-full p-2 border rounded" placeholder="Локация" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-2">
                         <input type="date" className="w-full p-2 border rounded" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} required/>
                         <input type="time" className="w-full p-2 border rounded" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
                     </div>
-                    <input className="w-full p-2 border rounded" placeholder="Локация" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
+
                     <div className="grid grid-cols-2 gap-2">
                          <input type="number" className="w-full p-2 border rounded" placeholder="Цена" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
-                         <input type="number" className="w-full p-2 border rounded" placeholder="Мест" value={form.spots_left} onChange={e=>setForm({...form, spots_left: e.target.value})} required/>
+                         <input type="number" className="w-full p-2 border rounded" placeholder="Всего мест" value={form.spots} onChange={e=>setForm({...form, spots: e.target.value})} required/>
                     </div>
-                    <input className="w-full p-2 border rounded" placeholder="Ссылка на фото" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
+                    
+                    {/* ЗАГРУЗКА ФОТО (UI) */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative group">
+                        <input 
+                            type="file" 
+                            accept="image/*"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if(file) alert(`Файл "${file.name}" выбран! \n(Логика отправки в Supabase будет добавлена следующим шагом)`);
+                            }} 
+                        />
+                        <div className="flex flex-col items-center text-gray-400 group-hover:text-teal-600 transition">
+                            <UploadCloud size={32} className="mb-2"/>
+                            <p className="text-sm font-medium">Перетащите фото сюда</p>
+                            <p className="text-xs opacity-70">или нажмите для выбора</p>
+                        </div>
+                    </div>
+                    
+                    <input className="w-full p-2 border rounded text-sm text-gray-500" placeholder="Или ссылка на фото (временно)" value={form.image_url} onChange={e=>setForm({...form, image_url: e.target.value})}/>
+                    
                     <button className="w-full bg-teal-600 text-white py-3 rounded font-bold">Создать</button>
                     <button type="button" onClick={onClose} className="w-full text-gray-500 py-2">Отмена</button>
                 </form>
@@ -119,7 +185,6 @@ const CreateEventModal = ({ onClose, onRefresh }) => {
 
 // ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
 const TourClubWebsite = () => {
-  // Хук данных
   const { events, loading, refreshEvents, deleteEvent } = useEvents();
   
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -131,7 +196,6 @@ const TourClubWebsite = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   
-  // Форма регистрации
   const [regForm, setRegForm] = useState({ name: '', phone: '', tickets: 1 });
   const [regErrors, setRegErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -157,7 +221,11 @@ const TourClubWebsite = () => {
           total_price: selectedEvent.price.adult * regForm.tickets,
           status: 'new'
       };
+      
+      // ВНИМАНИЕ: Здесь пока обычный insert.
+      // После выполнения SQL-скрипта мы заменим это на вызов RPC функции book_event
       const { error } = await supabase.from('registrations').insert([regData]);
+      
       if(!error) {
           setToast({ message: t.messages.success, type: 'success' });
           setShowModal(false);
@@ -186,14 +254,11 @@ const TourClubWebsite = () => {
       setShowModal(true);
   };
 
+  // Список фильтров для отображения (берем только новые основные категории)
+  const filterCategories = ['all', EventTypes.WATER, EventTypes.HIKING_1, EventTypes.KIDS, EventTypes.WEEKEND, EventTypes.EXPEDITION];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 font-sans">
-      {/* ФОН */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-      </div>
-
       {/* HEADER */}
       <header className={`relative text-white shadow-2xl transition-colors duration-500 ${isAdmin ? 'bg-slate-800' : 'bg-gradient-to-r from-teal-600 via-blue-600 to-cyan-600'}`}>
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -236,15 +301,22 @@ const TourClubWebsite = () => {
         {viewMode !== 'admin_bookings' && (
             <>
                 {!isAdmin && (
-                    <div className="flex justify-between items-center mb-8 flex-wrap gap-4 animate-fadeIn">
-                        <div className="flex gap-2">
-                            <button onClick={() => setViewMode(ViewModes.GRID)} className={`p-2 rounded-lg ${viewMode === ViewModes.GRID ? 'bg-white text-teal-600 shadow' : 'text-gray-500 hover:bg-white/50'}`}><Grid size={20}/></button>
-                            <button onClick={() => setViewMode(ViewModes.CALENDAR)} className={`p-2 rounded-lg ${viewMode === ViewModes.CALENDAR ? 'bg-white text-teal-600 shadow' : 'text-gray-500 hover:bg-white/50'}`}><CalendarDays size={20}/></button>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-fadeIn">
+                         {/* Кнопки вида */}
+                        <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm">
+                            <button onClick={() => setViewMode(ViewModes.GRID)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.GRID ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><Grid size={20}/></button>
+                            <button onClick={() => setViewMode(ViewModes.CALENDAR)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.CALENDAR ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><CalendarDays size={20}/></button>
                         </div>
-                        <div className="flex gap-2 overflow-x-auto pb-2">
-                            {['all', 'rafting', 'hiking', 'cycling'].map(type => (
-                                <button key={type} onClick={()=>setFilterType(type)} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${filterType===type ? 'bg-teal-600 text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-teal-50'}`}>
-                                    {t.filters[type]}
+                        
+                        {/* Фильтры */}
+                        <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide">
+                            {filterCategories.map(type => (
+                                <button 
+                                    key={type} 
+                                    onClick={()=>setFilterType(type)} 
+                                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition border ${filterType===type ? 'bg-teal-600 text-white border-teal-600 shadow-lg' : 'bg-white text-gray-600 border-gray-100 hover:border-teal-200'}`}
+                                >
+                                    {t.filters[type] || type}
                                 </button>
                             ))}
                         </div>
@@ -252,7 +324,7 @@ const TourClubWebsite = () => {
                 )}
 
                 {isAdmin && (
-                    <button onClick={()=>setShowCreate(true)} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2">
+                    <button onClick={()=>setShowCreate(true)} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2 transition">
                         <Plus/> {t.admin.add}
                     </button>
                 )}
@@ -268,15 +340,20 @@ const TourClubWebsite = () => {
                                     <div key={event.id} className="relative group">
                                         <EventCard event={event} onSelect={openRegModal} index={idx} t={t} />
                                         {isAdmin && (
-                                            <button onClick={()=>handleDelete(event.id)} className="absolute top-2 right-2 bg-red-100 p-2 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition shadow-lg z-10">
+                                            <button onClick={()=>handleDelete(event.id)} className="absolute top-2 right-2 bg-white p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition shadow-lg z-10 hover:bg-red-50">
                                                 <Trash2 size={20}/>
                                             </button>
                                         )}
                                     </div>
                                 ))}
+                                {filteredEvents.length === 0 && (
+                                    <div className="col-span-full text-center py-20 text-gray-400">
+                                        В этой категории пока нет туров 🏔️
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                        // ВИД: КАЛЕНДАРЬ (НОВЫЙ)
+                        // ВИД: КАЛЕНДАРЬ
                             <CalendarView events={filteredEvents} onSelect={openRegModal} currentLang={language} />
                         )}
                     </>
@@ -293,28 +370,31 @@ const TourClubWebsite = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={()=>setShowModal(false)}>
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onClick={e=>e.stopPropagation()}>
                 <button onClick={()=>setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
-                <h2 className="text-2xl font-bold mb-1">{selectedEvent.title}</h2>
-                <p className="text-teal-600 font-medium mb-6">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                <h2 className="text-2xl font-bold mb-1 pr-8">{selectedEvent.title}</h2>
+                <div className="flex gap-2 text-sm mb-6">
+                    <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded font-medium">{new Date(selectedEvent.date).toLocaleDateString()}</span>
+                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">{selectedEvent.time?.slice(0,5)}</span>
+                </div>
                 
                 <form onSubmit={handleRegister} className="space-y-4">
                     <div>
                         <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.name}</label>
-                        <input value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 ${regErrors.name ? 'border-red-500' : ''}`}/>
+                        <input value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.name ? 'border-red-500' : 'border-gray-200'}`}/>
                         {regErrors.name && <p className="text-red-500 text-xs mt-1">{regErrors.name}</p>}
                     </div>
                     <div>
                         <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.phone}</label>
-                        <input type="tel" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 ${regErrors.phone ? 'border-red-500' : ''}`}/>
+                        <input type="tel" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.phone ? 'border-red-500' : 'border-gray-200'}`}/>
                         {regErrors.phone && <p className="text-red-500 text-xs mt-1">{regErrors.phone}</p>}
                     </div>
                     <div>
-                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.quantity}</label>
-                        <input type="number" min="1" max={selectedEvent.spotsLeft} value={regForm.tickets} onChange={e=>setRegForm({...regForm, tickets: +e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 ${regErrors.tickets ? 'border-red-500' : ''}`}/>
+                        <label className="text-sm font-bold text-gray-700 block mb-1">{t.form.quantity} <span className="text-gray-400 font-normal">({t.event.spots} {selectedEvent.spotsLeft})</span></label>
+                        <input type="number" min="1" max={selectedEvent.spotsLeft} value={regForm.tickets} onChange={e=>setRegForm({...regForm, tickets: +e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.tickets ? 'border-red-500' : 'border-gray-200'}`}/>
                         {regErrors.tickets && <p className="text-red-500 text-xs mt-1">{regErrors.tickets}</p>}
                     </div>
                     <div className="pt-4 border-t flex justify-between items-center">
                         <div><p className="text-sm text-gray-500">{t.form.total}</p><p className="text-2xl font-bold text-teal-600">{selectedEvent.price.adult * regForm.tickets}₽</p></div>
-                        <button disabled={isSubmitting} className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50">
+                        <button disabled={isSubmitting} className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50 transition shadow-lg shadow-teal-200">
                             {isSubmitting ? <Loader className="animate-spin"/> : t.event.registerBtn}
                         </button>
                     </div>
@@ -330,13 +410,12 @@ const TourClubWebsite = () => {
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes fadeInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes blob { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
         .animate-fadeInUp { animation: fadeInUp 0.6s ease-out; animation-fill-mode: both; }
         .animate-fadeInLeft { animation: fadeInLeft 0.8s ease-out; }
         .animate-fadeInRight { animation: fadeInRight 0.8s ease-out; }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
