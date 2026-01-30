@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; // ✅ SEO
+import { Helmet } from 'react-helmet-async';
 import { 
     MapPin, Calendar, Clock, User, Mountain, Footprints, 
     CheckCircle, XCircle, ChevronDown, ArrowLeft, Share2, 
     Wallet, Navigation
 } from 'lucide-react';
 import Button from './ui/Button';
+import { getOptimizedImage } from '../lib/imageOptimizer'; // ✅ 1. Импорт оптимизатора
 
 const TourPage = ({ events, onRegister }) => {
     const { id } = useParams();
@@ -40,7 +41,6 @@ const TourPage = ({ events, onRegister }) => {
     const dateStr = startDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
     const startTime = event.time?.slice(0,5);
 
-    // Функция скролла
     const scrollToSection = (id) => {
         const element = document.getElementById(id);
         if (element) {
@@ -50,7 +50,6 @@ const TourPage = ({ events, onRegister }) => {
         }
     };
 
-    // Функция для жирного текста
     const formatText = (text) => {
         if (!text) return null;
         return text.split(/(\*\*.*?\*\*)/g).map((part, index) => {
@@ -61,7 +60,9 @@ const TourPage = ({ events, onRegister }) => {
         });
     };
 
-    // ✅ ГЕНЕРАЦИЯ SCHEMA.ORG (Для Google Events)
+    // ✅ Оптимизированная картинка для SEO
+    const optimizedImage = getOptimizedImage(event.image, 1200);
+
     const eventSchema = {
         "@context": "https://schema.org",
         "@type": "Event",
@@ -75,62 +76,59 @@ const TourPage = ({ events, onRegister }) => {
             "name": event.location,
             "address": {
                 "@type": "PostalAddress",
-                "addressLocality": event.location // Можно уточнить город, если есть
+                "addressLocality": event.location
             }
         },
-        "image": [event.image],
+        "image": [optimizedImage], // ✅ Используем WebP в схеме
         "description": event.subtitle || event.description,
         "offers": {
             "@type": "Offer",
             "url": window.location.href,
             "price": event.price.adult,
-            "priceCurrency": "RUB", // Или MDL
+            "priceCurrency": "RUB",
             "availability": event.spotsLeft > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
             "validFrom": new Date().toISOString()
         },
         "organizer": {
             "@type": "Organization",
             "name": "Турклуб Эва",
-            "url": "https://tour-club-eva.vercel.app" // Твой домен
+            "url": "https://tour-club-eva.vercel.app"
         }
     };
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen pb-24 md:pb-0 font-onest">
-            
-            {/* ✅ SEO META TAGS */}
             <Helmet>
                 <title>{event.title} | Турклуб Эва</title>
                 <meta name="description" content={event.subtitle || event.description?.slice(0, 160)} />
-                
-                {/* Open Graph / Facebook / Telegram */}
                 <meta property="og:type" content="website" />
                 <meta property="og:title" content={event.title} />
                 <meta property="og:description" content={event.subtitle || "Присоединяйтесь к нашему путешествию!"} />
-                <meta property="og:image" content={event.image} />
+                <meta property="og:image" content={optimizedImage} />
                 <meta property="og:url" content={window.location.href} />
-                
-                {/* Structured Data (JSON-LD) */}
-                <script type="application/ld+json">
-                    {JSON.stringify(eventSchema)}
-                </script>
+                <script type="application/ld+json">{JSON.stringify(eventSchema)}</script>
             </Helmet>
 
             {/* HERO */}
             <div className="relative h-[50vh] md:h-[65vh] w-full overflow-hidden group">
+                {/* ✅ 2. ИСПРАВЛЕНИЕ LCP и РАЗМЕРА */}
                 <img 
-                    src={event.image} 
-                    alt={event.title} 
+                    src={optimizedImage} 
+                    alt={event.title}
+                    // fetchPriority="high" говорит браузеру: "Грузи это в первую очередь!"
+                    fetchPriority="high" 
+                    // loading="eager" отключает ленивую загрузку для главного баннера
+                    loading="eager"
+                    width="1200"
+                    height="800"
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
                 
-                {/* Кнопки навигации */}
                 <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition">
+                    <button onClick={() => navigate(-1)} aria-label="Назад" className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition">
                         <ArrowLeft size={24} />
                     </button>
-                    {/* Кнопка "Поделиться" с Web Share API */}
                     <button 
                         onClick={() => {
                             if (navigator.share) {
@@ -140,9 +138,10 @@ const TourPage = ({ events, onRegister }) => {
                                     url: window.location.href,
                                 });
                             } else {
-                                alert('Ссылка скопирована!'); // Фоллбэк
+                                alert('Ссылка скопирована!');
                             }
                         }} 
+                        aria-label="Поделиться"
                         className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition"
                     >
                         <Share2 size={24} />
@@ -203,11 +202,7 @@ const TourPage = ({ events, onRegister }) => {
             </div>
 
             <div className="max-w-6xl mx-auto px-4 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
-                
-                {/* ЛЕВАЯ КОЛОНКА (Контент) */}
                 <div className="lg:col-span-2 space-y-10">
-                    
-                    {/* ИНФОГРАФИКА (Адаптивная сетка) */}
                     <div id="about" className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                         <InfoBox icon={Calendar} label="Старт" value={dateStr} sub={startTime} />
                         <InfoBox icon={Clock} label="Длительность" value={event.duration} />
@@ -223,30 +218,22 @@ const TourPage = ({ events, onRegister }) => {
                         )}
                     </div>
 
-                    {/* ОПИСАНИЕ */}
                     <div className="text-[14px] md:text-[16px] text-gray-700 leading-relaxed whitespace-pre-line">
                         <h2 className="text-[20px] md:text-[22px] font-condensed font-bold mb-4 uppercase text-black">О путешествии</h2>
-                        {/* Показываем подзаголовок на мобильных здесь, раз скрыли в шапке */}
                         {event.subtitle && <p className="font-bold mb-4 md:hidden">{event.subtitle}</p>}
                         {formatText(event.description)}
                     </div>
 
-                    {/* ПРОГРАММА */}
                     {event.program && (
                         <div id="program" className="scroll-mt-24">
                             <h2 className="text-[20px] md:text-[22px] font-condensed font-bold mb-8 uppercase text-black">Программа тура</h2>
                             <div className="space-y-0">
                                 {event.program.split('\n').filter(line => line.trim() !== '').map((line, i) => (
                                     <div key={i} className="flex gap-4 relative pb-8 last:pb-0">
-                                        {/* Линия (скрываем на последнем элементе) */}
                                         <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-teal-100 last:hidden"></div>
-                                        
-                                        {/* Кружок */}
                                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-bold text-sm z-10">
                                             {i + 1}
                                         </div>
-                                        
-                                        {/* Текст */}
                                         <div className="pt-1">
                                              <p className="text-[14px] md:text-[16px] text-gray-800 font-medium leading-snug">
                                                 {formatText(line)}
@@ -258,7 +245,6 @@ const TourPage = ({ events, onRegister }) => {
                         </div>
                     )}
 
-                    {/* ФИНАНСЫ */}
                     <div id="finance" className="scroll-mt-24 grid md:grid-cols-2 gap-6">
                         {event.included && event.included.length > 0 && (
                             <div className="bg-[#ECFDF5] rounded-2xl p-6 border border-[#D1FAE5]">
@@ -293,7 +279,6 @@ const TourPage = ({ events, onRegister }) => {
                         )}
                     </div>
 
-                    {/* FAQ */}
                     {event.faq && event.faq.length > 0 && (
                         <div id="faq" className="scroll-mt-24">
                             <h2 className="text-[20px] md:text-[22px] font-condensed font-bold mb-6 uppercase text-black">Вопрос - Ответ</h2>
@@ -314,7 +299,6 @@ const TourPage = ({ events, onRegister }) => {
                     )}
                 </div>
 
-                {/* ПРАВАЯ КОЛОНКА (Desktop Sticky) */}
                 <div className="hidden lg:block">
                     <div className="sticky top-24 bg-white border border-gray-200 rounded-2xl p-6 shadow-xl shadow-gray-100/50">
                         <div className="mb-6 pb-6 border-b border-gray-100">
@@ -362,7 +346,6 @@ const TourPage = ({ events, onRegister }) => {
                 </div>
             </div>
 
-            {/* MOBILE FOOTER (Фиксированный низ) */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 flex items-center justify-between shadow-[0_-5px_20px_rgba(0,0,0,0.05)] safe-area-pb">
                 <div>
                     <p className="text-[10px] text-gray-400 font-bold uppercase">Всего от</p>
