@@ -1,17 +1,23 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, Edit } from 'lucide-react';
+import { 
+  CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, 
+  CheckSquare, Square, Loader, Edit, DownloadCloud 
+} from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { DownloadCloud } from 'lucide-react';
 import { useEvents, ValidationUtils } from './lib/hooks';
 
-// UI Components
+// UX Components (Новые)
+import Button from './components/ui/Button';
+import { SkeletonGrid } from './components/ui/Skeleton';
 import Toast from './components/Toast';
+
+// Feature Components
 import LanguageSwitcher from './components/LanguageSwitcher';
 import EventCard from './components/EventCard';
 import LoginModal from './components/LoginModal';
 import CalendarView from './components/CalendarView';
 import EventDetailsModal from './components/EventDetailsModal';
-import EventFormModal from './components/EventFormModal'; // ✅ НОВЫЙ КОМПОНЕНТ
+import EventFormModal from './components/EventFormModal';
 
 // ============ CONSTANTS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
@@ -20,7 +26,7 @@ const EventTypes = {
     WATER: 'water', HIKING_1: 'hiking_1', KIDS: 'kids', WEEKEND: 'weekend', EXPEDITION: 'expedition' 
 };
 
-// ============ TRANSLATIONS (i18n) ============
+// ============ TRANSLATIONS ============
 const translations = {
   ru: {
     header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные 🌄' },
@@ -39,7 +45,6 @@ const translations = {
     messages: { success: 'Спасибо за регистрацию! ✓', error: 'Ошибка регистрации ✗', full: 'Места закончились 😔' },
     admin: { title: 'Панель управления', tours: 'Туры', bookings: 'Заявки', add: 'Добавить тур' }
   },
-  // (EN и RO оставлены для краткости такими же, как были)
   en: {
     header: { title: 'Tour Club "Eva"', subtitle: 'Adventures every weekend 🌄' },
     filters: { all: 'All', water: 'Water', hiking_1: '1 Day', kids: 'Kids', weekend: 'Weekend', expedition: 'Expedition' },
@@ -60,22 +65,17 @@ const translations = {
   }
 };
 
-// --- АДМИН: СПИСОК ЗАЯВОК + ЭКСПОРТ ---
+// --- АДМИН: СПИСОК ЗАЯВОК + EXCEL ---
 const AdminRegistrations = () => {
     const [regs, setRegs] = useState([]);
-    const [loading, setLoading] = useState(false);
-
+    
     useEffect(() => {
-        fetchRegs();
+        const fetch = async () => {
+            const { data } = await supabase.from('registrations').select(`*, events(title, date)`).order('created_at', { ascending: false });
+            if(data) setRegs(data);
+        };
+        fetch();
     }, []);
-
-    const fetchRegs = async () => {
-        const { data } = await supabase
-            .from('registrations')
-            .select(`*, events(title, date)`) // Подтягиваем название и дату тура
-            .order('created_at', { ascending: false });
-        if(data) setRegs(data);
-    };
 
     const toggle = async (id, st) => {
         const ns = st === 'new' ? 'done' : 'new';
@@ -90,32 +90,21 @@ const AdminRegistrations = () => {
         }
     }
 
-    // 📤 ФУНКЦИЯ ЭКСПОРТА
+    // Скачивание CSV
     const downloadCSV = () => {
-        if (!regs.length) return alert('Нет данных для экспорта');
-
-        // 1. Формируем заголовки
-        const headers = ['Статус', 'Дата Тура', 'Тур', 'Имя Клиента', 'Телефон', 'Билетов', 'Сумма', 'Создано'];
-        
-        // 2. Формируем строки
+        if (!regs.length) return alert('Нет данных');
+        const headers = ['Статус', 'Дата Тура', 'Тур', 'Имя', 'Телефон', 'Билетов', 'Сумма', 'Создано'];
         const rows = regs.map(r => [
             r.status === 'new' ? 'Новая' : 'Оплачено',
             r.events?.date || '-',
-            `"${r.events?.title || 'Удаленный тур'}"`, // Кавычки для защиты от запятых в названии
+            `"${r.events?.title || 'Удален'}"`,
             `"${r.name}"`,
             r.phone,
             r.tickets,
             r.total_price,
             new Date(r.created_at).toLocaleDateString()
         ]);
-
-        // 3. Собираем CSV строку
-        const csvContent = [
-            headers.join(','), 
-            ...rows.map(row => row.join(','))
-        ].join('\n');
-
-        // 4. Создаем файл и скачиваем (BOM для корректного Excel кириллицы)
+        const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
         const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -129,72 +118,54 @@ const AdminRegistrations = () => {
     return (
         <div className="bg-white rounded-2xl shadow-lg p-6">
              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">📋 Все заявки ({regs.length})</h2>
-                <button 
-                    onClick={downloadCSV} 
-                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 transition shadow-lg hover:shadow-green-200"
-                >
-                    <DownloadCloud size={20}/> Скачать Excel
-                </button>
+                 <h2 className="text-xl font-bold text-gray-800">📋 Все заявки ({regs.length})</h2>
+                 <Button variant="primary" onClick={downloadCSV} className="!py-2 !px-4 text-sm bg-green-600 hover:bg-green-700 from-green-600 to-green-700 shadow-green-200">
+                    <DownloadCloud size={18}/> Excel
+                 </Button>
              </div>
-
              <div className="overflow-x-auto">
                  <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
-                        <tr>
-                            <th className="p-4 rounded-l-xl">Статус</th>
-                            <th className="p-4">Дата тура</th>
-                            <th className="p-4">Клиент</th>
-                            <th className="p-4">Тур</th>
-                            <th className="p-4">Сумма</th>
-                            <th className="p-4 rounded-r-xl">Действия</th>
-                        </tr>
+                        <tr><th className="p-4">Статус</th><th className="p-4">Тур</th><th className="p-4">Клиент</th><th className="p-4">Сумма</th><th className="p-4">Del</th></tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {regs.map(r => (
                             <tr key={r.id} className="hover:bg-blue-50/50 transition">
                                 <td className="p-4 cursor-pointer" onClick={()=>toggle(r.id, r.status||'new')}>
                                     {r.status==='done' 
-                                        ? <span className="flex items-center gap-1 text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs"><CheckSquare size={14}/> Оплачено</span> 
-                                        : <span className="flex items-center gap-1 text-orange-500 font-bold bg-orange-100 px-2 py-1 rounded text-xs"><Square size={14}/> Новая</span>
+                                        ? <span className="flex items-center gap-1 text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs"><CheckSquare size={14}/> OK</span> 
+                                        : <span className="flex items-center gap-1 text-orange-500 font-bold bg-orange-100 px-2 py-1 rounded text-xs"><Square size={14}/> New</span>
                                     }
                                 </td>
-                                <td className="p-4 text-gray-600">{r.events?.date ? new Date(r.events.date).toLocaleDateString() : '-'}</td>
                                 <td className="p-4">
-                                    <div className="font-bold text-gray-800">{r.name}</div>
+                                    <div className="font-medium text-gray-800 max-w-xs truncate">{r.events?.title || 'Удален'}</div>
+                                    <div className="text-xs text-gray-400">{r.events?.date ? new Date(r.events.date).toLocaleDateString() : '-'}</div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="font-bold">{r.name}</div>
                                     <div className="text-xs text-blue-500 font-mono">{r.phone}</div>
                                 </td>
-                                <td className="p-4 text-gray-700 font-medium max-w-xs truncate" title={r.events?.title}>
-                                    {r.events?.title || <span className="text-red-400">Тур удален</span>}
-                                </td>
-                                <td className="p-4 font-bold text-teal-600">{r.total_price}₽ <span className="text-gray-400 font-normal text-xs">({r.tickets} билета)</span></td>
-                                <td className="p-4">
-                                    <button onClick={()=>del(r.id)} className="p-2 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded-lg transition">
-                                        <Trash2 size={18}/>
-                                    </button>
-                                </td>
+                                <td className="p-4 font-bold text-teal-600">{r.total_price}₽</td>
+                                <td className="p-4"><button onClick={()=>del(r.id)} className="p-2 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded"><Trash2 size={18}/></button></td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-                {regs.length === 0 && <div className="text-center py-10 text-gray-400">Заявок пока нет</div>}
             </div>
         </div>
     )
 }
 
-// ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
+// ============ MAIN APP ============
 const TourClubWebsite = () => {
-  // Достаем createEvent и updateEvent из хука
-  const { events, loading, deleteEvent, bookEvent, uploadImage, createEvent, updateEvent } = useEvents();
+  const { events, loading, deleteEvent, bookEvent, uploadImage, createEvent, updateEvent, refreshEvents } = useEvents();
   
   const [selectedEvent, setSelectedEvent] = useState(null); 
-  const [editingEvent, setEditingEvent] = useState(null); // ✅ Для редактирования
+  const [editingEvent, setEditingEvent] = useState(null); 
 
-  // СОСТОЯНИЯ МОДАЛОК
   const [showDetails, setShowDetails] = useState(false); 
   const [showRegModal, setShowRegModal] = useState(false);
-  const [showFormModal, setShowFormModal] = useState(false); // ✅ Одна модалка на создание/редакт
+  const [showFormModal, setShowFormModal] = useState(false);
   
   const [filterType, setFilterType] = useState('all');
   const [viewMode, setViewMode] = useState(ViewModes.GRID); 
@@ -209,45 +180,27 @@ const TourClubWebsite = () => {
   const t = translations[language];
   const isAdmin = viewMode.startsWith('admin');
 
-  // --- handlers ---
-
+  // --- Handlers ---
   const handleCreateOrUpdate = async (formData) => {
+      let result;
       if (editingEvent) {
-          // UPDATE
-          const { error } = await updateEvent(editingEvent.id, formData);
-          if (error) alert(error.message);
-          else setToast({ message: 'Тур обновлен', type: 'success' });
+          result = await updateEvent(editingEvent.id, formData);
       } else {
-          // CREATE
-          const { error } = await createEvent(formData);
-          if (error) alert(error.message);
-          else setToast({ message: 'Тур создан', type: 'success' });
+          result = await createEvent(formData);
       }
-      setShowFormModal(false);
-      setEditingEvent(null);
+      
+      if (result.error) alert(result.error.message);
+      else {
+          setToast({ message: editingEvent ? 'Тур обновлен' : 'Тур создан', type: 'success' });
+          setShowFormModal(false);
+          setEditingEvent(null);
+      }
   }
 
   const openEditModal = (event, e) => {
-      e.stopPropagation(); // Чтобы не открылась карточка деталей
+      e.stopPropagation(); 
       setEditingEvent(event);
       setShowFormModal(true);
-  };
-
-  const openCreateModal = () => {
-      setEditingEvent(null);
-      setShowFormModal(true);
-  };
-
-  const openDetails = (event) => {
-      setSelectedEvent(event);
-      setShowDetails(true);
-  };
-
-  const openRegistration = () => {
-      setShowDetails(false); 
-      setRegForm({name:'', phone:'', tickets:1}); 
-      setRegErrors({});
-      setShowRegModal(true); 
   };
 
   const handleRegister = async (e) => {
@@ -274,9 +227,7 @@ const TourClubWebsite = () => {
   }
 
   const handleDelete = async (id) => {
-      if(window.confirm('Удалить?')) {
-          await deleteEvent(id);
-      }
+      if(window.confirm('Удалить?')) await deleteEvent(id);
   }
 
   const filteredEvents = useMemo(() => {
@@ -288,6 +239,8 @@ const TourClubWebsite = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 font-sans">
+      
+      {/* HEADER */}
       <header className={`relative text-white shadow-2xl transition-colors duration-500 ${isAdmin ? 'bg-slate-800' : 'bg-gradient-to-r from-teal-600 via-blue-600 to-cyan-600'}`}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex justify-between items-center">
@@ -318,8 +271,11 @@ const TourClubWebsite = () => {
         </div>
       </header>
 
+      {/* CONTENT */}
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
+        
         {viewMode === 'admin_bookings' && <AdminRegistrations />}
+
         {viewMode !== 'admin_bookings' && (
             <>
                 {!isAdmin && (
@@ -335,18 +291,23 @@ const TourClubWebsite = () => {
                         </div>
                     </div>
                 )}
+
                 {isAdmin && (
-                    <button onClick={openCreateModal} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2 transition"><Plus/> {t.admin.add}</button>
+                    <Button onClick={()=>{setEditingEvent(null); setShowFormModal(true);}} className="w-full mb-6 !py-4 border-2 border-dashed border-blue-300 text-blue-500 hover:bg-blue-50 !bg-transparent !shadow-none !text-blue-500">
+                        <Plus/> {t.admin.add}
+                    </Button>
                 )}
+
+                {/* SKELETON LOADING */}
                 {loading ? (
-                    <div className="flex justify-center py-20"><Loader className="animate-spin text-teal-600" size={40}/></div>
+                    <SkeletonGrid />
                 ) : (
                     <>
                         {viewMode === ViewModes.GRID || isAdmin ? (
                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredEvents.map((event, idx) => (
                                     <div key={event.id} className="relative group">
-                                        <EventCard event={event} onSelect={openDetails} index={idx} t={t} />
+                                        <EventCard event={event} onSelect={(e)=>{setSelectedEvent(e); setShowDetails(true);}} index={idx} t={t} />
                                         {isAdmin && (
                                             <div className="absolute top-2 right-2 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition">
                                                 <button onClick={(e)=>openEditModal(event, e)} className="bg-white p-2 rounded-full text-blue-500 shadow-lg hover:bg-blue-50"><Edit size={20}/></button>
@@ -358,7 +319,7 @@ const TourClubWebsite = () => {
                                 {filteredEvents.length === 0 && <div className="col-span-full text-center py-20 text-gray-400">В этой категории пока нет туров 🏔️</div>}
                             </div>
                         ) : (
-                            <CalendarView events={filteredEvents} onSelect={openDetails} currentLang={language} />
+                            <CalendarView events={filteredEvents} onSelect={(e)=>{setSelectedEvent(e); setShowDetails(true);}} currentLang={language} />
                         )}
                     </>
                 )}
@@ -366,16 +327,15 @@ const TourClubWebsite = () => {
         )}
       </main>
 
-      {/* МОДАЛКИ */}
+      {/* MODALS */}
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setViewMode('admin_tours');}} />}
       
-      {/* 3. ОБЩАЯ ФОРМА ДЛЯ СОЗДАНИЯ И РЕДАКТИРОВАНИЯ */}
       {showFormModal && (
           <EventFormModal 
             onClose={()=>{setShowFormModal(false); setEditingEvent(null);}} 
             onSubmit={handleCreateOrUpdate} 
             onUpload={uploadImage}
-            initialData={editingEvent} // Передаем данные для редактирования
+            initialData={editingEvent}
           />
       )}
 
@@ -383,7 +343,7 @@ const TourClubWebsite = () => {
           <EventDetailsModal 
             event={selectedEvent} 
             onClose={() => setShowDetails(false)} 
-            onRegister={openRegistration} 
+            onRegister={() => { setShowDetails(false); setRegForm({name:'', phone:'', tickets:1}); setRegErrors({}); setShowRegModal(true); }} 
             t={t} 
           />
       )}
@@ -400,7 +360,9 @@ const TourClubWebsite = () => {
                     <div><label className="text-sm font-bold text-gray-700 block mb-1">{t.form.quantity}</label><input type="number" min="1" max={selectedEvent.spotsLeft} value={regForm.tickets} onChange={e=>setRegForm({...regForm, tickets: +e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.tickets ? 'border-red-500' : 'border-gray-200'}`}/></div>
                     <div className="pt-4 border-t flex justify-between items-center">
                         <div><p className="text-sm text-gray-500">{t.form.total}</p><p className="text-2xl font-bold text-teal-600">{selectedEvent.price.adult * regForm.tickets}₽</p></div>
-                        <button disabled={isSubmitting} className="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 disabled:opacity-50 transition shadow-lg shadow-teal-200">{isSubmitting ? <Loader className="animate-spin"/> : t.event.registerBtn}</button>
+                        <Button isLoading={isSubmitting} variant="primary" className="shadow-lg shadow-teal-200">
+                            {t.event.registerBtn}
+                        </Button>
                     </div>
                 </form>
             </div>
