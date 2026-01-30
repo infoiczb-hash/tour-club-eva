@@ -47,6 +47,19 @@ export const useEvents = () => {
             return { error };
         },
 
+        // ✅ НОВАЯ ФУНКЦИЯ: ОБНОВЛЕНИЕ
+        updateEvent: async (id, data) => {
+            const { error } = await supabase.from('events').update(data).eq('id', id);
+            if (!error) loadEvents();
+            return { error };
+        },
+
+        createEvent: async (data) => {
+            const { error } = await supabase.from('events').insert([data]);
+            if (!error) loadEvents();
+            return { error };
+        },
+
         bookEvent: async ({ eventId, formData, totalPrice }) => {
             const { data, error } = await supabase.rpc('book_event', {
                 event_id_input: eventId,
@@ -59,26 +72,15 @@ export const useEvents = () => {
             if (data && data.error) {
                 return { error: { message: data.error } };
             }
-            
             if (!error) loadEvents();
             return { data, error };
         },
 
-        // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ
         uploadImage: async (file) => {
-            // Генерируем уникальное имя: timestamp_имяфайла (удаляем пробелы)
             const fileName = `${Date.now()}_${file.name.replace(/\s/g, '_')}`;
-            
-            const { error } = await supabase.storage
-                .from('tours-images')
-                .upload(fileName, file);
-
+            const { error } = await supabase.storage.from('tours-images').upload(fileName, file);
             if (error) return { error };
-
-            const { data } = supabase.storage
-                .from('tours-images')
-                .getPublicUrl(fileName);
-                
+            const { data } = supabase.storage.from('tours-images').getPublicUrl(fileName);
             return { url: data.publicUrl };
         }
     };
@@ -89,7 +91,6 @@ export const ValidationUtils = {
         const e = {};
         if (!data.name?.trim()) e.name = t.validation.nameRequired;
         if (!data.phone?.trim()) e.phone = t.validation.phoneRequired;
-        
         if (data.tickets < 1 || data.tickets > maxSpots) e.tickets = `1-${maxSpots}`;
         return e;
     }
