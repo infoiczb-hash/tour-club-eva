@@ -15,11 +15,19 @@ export const useEvents = () => {
         if (!error && data) {
             const formatted = data.map(e => ({
                 ...e,
+                // === ЦЕНЫ ===
                 price: { 
                     adult: e.price_adult, 
                     child: e.price_child || Math.round(e.price_adult * 0.8), 
                     family: e.price_family || Math.round(e.price_adult * 2.5) 
                 },
+                priceOld: e.price_old, // 🆕 Старая цена
+                
+                // === МАРКЕТИНГ ===
+                label: e.label,        // 🆕 "Эксклюзив"
+                subtitle: e.subtitle,  // 🆕 Подзаголовок
+                
+                // === ДЕТАЛИ ===
                 spotsLeft: e.spots_left,
                 spots: e.spots, 
                 image: e.image_url,
@@ -27,7 +35,13 @@ export const useEvents = () => {
                 guide: e.guide,
                 difficulty: e.difficulty,
                 duration: e.duration,
-                included: e.included || []
+                distance: e.distance,
+                
+                // === МАССИВЫ И ТЕКСТЫ ===
+                included: e.included || [],
+                additionalExpenses: e.additional_expenses || [],
+                program: e.program,
+                faq: e.faq || []
             }));
             setEvents(formatted);
         }
@@ -47,7 +61,6 @@ export const useEvents = () => {
             return { error };
         },
 
-        // ✅ НОВАЯ ФУНКЦИЯ: ОБНОВЛЕНИЕ
         updateEvent: async (id, data) => {
             const { error } = await supabase.from('events').update(data).eq('id', id);
             if (!error) loadEvents();
@@ -69,9 +82,7 @@ export const useEvents = () => {
                 total_price_input: totalPrice
             });
 
-            if (data && data.error) {
-                return { error: { message: data.error } };
-            }
+            if (data && data.error) return { error: { message: data.error } };
             if (!error) loadEvents();
             return { data, error };
         },
