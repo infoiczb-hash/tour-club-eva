@@ -4,48 +4,38 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#14b8a6" />
-    <meta
-      name="description"
-      content="Турклуб Эва - приключения каждые выходные. Сплавы, походы, велотуры в Приднестровье"
-    />
-    <title>Турклуб "Эва" - Приключения каждые выходные</title>
+    <meta name="description" content="Турклуб Эва - приключения каждые выходные" />
+    <title>Турклуб "Эва"</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-      /* Основной шрифт сайта */
+      /* Весь сайт по умолчанию на Onest */
       body {
-        font-family: 'Roboto', sans-serif;
-        background-color: #f0fdfa; /* Легкий фон (teal-50), чтобы не было белых полос при загрузке */
+        font-family: 'Onest', sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
       }
-
-      /* Класс для узких заголовков (КАК В СТАМБУЛЕ) */
+      /* Класс для заголовков */
       .font-condensed {
         font-family: 'Oswald', sans-serif !important;
+        text-transform: uppercase; 
+        letter-spacing: 0.02em;
       }
       
-      /* Красивый скроллбар для модальных окон */
-      .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cccccc;
-          border-radius: 10px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #999999;
-      }
+      /* Скроллбар */
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
   </head>
   <body>
-    <noscript>Вам нужно включить JavaScript для работы этого приложения.</noscript>
+    <noscript>Вам нужно включить JavaScript.</noscript>
     <div id="root"></div>
   </body>
 </html>
