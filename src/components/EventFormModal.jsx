@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UploadCloud, Loader, Image as ImageIcon } from 'lucide-react';
-import Button from './ui/Button';
+import Button from './ui/Button'; 
 
 const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => {
     // Дефолтное состояние
