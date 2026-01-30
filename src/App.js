@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'; 
-import { Routes, Route, useNavigate } from 'react-router-dom'; // ❌ УБРАЛИ BrowserRouter
+import { Routes, Route, useNavigate } from 'react-router-dom'; 
 import { 
   CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, Edit 
 } from 'lucide-react';
@@ -78,7 +78,11 @@ const HomePage = ({
                         <div className="flex flex-col items-end gap-2">
                             <div className="flex gap-2 items-center">
                                <LanguageSwitcher currentLang={language} onChange={setLanguage} />
-                                <button onClick={() => isAdmin ? setViewMode('grid') : setShowLogin(true)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition text-white">
+                                <button 
+                                    onClick={() => isAdmin ? setViewMode('grid') : setShowLogin(true)} 
+                                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition text-white"
+                                    aria-label={isAdmin ? "Закрыть панель" : "Вход для админа"}
+                                >
                                     {isAdmin ? <X size={16}/> : <Settings size={16}/>}
                                 </button>
                             </div>
@@ -92,8 +96,8 @@ const HomePage = ({
                 {!isAdmin && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                            <button onClick={() => setViewMode(ViewModes.GRID)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.GRID ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><Grid size={20}/></button>
-                            <button onClick={() => setViewMode(ViewModes.CALENDAR)} className={`p-2 rounded-lg transition ${viewMode === ViewModes.CALENDAR ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><CalendarDays size={20}/></button>
+                            <button onClick={() => setViewMode(ViewModes.GRID)} aria-label="Сетка" className={`p-2 rounded-lg transition ${viewMode === ViewModes.GRID ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><Grid size={20}/></button>
+                            <button onClick={() => setViewMode(ViewModes.CALENDAR)} aria-label="Календарь" className={`p-2 rounded-lg transition ${viewMode === ViewModes.CALENDAR ? 'bg-teal-50 text-teal-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}><CalendarDays size={20}/></button>
                         </div>
                         <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto custom-scrollbar">
                            {filterCategories.map(type => (
@@ -115,13 +119,12 @@ const HomePage = ({
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
                                {filteredEvents.map((event, idx) => (
                                    <div key={event.id} className="relative group">
-                                       {/* ✅ Передаем обработчик клика */}
                                        <EventCard event={event} onSelect={onSelectEvent} index={idx} t={t} />
                                        
                                        {isAdmin && (
                                           <div className="absolute top-2 right-2 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition">
-                                               <button onClick={(e)=>{e.stopPropagation(); openEditModal(event)}} className="bg-white p-2 rounded-full text-blue-500 shadow-lg hover:bg-blue-50"><Edit size={20}/></button>
-                                               <button onClick={(e)=>{e.stopPropagation(); handleDelete(event.id)}} className="bg-white p-2 rounded-full text-red-500 shadow-lg hover:bg-red-50"><Trash2 size={20}/></button>
+                                               <button onClick={(e)=>{e.stopPropagation(); openEditModal(event)}} aria-label="Редактировать" className="bg-white p-2 rounded-full text-blue-500 shadow-lg hover:bg-blue-50"><Edit size={20}/></button>
+                                               <button onClick={(e)=>{e.stopPropagation(); handleDelete(event.id)}} aria-label="Удалить" className="bg-white p-2 rounded-full text-red-500 shadow-lg hover:bg-red-50"><Trash2 size={20}/></button>
                                           </div>
                                         )}
                                    </div>
@@ -138,9 +141,9 @@ const HomePage = ({
 };
  
 // ============ MAIN APP WRAPPER ============
-const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
+const App = () => { 
   const { events, loading, deleteEvent, bookEvent, uploadImage, createEvent, updateEvent } = useEvents();
-  const navigate = useNavigate(); // ✅ Хук навигации теперь работает, т.к. App внутри Router (в index.js)
+  const navigate = useNavigate();
   
   // Состояния
   const [editingEvent, setEditingEvent] = useState(null); 
@@ -160,7 +163,7 @@ const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
  
   const t = translations[language] || translations.ru;
  
-  // --- Handlers ---
+  // Handlers
   const handleCreateOrUpdate = async (formData) => {
       let result;
       if (editingEvent) result = await updateEvent(editingEvent.id, formData);
@@ -195,7 +198,6 @@ const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
   }
  
   return (
-        // ✅ УДАЛИЛИ <Router> - теперь только div
         <div className="min-h-screen bg-[#f0fdfa] font-sans">
             <Routes>
                 {/* ГЛАВНАЯ СТРАНИЦА */}
@@ -207,7 +209,6 @@ const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
                         handleDelete={(id) => {if(window.confirm('Удалить?')) deleteEvent(id)}}
                         openEditModal={(ev) => {setEditingEvent(ev); setShowFormModal(true);}}
                         openCreateModal={() => {setEditingEvent(null); setShowFormModal(true);}}
-                        // ✅ Используем navigate для перехода
                         onSelectEvent={(event) => navigate(`/tour/${event.id}`)} 
                     />
                 } />
@@ -225,7 +226,7 @@ const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
                 } />
             </Routes>
  
-            {/* МОДАЛКИ (Глобальные) */}
+            {/* МОДАЛКИ */}
             {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setIsAdmin(true);}} />}
             
             {showFormModal && (
@@ -237,11 +238,10 @@ const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
                 />
             )}
  
-            {/* Модалка регистрации */}
             {showRegModal && selectedEventForReg && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fadeIn" onClick={()=>setShowRegModal(false)}>
                     <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onClick={e=>e.stopPropagation()}>
-                        <button onClick={()=>setShowRegModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
+                        <button onClick={()=>setShowRegModal(false)} aria-label="Закрыть" className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
                         <h2 className="text-xl font-bold mb-1 pr-8 text-gray-500">Запись на тур</h2>
                         <h3 className="text-2xl font-bold mb-4 font-condensed uppercase">{selectedEventForReg.title}</h3>
                         <form onSubmit={handleRegister} className="space-y-4">
@@ -259,4 +259,4 @@ const App = () => {  // ✅ ПЕРЕИМЕНОВАЛИ В APP
   );
 };
  
-export default App; // ✅ Экспорт тоже правильный
+export default App;
