@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     MapPin, Calendar, Clock, User, Mountain, Footprints, 
-    CheckCircle, XCircle, HelpCircle, ArrowLeft, Share2, 
-    Wallet, Navigation, Info, ChevronDown
+    CheckCircle, XCircle, ChevronDown, ArrowLeft, Share2, 
+    Wallet, Navigation
 } from 'lucide-react';
 import Button from './ui/Button';
 
@@ -48,12 +48,10 @@ const TourPage = ({ events, onRegister }) => {
         }
     };
 
-    // ✅ НОВАЯ ФУНКЦИЯ: Делает текст жирным между **звездочками**
     const formatText = (text) => {
         if (!text) return null;
         return text.split(/(\*\*.*?\*\*)/g).map((part, index) => {
             if (part.startsWith('**') && part.endsWith('**')) {
-                // Убираем звездочки и делаем жирным
                 return <strong key={index} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
             }
             return part;
@@ -61,7 +59,7 @@ const TourPage = ({ events, onRegister }) => {
     };
 
     return (
-        <div className="bg-[#F8FAFC] min-h-screen pb-24 md:pb-0">
+        <div className="bg-[#F8FAFC] min-h-screen pb-24 md:pb-0 font-onest">
             
             {/* HERO */}
             <div className="relative h-[50vh] md:h-[65vh] w-full overflow-hidden group">
@@ -92,10 +90,17 @@ const TourPage = ({ events, onRegister }) => {
                             </span>
                         )}
                     </div>
+                    {/* ЗАГОЛОВОК */}
                     <h1 className="text-3xl md:text-5xl font-condensed font-bold uppercase leading-tight mb-2 drop-shadow-lg">
                         {event.title}
                     </h1>
-                    <div className="flex items-center gap-2 text-gray-200 text-lg">
+                    {/* ПОДЗАГОЛОВОК НА ОБЛОЖКЕ */}
+                    {event.subtitle && (
+                        <p className="text-lg md:text-xl text-white/90 font-light mb-4 max-w-2xl leading-snug">
+                            {event.subtitle}
+                        </p>
+                    )}
+                    <div className="flex items-center gap-2 text-gray-200 text-base">
                         <MapPin size={20} className="text-teal-400"/> 
                         {event.location}
                     </div>
@@ -103,9 +108,9 @@ const TourPage = ({ events, onRegister }) => {
             </div>
 
             {/* STICKY MENU */}
-            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm overflow-x-auto hide-scrollbar">
+            <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm overflow-x-auto hide-scrollbar">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex space-x-6 text-sm font-bold uppercase tracking-wider">
+                    <div className="flex space-x-8 text-[14px] font-bold uppercase tracking-wider">
                         {[
                             { id: 'about', label: 'Детали' },
                             { id: 'program', label: 'Программа' },
@@ -126,13 +131,13 @@ const TourPage = ({ events, onRegister }) => {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 
                 {/* ЛЕВАЯ КОЛОНКА */}
                 <div className="lg:col-span-2 space-y-12">
                     
                     {/* ИНФОГРАФИКА */}
-                    <div id="about" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div id="about" className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <InfoBox icon={Calendar} label="Старт" value={dateStr} sub={startTime} />
                         <InfoBox icon={Clock} label="Длительность" value={event.duration} />
                         {event.distance && <InfoBox icon={Footprints} label="Дистанция" value={event.distance} />}
@@ -147,25 +152,32 @@ const TourPage = ({ events, onRegister }) => {
                         )}
                     </div>
 
-                    {/* ОПИСАНИЕ (с поддержкой Markdown) */}
-                    <div className="prose prose-lg text-gray-700 leading-relaxed whitespace-pre-line">
-                        <h2 className="text-2xl font-condensed font-bold mb-4 uppercase text-black">О путешествии</h2>
-                        {/* ✅ Используем formatText */}
+                    {/* ОПИСАНИЕ */}
+                    <div className="text-[14px] md:text-[16px] text-gray-700 leading-relaxed whitespace-pre-line">
+                        <h2 className="text-[22px] font-condensed font-bold mb-4 uppercase text-black">О путешествии</h2>
                         {formatText(event.description)}
                     </div>
 
-                    {/* ПРОГРАММА (с поддержкой Markdown) */}
+                    {/* ПРОГРАММА (НОВЫЙ ДИЗАЙН) */}
                     {event.program && (
                         <div id="program" className="scroll-mt-24">
-                            <h2 className="text-2xl font-condensed font-bold mb-6 uppercase text-black">Программа тура</h2>
-                            <div className="border-l-2 border-teal-100 ml-3 space-y-8 pb-2">
+                            <h2 className="text-[22px] font-condensed font-bold mb-8 uppercase text-black">Программа тура</h2>
+                            <div className="space-y-0">
                                 {event.program.split('\n').filter(line => line.trim() !== '').map((line, i) => (
-                                    <div key={i} className="relative pl-8 group">
-                                        <div className="absolute -left-[9px] top-1 w-4 h-4 bg-white border-2 border-teal-500 rounded-full group-hover:bg-teal-500 transition-colors"></div>
+                                    <div key={i} className="flex gap-4 relative pb-8 last:pb-0">
+                                        {/* Линия */}
+                                        <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-teal-100 last:hidden"></div>
                                         
-                                        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                                             {/* ✅ Используем formatText и здесь */}
-                                             <p className="text-gray-800 font-medium">{formatText(line)}</p>
+                                        {/* Кружок с цифрой */}
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-bold text-sm z-10">
+                                            {i + 1}
+                                        </div>
+                                        
+                                        {/* Текст */}
+                                        <div className="pt-1">
+                                             <p className="text-[14px] md:text-[16px] text-gray-800 font-medium leading-snug">
+                                                {formatText(line)}
+                                             </p>
                                         </div>
                                     </div>
                                 ))}
@@ -177,12 +189,12 @@ const TourPage = ({ events, onRegister }) => {
                     <div id="finance" className="scroll-mt-24 grid md:grid-cols-2 gap-6">
                         {event.included && event.included.length > 0 && (
                             <div className="bg-[#ECFDF5] rounded-2xl p-6 border border-[#D1FAE5]">
-                                <h3 className="flex items-center gap-2 font-bold text-lg text-[#047857] mb-4">
+                                <h3 className="flex items-center gap-2 font-bold text-[18px] text-[#047857] mb-4">
                                     <CheckCircle size={20} className="fill-[#10B981] text-white"/> Включено
                                 </h3>
                                 <ul className="space-y-3">
                                     {event.included.map((item, i) => (
-                                        <li key={i} className="flex items-start gap-3 text-sm font-medium text-gray-700">
+                                        <li key={i} className="flex items-start gap-3 text-[14px] font-medium text-gray-700">
                                             <span className="w-1.5 h-1.5 bg-[#10B981] rounded-full mt-1.5 shrink-0"></span>
                                             {formatText(item)}
                                         </li>
@@ -193,12 +205,12 @@ const TourPage = ({ events, onRegister }) => {
 
                         {event.additionalExpenses && event.additionalExpenses.length > 0 && (
                             <div className="bg-[#FFF7ED] rounded-2xl p-6 border border-[#FFEDD5]">
-                                <h3 className="flex items-center gap-2 font-bold text-lg text-[#C2410C] mb-4">
+                                <h3 className="flex items-center gap-2 font-bold text-[18px] text-[#C2410C] mb-4">
                                     <Wallet size={20} className="text-[#F97316]"/> Доп. расходы
                                 </h3>
                                 <ul className="space-y-3">
                                     {event.additionalExpenses.map((item, i) => (
-                                        <li key={i} className="flex items-start gap-3 text-sm font-medium text-gray-700">
+                                        <li key={i} className="flex items-start gap-3 text-[14px] font-medium text-gray-700">
                                             <XCircle size={16} className="text-[#F97316] mt-0.5 shrink-0"/>
                                             {formatText(item)}
                                         </li>
@@ -211,15 +223,15 @@ const TourPage = ({ events, onRegister }) => {
                     {/* FAQ */}
                     {event.faq && event.faq.length > 0 && (
                         <div id="faq" className="scroll-mt-24">
-                            <h2 className="text-2xl font-condensed font-bold mb-6 uppercase text-black">Вопрос - Ответ</h2>
+                            <h2 className="text-[22px] font-condensed font-bold mb-6 uppercase text-black">Вопрос - Ответ</h2>
                             <div className="space-y-3">
                                 {event.faq.map((item, i) => (
                                     <details key={i} className="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                        <summary className="flex cursor-pointer items-center justify-between p-5 font-bold text-gray-900 list-none hover:bg-gray-50 transition">
+                                        <summary className="flex cursor-pointer items-center justify-between p-5 font-bold text-gray-900 list-none hover:bg-gray-50 transition text-[16px]">
                                             <span>{formatText(item.q)}</span>
                                             <ChevronDown className="text-gray-400 transition-transform duration-300 group-open:rotate-180" size={20}/>
                                         </summary>
-                                        <div className="px-5 pb-5 pt-0 text-gray-600 border-t border-transparent group-open:border-gray-100 group-open:pt-4">
+                                        <div className="px-5 pb-5 pt-0 text-gray-600 text-[14px] border-t border-transparent group-open:border-gray-100 group-open:pt-4 leading-relaxed">
                                             {formatText(item.a)}
                                         </div>
                                     </details>
@@ -240,6 +252,22 @@ const TourPage = ({ events, onRegister }) => {
                             </div>
                         </div>
                         
+                        {/* ДОП. ЦЕНЫ ЕСЛИ ЕСТЬ */}
+                        {(event.price.child > 0 || event.price.family > 0) && (
+                            <div className="mb-6 space-y-2 text-sm text-gray-600">
+                                {event.price.child > 0 && (
+                                    <div className="flex justify-between">
+                                        <span>Детский:</span> <span className="font-bold">{event.price.child}₽</span>
+                                    </div>
+                                )}
+                                {event.price.family > 0 && (
+                                    <div className="flex justify-between">
+                                        <span>Семейный:</span> <span className="font-bold">{event.price.family}₽</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="space-y-4 mb-6">
                             {event.spotsLeft > 0 ? (
                                 <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 border border-green-200">
@@ -279,12 +307,12 @@ const TourPage = ({ events, onRegister }) => {
 const InfoBox = ({ icon: Icon, label, value, sub }) => {
     if (!value) return null;
     return (
-        <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex flex-col items-start h-full">
+        <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex flex-col items-start h-full hover:border-teal-200 transition">
             <div className="p-2 bg-teal-50 text-teal-600 rounded-lg mb-2">
                 <Icon size={18} />
             </div>
             <p className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">{label}</p>
-            <p className="font-bold text-sm text-gray-900 leading-tight">{value}</p>
+            <p className="font-bold text-[14px] text-gray-900 leading-tight">{value}</p>
             {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
         </div>
     );
