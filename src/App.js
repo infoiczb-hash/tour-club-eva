@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, Edit } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { ..., DownloadCloud } from 'lucide-react';
+import { DownloadCloud } from 'lucide-react';
 import { useEvents, ValidationUtils } from './lib/hooks';
 
 // UI Components
