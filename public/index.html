@@ -26,6 +26,8 @@
       .custom-scrollbar::-webkit-scrollbar { width: 6px; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
       .hide-scrollbar::-webkit-scrollbar { display: none; }
+      /* Поддержка безопасных зон iPhone (чтобы кнопка не прилипала к нижнему краю) */
+.safe-area-pb {padding-bottom: env(safe-area-inset-bottom, 20px);}
     </style>
   </head>
   <body>
