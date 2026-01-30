@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#14b8a6" />
+
+    <meta name="description" content="Турклуб Эва — авторские туры, походы и сплавы. Приключения каждые выходные в Молдове и за рубежом." />
+
     <title>Турклуб "Эва"</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,16 +25,20 @@
         font-family: 'Oswald', sans-serif !important;
         text-transform: uppercase; 
       }
+      
       /* Скроллбар */
       .custom-scrollbar::-webkit-scrollbar { width: 6px; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
       .hide-scrollbar::-webkit-scrollbar { display: none; }
+
       /* Поддержка безопасных зон iPhone (чтобы кнопка не прилипала к нижнему краю) */
-.safe-area-pb {padding-bottom: env(safe-area-inset-bottom, 20px);}
+      .safe-area-pb {
+         padding-bottom: env(safe-area-inset-bottom, 20px);
+      }
     </style>
   </head>
   <body>
-    <noscript>Вам нужно включить JavaScript.</noscript>
+    <noscript>Вам нужно включить JavaScript для работы сайта.</noscript>
     <div id="root"></div>
   </body>
 </html>
