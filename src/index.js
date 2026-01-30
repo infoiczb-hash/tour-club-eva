@@ -1,13 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async'; // <--- ВАЖНО
+import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
-import './index.css';
+import './index.css'; // <--- ВОТ ЭТА СТРОКА ВЫЗЫВАЛА ОШИБКУ, ЕСЛИ ФАЙЛА НЕ БЫЛО
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <HelmetProvider> {/* <--- ОБЯЗАТЕЛЬНО ОБЕРНУТЬ */}
+    <HelmetProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
