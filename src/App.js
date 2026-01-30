@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { CalendarDays, Grid, Plus, Settings, Sparkles, Trash2, X, CheckSquare, Square, Loader, Edit } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useEvents, ValidationUtils } from './lib/hooks';
-import { ..., DownloadCloud } from 'lucide-react';
 
 // UI Components
 import Toast from './components/Toast';
@@ -10,30 +9,28 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 import EventCard from './components/EventCard';
 import LoginModal from './components/LoginModal';
 import CalendarView from './components/CalendarView';
-import EventDetailsModal from './components/EventDetailsModal'; // ✅ НОВЫЙ ИМПОРТ
+import EventDetailsModal from './components/EventDetailsModal';
+import EventFormModal from './components/EventFormModal'; // ✅ НОВЫЙ КОМПОНЕНТ
 
 // ============ CONSTANTS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
 const Languages = { RU: 'ru', EN: 'en', RO: 'ro' };
 const EventTypes = { 
-    WATER: 'water',       
-    HIKING_1: 'hiking_1', 
-    KIDS: 'kids',         
-    WEEKEND: 'weekend',   
-    EXPEDITION: 'expedition' 
+    WATER: 'water', HIKING_1: 'hiking_1', KIDS: 'kids', WEEKEND: 'weekend', EXPEDITION: 'expedition' 
 };
 
-// ============ TRANSLATIONS ============
+// ============ TRANSLATIONS (i18n) ============
 const translations = {
   ru: {
     header: { title: 'Турклуб "Эва"', subtitle: 'Приключения каждые выходные 🌄' },
     filters: { 
         all: 'Все', 
-        [EventTypes.WATER]: 'На воде', 
-        [EventTypes.HIKING_1]: 'Выезды на 1 день', 
-        [EventTypes.KIDS]: 'Подросткам',
-        [EventTypes.WEEKEND]: 'Походы на выходные',
-        [EventTypes.EXPEDITION]: 'Экспедиции ',
+        [EventTypes.WATER]: 'На воде 🛶', 
+        [EventTypes.HIKING_1]: '1 день 🎒', 
+        [EventTypes.KIDS]: 'Детские 👶', 
+        [EventTypes.WEEKEND]: 'Выходные 🏕️', 
+        [EventTypes.EXPEDITION]: 'Экспедиции 🏔️',
+        'hiking': 'Походы'
     },
     event: { register: 'Записаться', spots: 'мест', registerBtn: 'Записаться' },
     form: { name: 'Ваше имя *', phone: 'Телефон *', quantity: 'Количество', total: 'Итого:', submit: 'Зарегистрироваться' },
@@ -41,6 +38,7 @@ const translations = {
     messages: { success: 'Спасибо за регистрацию! ✓', error: 'Ошибка регистрации ✗', full: 'Места закончились 😔' },
     admin: { title: 'Панель управления', tours: 'Туры', bookings: 'Заявки', add: 'Добавить тур' }
   },
+  // (EN и RO оставлены для краткости такими же, как были)
   en: {
     header: { title: 'Tour Club "Eva"', subtitle: 'Adventures every weekend 🌄' },
     filters: { all: 'All', water: 'Water', hiking_1: '1 Day', kids: 'Kids', weekend: 'Weekend', expedition: 'Expedition' },
@@ -61,233 +59,65 @@ const translations = {
   }
 };
 
-// --- АДМИН: СПИСОК ЗАЯВОК + ЭКСПОРТ ---
+// --- АДМИН: СПИСОК ЗАЯВОК ---
 const AdminRegistrations = () => {
     const [regs, setRegs] = useState([]);
-    const [loading, setLoading] = useState(false);
-
     useEffect(() => {
-        fetchRegs();
+        const fetch = async () => {
+            const { data } = await supabase.from('registrations').select(`*, events(title)`).order('created_at', { ascending: false });
+            if(data) setRegs(data);
+        };
+        fetch();
     }, []);
-
-    const fetchRegs = async () => {
-        const { data } = await supabase
-            .from('registrations')
-            .select(`*, events(title, date)`) // Подтягиваем название и дату тура
-            .order('created_at', { ascending: false });
-        if(data) setRegs(data);
-    };
-
     const toggle = async (id, st) => {
         const ns = st === 'new' ? 'done' : 'new';
         await supabase.from('registrations').update({status: ns}).eq('id', id);
         setRegs(regs.map(r => r.id === id ? {...r, status: ns} : r));
     }
-
     const del = async (id) => {
-        if(window.confirm('Удалить заявку?')) {
+        if(window.confirm('Удалить?')) {
             await supabase.from('registrations').delete().eq('id', id);
             setRegs(regs.filter(r => r.id !== id));
         }
     }
-
-    // 📤 ФУНКЦИЯ ЭКСПОРТА
-    const downloadCSV = () => {
-        if (!regs.length) return alert('Нет данных для экспорта');
-
-        // 1. Формируем заголовки
-        const headers = ['Статус', 'Дата Тура', 'Тур', 'Имя Клиента', 'Телефон', 'Билетов', 'Сумма', 'Создано'];
-        
-        // 2. Формируем строки
-        const rows = regs.map(r => [
-            r.status === 'new' ? 'Новая' : 'Оплачено',
-            r.events?.date || '-',
-            `"${r.events?.title || 'Удаленный тур'}"`, // Кавычки для защиты от запятых в названии
-            `"${r.name}"`,
-            r.phone,
-            r.tickets,
-            r.total_price,
-            new Date(r.created_at).toLocaleDateString()
-        ]);
-
-        // 3. Собираем CSV строку
-        const csvContent = [
-            headers.join(','), 
-            ...rows.map(row => row.join(','))
-        ].join('\n');
-
-        // 4. Создаем файл и скачиваем (BOM для корректного Excel кириллицы)
-        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `Заявки_EvaClub_${new Date().toLocaleDateString()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     return (
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">📋 Все заявки ({regs.length})</h2>
-                <button 
-                    onClick={downloadCSV} 
-                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 transition shadow-lg hover:shadow-green-200"
-                >
-                    <DownloadCloud size={20}/> Скачать Excel
-                </button>
-             </div>
-
-             <div className="overflow-x-auto">
-                 <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
-                        <tr>
-                            <th className="p-4 rounded-l-xl">Статус</th>
-                            <th className="p-4">Дата тура</th>
-                            <th className="p-4">Клиент</th>
-                            <th className="p-4">Тур</th>
-                            <th className="p-4">Сумма</th>
-                            <th className="p-4 rounded-r-xl">Действия</th>
+        <div className="bg-white rounded-2xl shadow p-4 overflow-x-auto">
+             <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50"><tr><th className="p-3">Статус</th><th className="p-3">Имя</th><th className="p-3">Тур</th><th className="p-3">Сумма</th><th className="p-3">Del</th></tr></thead>
+                <tbody>
+                    {regs.map(r => (
+                        <tr key={r.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3 cursor-pointer" onClick={()=>toggle(r.id, r.status||'new')}>{r.status==='done' ? <CheckSquare className="text-green-500"/> : <Square className="text-orange-500"/>}</td>
+                            <td className="p-3 font-bold">{r.name}<div className="text-xs text-blue-500">{r.phone}</div></td>
+                            <td className="p-3">{r.events?.title}</td>
+                            <td className="p-3">{r.total_price}₽</td>
+                            <td className="p-3"><button onClick={()=>del(r.id)}><Trash2 size={16} className="text-red-400"/></button></td>
                         </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {regs.map(r => (
-                            <tr key={r.id} className="hover:bg-blue-50/50 transition">
-                                <td className="p-4 cursor-pointer" onClick={()=>toggle(r.id, r.status||'new')}>
-                                    {r.status==='done' 
-                                        ? <span className="flex items-center gap-1 text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs"><CheckSquare size={14}/> Оплачено</span> 
-                                        : <span className="flex items-center gap-1 text-orange-500 font-bold bg-orange-100 px-2 py-1 rounded text-xs"><Square size={14}/> Новая</span>
-                                    }
-                                </td>
-                                <td className="p-4 text-gray-600">{r.events?.date ? new Date(r.events.date).toLocaleDateString() : '-'}</td>
-                                <td className="p-4">
-                                    <div className="font-bold text-gray-800">{r.name}</div>
-                                    <div className="text-xs text-blue-500 font-mono">{r.phone}</div>
-                                </td>
-                                <td className="p-4 text-gray-700 font-medium max-w-xs truncate" title={r.events?.title}>
-                                    {r.events?.title || <span className="text-red-400">Тур удален</span>}
-                                </td>
-                                <td className="p-4 font-bold text-teal-600">{r.total_price}₽ <span className="text-gray-400 font-normal text-xs">({r.tickets} билета)</span></td>
-                                <td className="p-4">
-                                    <button onClick={()=>del(r.id)} className="p-2 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded-lg transition">
-                                        <Trash2 size={18}/>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {regs.length === 0 && <div className="text-center py-10 text-gray-400">Заявок пока нет</div>}
-            </div>
-        </div>
-    )
-}
-   
-const CreateEventModal = ({ onClose, onRefresh, onUpload }) => {
-    const [form, setForm] = useState({ 
-        title: '', date: '', time: '08:00', location: '', guide: '',
-        price_adult: '', spots_left: 20, spots: 20, 
-        image_url: '', type: 'hiking_1',
-        duration: '', difficulty: 'средняя', description: '', route: '', included: ''
-    });
-    
-    const [uploading, setUploading] = useState(false);
-    
-    const submit = async (e) => {
-        e.preventDefault();
-        // Преобразуем included из строки в массив (через запятую)
-        const includedArray = form.included ? form.included.split(',').map(s => s.trim()) : [];
-        const dataToSend = { ...form, spots_left: form.spots, included: includedArray };
-        
-        const { error } = await supabase.from('events').insert([dataToSend]);
-        if(!error) { onRefresh(); onClose(); }
-        else alert(error.message);
-    }
-
-    const handleFile = async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        setUploading(true);
-        const { url, error } = await onUpload(file);
-        if (error) alert('Ошибка загрузки: ' + error.message);
-        else setForm({...form, image_url: url});
-        setUploading(false);
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">Новый тур</h2>
-                <form onSubmit={submit} className="space-y-3">
-                    <input className="w-full p-2 border rounded" placeholder="Название" value={form.title} onChange={e=>setForm({...form, title: e.target.value})} required/>
-                    <div className="grid grid-cols-2 gap-2">
-                        <select className="w-full p-2 border rounded bg-white" value={form.type} onChange={e=>setForm({...form, type: e.target.value})}>
-                            <option value="hiking_1">🎒 1 день</option>
-                            <option value="water">🛶 На воде</option>
-                            <option value="kids">👶 Детский</option>
-                            <option value="weekend">🏕️ Выходные</option>
-                            <option value="expedition">🏔️ Экспедиция</option>
-                        </select>
-                        <input className="w-full p-2 border rounded" placeholder="Локация" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <input type="date" className="w-full p-2 border rounded" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} required/>
-                        <input type="time" className="w-full p-2 border rounded" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
-                    </div>
-                    <input className="w-full p-2 border rounded" placeholder="Имя гида" value={form.guide} onChange={e=>setForm({...form, guide: e.target.value})} />
-                    
-                    {/* НОВЫЕ ПОЛЯ ДЛЯ ОПИСАНИЯ */}
-                    <textarea className="w-full p-2 border rounded h-24" placeholder="Описание тура..." value={form.description} onChange={e=>setForm({...form, description: e.target.value})} />
-                    <input className="w-full p-2 border rounded" placeholder="Маршрут (напр. Старт - Лес - Финиш)" value={form.route} onChange={e=>setForm({...form, route: e.target.value})} />
-                    <input className="w-full p-2 border rounded" placeholder="Включено (через запятую: Обед, Трансфер)" value={form.included} onChange={e=>setForm({...form, included: e.target.value})} />
-
-                    <div className="grid grid-cols-2 gap-2">
-                         <input className="w-full p-2 border rounded" placeholder="Длительность" value={form.duration} onChange={e=>setForm({...form, duration: e.target.value})} />
-                         <select className="w-full p-2 border rounded bg-white" value={form.difficulty} onChange={e=>setForm({...form, difficulty: e.target.value})}>
-                            <option value="легкая">Легкая</option>
-                            <option value="средняя">Средняя</option>
-                            <option value="сложная">Сложная</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                         <input type="number" className="w-full p-2 border rounded" placeholder="Цена" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
-                         <input type="number" className="w-full p-2 border rounded" placeholder="Всего мест" value={form.spots} onChange={e=>setForm({...form, spots: e.target.value})} required/>
-                    </div>
-                    
-                    <div className={`border-2 border-dashed rounded-lg p-4 text-center transition relative group overflow-hidden ${form.image_url ? 'border-teal-500 bg-teal-50' : 'border-gray-300 hover:bg-gray-50'}`}>
-                        {uploading ? <Loader className="animate-spin mx-auto text-teal-600"/> : (
-                            <>
-                                <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={handleFile}/>
-                                {form.image_url ? <img src={form.image_url} alt="Preview" className="h-32 w-full object-cover rounded"/> : <div className="text-gray-400"><ImageIcon size={24} className="mx-auto mb-2"/><span className="text-xs">Фото</span></div>}
-                            </>
-                        )}
-                    </div>
-                    
-                    <button disabled={uploading} className="w-full bg-teal-600 text-white py-3 rounded font-bold disabled:opacity-50">{uploading ? '...' : 'Создать'}</button>
-                    <button type="button" onClick={onClose} className="w-full text-gray-500 py-2">Отмена</button>
-                </form>
-            </div>
+                    ))}
+                </tbody>
+            </table>
         </div>
     )
 }
 
 // ============ ГЛАВНОЕ ПРИЛОЖЕНИЕ ============
 const TourClubWebsite = () => {
-  const { events, loading, refreshEvents, deleteEvent, bookEvent, uploadImage } = useEvents();
+  // Достаем createEvent и updateEvent из хука
+  const { events, loading, deleteEvent, bookEvent, uploadImage, createEvent, updateEvent } = useEvents();
   
-  const [selectedEvent, setSelectedEvent] = useState(null); // Текущее выбранное событие
-  
+  const [selectedEvent, setSelectedEvent] = useState(null); 
+  const [editingEvent, setEditingEvent] = useState(null); // ✅ Для редактирования
+
   // СОСТОЯНИЯ МОДАЛОК
-  const [showDetails, setShowDetails] = useState(false); // ✅ Показывать детали?
-  const [showRegModal, setShowRegModal] = useState(false); // ✅ Показывать регистрацию?
+  const [showDetails, setShowDetails] = useState(false); 
+  const [showRegModal, setShowRegModal] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false); // ✅ Одна модалка на создание/редакт
   
   const [filterType, setFilterType] = useState('all');
   const [viewMode, setViewMode] = useState(ViewModes.GRID); 
   const [language, setLanguage] = useState(Languages.RU);
   const [toast, setToast] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
   
   const [regForm, setRegForm] = useState({ name: '', phone: '', tickets: 1 });
   const [regErrors, setRegErrors] = useState({});
@@ -296,18 +126,45 @@ const TourClubWebsite = () => {
   const t = translations[language];
   const isAdmin = viewMode.startsWith('admin');
 
-  // 1. Открытие деталей (при клике на карточку)
+  // --- handlers ---
+
+  const handleCreateOrUpdate = async (formData) => {
+      if (editingEvent) {
+          // UPDATE
+          const { error } = await updateEvent(editingEvent.id, formData);
+          if (error) alert(error.message);
+          else setToast({ message: 'Тур обновлен', type: 'success' });
+      } else {
+          // CREATE
+          const { error } = await createEvent(formData);
+          if (error) alert(error.message);
+          else setToast({ message: 'Тур создан', type: 'success' });
+      }
+      setShowFormModal(false);
+      setEditingEvent(null);
+  }
+
+  const openEditModal = (event, e) => {
+      e.stopPropagation(); // Чтобы не открылась карточка деталей
+      setEditingEvent(event);
+      setShowFormModal(true);
+  };
+
+  const openCreateModal = () => {
+      setEditingEvent(null);
+      setShowFormModal(true);
+  };
+
   const openDetails = (event) => {
       setSelectedEvent(event);
       setShowDetails(true);
   };
 
-  // 2. Переход от деталей к регистрации
   const openRegistration = () => {
-      setShowDetails(false); // Закрываем детали
+      setShowDetails(false); 
       setRegForm({name:'', phone:'', tickets:1}); 
       setRegErrors({});
-      setShowRegModal(true); // Открываем форму
+      setShowRegModal(true); 
   };
 
   const handleRegister = async (e) => {
@@ -396,7 +253,7 @@ const TourClubWebsite = () => {
                     </div>
                 )}
                 {isAdmin && (
-                    <button onClick={()=>setShowCreate(true)} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2 transition"><Plus/> {t.admin.add}</button>
+                    <button onClick={openCreateModal} className="w-full py-4 mb-6 border-2 border-dashed border-blue-300 text-blue-500 rounded-2xl font-bold hover:bg-blue-50 flex items-center justify-center gap-2 transition"><Plus/> {t.admin.add}</button>
                 )}
                 {loading ? (
                     <div className="flex justify-center py-20"><Loader className="animate-spin text-teal-600" size={40}/></div>
@@ -408,7 +265,10 @@ const TourClubWebsite = () => {
                                     <div key={event.id} className="relative group">
                                         <EventCard event={event} onSelect={openDetails} index={idx} t={t} />
                                         {isAdmin && (
-                                            <button onClick={(e)=>{e.stopPropagation(); handleDelete(event.id);}} className="absolute top-2 right-2 bg-white p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition shadow-lg z-10 hover:bg-red-50"><Trash2 size={20}/></button>
+                                            <div className="absolute top-2 right-2 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition">
+                                                <button onClick={(e)=>openEditModal(event, e)} className="bg-white p-2 rounded-full text-blue-500 shadow-lg hover:bg-blue-50"><Edit size={20}/></button>
+                                                <button onClick={(e)=>{e.stopPropagation(); handleDelete(event.id);}} className="bg-white p-2 rounded-full text-red-500 shadow-lg hover:bg-red-50"><Trash2 size={20}/></button>
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -425,9 +285,17 @@ const TourClubWebsite = () => {
 
       {/* МОДАЛКИ */}
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={()=>{setShowLogin(false); setViewMode('admin_tours');}} />}
-      {showCreate && <CreateEventModal onClose={()=>setShowCreate(false)} onRefresh={refreshEvents} onUpload={uploadImage} />}
       
-      {/* 1. ДЕТАЛИ ТУРА */}
+      {/* 3. ОБЩАЯ ФОРМА ДЛЯ СОЗДАНИЯ И РЕДАКТИРОВАНИЯ */}
+      {showFormModal && (
+          <EventFormModal 
+            onClose={()=>{setShowFormModal(false); setEditingEvent(null);}} 
+            onSubmit={handleCreateOrUpdate} 
+            onUpload={uploadImage}
+            initialData={editingEvent} // Передаем данные для редактирования
+          />
+      )}
+
       {showDetails && selectedEvent && (
           <EventDetailsModal 
             event={selectedEvent} 
@@ -437,14 +305,12 @@ const TourClubWebsite = () => {
           />
       )}
 
-      {/* 2. РЕГИСТРАЦИЯ */}
       {showRegModal && selectedEvent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={()=>setShowRegModal(false)}>
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onClick={e=>e.stopPropagation()}>
                 <button onClick={()=>setShowRegModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24}/></button>
                 <h2 className="text-xl font-bold mb-1 pr-8 text-gray-500">Регистрация</h2>
                 <h3 className="text-2xl font-bold mb-4">{selectedEvent.title}</h3>
-                
                 <form onSubmit={handleRegister} className="space-y-4">
                     <div><label className="text-sm font-bold text-gray-700 block mb-1">{t.form.name}</label><input value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.name ? 'border-red-500' : 'border-gray-200'}`}/>{regErrors.name && <p className="text-red-500 text-xs mt-1">{regErrors.name}</p>}</div>
                     <div><label className="text-sm font-bold text-gray-700 block mb-1">{t.form.phone}</label><input type="tel" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone: e.target.value})} className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition ${regErrors.phone ? 'border-red-500' : 'border-gray-200'}`}/>{regErrors.phone && <p className="text-red-500 text-xs mt-1">{regErrors.phone}</p>}</div>
