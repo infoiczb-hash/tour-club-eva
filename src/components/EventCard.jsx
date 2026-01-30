@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Sparkles, Clock, User, Award } from 'lucide-react';
+import { Calendar, MapPin, Sparkles, User } from 'lucide-react';
+import Button from './ui/Button'; // ✅ Импортируем умную кнопку
 
 const EventCard = ({ event, onSelect, index, t }) => {
   const [hover, setHover] = useState(false);
   
-  // Цвета для сложности
   const diffColors = { 
       'легкая': 'bg-green-100 text-green-800 border-green-300', 
       'средняя': 'bg-yellow-100 text-yellow-800 border-yellow-300', 
       'сложная': 'bg-red-100 text-red-800 border-red-300' 
   };
 
-  // Цвета для наших типов (адаптировано под новый дизайн)
   const typeColors = { 
       'water': 'from-blue-500 to-cyan-500', 
       'hiking_1': 'from-green-500 to-emerald-500', 
       'weekend': 'from-orange-500 to-red-500',
       'kids': 'from-yellow-400 to-orange-500',
       'expedition': 'from-indigo-600 to-purple-600',
-      // Fallback
       'hiking': 'from-green-500 to-emerald-500',
       'rafting': 'from-blue-500 to-cyan-500'
   };
 
-  // Расчет процента заполненности
   const spotsTotal = event.spots || 20;
   const pct = ((event.spotsLeft / spotsTotal) * 100).toFixed(0);
   
@@ -34,7 +31,6 @@ const EventCard = ({ event, onSelect, index, t }) => {
         onMouseEnter={() => setHover(true)} 
         onMouseLeave={() => setHover(false)}
     >
-      {/* Изображение и бейджи */}
       <div className="relative h-56 overflow-hidden shrink-0">
         <img 
             src={event.image || 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d'} 
@@ -43,12 +39,10 @@ const EventCard = ({ event, onSelect, index, t }) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
         
-        {/* Тип тура (Градиентный бейдж) */}
         <div className={`absolute top-4 left-4 bg-gradient-to-r ${typeColors[event.type] || typeColors.hiking} text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg uppercase tracking-wider transform transition-transform ${hover ? 'scale-105' : 'scale-100'}`}>
             {t.filters[event.type] || event.type}
         </div>
 
-        {/* Индикатор мест (Пульсирующий) */}
         <div className="absolute top-4 right-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-full shadow-lg">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full animate-pulse ${pct > 50 ? 'bg-green-500' : pct > 20 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
@@ -56,7 +50,6 @@ const EventCard = ({ event, onSelect, index, t }) => {
           </div>
         </div>
 
-        {/* Бейдж "Последние места" */}
         {event.spotsLeft <= 5 && event.spotsLeft > 0 && (
             <div className="absolute bottom-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-bounce shadow-lg">
                 🔥 Осталось мало мест!
@@ -64,13 +57,11 @@ const EventCard = ({ event, onSelect, index, t }) => {
         )}
       </div>
 
-      {/* Контент карточки */}
       <div className="p-5 flex flex-col flex-grow">
         <h3 className="text-lg font-bold text-gray-800 mb-3 group-hover:text-teal-600 transition-colors line-clamp-1">
             {event.title}
         </h3>
         
-        {/* Инфо-строки */}
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-3 text-gray-600">
               <Calendar size={18} className="text-teal-500 shrink-0" />
@@ -91,7 +82,6 @@ const EventCard = ({ event, onSelect, index, t }) => {
           </div>
         </div>
 
-        {/* Сложность и Цена */}
         <div className="flex justify-between items-center mb-4 mt-auto">
              <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${diffColors[event.difficulty] || 'bg-gray-100 text-gray-600'}`}>
                 {(event.difficulty || 'Средняя').toUpperCase()}
@@ -104,7 +94,6 @@ const EventCard = ({ event, onSelect, index, t }) => {
              </div>
         </div>
 
-        {/* Прогресс бар мест */}
         <div className="mb-5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
              <div 
                 className={`h-full transition-all duration-1000 ${pct > 50 ? 'bg-gradient-to-r from-green-400 to-green-600' : pct > 20 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-red-400 to-red-600'}`} 
@@ -112,14 +101,11 @@ const EventCard = ({ event, onSelect, index, t }) => {
              ></div>
         </div>
 
-        {/* Кнопка */}
-        <button 
-            onClick={() => onSelect(event)} 
-            className="w-full bg-gradient-to-r from-teal-600 to-blue-600 text-white py-3 rounded-xl font-bold hover:from-teal-700 hover:to-blue-700 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-teal-200/50 flex items-center justify-center gap-2"
-        >
-          <Sparkles size={18} />
-          {t.event.registerBtn}
-        </button>
+        {/* Используем Button из UI */}
+        <Button onClick={() => onSelect(event)} className="w-full">
+            <Sparkles size={18} />
+            {t.event.registerBtn}
+        </Button>
       </div>
     </article>
   );
