@@ -1,17 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { Loader, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader, Image as ImageIcon, Bold, Smile } from 'lucide-react';
 import Button from './ui/Button';
 
-// Поле ввода (вынесено наружу, чтобы не терялся фокус)
 const Input = ({ label, ...props }) => (
     <div>
-        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">{label}</label>
-        <input className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition text-sm font-medium" {...props} />
+        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1 tracking-wider">{label}</label>
+        <input className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition text-sm font-medium" {...props} />
     </div>
 );
 
+// ✅ НОВЫЙ КОМПОНЕНТ: Текстовое поле с кнопками
+const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }) => {
+    const textareaRef = useRef(null);
+
+    // Функция вставки жирного текста
+    const addBold = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = value.substring(start, end);
+        
+        // Оборачиваем выделенное в **...**
+        const newText = value.substring(0, start) + `**${selectedText || 'жирный текст'}**` + value.substring(end);
+        
+        // Обновляем текст
+        // Эмулируем событие change, чтобы React понял обновление
+        const event = { target: { value: newText } };
+        onChange(event);
+
+        // Возвращаем фокус
+        setTimeout(() => textarea.focus(), 0);
+    };
+
+    // Функция вставки смайлика
+    const addEmoji = (emoji) => {
+        const newText = value + emoji;
+        const event = { target: { value: newText } };
+        onChange(event);
+    };
+
+    return (
+        <div>
+            <div className="flex justify-between items-end mb-1 ml-1">
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">{label}</label>
+                
+                {/* ПАНЕЛЬ ИНСТРУМЕНТОВ */}
+                <div className="flex gap-2">
+                    <button type="button" onClick={addBold} className="p-1 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold flex items-center gap-1 px-2" title="Жирный">
+                        <Bold size={12}/> Жирный
+                    </button>
+                    <div className="flex gap-1">
+                        {['🔥', '✨', '🛶', '🎒', '🏕️'].map(emo => (
+                            <button key={emo} type="button" onClick={() => addEmoji(emo)} className="p-1 hover:bg-gray-100 rounded text-sm transition">
+                                {emo}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <textarea 
+                ref={textareaRef}
+                className={`w-full p-3 border border-gray-200 rounded-xl ${height} text-sm focus:ring-2 focus:ring-teal-500 outline-none transition`} 
+                value={value} 
+                onChange={onChange}
+                placeholder={placeholder}
+            />
+        </div>
+    );
+};
+
 const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => {
-    // Полный стейт со всеми полями
     const defaultState = { 
         title: '', subtitle: '', 
         type: 'hiking_1', label: '',
@@ -34,7 +94,7 @@ const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => 
         if (initialData) {
             let faqText = '';
             if (initialData.faq && Array.isArray(initialData.faq)) {
-                faqText = initialData.faq.map(item => `В: ${item.q}\nO: ${item.a}`).join('\n\n');
+                faqText = initialData.faq.map(item => `В: ${item.q}\nО: ${item.a}`).join('\n\n');
             }
             setForm({
                 ...defaultState,
@@ -54,13 +114,11 @@ const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => 
         e.preventDefault();
         const data = { ...form };
         
-        // 1. Превращаем списки в массивы
         data.included = form.included.split('\n').map(s=>s.trim()).filter(Boolean);
         data.additional_expenses = form.additional_expenses.split('\n').map(s=>s.trim()).filter(Boolean);
         
-        // 2. Обрабатываем FAQ
         const faqArray = [];
-        const blocks = form.faq.split('\n\n');
+        const blocks = form.faq.split(/\n\n+/); 
         blocks.forEach(block => {
             const lines = block.split('\n');
             if(lines.length >= 2) {
@@ -71,15 +129,13 @@ const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => 
         });
         data.faq = faqArray;
 
-        // 🔥 ВАЖНО: Очистка пустых полей дат (чтобы не было ошибки SQL)
         if (data.end_date === '') data.end_date = null;
         if (data.end_time === '') data.end_time = null;
         if (data.meeting_point === '') data.meeting_point = null;
         if (data.route === '') data.route = null;
-        if (data.price_child === '') data.price_child = 0;
-        if (data.price_family === '') data.price_family = 0;
+        if (!data.price_child) data.price_child = 0;
+        if (!data.price_family) data.price_family = 0;
 
-        // Чистим мусор
         delete data.price; delete data.priceOld; delete data.spotsLeft; delete data.image; delete data.id; delete data.additionalExpenses;
         
         if (!isEditMode) data.spots_left = form.spots;
@@ -112,10 +168,12 @@ const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => 
                     {/* 1. ГЛАВНОЕ */}
                     <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <Input label="Название (Заголовок)" placeholder="Сплав на байдарках" value={form.title} onChange={e=>setForm({...form, title: e.target.value})} required/>
+                        <Input label="Краткое описание (Подзаголовок)" placeholder="2-3 строки..." value={form.subtitle} onChange={e=>setForm({...form, subtitle: e.target.value})} />
+                        
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Тип</label>
-                                <select className="w-full p-3 border border-gray-200 rounded-xl bg-white" value={form.type} onChange={e=>setForm({...form, type: e.target.value})}>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1 tracking-wider">Тип</label>
+                                <select className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm" value={form.type} onChange={e=>setForm({...form, type: e.target.value})}>
                                     <option value="hiking_1">🎒 Поход 1 день</option>
                                     <option value="water">🛶 Сплав</option>
                                     <option value="weekend">🏕️ Выходные</option>
@@ -123,10 +181,9 @@ const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => 
                                     <option value="expedition">🏔️ Экспедиция</option>
                                 </select>
                             </div>
-                            {/* ✅ ВЕРНУЛИ ВЫПАДАЮЩИЙ СПИСОК МЕТОК */}
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Метка (на фото)</label>
-                                <select className="w-full p-3 border border-gray-200 rounded-xl bg-white" value={form.label} onChange={e=>setForm({...form, label: e.target.value})}>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1 tracking-wider">Метка</label>
+                                <select className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm" value={form.label} onChange={e=>setForm({...form, label: e.target.value})}>
                                     <option value="">(Нет)</option>
                                     <option value="эксклюзив">🔥 Эксклюзив</option>
                                     <option value="новинка">✨ Новинка</option>
@@ -140,69 +197,63 @@ const EventFormModal = ({ onClose, onSubmit, onUpload, initialData = null }) => 
                     {/* 2. ЛОГИСТИКА */}
                     <div className="space-y-3">
                         <h3 className="text-sm font-bold text-teal-700 uppercase">Логистика</h3>
-                        
-                        {/* Старт */}
                         <div className="grid grid-cols-2 gap-3">
                              <Input label="Дата старта" type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} required/>
                              <Input label="Время сбора" type="time" value={form.time} onChange={e=>setForm({...form, time: e.target.value})}/>
                         </div>
-
-                        {/* ✅ ВЕРНУЛИ ДАТУ ОКОНЧАНИЯ */}
                         <div className="grid grid-cols-2 gap-3 bg-gray-50 p-2 rounded-xl border border-gray-100">
-                             <Input label="Дата окончания (необязательно)" type="date" value={form.end_date || ''} onChange={e=>setForm({...form, end_date: e.target.value})}/>
-                             <Input label="Время окончания (необязательно)" type="time" value={form.end_time || ''} onChange={e=>setForm({...form, end_time: e.target.value})}/>
+                             <Input label="Дата окончания" type="date" value={form.end_date || ''} onChange={e=>setForm({...form, end_date: e.target.value})}/>
+                             <Input label="Время окончания" type="time" value={form.end_time || ''} onChange={e=>setForm({...form, end_time: e.target.value})}/>
                         </div>
-                        
-                        {/* Локации */}
                         <div className="grid grid-cols-2 gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
-                            <Input label="Локация (Куда едем?)" placeholder="напр. Старый Орхей" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
-                            <Input label="Место сбора (Где встреча?)" placeholder="напр. Цирк" value={form.meeting_point} onChange={e=>setForm({...form, meeting_point: e.target.value})}/>
+                            <Input label="Локация (Куда?)" placeholder="Старый Орхей" value={form.location} onChange={e=>setForm({...form, location: e.target.value})} required/>
+                            <Input label="Место сбора (Где?)" placeholder="Цирк" value={form.meeting_point} onChange={e=>setForm({...form, meeting_point: e.target.value})}/>
                         </div>
-
                         <div className="grid grid-cols-2 gap-3">
                              <Input label="Длительность" placeholder="4 часа" value={form.duration} onChange={e=>setForm({...form, duration: e.target.value})}/>
                              <Input label="Дистанция" placeholder="15 км" value={form.distance} onChange={e=>setForm({...form, distance: e.target.value})}/>
                         </div>
-
-                        <Input label="Маршрут (кратко)" placeholder="Тирасполь -> Бендеры -> Тирасполь" value={form.route} onChange={e=>setForm({...form, route: e.target.value})}/>
+                        <Input label="Маршрут (кратко)" placeholder="Тирасполь -> Бендеры" value={form.route} onChange={e=>setForm({...form, route: e.target.value})}/>
                     </div>
 
                     {/* 3. ДЕНЬГИ */}
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
                         <h3 className="text-sm font-bold text-teal-700 uppercase">Стоимость</h3>
                         <div className="grid grid-cols-2 gap-3">
-                             <Input label="Цена Взрослый" type="number" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
-                             <Input label="Старая цена (зачеркнута)" type="number" value={form.price_old} onChange={e=>setForm({...form, price_old: e.target.value})}/>
+                             <Input label="Взрослый" type="number" value={form.price_adult} onChange={e=>setForm({...form, price_adult: e.target.value})} required/>
+                             <Input label="Старая цена" type="number" value={form.price_old} onChange={e=>setForm({...form, price_old: e.target.value})}/>
                         </div>
-                        {/* ✅ ВЕРНУЛИ ЦЕНЫ ДЛЯ ДЕТЕЙ И СЕМЬИ */}
                         <div className="grid grid-cols-2 gap-3">
-                             <Input label="Цена Детский" type="number" value={form.price_child} onChange={e=>setForm({...form, price_child: e.target.value})}/>
-                             <Input label="Цена Семейный" type="number" value={form.price_family} onChange={e=>setForm({...form, price_family: e.target.value})}/>
+                             <Input label="Детский" type="number" value={form.price_child} onChange={e=>setForm({...form, price_child: e.target.value})}/>
+                             <Input label="Семейный" type="number" value={form.price_family} onChange={e=>setForm({...form, price_family: e.target.value})}/>
                         </div>
                         <Input label="Всего мест" type="number" value={form.spots} onChange={e=>setForm({...form, spots: e.target.value})} required/>
                     </div>
 
-                    {/* 4. КОНТЕНТ */}
+                    {/* 4. КОНТЕНТ С КНОПКАМИ */}
                     <div className="space-y-4">
+                        <Input label="Включено (Enter - новая строка)" value={form.included} onChange={e=>setForm({...form, included: e.target.value})} />
+                        <Input label="Доп. расходы (Enter - новая строка)" value={form.additional_expenses} onChange={e=>setForm({...form, additional_expenses: e.target.value})} />
+                        
+                        {/* ✅ УЛУЧШЕННОЕ ПОЛЕ ОПИСАНИЯ */}
+                        <RichTextarea 
+                            label="Описание" 
+                            value={form.description} 
+                            onChange={e=>setForm({...form, description: e.target.value})} 
+                            placeholder="Выделите текст и нажмите 'Жирный'..."
+                        />
+                        
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Включено (Enter - новая строка)</label>
-                            <textarea className="w-full p-3 border border-gray-200 rounded-xl h-24 text-sm" value={form.included} onChange={e=>setForm({...form, included: e.target.value})} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Доп. расходы</label>
-                            <textarea className="w-full p-3 border border-gray-200 rounded-xl h-20 text-sm" value={form.additional_expenses} onChange={e=>setForm({...form, additional_expenses: e.target.value})} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Описание</label>
-                            <textarea className="w-full p-3 border border-gray-200 rounded-xl h-32 text-sm" value={form.description} onChange={e=>setForm({...form, description: e.target.value})} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Программа (Каждый пункт с новой строки)</label>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1 tracking-wider">Программа</label>
                             <textarea className="w-full p-3 border border-gray-200 rounded-xl h-32 text-sm" value={form.program} onChange={e=>setForm({...form, program: e.target.value})} />
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">FAQ (Вопрос - Enter - Ответ)</label>
-                            <textarea className="w-full p-3 border border-gray-200 rounded-xl h-32 text-sm font-mono" placeholder="В: Вопрос...&#10;О: Ответ...&#10;&#10;В: Вопрос 2..." value={form.faq} onChange={e=>setForm({...form, faq: e.target.value})} />
+                        
+                        <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                            <label className="block text-[10px] font-bold text-amber-700 uppercase mb-1 ml-1 tracking-wider">FAQ</label>
+                            <textarea className="w-full p-3 border border-amber-200 rounded-xl h-32 text-sm font-mono bg-white" 
+                                placeholder="В: Нужна виза?&#10;О: Нет.&#10;&#10;В: Что брать?&#10;О: Рюкзак." 
+                                value={form.faq} onChange={e=>setForm({...form, faq: e.target.value})} 
+                            />
                         </div>
                     </div>
 
