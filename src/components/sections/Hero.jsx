@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'; 
 import { Sparkles, Settings, X } from 'lucide-react';
 import LanguageSwitcher from '../LanguageSwitcher';
 import { motion } from "framer-motion"; 
