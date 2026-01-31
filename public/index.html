@@ -18,16 +18,31 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              // Основной текст
+              sans: ['Onest', 'sans-serif'],
+              // Акцентный заголовочный шрифт (Oswald)
+              condensed: ['Oswald', 'sans-serif'], 
+            },
+            colors: {
+              // Здесь можно будет добавить свои цвета, если понадобятся
+            }
+          }
+        }
+      }
+    </script>
     <style>
       body {
+        /* font-family теперь управляется через Tailwind, но базовый сброс оставим */
         font-family: 'Onest', sans-serif;
         background-color: #f8fafc;
         color: #0f172a;
       }
-      .font-condensed {
-        font-family: 'Oswald', sans-serif !important;
-        text-transform: uppercase; 
-      }
+
       /* Скроллбар */
       .custom-scrollbar::-webkit-scrollbar { width: 6px; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
