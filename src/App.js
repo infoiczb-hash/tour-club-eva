@@ -17,12 +17,12 @@ import CalendarView from './components/CalendarView';
 import EventFormModal from './components/EventFormModal';
 import TourPage from './components/TourPage';
 
-// SECTIONS (Импортируем блоки лендинга)
+// SECTIONS
 import Hero from './components/sections/Hero';
-import GuidesSection from './components/sections/Guides'; // Гиды
-import Reviews from './components/sections/Reviews'; // Отзывы
-import Footer from './components/sections/Footer'; // Футер
- 
+import GuidesSection from './components/sections/Guides'; // ✅ Гиды подключены
+import Footer from './components/sections/Footer'; 
+// ❌ Reviews (Отзывы) пока убрали, чтобы не было ошибки
+
 // ============ CONSTANTS & TRANSLATIONS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
 const Languages = { RU: 'ru', EN: 'en', RO: 'ro' };
@@ -66,7 +66,7 @@ const HomePage = ({
  
     return (
         <>
-            {/* 1. HERO SECTION (Главный экран) */}
+            {/* 1. HERO SECTION */}
             <Hero 
                 isAdmin={isAdmin}
                 t={t}
@@ -76,17 +76,13 @@ const HomePage = ({
                 setViewMode={setViewMode}
             />
 
-            {/* 2. GUIDES SECTION (Гиды) - Добавлено! */}
+            {/* 2. GUIDES SECTION (Гиды) */}
+            {/* Теперь это единственный добавленный блок, ошибок быть не должно */}
             <GuidesSection />
 
-            {/* 3. REVIEWS SECTION (Отзывы) - Добавлено! */}
-            {/* Убедись, что создал файл Reviews.jsx, иначе закомментируй эту строку */}
-            <Reviews />
-
-            {/* 4. MAIN CONTENT (Список туров) */}
+            {/* 3. MAIN CONTENT (Список туров) */}
             <main className="max-w-7xl mx-auto px-4 py-16 min-h-[50vh]">
                 
-                {/* Заголовок перед турами */}
                 {!isAdmin && (
                     <div className="mb-8 text-center md:text-left">
                         <span className="text-teal-600 font-bold tracking-widest uppercase text-xs mb-2 block">
@@ -98,7 +94,6 @@ const HomePage = ({
                     </div>
                 )}
 
-                {/* Filters & View Toggle */}
                 {!isAdmin && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
@@ -131,7 +126,6 @@ const HomePage = ({
                     </div>
                 )}
  
-                {/* Admin: Add Button */}
                 {isAdmin && (
                     <Button 
                         onClick={openCreateModal} 
@@ -141,7 +135,6 @@ const HomePage = ({
                     </Button>
                 )}
  
-                {/* Content Grid/Calendar */}
                 {loading ? <SkeletonGrid /> : (
                     <>
                         {viewMode === ViewModes.GRID || isAdmin ? (
@@ -178,7 +171,7 @@ const HomePage = ({
                 )}
             </main>
 
-            {/* 5. FOOTER SECTION (Футер) */}
+            {/* 4. FOOTER SECTION */}
             <Footer />
         </>
     );
