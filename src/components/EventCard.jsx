@@ -1,140 +1,115 @@
-import React, { useState } from 'react';
-import { MapPin, ArrowRight, Calendar } from 'lucide-react';
+import React from 'react';
+import { Calendar, Clock, MapPin, Users, ArrowRight, Zap } from 'lucide-react';
 
-const EventCard = ({ event, onSelect, index, t }) => {
-  const [hover, setHover] = useState(false);
+// Настройка цветов для сложности
+const difficultyConfig = {
+  easy: { color: 'bg-green-500', label: 'Легкий' },
+  medium: { color: 'bg-yellow-500', label: 'Средний' },
+  hard: { color: 'bg-orange-500', label: 'Сложный' },
+  expert: { color: 'bg-red-600', label: 'Экстремальный' },
+  // Значение по умолчанию
+  default: { color: 'bg-slate-500', label: 'Обычный' }
+};
 
-  // --- ДАТЫ ---
-  const dateObj = new Date(event.date);
-  const day = dateObj.getDate().toString().padStart(2, '0');
-  const month = dateObj.toLocaleString('ru-RU', { month: 'short' }).replace('.', '');
+const EventCard = ({ event, onSelect, t }) => {
+  // Деструктуризация данных события
+  const { title, date, price, image, spotsLeft, difficulty, type, duration, location } = event;
   
-  // Формируем строку для зеленой полоски внизу: "06 мар 07:00"
-  const dateString = `${day} ${month} ${event.time?.slice(0,5)}`;
+  // Определяем настройки сложности
+  const diff = difficultyConfig[difficulty] || difficultyConfig.default;
 
-  // --- ЦВЕТА КАТЕГОРИЙ (ВЕРХ СЛЕВА) ---
-  const typeColors = {
-      'water': 'bg-blue-500',
-      'hiking_1': 'bg-green-600',
-      'kids': 'bg-yellow-500 text-black',
-      'weekend': 'bg-orange-500',
-      'expedition': 'bg-indigo-600',
-      'default': 'bg-teal-600'
-  };
-  const currentTypeColor = typeColors[event.type] || typeColors.default;
-
-  // --- ЦВЕТА МЕТОК (НИЗ СЛЕВА) ---
-  const labelColors = {
-      'эксклюзив': 'bg-[#D946EF]',
-      'новинка': 'bg-emerald-500',
-      'топ': 'bg-red-500',
-      'хит': 'bg-orange-500',
-      'для новичков': 'bg-cyan-500'
-  };
-  const labelBg = labelColors[event.label?.toLowerCase()] || 'bg-gray-800';
+  // Форматируем дату (например: "6 марта")
+  const dateObj = new Date(date);
+  const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
   return (
-    <article 
-        className="bg-white rounded-[24px] shadow-lg hover:shadow-2xl transition-all duration-500 group flex flex-col h-full relative transform hover:-translate-y-1 font-sans border border-gray-100 overflow-hidden"
-        onMouseEnter={() => setHover(true)} 
-        onMouseLeave={() => setHover(false)}
-        style={{ animationDelay: `${index * 100}ms` }} 
+    <div
+      onClick={() => onSelect(event)}
+      className="group relative flex flex-col h-full bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-teal-900/10 transition-all duration-500 hover:-translate-y-1 cursor-pointer select-none"
     >
-      {/* ================= ФОТО (Кликабельно) ================= */}
-      <div 
-        onClick={() => onSelect(event)}
-        className="relative h-64 shrink-0 cursor-pointer"
-      >
-        <img 
-            src={event.image} 
-            alt={event.title} 
-            className={`w-full h-full object-cover transition-transform duration-700 ${hover ? 'scale-110' : 'scale-100'}`} 
+      {/* 1. БЛОК С ФОТО (Эффекты) */}
+      <div className="relative h-72 overflow-hidden">
+        {/* Картинка с зумом при наведении */}
+        <img
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
-        {/* 1. СЛЕВА СВЕРХУ: Вид тура */}
-        <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-lg text-white text-[11px] font-bold uppercase tracking-wider shadow-md ${currentTypeColor}`}>
-            {t.filters[event.type] || event.type}
+        {/* Градиент снизу для читаемости текста */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
+
+        {/* ТЕГ: Категория (Слева сверху) */}
+        <div className="absolute top-4 left-4">
+            <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest rounded-full text-slate-800 shadow-sm border border-white/20">
+                {t?.filters?.[type] || type}
+            </span>
         </div>
 
-        {/* 2. СПРАВА СВЕРХУ: Зеленый квадрат (СВИСАЕТ) */}
-        {/* Изменено: top-0, rounded-b-[16px], убрана рамка */}
-        <div className="absolute top-0 right-6 bg-[#2E8B57] text-white rounded-b-[16px] shadow-md flex flex-col items-center justify-center w-12 h-14 pt-1 z-20">
-            <span className="text-xl font-bold font-condensed leading-none mt-0.5">{day}</span>
-            <span className="text-[10px] font-bold uppercase leading-none mb-1 opacity-90">{month}</span>
-        </div>
-
-        {/* 3. СЛЕВА ВНИЗУ: Метка */}
-        {event.label && (
-             <div className={`absolute bottom-4 left-4 px-3 py-1 rounded-md text-white text-[10px] font-bold uppercase tracking-wider shadow-lg ${labelBg}`}>
-                 {event.label}
-             </div>
+        {/* ТЕГ: Горящие места (Справа сверху) */}
+        {spotsLeft <= 5 && (
+            <div className="absolute top-4 right-4">
+                <span className="flex items-center gap-1 px-3 py-1.5 bg-rose-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg shadow-rose-500/20 animate-pulse">
+                    <Zap className="w-3 h-3 fill-current" />
+                    Осталось {spotsLeft}
+                </span>
+            </div>
         )}
 
-        {/* 4. СПРАВА ВНИЗУ: Осталось мест (ПОЛНЫЙ ТЕКСТ) */}
-        <div className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-            <div className={`w-1.5 h-1.5 rounded-full ${event.spotsLeft > 5 ? 'bg-green-400' : 'bg-red-500 animate-pulse'}`}></div>
-            {/* Изменено: Полный текст "Осталось X мест" */}
-            <span className="text-[10px] font-bold text-white uppercase tracking-wide">
-                Осталось {event.spotsLeft} мест
-            </span>
+        {/* ТЕГ: Сложность (Снизу слева) */}
+        <div className="absolute bottom-4 left-4">
+             <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-sm backdrop-blur-md bg-black/40 border border-white/10`}>
+                <span className={`w-2 h-2 rounded-full ${diff.color}`} />
+                {diff.label}
+             </span>
         </div>
       </div>
 
-      {/* ================= КОНТЕНТ ================= */}
-      <div className="px-5 pb-5 pt-3 flex flex-col flex-grow bg-white relative">
+      {/* 2. КОНТЕНТ (Чистый дизайн) */}
+      <div className="flex flex-col flex-grow p-7 relative">
         
-        {/* Локация */}
-        <div className="flex items-center gap-1.5 text-gray-400 text-[12px] font-bold uppercase tracking-wide mb-2">
-            <MapPin size={14} className="text-teal-600"/>
-            <span className="truncate">{event.location}</span>
+        {/* Инфо: Дата и Локация */}
+        <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+            <div className="flex items-center gap-1.5 text-teal-600 bg-teal-50 px-2 py-1 rounded-lg">
+                <Calendar className="w-3.5 h-3.5" />
+                {dateStr}
+            </div>
+            {location && (
+                <div className="flex items-center gap-1.5 line-clamp-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {location}
+                </div>
+            )}
         </div>
 
         {/* Заголовок */}
-        <h3 className="text-2xl font-condensed font-bold text-[#0F172A] uppercase leading-tight mb-2 group-hover:text-teal-600 transition-colors">
-            {event.title}
+        <h3 className="text-2xl font-condensed font-bold text-slate-900 uppercase leading-none mb-2 group-hover:text-teal-600 transition-colors">
+            {title}
         </h3>
+        
+        {/* Длительность (если есть) */}
+        {duration && (
+            <p className="text-sm text-slate-500 font-medium mb-6">
+                Длительность: {duration}
+            </p>
+        )}
 
-        {/* Подзаголовок */}
-        <p className="text-sm text-gray-500 font-light leading-snug mb-4 line-clamp-3">
-            {event.subtitle || event.description || 'Описание уточняется...'}
-        </p>
-        
-        {/* ЗЕЛЕНАЯ ПОЛОСКА (Только дата и время) */}
-        {/* Изменено: mb-5 -> mb-2 (уменьшен отступ), убрана длительность */}
-        <div className="mt-auto mb-2 bg-[#2E8B57]/10 border border-[#2E8B57]/20 text-[#2E8B57] py-1.5 px-3 rounded-lg flex items-center gap-2 text-[13px] font-bold w-fit">
-            <Calendar size={15} />
-            <span>{dateString}</span>
-        </div>
-        
-        {/* ФУТЕР */}
-        <div className="flex items-end justify-between border-t border-gray-50 pt-3 mt-1">
-            
-            {/* Цена */}
-            <div className="flex flex-col justify-center">
-                <div className="flex items-baseline gap-1.5">
-                    <span className="text-[11px] text-gray-400 font-bold uppercase">от</span>
-                    <span className="text-3xl font-condensed font-bold text-[#2E8B57] leading-none">
-                        {event.price.adult} ₽
-                    </span>
-                </div>
-                 {event.priceOld && (
-                    <span className="text-xs text-gray-300 line-through font-medium ml-4">
-                        {event.priceOld} ₽
-                    </span>
-                )}
+        {/* НИЗ: Цена и Кнопка */}
+        <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
+            <div className="flex flex-col">
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-0.5">Стоимость</span>
+                <span className="text-xl md:text-2xl font-condensed font-bold text-slate-900">
+                    {price.adult} <span className="text-sm text-slate-400 font-normal">MDL</span>
+                </span>
             </div>
 
-            {/* Кнопка */}
-            <button 
-                onClick={() => onSelect(event)}
-                className="w-11 h-11 rounded-full bg-[#117CA6] text-white flex items-center justify-center shadow-md hover:bg-[#0D6587] hover:scale-105 transition-all active:scale-95 cursor-pointer"
-            >
-                <ArrowRight size={22} strokeWidth={2.5} />
+            {/* Активная кнопка со стрелкой */}
+            <button className="w-12 h-12 rounded-2xl bg-slate-100 group-hover:bg-teal-600 flex items-center justify-center transition-all duration-300 group-hover:shadow-lg group-hover:shadow-teal-600/30 group-hover:-rotate-45">
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
             </button>
         </div>
       </div>
-    </article>
+    </div>
   );
 };
 
