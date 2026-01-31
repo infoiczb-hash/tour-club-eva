@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react'; 
+import React, { useState, useMemo } from 'react';  
 import { Routes, Route, useNavigate } from 'react-router-dom'; 
 import { 
   CalendarDays, Grid, Plus, Trash2, X, Edit 
 } from 'lucide-react';
-import { useEvents } from './lib/hooks';
+import { useEvents } from './lib/hooks'; 
  
 // UX Components
 import Button from './components/ui/Button';
