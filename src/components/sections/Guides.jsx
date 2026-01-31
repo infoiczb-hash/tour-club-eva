@@ -31,7 +31,7 @@ const guides = [
   },
  ]
 
-export function GuidesSection() {
+export default function GuidesSection() {
   const [selectedGuide, setSelectedGuide] = useState(null)
   const [hoveredCard, setHoveredCard] = useState(null)
 
