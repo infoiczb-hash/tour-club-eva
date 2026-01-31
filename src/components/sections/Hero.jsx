@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Settings, X } from 'lucide-react';
 import LanguageSwitcher from '../LanguageSwitcher';
+import { motion } from "framer-motion"; 
 
 const Hero = ({ isAdmin, t, language, setLanguage, setShowLogin, setViewMode }) => {
   return (
@@ -35,9 +36,14 @@ const Hero = ({ isAdmin, t, language, setLanguage, setShowLogin, setViewMode }) 
         </div>
       </div>
 
-      {/* Hero Content */}
+     {/* Hero Content */}
       <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex flex-col justify-center text-left">
-        <div className="max-w-3xl">
+        <motion.div 
+           initial={{ opacity: 0, y: 40 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.8, ease: "easeOut" }}
+           className="max-w-3xl"
+        >
           <span className="inline-block px-3 py-1 mb-4 text-[10px] font-bold tracking-[0.3em] text-teal-400 uppercase bg-teal-400/10 backdrop-blur-sm border border-teal-400/20 rounded">
             Adventure awaits
           </span>
@@ -49,7 +55,7 @@ const Hero = ({ isAdmin, t, language, setLanguage, setShowLogin, setViewMode }) 
               {t.header.subtitle}
             </p>
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
