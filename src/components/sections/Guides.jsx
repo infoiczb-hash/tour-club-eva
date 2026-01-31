@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Instagram, MessageCircle, Sparkles, Award, Heart, X, ChevronRight } from "lucide-react"
+import { Instagram, Sparkles, Award, X, ChevronRight } from "lucide-react"
 
 // Данные
 const guides = [
@@ -11,21 +11,21 @@ const guides = [
     image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600",
     superpower: "Играет на гитаре",
     experience: "20 лет",
-    bio: "Провел более 30 туров и походов. Специалист по походной кухне и разгворам о жизни. Знает, где найти лучший вид на рассвет.",
-    achievements: ["Хранитель собаки Эва", "Автор блока Школа Ментального туризма"],
+    bio: "Провел более 30 туров и походов. Специалист по походной кухне и разговорам о жизни. Знает, где найти лучший вид на рассвет.",
+    achievements: ["Хранитель собаки Эва", "Автор блога Школа туризма"],
     contact: "@romansvtirase",
-      },
+  },
   {
     id: 2,
     name: "Алексей Батрынча",
-    role: "Туристический гиду",
+    role: "Туристический гид",
     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=600",
     superpower: "Специалист по детям",
     experience: "12 лет",
-    bio: "Любитель танцев и молдавского фольклера. Прививает туризм подросткам. Знает как выжить в любой ситуации.",
-    achievements: ["Спасатель", "Основатель группы идейнных туристов 'Атлас'"],
+    bio: "Любитель танцев и молдавского фольклора. Прививает туризм подросткам. Знает как выжить в любой ситуации.",
+    achievements: ["Спасатель", "Основатель клуба 'Атлас'"], 
     contact: "@batrancha.alex",
-      },
+  },
 ]
 
 export default function GuidesSection() {
@@ -33,9 +33,9 @@ export default function GuidesSection() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#0a0f0d] py-20 border-t border-white/5">
+      <section className="relative overflow-hidden bg-[#0a0f0d] py-10 border-t border-white/5">
         
-        {/* Фоновые пятна (чуть меньше и прозрачнее) */}
+        {/* Фоновые пятна */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 h-[300px] w-[300px] rounded-full bg-teal-900/10 blur-[80px]" />
           <div className="absolute bottom-0 right-0 h-[300px] w-[300px] rounded-full bg-emerald-900/10 blur-[80px]" />
@@ -45,13 +45,13 @@ export default function GuidesSection() {
           
           <div className="grid lg:grid-cols-12 gap-12 items-start">
             
-            {/* ЛЕВАЯ КОЛОНКА: Текст (Занимает 5 колонок) */}
+            {/* ЛЕВАЯ КОЛОНКА */}
             <div className="lg:col-span-5 lg:sticky lg:top-24">
                <motion.span 
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  className="text-teal-600 font-bold tracking-widest uppercase text-xs mb-3 block"
+                  className="text-teal-500 font-bold tracking-widest uppercase text-lg mb-4 block"
                >
                   Команда
                </motion.span>
@@ -78,16 +78,9 @@ export default function GuidesSection() {
                   Мы не просто водим группы. Мы создаем атмосферу безопасности и легкости, 
                   чтобы вы могли отключить голову и наслаждаться моментом.
                </motion.p>
-
-               {/* Декоративная кнопка или ссылка */}
-               <div className="hidden lg:block">
-                  <a href="/team" className="text-white text-xs font-bold uppercase tracking-wider border-b border-teal-500/50 pb-1 hover:text-teal-400 transition-colors">
-                    Вся команда (скоро)
-                  </a>
-               </div>
             </div>
 
-            {/* ПРАВАЯ КОЛОНКА: Карточки гидов (Занимает 7 колонок) */}
+            {/* ПРАВАЯ КОЛОНКА */}
             <div className="lg:col-span-7 flex flex-col gap-6">
               {guides.map((guide, index) => (
                 <motion.div
@@ -97,12 +90,13 @@ export default function GuidesSection() {
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => setSelectedGuide(guide)}
-                  className="group relative cursor-pointer overflow-hidden rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-colors duration-300"
+                  // FIX UX: Добавили active:scale-[0.98] для тактильного отклика на телефоне
+                  className="group relative cursor-pointer overflow-hidden rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all duration-300 active:scale-[0.98] active:bg-white/15"
                 >
                   <div className="flex flex-col sm:flex-row h-full">
                     
-                    {/* Фото (слева в карточке) - компактное */}
-                    <div className="sm:w-48 h-48 sm:h-auto relative shrink-0">
+                    {/* ФОТО */}
+                    <div className="sm:w-60 h-64 sm:h-auto relative shrink-0">
                       <img 
                         src={guide.image} 
                         alt={guide.name} 
@@ -111,7 +105,7 @@ export default function GuidesSection() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent sm:bg-gradient-to-r sm:from-transparent sm:to-black/80 opacity-60" />
                     </div>
 
-                    {/* Контент (справа в карточке) */}
+                    {/* Контент */}
                     <div className="p-6 flex flex-col justify-center w-full relative">
                         <div className="flex justify-between items-start mb-2">
                             <div>
@@ -122,20 +116,28 @@ export default function GuidesSection() {
                                     {guide.role} • {guide.experience}
                                 </p>
                             </div>
-                            <div className="bg-white/10 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-2">
-                                <ChevronRight className="w-4 h-4 text-white" />
+                            
+                            {/* FIX UX: Убрали opacity-0. Теперь стрелка видна всегда, но чуть прозрачная (text-white/30) */}
+                            {/* При наведении становится яркой (group-hover:text-white) */}
+                            <div className="bg-white/5 p-2 rounded-full transition-colors -mr-2 -mt-2 group-hover:bg-teal-500">
+                                <ChevronRight className="w-5 h-5 text-white/50 group-hover:text-white transition-colors" />
                             </div>
                         </div>
 
-                        <p className="text-slate-400 text-xs line-clamp-2 mb-4">
+                        <p className="text-slate-400 text-xs line-clamp-3 mb-4 leading-relaxed">
                             {guide.bio}
                         </p>
 
-                        <div className="mt-auto flex items-center gap-3">
+                        <div className="mt-auto flex items-center justify-between gap-3">
                             <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-3 py-1 text-[10px] font-bold text-teal-400 border border-teal-500/20">
                                 <Sparkles className="h-3 w-3" />
                                 {guide.superpower}
                             </div>
+                            
+                            {/* FIX UX: Добавили явный текст "Подробнее" только для мобильных */}
+                            <span className="text-[10px] text-white/40 uppercase tracking-widest sm:hidden">
+                                Подробнее
+                            </span>
                         </div>
                     </div>
                   </div>
@@ -147,7 +149,7 @@ export default function GuidesSection() {
         </div>
       </section>
 
-      {/* МОДАЛКА (Оставили как есть, она хорошая) */}
+      {/* МОДАЛКА */}
       <AnimatePresence>
         {selectedGuide && (
           <>
