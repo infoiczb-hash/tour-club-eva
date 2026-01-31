@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';    
+import React, { useState, useMemo } from 'react'; 
 import { Routes, Route, useNavigate } from 'react-router-dom'; 
 import { 
   CalendarDays, Grid, Plus, Trash2, X, Edit 
 } from 'lucide-react';
-import { useEvents } from './lib/hooks'; 
+import { useEvents } from './lib/hooks';
  
 // UX Components
 import Button from './components/ui/Button';
@@ -17,10 +17,11 @@ import CalendarView from './components/CalendarView';
 import EventFormModal from './components/EventFormModal';
 import TourPage from './components/TourPage';
 
-// SECTIONS (Импортируем наши новые блоки)
+// SECTIONS (Импортируем блоки лендинга)
 import Hero from './components/sections/Hero';
-import GuidesSection from './components/sections/Guides';
-import Footer from './components/sections/Footer'; // <--- Добавили импорт
+import GuidesSection from './components/sections/Guides'; // Гиды
+import Reviews from './components/sections/Reviews'; // Отзывы
+import Footer from './components/sections/Footer'; // Футер
  
 // ============ CONSTANTS & TRANSLATIONS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
@@ -65,7 +66,7 @@ const HomePage = ({
  
     return (
         <>
-            {/* 1. HERO SECTION */}
+            {/* 1. HERO SECTION (Главный экран) */}
             <Hero 
                 isAdmin={isAdmin}
                 t={t}
@@ -74,9 +75,29 @@ const HomePage = ({
                 setShowLogin={setShowLogin}
                 setViewMode={setViewMode}
             />
- 
-            {/* 2. MAIN CONTENT */}
-            <main className="max-w-7xl mx-auto px-4 py-8 min-h-[50vh]">
+
+            {/* 2. GUIDES SECTION (Гиды) - Добавлено! */}
+            <GuidesSection />
+
+            {/* 3. REVIEWS SECTION (Отзывы) - Добавлено! */}
+            {/* Убедись, что создал файл Reviews.jsx, иначе закомментируй эту строку */}
+            <Reviews />
+
+            {/* 4. MAIN CONTENT (Список туров) */}
+            <main className="max-w-7xl mx-auto px-4 py-16 min-h-[50vh]">
+                
+                {/* Заголовок перед турами */}
+                {!isAdmin && (
+                    <div className="mb-8 text-center md:text-left">
+                        <span className="text-teal-600 font-bold tracking-widest uppercase text-xs mb-2 block">
+                            Куда отправимся?
+                        </span>
+                        <h2 className="text-4xl font-condensed font-bold text-slate-900 uppercase">
+                            Ближайшие приключения
+                        </h2>
+                    </div>
+                )}
+
                 {/* Filters & View Toggle */}
                 {!isAdmin && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -157,8 +178,8 @@ const HomePage = ({
                 )}
             </main>
 
-            {/* 3. FOOTER SECTION */}
-            <Footer /> {/* <--- Добавили компонент сюда */}
+            {/* 5. FOOTER SECTION (Футер) */}
+            <Footer />
         </>
     );
 };
