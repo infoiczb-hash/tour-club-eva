@@ -19,6 +19,7 @@ import TourPage from './components/TourPage';
 
 // SECTIONS (Импортируем наши новые блоки)
 import Hero from './components/sections/Hero';
+import GuidesSection from './components/sections/Guides';
 import Footer from './components/sections/Footer'; // <--- Добавили импорт
  
 // ============ CONSTANTS & TRANSLATIONS ============
