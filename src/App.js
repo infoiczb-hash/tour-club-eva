@@ -49,6 +49,8 @@ const translations = {
   },
 };
  
+// ... (верхняя часть файла с импортами остается без изменений)
+
 // ============ HOME PAGE COMPONENT ============
 const HomePage = ({ 
     events, loading, viewMode, setViewMode, filterType, setFilterType, 
@@ -75,11 +77,7 @@ const HomePage = ({
                 setViewMode={setViewMode}
             />
 
-            {/* 2. GUIDES SECTION (Гиды) */}
-            {/* Теперь это единственный добавленный блок, ошибок быть не должно */}
-            <GuidesSection />
-
-            {/* 3. MAIN CONTENT (Список туров) */}
+            {/* 2. MAIN CONTENT (Теперь туры идут сразу после Hero) */}
             <main className="max-w-7xl mx-auto px-4 py-16 min-h-[50vh]">
                 
                 {!isAdmin && (
@@ -93,6 +91,7 @@ const HomePage = ({
                     </div>
                 )}
 
+                {/* ... (Весь код фильтров и кнопок остается тут) ... */}
                 {!isAdmin && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
@@ -170,12 +169,14 @@ const HomePage = ({
                 )}
             </main>
 
+            {/* 3. GUIDES SECTION (Теперь Гиды идут после туров) */}
+            <GuidesSection />
+
             {/* 4. FOOTER SECTION */}
             <Footer />
         </>
     );
 };
- 
 // ============ MAIN APP WRAPPER ============
 const App = () => { 
   const { events, loading, deleteEvent, bookEvent, uploadImage, createEvent, updateEvent } = useEvents();
