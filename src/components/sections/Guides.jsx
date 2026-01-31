@@ -8,7 +8,7 @@ const guides = [
     id: 1,
     name: "Санду Роман",
     role: "Туристический гид",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800",
     superpower: "Играет на гитаре",
     experience: "20 лет",
     bio: "Провел более 30 туров и походов. Специалист по походной кухне и разговорам о жизни. Знает, где найти лучший вид на рассвет.",
@@ -19,7 +19,7 @@ const guides = [
     id: 2,
     name: "Алексей Батрынча",
     role: "Туристический гид",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=600",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=800",
     superpower: "Специалист по детям",
     experience: "12 лет",
     bio: "Любитель танцев и молдавского фольклора. Прививает туризм подросткам. Знает как выжить в любой ситуации.",
@@ -33,13 +33,13 @@ export default function GuidesSection() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#0a0f0d] py-10 border-t border-white/5">
+      {/* 1. ФОН: bg-slate-50 (Светло-серый, почти белый) вместо черного */}
+      <section className="relative overflow-hidden bg-slate-50 py-16">
         
-        {/* Фоновые пятна */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-0 h-[300px] w-[300px] rounded-full bg-teal-900/10 blur-[80px]" />
-          <div className="absolute bottom-0 right-0 h-[300px] w-[300px] rounded-full bg-emerald-900/10 blur-[80px]" />
-        </div>
+        {/* Фоновые узоры (еле заметные серые) */}
+        <div className="absolute inset-0 opacity-[0.4]" 
+             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2394a3b8' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} 
+        />
 
         <div className="relative mx-auto max-w-7xl px-4">
           
@@ -47,40 +47,44 @@ export default function GuidesSection() {
             
             {/* ЛЕВАЯ КОЛОНКА */}
             <div className="lg:col-span-5 lg:sticky lg:top-24">
-               <motion.span 
+               
+               {/* Заголовок "Команда" - теперь светло-серый */}
+               <motion.h3 
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  className="text-teal-500 font-bold tracking-widest uppercase text-lg mb-4 block"
+                  className="text-slate-200 font-condensed font-bold uppercase text-5xl md:text-6xl mb-2 block leading-none select-none"
                >
                   Команда
-               </motion.span>
+               </motion.h3>
 
+               {/* Основной заголовок - Темный (slate-900) */}
                <motion.h2 
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className="font-condensed text-4xl md:text-5xl font-bold uppercase leading-none text-white mb-6"
+                  className="font-condensed text-3xl md:text-4xl font-bold uppercase leading-tight text-slate-900 mb-6"
                >
                   Люди, которым <br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500">
+                  <span className="text-teal-600">
                     можно доверять
                   </span>
                </motion.h2>
 
+               {/* Текст описания - Темно-серый (slate-600) */}
                <motion.p 
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.1 }}
-                  className="text-slate-400 text-sm leading-relaxed mb-8 max-w-md"
+                  className="text-slate-600 text-sm leading-relaxed mb-8 max-w-md"
                >
                   Мы не просто водим группы. Мы создаем атмосферу безопасности и легкости, 
                   чтобы вы могли отключить голову и наслаждаться моментом.
                </motion.p>
             </div>
 
-            {/* ПРАВАЯ КОЛОНКА */}
+            {/* ПРАВАЯ КОЛОНКА: Карточки гидов */}
             <div className="lg:col-span-7 flex flex-col gap-6">
               {guides.map((guide, index) => (
                 <motion.div
@@ -90,52 +94,53 @@ export default function GuidesSection() {
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => setSelectedGuide(guide)}
-                  // FIX UX: Добавили active:scale-[0.98] для тактильного отклика на телефоне
-                  className="group relative cursor-pointer overflow-hidden rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all duration-300 active:scale-[0.98] active:bg-white/15"
+                  // КАРТОЧКА: Белый фон, тень, рамка
+                  className="group relative cursor-pointer overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:border-teal-200 transition-all duration-300 active:scale-[0.98]"
                 >
-                  <div className="flex flex-col sm:flex-row h-full">
+                  <div className="flex flex-col sm:flex-row">
                     
                     {/* ФОТО */}
-                    <div className="sm:w-60 h-64 sm:h-auto relative shrink-0">
+                    <div className="relative h-72 sm:h-80 sm:w-72 shrink-0 overflow-hidden">
                       <img 
                         src={guide.image} 
                         alt={guide.name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent sm:bg-gradient-to-r sm:from-transparent sm:to-black/80 opacity-60" />
+                      {/* Градиент на фото оставим, чтобы текст (если будет) читался, но сделаем его мягче */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
-                    {/* Контент */}
-                    <div className="p-6 flex flex-col justify-center w-full relative">
+                    {/* КОНТЕНТ КАРТОЧКИ */}
+                    <div className="p-6 flex flex-col justify-center w-full relative min-h-[200px]">
                         <div className="flex justify-between items-start mb-2">
                             <div>
-                                <h3 className="font-condensed text-2xl font-bold text-white uppercase">
+                                {/* Имя гида - Темное */}
+                                <h3 className="font-condensed text-2xl font-bold text-slate-900 uppercase">
                                     {guide.name}
                                 </h3>
-                                <p className="text-teal-400 text-xs font-bold uppercase tracking-wider mt-1">
+                                <p className="text-teal-600 text-xs font-bold uppercase tracking-wider mt-1">
                                     {guide.role} • {guide.experience}
                                 </p>
                             </div>
                             
-                            {/* FIX UX: Убрали opacity-0. Теперь стрелка видна всегда, но чуть прозрачная (text-white/30) */}
-                            {/* При наведении становится яркой (group-hover:text-white) */}
-                            <div className="bg-white/5 p-2 rounded-full transition-colors -mr-2 -mt-2 group-hover:bg-teal-500">
-                                <ChevronRight className="w-5 h-5 text-white/50 group-hover:text-white transition-colors" />
+                            {/* Стрелка - Темно-серая */}
+                            <div className="bg-slate-100 p-2 rounded-full transition-colors -mr-2 -mt-2 group-hover:bg-teal-500">
+                                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
                             </div>
                         </div>
 
-                        <p className="text-slate-400 text-xs line-clamp-3 mb-4 leading-relaxed">
+                        {/* Био - Серый текст */}
+                        <p className="text-slate-600 text-xs line-clamp-4 mb-4 leading-relaxed">
                             {guide.bio}
                         </p>
 
                         <div className="mt-auto flex items-center justify-between gap-3">
-                            <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-3 py-1 text-[10px] font-bold text-teal-400 border border-teal-500/20">
+                            <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-[10px] font-bold text-teal-700 border border-teal-100">
                                 <Sparkles className="h-3 w-3" />
                                 {guide.superpower}
                             </div>
                             
-                            {/* FIX UX: Добавили явный текст "Подробнее" только для мобильных */}
-                            <span className="text-[10px] text-white/40 uppercase tracking-widest sm:hidden">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-widest sm:hidden">
                                 Подробнее
                             </span>
                         </div>
@@ -149,7 +154,8 @@ export default function GuidesSection() {
         </div>
       </section>
 
-      {/* МОДАЛКА */}
+      {/* МОДАЛКА (Оставим темной для контраста и киношности, или хочешь светлую?) */}
+      {/* Я пока оставил ТЕМНУЮ, так как всплывающие окна круто смотрятся в "режиме кинотеатра" */}
       <AnimatePresence>
         {selectedGuide && (
           <>
@@ -158,7 +164,7 @@ export default function GuidesSection() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedGuide(null)}
-              className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm"
+              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
             />
             
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
