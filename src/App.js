@@ -21,7 +21,6 @@ import TourPage from './components/TourPage';
 import Hero from './components/sections/Hero';
 import GuidesSection from './components/sections/Guides'; // ✅ Гиды подключены
 import Footer from './components/sections/Footer'; 
-// ❌ Reviews (Отзывы) пока убрали, чтобы не было ошибки
 
 // ============ CONSTANTS & TRANSLATIONS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
