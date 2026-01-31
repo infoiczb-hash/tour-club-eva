@@ -17,8 +17,9 @@ import CalendarView from './components/CalendarView';
 import EventFormModal from './components/EventFormModal';
 import TourPage from './components/TourPage';
 
-// SECTIONS
+// SECTIONS (Импортируем наши новые блоки)
 import Hero from './components/sections/Hero';
+import Footer from './components/sections/Footer'; // <--- Добавили импорт
  
 // ============ CONSTANTS & TRANSLATIONS ============
 const ViewModes = { GRID: 'grid', CALENDAR: 'calendar' };
@@ -63,7 +64,7 @@ const HomePage = ({
  
     return (
         <>
-            {/* HERO SECTION */}
+            {/* 1. HERO SECTION */}
             <Hero 
                 isAdmin={isAdmin}
                 t={t}
@@ -73,8 +74,8 @@ const HomePage = ({
                 setViewMode={setViewMode}
             />
  
-            {/* MAIN CONTENT */}
-            <main className="max-w-7xl mx-auto px-4 py-8">
+            {/* 2. MAIN CONTENT */}
+            <main className="max-w-7xl mx-auto px-4 py-8 min-h-[50vh]">
                 {/* Filters & View Toggle */}
                 {!isAdmin && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -154,6 +155,9 @@ const HomePage = ({
                     </>
                 )}
             </main>
+
+            {/* 3. FOOTER SECTION */}
+            <Footer /> {/* <--- Добавили компонент сюда */}
         </>
     );
 };
