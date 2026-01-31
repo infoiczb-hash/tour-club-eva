@@ -20,6 +20,7 @@ import TourPage from './components/TourPage';
 // SECTIONS
 import Hero from './components/sections/Hero';
 import GuidesSection from './components/sections/Guides'; // ✅ Гиды подключены
+import BlogSection from './components/sections/Blog';
 import Footer from './components/sections/Footer'; 
 
 // ============ CONSTANTS & TRANSLATIONS ============
