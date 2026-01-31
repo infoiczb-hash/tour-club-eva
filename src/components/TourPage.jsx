@@ -189,3 +189,223 @@ const TourPage = ({ events, onRegister }) => {
                 
                 {/* ЛЕВАЯ КОЛОНКА (Контент) */}
                 <div className="lg:col-span-2 space-y-12">
+                    
+                    {/* ABOUT: Bento Grid Характеристики */}
+                    <div id="about" className="space-y-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                           <InfoBox icon={Calendar} label="Дата" value={dateString} />
+                           <InfoBox icon={Mountain} label="Сложность" value={event.difficulty || 'Средняя'} />
+                           <InfoBox icon={Footprints} label="Дистанция" value={event.distance || '-'} />
+                           <InfoBox icon={Users} label="Группа" value={`до ${event.spots || 20}`} />
+                           
+                           {/* Место сбора: Если есть отдельное место сбора - показываем его, иначе локацию */}
+                           <div className="col-span-2 md:col-span-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                                   <Navigation size={20} />
+                               </div>
+                               <div>
+                                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Место сбора</p>
+                                   <p className="text-sm font-bold text-slate-900 leading-tight">
+                                       {event.meeting_point || event.location}
+                                   </p>
+                                   <p className="text-xs text-slate-500 mt-0.5">{event.time || '08:00'}</p>
+                               </div>
+                           </div>
+                        </div>
+
+                        {/* Описание */}
+                        <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed">
+                            <h3 className="font-condensed font-bold text-2xl uppercase text-slate-900 mb-4 flex items-center gap-2">
+                               <Shield className="w-6 h-6 text-teal-600" /> О приключении
+                            </h3>
+                            <div className="whitespace-pre-line text-lg">
+                                {formatText(event.description)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PROGRAM: Timeline */}
+                    {event.program && (
+                        <div id="program" className="scroll-mt-28">
+                           <h3 className="font-condensed font-bold text-2xl uppercase text-slate-900 mb-8 flex items-center gap-2">
+                              <Clock className="w-6 h-6 text-teal-600" /> Программа тура
+                           </h3>
+                           <div className="border-l-2 border-teal-100 ml-3 space-y-10 pl-8 relative">
+                              {event.program.split('\n').filter(l => l.trim()).map((line, idx) => (
+                                 <div key={idx} className="relative group">
+                                    <span className="absolute -left-[39px] top-1 w-5 h-5 rounded-full bg-white border-4 border-teal-100 group-hover:border-teal-500 transition-colors" />
+                                    <p className="text-slate-700 text-lg leading-relaxed">{formatText(line)}</p>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+                    )}
+
+                    {/* FINANCE: Включено / Не включено */}
+                    <div id="finance" className="scroll-mt-28 grid md:grid-cols-2 gap-6">
+                        {event.included && (
+                            <div className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100">
+                                <h4 className="font-bold text-emerald-900 mb-5 flex items-center gap-2 text-lg">
+                                    <CheckCircle className="w-5 h-5 text-emerald-600" /> В стоимость входит
+                                </h4>
+                                <ul className="space-y-4">
+                                    {event.included.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                            {formatText(item)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {event.additionalExpenses && (
+                            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                                <h4 className="font-bold text-slate-800 mb-5 flex items-center gap-2 text-lg">
+                                    <Wallet className="w-5 h-5 text-orange-500" /> Доп. расходы
+                                </h4>
+                                <ul className="space-y-4">
+                                    {event.additionalExpenses.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-sm font-medium text-slate-600">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-orange-300 mt-1.5 shrink-0" />
+                                            {formatText(item)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* FAQ: Аккордеон */}
+                    {event.faq && event.faq.length > 0 && (
+                        <div id="faq" className="scroll-mt-28">
+                            <h3 className="font-condensed font-bold text-2xl uppercase text-slate-900 mb-6 flex items-center gap-2">
+                                <AlertCircle className="w-6 h-6 text-teal-600" /> Вопрос - Ответ
+                            </h3>
+                            <div className="space-y-4">
+                                {event.faq.map((item, i) => (
+                                    <details key={i} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden open:shadow-lg open:border-teal-100 transition-all duration-300">
+                                        <summary className="flex cursor-pointer items-center justify-between p-5 font-bold text-slate-800 list-none hover:bg-slate-50 transition">
+                                            <span>{item.q}</span>
+                                            <ChevronDown className="text-slate-400 group-open:rotate-180 transition-transform" />
+                                        </summary>
+                                        <div className="px-5 pb-6 text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
+                                            {item.a}
+                                        </div>
+                                    </details>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ПРАВАЯ КОЛОНКА (Sticky Booking - Только Десктоп) */}
+                <div className="hidden lg:block lg:col-span-1">
+                    <div className="sticky top-24 space-y-6">
+                        {/* Карточка брони */}
+                        <div className="bg-white rounded-[32px] p-8 shadow-2xl shadow-slate-200/60 border border-slate-100">
+                            <div className="text-center mb-6">
+                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Стоимость участия</span>
+                                <div className="flex items-center justify-center gap-3 mt-1">
+                                    <span className="text-5xl font-condensed font-bold text-slate-900">{event.price?.adult}</span>
+                                    <span className="text-xl font-medium text-slate-400">₽</span>
+                                </div>
+                                {event.priceOld && (
+                                    <span className="text-sm text-slate-400 line-through decoration-rose-400 block mt-1">
+                                        {event.priceOld} ₽
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Цены для детей/семьи */}
+                            {(event.price?.child > 0 || event.price?.family > 0) && (
+                                <div className="bg-slate-50 rounded-xl p-4 mb-6 text-sm space-y-2 border border-slate-100">
+                                    {event.price.child > 0 && (
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">Детский:</span>
+                                            <span className="font-bold text-slate-900">{event.price.child} ₽</span>
+                                        </div>
+                                    )}
+                                    {event.price.family > 0 && (
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">Семейный:</span>
+                                            <span className="font-bold text-slate-900">{event.price.family} ₽</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Индикатор мест */}
+                            <div className="mb-6">
+                                {event.spotsLeft > 0 ? (
+                                    <div className="flex items-center justify-center gap-2 text-emerald-600 bg-emerald-50 py-2 rounded-lg text-sm font-bold">
+                                        <CheckCircle size={16} /> Осталось {event.spotsLeft} мест
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center gap-2 text-rose-600 bg-rose-50 py-2 rounded-lg text-sm font-bold">
+                                        <XCircle size={16} /> Мест нет
+                                    </div>
+                                )}
+                            </div>
+
+                            <Button 
+                                onClick={() => onRegister(event)} 
+                                variant="primary" 
+                                className="w-full h-14 text-lg shadow-xl shadow-teal-600/20 group hover:scale-[1.02]"
+                            >
+                                Записаться
+                                <Zap className="w-5 h-5 ml-2 group-hover:fill-current transition-colors" />
+                            </Button>
+                            <p className="text-center text-xs text-slate-400 mt-4">
+                                Бронирование без предоплаты
+                            </p>
+                        </div>
+
+                        {/* Блок Гида */}
+                        <div className="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center font-bold text-teal-400 border-2 border-slate-600 shrink-0">
+                               E
+                           </div>
+                           <div className="relative z-10">
+                              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Организатор</p>
+                              <p className="font-bold text-lg leading-none mt-1">Турклуб ЭВА</p>
+                           </div>
+                           <div className="absolute -right-4 -bottom-10 w-24 h-24 bg-teal-500/20 rounded-full blur-xl" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {/* 4. MOBILE STICKY BOTTOM BAR (Только мобилка) */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 lg:hidden z-50 flex items-center justify-between shadow-[0_-5px_30px_rgba(0,0,0,0.1)] safe-area-pb">
+                <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Цена за место</p>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-condensed font-bold text-slate-900">{event.price?.adult}₽</span>
+                        {event.priceOld && <span className="text-xs text-slate-400 line-through">{event.priceOld}</span>}
+                    </div>
+                </div>
+                <Button onClick={() => onRegister(event)} className="px-8 py-3 h-12 shadow-lg shadow-teal-500/20">
+                    Записаться
+                </Button>
+            </div>
+
+        </div>
+    );
+};
+
+// Компонент Bento Box для характеристик
+const InfoBox = ({ icon: Icon, label, value }) => {
+    if (!value) return null;
+    return (
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-start h-full hover:border-teal-200 hover:shadow-md transition-all">
+            <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center mb-3">
+                <Icon size={18} />
+            </div>
+            <p className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 tracking-wider">{label}</p>
+            <p className="font-bold text-sm text-slate-900 leading-tight">{value}</p>
+        </div>
+    );
+};
+
+export default TourPage;
