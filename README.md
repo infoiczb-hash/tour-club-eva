@@ -14,7 +14,7 @@
 
 ## 🛠️ Технологии
 
-- React 18
+- NEXT 16/1/6
 - Supabase (база данных)
 - Tailwind CSS
 - Vercel (хостинг)
