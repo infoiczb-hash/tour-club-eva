@@ -1,6 +1,7 @@
+'use client'
+
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { useParams } from 'next/navigation';
 import { 
   MapPin, Calendar, Clock, User, Mountain, Footprints, 
   CheckCircle, XCircle, ChevronDown, ArrowLeft, Share2, 
@@ -30,12 +31,12 @@ const formatDateRange = (start, end) => {
 };
 
 const TourPage = ({ events, onRegister }) => {
-    const { id } = useParams();
-    const navigate = useNavigate();
+    const params = useParams();
+    const id = params?.id;
     const [activeTab, setActiveTab] = useState('about');
     
     // Находим тур (учитываем, что id может быть строкой или числом)
-    const event = events.find(e => String(e.id) === String(id));
+    const event = events?.find(e => String(e.id) === String(id));
 
     // Скролл наверх
     useEffect(() => { window.scrollTo(0, 0); }, [id]);
@@ -61,51 +62,22 @@ const TourPage = ({ events, onRegister }) => {
     const scrollToSection = (id) => {
         const element = document.getElementById(id);
         if (element) {
-            const y = element.getBoundingClientRect().top + window.pageYOffset - 140; // Чуть больше отступ из-за стики хедера
+            const y = element.getBoundingClientRect().top + window.pageYOffset - 140;
             window.scrollTo({ top: y, behavior: 'smooth' });
             setActiveTab(id);
         }
     };
 
+    const handleBack = () => {
+        window.location.href = '/';
+    };
+
     if (!event) return <div className="p-20 text-center text-slate-500">Тур не найден... 😔</div>;
 
     const dateString = formatDateRange(event.date, event.end_date);
-    
-    // SEO Схема
-    const eventSchema = {
-        "@context": "https://schema.org",
-        "@type": "Event",
-        "name": event.title,
-        "startDate": event.date,
-        "endDate": event.end_date || event.date,
-        "eventStatus": "https://schema.org/EventScheduled",
-        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "location": {
-            "@type": "Place",
-            "name": event.location,
-            "address": { "@type": "PostalAddress", "addressLocality": event.location }
-        },
-        "image": [event.image],
-        "description": event.subtitle || event.description,
-        "offers": {
-            "@type": "Offer",
-            "price": event.price?.adult,
-            "priceCurrency": "RUB", // Или MDL, если нужно
-            "availability": event.spotsLeft > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
-            "url": window.location.href
-        }
-    };
 
     return (
         <div className="bg-white min-h-screen pb-24 md:pb-10 font-sans text-slate-800">
-            {/* SEO */}
-            <Helmet>
-                <title>{event.title} | Турклуб Эва</title>
-                <meta name="description" content={event.subtitle || event.description?.slice(0, 160)} />
-                <meta property="og:image" content={event.image} />
-                <script type="application/ld+json">{JSON.stringify(eventSchema)}</script>
-            </Helmet>
-
             {/* 1. HERO SECTION (Parallax Style) */}
             <div className="relative h-[65vh] md:h-[75vh] w-full overflow-hidden">
                 <img 
@@ -117,7 +89,7 @@ const TourPage = ({ events, onRegister }) => {
                 
                 {/* Навигация сверху */}
                 <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-20">
-                    <button onClick={() => navigate(-1)} className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-slate-900 transition-all border border-white/10">
+                    <button onClick={handleBack} className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-slate-900 transition-all border border-white/10">
                         <ArrowLeft size={20} />
                     </button>
                     <button 
@@ -198,7 +170,7 @@ const TourPage = ({ events, onRegister }) => {
                            <InfoBox icon={Footprints} label="Дистанция" value={event.distance || '-'} />
                            <InfoBox icon={Users} label="Группа" value={`до ${event.spots || 20}`} />
                            
-                           {/* Место сбора: Если есть отдельное место сбора - показываем его, иначе локацию */}
+                           {/* Место сбора */}
                            <div className="col-span-2 md:col-span-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                                    <Navigation size={20} />
