@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
@@ -17,7 +18,8 @@ interface TiptapEditorProps {
   placeholder?: string;
 }
 
-const MenuBar = ({ editor }: { editor: any }) => {
+// 1. Починили тип здесь (убрали any, поставили строгий Editor | null)
+const MenuBar = ({ editor }: { editor: Editor | null }) => {
   if (!editor) return null;
 
   const addImage = useCallback(() => {
@@ -115,14 +117,14 @@ export default function TiptapEditor({ content, onChange, placeholder }: TiptapE
     content,
     editorProps: {
       attributes: {
-        // Компактные стили для редактора
         class: 'prose prose-sm sm:prose-base dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-6 py-4 prose-p:my-2 prose-p:leading-snug prose-li:my-0 prose-ul:my-2 prose-headings:mb-2 prose-headings:mt-4',
       },
     },
-    onUpdate: ({ editor }) => {
+    // 2. Починили тип здесь! (Именно на это ругался компилятор)
+    onUpdate: ({ editor }: { editor: Editor }) => {
       onChange(editor.getHTML());
     },
-    immediatelyRender: false, // <--- ИСПРАВЛЕНИЕ ОШИБКИ SSR
+    immediatelyRender: false,
   });
 
   return (
