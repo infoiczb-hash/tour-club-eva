@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, ArrowRight, Check, Sparkles, Info, Loader2, Trophy } from "lucide-react";
+import { 
+  X, ArrowLeft, ArrowRight, Check, Sparkles, Info, Loader2, Trophy,
+  Compass, Anchor, Waves, Mountain, Baby, Backpack, Zap, ShieldCheck, 
+  Users, Briefcase, Trees, Camera, Rocket, Calendar, Eye
+} from "lucide-react";
 import { clsx } from "clsx";
 
 /* --- ТИПЫ ДАННЫХ --- */
@@ -13,64 +18,64 @@ type Answers = {
   readiness: string;
 };
 
-type TourResult = {
-  id: number;
+// Новый тип: Направление вместо конкретного тура
+type DirectionResult = {
+  id: string; // slug направления (sup, kayaking, hiking, local)
   match: number;
-  emoji: string;
+  icon: React.ElementType;
   title: string;
   description: string;
   whyThis: string[];
-  features: string[];
-  duration: string;
-  difficulty: string;
-  price: string;
-  link_slug: string; // Slug для ссылки или контекста
+  href_info: string;
+  href_tours: string;
 };
 
-/* --- КОНСТАНТЫ ВОПРОСОВ --- */
+/* --- КОНСТАНТЫ ВОПРОСОВ (Только Lucide) --- */
 const questions = [
   {
     id: 1,
-    question: "Ты когда-нибудь ходил в походы?",
-    hint: "Не переживай, мы подберём маршрут под любой уровень",
+    question: "Какой у вас опыт походов?",
+    hint: "Подберем маршрут под ваш уровень подготовки",
+    multiple: false,
     options: [
-      { value: "never", label: "Никогда", icon: "👶", hint: "Всё будет просто!" },
-      { value: "few", label: "1-2 раза", icon: "🎒", hint: "Есть база!" },
-      { value: "regular", label: "Регулярно", icon: "🏔️", hint: "Опытный!" },
-      
+      { value: "never", label: "Никогда не был", icon: Baby, hint: "Сделаем первый шаг вместе" },
+      { value: "few", label: "Пару раз ходил", icon: Backpack, hint: "Базовые навыки есть" },
+      { value: "regular", label: "Регулярно", icon: Mountain, hint: "Горы — второй дом" },
     ],
   },
   {
     id: 2,
     question: "Что сейчас волнует больше всего?",
-    hint: "Честно — это поможет подобрать правильный формат",
+    hint: "Ответьте честно, мы учтем это при подборе",
+    multiple: false,
     options: [
-      { value: "physical", label: "Боюсь не справиться", icon: "💪", hint: "Все проходят!" },
-      { value: "people", label: "Не знаю никого", icon: "👥", hint: "Познакомишься!" },
-      { value: "gear", label: "Что брать с собой", icon: "🎒", hint: "Поможем!" },
-      { value: "nothing", label: "Ничего не волнует", icon: "😎", hint: "Отлично!" },
+      { value: "physical", label: "Боюсь не справиться", icon: Zap, hint: "Подберем легкий старт" },
+      { value: "people", label: "Не знаю никого в группе", icon: Users, hint: "У нас все знакомятся" },
+      { value: "gear", label: "Нет своего снаряжения", icon: Briefcase, hint: "Всё выдадим на месте" },
+      { value: "nothing", label: "Я абсолютно готов", icon: ShieldCheck, hint: "Отличный настрой!" },
     ],
   },
   {
     id: 3,
-    question: "Что для тебя важнее всего?",
-    hint: "Можешь выбрать несколько вариантов",
+    question: "Что для вас самое важное в туре?",
+    hint: "Можно выбрать несколько вариантов",
     multiple: true,
     options: [
-      { value: "relax", label: "Отдохнуть от города", icon: "🌲", hint: "Перезагрузка" },
-      { value: "people", label: "Познакомиться", icon: "🤝", hint: "Новые друзья" },
-      { value: "challenge", label: "Проверить себя", icon: "🏔️", hint: "Вызов!" },
-      { value: "nature", label: "Красивые места", icon: "📸", hint: "Фото-тур" },
+      { value: "relax", label: "Перезагрузка и отдых", icon: Trees, hint: "Тишина и природа" },
+      { value: "people", label: "Новые знакомства", icon: Users, hint: "Командный дух" },
+      { value: "challenge", label: "Бросить себе вызов", icon: Mountain, hint: "Проверка на прочность" },
+      { value: "nature", label: "Сделать крутые фото", icon: Camera, hint: "Самые красивые локации" },
     ],
   },
   {
     id: 4,
-    question: "Когда ты готов идти в поход?",
-    hint: "Это поможет показать подходящие даты",
+    question: "Когда планируете отправиться?",
+    hint: "Это поможет оценить срочность подготовки",
+    multiple: false,
     options: [
-      { value: "soon", label: "В ближайшие выходные", icon: "🚀", hint: "Быстрый старт!" },
-      { value: "weeks", label: "Через 2-4 недели", icon: "📅", hint: "Есть время" },
-      { value: "explore", label: "Хочу только посмотреть", icon: "👀", hint: "Без давления" },
+      { value: "soon", label: "В ближайшие выходные", icon: Rocket, hint: "Быстрый старт" },
+      { value: "weeks", label: "Через 2-4 недели", icon: Calendar, hint: "Есть время на сборы" },
+      { value: "explore", label: "Пока просто смотрю", icon: Eye, hint: "Изучаю варианты" },
     ],
   },
 ];
@@ -79,21 +84,15 @@ const questions = [
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onResultSelect: (tourTitle: string) => void; // Коллбек для открытия Хаба
 }
 
-export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props) {
+export default function TourQuizModal({ isOpen, onClose }: Props) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({ experience: "", concern: "", priority: "", readiness: "" });
   const [selectedMultiple, setSelectedMultiple] = useState<string[]>([]);
-  
-  // Состояния этапов
   const [view, setView] = useState<'question' | 'analyzing' | 'results'>('question');
-  
-  // Для анимации анализа
   const [analysisText, setAnalysisText] = useState("Анализируем ответы...");
 
-  // Сброс при открытии
   useEffect(() => {
     if (isOpen) {
         setStep(0);
@@ -106,7 +105,6 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
     }
   }, [isOpen]);
 
-  // Логика переключения вопросов
   const handleAnswer = (value: string) => {
     const key = ["experience", "concern", "priority", "readiness"][step] as keyof Answers;
     
@@ -135,13 +133,12 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
     if (step > 0) setStep(s => s - 1);
   };
 
-  // Эффект "Магии" (Анализ)
   const startAnalysis = () => {
     setView('analyzing');
     const texts = [
-      "Проверяем твой уровень...", 
-      "Ищем лучшие локации...", 
-      "Подбираем команду...", 
+      "Оцениваем физическую нагрузку...", 
+      "Проверяем наличие снаряжения...", 
+      "Подбираем лучшие направления...", 
       "Готово!"
     ];
     let i = 0;
@@ -152,10 +149,9 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
          clearInterval(interval);
          setView('results');
        }
-    }, 600); // 2.4 секунды общей задержки
+    }, 700);
   };
 
-  // Получаем результаты
   const recommendations = getRecommendations(answers);
   const progress = ((step + 1) / questions.length) * 100;
   const currentQ = questions[step];
@@ -166,13 +162,12 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
           
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-2xl bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
           >
-            {/* Кнопка закрытия */}
-            <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-2 bg-white/5 rounded-full">
+            <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full">
                <X size={20} />
             </button>
 
@@ -180,23 +175,21 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
             {view === 'question' && (
                <div className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
                   
-                  {/* Прогресс бар */}
                   <div className="mb-8">
                      <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                         <span>Шаг {step + 1} / {questions.length}</span>
                         <span>{Math.round(progress)}%</span>
                      </div>
-                     <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                     <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5">
                         <motion.div 
-                           className="h-full bg-gradient-to-r from-teal-500 to-cyan-500"
+                           className="h-full bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]"
                            initial={{ width: 0 }}
                            animate={{ width: `${progress}%` }}
-                           transition={{ duration: 0.5 }}
+                           transition={{ duration: 0.5, ease: "easeOut" }}
                         />
                      </div>
                   </div>
 
-                  {/* Вопрос */}
                   <motion.div
                      key={step}
                      initial={{ x: 20, opacity: 0 }}
@@ -204,47 +197,54 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
                      exit={{ x: -20, opacity: 0 }}
                      className="flex-1"
                   >
-                     <h3 className="text-2xl md:text-3xl font-black text-white mb-3 leading-tight">
+                     <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
                         {currentQ.question}
                      </h3>
                      <p className="text-slate-400 text-sm md:text-base mb-8 font-medium">
                         {currentQ.hint}
                      </p>
 
-                     <div className="space-y-3">
+                     <div className="grid gap-3">
                         {currentQ.options.map((opt) => {
-                           const isSelected = currentQ.multiple 
-                              ? selectedMultiple.includes(opt.value)
-                              : false; // Для одиночного выбора не подсвечиваем, т.к. сразу переключаем
+                           const isSelected = currentQ.multiple ? selectedMultiple.includes(opt.value) : false;
+                           const Icon = opt.icon;
 
                            return (
                              <button
                                key={opt.value}
                                onClick={() => handleAnswer(opt.value)}
                                className={clsx(
-                                  "w-full p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-4 group",
+                                  "w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group text-left",
                                   isSelected 
-                                    ? "bg-teal-500/10 border-teal-500" 
-                                    : "bg-slate-900 border-slate-800 hover:border-teal-500/50 hover:bg-slate-800/80"
+                                    ? "bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]" 
+                                    : "bg-slate-900/50 border-slate-800 hover:border-teal-500/50 hover:bg-slate-900"
                                )}
                              >
-                                <span className="text-3xl group-hover:scale-110 transition-transform">{opt.icon}</span>
+                                <div className={clsx(
+                                    "w-12 h-12 shrink-0 rounded-xl flex items-center justify-center transition-colors duration-300",
+                                    isSelected ? "bg-teal-500 text-slate-950" : "bg-slate-800 text-teal-500 group-hover:bg-teal-500/20"
+                                )}>
+                                    <Icon size={24} />
+                                </div>
+                                
                                 <div className="flex-1">
-                                   <div className={clsx("font-bold text-base mb-0.5", isSelected ? "text-teal-400" : "text-white")}>{opt.label}</div>
+                                   <div className={clsx("font-bold text-base mb-0.5 transition-colors", isSelected ? "text-teal-400" : "text-white")}>
+                                       {opt.label}
+                                   </div>
                                    <div className="text-xs text-slate-400 font-medium">{opt.hint}</div>
                                 </div>
-                                {isSelected && <Check className="text-teal-500" />}
+                                
+                                {isSelected && <Check className="text-teal-500 shrink-0" />}
                              </button>
                            )
                         })}
                      </div>
                   </motion.div>
 
-                  {/* Футер (Назад / Далее) */}
                   <div className="mt-8 flex items-center justify-between">
                      {step > 0 ? (
-                        <button onClick={handleBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-bold uppercase tracking-wider">
-                           <ArrowLeft size={16}/> Назад
+                        <button onClick={handleBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
+                           <ArrowLeft size={14}/> Назад
                         </button>
                      ) : <div/>}
 
@@ -252,27 +252,27 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
                         <button 
                            onClick={handleNextMultiple}
                            disabled={selectedMultiple.length === 0}
-                           className="bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 px-8 py-3 rounded-xl font-bold uppercase tracking-wider transition-all"
+                           className="bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 px-8 py-3 rounded-xl font-bold uppercase tracking-widest transition-all text-xs"
                         >
-                           Далее
+                           Далее <ArrowRight size={14} className="inline ml-1 mb-0.5" />
                         </button>
                      )}
                   </div>
                </div>
             )}
 
-            {/* === VIEW 2: АНАЛИЗ (Fake Loading) === */}
+            {/* === VIEW 2: АНАЛИЗ === */}
             {view === 'analyzing' && (
-                <div className="flex flex-col items-center justify-center h-[500px] p-10 text-center">
+                <div className="flex flex-col items-center justify-center h-[400px] md:h-[500px] p-10 text-center">
                     <div className="relative mb-8">
-                        <div className="absolute inset-0 bg-teal-500/30 blur-xl rounded-full animate-pulse" />
+                        <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full animate-pulse" />
                         <Loader2 className="w-16 h-16 text-teal-400 animate-spin relative z-10" />
                     </div>
                     <motion.h3 
                        key={analysisText}
                        initial={{ opacity: 0, y: 10 }}
                        animate={{ opacity: 1, y: 0 }}
-                       className="text-2xl font-black text-white uppercase tracking-tight"
+                       className="text-xl md:text-2xl font-black text-white uppercase tracking-tight"
                     >
                        {analysisText}
                     </motion.h3>
@@ -281,26 +281,23 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
 
             {/* === VIEW 3: РЕЗУЛЬТАТЫ === */}
             {view === 'results' && (
-               <div className="flex flex-col h-full overflow-hidden bg-slate-900">
-                  <div className="p-6 md:p-8 pb-4 text-center shrink-0">
+               <div className="flex flex-col h-full overflow-hidden bg-slate-950">
+                  <div className="p-6 md:p-8 pb-4 text-center shrink-0 border-b border-white/5">
                       <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-4">
                          <Sparkles size={14} className="text-teal-400" />
                          <span className="text-[10px] font-black uppercase text-teal-400 tracking-widest">AI подбор завершен</span>
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-black text-white mb-2">Идеально для тебя</h3>
-                      <p className="text-slate-400 text-sm">Мы нашли {recommendations.length} варианта, которые подходят под твои ответы.</p>
+                      <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Идеально для вас</h3>
+                      <p className="text-slate-400 text-sm font-medium">Мы подобрали направления с наивысшим процентом совпадения.</p>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-4">
-                      {recommendations.map((tour, idx) => (
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+                      {recommendations.slice(0, 2).map((direction, idx) => (
                           <ResultCard 
-                             key={tour.id} 
-                             tour={tour} 
+                             key={direction.id} 
+                             direction={direction} 
                              rank={idx + 1} 
-                             onSelect={() => {
-                                 onClose();
-                                 onResultSelect(tour.title);
-                             }}
+                             onClose={onClose}
                           />
                       ))}
                   </div>
@@ -314,9 +311,10 @@ export default function TourQuizModal({ isOpen, onClose, onResultSelect }: Props
   );
 }
 
-/* --- ПОДКОМПОНЕНТ КАРТОЧКИ --- */
-function ResultCard({ tour, rank, onSelect }: { tour: TourResult, rank: number, onSelect: () => void }) {
+/* --- ПОДКОМПОНЕНТ КАРТОЧКИ РЕЗУЛЬТАТА --- */
+function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, rank: number, onClose: () => void }) {
     const isBest = rank === 1;
+    const Icon = direction.icon;
     
     return (
         <motion.div 
@@ -324,153 +322,185 @@ function ResultCard({ tour, rank, onSelect }: { tour: TourResult, rank: number, 
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: rank * 0.1 }}
            className={clsx(
-               "relative p-5 rounded-2xl border transition-all hover:shadow-lg",
+               "relative p-5 md:p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-5",
                isBest 
-                 ? "bg-gradient-to-br from-teal-900/40 to-slate-900 border-teal-500/50 shadow-teal-900/20" 
-                 : "bg-slate-800/50 border-white/5 hover:bg-slate-800"
+                 ? "bg-slate-900 border-teal-500/40 shadow-[0_10px_30px_rgba(20,184,166,0.1)]" 
+                 : "bg-slate-900/50 border-white/5"
            )}
         >
             {isBest && (
-                <div className="absolute -top-3 left-6 bg-teal-500 text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
-                    <Trophy size={12} fill="currentColor"/> Твой выбор
+                <div className="absolute -top-3 left-6 bg-teal-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                    <Trophy size={12} fill="currentColor"/> Лучший выбор
                 </div>
             )}
             
-            <div className="flex justify-between items-start mb-3 mt-1">
-                <div className="flex items-center gap-3">
-                    <div className="text-4xl">{tour.emoji}</div>
+            {/* Header */}
+            <div className="flex justify-between items-start mt-1">
+                <div className="flex items-center gap-4">
+                    <div className={clsx(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                        isBest ? "bg-teal-500/20 text-teal-400" : "bg-white/5 text-slate-400"
+                    )}>
+                        <Icon size={24} />
+                    </div>
                     <div>
-                        <h4 className="font-bold text-white text-lg leading-tight">{tour.title}</h4>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">
-                            <span>{tour.duration}</span>
-                            <span className="w-1 h-1 bg-slate-600 rounded-full"/>
-                            <span>{tour.difficulty}</span>
-                        </div>
+                        <h4 className="font-black text-white text-xl uppercase tracking-tight leading-none mb-1.5">{direction.title}</h4>
+                        <p className="text-xs text-slate-400 font-medium">{direction.description}</p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <span className="block text-teal-400 font-black text-xl">{tour.match}%</span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase">Совпадение</span>
+                <div className="text-right shrink-0 ml-4">
+                    <span className={clsx("block font-black text-2xl leading-none", isBest ? "text-teal-400" : "text-white")}>
+                        {direction.match}%
+                    </span>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
                 </div>
             </div>
 
-            {/* Блок "Почему это подходит" */}
-            <div className="bg-black/20 rounded-xl p-3 mb-4 border border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                    <Info size={12} className="text-teal-500"/>
-                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider">Почему этот тур:</span>
+            {/* Почему это подходит */}
+            <div className="bg-black/30 rounded-2xl p-4 border border-white/5">
+                <div className="flex items-center gap-2 mb-3">
+                    <Info size={14} className="text-teal-500"/>
+                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest">Почему именно это:</span>
                 </div>
-                <ul className="space-y-1">
-                    {tour.whyThis.map((reason, i) => (
-                        <li key={i} className="text-xs text-slate-300 flex items-start gap-2">
-                            <span className="text-teal-500/50 mt-1">•</span> {reason}
+                <ul className="space-y-2">
+                    {direction.whyThis.map((reason, i) => (
+                        <li key={i} className="text-xs text-slate-300 font-medium flex items-start gap-2.5 leading-relaxed">
+                            <span className="text-teal-500/50 mt-0.5 shrink-0">❖</span> {reason}
                         </li>
                     ))}
                 </ul>
             </div>
 
-            <button 
-                onClick={onSelect}
-                className={clsx(
-                    "w-full py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2",
-                    isBest 
-                       ? "bg-teal-500 hover:bg-teal-400 text-slate-900 shadow-lg shadow-teal-500/20"
-                       : "bg-white/10 hover:bg-white/20 text-white"
-                )}
-            >
-                Хочу этот тур <ArrowRight size={14}/>
-            </button>
+            {/* Смарт-кнопки 2026 года (Soft & Hard CTA) */}
+            <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                <Link 
+                    href={direction.href_info}
+                    onClick={onClose}
+                    className="flex-1 py-3.5 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+                >
+                    <Compass size={14}/> О направлении
+                </Link>
+                <Link 
+                    href={direction.href_tours}
+                    onClick={onClose}
+                    className={clsx(
+                        "flex-1 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2",
+                        isBest 
+                            ? "bg-teal-500 text-slate-950 hover:bg-teal-400" 
+                            : "bg-white text-slate-950 hover:bg-slate-200"
+                    )}
+                >
+                    Смотреть туры <ArrowRight size={14}/>
+                </Link>
+            </div>
         </motion.div>
     )
 }
 
-/* --- ЛОГИКА АЛГОРИТМА (Hardcoded Golden Standard) --- */
-function getRecommendations(answers: Answers): TourResult[] {
-    // В реальном проекте тут можно делать запрос к API
-    // Пока используем хардкод, который "безотказен"
-    
-    // 1. Считаем очки
-    const scores = {
-        sup: 0,
-        kayak: 0,
-        oneDay: 0,
-        picnic: 0,
-        challenge: 0,
-        relax: 0,
-    };
+/* --- ВЗВЕШЕННЫЙ АЛГОРИТМ (Senior Level Algorithm) --- */
+function getRecommendations(answers: Answers): DirectionResult[] {
+    // 1. Инициализируем направления с базовым рейтингом
+    let scores = { sup: 0, kayaking: 0, hiking: 0, local: 0 };
 
-    // ОПЫТ
-    if (answers.experience === "never") { scores.sup += 35; scores.picnic += 30; scores.oneDay += 25; }
-    else if (answers.experience === "few") { scores.kayak += 25; scores.oneDay += 20; scores.relax += 20; }
-    else { scores.challenge += 35; scores.kayak += 25; }
+    // 2. Система весов (Weight System)
+    // --- Опыт ---
+    if (answers.experience === "never") { scores.sup += 30; scores.local += 20; scores.kayaking += 10; }
+    if (answers.experience === "few") { scores.kayaking += 30; scores.hiking += 10; scores.sup += 10; }
+    if (answers.experience === "regular") { scores.hiking += 40; scores.kayaking += 20; }
 
-    // СТРАХИ
-    if (answers.concern === "physical") { scores.sup += 30; scores.picnic += 25; scores.relax += 20; }
-    if (answers.concern === "people") { scores.oneDay += 25; scores.kayak += 20; }
-    if (answers.concern === "gear") { scores.sup += 25; scores.kayak += 20; }
+    // --- Страхи ---
+    if (answers.concern === "physical") { scores.sup += 30; scores.local += 20; }
+    if (answers.concern === "people") { scores.local += 25; scores.kayaking += 20; scores.hiking += 15; }
+    if (answers.concern === "gear") { scores.sup += 20; scores.kayaking += 20; scores.local += 20; }
+    if (answers.concern === "nothing") { scores.hiking += 30; scores.kayaking += 20; }
 
-    // ПРИОРИТЕТЫ
+    // --- Приоритеты (Множественный выбор) ---
     const priorities = answers.priority.split(",");
-    if (priorities.includes("relax")) { scores.relax += 25; scores.picnic += 20; scores.sup += 15; }
-    if (priorities.includes("people")) { scores.oneDay += 25; scores.kayak += 20; }
-    if (priorities.includes("challenge")) { scores.challenge += 30; scores.kayak += 20; }
-    if (priorities.includes("nature")) { scores.relax += 20; scores.kayak += 15; }
+    if (priorities.includes("relax")) { scores.sup += 30; scores.local += 25; scores.kayaking += 15; }
+    if (priorities.includes("people")) { scores.kayaking += 30; scores.hiking += 20; }
+    if (priorities.includes("challenge")) { scores.hiking += 40; scores.kayaking += 15; }
+    if (priorities.includes("nature")) { scores.hiking += 25; scores.kayaking += 20; scores.sup += 15; }
 
-    // Функция генератора причин "Почему"
-    const getWhy = (type: string) => {
-        const reasons = [];
-        if (answers.experience === "never") reasons.push("Подходит для первого раза, опыт не нужен");
-        if (answers.concern === "physical" && (type === 'sup' || type === 'picnic')) reasons.push("Минимальная нагрузка, справится каждый");
-        if (answers.concern === "gear") reasons.push("Все снаряжение выдаем, с собой только одежду");
-        if (priorities.includes("relax") && type === 'sup') reasons.push("Медитативный формат, полная тишина");
-        if (priorities.includes("challenge") && type === 'challenge') reasons.push("Настоящее приключение для проверки себя");
-        // Дефолтная причина, если список пуст
-        if (reasons.length === 0) reasons.push("Один из самых популярных форматов клуба");
-        return reasons.slice(0, 2);
+    // 3. Динамическая генерация причин "Почему"
+    const generateReasons = (type: keyof typeof scores): string[] => {
+        const reasons: string[] = [];
+        
+        if (answers.experience === "never" && (type === "sup" || type === "local")) {
+            reasons.push("Идеально для новичков: не требует физической подготовки и опыта.");
+        }
+        if (answers.concern === "physical" && type === "sup") {
+            reasons.push("Минимальная нагрузка. Можно грести сидя или просто лежать на доске.");
+        }
+        if (answers.concern === "gear" && type !== "hiking") {
+            reasons.push("Мы предоставляем абсолютно всё снаряжение премиум-класса.");
+        }
+        if (priorities.includes("challenge") && type === "hiking") {
+            reasons.push("Настоящий вызов: рельеф, высота и проверка собственных сил в горах.");
+        }
+        if (priorities.includes("relax") && type === "local") {
+            reasons.push("Максимальный релакс недалеко от дома, без долгих переездов.");
+        }
+        if (priorities.includes("people") && type === "kayaking") {
+            reasons.push("Командная работа в байдарке — лучший способ завести новые знакомства.");
+        }
+
+        // Если специфичных причин не набралось, добавляем универсальные
+        if (reasons.length === 0) {
+            if (type === "sup") reasons.push("Самый популярный и эстетичный вид отдыха на воде.");
+            if (type === "kayaking") reasons.push("Классика туризма: вода, природа и отличная компания.");
+            if (type === "hiking") reasons.push("Глубокое погружение в дикую природу вдали от цивилизации.");
+            if (type === "local") reasons.push("Отличный способ сбежать от городской суеты на один день.");
+        }
+
+        return reasons.slice(0, 2); // Оставляем 2 самые весомые причины
     };
 
-    const allTours: TourResult[] = [
+    // 4. Формируем массив результатов с нормализацией процентов (чтобы лучший был ~92-98%)
+    const maxScorePossible = 110; // Примерный максимум по весам
+    
+    const results: DirectionResult[] = [
         {
-            id: 1,
-            match: Math.min(98, 50 + scores.sup),
-            emoji: "🏄",
-            title: "SUP-прогулка",
-            description: "Самый легкий старт. Учим за 5 минут, выдаем жилеты.",
-            duration: "3 часа",
-            difficulty: "Легко",
-            price: "450 MDL",
-            link_slug: "sup-dnister",
-            whyThis: getWhy('sup'),
-            features: [],
+            id: "sup",
+            match: Math.min(98, Math.round((scores.sup / maxScorePossible) * 100) + 20), // +20 базовых очков для красивого отображения
+            icon: Anchor,
+            title: "SUP Прогулки",
+            description: "Медитация на воде и эстетика рассветов",
+            whyThis: generateReasons("sup"),
+            href_info: "/directions/sup",
+            href_tours: "/tour?category=sup"
         },
         {
-            id: 2,
-            match: Math.min(95, 45 + scores.kayak),
-            emoji: "🚣",
-            title: "Сплав на байдарках",
-            description: "Классика жанра. Команда, вода и красивые виды.",
-            duration: "1 день",
-            difficulty: "Средне",
-            price: "600 MDL",
-            link_slug: "kayak-classic",
-            whyThis: getWhy('kayak'),
-            features: [],
+            id: "kayaking",
+            match: Math.min(96, Math.round((scores.kayaking / maxScorePossible) * 100) + 15),
+            icon: Waves,
+            title: "Сплавы на байдарках",
+            description: "Классическое водное приключение для всех",
+            whyThis: generateReasons("kayaking"),
+            href_info: "/directions/kayaking",
+            href_tours: "/tour?category=kayaking"
         },
         {
-            id: 3,
-            match: Math.min(92, 40 + scores.challenge),
-            emoji: "⛰️",
-            title: "Горный Треккинг",
-            description: "Для тех, кто хочет гор. Румыния, Карпаты.",
-            duration: "2 дня",
-            difficulty: "Активно",
-            price: "1800 MDL",
-            link_slug: "mountain-hike",
-            whyThis: getWhy('challenge'),
-            features: [],
+            id: "hiking",
+            match: Math.min(99, Math.round((scores.hiking / maxScorePossible) * 100) + 10),
+            icon: Mountain,
+            title: "Горы и Походы",
+            description: "Настоящий вызов и дикая природа Карпат",
+            whyThis: generateReasons("hiking"),
+            href_info: "/directions/hiking",
+            href_tours: "/tour?category=hiking"
         },
+        {
+            id: "local",
+            match: Math.min(95, Math.round((scores.local / maxScorePossible) * 100) + 25),
+            icon: Compass,
+            title: "Местная Программа",
+            description: "Быстрая перезагрузка без долгих сборов",
+            whyThis: generateReasons("local"),
+            href_info: "/directions/local",
+            href_tours: "/tour?category=local"
+        }
     ];
 
-    // Сортируем по совпадению и отдаем топ-3
-    return allTours.sort((a, b) => b.match - a.match);
+    // 5. Сортируем по убыванию процента совпадения
+    return results.sort((a, b) => b.match - a.match);
 }
