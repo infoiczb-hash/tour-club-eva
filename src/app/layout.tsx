@@ -10,6 +10,8 @@ import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 import Header from "@/components/Header"; 
 import { Footer } from "@/components/layout/Footer";
 import PromoBlock from "@/components/layout/PromoBlock"; 
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -50,6 +52,8 @@ export default function RootLayout({
             </MainLayoutWrapper>
           </ToastProvider>
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
