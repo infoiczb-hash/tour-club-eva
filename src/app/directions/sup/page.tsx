@@ -25,7 +25,7 @@ export default async function SupPage() {
 
   return (
     <main className="bg-slate-950 min-h-screen">
-      <SupLandingClient tours={supTours} />
+      <SupLandingClient />
     </main>
   );
 }
