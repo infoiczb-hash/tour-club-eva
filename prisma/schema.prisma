@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Blog {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String     @unique
+  title        String
+  excerpt      String
+  content      String
+  category     String     @default("OTHER")
+  image        String?
+  read_time    Int        @default(5)
+  date         DateTime   @default(now()) @db.Timestamp(6)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  is_trending  Boolean    @default(false)
+  format       PostFormat @default(long)
+  author_name  String?    @default("Team Eva")
+  author_role  String?    @default("Guide Club")
+  author_image String?
+  guideId      String?    @map("guide_id") @db.Uuid
+  isActive     Boolean    @default(false) @map("is_active")
+  guide        Guide?     @relation(fields: [guideId], references: [id])
+
+  @@map("blog_posts")
+}
+
+model Tour {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug               String         @unique
+  title              String
+  subtitle           String?
+  description        String?
+  type               String         @default("hiking")
+  label              String         @default("")
+  duration           String?
+  location           String
+  spots              Int            @default(15)
+  spotsLeft          Int            @default(15) @map("spots_left")
+  currency           String         @default("RUB")
+  gallery            String[]       @default([])
+  program            Json?          @default("[]")
+  faq                Json?          @default("[]")
+  included           String[]       @default([])
+  additionalExpenses String[]       @default([]) @map("additional_expenses")
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  difficulty         String         @default("medium")
+  distance           String?
+  documents          Json?          @default("[]")
+  guideId            String?        @map("guide_id") @db.Uuid
+  isActive           Boolean        @default(false) @map("is_active")
+  meetingPoint       String?        @map("meeting_point")
+  priceChild         Int?           @map("price_child")
+  priceOld           Int?           @map("price_old")
+  coverImage         String?        @map("cover_image")
+  dates              Json           @default("[]")
+  highlights         Json?          @default("[]")
+  metaDesc           String?        @map("meta_desc")
+  metaTitle          String?        @map("meta_title")
+  price              Int            @default(0)
+  priceMember        Int?           @map("price_member")
+  route              String?
+  tags               String[]       @default([])
+  checklist          Json?          @default("[]")
+  priceFamily        Int?           @map("price_family")
+  bookings           Booking[]
+  registrations      Registration[]
+  guide              Guide?         @relation(fields: [guideId], references: [id])
+
+  @@map("tours")
+}
+
+model Guide {
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  name         String
+  role         String   @default("GID")
+  image        String?
+  superpower   String?
+  experience   String?
+  bio          String?
+  achievements String[]
+  contact      String?
+  instagram    String?
+  telegram     String?
+  isActive     Boolean  @default(true) @map("is_active")
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actionImage  String?
+  posts        Blog[]
+  tours        Tour[]
+
+  @@map("guides")
+}
+
+model Booking {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  phone      String
+  email      String?
+  tickets    Json
+  totalPrice Int           @map("total_price")
+  status     BookingStatus @default(pending)
+  bookedDate DateTime?     @map("booked_date")
+  tourId     String        @map("tour_id") @db.Uuid
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  tour       Tour          @relation(fields: [tourId], references: [id], onUpdate: NoAction)
+
+  @@map("bookings")
+}
+
+model ContentBlock {
+  slug    String @id @unique
+  content Json
+
+  @@map("content_blocks")
+}
+
+model Registration {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  phone          String
+  email          String?
+  tickets        Int
+  ticket_type    String?   @default("adult")
+  total_price    Int
+  status         String?   @default("new")
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  tickets_adult  Int?      @default(0)
+  tickets_child  Int?      @default(0)
+  tickets_family Int?      @default(0)
+  tour_id        String?   @db.Uuid
+  tour           Tour?     @relation(fields: [tour_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("registrations")
+}
+
+model Review {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  text      String
+  source    String   @default("tg")
+  avatar    String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("reviews")
+}
+
+enum PostFormat {
+  short
+  long
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+model Inquiry {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      InquiryType
+  status    InquiryStatus @default(NEW)
+  name      String
+  phone     String?
+  social    String?       @map("social_link") // Telegram/Instagram
+  
+  message   String?       // Main text
+  payload   Json?         // Additional info
+  
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("inquiries")
+}
+
+enum InquiryType {
+  TOUR      // Tour
+  HR        // Team
+  BLOG      // Blog
+  B2B       // Partnership
+  REVIEW    // Review
+  HELP      // Help
+}
+
+enum InquiryStatus {
+  NEW       // New
+  WORK      // In Work
+  DONE      // Finish / Spam
+}

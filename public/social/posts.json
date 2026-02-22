@@ -1,0 +1,59 @@
+{
+  "posts": [
+    {
+      "id": 1,
+      "type": "video",
+      "url": "https://player.cloudinary.com/embed/?cloud_name=dwrei7k2z&public_id=tour-1_ntce1m",
+      "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522348/tour-1_ephqio.webp",
+      "size": "tall",
+      "likes": 142,
+      "comments": 24,
+      "tags": ["#ЭваТурклуб", "#Поход", "#Горы"],
+      "caption": "Те самые моменты, ради которых стоит быть вместе"
+    },
+    {
+      "id": 2,
+      "type": "video",
+      "url": "https://player.cloudinary.com/embed/?cloud_name=dwrei7k2z&public_id=tour-2_qh1iak",
+      "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522349/tour-2_nnerpa.webp",
+      "size": "tall",
+      "likes": 89,
+      "comments": 5,
+      "tags": ["#Днестр", "#сплав"],
+      "caption": "Вода как поток твоего спокойствия"
+    },
+    {
+      "id": 3,
+      "type": "video",
+      "url": "https://res.cloudinary.com/dwrei7k2z/video/upload/v1771522113/tour-3_ojcd0a.mp4",
+      "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522345/tour-3_esmefi.webp",
+      "size": "tall",
+      "likes": 210,
+      "comments": 42,
+      "tags": ["#Природа", "#Румыния", "#Горы"],
+      "caption": "Тишина и спокойствие на маршруте. Перезагрузка на 100%."
+    },
+    {
+      "id": 4,
+      "type": "video",
+      "url": "https://res.cloudinary.com/dwrei7k2z/video/upload/v1771522100/tour-4_nlqemq.mp4",
+      "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522345/tour-4_xpwpmi.webp",
+      "size": "tall",
+      "likes": 350,
+      "comments": 67,
+      "tags": ["#SUP", "#Днестр", "#Драйв"],
+      "caption": "SUP - когда свобода внутри!"
+    },
+    {
+      "id": 5,
+      "type": "video",
+      "url": "https://res.cloudinary.com/dwrei7k2z/video/upload/v1771522112/tour-5_tdsi3r.mp4",
+      "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522347/tour-5_rubny7.webp",
+      "size": "tall",
+      "likes": 600,
+      "comments": 89,
+      "tags": ["#Горы", "#Румыния"],
+      "caption": "Тур по Трансфагарашу — волшебство природы и душевного спокойствия"
+    }
+      ]
+}
