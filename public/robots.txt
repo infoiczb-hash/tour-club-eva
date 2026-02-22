@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://tour-club-eva.vercel.app/sitemap.xml

@@ -1,0 +1,449 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { 
+  X, Save, Sparkles, Loader2, Share2, 
+  Instagram, Send, Image as ImageIcon, Upload, Palette,
+  Clock, Tag, User, TrendingUp, CheckCircle2, ChevronDown, Link as LinkIcon, RefreshCw
+} from 'lucide-react';
+import { Blog } from '@prisma/client'; 
+import Button from '@/shared/ui/Button';
+import { performAiTask } from '@/features/admin/actions/ai';
+import { uploadImage, uploadImageFromUrl } from '@/lib/api';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import TiptapEditor from '@/shared/ui/TiptapEditor'; // Убедись, что путь верный
+import { getGuides } from '@/features/tours/api';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// Утилита для транслитерации (Русский -> Eng Slug)
+const slugify = (text: string) => {
+  const ru: Record<string, string> = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 
+    'е': 'e', 'ё': 'yo', 'ж': 'zh', 'з': 'z', 'и': 'i', 
+    'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 
+    'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 
+    'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 
+    'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 
+    'э': 'e', 'ю': 'yu', 'я': 'ya'
+  };
+
+  return text
+    .toLowerCase()
+    .split('')
+    .map(char => ru[char] || char)
+    .join('')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+// Расчет времени чтения (HTML -> Text -> Words -> Minutes)
+const calculateReadTime = (html: string): number => {
+  const text = html.replace(/<[^>]*>/g, ' '); // Убираем теги
+  const wordCount = text.trim().split(/\s+/).length;
+  const time = Math.ceil(wordCount / 200); // 200 слов в минуту
+  return time < 1 ? 1 : time;
+};
+
+interface ExtendedBlog extends Omit<Blog, 'guideId'> {
+  guideId?: string | null;
+}
+
+interface Props {
+  initialData?: ExtendedBlog | null;
+  onClose: () => void;
+  onSubmit: (data: any) => Promise<void>;
+}
+
+export default function PostForm({ initialData, onClose, onSubmit }: Props) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isImageGenerating, setIsImageGenerating] = useState(false);
+  const [loadingField, setLoadingField] = useState<string | null>(null); 
+  
+  const [guides, setGuides] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
+    title: initialData?.title || '',
+    slug: initialData?.slug || '', // Добавили поле SLUG
+    excerpt: initialData?.excerpt || '', // Важно: используем excerpt (как в схеме), а не desc
+    content: initialData?.content || '',
+    image: initialData?.image || '',
+    category: initialData?.category || 'TIPS', // Default uppercase matches Filters
+    read_time: initialData?.read_time?.toString() || '5',
+    is_trending: initialData?.is_trending || false,
+    
+    author_name: initialData?.author_name || 'Team Eva',
+    author_role: initialData?.author_role || 'Guide Club',
+    author_image: initialData?.author_image || '',
+    guide_id: initialData?.guideId || '',
+  });
+
+  useEffect(() => {
+    async function loadGuides() {
+      const list = await getGuides();
+      setGuides(list);
+    }
+    loadGuides();
+  }, []);
+
+  // АВТО-SLUG: Если создаем новую статью, генерируем slug из заголовка на лету
+  useEffect(() => {
+    if (!initialData && formData.title) {
+        setFormData(prev => ({ ...prev, slug: slugify(prev.title) }));
+    }
+  }, [formData.title, initialData]);
+
+  // АВТО-ВРЕМЯ: При изменении контента пересчитываем время
+  const handleContentChange = (html: string) => {
+    const time = calculateReadTime(html);
+    setFormData(prev => ({ 
+        ...prev, 
+        content: html,
+        read_time: String(time) // Обновляем время автоматически
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUploading(true);
+    try {
+      // Генерируем слаг, если он пустой
+      const finalSlug = formData.slug || slugify(formData.title) || `post-${Date.now()}`;
+
+      const payload = { 
+          ...formData, 
+          slug: finalSlug,
+          read_time: Number(formData.read_time) || 5, 
+          image: formData.image || null,
+          author_image: formData.author_image || null,
+          guide_id: formData.guide_id || null,
+          id: initialData?.id 
+      };
+      await onSubmit(payload);
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("Error saving post");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ... (Остальные хендлеры handleSelectGuide, handleFile, handleAiImage, handleAiText без изменений)
+  const handleSelectGuide = (guideId: string) => {
+    if (!guideId) {
+      setFormData(prev => ({ ...prev, guide_id: '' }));
+      return;
+    }
+    const guide = guides.find(g => g.id === guideId);
+    if (guide) {
+      setFormData(prev => ({
+        ...prev,
+        guide_id: guide.id,
+        author_name: guide.name,
+        author_role: guide.role || 'Guide Club', 
+        author_image: guide.image || prev.author_image
+      }));
+    }
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'author_image') => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setLoadingField(field);
+    try {
+        const url = await uploadImage(file);
+        if (url) setFormData(prev => ({ ...prev, [field]: url }));
+        else alert("Upload failed");
+    } catch (err) { alert("Upload failed"); } 
+    finally { setLoadingField(null); }
+  };
+
+  const handleAiImage = async () => {
+    if (!formData.title) return alert("Please enter a title first!");
+    setIsImageGenerating(true);
+    const res = await performAiTask({ mode: 'generate_image', prompt: formData.title });
+    if (res.success) {
+       const permanentUrl = await uploadImageFromUrl(res.data as string);
+       if (permanentUrl) setFormData(prev => ({ ...prev, image: permanentUrl }));
+    } else { alert("AI Error: " + res.error); }
+    setIsImageGenerating(false);
+  };
+
+  const handleAiText = async () => {
+    const topic = prompt("Topic of the article?"); if (!topic) return;
+    setIsAiGenerating(true);
+    const res = await performAiTask({ mode: 'generate_blog', topic });
+    setIsAiGenerating(false);
+    if (res.success) {
+        const data = res.data as any;
+        setFormData(prev => ({ 
+            ...prev, 
+            title: data.title, 
+            excerpt: data.excerpt, 
+            content: data.content, 
+            read_time: String(data.read_time), 
+            category: data.category,
+            slug: slugify(data.title) // AI тоже должен генерировать слаг
+        }));
+    } else { alert("AI Error: " + res.error); }
+  };
+
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-950 rounded-2xl w-full max-w-6xl shadow-2xl flex flex-col max-h-[95vh] border border-slate-200 dark:border-slate-800 relative overflow-hidden">
+        
+        {/* HEADER */}
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-950/80 backdrop-blur z-10">
+          <div>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">{initialData ? '✏️ Edit Post' : '📝 New Post'}</h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">CONTENT MANAGER</p>
+          </div>
+          <div className="flex gap-2">
+             <button type="button" onClick={handleAiText} disabled={isAiGenerating} className="hidden sm:flex bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-100 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800 px-3 py-2 rounded-xl text-xs font-bold items-center gap-2 transition shadow-sm">
+                {isAiGenerating ? <Loader2 className="animate-spin" size={16}/> : <Sparkles size={16}/>} AI Generator
+             </button>
+             <button onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition text-slate-400"><X size={24}/></button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* LEFT COLUMN */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* TITLE & SLUG GROUP */}
+                <div className="space-y-3">
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Title (Заголовок)</label>
+                        <input className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-lg font-bold transition-all dark:text-white" 
+                            value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Ex: Top 5 places..." autoFocus 
+                        />
+                    </div>
+                    
+                    {/* SLUG FIELD (NEW) */}
+                    <div className="flex gap-2 items-end">
+                        <div className="flex-1">
+                             <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
+                                <LinkIcon size={10}/> URL Slug
+                             </label>
+                             <input className="w-full p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-violet-500/20 outline-none" 
+                                value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} placeholder="my-awesome-post" 
+                             />
+                        </div>
+                        <button 
+                            type="button" 
+                            onClick={() => setFormData({...formData, slug: slugify(formData.title)})}
+                            className="p-2 h-[34px] bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                            title="Regenerate Slug from Title"
+                        >
+                            <RefreshCw size={14} />
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Tag size={10}/> Category</label>
+                        <select className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white appearance-none cursor-pointer" 
+                            value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                            <option value="HIKING">HIKING (Походы)</option>
+                            <option value="TIPS">TIPS (Советы)</option>
+                            <option value="GEAR">GEAR (Снаряжение)</option>
+                            <option value="STORIES">STORIES (Истории)</option>
+                            <option value="OTHER">OTHER (Разное)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Clock size={10}/> Read Time (min)</label>
+                        <div className="relative">
+                            <input type="number" className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white" 
+                                value={formData.read_time} onChange={e => setFormData({...formData, read_time: e.target.value})} 
+                            />
+                            <div className="absolute right-3 top-3 text-[10px] text-slate-400 font-bold uppercase pointer-events-none">Auto-calc</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div 
+                    onClick={() => setFormData(prev => ({...prev, is_trending: !prev.is_trending}))}
+                    className={cn(
+                        "flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all select-none",
+                        formData.is_trending 
+                            ? "bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-orange-200 dark:border-orange-900/50" 
+                            : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                    )}
+                >
+                    <div className={cn(
+                        "w-5 h-5 rounded-md flex items-center justify-center transition-colors",
+                        formData.is_trending ? "bg-orange-500 text-white" : "bg-slate-200 dark:bg-slate-700"
+                    )}>
+                        {formData.is_trending && <CheckCircle2 size={14} />}
+                    </div>
+                    <div>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            <TrendingUp size={14} className={formData.is_trending ? "text-orange-500" : "text-slate-400"}/> 
+                            Trending (Топ новость)
+                        </span>
+                        <p className="text-[10px] text-slate-400">Показывать в блоке "Сейчас читают"</p>
+                    </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: AUTHOR (Остался без изменений, код валидный) */}
+              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 h-fit">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={12}/> Author Details</h3>
+                  
+                  {/* GUIDE SELECTION */}
+                  <div className="mb-4 relative">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select from Team</label>
+                      <div className="relative">
+                          <select 
+                            className="w-full p-2 pl-3 pr-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white appearance-none cursor-pointer focus:ring-2 focus:ring-violet-500/20 outline-none"
+                            value={formData.guide_id}
+                            onChange={(e) => handleSelectGuide(e.target.value)}
+                          >
+                             <option value="">-- Manual Input --</option>
+                             {guides.map(g => (
+                               <option key={g.id} value={g.id}>{g.name}</option>
+                             ))}
+                          </select>
+                          <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
+                      </div>
+                  </div>
+
+                  <hr className="border-slate-200 dark:border-slate-700 my-4 border-dashed"/>
+
+                  <div className="flex flex-col items-center mb-4">
+                      <div className="w-20 h-20 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 relative group overflow-hidden bg-white dark:bg-slate-800 mb-3">
+                          {formData.author_image ? (
+                              <img src={formData.author_image} className="w-full h-full object-cover" alt="Author"/>
+                          ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-300"><User size={24}/></div>
+                          )}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                              {loadingField === 'author_image' ? <Loader2 className="animate-spin text-white"/> : <Upload className="text-white"/>}
+                          </div>
+                          <input type="file" onChange={(e) => handleFile(e, 'author_image')} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                      </div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">Author Photo</p>
+                  </div>
+
+                  <div className="space-y-3">
+                      <div>
+                          <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Name</label>
+                          <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white" 
+                             value={formData.author_name} onChange={e => setFormData({...formData, author_name: e.target.value})} placeholder="Roman Sandu"
+                          />
+                      </div>
+                      <div>
+                          <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Role</label>
+                          <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white" 
+                             value={formData.author_role} onChange={e => setFormData({...formData, author_role: e.target.value})} placeholder="Guide Club"
+                          />
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <hr className="border-slate-100 dark:border-slate-800"/>
+          
+          {/* 2. TEXT CONTENT & TIPTAP */}
+          <div className="space-y-6">
+              <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Preview (Lead)</label>
+                  <textarea 
+                    className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm leading-relaxed outline-none focus:ring-2 focus:ring-violet-500/20 transition-all resize-none dark:text-white placeholder:text-slate-400 h-28" 
+                    value={formData.excerpt} onChange={(e) => setFormData({...formData, excerpt: e.target.value})} placeholder="Short description for the card..." 
+                  />
+              </div>
+
+              <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Content</label>
+                  {/* TIPTAP EDITOR: Передаем обновленный хендлер */}
+                  <TiptapEditor 
+                    content={formData.content} 
+                    onChange={handleContentChange} // Используем функцию с авто-расчетом времени
+                    placeholder="Write your story here..."
+                  />
+              </div>
+          </div>
+
+          <hr className="border-slate-100 dark:border-slate-800"/>
+          
+          {/* 3. COVER IMAGE (Без изменений) */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cover Image</label>
+                <button type="button" onClick={handleAiImage} disabled={isImageGenerating || !formData.title} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 disabled:opacity-50">
+                    {isImageGenerating ? <Loader2 size={12} className="animate-spin"/> : <Palette size={12}/>} Generate AI
+                </button>
+            </div>
+            <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-900 relative group transition-colors">
+                <div className="flex gap-4 items-center">
+                    <div className="flex-1 relative h-40 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center group/img">
+                        {formData.image ? (
+                            <>
+                                <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                                <button type="button" onClick={() => setFormData({...formData, image: ''})} className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center"><span className="bg-white/20 p-2 rounded-full text-white backdrop-blur"><X size={20}/></span></button>
+                            </>
+                        ) : (
+                            <div className="text-slate-400 flex flex-col items-center">
+                                {loadingField === 'image' ? (
+                                    <Loader2 size={32} className="mb-2 animate-spin text-violet-500"/>
+                                ) : (
+                                    <>
+                                        <ImageIcon size={32} className="mb-2 opacity-50"/>
+                                        <span className="text-xs font-bold uppercase">{isImageGenerating ? 'Painting...' : 'No Image'}</span>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                        <input type="file" onChange={(e) => handleFile(e, 'image')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" disabled={isImageGenerating || loadingField === 'image'} />
+                    </div>
+                    <div className="w-1/3 space-y-3">
+                        <input className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="Or URL..." />
+                        <button type="button" className="w-full p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2 transition pointer-events-none">
+                            <Upload size={16}/> Upload
+                        </button>
+                        <p className="text-[9px] text-center text-amber-500 font-bold">⚠️ 16:9 Ratio</p>
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          {/* SMM GENERATOR */}
+          <div className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 p-6 rounded-3xl border border-pink-100 dark:border-pink-900/30 flex flex-col sm:flex-row justify-between items-center gap-4">
+             <div><h4 className="text-xs font-black text-pink-700 dark:text-pink-400 uppercase flex items-center gap-2 mb-1"><Share2 size={14}/> SMM Announce</h4><p className="text-[10px] text-pink-600/70 dark:text-pink-400/70 font-medium">Generate social media posts</p></div>
+             <div className="flex gap-2 w-full sm:w-auto">
+                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[10px] flex-1" onClick={async () => {
+                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' });
+                     if(res.success) navigator.clipboard.writeText(res.data as string).then(() => alert('✅ Copied!'));
+                 }}><Instagram size={14} className="mr-2 text-pink-600"/> Instagram</Button>
+                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[10px] flex-1" onClick={async () => {
+                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' });
+                     if(res.success) navigator.clipboard.writeText(res.data as string).then(() => alert('✅ Copied!'));
+                 }}><Send size={14} className="mr-2 text-sky-500"/> Telegram</Button>
+             </div>
+          </div>
+        </form>
+
+        {/* FOOTER */}
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur rounded-b-2xl flex justify-end gap-3 z-10">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isUploading}>Cancel</Button>
+            <Button type="submit" onClick={handleSubmit} variant="primary" disabled={isUploading} className="bg-violet-600 hover:bg-violet-700 text-white shadow-xl shadow-violet-500/20 px-8">
+              {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} Save Post
+            </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
