@@ -145,6 +145,7 @@ export default function PromoBlock() {
         </div>
       </div>
       <ContactHubModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} initialTab={contactTab} tourContext={tourContext} />
+      <TourQuizModal isOpen={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
          </section>
   );
 }
