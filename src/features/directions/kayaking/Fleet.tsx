@@ -36,7 +36,7 @@ export default function Fleet() {
             <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                     <ShieldCheck size={14} className="text-teal-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Инвентарь</span>
+                    <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Инвентарь</span>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">
                     Наш <span className="text-teal-500">Флот</span>
@@ -70,7 +70,7 @@ export default function Fleet() {
 
                     <div className="relative bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-6 pt-16 md:pt-20 pb-8 flex flex-col items-center text-center overflow-hidden transition-all duration-500 group-hover:border-teal-500/30 group-hover:bg-slate-900/60 shadow-xl group-hover:shadow-2xl h-full">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-teal-500/0 blur-[80px] rounded-full transition-all duration-500 group-hover:bg-teal-500/20 pointer-events-none" />
-                        <span className="inline-block mb-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-teal-500 tracking-widest relative z-10">
+                        <span className="inline-block mb-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[14px] font-black uppercase text-teal-500 tracking-widest relative z-10">
                             {boat.tag}
                         </span>
                         <h4 className="font-black text-2xl text-white uppercase tracking-tight mb-3 relative z-10 group-hover:text-teal-300 transition-colors">

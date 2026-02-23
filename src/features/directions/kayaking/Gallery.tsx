@@ -53,7 +53,7 @@ export default function Gallery() {
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                     <Camera size={14} className="text-teal-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Фотоотчет</span>
+                    <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Фотоотчет</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4">
                     Живые <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">Эмоции</span>

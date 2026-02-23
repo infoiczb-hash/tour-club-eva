@@ -310,7 +310,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                     {/* STICKY FOOTER */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:px-10 md:pb-10 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent">
                          <Link 
-                            href={`/tours?guide=${guide.id}`} 
+                            href={`/tour`} 
                             className="w-full py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] active:scale-[0.98]"
                          >
                             <MapPin size={18} strokeWidth={2.5} />

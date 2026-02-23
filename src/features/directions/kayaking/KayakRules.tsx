@@ -28,7 +28,7 @@ export default function KayakRules() {
             <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/20 bg-amber-950/30 backdrop-blur-md mb-4">
                     <ShieldAlert size={14} className="text-amber-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Сохрани лодку</span>
+                    <span className="text-[14px] font-bold uppercase tracking-widest text-amber-400">Сохрани лодку</span>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4">
                     Правила обращения <br className="hidden md:block"/>

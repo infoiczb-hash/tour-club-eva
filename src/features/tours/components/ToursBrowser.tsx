@@ -124,57 +124,57 @@ export default function ToursBrowser({
         </div>
 
         {/* =======================================================
-            MOBILE CONTROLS (3 КРУПНЫЕ КНОПКИ)
+           MOBILE CONTROLS (КОМПАКТНАЯ ПАНЕЛЬ)
            ======================================================= */}
         <div className="lg:hidden mb-8 sticky top-4 z-40">
-            <div className="grid grid-cols-3 gap-2 p-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
                 
-                {/* 1. СЕТКА (Закрывает фильтры при клике) */}
+                {/* 1. СЕТКА */}
                 <button 
                     onClick={() => {
                         setViewMode('grid');
                         setIsMobileFiltersOpen(false);
                     }}
                     className={cn(
-                        "flex flex-col items-center justify-center gap-1 py-3 rounded-xl transition-all",
+                        "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all",
                         viewMode === 'grid' 
-                            ? "bg-teal-500 text-slate-900 shadow-lg" 
-                            : "bg-white/5 text-slate-400 active:bg-white/10"
+                            ? "bg-teal-500 text-slate-900 shadow-md" 
+                            : "bg-transparent text-slate-400 active:bg-white/10"
                     )}
                 >
-                    <LayoutGrid size={20} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Сетка</span>
+                    <LayoutGrid size={15} strokeWidth={2.5} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Сетка</span>
                 </button>
 
-                {/* 2. КАЛЕНДАРЬ (Закрывает фильтры при клике) */}
+                {/* 2. КАЛЕНДАРЬ */}
                 <button 
                     onClick={() => {
                         setViewMode('calendar');
                         setIsMobileFiltersOpen(false);
                     }}
                     className={cn(
-                        "flex flex-col items-center justify-center gap-1 py-3 rounded-xl transition-all",
+                        "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all",
                         viewMode === 'calendar' 
-                            ? "bg-teal-500 text-slate-900 shadow-lg" 
-                            : "bg-white/5 text-slate-400 active:bg-white/10"
+                            ? "bg-teal-500 text-slate-900 shadow-md" 
+                            : "bg-transparent text-slate-400 active:bg-white/10"
                     )}
                 >
-                    <CalendarIcon size={20} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Календарь</span>
+                    <CalendarIcon size={15} strokeWidth={2.5} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Календарь</span>
                 </button>
 
-                {/* 3. ФИЛЬТРЫ (Переключатель) */}
+                {/* 3. ФИЛЬТРЫ */}
                 <button 
                     onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
                     className={cn(
-                        "flex flex-col items-center justify-center gap-1 py-3 rounded-xl transition-all border",
+                        "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all border",
                         isMobileFiltersOpen 
                             ? "bg-slate-800 text-white border-teal-500/50" 
-                            : "bg-white/5 text-slate-400 border-transparent active:bg-white/10"
+                            : "bg-transparent border-transparent text-slate-400 active:bg-white/10"
                     )}
                 >
-                    {isMobileFiltersOpen ? <X size={20}/> : <Filter size={20} />}
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Фильтры</span>
+                    {isMobileFiltersOpen ? <X size={15} strokeWidth={2.5}/> : <Filter size={15} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Фильтры</span>
                 </button>
             </div>
 
@@ -269,7 +269,7 @@ export default function ToursBrowser({
 
                 {/* All Tours Link */}
                 <Link 
-                    href="/tours" 
+                    href="/tour" 
                     className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-teal-500 hover:text-slate-900 border border-white/10 text-white text-xs font-bold uppercase tracking-widest transition-all group"
                 >
                     <span>Все туры</span>

@@ -70,7 +70,7 @@ export default function PromoBlock() {
             {/* Текст */}
             <div className="mt-4 md:mt-8 mb-4">
                 <h3 className="text-sm md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-3">Подобрать тур</h3>
-                <p className="text-[10px] md:text-sm text-slate-400 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                <p className="text-[12px] md:text-sm text-slate-400 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
                     Пройди тест и получи нашу рекомендацию для первого тура.
                 </p>
             </div>
@@ -99,7 +99,7 @@ export default function PromoBlock() {
             {/* Текст */}
             <div className="mt-4 md:mt-8 mb-4">
                 <h3 className="text-sm md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-3">Полевой дневник</h3>
-                <p className="text-[10px] md:text-sm text-slate-400 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                <p className="text-[12px] md:text-sm text-slate-400 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
                     Размышления, лайфхаки и походные истории из первых уст.
                 </p>
             </div>

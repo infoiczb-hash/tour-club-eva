@@ -76,7 +76,7 @@ const FAQ_ITEMS = [
           Во время активной части маршрута (ходьба, сплав, восхождение) действует <strong>правила самоконтроля</strong>. Вечером или при отсуствии физической нагрузки умеренное потребление алкоголя возможно, не мешая отдыху других участников.
         </p>
         <div className="p-3 md:p-4 rounded-xl bg-amber-900/20 border border-amber-500/30">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 text-amber-500 font-black uppercase text-[10px] md:text-xs tracking-wider">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2 text-amber-500 font-black uppercase text-[14px] md:text-xs tracking-wider">
                 <ShieldAlert size={14}/> Внимание: Последствия
             </div>
             <p className="text-xs md:text-sm text-amber-100/80 leading-relaxed">
@@ -181,7 +181,7 @@ export default function FAQPage() {
         
         {/* Header */}
         <div className="mb-8 md:mb-12 text-center md:text-left">
-            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-4 md:mb-6 text-[10px] md:text-sm font-bold uppercase tracking-wider">
+            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-4 md:mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
                 <ArrowLeft size={16} /> На главную
             </Link>
             

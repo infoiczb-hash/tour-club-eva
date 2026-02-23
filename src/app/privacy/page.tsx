@@ -24,13 +24,13 @@ export default function PrivacyPage() {
         
         {/* Header */}
         <div className="mb-8 md:mb-12">
-            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-6 text-[10px] md:text-sm font-bold uppercase tracking-wider">
+            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
                 <ArrowLeft size={16} /> На главную
             </Link>
             
-            <h1 className="text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 uppercase tracking-tight leading-none">
-              Политика <span className="text-teal-500">Конфиденциальности</span>
-            </h1>
+         <h1 className="text-[24px] xs:text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 uppercase tracking-tighter leading-[1.1] break-words [hyphens:auto]" lang="ru">
+      Политика <span className="text-teal-500 block sm:inline">Конфиденциальности</span>
+    </h1>
             
             <div className="inline-flex items-center gap-2 md:gap-3 text-slate-400 text-xs md:text-sm font-medium bg-slate-900/50 p-4 rounded-xl border border-white/5">
                 <ShieldCheck size={18} className="text-teal-500 shrink-0" />

@@ -73,11 +73,11 @@ export default async function BlogPostPage({ params }: PageProps) {
                 <div className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center group-hover:bg-teal-500 group-hover:text-slate-900 transition-all border border-white/10">
                     <ArrowLeft size={16} />
                 </div>
-                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">Журнал</span>
+                <span className="text-[14px] md:text-xs font-bold uppercase tracking-widest">Журнал</span>
             </Link>
 
             {/* Категория */}
-            <span className="inline-block px-2.5 py-1 bg-teal-500 text-slate-900 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded md:rounded-lg mb-2 md:mb-5 w-fit shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+            <span className="inline-block px-2.5 py-1 bg-teal-500 text-slate-900 text-[9px] md:text-[14px] font-black uppercase tracking-widest rounded md:rounded-lg mb-2 md:mb-5 w-fit shadow-[0_0_15px_rgba(20,184,166,0.3)]">
                 {post.category}
             </span>
 
@@ -97,14 +97,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                          )}
                     </div>
                     <div>
-                        <div className="text-white font-bold uppercase tracking-wider text-[10px] md:text-xs">{post.author_name}</div>
-                        <div className="text-slate-400 text-[9px] md:text-[10px]">{post.author_role || "Гид клуба"}</div>
+                        <div className="text-white font-bold uppercase tracking-wider text-[14px] md:text-xs">{post.author_name}</div>
+                        <div className="text-slate-400 text-[9px] md:text-[14px]">{post.author_role || "Гид клуба"}</div>
                     </div>
                 </div>
 
                 <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
 
-                <div className="flex items-center gap-3 text-slate-300 text-[10px] md:text-xs font-medium">
+                <div className="flex items-center gap-3 text-slate-300 text-[14px] md:text-xs font-medium">
                     <div className="flex items-center gap-1.5">
                         <Calendar size={14} className="text-teal-500" />
                         <span>{formatDate(post.date)}</span>
@@ -157,7 +157,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                 <div className="mt-6 flex flex-wrap gap-2">
                     <span className="text-slate-500 text-xs font-bold mr-1 py-1">Тема:</span>
-                    <span className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-[10px] md:text-xs hover:text-white transition-colors cursor-pointer border border-white/5">#{post.category}</span>
+                    <span className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-[14px] md:text-xs hover:text-white transition-colors cursor-pointer border border-white/5">#{post.category}</span>
                 </div>
             </div>
 
@@ -192,7 +192,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
 
                     <div className="mt-6 pt-5 border-t border-white/10">
-                        <Link href="/blog" className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-800 text-white font-bold uppercase text-[10px] md:text-xs hover:bg-teal-500 hover:text-slate-900 transition-all border border-white/10 shadow-lg">
+                        <Link href="/blog" className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-800 text-white font-bold uppercase text-[14px] md:text-xs hover:bg-teal-500 hover:text-slate-900 transition-all border border-white/10 shadow-lg">
                             <span>Все статьи</span>
                             <ArrowRight size={14} />
                         </Link>
@@ -202,7 +202,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-teal-900/30 to-slate-900 border border-teal-500/20 text-center shadow-lg">
                     <h3 className="text-lg font-black text-white mb-2 uppercase">Хотите с нами?</h3>
                     <p className="text-xs md:text-sm text-slate-300 mb-5 leading-relaxed">Наши гиды проведут вас по самым красивым маршрутам.</p>
-                    <Link href="/tour" className="inline-flex w-full justify-center py-3 rounded-xl bg-teal-500 text-slate-900 font-bold uppercase text-[10px] md:text-xs hover:bg-teal-400 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+                    <Link href="/tour" className="inline-flex w-full justify-center py-3 rounded-xl bg-teal-500 text-slate-900 font-bold uppercase text-[14px] md:text-xs hover:bg-teal-400 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.3)]">
                         Выбрать тур
                     </Link>
                 </div>

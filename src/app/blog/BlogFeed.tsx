@@ -68,7 +68,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
          <div className="container mx-auto max-w-5xl relative z-10 text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
                 <BookOpen size={12} className="text-teal-400" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">База знаний</span>
+                <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">База знаний</span>
             </div>
             
             <h1 className="text-4xl md:text-7xl leading-[0.9] text-center mb-6">
@@ -146,7 +146,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                             
                             <div className="relative p-6 md:p-8 w-full flex flex-col h-full justify-end">
                                 <div>
-                                    <span className="px-3 py-1 bg-teal-400 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-lg mb-4 inline-block shadow-[0_0_15px_rgba(45,212,191,0.5)]">
+                                    <span className="px-3 py-1 bg-teal-400 text-slate-900 text-[14px] font-black uppercase tracking-widest rounded-lg mb-4 inline-block shadow-[0_0_15px_rgba(45,212,191,0.5)]">
                                         {getLabel(post.category)}
                                     </span>
                                     <h3 className="text-2xl md:text-4xl font-black text-white leading-[1.15] mb-3 group-hover:text-teal-400 transition-colors drop-shadow-lg max-w-lg">
@@ -168,7 +168,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                                     </div>
                                     <div className="text-xs md:text-sm">
                                         <div className="text-white font-bold">{post.author_name}</div>
-                                        <div className="text-teal-400 font-bold tracking-widest text-[9px] md:text-[10px] uppercase mt-0.5">{formatDate(post.date)}</div>
+                                        <div className="text-teal-400 font-bold tracking-widest text-[9px] md:text-[14px] uppercase mt-0.5">{formatDate(post.date)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -192,7 +192,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                 
                 <button 
                    onClick={() => setIsHubOpen(true)} 
-                   className="hidden md:flex items-center gap-2 px-6 py-3 rounded-2xl border border-teal-500/30 bg-teal-500/5 text-teal-400 font-black uppercase text-[10px] tracking-widest hover:bg-teal-500 hover:text-slate-900 transition-all"
+                   className="hidden md:flex items-center gap-2 px-6 py-3 rounded-2xl border border-teal-500/30 bg-teal-500/5 text-teal-400 font-black uppercase text-[14px] tracking-widest hover:bg-teal-500 hover:text-slate-900 transition-all"
                 >
                     <PenLine size={16}/> 
                     <span>Стать автором</span>
@@ -221,7 +221,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                             
                             {/* МЕТА ДАННЫЕ (Только десктоп) */}
                             <div className="hidden lg:flex items-center gap-3 mb-4">
-                                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                <div className="flex items-center gap-2 text-[14px] text-slate-400 font-bold uppercase tracking-widest">
                                     <Clock size={12} className="text-teal-500"/>
                                     <span>{post.read_time} мин</span>
                                 </div>
@@ -237,7 +237,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                             </p>
 
                             {/* Дата на мобильных (вместо автора) */}
-                            <div className="lg:hidden text-[10px] text-slate-500 font-medium mt-1">
+                            <div className="lg:hidden text-[14px] text-slate-500 font-medium mt-1">
                                 {formatDate(post.date)}
                             </div>
 
@@ -253,7 +253,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                                     </div>
                                     <div className="text-xs">
                                         <div className="text-white font-bold">{post.author_name}</div>
-                                        <div className="text-slate-500 text-[10px]">{formatDate(post.date)}</div>
+                                        <div className="text-slate-500 text-[14px]">{formatDate(post.date)}</div>
                                     </div>
                                 </div>
                                 

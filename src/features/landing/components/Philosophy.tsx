@@ -6,8 +6,15 @@ import Link from 'next/link';
 import { motion } from "framer-motion";
 import { 
   Mountain, Waves, Tent, Briefcase, 
-  ArrowUpRight, Compass, Anchor, ArrowRight, ChevronLeft, ChevronRight 
+  ArrowUpRight, Compass, Anchor, ArrowRight, ChevronLeft, ChevronRight,
+  MoveRight
 } from "lucide-react";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
+}
 
 // --- ДАННЫЕ ---
 const directions = [
@@ -65,26 +72,26 @@ export default function Philosophy() {
   
   const handleMouseUp = () => {
     setIsDragging(false);
-    setTimeout(() => setDragDistance(0), 50); // Reset after click event resolves
+    setTimeout(() => setDragDistance(0), 50);
   };
 
   const handleMouseMove = (e: ReactMouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - scrollContainerRef.current!.offsetLeft;
-    const walk = (x - startX) * 1.5; // Чувствительность перетаскивания
+    const walk = (x - startX) * 1.5; 
     setDragDistance(Math.abs(walk));
     
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.style.scrollBehavior = 'auto'; // Отключаем плавность для мгновенного следования за мышкой
+      scrollContainerRef.current.style.scrollBehavior = 'auto'; 
       scrollContainerRef.current.scrollLeft = scrollLeftPos - walk;
-      scrollContainerRef.current.style.scrollBehavior = 'smooth'; // Возвращаем для кнопок
+      scrollContainerRef.current.style.scrollBehavior = 'smooth'; 
     }
   };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 340 + 16; // Ширина карточки + gap
+      const scrollAmount = window.innerWidth > 768 ? 356 : 300; // Ширина карточки + gap
       scrollContainerRef.current.scrollBy({
         left: direction === 'right' ? scrollAmount : -scrollAmount,
         behavior: 'smooth'
@@ -93,16 +100,16 @@ export default function Philosophy() {
   };
 
   return (
-    <section ref={containerRef} className="relative bg-slate-950 py-12 md:py-20 overflow-hidden border-t border-white/5">
+    <section ref={containerRef} className="relative bg-[#0b1016] py-16 md:py-24 overflow-hidden border-t border-white/5">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/50 to-slate-950" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-20">
+      <div className="container mx-auto px-4 sm:px-6 relative z-20">
         
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-20">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             
             {/* --- LEFT: STICKY CONTENT --- */}
             <div className="lg:w-1/3 lg:sticky lg:top-32 h-fit z-30 flex flex-col items-start">
@@ -112,66 +119,80 @@ export default function Philosophy() {
                     viewport={{ once: true }}
                 >
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
-                        <Compass size={14} className="text-teal-400" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Ценности</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 backdrop-blur-md mb-6">
+                        <Compass size={16} className="text-teal-400" />
+                        <span className="text-xs font-black uppercase tracking-[0.15em] text-teal-300">Ценности</span>
                     </div>
 
                     {/* Title */}
-                   <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
+                   <h2 className="text-4xl sm:text-5xl md:text-6xl uppercase tracking-tighter leading-[1.1] mb-6">
                         <span className="font-light text-slate-400 block md:inline"> Не просто туризм,</span> 
                         <span className="font-black text-white"> а образ жизни</span>
                         <span className="text-teal-500">.</span>
                     </h2>
 
                     {/* Text */}
-                    <p className="text-slate-400 text-base md:text-lg font-medium leading-relaxed mb-8 max-w-md border-l-2 border-white/10 pl-4">
+                    <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed mb-10 max-w-md border-l-2 border-teal-500/50 pl-5">
                         Мы не продаем билеты в горы. Мы создаем среду, где приключения становятся инструментом самопознания, а группа — семьей.
                     </p>
 
-                    {/* CONTROLS (Desktop Only) */}
-                    <div className="hidden lg:flex items-center gap-4 mt-4 select-none">
-                        <button 
-                            aria-label="Предыдущий слайд" 
-                            onClick={() => scroll('left')}
-                            disabled={!canScrollLeft}
-                            className={`w-12 h-12 rounded-full border border-white/10 flex items-center justify-center transition-all ${
-                                canScrollLeft 
-                                    ? 'bg-white/5 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 active:scale-95' 
-                                    : 'opacity-30 cursor-not-allowed text-slate-500'
-                            }`}
+                    {/* CONTROLS & CTA (Desktop Only) */}
+                    <div className="hidden lg:flex flex-col gap-8">
+                        {/* Desktop Controls */}
+                        <div className="flex items-center gap-4 select-none">
+                            <button 
+                                aria-label="Предыдущий слайд" 
+                                onClick={() => scroll('left')}
+                                disabled={!canScrollLeft}
+                                className={cn(
+                                    "w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300",
+                                    canScrollLeft 
+                                        ? "bg-slate-900 border-white/10 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] active:scale-95" 
+                                        : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-500"
+                                )}
+                            >
+                                <ChevronLeft size={24} strokeWidth={2} />
+                            </button>
+                            <button 
+                                aria-label="Следующий слайд"
+                                onClick={() => scroll('right')}
+                                disabled={!canScrollRight}
+                                className={cn(
+                                    "w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300",
+                                    canScrollRight 
+                                        ? "bg-slate-900 border-white/10 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] active:scale-95" 
+                                        : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-500"
+                                )}
+                            >
+                                <ChevronRight size={24} strokeWidth={2} />
+                            </button>
+                        </div>
+
+                        {/* Desktop "All Directions" Link */}
+                        <Link 
+                            href="/directions" 
+                            className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white text-white hover:text-slate-950 text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/10 hover:border-white shadow-lg w-fit group"
                         >
-                            <ChevronLeft size={20} />
-                        </button>
-                        <button 
-                            aria-label="Следующий слайд"
-                            onClick={() => scroll('right')}
-                            disabled={!canScrollRight}
-                            className={`w-12 h-12 rounded-full border border-white/10 flex items-center justify-center transition-all ${
-                                canScrollRight 
-                                    ? 'bg-white/5 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 active:scale-95' 
-                                    : 'opacity-30 cursor-not-allowed text-slate-500'
-                            }`}
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-2">
-                            Листайте направления
-                        </span>
+                            Все направления
+                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
                     </div>
                 </motion.div>
             </div>
 
             {/* --- RIGHT: SCROLLABLE CARDS --- */}
-            <div className="lg:w-2/3 min-w-0">
+            <div className="lg:w-2/3 min-w-0 flex flex-col">
                 
-                {/* Mobile Header (Compact) */}
-                <div className="lg:hidden mb-4 flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Направления</span>
-                    <ArrowRight size={14} className="text-teal-500 animate-pulse" />
+                {/* Mobile Header (Свайп Индикатор) */}
+                <div className="lg:hidden mb-6 flex items-center justify-between pl-2">
+                    <span className="text-sm font-black uppercase tracking-widest text-slate-300">Направления</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-white/5 shadow-inner">
+                        <span className="text-xs font-bold uppercase tracking-wider text-teal-400">Свайпай</span>
+                        <MoveRight size={14} className="text-teal-400 animate-pulse" />
+                    </div>
                 </div>
 
-                {/* SCROLL CONTAINER (Interactive) */}
+                {/* SCROLL CONTAINER */}
                 <div 
                     ref={scrollContainerRef}
                     onScroll={checkScroll}
@@ -180,50 +201,45 @@ export default function Philosophy() {
                     onMouseUp={handleMouseUp}
                     onMouseMove={handleMouseMove}
                     style={{ WebkitOverflowScrolling: 'touch' }}
-                    className={`
-                        flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 
-                        lg:mx-0 lg:px-0 lg:pb-12 hide-scrollbar scroll-smooth
-                        ${isDragging ? 'cursor-grabbing select-none snap-none' : 'cursor-grab lg:snap-x lg:snap-mandatory'}
-                    `}
+                    className={cn(
+                        "flex gap-4 sm:gap-6 overflow-x-auto pb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:pb-12 hide-scrollbar scroll-smooth",
+                        isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab lg:snap-x lg:snap-mandatory"
+                    )}
                 >
                     {directions.map((dir, idx) => (
                         <motion.div
                             key={dir.id}
-                            initial={{ opacity: 0, x: 50 }}
+                            initial={{ opacity: 0, x: 40 }}
                             whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
+                            viewport={{ once: true, margin: "-50px" }}
                             className="flex-none snap-center"
-                            onClick={(e) => dragDistance > 10 && e.preventDefault()} // Защита от миссклика при Drag
+                            onClick={(e) => dragDistance > 10 && e.preventDefault()}
                         >
                             <DirectionCard direction={dir} />
                         </motion.div>
                     ))}
-                    
-                    {/* "More" Card */}
-                    <div className="flex-none snap-center w-[200px] md:w-[280px] aspect-[3/4] flex items-center justify-center">
-                        <Link 
-                            href="/tour" 
-                            onClick={(e) => dragDistance > 10 && e.preventDefault()}
-                            className="group flex flex-col items-center gap-4 text-center p-6 rounded-[2rem] border border-dashed border-white/10 hover:border-teal-500/50 hover:bg-white/[0.02] transition-all w-full h-full justify-center"
-                        >
-                            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-teal-500 group-hover:text-slate-900 transition-all">
-                                <ArrowRight size={24} className="text-slate-400 group-hover:text-slate-900" />
-                            </div>
-                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400 group-hover:text-white transition-colors">
-                                Смотреть все туры
-                            </span>
-                        </Link>
-                    </div>
                 </div>
 
                 {/* Dynamic Progress Line (Desktop) */}
-                <div className="hidden lg:block w-full h-[2px] bg-white/5 mt-[-20px] relative overflow-hidden rounded-full">
+                <div className="hidden lg:block w-full h-1 bg-slate-900 mt-[-20px] relative overflow-hidden rounded-full">
                     <div 
-                        className="absolute inset-y-0 left-0 bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)] rounded-full transition-all duration-300 ease-out"
-                        style={{ width: `${Math.max(15, scrollProgress)}%` }} // Минимум 15%, чтобы ползунок всегда было видно
+                        className="absolute inset-y-0 left-0 bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.8)] rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${Math.max(10, scrollProgress)}%` }} 
                     />
                 </div>
+
+                {/* Mobile "All Directions" Button (Огромный CTA снизу) */}
+                <div className="lg:hidden mt-2 flex justify-center w-full">
+                    <Link 
+                        href="/directions" 
+                        className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-slate-900 border border-white/10 hover:border-teal-500 hover:bg-teal-500 text-slate-300 hover:text-slate-950 text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-xl group active:scale-[0.98]"
+                    >
+                        Все 6 направлений
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                    </Link>
+                </div>
+
             </div>
 
         </div>
@@ -232,52 +248,57 @@ export default function Philosophy() {
   );
 }
 
-// --- CARD COMPONENT ---
+// --- CARD COMPONENT (Premium Glass UI) ---
 function DirectionCard({ direction }: { direction: any }) {
     return (
         <Link 
             href={direction.href} 
             className="
                 group block relative 
-                w-[280px] md:w-[340px] aspect-[3/4] 
+                w-[280px] sm:w-[320px] aspect-[4/5] sm:aspect-[3/4] 
                 rounded-[2rem] overflow-hidden 
-                bg-slate-900 border border-white/5 shadow-2xl 
-                transition-all duration-500 md:hover:-translate-y-2
-                z-0 pointer-events-auto
+                bg-slate-900 border-2 border-white/5 shadow-2xl 
+                transition-all duration-500 hover:-translate-y-2 hover:border-teal-500/30 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]
+                z-0 outline-none
             "
-            draggable={false} // Отключаем дефолтный браузерный drag для картинки
+            draggable={false}
         >
-            {/* Image */}
+            {/* Image (Убрали серый фильтр, добавили легкое затемнение) */}
             <Image
                 src={direction.image}
                 alt={direction.title}
                 fill
                 draggable={false}
-                className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[20%] group-hover:grayscale-0 select-none"
-                sizes="(max-width: 768px) 80vw, 25vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105 select-none"
+                sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 33vw"
             />
 
-            {/* Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-90 group-hover:opacity-60 transition-opacity pointer-events-none" />
+            {/* Gradients для читаемости (Не убивает цвета фото) */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
 
-            {/* Content */}
-            <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between z-10 pointer-events-none">
+            {/* Content Container */}
+            <div className="absolute inset-0 p-6 flex flex-col justify-between z-10 pointer-events-none">
                 
-                {/* Icon */}
-                <div className="self-end w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white group-hover:bg-teal-500 group-hover:text-slate-900 transition-all duration-300 shadow-lg">
-                    <direction.icon size={18} />
+                {/* Icon (Glassmorphism) */}
+                <div className="self-end w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-lg transition-transform duration-500 group-hover:rotate-6">
+                    <direction.icon size={20} strokeWidth={2} />
                 </div>
 
-                {/* Text */}
-                <div>
-                    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight leading-[1] mb-3 group-hover:text-teal-400 transition-colors drop-shadow-md">
+                {/* Bottom Content (Title + Persistent Button) */}
+                <div className="flex flex-col gap-3 mt-auto transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <h3 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight leading-[1.1] drop-shadow-xl">
                         {direction.title}
                     </h3>
                     
-                    {/* Hover Link */}
-                    <div className="flex items-center gap-2 text-white/80 text-[10px] font-bold uppercase tracking-widest opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                        <span>Подробнее</span>
-                        <ArrowUpRight size={14} />
+                    {/* Always visible action row */}
+                    <div className="flex items-center justify-between w-full pt-2 border-t border-white/10">
+                        <span className="text-xs font-black uppercase tracking-widest text-teal-400 group-hover:text-white transition-colors drop-shadow-md">
+                            Подробнее
+                        </span>
+                        <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center text-slate-950 transition-all duration-300 shadow-[0_0_15px_rgba(20,184,166,0.4)] group-hover:scale-110 group-hover:bg-white group-hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+                            <ArrowUpRight size={20} strokeWidth={2.5} />
+                        </div>
                     </div>
                 </div>
             </div>

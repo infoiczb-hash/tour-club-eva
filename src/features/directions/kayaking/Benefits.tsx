@@ -103,7 +103,7 @@ export default function Benefits() {
           <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                 <Sparkles size={14} className="text-teal-400" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Почему мы</span>
+                <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Почему мы</span>
             </div>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-4 leading-[0.9]">
               Идеальный отдых <br className="hidden md:block" />
@@ -211,7 +211,7 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
                 <Icon size={24} strokeWidth={1.5} />
             </div>
             {item.tag && (
-                <span className="hidden md:inline-flex text-[10px] font-bold uppercase tracking-widest bg-teal-500/20 text-teal-400 px-3 py-1.5 rounded-lg border border-teal-500/30">
+                <span className="hidden md:inline-flex text-[14px] font-bold uppercase tracking-widest bg-teal-500/20 text-teal-400 px-3 py-1.5 rounded-lg border border-teal-500/30">
                     {item.tag}
                 </span>
             )}
@@ -235,7 +235,7 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
         {item.features && (
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mt-6 pt-6 border-t border-white/10">
             {item.features.map((feat: string) => (
-                <li key={feat} className="flex items-start gap-2 text-[10px] md:text-xs font-bold text-slate-300 uppercase tracking-widest text-left">
+                <li key={feat} className="flex items-start gap-2 text-[14px] md:text-xs font-bold text-slate-300 uppercase tracking-widest text-left">
                 <div className="mt-0.5 shrink-0"><CheckCircle2 size={14} className="text-teal-500" /></div>
                 <span>{feat}</span>
                 </li>

@@ -161,7 +161,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                    />
                                </div>
                            </div>
-                           <p className="text-[10px] text-slate-500 ml-2">* Укажите хотя бы один контакт</p>
+                           <p className="text-[14px] text-slate-500 ml-2">* Укажите хотя бы один контакт</p>
                        </div>
 
                        {/* --- DYNAMIC FIELDS --- */}

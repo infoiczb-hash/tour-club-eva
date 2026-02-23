@@ -62,7 +62,7 @@ export default function HikesLogistics() {
                                 </div>
                                 <div>
                                     <div className="text-stone-100 font-bold text-lg leading-tight">Роман Санду</div>
-                                    <div className="text-teal-600 text-[10px] md:text-xs uppercase font-bold tracking-widest mt-1">
+                                    <div className="text-teal-600 text-[14px] md:text-xs uppercase font-bold tracking-widest mt-1">
                                         Старший гид экспедиций
                                     </div>
                                 </div>

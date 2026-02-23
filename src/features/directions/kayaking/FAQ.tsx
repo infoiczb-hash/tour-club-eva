@@ -33,7 +33,7 @@ export default function FAQ({ onNavigateToPrep }: { onNavigateToPrep?: () => voi
                 <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                         <HelpCircle size={14} className="text-teal-400" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">FAQ</span>
+                        <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">FAQ</span>
                     </div>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-[1.1] mb-6">
                         Частые <br />
@@ -61,7 +61,7 @@ export default function FAQ({ onNavigateToPrep }: { onNavigateToPrep?: () => voi
                                 Полный гайд: что надеть, что взять с собой и как вести себя на воде.
                             </p>
                             
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
+                            <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
                                 <span>Перейти в раздел</span>
                                 <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
                             </div>
