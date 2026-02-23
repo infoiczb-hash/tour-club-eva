@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { 
   X, ArrowLeft, Check, Compass, Users, Mountain, 
   TreePine, Dices, Scale, ListTodo, Music, Flame, 
@@ -230,17 +230,17 @@ export default function QuizTouristType({ open, onClose, onComplete }: Props) {
   const result = calculateResult(answers);
 
   // Анимация появления списка
-  const listVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+  const listVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
 
-  if (!open) return null;
+const itemVariants: Variants = { // <-- Добавили : Variants сюда
+  hidden: { opacity: 0, x: -20 },
+  show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
+if (!open) return null;
   return (
     <AnimatePresence>
       <motion.div

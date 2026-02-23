@@ -67,8 +67,7 @@ const guides = rawGuides.map((guide) => ({
     tours={tours} 
     limit={8} // 👈 Ограничиваем показ
     title="Афиша Приключений"
-    subtitle="Популярные направления"
-/>
+  />
     </Suspense>
     
     <Philosophy />

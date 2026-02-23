@@ -128,7 +128,7 @@
   }
 
   .admin-label {
-    @apply block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest;
+    @apply block text-[14px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest;
   }
 
   .admin-section-title {

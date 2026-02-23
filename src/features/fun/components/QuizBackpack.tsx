@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { 
   X, Check, Luggage, AlertTriangle, ArrowRight, 
   Milestone, BrickWall, BriefcaseMedical, Wind, 
@@ -136,18 +136,18 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
   const result = calculateResult(selected);
 
   // Варианты анимации для Stagger-эффекта сетки
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
-    }
-  };
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+};
 
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+const itemVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
   if (!open) return null;
 

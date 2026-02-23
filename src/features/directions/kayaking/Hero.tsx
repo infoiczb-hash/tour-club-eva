@@ -42,7 +42,7 @@ export default function Hero({ activeTab, setActiveTab }: HeroProps) {
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6"
         >
           <Waves size={14} className="text-teal-400 animate-pulse" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">
+          <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
             Маршруты по Днестру
           </span>
         </motion.div>

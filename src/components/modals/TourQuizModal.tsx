@@ -285,7 +285,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
                   <div className="p-6 md:p-8 pb-4 text-center shrink-0 border-b border-white/5">
                       <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-4">
                          <Sparkles size={14} className="text-teal-400" />
-                         <span className="text-[10px] font-black uppercase text-teal-400 tracking-widest">AI подбор завершен</span>
+                         <span className="text-[14px] font-black uppercase text-teal-400 tracking-widest">AI подбор завершен</span>
                       </div>
                       <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Идеально для вас</h3>
                       <p className="text-slate-400 text-sm font-medium">Мы подобрали направления с наивысшим процентом совпадения.</p>
@@ -329,7 +329,7 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
            )}
         >
             {isBest && (
-                <div className="absolute -top-3 left-6 bg-teal-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                <div className="absolute -top-3 left-6 bg-teal-500 text-slate-950 text-[14px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
                     <Trophy size={12} fill="currentColor"/> Лучший выбор
                 </div>
             )}
@@ -360,7 +360,7 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
             <div className="bg-black/30 rounded-2xl p-4 border border-white/5">
                 <div className="flex items-center gap-2 mb-3">
                     <Info size={14} className="text-teal-500"/>
-                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest">Почему именно это:</span>
+                    <span className="text-[14px] font-bold text-teal-500 uppercase tracking-widest">Почему именно это:</span>
                 </div>
                 <ul className="space-y-2">
                     {direction.whyThis.map((reason, i) => (

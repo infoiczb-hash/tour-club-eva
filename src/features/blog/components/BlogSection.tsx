@@ -55,7 +55,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
             <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-3 md:mb-4">
                     <BookOpen size={12} className="text-teal-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Блог клуба</span>
+                    <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Блог клуба</span>
                 </div>
                 <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
             <span className="font-light text-slate-400 block md:inline">Полевой </span>
@@ -72,7 +72,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                         <button
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
-                            className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase whitespace-nowrap transition-all border ${
+                            className={`px-4 py-2 rounded-xl text-[14px] md:text-xs font-bold uppercase whitespace-nowrap transition-all border ${
                                 activeCategory === cat 
                                     ? 'bg-teal-400 text-slate-900 border-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.3)]' // Active: TEAL PILL
                                     : 'bg-slate-900 border-white/10 text-slate-400 hover:border-teal-500/50 hover:text-white'
@@ -125,7 +125,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
 
                         <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end items-start">
                             {/* Category Pill */}
-                            <span className="px-3 py-1.5 bg-teal-400 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-lg mb-4 shadow-lg shadow-teal-500/20">
+                            <span className="px-3 py-1.5 bg-teal-400 text-slate-900 text-[14px] font-black uppercase tracking-widest rounded-lg mb-4 shadow-lg shadow-teal-500/20">
                                 {featuredPost.category}
                             </span>
                             
@@ -143,8 +143,8 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-white uppercase tracking-wider mb-0.5">{featuredPost.author_name}</span>
-                                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                                    <span className="text-[14px] font-black text-white uppercase tracking-wider mb-0.5">{featuredPost.author_name}</span>
+                                    <div className="flex items-center gap-2 text-[14px] text-slate-400 font-medium">
                                         <span>{formatDate(featuredPost.date)}</span>
                                         <span className="w-1 h-1 bg-slate-600 rounded-full"/>
                                         <span>{featuredPost.read_time} мин</span>

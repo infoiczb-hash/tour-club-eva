@@ -123,7 +123,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
 
                 {/* Ссылка на общий каталог */}
                 <Link 
-                    href="/tours?category=kids" 
+                    href="/tour?category=kids" 
                     className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl hover:bg-white/5 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-all group"
                 >
                     <Map size={14} className="text-amber-500" />
@@ -216,7 +216,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
 
         <div className="mt-8 text-center md:hidden">
             <Link 
-                href="/tours?category=kids" 
+                href="/tour?category=kids" 
                 className="inline-flex items-center justify-center gap-2 w-full py-4 bg-white/5 rounded-xl text-white font-bold"
             >
                 <Map size={18} className="text-amber-500" />

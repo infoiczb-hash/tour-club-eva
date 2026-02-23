@@ -3,7 +3,7 @@
     {
       "id": 1,
       "type": "video",
-      "url": "https://player.cloudinary.com/embed/?cloud_name=dwrei7k2z&public_id=tour-1_ntce1m",
+      "url": "https://res.cloudinary.com/dwrei7k2z/video/upload/v1771522119/tour-1_ntce1m.mp4",
       "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522348/tour-1_ephqio.webp",
       "size": "tall",
       "likes": 142,
@@ -14,7 +14,7 @@
     {
       "id": 2,
       "type": "video",
-      "url": "https://player.cloudinary.com/embed/?cloud_name=dwrei7k2z&public_id=tour-2_qh1iak",
+      "url": "https://res.cloudinary.com/dwrei7k2z/video/upload/v1771522103/tour-2_qh1iak.mp4",
       "cover": "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522349/tour-2_nnerpa.webp",
       "size": "tall",
       "likes": 89,
