@@ -172,7 +172,7 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
                     className="w-full md:w-auto shrink-0 px-8 py-4 bg-white text-slate-950 font-black uppercase tracking-wider rounded-xl hover:bg-teal-50 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
                 >
                     <MessageCircle size={18} />
-                    <span>Задать вопрос</span>
+                    <span>Спросить</span>
                 </button>
             </motion.div>
         </div>
