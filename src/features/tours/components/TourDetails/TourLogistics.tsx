@@ -28,7 +28,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
          </div>
          <div>
             {/* Поменял заголовок на более логичный для meetingPoint */}
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            <h4 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                Место сбора
             </h4>
             {/* Теперь берем данные из meetingPoint */}
@@ -55,7 +55,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
          </div>
          
          <div>
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            <h4 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                {guideRole}
             </h4>
             <p className="text-white font-bold text-sm leading-snug">
@@ -70,7 +70,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             <Navigation size={20} />
          </div>
          <div>
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            <h4 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                Нить маршрута
             </h4>
             <p className="text-white font-medium text-sm leading-snug">

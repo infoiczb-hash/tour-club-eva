@@ -192,7 +192,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
                             <span className="text-2xl sm:text-4xl font-black leading-none text-white group-hover:text-teal-400 transition-colors">
                                 {dayNumber}
                             </span>
-                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">
+                            <span className="text-[12px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">
                                 {weekDay}
                             </span>
                         </>
@@ -214,10 +214,10 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
                 <div className="flex flex-col justify-center flex-1 min-w-0 py-1">
                     
                     {/* Мета-инфо (Читаемый размер) */}
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                         {tour.type && (
                             <span className={cn(
-                                "px-2 py-0.5 rounded-md border backdrop-blur-sm text-[9px] sm:text-[10px]",
+                                "px-2 py-0.5 rounded-md border backdrop-blur-sm text-[9px] sm:text-[12px]",
                                 tour.type === 'weekend' ? "bg-violet-500/10 border-violet-500/20 text-violet-400" :
                                 tour.type === 'hiking' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
                                 tour.type === 'kids' ? "bg-pink-500/10 border-pink-500/20 text-pink-400" :
@@ -255,7 +255,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
                     
                     {/* Цена (Видна на десктопе, спрятана на мобилке для экономии места) */}
                     <div className="hidden sm:flex flex-col items-end justify-center pr-5 border-r border-white/10 h-full">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">Билет от</span>
+                        <span className="text-[12px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">Билет от</span>
                         <div className="flex items-baseline gap-1">
                             <span className="text-xl font-black text-white leading-none tracking-tight">
                                 {Number(tour.price).toLocaleString()}

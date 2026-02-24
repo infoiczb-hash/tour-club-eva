@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { 
   MapPin, Calendar, Clock, Crown, Baby, 
-  ArrowRight, Flame, Sparkles, Percent, Star,
+  ArrowRight, Flame, Sparkles, Percent, Star, Hash,
   type LucideIcon
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
@@ -46,7 +46,7 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
     price, priceOld, currency,
     priceMember, priceChild, 
     image, location, duration, 
-    label, type 
+    tags, label, type 
   } = tour;
 
   // Форматирование даты
@@ -162,13 +162,24 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
                 </div>
             </div>
 
-            {/* Заголовок (До 3 строк на десктопе, до 2 на мобилке) */}
-            <h3 className="text-xl sm:text-2xl font-black text-white uppercase leading-[1.15] mb-5 group-hover:text-teal-400 transition-colors line-clamp-2 sm:line-clamp-3">
+            {/* Заголовок */}
+            <h3 className="text-xl sm:text-2xl font-black text-white uppercase leading-[1.15] mb-4 group-hover:text-teal-400 transition-colors line-clamp-2 sm:line-clamp-3">
                 {title}
             </h3>
 
+            {/* ✅ ТЕГИ (Деликатные и информативные) */}
+            {tags && tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {tags.slice(0, 3).map((tag, i) => (
+                        <span key={i} className="flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                            <Hash size={10} strokeWidth={3} /> {tag}
+                        </span>
+                    ))}
+                </div>
+            )}
+
             {/* Опции тарифов (Явные текстовые плашки вместо скрытого hover) */}
-            <div className="flex flex-wrap gap-2 mb-6 mt-auto">
+            <div className={cn("flex flex-wrap gap-2 mb-6 mt-auto", (!tags || tags.length === 0) && "mt-auto")}>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/5 text-[12px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider">
                     Стандарт
                 </span>
@@ -194,7 +205,7 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
                 
                 {/* Блок цены */}
                 <div className="flex flex-col">
-                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                     <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1">
                          Стоимость
                      </span>
                      <div className="flex items-baseline gap-1.5">

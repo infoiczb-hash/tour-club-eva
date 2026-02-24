@@ -155,7 +155,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                 >
                     <div className="bg-black/40 backdrop-blur-md p-4 rounded-full animate-pulse border border-white/10">
                          <VolumeX size={32} className="text-white" />
-                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-white whitespace-nowrap">Tap for Sound</span>
+                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[12px] font-bold uppercase tracking-widest text-white whitespace-nowrap">Tap for Sound</span>
                     </div>
                 </div>
             )}
@@ -165,7 +165,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                  <div className="flex items-center justify-between items-end">
                      <div>
                         <div className="flex items-center gap-2 mb-3">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400 bg-teal-950/80 px-2 py-1 rounded border border-teal-500/20 backdrop-blur-md">
+                            <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400 bg-teal-950/80 px-2 py-1 rounded border border-teal-500/20 backdrop-blur-md">
                                 Eva Club
                             </span>
                             {!isMuted && <Volume2 size={16} className="text-white/80" />}
@@ -181,7 +181,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
                                  <Heart size={20} className="text-rose-500" fill="currentColor"/>
                              </div>
-                             <span className="text-[10px] font-bold text-white">{post.likes}</span>
+                             <span className="text-[12px] font-bold text-white">{post.likes}</span>
                          </div>
                          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
                              <Send size={18} className="text-white" />
@@ -221,22 +221,22 @@ export default function SocialGrid() {
 
       <div className="container mx-auto px-4 relative z-10">
         
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-6">
+       {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
-               <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Live Feed</span>
+               <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Live Feed</span>
             </div>
-         {/* Title */}
-        <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-            <span className="font-light text-slate-400 block md:inline">Ловим</span>
-            <span className="font-black text-white">Моменты</span>
-            <span className="text-teal-500">.</span>
-        </h2>
+            {/* Title */}
+            <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
+                <span className="font-light text-slate-400 block md:inline">Ловим </span>
+                <span className="font-black text-white">Моменты</span>
+                <span className="text-teal-500">.</span>
+            </h2>
           </div>
 
           <div className="flex gap-3">
@@ -276,7 +276,7 @@ export default function SocialGrid() {
             
             {/* SWIPE HINT (Mobile only, bottom right) */}
             <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
-                <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
                 <ChevronRight size={14} />
             </div>
         </div>
@@ -355,7 +355,7 @@ function ReelCard({ post, onClick }: { post: SocialPost; onClick: () => void }) 
                 <div className="flex items-center justify-between mb-1 opacity-80 group-hover:opacity-100 transition-opacity">
                     <div className="flex items-center gap-1.5">
                         <Heart size={12} className="text-rose-500" fill="currentColor"/> 
-                        <span className="text-[10px] font-bold text-white">{post.likes}</span>
+                        <span className="text-[12px] font-bold text-white">{post.likes}</span>
                     </div>
                 </div>
                 <p className="text-xs font-medium text-white line-clamp-2 leading-snug drop-shadow-sm group-hover:text-teal-50 transition-colors">

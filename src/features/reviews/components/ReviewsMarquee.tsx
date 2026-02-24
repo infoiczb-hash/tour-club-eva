@@ -103,7 +103,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
             <span className="text-sm font-bold text-white leading-none">{review.name}</span>
             <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300 opacity-60 group-hover:opacity-100", config.iconColor)}>
                {config.icon}
-               <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
+               <span className="text-[12px] font-bold uppercase tracking-wider">{config.label}</span>
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
       {/* FOOTER */}
       <div className="flex justify-end items-center gap-1.5 mt-auto border-t border-white/5 pt-3">
-        <span className="text-[10px] font-mono text-slate-400 group-hover:text-slate-400 transition-colors">{time}</span>
+        <span className="text-[12px] font-mono text-slate-400 group-hover:text-slate-400 transition-colors">{time}</span>
         
         {/* UX: ГАЛОЧКИ ПРОЧТЕНИЯ */}
         {/* По умолчанию: text-slate-600 (не прочитано/серое) */}
@@ -153,7 +153,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
             <MessageCircle size={14} className="text-teal-400" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
+            <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
         </div>
 
         {/* Title */}

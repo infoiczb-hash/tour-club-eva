@@ -71,3 +71,4 @@ export default function KayakingLanding({ tours }: { tours: Tour[] }) {
     </div>
   );
 }
+

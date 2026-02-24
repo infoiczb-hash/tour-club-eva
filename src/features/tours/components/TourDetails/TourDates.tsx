@@ -97,7 +97,7 @@ export default function TourDates({ tour, onBook }: TourDatesProps) {
                 {/* ПРАВАЯ ЧАСТЬ: ЦЕНА И КНОПКА */}
                 <div className="flex items-center justify-between md:gap-8">
                    <div className="text-right mr-auto md:mr-0">
-                      <span className="block text-[10px] text-slate-500 uppercase font-bold">Цена</span>
+                      <span className="block text-[12px] text-slate-500 uppercase font-bold">Цена</span>
                       <span className="block text-lg font-black text-white">
                          {tour.price.toLocaleString()} {tour.currency}
                       </span>

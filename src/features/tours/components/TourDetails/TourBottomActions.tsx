@@ -63,7 +63,7 @@ export default function TourBottomActions({ tour, onBook }: TourBottomActionsPro
              showHint ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"
         )}>
             <div className="bg-slate-950/50 p-3 border-b border-white/5 flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Все тарифы</span>
+                <span className="text-[12px]font-bold uppercase text-slate-400 tracking-wider">Все тарифы</span>
                 <button onClick={() => setShowHint(false)}><X size={14} className="text-slate-500"/></button>
             </div>
             <div className="p-3 space-y-2">
@@ -85,7 +85,7 @@ export default function TourBottomActions({ tour, onBook }: TourBottomActionsPro
           
           {/* БЛОК ЦЕНЫ */}
           <div className="flex-grow">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">
+            <p className="text-[12px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">
               Стоимость участия
             </p>
             

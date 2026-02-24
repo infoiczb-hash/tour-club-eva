@@ -100,7 +100,8 @@ export default function Philosophy() {
   };
 
   return (
-    <section ref={containerRef} className="relative bg-[#0b1016] py-16 md:py-24 overflow-hidden border-t border-white/5">
+    // ИСПРАВЛЕНО: Заменили bg-[#0b1016] на системный bg-slate-950
+    <section ref={containerRef} className="relative bg-slate-950 py-16 md:py-24 overflow-hidden border-t border-white/5">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -117,6 +118,7 @@ export default function Philosophy() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
+                    className="w-full"
                 >
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 backdrop-blur-md mb-6">
@@ -132,20 +134,20 @@ export default function Philosophy() {
                     </h2>
 
                     {/* Text */}
-                    <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed mb-10 max-w-md border-l-2 border-teal-500/50 pl-5">
+                    <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed mb-8 max-w-md border-l-2 border-teal-500/50 pl-5">
                         Мы не продаем билеты в горы. Мы создаем среду, где приключения становятся инструментом самопознания, а группа — семьей.
                     </p>
 
-                    {/* CONTROLS & CTA (Desktop Only) */}
-                    <div className="hidden lg:flex flex-col gap-8">
-                        {/* Desktop Controls */}
-                        <div className="flex items-center gap-4 select-none">
+                    {/* ИСПРАВЛЕНО: Десктопные контролы выстроены в один ряд (flex-row) */}
+                    <div className="hidden lg:flex flex-row flex-wrap items-center justify-between gap-4 w-full mt-4">
+                        {/* Desktop Controls (Left side of the row) */}
+                        <div className="flex items-center gap-3 select-none shrink-0">
                             <button 
                                 aria-label="Предыдущий слайд" 
                                 onClick={() => scroll('left')}
                                 disabled={!canScrollLeft}
                                 className={cn(
-                                    "w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300",
+                                    "w-12 h-12 xl:w-14 xl:h-14 rounded-full border flex items-center justify-center transition-all duration-300",
                                     canScrollLeft 
                                         ? "bg-slate-900 border-white/10 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] active:scale-95" 
                                         : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-500"
@@ -158,7 +160,7 @@ export default function Philosophy() {
                                 onClick={() => scroll('right')}
                                 disabled={!canScrollRight}
                                 className={cn(
-                                    "w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300",
+                                    "w-12 h-12 xl:w-14 xl:h-14 rounded-full border flex items-center justify-center transition-all duration-300",
                                     canScrollRight 
                                         ? "bg-slate-900 border-white/10 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] active:scale-95" 
                                         : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-500"
@@ -168,10 +170,10 @@ export default function Philosophy() {
                             </button>
                         </div>
 
-                        {/* Desktop "All Directions" Link */}
+                        {/* Desktop "All Directions" Link (Right side of the row) */}
                         <Link 
                             href="/directions" 
-                            className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white text-white hover:text-slate-950 text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/10 hover:border-white shadow-lg w-fit group"
+                            className="inline-flex items-center justify-center gap-2 xl:gap-3 px-5 xl:px-6 py-3.5 xl:py-4 bg-white/5 hover:bg-white text-white hover:text-slate-950 text-xs xl:text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/10 hover:border-white shadow-lg shrink-0 group"
                         >
                             Все направления
                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

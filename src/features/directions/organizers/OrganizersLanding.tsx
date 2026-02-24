@@ -23,12 +23,11 @@ export default function OrganizersLanding() {
       {/* 1. Главный экран */}
       <OrgHero onScrollDown={scrollToContact} />
       
+      {/* 3. Форматы (Тимбилдинг, Ретриты, Стратсессии) */}
+      <OrgFormats />
       {/* 2. Боли организатора (Эмпатия) */}
       <OrgEmpathy />
       
-      {/* 3. Форматы (Тимбилдинг, Ретриты, Стратсессии) */}
-      <OrgFormats />
-
       {/* 4. Как мы работаем (Шаги) */}
       <OrgWorkflow />
 

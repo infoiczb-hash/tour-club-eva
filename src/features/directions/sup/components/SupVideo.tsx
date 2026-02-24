@@ -35,12 +35,9 @@ export default function SupVideo() {
                         </span>
                     </div>
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
-                        Атмосфера на <span className="text-teal-500">Воде</span>
+                       Видео инструтаж <span className="text-teal-500"> для новичков</span>
                     </h2>
-                    <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl mx-auto leading-relaxed">
-                        Посмотрите, как проходят наши сплавы. Спойлер: встать на доску и поплыть гораздо проще, чем кажется.
-                    </p>
-                </motion.div>
+                                    </motion.div>
 
                 {/* 2. КИНЕМАТОГРАФИЧНЫЙ ПЛЕЕР (Фасад) */}
                 <motion.div 

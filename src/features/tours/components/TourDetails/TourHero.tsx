@@ -82,14 +82,14 @@ export default function TourHero({ tour }: TourHeroProps) {
               
               {/* 1. ТИП ТУРА (Всегда первый) */}
               {/* Стиль: Бирюзовый фон, темный текст (как на скрине) */}
-              <span className="px-3 py-1 rounded-md bg-teal-500 text-slate-900 text-[10px] md:text-xs font-black uppercase tracking-widest backdrop-blur-md">
+              <span className="px-3 py-1 rounded-md bg-teal-500 text-slate-900 text-[14px] md:text-xs font-black uppercase tracking-widest backdrop-blur-md">
                   {typeLabel}
               </span>
 
               {/* 2. МАРКЕТИНГОВАЯ МЕТКА (LABEL) - Только если есть */}
               {/* Стиль: Прозрачный/Серый фон, белый текст (как "Средний" на скрине, но теперь тут Label) */}
               {tour.label && (
-                <span className="px-3 py-1 rounded-md bg-white/20 text-white border border-white/20 text-[10px] md:text-xs font-bold uppercase tracking-widest backdrop-blur-md">
+                <span className="px-3 py-1 rounded-md bg-white/20 text-white border border-white/20 text-[14px] md:text-xs font-bold uppercase tracking-widest backdrop-blur-md">
                     {tour.label}
                 </span>
               )}

@@ -10,7 +10,7 @@ export default function PreparationCTA({ onNavigateToRoutes }: { onNavigateToRou
   const [isHubOpen, setIsHubOpen] = useState(false);
 
   return (
-    <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans">
+    <section className="py-10 md:py-14 bg-[#020617] relative overflow-hidden font-sans">
       <div className="container mx-auto px-4 max-w-5xl relative z-10">
         
         <motion.div 
@@ -24,7 +24,7 @@ export default function PreparationCTA({ onNavigateToRoutes }: { onNavigateToRou
             <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-amber-500/5 blur-[100px] rounded-full pointer-events-none" />
 
             {/* Иконка */}
-            <div className="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-8 relative z-10">
+            <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-8 relative z-10">
                 <Sparkles size={32} strokeWidth={1.5} />
             </div>
 

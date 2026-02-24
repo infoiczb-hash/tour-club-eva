@@ -24,7 +24,7 @@ export default function HikesHero({ onScrollDown }: { onScrollDown?: () => void 
           transition={{ duration: 0.6 }}
           className="inline-block px-5 py-2 mb-8 text-xs md:text-sm font-bold tracking-widest text-teal-200 border border-teal-800/50 rounded-full backdrop-blur-md uppercase bg-teal-950/30"
         >
-          Туры по горам Румынии и не только для всех, кто хочет просто гулять и наслаждаться, а не покорять вершины.
+          Туры по горам Румынии и не только.
         </motion.div>
 
         {/* Новая мягкая типографика */}

@@ -33,7 +33,7 @@ export default function TourEssentials({
 
       <div className="grid md:grid-cols-2 gap-4 mb-8">
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
-          <h3 className="text-emerald-400 font-black uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2">
+          <h3 className="text-emerald-400 font-black uppercase tracking-widest text-[12px] mb-4 flex items-center gap-2">
             <CheckCircle size={14} /> Что включено
           </h3>
           <ul className="space-y-2.5">
@@ -47,7 +47,7 @@ export default function TourEssentials({
         </div>
 
         <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-5">
-          <h3 className="text-rose-400 font-black uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2">
+          <h3 className="text-rose-400 font-black uppercase tracking-widest text-[12px] mb-4 flex items-center gap-2">
             <XCircle size={14} /> Дополнительно
           </h3>
           <ul className="space-y-2.5">
