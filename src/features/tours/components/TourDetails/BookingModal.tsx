@@ -225,7 +225,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
-                            <AtSign size={12} /> Ник в Telegram / Instagram <span className="text-[10px] normal-case opacity-50">(необязательно)</span>
+                            <AtSign size={12} /> Ник в Telegram / Instagram <span className="text-[12px] normal-case opacity-50">(необязательно)</span>
                           </label>
                           <input 
                             type="text" placeholder="@username" value={formData.social}
@@ -252,7 +252,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
                       {isLoading ? <Loader2 className="animate-spin" size={20} /> : `Записаться за ${totalPrice.toLocaleString()} ${tour.currency}`}
                     </button>
                     
-                    <p className="text-[10px] text-slate-500 text-center leading-tight">
+                    <p className="text-[12px] text-slate-500 text-center leading-tight">
                       Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
                     </p>
 

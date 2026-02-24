@@ -53,7 +53,7 @@ export default function TourSidebar({ tour, onBook }: TourSidebarProps) {
             
             {/* Основная цена */}
             <div>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">
+              <p className="text-slate-400 text-[14px] font-bold uppercase tracking-wider mb-1">
                 Стоимость участия
               </p>
               <div className="flex items-baseline gap-1.5">
@@ -68,7 +68,7 @@ export default function TourSidebar({ tour, onBook }: TourSidebarProps) {
                   <span className="text-slate-400 line-through text-xs font-medium decoration-rose-500/50">
                     {oldPriceVal.toLocaleString('ru-RU')}
                   </span>
-                  <span className="bg-rose-500/10 text-rose-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
+                  <span className="bg-rose-500/10 text-rose-500 text-[14px] font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
                     Выгода {discountPercent}%
                   </span>
                 </div>
@@ -77,7 +77,7 @@ export default function TourSidebar({ tour, onBook }: TourSidebarProps) {
 
             {/* Счетчик мест (Крупно) */}
             <div className="text-right">
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">
+                <p className="text-slate-400 text-[14px] font-bold uppercase tracking-wider mb-1">
                   Свободных мест
                 </p>
                 <div className={clsx(
@@ -98,7 +98,7 @@ export default function TourSidebar({ tour, onBook }: TourSidebarProps) {
           {/* Выводим блок только если есть хотя бы одна доп. цена */}
           {((priceMember || 0) > 0 || (priceChild || 0) > 0 || (priceFamily || 0) > 0) && (
             <div className="space-y-3 mb-6">
-              <p className="text-slate-400 text-[10px] font-bold uppercase mb-2">
+              <p className="text-slate-400 text-[14px] font-bold uppercase mb-2">
                  Доступные тарифы
               </p>
               

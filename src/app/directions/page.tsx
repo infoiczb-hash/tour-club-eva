@@ -11,23 +11,23 @@ import {
 import { clsx } from 'clsx';
 import ContactHubModal from "@/components/modals/ContactHubModal";
 
-// --- ДАННЫЕ (Расширены для SEO) ---
+// --- ДАННЫЕ НАПРАВЛЕНИЙ ---
 const DIRECTIONS = [
   { 
     id: 'hiking', 
     title: "Горы и походы", 
-    desc: "Восхождения, треккинг и жизнь в палатках. От Карпат и Румынии до Кавказа и Ликийской тропы. Маршруты для новичков и опытных волков.",
+    desc: "Туры в горы .Маршруты для новичков и опытных туристов.",
     image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674641/hiking_modikx.webp",
     icon: Mountain, 
     href: "/directions/hiking",
-    isLarge: true, // Флагман
+    isLarge: true, // Флагман (span-2 row-span-2)
     color: "text-emerald-400",
     bgAccent: "group-hover:bg-emerald-500"
   },
   { 
     id: 'kayaking', 
     title: "Сплавы на байдарках", 
-    desc: "Атмосферные сплавы по Днестру. Отдых на воде, костер и звездное небо. Идеально для перезагрузки.",
+    desc: "Атмосферные сплавы по Днестру. Идеально для перезагрузки.",
     image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674642/kayak_p2bkyz.webp", 
     icon: Waves, 
     href: "/directions/kayaking",
@@ -38,7 +38,7 @@ const DIRECTIONS = [
   { 
     id: 'sup', 
     title: "SUP прогулки", 
-    desc: "Встречи рассветов и проводы закатов на сапбордах. Эстетика, релакс и красивый контент.",
+    desc: "Эстетика, релакс и красивый контент.",
     image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674650/sup_zwz9yw.webp",
     icon: Anchor, 
     href: "/directions/sup",
@@ -49,7 +49,7 @@ const DIRECTIONS = [
   { 
     id: 'local', 
     title: "Местная программа", 
-    desc: "Туры выходного дня по родному краю. Винодельни, скалы, скрытые локации и гастрономия.",
+    desc: "Туры выходного дня по родному краю. Ущелья, скалы, скрытые локации и гастрономия.",
     image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674647/local_i9ul0e.webp",
     icon: Compass, 
     href: "/directions/local",
@@ -86,7 +86,7 @@ export default function DirectionsPage() {
   const [isHubOpen, setIsHubOpen] = useState(false);
 
   return (
-    <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-24 px-4 relative overflow-hidden">
+    <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-24 px-4 relative overflow-hidden selection:bg-teal-500/30">
       
       {/* --- AMBIENCE --- */}
       <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
@@ -127,7 +127,6 @@ export default function DirectionsPage() {
                         transition={{ delay: idx * 0.1 }}
                         className={clsx(
                             "group relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900 flex flex-col",
-                            // На десктопе первая карточка занимает 2 колонки и 2 строки
                             dir.isLarge ? "md:col-span-2 md:row-span-2" : "col-span-1 row-span-1"
                         )}
                     >
@@ -137,11 +136,14 @@ export default function DirectionsPage() {
                             alt={dir.title}
                             fill
                             className="object-cover opacity-60 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                            sizes={dir.isLarge ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 100vw, 33vw"}
+                            priority={dir.isLarge}
                         />
-                        {/* ГРАДИЕНТ (Затемнение снизу для читаемости) */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent pointer-events-none" />
+                        {/* ГРАДИЕНТ */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity" />
 
-                        <Link href={dir.href} className="absolute inset-0 z-10" aria-label={dir.title} />
+                        {/* ССЫЛКА НА РОУТЕР */}
+                        <Link href={dir.href} className="absolute inset-0 z-10 outline-none" aria-label={dir.title} />
 
                         {/* КОНТЕНТ */}
                         <div className="relative z-20 flex flex-col h-full p-6 md:p-8 justify-end pointer-events-none">
@@ -149,13 +151,13 @@ export default function DirectionsPage() {
                             <div className="flex items-center justify-between mb-auto">
                                 <div className={clsx(
                                     "w-12 h-12 rounded-2xl backdrop-blur-md border border-white/10 flex items-center justify-center transition-colors duration-300",
-                                    "bg-white/10 group-hover:text-slate-950",
+                                    "bg-white/10 group-hover:text-slate-950 shadow-xl",
                                     dir.color, dir.bgAccent
                                 )}>
                                     <Icon size={24} />
                                 </div>
                                 
-                                <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-white/50 group-hover:bg-white group-hover:text-slate-900 transition-all duration-300 transform group-hover:-translate-y-1 group-hover:translate-x-1">
+                                <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-white/50 group-hover:bg-white group-hover:text-slate-900 transition-all duration-300 transform group-hover:-translate-y-1 group-hover:translate-x-1 shadow-lg">
                                     <ArrowUpRight size={18} />
                                 </div>
                             </div>
@@ -164,7 +166,7 @@ export default function DirectionsPage() {
                                 <h2 className={clsx(
                                     "font-black text-white uppercase tracking-tight leading-none drop-shadow-lg transition-colors",
                                     dir.isLarge ? "text-3xl md:text-5xl mb-4" : "text-2xl mb-2",
-                                    "group-hover:text-white"
+                                    dir.color.replace('text-', 'group-hover:text-') // Динамический цвет при ховере
                                 )}>
                                     {dir.title}
                                 </h2>
@@ -176,18 +178,18 @@ export default function DirectionsPage() {
                                 </p>
                             </div>
 
-                            {/* B2B Кнопка быстрого вызова (Только для Организаторов) */}
+                            {/* B2B Кнопка (Только для Организаторов) */}
                             {dir.isB2B && (
-                                <div className="mt-4 pointer-events-auto relative z-30">
+                                <div className="mt-5 pointer-events-auto relative z-30">
                                     <button 
                                         onClick={(e) => {
-                                            e.preventDefault(); // Останавливаем переход по Link
+                                            e.preventDefault(); 
                                             e.stopPropagation();
                                             setIsHubOpen(true);
                                         }}
-                                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors shadow-lg active:scale-95"
+                                        className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors shadow-[0_0_20px_rgba(139,92,246,0.3)] active:scale-95 w-full sm:w-auto justify-center"
                                     >
-                                        Оставить заявку <ArrowRight size={14} />
+                                        Оставить заявку <ArrowRight size={16} className="ml-1" />
                                     </button>
                                 </div>
                             )}
@@ -204,7 +206,7 @@ export default function DirectionsPage() {
       <ContactHubModal 
         isOpen={isHubOpen} 
         onClose={() => setIsHubOpen(false)} 
-        initialTab="B2B" // Открываем сразу вкладку "Сотрудничество"
+        initialTab="B2B" 
       />
     </main>
   );

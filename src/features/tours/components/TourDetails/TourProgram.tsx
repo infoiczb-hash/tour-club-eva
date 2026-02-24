@@ -83,7 +83,7 @@ export default function TourProgram({ program }: TourProgramProps) {
                             {day.title || `День ${index + 1}`}
                         </h3>
                         {day.location && (
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
+                            <div className="flex items-center gap-2 text-[14px] font-bold text-slate-400 uppercase">
                                 <Navigation size={10} /> {day.location}
                             </div>
                         )}

@@ -19,13 +19,13 @@ function FadeText({ children, delay = 0 }: { children: React.ReactNode, delay?: 
 
 export default function LocalPhilosophy() {
     return (
-        <section className="py-12 md:py-20 relative bg-slate-950">
+        <section className="py-10 md:py-12 relative bg-slate-950">
             <div className="container mx-auto px-4">
                 <div className="max-w-5xl mx-auto space-y-16">
                     
                     <FadeText>
                         <h2 className="text-3xl md:text-5xl font-light text-white leading-tight">
-                            Мы привыкли искать красоту за тысячи километров. <span className="text-stone-500">Но настоящая красота не требует билета на самолет. Нужно лишь правильное настроение.</span>
+                            Мы привыкли искать красоту за сотни километров. <span className="text-stone-500">Но настоящая красота не требует билета на самолет. Нужно лишь правильное настроение.</span>
                         </h2>
                     </FadeText>
                     

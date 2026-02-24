@@ -29,7 +29,7 @@ const mainBenefits = [
     title: "Всё продумано до мелочей",
     desc: "Комфорт в деталях — от посадки до хранения ваших вещей в лодке.",
     icon: CheckCircle2,
-    features: ["Продуманная логистика", "Удобные мягкие сидушки", "Места для багажа", "Гермомешки для гаджетов (опционально по  запросу"],
+    features: ["Продуманная логистика", "Удобные мягкие сидушки", "Места для багажа", "Гермомешки для гаджетов (опционально по  запросу)"],
     desktopClass: "md:col-span-2 lg:col-span-6",
     isCompactOnMobile: false,
   },
@@ -218,9 +218,10 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
         </div>
 
         <div className={cn(!isDesktop && item.isCompactOnMobile ? "flex-1" : "")}>
-            <h3 className={cn(
+          <h3 className={cn(
                 "font-black text-white uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors drop-shadow-md",
-                !isDesktop && item.isCompactOnMobile ? "text-base mb-1" : "text-xl md:text-3xl mb-3 md:mb-4"
+                // Уменьшили базовый шрифт до text-sm (14px) для мобилок, на экранах побольше будет text-base (16px)
+                !isDesktop && item.isCompactOnMobile ? "text-sm sm:text-base mb-1" : "text-xl md:text-3xl mb-3 md:mb-4"
             )}>
                 {item.title}
             </h3>

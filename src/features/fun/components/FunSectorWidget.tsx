@@ -57,7 +57,7 @@ export default function FunSectorWidget() {
             <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-950/30 backdrop-blur-md mb-3 md:mb-4">
                     <Gamepad2 size={14} className="text-violet-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">Только фан</span>
+                    <span className="text-[12px] font-bold uppercase tracking-widest text-violet-400">Только фан</span>
                 </div>
                 <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                     Фан-Сектор
@@ -162,7 +162,7 @@ function QuizCard({ quiz }: { quiz: typeof QUIZZES[0] }) {
                 </div>
 
                 {/* Кнопка "Начать" на десктопе */}
-                <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/50 group-hover:text-white transition-colors mt-4">
+                <div className="hidden lg:flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-white/50 group-hover:text-white transition-colors mt-4">
                     <span>Начать тест</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>

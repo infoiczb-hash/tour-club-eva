@@ -134,7 +134,7 @@ export default function SafetyRegulations() {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400">Техника безопасности</span>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4">
-                    Кодекс <span className="text-rose-500">Матроса</span>
+                    Кодекс <span className="text-rose-500"> на сплаве</span>
                 </h2>
                 <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl mx-auto leading-relaxed">
                     Соблюдение этих правил обязательно для всех. Инструктор несет ответственность за группу, а вы — за выполнение его команд и сохранность имущества.

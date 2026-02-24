@@ -52,7 +52,7 @@ const GEAR = [
 
 export default function SupEquipment() {
     return (
-        <section className="py-10 md:py-12 bg-slate-950 relative overflow-hidden border-t border-white/5">
+        <section className="py-10 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
             {/* Фоновые свечения для кинематографичности */}
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 blur-[120px] rounded-full pointer-events-none" />
@@ -81,58 +81,60 @@ export default function SupEquipment() {
                 </div>
 
                 {/* ЧАСТЬ 1: ДОСКА И ХАРАКТЕРИСТИКИ */}
-                <div className="mb-20 relative">
-                    {/* Фото доски с легкой анимацией парения */}
+                <div className="relative flex flex-col items-center mb-16 md:mb-20">
+                    
+                    {/* Фото доски */}
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
-                        // ИЗМЕНЕНО: Уменьшена высота контейнера (h-[180px] md:h-[300px]) чтобы доска была компактнее
-                        className="relative w-full h-[180px] md:h-[300px] lg:h-[380px] drop-shadow-[0_20px_50px_rgba(20,184,166,0.15)] z-0"
+                        // Высота подогнана строго под узкую доску, чтобы убить лишние пустоты (было h-[380px])
+                        className="relative w-full max-w-5xl h-[140px] sm:h-[180px] md:h-[240px] lg:h-[280px] z-0 mb-6 md:mb-10"
                     >
                         <motion.div 
                             animate={{ y: [-10, 10, -10] }} 
                             transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-                            className="w-full h-full relative"
+                            // ИМЕННО ЗДЕСЬ мы увеличиваем доску на 30% на десктопе
+                            className="w-full h-full relative md:scale-[1.2] lg:scale-[1.3]"
                         >
                             <Image 
                                 src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771609412/sup_fl75zk.webp" 
                                 alt="SUP Board Touring" 
                                 fill 
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
-                                className="object-contain"
+                                sizes="(max-width: 768px) 100vw, 1200px"
+                                className="object-contain drop-shadow-[0_20px_40px_rgba(20,184,166,0.15)]"
                                 priority
                             />
                         </motion.div>
                     </motion.div>
-                </div>
 
-                    {/* Плашка с характеристиками (встроена под доской) */}
+                    {/* Плашка с характеристиками (ровная, без отрицательных марджинов) */}
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
-                        // ИЗМЕНЕНО: Отрегулирован отрицательный отступ (-mt-12 md:-mt-20), чтобы плашка аккуратно наезжала на низ доски
-                        className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 border border-white/10 rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 -mt-12 md:-mt-20"
+                        className="w-full bg-white/10 border border-white/10 rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10"
                     >
-                        {STATS.map((stat, i) => (
-                            <div key={i} className="bg-slate-900/90 backdrop-blur-md p-5 md:p-6 flex flex-col items-center text-center group hover:bg-slate-800/90 transition-colors duration-300">
-                                <stat.icon className="text-teal-500/50 group-hover:text-teal-400 transition-colors mb-3 md:mb-4" size={24} strokeWidth={1.5} />
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-xl md:text-2xl font-black text-white tracking-tighter">
-                                        {stat.value}
-                                    </span>
-                                    <span className="text-[9px] md:text-[10px] uppercase font-bold text-teal-500 tracking-[0.2em]">
-                                        {stat.label}
-                                    </span>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10">
+                            {STATS.map((stat, i) => (
+                                <div key={i} className="bg-slate-900/90 backdrop-blur-md p-5 md:p-8 flex flex-col items-center text-center group hover:bg-slate-800/90 transition-colors duration-300">
+                                    <stat.icon className="text-teal-500/50 group-hover:text-teal-400 transition-colors mb-3 md:mb-4" size={28} strokeWidth={1.5} />
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xl md:text-3xl font-black text-white tracking-tighter">
+                                            {stat.value}
+                                        </span>
+                                        <span className="text-[10px] md:text-xs uppercase font-bold text-teal-500 tracking-[0.2em]">
+                                            {stat.label}
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 md:mt-3 text-[10px] md:text-sm text-slate-400 font-medium max-w-[140px] mx-auto">
+                                        {stat.desc}
+                                    </p>
                                 </div>
-                                <p className="mt-2 md:mt-3 text-[10px] md:text-xs text-slate-400 font-medium">
-                                    {stat.desc}
-                                </p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </motion.div>
                 </div>
 
@@ -167,6 +169,7 @@ export default function SupEquipment() {
                     })}
                 </motion.div>
 
-             </section>
+            </div>
+        </section>
     );
 }

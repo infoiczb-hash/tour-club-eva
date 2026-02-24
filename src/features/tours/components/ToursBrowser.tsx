@@ -116,7 +116,7 @@ export default function ToursBrowser({
         <div className="mb-8 md:mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                <CalendarIcon size={14} className="text-teal-400" />
-               <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
+               <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
             </div>
             <h2 className="text-3xl md:text-5xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                 {title}
@@ -143,7 +143,7 @@ export default function ToursBrowser({
                     )}
                 >
                     <LayoutGrid size={15} strokeWidth={2.5} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Сетка</span>
+                    <span className="text-[12px] font-bold uppercase tracking-wider mt-0.5">Сетка</span>
                 </button>
 
                 {/* 2. КАЛЕНДАРЬ */}
@@ -160,7 +160,7 @@ export default function ToursBrowser({
                     )}
                 >
                     <CalendarIcon size={15} strokeWidth={2.5} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Календарь</span>
+                    <span className="text-[12px] font-bold uppercase tracking-wider mt-0.5">Календарь</span>
                 </button>
 
                 {/* 3. ФИЛЬТРЫ */}
@@ -174,7 +174,7 @@ export default function ToursBrowser({
                     )}
                 >
                     {isMobileFiltersOpen ? <X size={15} strokeWidth={2.5}/> : <Filter size={15} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Фильтры</span>
+                    <span className="text-[12px] font-bold uppercase tracking-wider mt-0.5">Фильтры</span>
                 </button>
             </div>
 
@@ -188,7 +188,7 @@ export default function ToursBrowser({
                         className="overflow-hidden mt-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/10"
                     >
                         <div className="p-4">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
+                            <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
                                 Категории туров:
                             </span>
                             <div className="flex flex-wrap gap-2">

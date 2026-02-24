@@ -271,7 +271,7 @@ if (!open) return null;
                 <div className="mb-8">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-4">
                      <Compass size={14} className="text-emerald-400"/>
-                     <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Психотип туриста</span>
+                     <span className="text-[12px] font-black uppercase text-emerald-400 tracking-widest">Психотип туриста</span>
                   </div>
                   
                   <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight min-h-[72px]">
@@ -356,7 +356,7 @@ function ResultScreen({ result, onComplete, theme }: { result: Result; onComplet
       </div>
 
       <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-6 mb-6">
-        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои ценности:</h4>
+        <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои ценности:</h4>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {result.values.map((val, i) => (
             <div key={i} className={clsx("flex items-center gap-2 text-slate-200 text-sm font-bold bg-white/5 border p-3 rounded-xl justify-center transition-colors", theme.border)}>
@@ -392,7 +392,7 @@ function ResultScreen({ result, onComplete, theme }: { result: Result; onComplet
 
         {/* Дополнительные туры */}
         <div className="space-y-2 pt-2">
-            <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Также тебе понравится</p>
+            <p className="text-center text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Также тебе понравится</p>
             {result.recommendedTours.map((tour, i) => (
                 <button
                     key={i}

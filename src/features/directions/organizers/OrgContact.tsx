@@ -11,9 +11,7 @@ export default function OrgContact() {
     return (
         <section className="py-12 md:py-20 bg-slate-950 border-t border-white/5 relative overflow-hidden">
             {/* Фоновое свечение B2B */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
-
-            <div className="container mx-auto px-4 max-w-5xl relative z-10">
+             <div className="container mx-auto px-4 max-w-5xl relative z-10">
                 
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}

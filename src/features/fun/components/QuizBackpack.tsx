@@ -36,7 +36,7 @@ type Result = {
    ДАННЫЕ (ITEMS)
 ======================= */
 const items: Item[] = [
-  { id: "poles", name: "Трек. палки", icon: Milestone, correct: true },
+  { id: "poles", name: "Трекинговые палки", icon: Milestone, correct: true },
   { id: "brick", name: "Кирпич", icon: BrickWall, correct: false },
   { id: "medkit", name: "Аптечка", icon: BriefcaseMedical, correct: true },
   { id: "hairdryer", name: "Фен", icon: Wind, correct: false },
@@ -177,7 +177,7 @@ const itemVariants: Variants = {
               <div className="mb-6 text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full mb-3">
                    <Luggage size={14} className="text-blue-400"/>
-                   <span className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Инвентарь</span>
+                   <span className="text-[12px] font-black uppercase text-blue-400 tracking-widest">Инвентарь</span>
                 </div>
                 <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Собери рюкзак</h3>
                 <p className="text-slate-400 text-sm">В рюкзак влезает ровно 7 предметов. Выбирай с умом!</p>
@@ -227,7 +227,7 @@ const itemVariants: Variants = {
                       )}
                     >
                       <Icon className={clsx("w-8 h-8 transition-transform", isSelected ? "scale-110" : "group-hover:scale-110")} strokeWidth={1.5} />
-                      <span className={clsx("text-[10px] font-bold uppercase text-center", isSelected ? "text-blue-200" : "text-slate-300")}>
+                      <span className={clsx("text-[12px] font-bold uppercase text-center", isSelected ? "text-blue-200" : "text-slate-300")}>
                         {item.name}
                       </span>
                       

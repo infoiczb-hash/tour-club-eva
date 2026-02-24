@@ -122,21 +122,21 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
       </motion.div>
 
       {/* 3. SCROLL BUTTON */}
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 1 }}
-        onClick={handleScrollDown}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 group cursor-pointer"
-      >
-          <span className="text-base font-bold tracking-[0.2em] text-white/70 uppercase group-hover:text-white transition-colors">
-              Погнали
-          </span>
-          <div className="w-14 h-14 rounded-full border border-white/20 bg-white/5 backdrop-blur-md flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-500 transition-all duration-300 shadow-lg">
-              <ArrowDown size={24} className="text-white group-hover:text-slate-900 animate-bounce" strokeWidth={2} />
-          </div>
-      </motion.button>
-
-    </section>
+      <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, duration: 1 }}
+            onClick={handleScrollDown}
+            className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto"
+          >
+              <span className="text-xs sm:text-base font-bold tracking-[0.2em] text-white/70 uppercase group-hover:text-white transition-colors drop-shadow-md">
+                  Погнали
+              </span>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/20 bg-white/5 backdrop-blur-md flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-500 transition-all duration-300 shadow-lg">
+                  <ArrowDown className="text-white group-hover:text-slate-900 animate-bounce w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
+              </div>
+          </motion.button>
+      </div> </section> 
   );
-}
+  }

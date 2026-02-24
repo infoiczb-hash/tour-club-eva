@@ -68,7 +68,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
              {isCopied ? <Check size={20} /> : <Share2 size={20} />}
           </div>
           <div>
-             <span className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">
+             <span className="block text-[12px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">
                {isCopied ? 'Ссылка скопирована' : 'Позвать друзей'}
              </span>
              <span className="block text-white font-bold text-sm">
@@ -86,7 +86,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
              <Printer size={20} />
           </div>
           <div>
-             <span className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">
+             <span className="block text-[12px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">
                Документ
              </span>
              <span className="block text-white font-bold text-sm">
@@ -104,7 +104,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
              <MessageCircle size={20} />
           </div>
           <div>
-             <span className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">
+             <span className="block text-[12px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">
                Есть вопросы по туру?
              </span>
              <span className="block text-white font-bold text-sm">

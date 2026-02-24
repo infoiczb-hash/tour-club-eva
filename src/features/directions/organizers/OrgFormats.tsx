@@ -58,10 +58,10 @@ export default function OrgFormats() {
                     className="mb-16 md:mb-24"
                 >
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
-                        Масштабируем <span className="text-indigo-500">Задачи</span>
+                        Что мы можем предложить <span className="text-indigo-500">Вам</span>
                     </h2>
                     <p className="text-slate-400 font-medium text-lg max-w-2xl">
-                        Мы не продаем стандартные пакеты. Мы адаптируем инфраструктуру под цель вашего выезда: от шумного праздника до тихой медитации.
+                        Вы можете выбрать любой наш тур или мы создадим инфраструктуру под цель вашего выезда: от шумного праздника до тихой медитации.
                     </p>
                 </motion.div>
 

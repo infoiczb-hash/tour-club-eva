@@ -240,7 +240,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                     className="flex flex-col h-full z-10"
                   >
                       <div className="text-center mb-8">
-                          <span className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-3 block">Вопрос {step + 1}/{questions.length}</span>
+                          <span className="text-[12px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-3 block">Вопрос {step + 1}/{questions.length}</span>
                           <h3 className="text-2xl md:text-3xl font-black text-white leading-tight">{currentQ.question}</h3>
                       </div>
 
@@ -318,7 +318,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                           </motion.div>
 
                           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                             <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 block">Твой тотем</span>
+                             <span className="text-[12px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 block">Твой тотем</span>
                              <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{finalResult.animal}</h2>
                              <h3 className={clsx("text-lg font-bold uppercase mb-4", finalResult.colorClass)}>{finalResult.title}</h3>
                           </motion.div>
@@ -335,7 +335,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                       </div>
 
                       <div className="mt-auto space-y-3">
-                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">Твоя стихия ждет</p>
+                          <p className="text-[12px] font-bold text-indigo-500 uppercase tracking-widest mb-1">Твоя стихия ждет</p>
                           {finalResult.recommendedTours.map((tour, i) => (
                                <button
                                   key={i}

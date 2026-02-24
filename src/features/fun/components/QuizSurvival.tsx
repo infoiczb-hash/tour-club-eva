@@ -254,7 +254,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
                 <div className="mb-8">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full mb-4">
                      <Flame size={14} className="text-red-500 animate-pulse"/>
-                     <span className="text-[10px] font-black uppercase text-red-500 tracking-[0.2em]">Тест на выживание</span>
+                     <span className="text-[12px] font-black uppercase text-red-500 tracking-[0.2em]">Тест на выживание</span>
                   </div>
                   
                   <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight min-h-[72px]">
@@ -346,7 +346,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
                 </div>
 
                 <div className="bg-black/40 border border-white/5 rounded-2xl p-6 mb-6">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои характеристики:</h4>
+                  <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои характеристики:</h4>
                   <div className="space-y-3">
                     {finalResult.characteristics.map((char, i) => (
                       <div key={i} className="flex items-center gap-3 text-slate-200 bg-white/[0.02] p-3 rounded-xl border border-white/5">
@@ -360,7 +360,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
                 </div>
 
                 <div className="space-y-3 mt-auto">
-                  <p className={clsx("text-center text-[10px] font-bold uppercase tracking-widest mb-2", finalResult.theme.color)}>
+                  <p className={clsx("text-center text-[12px] font-bold uppercase tracking-widest mb-2", finalResult.theme.color)}>
                       Рекомендуем для старта
                   </p>
                   
@@ -376,7 +376,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
                   ))}
 
                   {finalResult.notRecommended && (
-                     <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 mt-4 uppercase font-bold">
+                     <div className="flex items-center justify-center gap-2 text-[12px] text-slate-500 mt-4 uppercase font-bold">
                         <AlertTriangle size={14} className="text-red-500/50" />
                         <span>Не лезь сюда: {finalResult.notRecommended.join(", ")}</span>
                      </div>

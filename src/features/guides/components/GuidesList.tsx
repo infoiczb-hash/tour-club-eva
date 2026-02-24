@@ -36,7 +36,7 @@ interface Guide {
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     <div className="mb-2">
        <div className="flex justify-between items-end mb-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-slate-400">
              <Icon size={14} className={colorClass} />
              <span>{label}</span>
           </div>
@@ -77,7 +77,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
                         <ShieldCheck size={14} className="text-teal-400" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
                     </div>
                     
                     {/* Title: Чистый белый цвет */}
@@ -138,7 +138,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                 <p className="text-xs text-slate-400 font-medium mb-8 max-w-[220px] leading-relaxed">
                     Хочешь водить группы или стать частью команды? Нам нужны гиды, технические ассистенты, повара и просто хорошие люди.
                 </p>
-                <span className="px-5 py-2 rounded-full border border-teal-500/30 text-[10px] font-bold uppercase tracking-widest text-teal-400 flex items-center gap-2 group-hover:bg-teal-500 group-hover:text-slate-900 transition-all">
+                <span className="px-5 py-2 rounded-full border border-teal-500/30 text-[12px] font-bold uppercase tracking-widest text-teal-400 flex items-center gap-2 group-hover:bg-teal-500 group-hover:text-slate-900 transition-all">
                     ПОДАТЬ ЗАЯВКУ <ArrowRight size={14} />
                 </span>
             </motion.div>
@@ -211,7 +211,7 @@ function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onC
                         {guide.name}
                     </h3>
                     
-                    <div className="flex items-center gap-2 text-teal-400 text-[10px] font-bold uppercase tracking-widest opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
+                    <div className="flex items-center gap-2 text-teal-400 text-[12px] font-bold uppercase tracking-widest opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
                         <span>Смотреть профиль</span>
                         <ChevronRight size={14} />
                     </div>
@@ -270,16 +270,16 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                     
                     {/* Header Desktop */}
                     <div className="hidden md:block mb-8 shrink-0">
-                         <div className="text-[10px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Instuctor Profile</div>
+                         <div className="text-[12px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Instuctor Profile</div>
                          <h2 className="text-5xl lg:text-6xl font-black text-white uppercase leading-[0.85] tracking-tight">{guide.name}</h2>
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide pb-24 md:pb-32">
                         {/* Tags */}
                         <div className="flex flex-wrap gap-2 mb-8">
-                             <span className="px-3 py-1 bg-teal-500 text-slate-950 text-[10px] font-black uppercase rounded">{guide.role}</span>
+                             <span className="px-3 py-1 bg-teal-500 text-slate-950 text-[12px] font-black uppercase rounded">{guide.role}</span>
                              {guide.superpower && (
-                                <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 text-[10px] font-bold uppercase rounded flex items-center gap-1">
+                                <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 text-[12px] font-bold uppercase rounded flex items-center gap-1">
                                     <Sparkles size={10} className="text-amber-400"/> {guide.superpower}
                                 </span>
                              )}
@@ -294,7 +294,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
 
                         {/* BIO */}
                         <div className="mb-8">
-                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Биография</h4>
+                            <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-2">Биография</h4>
                             <p className="text-sm text-slate-300 leading-relaxed font-medium">
                                 {guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию. Всегда знает, где самый красивый вид и вкусная вода."}
                             </p>
