@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowRight, Gamepad2, Compass, Flame, Backpack } from 'lucide-react';
+import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 

@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { Tour } from '@/features/tours/types'; 
 import { Blog, BookingStatus, Guide, Review, Inquiry } from '@prisma/client'; 
 import AdminNavigation from './AdminNavigation';
+import { FunTest } from '@prisma/client'; 
+import FunTestTable from '@/features/admin/components/FunTestTab';
+import FanForm from '@/features/admin/components/FanForm';
+import { getFunTestsAction } from '@/features/admin/actions/fun';
 
 // VIEWS
 import DashboardTab from './views/DashboardTab';
@@ -48,8 +52,7 @@ import { getContentBlock } from '@/lib/api';
 import LoginModal from '@/shared/ui/LoginModal';
 
 // TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries';
-
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun';
 interface BookingItem {
   id: string;
   user_name: string;
@@ -83,11 +86,12 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [contentBlocks, setContentBlocks] = useState<any>({});
 
   // Modals
-  const [modalState, setModalState] = useState({
-    tour: false, guide: false, post: false, content: false, review: false
+const [modalState, setModalState] = useState({
+    tour: false, guide: false, post: false, content: false, review: false, fun: false 
   });
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingSlug, setEditingSlug] = useState('');
+  const [funTests, setFunTests] = useState<FunTest[]>([]);
 
   // --- INIT ---
   useEffect(() => {
@@ -105,8 +109,10 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
             getBlogPosts(),
             getReviews(),
             getInquiriesAction(), // 👇 Загружаем заявки
+            getFunTestsAction(),
             getContentBlock('hero'),
             getContentBlock('footer')
+
         ]);
 
         if (bRes.data) setBookings(bRes.data as BookingItem[]);
@@ -209,6 +215,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       if (activeTab === 'blog') setModalState(p => ({...p, post: true}));
       if (activeTab === 'guides') setModalState(p => ({...p, guide: true}));
       if (activeTab === 'reviews') setModalState(p => ({...p, review: true}));
+      if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
   };
 
   // --- POSTS ---
@@ -319,6 +326,20 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
                 setModalState(p => ({...p, content: true})); 
             }} />
         )}
+        {activeTab === 'fun' && (
+            <div className="space-y-6">
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
+                   <p className="text-sm text-slate-500">Управляй карточками тестов на сайте</p>
+                 </div>
+               </div>
+               <FunTestTable 
+                 initialTests={funTests} 
+                 onEdit={(test) => { setEditingItem(test); setModalState(p => ({...p, fun: true})); }} 
+               />
+            </div>
+        )}
 
       </main>
 
@@ -367,6 +388,19 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
             onClose={() => setModalState(p => ({ ...p, content: false }))}
             onSubmit={async (s, d) => { await saveContentBlockAction(s, d); loadAllData(); }}
           />
+      )}
+      {modalState.fun && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl relative shadow-2xl my-auto">
+             <button onClick={() => setModalState(p => ({...p, fun: false}))} className="absolute top-4 right-4 text-slate-400 hover:text-red-500 z-10 p-2">
+                <X size={24}/>
+             </button>
+             <FanForm 
+                initialData={editingItem} 
+                onSuccess={() => { setModalState(p => ({...p, fun: false})); loadAllData(); showToast('Карточка сохранена', 'success'); }}
+             />
+          </div>
+        </div>
       )}
 
       <AiAssistant />

@@ -45,12 +45,7 @@ const FORMATS = [
 export default function OrgFormats() {
     return (
         <section className="py-12 md:py-20 bg-slate-950 border-t border-white/5 relative overflow-hidden">
-            {/* Типографический фон */}
-            <div className="absolute top-10 left-10 text-[20vw] font-black text-slate-800/10 leading-none select-none pointer-events-none">
-                B2B
-            </div>
-
-            <div className="container mx-auto px-4 max-w-7xl relative z-10">
+             <div className="container mx-auto px-4 max-w-7xl relative z-10">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}

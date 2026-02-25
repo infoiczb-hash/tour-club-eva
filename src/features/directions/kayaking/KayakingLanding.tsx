@@ -41,7 +41,7 @@ export default function KayakingLanding({ tours }: { tours: Tour[] }) {
           <PopularRoutes />
            <Timeline /> {/* На следующем шаге мы сделаем его горизонтальным */}
           <Gallery />
-         <FAQ />
+        <FAQ onNavigateToPrep={() => setActiveTab("participant")} />
           <div id="tours" className="bg-[#0B1120] border-y border-white/5 relative z-20">
               <ToursBrowser 
                 tours={tours} 
