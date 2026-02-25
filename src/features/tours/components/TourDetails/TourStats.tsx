@@ -45,14 +45,14 @@ export default function TourStats({ tour }: TourStatsProps) {
       {/* ДИСТАНЦИЯ */}
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
         <div className="text-teal-500 mb-2"><Ruler size={20} /></div>
-        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-1">Дистанция</span>
+        <span className="text-[12px] uppercase font-bold text-slate-400 tracking-widest mb-1">Дистанция</span>
         <span className="text-white font-bold text-sm">{tour.distance || '—'}</span>
       </div>
 
       {/* СЛОЖНОСТЬ */}
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
         <div className="text-teal-500 mb-2"><Signal size={20} /></div>
-        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-1">Сложность</span>
+        <span className="text-[12px] uppercase font-bold text-slate-400 tracking-widest mb-1">Сложность</span>
         {/* capitalize делает первую букву заглавной */}
         <span className="text-white font-bold text-sm capitalize">{difficultyLabel}</span>
       </div>
@@ -60,14 +60,14 @@ export default function TourStats({ tour }: TourStatsProps) {
       {/* ГРУППА */}
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
         <div className="text-teal-500 mb-2"><Users size={20} /></div>
-        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-1">Группа</span>
+        <span className="text-[12px] uppercase font-bold text-slate-400 tracking-widest mb-1">Группа</span>
         <span className="text-white font-bold text-sm">до {tour.groupSize || 15} чел.</span>
       </div>
 
       {/* ТИП ТУРА */}
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
         <div className="text-teal-500 mb-2"><Hash size={20} /></div>
-        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-1">Тип</span>
+        <span className="text-[12px] uppercase font-bold text-slate-400 tracking-widest mb-1">Тип</span>
         <span className="text-white font-bold text-sm truncate w-full px-2 capitalize">{typeLabel}</span>
       </div>
 

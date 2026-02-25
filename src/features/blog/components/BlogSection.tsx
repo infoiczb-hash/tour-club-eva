@@ -174,10 +174,10 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                             <div className="flex-1 min-w-0 py-1">
                                 <div className="flex items-center gap-2 mb-2">
                                     {/* Small Category Pill */}
-                                    <span className="px-1.5 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-[9px] font-bold text-teal-400 uppercase tracking-widest">
+                                    <span className="px-1.5 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-[10px] font-bold text-teal-400 uppercase tracking-widest">
                                         {post.category}
                                     </span>
-                                    <span className="text-[9px] text-slate-300 font-mono">{formatDate(post.date)}</span>
+                                    <span className="text-[10px] text-slate-300 font-mono">{formatDate(post.date)}</span>
                                 </div>
                                 <h4 className="font-bold text-slate-200 text-sm md:text-base leading-snug group-hover:text-teal-400 transition-colors line-clamp-2">
                                     {post.title}

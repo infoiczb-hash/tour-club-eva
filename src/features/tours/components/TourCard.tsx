@@ -171,7 +171,7 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
             {tags && tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                     {tags.slice(0, 3).map((tag, i) => (
-                        <span key={i} className="flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                        <span key={i} className="flex items-center gap-1 text-[10px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
                             <Hash size={10} strokeWidth={3} /> {tag}
                         </span>
                     ))}

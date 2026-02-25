@@ -135,12 +135,17 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                             href={`/blog/${post.slug}`}
                             className="group relative flex-shrink-0 snap-center rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 bg-slate-900 hover:border-teal-500/50 transition-all duration-500 flex flex-col justify-end w-[85vw] md:w-[600px] h-[350px] md:h-[450px]"
                          >
-                            <Image 
-                                src={post.image || '/placeholder.jpg'} 
-                                alt={post.title} 
-                                fill 
-                                className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[20%] group-hover:grayscale-0"
-                            />
+                          <Image 
+    src={post.image || '/placeholder.jpg'} 
+    alt={post.title} 
+    fill 
+    className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[20%] group-hover:grayscale-0"
+    // Логика для асимметрии:
+    // - На мобилках (до 768px) пост всегда на весь экран (100vw)
+    // - На планшетах (до 1024px) даже в асимметрии он вряд ли больше половины экрана (50vw)
+    // - На десктопе, если есть "главный" большой пост, лучше заложить 66vw (две трети)
+    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 66vw"
+/>
                             {/* Градиент для текста */}
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
                             
@@ -168,7 +173,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                                     </div>
                                     <div className="text-xs md:text-sm">
                                         <div className="text-white font-bold">{post.author_name}</div>
-                                        <div className="text-teal-400 font-bold tracking-widest text-[9px] md:text-[14px] uppercase mt-0.5">{formatDate(post.date)}</div>
+                                        <div className="text-teal-400 font-bold tracking-widest text-[12px] md:text-[14px] uppercase mt-0.5">{formatDate(post.date)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -211,7 +216,7 @@ export default function BlogFeed({ initialPosts }: BlogFeedProps) {
                         <div className="relative w-[120px] lg:w-full h-full lg:h-60 bg-slate-800 shrink-0 overflow-hidden">
                             <Image src={post.image || '/placeholder.jpg'} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700"/>
                              
-                             <div className="absolute top-2 left-2 lg:top-4 lg:left-4 px-2 py-0.5 lg:px-2.5 lg:py-1 bg-slate-900/80 backdrop-blur-md rounded-md lg:rounded-lg text-[8px] lg:text-[9px] font-black text-white uppercase border border-white/10 tracking-widest shadow-lg">
+                             <div className="absolute top-2 left-2 lg:top-4 lg:left-4 px-2 py-0.5 lg:px-2.5 lg:py-1 bg-slate-900/80 backdrop-blur-md rounded-md lg:rounded-lg text-[8px] lg:text-[12px] font-black text-white uppercase border border-white/10 tracking-widest shadow-lg">
                                 {getLabel(post.category)}
                             </div>
                         </div>

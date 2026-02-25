@@ -39,7 +39,7 @@ export default function OfferPage() {
             </div>
         </div>
 
-        {/* Content (Адаптивный Prose) */}
+      {/* Content (Адаптивный Prose) */}
         <article className="prose prose-sm md:prose-lg prose-invert max-w-none 
             prose-headings:font-bold prose-headings:uppercase prose-headings:text-white prose-headings:mt-8 prose-headings:mb-4
             prose-p:text-slate-300 prose-p:leading-relaxed prose-p:mb-4
@@ -47,8 +47,8 @@ export default function OfferPage() {
             prose-ul:my-4 prose-ul:pl-5
             prose-strong:text-teal-400">
             
-            <section>
-                <h3>1. Общие положения</h3>
+            <section aria-labelledby="offer-general">
+                <h3 id="offer-general">1. Общие положения</h3>
                 <p>
                     1.1. Настоящий документ является официальной публичной офертой Индивидуального Предпринимателя Санду Р.С. (далее — Организатор) и содержит все существенные условия предоставления услуг по организации активного отдыха.
                 </p>
@@ -57,8 +57,8 @@ export default function OfferPage() {
                 </p>
             </section>
 
-            <section>
-                <h3>2. Предмет оферты</h3>
+            <section aria-labelledby="offer-subject">
+                <h3 id="offer-subject">2. Предмет оферты</h3>
                 <p>
                     2.1. Организатор обязуется оказать Участнику услуги по организации туристического тура, поездки, сплава, прогулки или экскурсии (далее — Мероприятие), а Участник обязуется оплатить эти услуги.
                 </p>
@@ -67,8 +67,8 @@ export default function OfferPage() {
                 </p>
             </section>
 
-            <section>
-                <h3>3. Порядок оплаты и бронирования</h3>
+            <section aria-labelledby="offer-payment">
+                <h3 id="offer-payment">3. Порядок оплаты и бронирования</h3>
                 <p>
                     3.1. Для бронирования места в группе Участник оплачивает полную стоимость Мероприятия или вносит предоплату в размере, установленном для конкретного Мероприятия.
                 </p>
@@ -77,8 +77,8 @@ export default function OfferPage() {
                 </p>
             </section>
 
-            <section className="my-8 p-5 md:p-6 bg-slate-900 border border-slate-700 rounded-2xl">
-                <h3 className="!mt-0 text-teal-500">4. Отмена участия и Возврат средств</h3>
+            <section aria-labelledby="offer-refund" className="my-8 p-5 md:p-6 bg-slate-900 border border-slate-700 rounded-2xl">
+                <h3 id="offer-refund" className="!mt-0 text-teal-500">4. Отмена участия и Возврат средств</h3>
                 <p>
                     4.1. Внесенная предоплата расходуется Организатором на бронирование невозвратных услуг (транспорт, проживание, разрешительные документы) — это Фактически Понесенные Расходы (ФПР).
                 </p>
@@ -93,8 +93,8 @@ export default function OfferPage() {
                 </p>
             </section>
 
-            <section>
-                <h3>5. Безопасность и Ответственность</h3>
+            <section aria-labelledby="offer-security">
+                <h3 id="offer-security">5. Безопасность и Ответственность</h3>
                 <p>
                     5.1. Участник подтверждает, что не имеет медицинских противопоказаний к физическим нагрузкам. Ответственность за состояние своего здоровья несет лично Участник.
                 </p>
@@ -108,8 +108,8 @@ export default function OfferPage() {
                 </ul>
             </section>
 
-            <section>
-                <h3>6. Форс-мажор</h3>
+            <section aria-labelledby="offer-force-majeure">
+                <h3 id="offer-force-majeure">6. Форс-мажор</h3>
                 <p>
                     6.1. Стороны освобождаются от ответственности за неисполнение обязательств в случае действия обстоятельств непреодолимой силы: стихийных бедствий, военных действий, закрытия границ, эпидемий, запретительных актов государственных органов, как для отдельных участников, так и для всей группы. В таких случаях Организатор не несет ответственности за невозможность проведения тура и предлагает варианты решения (перенос, возврат с учетом ФПР).
                 </p>
@@ -118,13 +118,13 @@ export default function OfferPage() {
                 </p>
             </section>
 
-            <section>
-                <h3>7. Фото и Видео</h3>
+            <section aria-labelledby="offer-media">
+                <h3 id="offer-media">7. Фото и Видео</h3>
                 <p>
                     7.1. Организатор имеет право проводить фото- и видеосъемку во время Мероприятия и использовать полученные материалы для продвижения клуба (сайт, соцсети), если Участник заранее не выразил письменного несогласия.
                 </p>
             </section>
-
+    
             {/* Реквизиты */}
             <div className="mt-12 md:mt-16 p-6 bg-slate-900/50 border border-white/5 rounded-2xl text-sm md:text-base text-slate-400">
                 <h3 className="!text-white uppercase !mt-0 !mb-5">8. Реквизиты Организатора</h3>

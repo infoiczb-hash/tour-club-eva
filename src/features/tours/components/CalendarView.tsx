@@ -217,7 +217,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                         {tour.type && (
                             <span className={cn(
-                                "px-2 py-0.5 rounded-md border backdrop-blur-sm text-[9px] sm:text-[12px]",
+                                "px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px] sm:text-[12px]",
                                 tour.type === 'weekend' ? "bg-violet-500/10 border-violet-500/20 text-violet-400" :
                                 tour.type === 'hiking' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
                                 tour.type === 'kids' ? "bg-pink-500/10 border-pink-500/20 text-pink-400" :

@@ -38,16 +38,16 @@ export default function PromoBlock() {
         <div className="flex flex-col items-start mb-6 md:mb-12 max-w-4xl">
            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-3 md:mb-6">
                <Map size={10} className="text-teal-400 md:w-4 md:h-4" />
-               <span className="text-[9px] md:text-xs font-bold uppercase tracking-widest text-teal-400">Спроси совета</span>
+               <span className="text-[12px] md:text-xs font-bold uppercase tracking-widest text-teal-300">Спроси совета</span>
            </div>
           
          <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-            <span className="font-light text-slate-400 block md:inline">Не знаете с чего </span>
+            <span className="font-light text-slate-300 block md:inline">Не знаете с чего </span>
             <span className="font-black text-white">начать</span>
             <span className="text-teal-500">?</span>
         </h2>
           
-          <p className="text-slate-400 text-xs md:text-base font-medium leading-relaxed max-w-xs md:max-w-xl">
+          <p className="text-slate-300 text-xs md:text-base font-medium leading-relaxed max-w-xs md:max-w-xl">
             Три простых шаг, чтоб найти своё идеальное приключение. Понять/Вдохновиться/Спросить.
           </p>
         </div>
@@ -128,18 +128,30 @@ export default function PromoBlock() {
             {/* Текст (На мобилке плотнее и крупнее) */}
             <div className="mt-4 md:mt-8 mb-4 max-w-[85%] md:max-w-full">
                 <h3 className="text-xl md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-3">Центр связи</h3>
-                <p className="text-xs md:text-sm text-slate-400 leading-relaxed font-medium">
+                <p className="text-xs md:text-sm text-slate-300 leading-relaxed font-medium">
                     Напиши нам в мессенджер, и мы найдем для тебя идеальное решение или маршрут.
                 </p>
             </div>
                
-            {/* Кнопка (Адаптивная) */}
-            <div className="flex items-center gap-3 mt-auto justify-end md:justify-start">
-                <span className="text-xs font-bold text-sky-400 uppercase tracking-widest group-hover:text-white transition-colors">Связаться</span>
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:bg-sky-500 group-hover:text-white group-hover:translate-x-2 transition-all">
-                    <ChevronRight size={16} className="md:w-5 md:h-5" />
-                </div>
-            </div>
+           {/* Кнопка (Теперь это реально кнопка) */}
+<button 
+  type="button" // Всегда указывай тип для кнопок в React
+  className="flex items-center gap-3 mt-auto justify-end md:justify-start group 
+             outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-full transition-all"
+  onClick={() => { /* твоя логика */ }}
+>
+  <span className="text-xs font-bold text-sky-500 uppercase tracking-widest group-hover:text-white transition-colors">
+    Связаться
+  </span>
+  
+  <div 
+    aria-hidden="true" // Иконка декоративная, скринридеру она не нужна
+    className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-500/10 text-sky-400 flex items-center justify-center 
+               group-hover:bg-sky-500 group-hover:text-white group-hover:translate-x-2 transition-all"
+  >
+    <ChevronRight size={16} className="md:w-5 md:h-5" />
+  </div>
+</button>
           </div>
 
         </div>

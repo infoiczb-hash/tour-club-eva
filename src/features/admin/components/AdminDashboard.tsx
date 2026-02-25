@@ -326,19 +326,35 @@ const [modalState, setModalState] = useState({
                 setModalState(p => ({...p, content: true})); 
             }} />
         )}
-        {activeTab === 'fun' && (
-            <div className="space-y-6">
-               <div className="flex justify-between items-center mb-6">
-                 <div>
-                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
-                   <p className="text-sm text-slate-500">Управляй карточками тестов на сайте</p>
-                 </div>
-               </div>
-               <FunTestTable 
-                 initialTests={funTests} 
-                 onEdit={(test) => { setEditingItem(test); setModalState(p => ({...p, fun: true})); }} 
-               />
-            </div>
+       {activeTab === 'fun' && (
+  <div className="space-y-6">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
+        <p className="text-sm text-slate-500 mt-1">Управляй карточками тестов на сайте</p>
+      </div>
+      
+      {/* Кнопка добавления нового теста */}
+      <button
+        onClick={() => {
+          setEditingItem(null); // Важно: очищаем форму для создания НОВОГО теста
+          setModalState(p => ({...p, fun: true})); // Открываем модалку Фан-сектора
+        }}
+        className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+      >
+        <Plus size={18} />
+        Добавить тест
+      </button>
+    </div>
+
+    <FunTestTable 
+      initialTests={funTests} 
+      onEdit={(test) => { 
+        setEditingItem(test); 
+        setModalState(p => ({...p, fun: true})); 
+      }} 
+    />
+  </div>
         )}
 
       </main>

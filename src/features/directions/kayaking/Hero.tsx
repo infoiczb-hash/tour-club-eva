@@ -107,7 +107,7 @@ export default function Hero({ activeTab, setActiveTab }: HeroProps) {
         transition={{ delay: 1, duration: 1 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 pointer-events-none"
       >
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Вниз</span>
+        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.2em]">Вниз</span>
         <div className="w-6 h-10 border-2 border-slate-500 rounded-full flex justify-center p-1">
             <motion.div 
               animate={{ y: [0, 12, 0] }} 

@@ -352,7 +352,7 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
                     <span className={clsx("block font-black text-2xl leading-none", isBest ? "text-teal-400" : "text-white")}>
                         {direction.match}%
                     </span>
-                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
+                    <span className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
                 </div>
             </div>
 

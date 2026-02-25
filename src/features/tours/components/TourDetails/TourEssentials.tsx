@@ -95,7 +95,7 @@ export default function TourEssentials({
                         <FileText size={16} />
                       </div>
                       <div className="flex flex-col overflow-hidden">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Файл</span>
+                        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Файл</span>
                         <span className="text-xs font-bold text-slate-200 truncate group-hover:text-white transition-colors">
                           {doc.title || `Документ ${i + 1}`}
                         </span>

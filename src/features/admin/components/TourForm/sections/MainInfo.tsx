@@ -128,7 +128,7 @@ export const MainInfo = () => {
                 {/* Кнопка добавления */}
                 <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-400 hover:text-teal-600">
                   <Plus size={24} />
-                  <span className="text-[9px] font-bold uppercase mt-1">Добавить</span>
+                  <span className="text-[12px] font-bold uppercase mt-1">Добавить</span>
                   <input 
                     type="file" 
                     multiple 
