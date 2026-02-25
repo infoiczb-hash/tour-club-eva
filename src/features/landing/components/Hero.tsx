@@ -48,7 +48,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
                 fill
                 className="object-cover object-center"
                 priority
-                quality={85}
+                quality={80}
                 sizes="100vw"
              />
              

@@ -196,3 +196,19 @@ enum InquiryStatus {
   WORK      // In Work
   DONE      // Finish / Spam
 }
+
+// schema.prisma
+
+model FunTest {
+  id          String   @id @default(cuid())
+  slug        String   @unique // Уникальный ключ-связка с кодом (например, "fear-debrief")
+  title       String   // Название карточки
+  description String   // Описание карточки
+  image       String?  // Ссылка на картинку-обложку
+  category    String   // Категория (например, "Психология", "Игры")
+  isActive    Boolean  @default(false) // Показывать ли на сайте
+  passCount   Int      @default(0)     // Сколько раз прошли
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

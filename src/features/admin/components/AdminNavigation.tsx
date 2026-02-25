@@ -4,14 +4,13 @@ import React from 'react';
 import { 
   LayoutTemplate, Compass, Users, 
   MessageCircle, FileText, Layout, 
-  LogOut, Plus, Settings, MessageSquare 
+  LogOut, Plus, Settings, MessageSquare, Sparkles 
 } from 'lucide-react';
 import { SidebarNavItem } from './ui/SidebarNavItem';
 import { MobileNavItem } from './ui/MobileNavItem';
 
 // Типы табов (должны совпадать с AdminDashboard)
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries';
-
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun';
 interface AdminNavigationProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
@@ -96,6 +95,12 @@ export default function AdminNavigation({
               icon={<Layout size={20}/>} 
               label="Сайт" 
             />
+            <SidebarNavItem 
+  active={activeTab === 'fun'} 
+  onClick={() => setActiveTab('fun')} 
+  icon={<Sparkles size={20}/>} 
+  label="Фан-сектор" 
+/>
          </nav>
 
          {/* Футер сайдбара */}
