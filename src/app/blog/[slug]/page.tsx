@@ -5,11 +5,14 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ArrowLeft, Calendar, Clock, User, ArrowRight } from "lucide-react";
 import ArticleShare from "@/components/blog/ArticleShare";
+import { Metadata } from "next";
 
+// --- ТИПЫ ---
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+// --- БАЗА ДАННЫХ ---
 async function getPost(slug: string) {
   if (!slug) return null;
   const decodedSlug = decodeURIComponent(slug);
@@ -32,16 +35,43 @@ async function getPost(slug: string) {
   return { post, relatedPosts };
 }
 
-export async function generateMetadata({ params }: PageProps) {
+// --- SEO И OPEN GRAPH (КРАСИВЫЙ ШЕРИНГ) ---
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPost(slug);
-  if (!data) return { title: "Статья не найдена" };
+  
+  if (!data) return { title: "Статья не найдена | Турклуб Эва" };
+  
+  const post = data.post;
+  // Если у статьи нет картинки, подставим дефолтную обложку сайта
+  const imageUrl = post.image || '/og-default.jpg'; 
+
   return {
-    title: `${data.post.title} | Турклуб Эва`,
-    description: data.post.excerpt,
+    title: `${post.title} | Турклуб Эва`,
+    description: post.excerpt,
+    openGraph: {
+      title: `${post.title} | Турклуб Эва`,
+      description: post.excerpt || '',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt || '',
+      images: [imageUrl],
+    },
   };
 }
 
+// --- ВИЗУАЛЬНЫЙ КОМПОНЕНТ СТРАНИЦЫ ---
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
   const data = await getPost(slug);
@@ -56,16 +86,15 @@ export default async function BlogPostPage({ params }: PageProps) {
     <article className="min-h-screen bg-[#0B1120] pb-10 md:pb-20">
       
       {/* --- 1. HERO HEADER --- */}
-      {/* Уменьшили высоту на мобильном до 45vh, чтобы контент был виден сразу */}
       <div className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden">
         <Image 
-    src={post.image || '/placeholder.jpg'} 
-    alt={post.title} 
-    fill 
-    className="object-cover"
-    priority
-    sizes="100vw" 
-/>
+            src={post.image || '/placeholder.jpg'} 
+            alt={post.title} 
+            fill 
+            className="object-cover"
+            priority
+            sizes="100vw" 
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/40 to-transparent" />
 
         <div className="absolute inset-0 container mx-auto px-4 flex flex-col justify-end pb-6 md:pb-16 max-w-7xl">
@@ -120,18 +149,11 @@ export default async function BlogPostPage({ params }: PageProps) {
       </div>
 
       {/* --- 2. CONTENT GRID --- */}
-      {/* mt-4 (вместо mt-8) подтягивает текст к обложке */}
       <div className="container mx-auto px-4 max-w-7xl mt-4 md:mt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
             
             {/* MAIN TEXT */}
             <div className="lg:col-span-8">
-                {/* ИЗМЕНЕНИЯ СТИЛЕЙ:
-                   prose-sm (14px) -> для мобильных (было prose-base)
-                   md:prose-lg (18px) -> для ПК
-                   prose-p:my-3 -> еще более компактные отступы между абзацами
-                   leading-normal -> плотность текста
-                */}
                 <div 
                     className="prose prose-sm md:prose-lg prose-invert max-w-none 
                     
@@ -213,23 +235,4 @@ export default async function BlogPostPage({ params }: PageProps) {
       </div>
     </article>
   );
-  const post = await getPostBySlug(params.slug); // Твоя функция запроса из БД
-
-  return {
-    title: post.title,
-    description: post.excerpt,
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      images: [
-        {
-          url: post.image, // Ссылка на картинку из базы!
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-      type: 'article',
-    },
-  }
 }

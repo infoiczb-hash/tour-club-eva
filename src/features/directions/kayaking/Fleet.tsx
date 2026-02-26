@@ -28,7 +28,7 @@ const fleet = [
 
 export default function Fleet() {
   return (
-    <section className="pt-20 md:pt-32 pb-10 bg-[#020617] relative overflow-hidden text-slate-200 border-t border-white/5">
+    <section className="pt-12 md:pt-20 pb-10 bg-[#020617] relative overflow-hidden text-slate-200 border-t border-white/5">
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -47,7 +47,7 @@ export default function Fleet() {
             </p>
         </div>
 
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-8 pt-16 md:pt-24 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-8 pt-12 md:pt-18 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {fleet.map((boat, i) => (
                 <motion.div 
                     key={i} 
@@ -68,7 +68,7 @@ export default function Fleet() {
                         />
                     </div>
 
-                    <div className="relative bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-6 pt-16 md:pt-20 pb-8 flex flex-col items-center text-center overflow-hidden transition-all duration-500 group-hover:border-teal-500/30 group-hover:bg-slate-900/60 shadow-xl group-hover:shadow-2xl h-full">
+                    <div className="relative bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-6 pt-12 md:pt-18 pb-8 flex flex-col items-center text-center overflow-hidden transition-all duration-500 group-hover:border-teal-500/30 group-hover:bg-slate-900/60 shadow-xl group-hover:shadow-2xl h-full">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-teal-500/0 blur-[80px] rounded-full transition-all duration-500 group-hover:bg-teal-500/20 pointer-events-none" />
                         <span className="inline-block mb-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[14px] font-black uppercase text-teal-500 tracking-widest relative z-10">
                             {boat.tag}

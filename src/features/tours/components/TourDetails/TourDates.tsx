@@ -21,157 +21,143 @@ export default function TourDates({ tour, onBook }: TourDatesProps) {
   return (
     <section className="scroll-mt-24 mb-12 md:mb-16" id="dates">
       {/* ================= ЗАГОЛОВОК ================= */}
-      <div className="flex items-center gap-4 mb-6 md:mb-8">
-        <div className="w-10 h-10 md:w-12 md:h-12 bg-teal-500/10 rounded-xl md:rounded-2xl flex items-center justify-center text-teal-500 border border-teal-500/20 shrink-0">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20 shrink-0">
            <Calendar size={20} strokeWidth={2} />
         </div>
-        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+        <h2 className="text-2xl font-black text-white uppercase tracking-tight">
            Расписание
         </h2>
       </div>
 
       {/* ================= СПИСОК ДАТ ================= */}
-      <div className="flex flex-col gap-3 md:gap-4">
+      <div className="flex flex-col gap-3">
         {datesToRender.map((item: any, idx: number) => {
-           // --- ПОЛНЫЕ ДАТЫ (Без изменений) ---
+           
+           // --- ЛОГИКА ДАТ: ВСЕГДА ПЕРИОД "ОТ и ДО" ---
            const startDateObj = new Date(item.start || item.date); 
            const startStr = startDateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
            
-           let endStr = '';
-           if (item.end || item.endDate) {
-             const endDateObj = new Date(item.end || item.endDate);
-             endStr = ` — ${endDateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`;
-           }
+           // Если дата конца не указана, дублируем стартовую, чтобы сохранить формат "Периода"
+           const endDateObj = new Date(item.end || item.endDate || item.start || item.date);
+           const endStr = endDateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
            
-           const dateString = `${startStr}${endStr}`;
-           const fullDateStringForBooking = `${startStr}${item.time ? ` в ${item.time}` : ''}`;
+           // Итоговая строка: "20 февраля — 22 февраля"
+           const dateString = startStr === endStr ? startStr : `${startStr} — ${endStr}`;
+           const fullDateStringForBooking = `${dateString}${item.time ? ` в ${item.time}` : ''}`;
 
            // --- МЕСТА И СТАТУС ---
            const spots = item.spots ?? (datesToRender.length === 1 ? tour.spotsLeft : undefined);
            const isSoldOut = spots !== undefined && spots !== null && spots <= 0;
+           const guideData = typeof tour.guide === 'object' && tour.guide !== null ? tour.guide : null;
+const guideName = guideData?.name || 'Гид клуба';
+const guideImage = guideData?.image || null;
 
            return (
-             <div 
-                key={idx} 
-                onClick={() => !isSoldOut && onBook && onBook(fullDateStringForBooking)}
-                className={`group relative flex flex-col md:flex-row md:items-center justify-between p-5 md:px-8 md:py-6 rounded-[2rem] border transition-all duration-500 ${
-                  isSoldOut 
-                   ? 'bg-slate-900/20 border-white/5 opacity-60 cursor-not-allowed'
-                   : 'bg-slate-900/50 backdrop-blur-md border-white/5 hover:border-teal-500/30 hover:bg-slate-800/60 cursor-pointer shadow-xl'
-                }`}
-             >
-                {/* 1. ЛЕВАЯ ЧАСТЬ: ДАТА И ВРЕМЯ */}
-                <div className="flex flex-col mb-5 md:mb-0 md:w-1/3">
-                   <div className="flex items-center justify-between md:justify-start gap-4">
-                       <span className={`text-xl md:text-2xl font-black uppercase tracking-tight transition-colors ${
+            <div 
+   key={idx} 
+   onClick={() => !isSoldOut && onBook && onBook(fullDateStringForBooking)}
+   className={`group relative flex flex-col md:flex-row md:items-center justify-between p-4 md:px-6 md:py-4 rounded-2xl border transition-all duration-300 
+   print:bg-transparent print:border-slate-300 print:shadow-none print:break-inside-avoid print:p-2 print:mb-4 print:text-black ${
+     isSoldOut 
+      ? 'bg-slate-900/30 border-white/5 opacity-60 cursor-not-allowed print:opacity-100 print:text-slate-500'
+      : 'bg-slate-900/60 backdrop-blur-md border-white/10 hover:border-teal-500/40 hover:bg-slate-800/80 cursor-pointer shadow-lg'
+   }`}
+>
+              {/* 1. ВЕРХНЯЯ СТРОКА (Мобилка) / ЛЕВАЯ ЧАСТЬ (Десктоп) -> ДАТЫ */}
+                <div className="flex justify-between items-center md:w-1/3 mb-3 md:mb-0">
+                   <div className="flex flex-col">
+                       <span className={`text-lg md:text-xl font-black uppercase tracking-tight transition-colors ${
                            isSoldOut ? 'text-slate-500' : 'text-white group-hover:text-teal-400'
                        }`}>
                          {dateString}
                        </span>
-                       
-                       {/* Мобильная стрелочка (чтобы дизайн не ломался) */}
-                       <div className="md:hidden flex-shrink-0">
-                            {!isSoldOut && (
-                                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-all duration-300">
-                                    <ChevronRight size={20} strokeWidth={2.5} />
-                                </div>
-                            )}
-                       </div>
+                       {item.time && (
+                          <span className="text-xs text-slate-400 mt-0.5 font-bold uppercase tracking-wider">
+                              Старт в {item.time}
+                          </span>
+                       )}
                    </div>
-
-                   {item.time && (
-                      <span className="text-sm text-slate-400 mt-1 font-bold">
-                          Старт в {item.time}
-                      </span>
-                   )}
-                </div>
-
-                {/* 2. ЦЕНТРАЛЬНАЯ ЧАСТЬ: ГИД (Жизнь и доверие) */}
-                <div className="flex flex-row items-center gap-3 pt-4 border-t border-white/5 md:border-none md:pt-0 md:w-1/3 md:justify-center">
-                    <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-slate-800 border border-white/10 shrink-0">
-                        {/* Если в базе пока нет полей guide_image, Next.js просто покажет иконку-заглушку */}
-                        {tour.guide_image ? (
-                            <Image src={tour.guide_image} alt={tour.guide_name || "Гид"} fill className="object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={18}/></div>
+                   
+                   {/* Стрелка на мобилке (на десктопе скрыта) */}
+                   <div className="md:hidden shrink-0">
+                        {!isSoldOut && (
+                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
+                                <ChevronRight size={18} strokeWidth={2.5} />
+                            </div>
                         )}
-                    </div>
-                    <div className="flex flex-col text-left">
-                        <span className="text-[10px] md:text-[11px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">Ведет группу</span>
-                        <span className={`text-sm md:text-base font-bold ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
-                            {tour.guide_name || "Гид клуба"}
-                        </span>
-                    </div>
+                   </div>
                 </div>
 
-                {/* 3. ПРАВАЯ ЧАСТЬ: СТАТУС И СТРЕЛКА (Десктоп) */}
-                <div className="hidden md:flex items-center justify-end md:w-1/3 gap-6">
+                {/* 2. НИЖНЯЯ СТРОКА (Мобилка) / ЦЕНТР И ПРАВО (Десктоп) */}
+                <div className="flex items-center justify-between md:w-2/3 md:justify-end md:gap-8">
                     
-                    {/* Пульсирующий индикатор мест */}
-                    <div className="flex items-center gap-2">
+                    {/* --- ГИД (Теперь с правильными типами) --- */}
+                    <div className="flex gap-3 items-center mr-auto md:mr-0">
+                        <div className={`relative w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center ${
+                             isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
+                        }`}>
+                           {guideImage ? (
+                             <Image 
+                               src={guideImage} 
+                               alt={guideName} 
+                               fill 
+                               className={`object-cover ${isSoldOut ? 'grayscale opacity-50' : ''}`}
+                               sizes="40px"
+                             />
+                           ) : (
+                             <User size={20} />
+                           )}
+                        </div>
+                        
+                        <div>
+                           <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5 leading-none">
+                              Ведет группу
+                           </h4>
+                           <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
+                              {guideName}
+                           </p>
+                        </div>
+                    </div>
+
+                    {/* --- СТАТУС И СТРЕЛКА (Десктоп) --- */}
+                    <div className="flex items-center gap-4">
+                        {/* Статус мест */}
                         {isSoldOut ? (
-                            <div className="flex items-center gap-2 text-rose-500/80 font-bold text-sm uppercase tracking-widest bg-rose-500/10 px-3 py-1.5 rounded-lg">
+                            <div className="flex items-center gap-1.5 text-rose-500/80 font-bold text-[11px] uppercase tracking-widest bg-rose-500/10 px-2.5 py-1.5 rounded-md">
                                 Мест нет
                             </div>
                         ) : (
-                            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest bg-slate-950/50 border border-white/5 px-2.5 py-1.5 rounded-md">
                                 {(spots !== undefined && spots !== null) ? (
                                     <>
-                                        <span className="relative flex h-2 w-2">
+                                        <span className="relative flex h-1.5 w-1.5">
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                                         </span>
                                         <span className="text-amber-500">Осталось {spots}</span>
                                     </>
                                 ) : (
                                     <>
-                                        <span className="relative flex h-2 w-2">
+                                        <span className="relative flex h-1.5 w-1.5">
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                                         </span>
                                         <span className="text-emerald-400">Места есть</span>
                                     </>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Стрелка на десктопе */}
+                        {!isSoldOut && (
+                            <div className="hidden md:flex w-10 h-10 rounded-full bg-white/5 items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-slate-900 group-hover:translate-x-1 transition-all duration-300">
+                                <ChevronRight size={20} strokeWidth={2.5} />
                             </div>
                         )}
                     </div>
 
-                    {!isSoldOut && (
-                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-slate-900 group-hover:translate-x-2 transition-all duration-300 shadow-inner">
-                            <ChevronRight size={24} strokeWidth={2.5} />
-                        </div>
-                    )}
                 </div>
-
-                {/* МОБИЛЬНЫЙ СТАТУС (Встраивается отдельной строкой внизу) */}
-                <div className="md:hidden mt-4 pt-4 border-t border-white/5">
-                     {isSoldOut ? (
-                            <div className="flex items-center justify-center gap-2 text-rose-500/80 font-bold text-xs uppercase tracking-widest bg-rose-500/10 px-3 py-2 rounded-lg">
-                                Мест нет
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-800/50 py-2 rounded-lg border border-white/5">
-                                {(spots !== undefined && spots !== null) ? (
-                                    <>
-                                        <span className="relative flex h-2 w-2">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                                        </span>
-                                        <span className="text-amber-500">Осталось {spots}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="relative flex h-2 w-2">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                        </span>
-                                        <span className="text-emerald-400">Места есть</span>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                </div>
-
              </div>
            )
         })}

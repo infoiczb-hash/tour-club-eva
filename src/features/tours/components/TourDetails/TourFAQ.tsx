@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus, HelpCircle } from 'lucide-react';
 import { clsx } from 'clsx';
-// 🔥 Импортируем тип Tour
 import { Tour } from '@/features/tours/types';
 
 interface TourFAQProps {
@@ -12,8 +11,6 @@ interface TourFAQProps {
 }
 
 export default function TourFAQ({ tour }: TourFAQProps) {
-  // 1. Безопасное извлечение данных
-  // В базе данных faq может лежать как JSON-объект, массив или null
   const faqItems = React.useMemo(() => {
     if (!tour.faq) return [];
     if (Array.isArray(tour.faq)) return tour.faq;
@@ -22,12 +19,26 @@ export default function TourFAQ({ tour }: TourFAQProps) {
   }, [tour.faq]);
 
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [isPrinting, setIsPrinting] = useState(false); // 🔥 Добавили стейт для печати
+
+  // 🔥 Слушаем команды браузера на печать
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true);
+    const handleAfterPrint = () => setIsPrinting(false);
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
 
   const toggleItem = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-  // Если вопросов нет, просто не рисуем блок
   if (faqItems.length === 0) return null;
 
   return (
@@ -46,7 +57,8 @@ export default function TourFAQ({ tour }: TourFAQProps) {
       {/* СПИСОК ВОПРОСОВ (Аккордеон) */}
       <div className="space-y-3">
         {faqItems.map((item: any, index: number) => {
-          const isOpen = openIndex === index;
+          // 🔥 Вопрос открыт, если мы кликнули ИЛИ если идет печать
+          const isOpen = isPrinting || openIndex === index;
           const question = item.question || item.q || "Вопрос без заголовка";
           const answer = item.answer || item.a || "Ответ уточняется...";
 
@@ -54,8 +66,8 @@ export default function TourFAQ({ tour }: TourFAQProps) {
             <div 
               key={index}
               className={clsx(
-                "rounded-2xl border transition-all duration-300 overflow-hidden",
-                isOpen 
+                "rounded-2xl border transition-all duration-300 overflow-hidden print:border-slate-300 print:bg-transparent print:shadow-none print:break-inside-avoid print:mb-4",
+                isOpen && !isPrinting
                   ? "bg-slate-900 border-teal-500/30 shadow-lg" 
                   : "bg-slate-900/40 border-white/5 hover:border-white/10"
               )}
@@ -65,15 +77,16 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                 className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
               >
                 <span className={clsx(
-                  "text-base md:text-lg font-bold pr-8 transition-colors",
-                  isOpen ? "text-teal-400" : "text-white group-hover:text-teal-200"
+                  "text-base md:text-lg font-bold pr-8 transition-colors print:text-black",
+                  isOpen && !isPrinting ? "text-teal-400" : "text-white group-hover:text-teal-200"
                 )}>
                   {question}
                 </span>
                 
+                {/* 🔥 При печати прячем плюсик/минусик, он на бумаге не нужен */}
                 <div className={clsx(
-                  "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
-                  isOpen ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
+                  "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 print:hidden",
+                  isOpen && !isPrinting ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
                 )}>
                   {isOpen ? <Minus size={18} /> : <Plus size={18} />}
                 </div>
@@ -85,10 +98,13 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    // 🔥 Отключаем анимацию при печати, чтобы текст появился мгновенно
+                    transition={{ duration: isPrinting ? 0 : 0.3, ease: "easeInOut" }}
+                    className="print:block print:h-auto print:opacity-100"
                   >
                     <div className="px-5 md:px-6 pb-6 pt-0">
-                      <div className="pt-4 border-t border-white/5 prose prose-invert prose-sm max-w-none text-slate-300 font-light leading-relaxed whitespace-pre-line">
+                      {/* 🔥 Высветляем разделитель и делаем текст черным на бумаге */}
+                      <div className="pt-4 border-t border-white/5 print:border-slate-200 prose prose-invert prose-sm max-w-none text-slate-300 print:text-black font-light leading-relaxed whitespace-pre-line">
                         {answer}
                       </div>
                     </div>
