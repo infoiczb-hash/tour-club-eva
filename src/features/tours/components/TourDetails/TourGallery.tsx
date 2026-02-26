@@ -133,7 +133,8 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                  fill 
                  className="object-contain"
                  priority
-                 quality={100}
+                 sizes="100vw"
+                 quality={90}
                />
             </motion.div>
 

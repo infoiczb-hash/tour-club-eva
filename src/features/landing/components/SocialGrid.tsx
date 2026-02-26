@@ -229,7 +229,7 @@ export default function SocialGrid() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
-               <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Live Feed</span>
+               <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Live Feed</span>
             </div>
             {/* Title */}
             <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">

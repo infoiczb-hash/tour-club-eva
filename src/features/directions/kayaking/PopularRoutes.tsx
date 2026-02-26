@@ -249,7 +249,7 @@ function PassportItem({ icon: Icon, label, value }: { icon: any, label: string, 
         <Icon size={14} strokeWidth={2.5} />
       </div>
       <div>
-        <span className="block text-[9px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">{label}</span>
+        <span className="block text-[12px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">{label}</span>
         <span className="text-xs text-white font-bold leading-snug block">{value}</span>
       </div>
     </div>

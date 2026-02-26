@@ -67,16 +67,16 @@ export default function TourHero({ tour }: TourHeroProps) {
           fill
           className="object-cover object-center"
           priority
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950/60 to-transparent" />
       </div>
 
       {/* 2. КОНТЕНТ */}
-      <div className="container mx-auto px-4 relative z-10 pb-12 md:pb-16 pt-32 flex flex-col justify-end h-full">
+      <div className="container mx-auto px-4 relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">
         
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl">
-
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl mt-10">
             {/* --- БЕЙДЖИ (ИСПРАВЛЕНО) --- */}
             <div className="flex flex-wrap gap-2 md:gap-3">
               
@@ -118,7 +118,7 @@ export default function TourHero({ tour }: TourHeroProps) {
                             <MapPin size={16} />
                         </div>
                         <div>
-                            <p className="text-[9px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Локация</p>
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Локация</p>
                             <p className="font-bold text-sm md:text-base leading-none">{tour.location}</p>
                         </div>
                     </div>
@@ -129,7 +129,7 @@ export default function TourHero({ tour }: TourHeroProps) {
                             <Calendar size={16} />
                         </div>
                         <div>
-                            <p className="text-[9px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Даты</p>
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Даты</p>
                             <p className="font-bold text-sm md:text-base leading-none capitalize">{renderDateRange()}</p>
                         </div>
                     </div>
@@ -140,7 +140,7 @@ export default function TourHero({ tour }: TourHeroProps) {
                             <Clock size={16} />
                         </div>
                         <div>
-                            <p className="text-[9px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Длительность</p>
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Длительность</p>
                             <p className="font-bold text-sm md:text-base leading-none">{getDuration()}</p>
                         </div>
                     </div>

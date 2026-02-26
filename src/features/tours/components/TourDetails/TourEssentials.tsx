@@ -95,8 +95,8 @@ export default function TourEssentials({
                         <FileText size={16} />
                       </div>
                       <div className="flex flex-col overflow-hidden">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Файл</span>
-                        <span className="text-xs font-bold text-slate-200 truncate group-hover:text-white transition-colors">
+                        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Файл</span>
+                        <span className="text-m font-bold text-slate-200 truncate group-hover:text-white transition-colors">
                           {doc.title || `Документ ${i + 1}`}
                         </span>
                       </div>
@@ -109,10 +109,7 @@ export default function TourEssentials({
               <p className="text-slate-400 text-sm italic">Специальные документы не требуются</p>
             )}
             
-            <div className="mt-4 p-3 rounded-lg bg-teal-500/5 border border-teal-500/10 text-xs text-slate-400 leading-snug">
-              При заезде необходимо иметь при себе оригинал паспорта и полис ОМС.
-            </div>
-          </div>
+             </div>
         </div>
 
       </div>

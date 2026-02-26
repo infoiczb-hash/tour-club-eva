@@ -304,7 +304,7 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                   
                   {/* GUIDE SELECTION */}
                   <div className="mb-4 relative">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select from Team</label>
+                      <label className="text-[12px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select from Team</label>
                       <div className="relative">
                           <select 
                             className="w-full p-2 pl-3 pr-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white appearance-none cursor-pointer focus:ring-2 focus:ring-violet-500/20 outline-none"
@@ -334,18 +334,18 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                           </div>
                           <input type="file" onChange={(e) => handleFile(e, 'author_image')} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
                       </div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Author Photo</p>
+                      <p className="text-[12px] text-slate-400 font-bold uppercase">Author Photo</p>
                   </div>
 
                   <div className="space-y-3">
                       <div>
-                          <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Name</label>
+                          <label className="text-[12px] font-bold text-slate-400 uppercase ml-1">Name</label>
                           <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white" 
                              value={formData.author_name} onChange={e => setFormData({...formData, author_name: e.target.value})} placeholder="Roman Sandu"
                           />
                       </div>
                       <div>
-                          <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Role</label>
+                          <label className="text-[12px] font-bold text-slate-400 uppercase ml-1">Role</label>
                           <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white" 
                              value={formData.author_role} onChange={e => setFormData({...formData, author_role: e.target.value})} placeholder="Guide Club"
                           />
@@ -414,7 +414,7 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                         <button type="button" className="w-full p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2 transition pointer-events-none">
                             <Upload size={16}/> Upload
                         </button>
-                        <p className="text-[9px] text-center text-amber-500 font-bold">⚠️ 16:9 Ratio</p>
+                        <p className="text-[12px] text-center text-amber-500 font-bold">⚠️ 16:9 Ratio</p>
                     </div>
                 </div>
             </div>

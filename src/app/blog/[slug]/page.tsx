@@ -59,12 +59,13 @@ export default async function BlogPostPage({ params }: PageProps) {
       {/* Уменьшили высоту на мобильном до 45vh, чтобы контент был виден сразу */}
       <div className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden">
         <Image 
-            src={post.image || '/placeholder.jpg'} 
-            alt={post.title} 
-            fill 
-            className="object-cover"
-            priority
-        />
+    src={post.image || '/placeholder.jpg'} 
+    alt={post.title} 
+    fill 
+    className="object-cover"
+    priority
+    sizes="100vw" 
+/>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/40 to-transparent" />
 
         <div className="absolute inset-0 container mx-auto px-4 flex flex-col justify-end pb-6 md:pb-16 max-w-7xl">
@@ -77,7 +78,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             </Link>
 
             {/* Категория */}
-            <span className="inline-block px-2.5 py-1 bg-teal-500 text-slate-900 text-[9px] md:text-[14px] font-black uppercase tracking-widest rounded md:rounded-lg mb-2 md:mb-5 w-fit shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+            <span className="inline-block px-2.5 py-1 bg-teal-500 text-slate-900 text-[12px] md:text-[14px] font-black uppercase tracking-widest rounded md:rounded-lg mb-2 md:mb-5 w-fit shadow-[0_0_15px_rgba(20,184,166,0.3)]">
                 {post.category}
             </span>
 
@@ -98,7 +99,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     </div>
                     <div>
                         <div className="text-white font-bold uppercase tracking-wider text-[14px] md:text-xs">{post.author_name}</div>
-                        <div className="text-slate-400 text-[9px] md:text-[14px]">{post.author_role || "Гид клуба"}</div>
+                        <div className="text-slate-400 text-[12px] md:text-[14px]">{post.author_role || "Гид клуба"}</div>
                     </div>
                 </div>
 
@@ -177,7 +178,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                                         <Image src={relPost.image || '/placeholder.jpg'} alt={relPost.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                                     </div>
                                     <div className="py-1">
-                                        <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider mb-1 block opacity-80">{relPost.category}</span>
+                                        <span className="text-[12px] text-teal-400 font-bold uppercase tracking-wider mb-1 block opacity-80">{relPost.category}</span>
                                         <h4 className="text-xs md:text-sm font-bold text-white leading-snug group-hover:text-teal-400 transition-colors line-clamp-3">
                                             {relPost.title}
                                         </h4>
@@ -212,4 +213,23 @@ export default async function BlogPostPage({ params }: PageProps) {
       </div>
     </article>
   );
+  const post = await getPostBySlug(params.slug); // Твоя функция запроса из БД
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      images: [
+        {
+          url: post.image, // Ссылка на картинку из базы!
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: 'article',
+    },
+  }
 }

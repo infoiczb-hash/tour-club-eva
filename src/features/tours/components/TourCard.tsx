@@ -59,11 +59,10 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
   const hasMoreDates = id ? String(id).length % 2 === 0 : false;
 
   // Определяем стили бейджей
-  const labelData = label ? LABEL_CONFIG[label.toLowerCase()] : null;
   const typeStyle = type && TYPE_CONFIG[type.toLowerCase()] ? TYPE_CONFIG[type.toLowerCase()] : TYPE_CONFIG.default;
   
   // Акцентная обводка для горящих туров
-  const isHighlighted = isHot || label === 'hit';
+  const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
 
   return (
     <Link href={`/tour/${slug}`} className="group block h-full outline-none">
@@ -108,15 +107,14 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
              </div>
 
              {/* Маркетинговый бейдж "ХИТ/NEW" (Вверху справа) */}
-             {labelData && (
-                 <div className={cn(
-                     "absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-lg animate-pulse",
-                     labelData.bg,
-                     labelData.text
-                 )}>
-                     <labelData.icon size={14} strokeWidth={2.5} />
+            {label && (
+                 <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-lg bg-rose-500 text-white animate-pulse">
+                     {/* Если в тексте нет эмодзи, можешь оставить иконку Flame. Но если ты пишешь 🔥 в базе, иконку лучше вообще убрать, чтобы не дублировать. Я добавил проверку: */}
+                     {!label.includes('🔥') && !label.includes('✨') && (
+                         <Flame size={14} strokeWidth={2.5} />
+                     )}
                      <span className="text-xs font-black uppercase tracking-wider">
-                         {labelData.label}
+                         {label}
                      </span>
                  </div>
              )}
@@ -171,8 +169,8 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
             {tags && tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                     {tags.slice(0, 3).map((tag, i) => (
-                        <span key={i} className="flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                            <Hash size={10} strokeWidth={3} /> {tag}
+                        <span key={i} className="flex items-center gap-1 text-[12px] sm:text-[12px] font-black uppercase tracking-widest text-slate-600 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                            <Hash size={12} strokeWidth={4} /> {tag}
                         </span>
                     ))}
                 </div>
@@ -205,19 +203,28 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
                 
                 {/* Блок цены */}
                 <div className="flex flex-col">
-                     <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    {/* 1. Сделали текст светлее (slate-400 вместо slate-800) и чуть уменьшили отступ */}
+                     <span className="text-[14px] sm:text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
                          Стоимость
                      </span>
-                     <div className="flex items-baseline gap-1.5">
+                     
+                     <div className="flex items-baseline gap-2">
+                         {/* Старая цена: чуть смягчили цвет (rose-400/80) */}
                          {(priceOld ?? 0) > Number(price) && (
-                             <span className="text-xs sm:text-sm font-bold text-rose-400 line-through decoration-rose-400/50">
+                             <span className="text-sm font-bold text-rose-400/80 line-through decoration-rose-400/50">
                                  {priceOld}
                              </span>
                          )}
-                         <span className="text-2xl sm:text-3xl font-black text-white leading-none tracking-tight">
+                         
+                         {/* 2. Главная цена: увеличили размер (4xl) и добавили тень (drop-shadow-md) */}
+                         <span className="text-3xl sm:text-4xl font-black text-white leading-none tracking-tighter drop-shadow-md">
                             {Number(price).toLocaleString()}
                          </span>
-                         <span className="text-xs font-bold text-teal-500 uppercase">{currency || 'MDL'}</span>
+                         
+                         {/* 3. Валюта: сделали светлее (teal-400) и чуть крупнее (text-sm) */}
+                         <span className="text-sm font-bold text-teal-400 uppercase tracking-wider">
+                             {currency || 'RUB'}
+                         </span>
                      </div>
                 </div>
                 

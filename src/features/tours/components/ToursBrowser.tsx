@@ -41,8 +41,8 @@ interface ToursBrowserProps {
 export default function ToursBrowser({ 
     tours = [], 
     title = "Афиша Приключений", 
-    subtitle = "Ближайшие туры",
-    limit 
+    subtitle = "ТУРЫ КЛУБА",
+    limit = 16
 }: ToursBrowserProps) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
@@ -293,39 +293,41 @@ export default function ToursBrowser({
                 
                 {/* HOT SECTION */}
                 {displayHot.length > 0 && (
-                    <section>
-                        <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
-                            <Flame size={18} className="text-amber-500 animate-pulse" />
-                            <h3 className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
-                                Ближайшие туры на 2 недели
-                            </h3>
-                        </div>
+                    <section aria-labelledby="hot-tours-heading"> {/* 👈 Добавили связь с заголовком */}
+                    <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
+                        <Flame size={18} className="text-amber-500 animate-pulse" />
+                        {/* 👇 Добавили id сюда */}
+                        <h3 id="hot-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
+                            Ближайшие туры на 2 недели
+                        </h3>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {displayHot.map((tour) => (
-                                <TourCard key={tour.id} tour={tour} isHot />
-                            ))}
-                        </div>
-                    </section>
-                )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {displayHot.map((tour) => (
+                            <TourCard key={tour.id} tour={tour} isHot />
+                        ))}
+                    </div>
+                </section>
+            )}
 
-                {/* COMING SOON SECTION */}
-                {displaySoon.length > 0 && (
-                    <section>
-                        <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
-                            <Sparkles size={18} className="text-slate-400" />
-                            <h3 className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-400">
-                                Планируй заранее (Анонсы)
-                            </h3>
-                        </div>
+            {/* COMING SOON SECTION */}
+            {displaySoon.length > 0 && (
+                <section aria-labelledby="soon-tours-heading"> {/* 👈 Добавили связь со вторым заголовком */}
+                    <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
+                        <Sparkles size={18} className="text-slate-400" />
+                        {/* 👇 И id сюда */}
+                        <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-400">
+                            Планируй заранее (Анонсы)
+                        </h3>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-90 hover:opacity-100 transition-opacity">
-                            {displaySoon.map((tour) => (
-                                <TourCard key={tour.id} tour={tour} />
-                            ))}
-                        </div>
-                    </section>
-                )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-90 hover:opacity-100 transition-opacity">
+                        {displaySoon.map((tour) => (
+                            <TourCard key={tour.id} tour={tour} />
+                        ))}
+                    </div>
+                </section>
+             )}
 
                 {/* ====================================================
                     UX 2026: ИДЕАЛЬНОЕ ПУСТОЕ СОСТОЯНИЕ (ЛИДОГЕНЕРАЦИЯ)

@@ -61,7 +61,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 
   return (
     // Уменьшили отступы секции: py-12 md:py-24 (было больше)
-    <section className="py-12 md:py-24 bg-slate-950 text-white relative overflow-hidden" id="team">
+    <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden" id="team">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 pointer-events-none">
@@ -77,7 +77,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
                         <ShieldCheck size={14} className="text-teal-400" />
-                        <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
+                        <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
                     </div>
                     
                     {/* Title: Чистый белый цвет */}
@@ -88,7 +88,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
         </h2>
                     
                     {/* Subtitle */}
-                    <p className="text-slate-400 text-sm md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
+                    <p className="text-slate-400 text-s md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
                         Профессионалы, с которыми безопасно и интересно в любой точке мира.
                         Знают каждый камень на маршруте.
                     </p>
@@ -204,7 +204,7 @@ function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onC
             {/* INFO */}
             <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
                 <div className="transform translate-y-2 md:translate-y-8 group-hover:translate-y-0 transition-transform duration-500">
-                    <span className="inline-block px-2 py-0.5 rounded bg-teal-500 text-slate-900 text-[9px] font-black uppercase tracking-widest mb-3">
+                    <span className="inline-block px-2 py-0.5 rounded bg-teal-500 text-slate-900 text-[12px] font-black uppercase tracking-widest mb-3">
                         {guide.role}
                     </span>
                     <h3 className="text-2xl md:text-3xl font-black text-white leading-none uppercase tracking-tight mb-2">
@@ -253,7 +253,14 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                 {/* Заменили md:h-full на md:h-auto, чтобы фото тянулось за текстом */}
                 <div className="w-full md:w-5/12 h-[40vh] md:h-auto relative">
                     {guide.image ? (
-                        <Image src={guide.actionImage || guide.image} alt={guide.name} fill className="object-cover" />
+                       <Image 
+  src={guide.actionImage || guide.image} 
+  alt={guide.name} 
+  fill 
+  className="object-cover"
+   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+   quality={80}
+/>
                     ) : (
                         <div className="w-full h-full bg-slate-900 flex items-center justify-center"><User size={64}/></div>
                     )}

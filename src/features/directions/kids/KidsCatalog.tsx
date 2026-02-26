@@ -148,10 +148,10 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                 
                 {/* ГОРЯЩИЕ ТУРЫ */}
                 {hotTours.length > 0 && (
-                    <section>
+                    <section aria-labelledby="hot-tours-main-heading"> {/* 👈 Связали секцию с ID */}
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                             <Flame size={18} className="text-amber-500 animate-pulse" />
-                            <h3 className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
+                            <h3 id="hot-tours-main-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500"> {/* 👈 Добавили ID */}
                                 Ближайшие группы (Мест мало)
                             </h3>
                         </div>
@@ -166,10 +166,10 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
 
                 {/* АНОНСЫ */}
                 {comingSoonTours.length > 0 && (
-                    <section>
+                    <section aria-labelledby="announcements-main-heading"> {/* 👈 Связали секцию с ID */}
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                             <Sparkles size={18} className="text-emerald-500" />
-                            <h3 className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-emerald-500">
+                            <h3 id="announcements-main-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-emerald-500"> {/* 👈 Добавили ID */}
                                 Планируйте заранее
                             </h3>
                         </div>
@@ -181,7 +181,6 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                         </div>
                     </section>
                 )}
-
                 {/* ====================================================
                     ПУСТОЕ СОСТОЯНИЕ (ЛИДОГЕНЕРАЦИЯ)
                     ==================================================== */}

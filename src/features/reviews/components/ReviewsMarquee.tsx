@@ -153,7 +153,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
             <MessageCircle size={14} className="text-teal-400" />
-            <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
+            <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
         </div>
 
         {/* Title */}
@@ -164,9 +164,9 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
         </h2>
         
         {/* Subtitle */}
-        <div className="flex items-center gap-2 text-slate-400 text-xs md:text-sm font-medium max-w-xl">
+        <div className="flex items-center gap-2 text-slate-400 text-sm md:text-sm font-medium max-w-xl">
             <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
-            <span>Созданы из отзывов и оценочных форм туров</span>
+            <span>Создано из отзывов и оценочных форм туров</span>
         </div>
       </div>
 

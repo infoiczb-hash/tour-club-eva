@@ -56,7 +56,7 @@ export const SEO = () => {
                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500">Logo</div>
                  <div className="flex flex-col">
                     <span className="text-[10px] text-slate-800 font-bold">Ваш Сайт</span>
-                    <span className="text-[9px] text-slate-400">https://vash-site.com/tours/...</span>
+                    <span className="text-[10px] text-slate-400">https://vash-site.com/tours/...</span>
                  </div>
               </div>
               <h3 className="text-lg text-[#1a0dab] hover:underline cursor-pointer font-medium truncate">

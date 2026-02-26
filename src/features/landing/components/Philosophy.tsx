@@ -101,7 +101,7 @@ export default function Philosophy() {
 
   return (
     // ИСПРАВЛЕНО: Заменили bg-[#0b1016] на системный bg-slate-950
-    <section ref={containerRef} className="relative bg-slate-950 py-16 md:py-24 overflow-hidden border-t border-white/5">
+    <section ref={containerRef} className="relative bg-slate-950 py-12 md:py-16 overflow-hidden border-t border-white/5">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -123,7 +123,7 @@ export default function Philosophy() {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 backdrop-blur-md mb-6">
                         <Compass size={16} className="text-teal-400" />
-                        <span className="text-xs font-black uppercase tracking-[0.15em] text-teal-300">Ценности</span>
+                        <span className="text-l font-black uppercase tracking-[0.15em] text-teal-300">Ценности</span>
                     </div>
 
                     {/* Title */}
@@ -135,7 +135,7 @@ export default function Philosophy() {
 
                     {/* Text */}
                     <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed mb-8 max-w-md border-l-2 border-teal-500/50 pl-5">
-                        Мы не продаем билеты в горы. Мы создаем среду, где приключения становятся инструментом самопознания, а группа — семьей.
+                        Мы не продаем билеты в горы. Мы создаем среду, где приключения становятся способом самопознания, а группа — семьей.
                     </p>
 
                     {/* ИСПРАВЛЕНО: Десктопные контролы выстроены в один ряд (flex-row) */}
@@ -172,12 +172,25 @@ export default function Philosophy() {
 
                         {/* Desktop "All Directions" Link (Right side of the row) */}
                         <Link 
-                            href="/directions" 
-                            className="inline-flex items-center justify-center gap-2 xl:gap-3 px-5 xl:px-6 py-3.5 xl:py-4 bg-white/5 hover:bg-white text-white hover:text-slate-950 text-xs xl:text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border border-white/10 hover:border-white shadow-lg shrink-0 group"
-                        >
-                            Все направления
-                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                        </Link>
+    href="/directions" 
+    className="inline-flex items-center justify-center gap-2 xl:gap-3 px-6 py-4 
+               /* 1. Цвета: стеклянный фон, при наведении заливается фирменным бирюзовым */
+               bg-slate-900/50 backdrop-blur-md hover:bg-teal-500 
+               text-teal-400 hover:text-slate-950 
+               text-xs xl:text-sm font-black uppercase tracking-widest 
+               
+               /* 2. ТЕМАТИЧЕСКИЙ КОНТУР (форма волны/листа) */
+               rounded-tl-2xl rounded-br-2xl rounded-tr-sm rounded-bl-sm
+               
+               /* 3. Выразительная рамка и неоновое свечение */
+               border-2 border-teal-500/40 hover:border-teal-400 
+               shadow-[0_0_15px_rgba(20,184,166,0.15)] hover:shadow-[0_0_30px_rgba(20,184,166,0.4)] 
+               
+               transition-all duration-300 shrink-0 group outline-none"
+>
+    Все направления
+    <ArrowRight size={18} className="group-hover:translate-x-1.5 transition-transform" />
+</Link>
                     </div>
                 </motion.div>
             </div>
@@ -187,12 +200,13 @@ export default function Philosophy() {
                 
                 {/* Mobile Header (Свайп Индикатор) */}
                 <div className="lg:hidden mb-6 flex items-center justify-between pl-2">
-                    <span className="text-sm font-black uppercase tracking-widest text-slate-300">Направления</span>
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-white/5 shadow-inner">
-                        <span className="text-xs font-bold uppercase tracking-wider text-teal-400">Свайпай</span>
+                    <span className="text-s font-black uppercase tracking-widest text-slate-300">Направления</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-white/5 shadow-inner animate-pulse pointer-events-none">
+                        <span className="text-xs font-bold uppercase tracking-widest text-teal-500/80">МОТАЙ</span>
                         <MoveRight size={14} className="text-teal-400 animate-pulse" />
                     </div>
-                </div>
+                    
+                     </div>
 
                 {/* SCROLL CONTAINER */}
                 <div 
@@ -237,7 +251,7 @@ export default function Philosophy() {
                         href="/directions" 
                         className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-slate-900 border border-white/10 hover:border-teal-500 hover:bg-teal-500 text-slate-300 hover:text-slate-950 text-sm font-black uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-xl group active:scale-[0.98]"
                     >
-                        Все 6 направлений
+                        ВСЕ НАПРАВЛЕНИЯ
                         <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
                     </Link>
                 </div>

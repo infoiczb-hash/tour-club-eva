@@ -12,6 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import PromoBlock from "@/components/layout/PromoBlock"; 
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import AxeReporter from '@/components/AxeReporter'; 
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -35,7 +36,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning>
+    <html 
+      lang="ru" 
+      className={`scroll-smooth ${inter.variable}`} 
+      suppressHydrationWarning
+      // ✅ Добавляем только эту строку, чтобы Next.js не ругался на плавный скролл
+      data-scroll-behavior="smooth" 
+    >
       <body
         suppressHydrationWarning={true}
         className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col"
@@ -54,6 +61,7 @@ export default function RootLayout({
         </Providers>
         <Analytics />
         <SpeedInsights />
+        <AxeReporter />
       </body>
     </html>
   );

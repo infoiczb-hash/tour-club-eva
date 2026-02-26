@@ -87,7 +87,7 @@ export default function TourSidebar({ tour, onBook }: TourSidebarProps) {
                     {isSoldOut ? "0" : left}
                 </div>
                 {isLowSpots && !isSoldOut && (
-                    <span className="text-[9px] font-bold text-amber-500 uppercase animate-pulse">
+                    <span className="text-[12px] font-bold text-amber-500 uppercase animate-pulse">
                         Заканчиваются!
                     </span>
                 )}
@@ -168,10 +168,10 @@ export default function TourSidebar({ tour, onBook }: TourSidebarProps) {
           
           {!isSoldOut && (
             <div className="mt-4 flex items-center justify-center gap-4 opacity-60">
-                <p className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1">
+                <p className="text-[12px] text-slate-400 uppercase font-bold flex items-center gap-1">
                   <ShieldCheck size={10} className="text-teal-500"/> Без предоплаты
                 </p>
-                <p className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1">
+                <p className="text-[12px] text-slate-400 uppercase font-bold flex items-center gap-1">
                   <Check size={10} className="text-teal-500"/> Мгновенное подтверждение
                 </p>
             </div>

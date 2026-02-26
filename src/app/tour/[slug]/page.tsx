@@ -123,7 +123,7 @@ export default async function TourPage({ params }: Props) {
       {/* Передаем тур в интерактивный клиентский компонент.
          Типы данных Tour полностью совпадают.
       */}
-      return <TourDetailsWrapper tour={tour} />
+      <TourDetailsWrapper tour={tour} />
     </>
   );
 }

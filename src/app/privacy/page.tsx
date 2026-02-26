@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, HelpCircle } from 'lucide-react';
 import ContactHubModal from "@/components/modals/ContactHubModal";
+import LegalNav from "@/components/LegalNav" 
 
 // export const metadata: Metadata = {
 //   title: 'Политика конфиденциальности | Турклуб ЭВА',
@@ -116,7 +117,7 @@ export default function PrivacyPage() {
                 <HelpCircle size={18}/> Задать вопрос
             </button>
         </div>
-
+<LegalNav currentPage="faq" />
       </div>
 
       <ContactHubModal 

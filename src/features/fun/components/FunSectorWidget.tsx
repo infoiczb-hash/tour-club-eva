@@ -57,7 +57,7 @@ export default function FunSectorWidget() {
             <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-950/30 backdrop-blur-md mb-3 md:mb-4">
                     <Gamepad2 size={14} className="text-violet-400" />
-                    <span className="text-[12px] font-bold uppercase tracking-widest text-violet-400">Только фан</span>
+                    <span className="text-[16px] font-bold uppercase tracking-widest text-violet-400">Тесты и квизы</span>
                 </div>
                 <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                     Фан-Сектор
@@ -123,12 +123,13 @@ function QuizCard({ quiz }: { quiz: typeof QUIZZES[0] }) {
             )}
         >
             {/* ФОНОВОЕ ИЗОБРАЖЕНИЕ */}
-            <Image
-                src={quiz.image}
-                alt={quiz.title}
-                fill
-                className="object-cover opacity-40 grayscale-[50%] group-hover:grayscale-0 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700"
-            />
+          <Image
+    src={quiz.image}
+    alt="" // Рекомендую оставить пустым, если название теста (title) написано текстом рядом, чтобы Axe не ругался на дублирование
+    fill
+    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+    className="object-cover opacity-40 grayscale-[50%] group-hover:grayscale-0 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700"
+/>
             {/* ГРАДИЕНТ ДЛЯ ЧИТАЕМОСТИ ТЕКСТА */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
             <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
