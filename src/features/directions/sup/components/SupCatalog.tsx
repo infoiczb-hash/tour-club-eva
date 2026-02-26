@@ -85,7 +85,7 @@ export default function SupCatalog() {
                     {activeTab === 'lessons' && (
                         <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl" />
                     )}
-                    <span className="relative z-10">Занятия</span>
+                    <span className="relative z-10">ПРОГУЛКИ</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('tours')}
@@ -97,7 +97,7 @@ export default function SupCatalog() {
                     {activeTab === 'tours' && (
                         <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl" />
                     )}
-                    <span className="relative z-10">Прогулки</span>
+                    <span className="relative z-10">СПЛАВЫ</span>
                 </button>
             </div>
         </div>

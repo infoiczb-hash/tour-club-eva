@@ -38,6 +38,66 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [isHubOpen, setIsHubOpen] = useState(false);
 
+  // 🔥 ВЫНОСИМ КНОПКИ В ОТДЕЛЬНУЮ ПЕРЕМЕННУЮ (ЧТОБЫ НЕ ДУБЛИРОВАТЬ КОД)
+  const actionCardsContent = (
+    <div className="flex flex-col gap-4 mt-2">
+        {/* Кнопка "Подготовка к сплаву" */}
+        {onNavigateToPrep && (
+            <motion.button 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                onClick={onNavigateToPrep} 
+                className="group block w-full text-left outline-none"
+            >
+                <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
+                    <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
+                    
+                    <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">
+                        <BookOpen size={24} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
+                        Подготовка к сплаву
+                    </h3>
+                    <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
+                        Полный гайд: что надеть, что взять с собой и как вести себя на воде.
+                    </p>
+                    
+                    <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
+                        <span>Перейти в раздел</span>
+                        <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
+                    </div>
+                </div>
+            </motion.button>
+        )}
+
+        {/* Карточка "Остались вопросы?" */}
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="p-6 md:p-8 bg-slate-900/40 border border-white/5 rounded-[2rem] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-xl"
+        >
+            <div>
+                <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">
+                    Остались вопросы?
+                </h3>
+                <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-[250px]">
+                    Напишите нам. Мы на связи, чтобы помочь подобрать маршрут или развеять страхи.
+                </p>
+            </div>
+            
+            <button 
+                onClick={() => setIsHubOpen(true)}
+                className="w-full xl:w-auto shrink-0 px-6 py-3.5 bg-white text-slate-950 font-black uppercase tracking-wider text-s rounded-xl hover:bg-teal-50 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
+            >
+                <MessageCircle size={20} />
+                <span>Спросить</span>
+            </button>
+        </motion.div>
+    </div>
+  );
+
   return (
     <section className="py-16 md:py-24 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">
       
@@ -47,10 +107,10 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
         {/* ДВУХКОЛОНОЧНАЯ СЕТКА */}
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
             
             {/* ==========================================
-                ЛЕВАЯ КОЛОНКА: ЗАГОЛОВОК И КАРТОЧКИ
+                ЛЕВАЯ КОЛОНКА: ЗАГОЛОВОК
                 ========================================== */}
             <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-32">
                 
@@ -62,7 +122,7 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                         <HelpCircle size={14} className="text-teal-400" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">FAQ</span>
+                        <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">ВОПРОСЫ/ОТВЕТЫ</span>
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4">
                         Частые <br className="hidden lg:block"/>
@@ -73,61 +133,9 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
                     </p>
                 </motion.div>
 
-                <div className="flex flex-col gap-4 mt-2">
-                    {/* Кнопка "Подготовка к сплаву" */}
-                    {onNavigateToPrep && (
-                        <motion.button 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            onClick={onNavigateToPrep} 
-                            className="group block w-full text-left outline-none"
-                        >
-                            <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
-                                <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
-                                
-                                <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">
-                                    <BookOpen size={24} strokeWidth={1.5} />
-                                </div>
-                                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
-                                    Подготовка к сплаву
-                                </h3>
-                                <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
-                                    Полный гайд: что надеть, что взять с собой и как вести себя на воде.
-                                </p>
-                                
-                                <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
-                                    <span>Перейти в раздел</span>
-                                    <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
-                                </div>
-                            </div>
-                        </motion.button>
-                    )}
-
-                    {/* Карточка "Остались вопросы?" */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="p-6 md:p-8 bg-slate-900/40 border border-white/5 rounded-[2rem] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-xl"
-                    >
-                        <div>
-                            <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">
-                                Остались вопросы?
-                            </h3>
-                            <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-[250px]">
-                                Напишите нам. Мы на связи, чтобы помочь подобрать маршрут или развеять страхи.
-                            </p>
-                        </div>
-                        
-                        <button 
-                            onClick={() => setIsHubOpen(true)}
-                            className="w-full xl:w-auto shrink-0 px-6 py-3.5 bg-white text-slate-950 font-black uppercase tracking-wider text-xs rounded-xl hover:bg-teal-50 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
-                        >
-                            <MessageCircle size={16} />
-                            <span>Спросить</span>
-                        </button>
-                    </motion.div>
+                {/* 🔥 ПОКАЗЫВАЕМ КНОПКИ ЗДЕСЬ ТОЛЬКО НА КОМПЬЮТЕРЕ (hidden lg:block) */}
+                <div className="hidden lg:block">
+                    {actionCardsContent}
                 </div>
             </div>
 
@@ -188,6 +196,11 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
                     </motion.div>
                 );
               })}
+            </div>
+
+            {/* 🔥 ПОКАЗЫВАЕМ КНОПКИ ЗДЕСЬ ТОЛЬКО НА МОБИЛКЕ (lg:hidden) */}
+            <div className="lg:hidden lg:col-span-12 border-t border-white/5 pt-8 mt-4">
+                {actionCardsContent}
             </div>
 
         </div>

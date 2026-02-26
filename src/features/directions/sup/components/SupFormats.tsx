@@ -21,7 +21,7 @@ const FORMATS = [
 
 export default function SupFormats() {
   return (
-    <section className="py-12 md:py-16 bg-slate-950 relative overflow-hidden">
+    <section className="py-10 md:py-12 bg-slate-950 relative overflow-hidden">
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
         {/* МИКРО-ЗАГОЛОВОК */}

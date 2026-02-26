@@ -6,7 +6,8 @@ import Image from "next/image";
 import { 
   Navigation, Clock, X, Users, Wind, MapPin, Map, 
   ChevronLeft, ChevronRight, Ruler, Flag, Route as RouteIcon, 
-  Sparkles, Timer, Compass, CalendarDays, Flame, Moon, Tent
+  Sparkles, Timer, Compass, CalendarDays, Flame, Moon, Tent,
+  ArrowUpRight // 🔥 Добавили иконку для кнопки "Подробнее"
 } from "lucide-react";
 
 // Импортируем наши данные и тип
@@ -23,16 +24,13 @@ const otherFormats = [
 ];
 
 export default function PopularRoutes() {
-  // Используем строгий тип RouteData
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
 
-  // Сбрасываем индекс фото при открытии нового маршрута
   useEffect(() => {
     if (selectedRoute) setCurrentImgIdx(0);
   }, [selectedRoute]);
 
-  // Функции для карусели
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (selectedRoute) {
@@ -58,7 +56,7 @@ export default function PopularRoutes() {
             <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                     <Map size={14} className="text-teal-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Локации</span>
+                    <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Локации</span>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">
                     Популярные <span className="text-teal-500">Маршруты</span>
@@ -66,43 +64,59 @@ export default function PopularRoutes() {
             </div>
         </div>
 
-        {/* Сетка основных маршрутов */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {routesData.map((route) => (
-                <motion.div
-                    key={route.id}
-                    whileHover={{ y: -8 }}
-                    onClick={() => setSelectedRoute(route)}
-                    className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 transition-all duration-500 shadow-xl"
-                >
-                    {/* Обложка: первое фото из массива */}
-                    <Image 
-                        src={route.images[0]} 
-                        alt={route.title} 
-                        fill 
-                        className="object-cover transition-transform duration-1000 group-hover:scale-110 md:grayscale-[30%] group-hover:grayscale-0"
-                        sizes="(max-width: 768px) 85vw, 25vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                    
-                    <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
-                        <div className="flex gap-2 mb-4 opacity-100 md:opacity-0 md:-translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                            <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
-                                <Clock size={12} className="text-teal-400" /> {route.details.duration}
-                            </span>
-                            <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
-                                <Navigation size={12} className="text-teal-400" /> {route.details.level}
-                            </span>
+        {/* 🔥 1 и 2. Обертка с сеткой и бирюзовой подсказкой "Мотай" */}
+        <div className="relative">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {routesData.map((route) => (
+                    <motion.div
+                        key={route.id}
+                        whileHover={{ y: -8 }}
+                        onClick={() => setSelectedRoute(route)}
+                        className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 transition-all duration-500 shadow-xl"
+                    >
+                        {/* 🔥 1. Стеклянный бейдж "Подробнее" (Виден всегда на мобилке, появляется при наведении на десктопе) */}
+                        <div className="absolute top-4 right-4 z-20 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="flex items-center gap-1.5 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-xl">
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Подробнее</span>
+                                <ArrowUpRight size={14} className="text-teal-400" />
+                            </div>
                         </div>
-                        <h4 className="font-black text-2xl md:text-3xl text-white uppercase leading-[1.1] mb-2 group-hover:text-teal-400 transition-colors drop-shadow-lg">
-                            {route.title}
-                        </h4>
-                        <p className="text-xs md:text-sm text-slate-300 font-medium line-clamp-2 drop-shadow-md">
-                            {route.path}
-                        </p>
-                    </div>
-                </motion.div>
-            ))}
+
+                        {/* Обложка */}
+                        <Image 
+                            src={route.images[0]} 
+                            alt={route.title} 
+                            fill 
+                            className="object-cover transition-transform duration-1000 group-hover:scale-110 md:grayscale-[30%] group-hover:grayscale-0"
+                            sizes="(max-width: 768px) 85vw, 25vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                        
+                        <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
+                            <div className="flex gap-2 mb-4 opacity-100 md:opacity-0 md:-translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                                <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
+                                    <Clock size={12} className="text-teal-400" /> {route.details.duration}
+                                </span>
+                                <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
+                                    <Navigation size={12} className="text-teal-400" /> {route.details.level}
+                                </span>
+                            </div>
+                            <h4 className="font-black text-2xl md:text-3xl text-white uppercase leading-[1.1] mb-2 group-hover:text-teal-400 transition-colors drop-shadow-lg">
+                                {route.title}
+                            </h4>
+                            <p className="text-xs md:text-sm text-slate-300 font-medium line-clamp-2 drop-shadow-md">
+                                {route.path}
+                            </p>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* 🔥 2. Подсказка "Мотай" для главных маршрутов */}
+            <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                <ChevronRight size={14} />
+            </div>
         </div>
 
         {/* =========================================
@@ -112,43 +126,54 @@ export default function PopularRoutes() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-12 md:mt-24"
+            className="mt-12 md:mt-14 border-t border-white/10 pt-10"
         >
-            <div className="mb-8 text-center md:text-left">
+            {/* 🔥 3. Выровняли по левому краю (убрали text-center) */}
+            <div className="mb-6 md:mb-8 text-left">
                 <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
                     Другие <span className="text-amber-500">Форматы</span>
                 </h3>
-                <p className="text-slate-400 text-sm md:text-base mt-2">
+                <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">
                     Соберем маршрут под вашу компанию.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-                {otherFormats.map((format, idx) => {
-                    const Icon = format.icon;
-                    return (
-                        <div key={idx} className="bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-5 flex items-center gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group">
-                            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
-                                <Icon size={22} strokeWidth={1.5} />
+            {/* 🔥 4. Двухэтажный горизонтальный скролл с янтарной подсказкой */}
+            <div className="relative">
+                {/* CSS GRID МАГИЯ: 2 строки, авто-колонки, скролл по горизонтали */}
+                <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:auto-cols-auto md:grid-rows-none md:grid-cols-3 gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    {otherFormats.map((format, idx) => {
+                        const Icon = format.icon;
+                        return (
+                            <div key={idx} className="snap-center bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 md:p-5 flex items-center gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
+                                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
+                                    <Icon size={22} strokeWidth={1.5} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white text-sm md:text-base leading-tight mb-1 group-hover:text-amber-400 transition-colors">
+                                        {format.title}
+                                    </h4>
+                                    <p className="text-xs text-slate-400 font-medium line-clamp-1">
+                                        {format.desc}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-white text-sm md:text-base leading-tight mb-1 group-hover:text-amber-400 transition-colors">
-                                    {format.title}
-                                </h4>
-                                <p className="text-xs text-slate-400 font-medium line-clamp-1">
-                                    {format.desc}
-                                </p>
-                            </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
+
+                {/* 🔥 Янтарная подсказка "Мотай" */}
+                <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-amber-500/80 animate-pulse pointer-events-none">
+                    <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                    <ChevronRight size={14} />
+                </div>
             </div>
         </motion.div>
 
       </div>
 
       {/* =========================================
-          MODAL: ДЕТАЛИ МАРШРУТА
+          MODAL: ДЕТАЛИ МАРШРУТА (ЛОГИКА НЕ ТРОНУТА)
           ========================================= */}
       <AnimatePresence>
         {selectedRoute && (
@@ -210,7 +235,7 @@ export default function PopularRoutes() {
                       <h3 className="text-3xl md:text-4xl font-black text-white uppercase mb-4 leading-tight">{selectedRoute.title}</h3>
                       <p className="text-sm text-slate-400 mb-8 leading-relaxed font-medium">{selectedRoute.desc}</p>
                       
-                      {/* Обновленная сетка паспорта */}
+                      {/* Сетка паспорта */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 md:p-6 rounded-3xl bg-white/5 border border-white/5">
                         <PassportItem icon={Navigation} label="Сложность" value={selectedRoute.details.level} />
                         <PassportItem icon={Ruler} label="Километраж" value={selectedRoute.details.distance} />

@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { 
-  Leaf, Briefcase, ShieldCheck, Camera 
-} from 'lucide-react';
+  Leaf, Briefcase, ShieldCheck, Camera, ChevronRight 
+} from 'lucide-react'; // 🔥 Добавили ChevronRight
 
 const BENEFITS = [
   { 
@@ -30,47 +30,65 @@ const BENEFITS = [
 
 export default function SupBenefits() {
   return (
-    <section className="py-10 md:py-12 bg-slate-950 relative overflow-hidden">
+    // 🔥 1. Срезали отступы (было py-10 md:py-12, стало py-8 md:py-16)
+    <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden">
       
       {/* Легкое свечение на фоне */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">
+        
+        {/* 🔥 Бонус: Строгое выравнивание по левому краю (убрали text-center и mx-auto) */}
         <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-10 md:mb-12"
+            className="text-left mb-8 md:mb-10 max-w-3xl"
         >
             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
                 Почему стоит выбрать <span className="text-teal-500">SUP</span>
             </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl mx-auto">
+            <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
                 Продуманный до мелочей сервис, где ваша единственная задача — наслаждаться моментом.
             </p>
         </motion.div>
 
-        {/* Сетка из 4 крупных карточек */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {BENEFITS.map((b, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="group p-8 md:p-10 bg-slate-900/50 border border-white/5 rounded-[2rem] hover:border-teal-500/30 hover:bg-slate-900 transition-all duration-300 flex flex-col md:flex-row gap-6 items-start"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors duration-300">
-                  <b.icon className="text-teal-400 group-hover:text-slate-900 transition-colors" size={28} strokeWidth={1.5} />
-              </div>
-              <div>
-                  <h3 className="text-xl font-black text-white mb-3 uppercase tracking-tight group-hover:text-teal-400 transition-colors">{b.title}</h3>
-                  <p className="text-sm md:text-base text-slate-400 leading-relaxed font-medium">{b.text}</p>
-              </div>
-            </motion.div>
-          ))}
+        {/* 🔥 3. Обертка для горизонтального скролла */}
+        <div className="relative">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {BENEFITS.map((b, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  // 🔥 2. Схлопнули карточку: flex-row вместо flex-col на мобилках. Ширина 85vw для скролла.
+                  className="group shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/50 border border-white/5 rounded-[2rem] hover:border-teal-500/30 hover:bg-slate-900 transition-all duration-300 flex flex-row gap-4 md:gap-6 items-start"
+                >
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors duration-300">
+                      <b.icon className="text-teal-400 group-hover:text-slate-900 transition-colors" size={24} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                      <h3 className="text-lg md:text-xl font-black text-white mb-2 uppercase tracking-tight group-hover:text-teal-400 transition-colors leading-tight">
+                        {b.title}
+                      </h3>
+                      {/* 🔥 Текст 14px (вместо мелкого) */}
+                      <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
+                        {b.text}
+                      </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* 🔥 4. Подсказка "Мотай" */}
+            <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                <ChevronRight size={14} />
+            </div>
         </div>
+
       </div>
     </section>
   );
