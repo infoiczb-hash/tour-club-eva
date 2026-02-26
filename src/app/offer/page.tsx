@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, FileText, Scale, HelpCircle } from 'lucide-react';
 import ContactHubModal from "@/components/modals/ContactHubModal";
+import LegalNav from "@/components/LegalNav"
 
 export default function OfferPage() {
   const [isHubOpen, setIsHubOpen] = useState(false);
@@ -162,6 +163,7 @@ export default function OfferPage() {
                 <HelpCircle size={18}/> Задать вопрос
             </button>
         </div>
+        <LegalNav currentPage="faq" />
 
       </div>
 

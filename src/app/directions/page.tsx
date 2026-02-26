@@ -107,8 +107,8 @@ export default function DirectionsPage() {
               </span>
             </h1>
             
-            <p className="text-slate-400 text-sm md:text-lg max-w-2xl font-medium leading-relaxed">
-              Мы не ограничиваемся одним видом отдыха. Клуб «Эва» — это экосистема направлений, где каждый найдет свой формат: от суровых восхождений до релакса на сапбордах.
+            <p className="text-slate-400 text-s md:text-lg max-w-2xl font-medium leading-relaxed">
+              Мы не ограничиваемся одним видом приключений. ТурКлуб «Эва» — это экосистема направлений, где каждый найдет свой формат: от суровых восхождений до релакса на сапбордах.
             </p>
         </div>
 

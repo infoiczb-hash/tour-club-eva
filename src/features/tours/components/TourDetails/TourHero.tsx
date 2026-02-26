@@ -74,10 +74,9 @@ export default function TourHero({ tour }: TourHeroProps) {
       </div>
 
       {/* 2. КОНТЕНТ */}
-      <div className="container mx-auto px-4 relative z-10 pb-12 md:pb-16 pt-32 flex flex-col justify-end h-full">
+      <div className="container mx-auto px-4 relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">
         
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl">
-
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl mt-10">
             {/* --- БЕЙДЖИ (ИСПРАВЛЕНО) --- */}
             <div className="flex flex-wrap gap-2 md:gap-3">
               

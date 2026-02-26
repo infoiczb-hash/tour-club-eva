@@ -41,8 +41,8 @@ interface ToursBrowserProps {
 export default function ToursBrowser({ 
     tours = [], 
     title = "Афиша Приключений", 
-    subtitle = "Ближайшие туры",
-    limit 
+    subtitle = "ТУРЫ КЛУБА",
+    limit = 16
 }: ToursBrowserProps) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');

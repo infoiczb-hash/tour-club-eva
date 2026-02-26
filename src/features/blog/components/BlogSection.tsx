@@ -41,7 +41,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
   if (!posts || posts.length === 0) return null;
 
   return (
-    <section className="relative w-full bg-[#0B1120] py-12 md:py-24 overflow-hidden border-t border-white/5" id="blog">
+    <section className="relative w-full bg-[#0B1120] py-12 md:py-20 overflow-hidden border-t border-white/5" id="blog">
       
       {/* Background Ambience */}
       <div className="absolute inset-0 pointer-events-none">
@@ -55,7 +55,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
             <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-3 md:mb-4">
                     <BookOpen size={12} className="text-teal-400" />
-                    <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Блог клуба</span>
+                    <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Блог клуба</span>
                 </div>
                 <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
             <span className="font-light text-slate-400 block md:inline">Полевой </span>
@@ -143,8 +143,8 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[14px] font-black text-white uppercase tracking-wider mb-0.5">{featuredPost.author_name}</span>
-                                    <div className="flex items-center gap-2 text-[14px] text-slate-400 font-medium">
+                                    <span className="text-[12px] font-black text-white uppercase tracking-wider mb-0.5">{featuredPost.author_name}</span>
+                                    <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium">
                                         <span>{formatDate(featuredPost.date)}</span>
                                         <span className="w-1 h-1 bg-slate-600 rounded-full"/>
                                         <span>{featuredPost.read_time} мин</span>

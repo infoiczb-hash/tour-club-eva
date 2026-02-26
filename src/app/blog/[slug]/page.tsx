@@ -213,4 +213,23 @@ export default async function BlogPostPage({ params }: PageProps) {
       </div>
     </article>
   );
+  const post = await getPostBySlug(params.slug); // Твоя функция запроса из БД
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      images: [
+        {
+          url: post.image, // Ссылка на картинку из базы!
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: 'article',
+    },
+  }
 }

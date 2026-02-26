@@ -61,7 +61,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 
   return (
     // Уменьшили отступы секции: py-12 md:py-24 (было больше)
-    <section className="py-12 md:py-24 bg-slate-950 text-white relative overflow-hidden" id="team">
+    <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden" id="team">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 pointer-events-none">
@@ -77,7 +77,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
                         <ShieldCheck size={14} className="text-teal-400" />
-                        <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
+                        <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
                     </div>
                     
                     {/* Title: Чистый белый цвет */}
@@ -88,7 +88,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
         </h2>
                     
                     {/* Subtitle */}
-                    <p className="text-slate-400 text-sm md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
+                    <p className="text-slate-400 text-s md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
                         Профессионалы, с которыми безопасно и интересно в любой точке мира.
                         Знают каждый камень на маршруте.
                     </p>
