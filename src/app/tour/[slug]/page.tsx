@@ -12,46 +12,63 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// --- 1. SEO METADATA ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // 1. Получаем параметры (Next.js 15+ требует await)
   const { slug } = await params;
-  
-  // 2. Декодируем URL (чтобы "поход" не был "%D0%BF...")
   const decodedSlug = decodeURIComponent(slug);
-  
   const tour = await getTourBySlug(decodedSlug);
 
   if (!tour) {
     return { 
       title: 'Тур не найден | Турклуб ЭВА',
-      robots: { index: false } // Запрещаем индексировать страницу 404
+      robots: { index: false } 
     };
   }
 
-  const url = `${BASE_URL}/tour/${tour.slug}`;
-  const ogImages = tour.image 
-    ? [{ url: tour.image, width: 1200, height: 630, alt: tour.title }] 
-    : [];
+  const url = `${BASE_URL}/tours/${tour.slug}`; // Убедись, что тут правильный путь (/tours/ или /tour/)
+  
+  // 1. Бронебойная логика картинки (Абсолютный URL)
+  // Если у тура нет картинки, ставим красивую общую обложку сайта (создай файл og-default.jpg в папке public)
+  let imageUrl = tour.image || `${BASE_URL}/og-default.jpg`;
+  
+  // Если картинка лежит у нас на сервере (начинается с /), приклеиваем домен
+  if (imageUrl.startsWith('/')) {
+    imageUrl = `${BASE_URL}${imageUrl}`;
+  }
+
+  // 2. Чистое описание (без возможных HTML тегов)
+  const cleanDescription = tour.subtitle || 'Отправьтесь в туры вместе с турклубом ЭВА!';
 
   return {
     title: `${tour.title} | Турклуб ЭВА`,
-    description: tour.subtitle || tour.description?.slice(0, 160) || 'Авторское путешествие с командой профессионалов.',
+    description: cleanDescription,
     alternates: {
       canonical: url, 
     },
     openGraph: {
-      title: tour.title,
-      description: tour.subtitle || 'Присоединяйся к нашему приключению!',
+      title: `${tour.title} | Турклуб ЭВА`,
+      description: cleanDescription,
       url: url,
-      siteName: 'EVA Tourclub',
-      images: ogImages,
+      siteName: 'Турклуб ЭВА',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: tour.title,
+        }
+      ],
       type: 'website',
       locale: 'ru_RU',
     },
+    // 3. ДОБАВЛЕНО: Twitter Card (Обязательно для больших картинок в Telegram)
+    twitter: {
+      card: 'summary_large_image', // Эта строчка делает картинку БОЛЬШОЙ, а не маленьким квадратиком
+      title: tour.title,
+      description: cleanDescription,
+      images: [imageUrl],
+    },
   };
 }
-
 // --- 2. СТРАНИЦА ТУРА ---
 export default async function TourPage({ params }: Props) {
   const { slug } = await params;
@@ -114,8 +131,8 @@ export default async function TourPage({ params }: Props) {
 } : undefined
   };
 
-  return (
-    <>
+ return (
+    <main className="print:bg-white print:text-slate-900">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -124,6 +141,6 @@ export default async function TourPage({ params }: Props) {
          Типы данных Tour полностью совпадают.
       */}
       <TourDetailsWrapper tour={tour} />
-    </>
+    </main>
   );
 }

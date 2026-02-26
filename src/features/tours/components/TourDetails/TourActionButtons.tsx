@@ -44,7 +44,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
   };
 
   return (
-    <section className="scroll-mt-24 mb-12" id="actions">
+    <section className="scroll-mt-24 mb-12 print:hidden" id="actions">
       
       {/* 1. ЗАГОЛОВОК С ИКОНКОЙ */}
       <div className="flex items-center gap-4 mb-6 md:mb-8">

@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { 
   Users, CheckCircle2, Waves, Heart, 
   LifeBuoy, Zap, Sparkles, 
-  Megaphone, Anchor, BriefcaseMedical
+  Megaphone, Anchor, BriefcaseMedical,
+  ChevronRight // 🔥 Добавили иконку для свайпа
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -123,13 +124,22 @@ export default function Benefits() {
         </div>
 
         {/* Гибридный свайп (Мобайл) */}
-        <div className="flex flex-col md:hidden gap-4 mb-16">
+        <div className="flex flex-col md:hidden gap-4 mb-16 relative">
             <BenefitCard item={mainBenefits[0]} idx={0} />
             <BenefitCard item={mainBenefits[1]} idx={1} />
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {mainBenefits.slice(2, 6).map((item, idx) => (
-                    <BenefitCard key={item.id} item={item} idx={idx + 2} isSwipeable />
-                ))}
+            
+            {/* Обертка для скролла с подсказкой */}
+            <div className="relative mt-2">
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    {mainBenefits.slice(2, 6).map((item, idx) => (
+                        <BenefitCard key={item.id} item={item} idx={idx + 2} isSwipeable />
+                    ))}
+                </div>
+                {/* 🔥 Пульсирующая подсказка "Мотай" */}
+                <div className="absolute bottom-0 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+                    <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                    <ChevronRight size={14} />
+                </div>
             </div>
         </div>
 
@@ -151,33 +161,43 @@ export default function Benefits() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                {instructorRoles.map((role, idx) => {
-                    const Icon = role.icon;
-                    return (
-                        <motion.div 
-                            key={idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.1 }}
-                            // МАГИЯ АДАПТИВА: flex-row на мобильном, flex-col на десктопе
-                            className="bg-slate-900/60 border border-white/5 rounded-[2rem] p-5 md:p-8 hover:border-amber-500/30 transition-all duration-300 group flex flex-row items-center md:flex-col md:items-start text-left"
-                        >
-                            <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 mr-4 md:mr-0 md:mb-6 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all duration-500">
-                                <Icon size={24} strokeWidth={1.5} />
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="text-base md:text-xl font-black text-white uppercase tracking-tight mb-1 md:mb-3 group-hover:text-amber-400 transition-colors leading-tight">
-                                    {role.title}
-                                </h4>
-                                <p className="text-xs md:text-sm text-slate-400 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
-                                    {role.desc}
-                                </p>
-                            </div>
-                        </motion.div>
-                    )
-                })}
+           {/* Обертка для скролла с янтарной подсказкой */}
+            <div className="relative">
+                {/* 🔥 МАГИЯ ТЕЙЛВИНДА: flex и скролл на мобилке, grid из 3 колонок на десктопе */}
+                <div className="flex flex-row md:grid md:grid-cols-3 overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-6 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    {instructorRoles.map((role, idx) => {
+                        const Icon = role.icon;
+                        return (
+                            <motion.div 
+                                key={idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1 }}
+                                // 🔥 Ширина 85vw для свайпа на мобилке, авто-ширина на десктопе
+                                className="w-[85vw] md:w-auto flex-shrink-0 snap-center bg-slate-900/60 border border-white/5 rounded-[2rem] p-5 md:p-8 hover:border-amber-500/30 transition-all duration-300 group flex flex-row items-center md:flex-col md:items-start text-left"
+                            >
+                                <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 mr-4 md:mr-0 md:mb-6 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all duration-500">
+                                    <Icon size={24} strokeWidth={1.5} />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-[15px] sm:text-base md:text-xl font-black text-white uppercase tracking-tight mb-1 md:mb-3 group-hover:text-amber-400 transition-colors leading-tight">
+                                        {role.title}
+                                    </h4>
+                                    <p className="text-[14px] md:text-sm text-slate-400 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
+                                        {role.desc}
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )
+                    })}
+                </div>
+                
+                {/* 🔥 Пульсирующая подсказка "Мотай" (Только для мобилок, Янтарная) */}
+                <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-amber-500/80 animate-pulse pointer-events-none">
+                    <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                    <ChevronRight size={14} />
+                </div>
             </div>
         </motion.div>
 
@@ -190,6 +210,33 @@ export default function Benefits() {
 function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any) {
   const Icon = item.icon;
   
+  // 🔥 ЛОГИКА ДЛЯ ГОРИЗОНТАЛЬНЫХ КАРТОЧЕК (СВАЙП)
+  if (!isDesktop && item.isCompactOnMobile) {
+      return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05, duration: 0.5 }}
+            viewport={{ once: true }}
+            className="group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left flex flex-row items-center p-5 w-[85vw] md:w-auto flex-shrink-0 snap-center"
+        >
+            <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 shrink-0 mr-4">
+                <Icon size={24} strokeWidth={1.5} />
+            </div>
+            <div className="flex-1">
+                <h3 className="text-[15px] sm:text-base font-black text-white uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors mb-1">
+                    {item.title}
+                </h3>
+                {/* 🔥 Исправлено: текст теперь 14px */}
+                <p className="text-[14px] text-slate-400 font-medium leading-snug line-clamp-3">
+                    {item.desc}
+                </p>
+            </div>
+        </motion.div>
+      );
+  }
+
+  // 🔥 ЛОГИКА ДЛЯ ПЕРВЫХ ДВУХ КАРТОЧЕК (И ДЕСКТОПА)
   return (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -197,41 +244,31 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
         transition={{ delay: idx * 0.05, duration: 0.5 }}
         viewport={{ once: true }}
         className={cn(
-            "group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left",
-            isDesktop ? item.desktopClass : "",
-            isSwipeable ? "flex-shrink-0 snap-center w-[85vw] md:w-auto" : "w-full",
-            // МАГИЯ АДАПТИВА: flex-row на мобильном, если карточка компактная, иначе flex-col
-            !isDesktop && item.isCompactOnMobile 
-                ? "flex flex-row items-center p-5" 
-                : "flex flex-col justify-between p-6 md:p-8"
+            "group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left w-full flex flex-col p-6 md:p-8",
+            isDesktop ? item.desktopClass : ""
         )}
     >
-        <div className={cn("flex justify-between items-start shrink-0", !isDesktop && item.isCompactOnMobile ? "mr-4" : "mb-6 md:mb-8")}>
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 shadow-[0_0_15px_rgba(20,184,166,0)] group-hover:shadow-[0_0_20px_rgba(20,184,166,0.3)]">
+        {/* 🔥 Иконка и заголовок в один ряд на мобилках, сверху-вниз на десктопе */}
+        <div className="flex flex-row items-center md:items-start md:flex-col gap-4 mb-4 md:mb-6">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 shadow-[0_0_15px_rgba(20,184,166,0)] group-hover:shadow-[0_0_20px_rgba(20,184,166,0.3)] shrink-0">
                 <Icon size={24} strokeWidth={1.5} />
             </div>
-            {item.tag && (
-                <span className="hidden md:inline-flex text-[14px] font-bold uppercase tracking-widest bg-teal-500/20 text-teal-400 px-3 py-1.5 rounded-lg border border-teal-500/30">
-                    {item.tag}
-                </span>
-            )}
+            
+            <div className="flex-1">
+                {item.tag && (
+                    <span className="hidden md:inline-flex text-[14px] font-bold uppercase tracking-widest bg-teal-500/20 text-teal-400 px-3 py-1.5 rounded-lg border border-teal-500/30 mb-3 md:mb-4">
+                        {item.tag}
+                    </span>
+                )}
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors">
+                    {item.title}
+                </h3>
+            </div>
         </div>
 
-        <div className={cn(!isDesktop && item.isCompactOnMobile ? "flex-1" : "")}>
-          <h3 className={cn(
-                "font-black text-white uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors drop-shadow-md",
-                // Уменьшили базовый шрифт до text-sm (14px) для мобилок, на экранах побольше будет text-base (16px)
-                !isDesktop && item.isCompactOnMobile ? "text-sm sm:text-base mb-1" : "text-xl md:text-3xl mb-3 md:mb-4"
-            )}>
-                {item.title}
-            </h3>
-            <p className={cn(
-                "text-slate-400 font-medium leading-relaxed",
-                !isDesktop && item.isCompactOnMobile ? "text-xs line-clamp-3" : "text-sm md:text-base"
-            )}>
-                {item.desc}
-            </p>
-        </div>
+        <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
+            {item.desc}
+        </p>
 
         {item.features && (
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mt-6 pt-6 border-t border-white/10">
