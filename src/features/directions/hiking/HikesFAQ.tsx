@@ -123,7 +123,7 @@ export default function HikesFAQ() {
             <ContactHubModal 
                 isOpen={isHubOpen} 
                 onClose={() => setIsHubOpen(false)} 
-                initialTab="HELP" 
+                initialTab="TOUR" 
             />
         </section>
     );

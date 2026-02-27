@@ -71,7 +71,7 @@ export default function HikesHero({ onScrollDown }: { onScrollDown?: () => void 
                 <div className="hidden md:block w-px h-6 bg-stone-800" />
                 <div className="flex items-center gap-3">
                     <ShieldCheck className="w-6 h-6 text-teal-500" />
-                    <span className="text-sm font-bold uppercase tracking-wider">Без тяжелых рюкзаков</span>
+                    <span className="text-sm font-bold uppercase tracking-wider">На легке и с рюкзаками</span>
                 </div>
             </div>
         </motion.div>

@@ -171,13 +171,13 @@ export default function SupFAQ() {
                 </motion.div>
 
             </div>
+ {/* Модалка Связи */}
+      <ContactHubModal 
+        isOpen={isHubOpen} 
+        onClose={() => setIsHubOpen(false)} 
+        initialTab="TOUR" 
+      />
 
-            {/* Модалка связи */}
-            <ContactHubModal 
-                isOpen={isHubOpen} 
-                onClose={() => setIsHubOpen(false)} 
-                initialTab="HELP" 
-            />
         </section>
     );
 }
