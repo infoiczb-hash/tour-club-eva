@@ -31,6 +31,7 @@ export async function upsertReview(data: any) {
       text: payload.text,
       source: payload.source || 'tg', // По умолчанию Telegram
       avatar: payload.avatar || null,
+      category: payload.category || 'general', // 🔥 НОВОЕ: Обработка категории
       // Если пришло строкой "on" (из формы) или boolean — приводим к boolean
       isActive: payload.isActive === true || payload.isActive === 'true' || payload.isActive === 'on'
     };
