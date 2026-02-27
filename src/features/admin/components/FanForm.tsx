@@ -4,32 +4,51 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
-import { Save, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { upsertFunTestAction } from "@features/admin/actions/fun";
+import { Save, AlertCircle, Loader2, Tags, Key } from "lucide-react";
+import { upsertFunTestAction } from "@/features/admin/actions/fun";
 
+// --- КОНСТАНТЫ ДЛЯ УДОБСТВА ---
+const CATEGORIES = [
+  "Психологические тесты",
+  "Поддержка в туре",
+  "Подбор тура",
+  "Какой ты турист?",
+  "Юмористические",
+  "Другое"
+];
+
+// Все системные ключи, которые поддерживаются в коде модалок
+const SYSTEM_SLUGS = [
+  { id: 'fears', label: 'Разбор страхов (AI)' },
+  { id: 'physical', label: 'Готов ли я физически? (AI)' },
+  { id: 'signals', label: 'Симптомы в туре (AI)' },
+  { id: 'debrief', label: 'Рефлексия опыта (AI)' },
+  { id: 'psych-profile', label: 'Псих. профиль (AI)' },
+  { id: 'tourist-type', label: 'Кто ты в горах?' },
+  { id: 'backpack', label: 'Собери рюкзак' },
+  { id: 'survival', label: 'Выживание' },
+  { id: 'totem', label: 'Тотемное животное' },
+];
 
 // --- Схема валидации Zod ---
 const formSchema = z.object({
-  slug: z.string().min(2, "Slug обязателен (напр. fear-debrief)"),
+  slug: z.string().min(2, "Выберите системный ключ"),
   title: z.string().min(2, "Введите название теста"),
   description: z.string().min(5, "Добавьте краткое описание"),
   image: z.string().url("Введите корректный URL картинки").or(z.literal("")),
   category: z.string().min(2, "Укажите категорию"),
-  isActive: z.boolean(), // <-- убрали .default()
-  passCount: z.number().min(0), // <-- убрали .default()
+  isActive: z.boolean(), 
+  passCount: z.number().min(0), 
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface Props {
- initialData?: any; // (или твой FormValues, если он там есть)
-  onSuccess?: () => void; // 👈 Добавь эту строку
+  initialData?: any; 
+  onSuccess?: () => void; 
 }
 
 export default function FanForm({ initialData, onSuccess }: Props) {
-  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,8 +59,8 @@ export default function FanForm({ initialData, onSuccess }: Props) {
       title: "",
       description: "",
       image: "",
-      category: "Психология",
-      isActive: false,
+      category: "Психологические тесты",
+      isActive: true, // По умолчанию делаем активным при создании
       passCount: 0,
     },
   });
@@ -53,10 +72,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
     try {
       const res = await upsertFunTestAction(data);
       if (res.success) {
-        // Вызываем функцию закрытия модалки и обновления данных в дашборде
-        if (onSuccess) {onSuccess(); 
-        }
-        // router.push и router.refresh мы удалили, они больше не нужны!
+        if (onSuccess) onSuccess(); 
       } else {
         setError(res.error || "Произошла ошибка при сохранении");
       }
@@ -65,128 +81,155 @@ export default function FanForm({ initialData, onSuccess }: Props) {
     } finally {
       setIsSaving(false);
     }
-     }
+  };
+
+  const selectedCategory = form.watch("category");
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <Link href="/admin/fun" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-2">
-            <ArrowLeft size={16} /> Назад к списку
-          </Link>
-          <h1 className="text-3xl font-bold text-slate-900">
-            {initialData ? "Редактирование теста" : "Новый тест (Карточка)"}
-          </h1>
-        </div>
+    <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      {/* Шапка модалки */}
+      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          {initialData ? "✏️ Редактирование карточки" : "✨ Новая карточка (Квиз)"}
+        </h1>
+        <p className="text-xs text-slate-500 mt-1">
+          {initialData ? "Измените описание или категорию теста." : "Выберите системный ключ и настройте внешний вид."}
+        </p>
       </div>
 
-      <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      {/* Тело формы (скроллится) */}
+      <div className="p-6 overflow-y-auto no-scrollbar">
+        <form id="fan-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
           {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl text-sm">
+            <div className="flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100">
               <AlertCircle size={18} /> {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* --- СИСТЕМНЫЙ SLUG --- */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Системный Slug (Ключ) <span className="text-red-500">*</span></label>
+          {/* --- СИСТЕМНЫЙ SLUG --- */}
+          <div className="space-y-2 bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
+            <label className="flex items-center gap-1.5 text-sm font-bold text-indigo-900 dark:text-indigo-300">
+              <Key size={14} /> Системный Slug (Связь с кодом) <span className="text-red-500">*</span>
+            </label>
+            
+            {initialData ? (
               <input 
                 {...form.register("slug")}
-                disabled={!!initialData} // Запрещаем менять slug после создания, чтобы не сломать связь с кодом
-                placeholder="напр. fear-debrief"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-400"
+                disabled
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-sm outline-none"
               />
-              {form.formState.errors.slug && <p className="text-xs text-red-500">{form.formState.errors.slug.message}</p>}
-              <p className="text-xs text-slate-400">Связывает карточку с кодом модалки. Должен совпадать с ключом в реестре.</p>
-            </div>
-
-            {/* --- КАТЕГОРИЯ --- */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Категория <span className="text-red-500">*</span></label>
-              <input 
-                {...form.register("category")}
-                placeholder="Психология, Игры, Тесты"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-              />
-              {form.formState.errors.category && <p className="text-xs text-red-500">{form.formState.errors.category.message}</p>}
-            </div>
+            ) : (
+              <select 
+                {...form.register("slug")}
+                className="w-full px-4 py-3 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-slate-800 font-bold text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+                <option value="" disabled>-- Выберите ключ теста --</option>
+                {SYSTEM_SLUGS.map(s => (
+                  <option key={s.id} value={s.id}>{s.id} ({s.label})</option>
+                ))}
+              </select>
+            )}
+            {form.formState.errors.slug && <p className="text-xs text-red-500 font-medium">{form.formState.errors.slug.message}</p>}
           </div>
 
-          {/* --- НАЗВАНИЕ --- */}
+          {/* --- КАТЕГОРИЯ --- */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Название карточки <span className="text-red-500">*</span></label>
-            <input 
-              {...form.register("title")}
-              placeholder="Разбор страхов"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-            />
-            {form.formState.errors.title && <p className="text-xs text-red-500">{form.formState.errors.title.message}</p>}
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                <Tags size={12} /> Раздел на сайте <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+               {CATEGORIES.map(cat => (
+                 <button
+                    key={cat}
+                    type="button"
+                    onClick={() => form.setValue("category", cat)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+                      selectedCategory === cat 
+                        ? 'bg-teal-500 text-white border-teal-600 shadow-md' 
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-teal-300'
+                    }`}
+                 >
+                    {cat}
+                 </button>
+               ))}
+            </div>
+            {form.formState.errors.category && <p className="text-xs text-red-500">{form.formState.errors.category.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* --- НАЗВАНИЕ --- */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Название карточки <span className="text-red-500">*</span></label>
+              <input 
+                {...form.register("title")}
+                placeholder="напр. Разбор страхов"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+              />
+              {form.formState.errors.title && <p className="text-xs text-red-500">{form.formState.errors.title.message}</p>}
+            </div>
+
+            {/* --- ОБЛОЖКА --- */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">URL обложки</label>
+              <input 
+                {...form.register("image")}
+                placeholder="https://res.cloudinary.com/..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+              />
+              {form.formState.errors.image && <p className="text-xs text-red-500">{form.formState.errors.image.message}</p>}
+            </div>
           </div>
 
           {/* --- ОПИСАНИЕ --- */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Описание <span className="text-red-500">*</span></label>
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Описание <span className="text-red-500">*</span></label>
             <textarea 
               {...form.register("description")}
               rows={3}
-              placeholder="AI-психолог проанализирует, что тебя останавливает..."
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none"
+              placeholder="Кратко, о чем этот тест..."
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all resize-none"
             />
             {form.formState.errors.description && <p className="text-xs text-red-500">{form.formState.errors.description.message}</p>}
           </div>
 
-          {/* --- ОБЛОЖКА --- */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">URL обложки (Cloudinary)</label>
-            <input 
-              {...form.register("image")}
-              placeholder="https://res.cloudinary.com/..."
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-            />
-            {form.formState.errors.image && <p className="text-xs text-red-500">{form.formState.errors.image.message}</p>}
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+            {/* --- СТАТУС --- */}
+            <div className="flex items-center gap-3 pt-2">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" {...form.register("isActive")} className="sr-only peer" />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
+                <span className="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">Показывать на сайте</span>
+              </label>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-            {/* --- СЧЕТЧИК (Только для корректировки) --- */}
+            {/* --- СЧЕТЧИК --- */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Счетчик прохождений</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Прохождений (Накрутка)</label>
               <input 
                 type="number"
                 {...form.register("passCount", { valueAsNumber: true })}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm dark:text-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
               />
             </div>
-
-            {/* --- СТАТУС --- */}
-            <div className="flex items-center gap-3 pt-8">
-              <input 
-                type="checkbox"
-                id="isActive"
-                {...form.register("isActive")}
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
-              />
-              <label htmlFor="isActive" className="text-sm font-semibold text-slate-700 cursor-pointer">
-                Отображать на сайте (Активен)
-              </label>
-            </div>
           </div>
-
-          <div className="pt-6">
-            <button 
-              type="submit" 
-              disabled={isSaving}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-semibold transition-colors disabled:opacity-70"
-            >
-              {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-              {isSaving ? "Сохраняем..." : "Сохранить карточку"}
-            </button>
-          </div>
-
         </form>
       </div>
+
+      {/* Подвал формы с кнопкой */}
+      <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 mt-auto">
+        <button 
+          form="fan-form"
+          type="submit" 
+          disabled={isSaving}
+          className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white py-3.5 rounded-xl font-bold transition-colors disabled:opacity-70 shadow-lg shadow-teal-600/20"
+        >
+          {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+          {isSaving ? "Сохраняем..." : "Сохранить карточку"}
+        </button>
+      </div>
+
     </div>
   );
 }

@@ -147,6 +147,7 @@ model Review {
   text      String
   source    String   @default("tg")
   avatar    String?
+  category  String   @default("general") 
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -205,7 +206,7 @@ model FunTest {
   title       String   // Название карточки
   description String   // Описание карточки
   image       String?  // Ссылка на картинку-обложку
-  category    String   // Категория (например, "Психология", "Игры")
+  category    String   @default("general")
   isActive    Boolean  @default(false) // Показывать ли на сайте
   passCount   Int      @default(0)     // Сколько раз прошли
   

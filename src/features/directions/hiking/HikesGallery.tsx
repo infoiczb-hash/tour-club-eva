@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Image as ImageIcon, Camera, MountainSnow, Coffee } from 'lucide-react';
+import { Camera, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
@@ -9,108 +10,135 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// Данные для заглушек (потом заменим на реальные фото)
+// 7 РЕАЛЬНЫХ ФОТОГРАФИЙ (Bento-структура для десктопа)
 const GALLERY_ITEMS = [
     {
         id: 1,
         title: "Масштаб",
-        subtitle: "Ощущение себя песчинкой среди вершин",
-        icon: MountainSnow,
-        className: "md:col-span-2 md:row-span-2 h-[400px] md:h-full", // Большой вертикальный блок слева
+        subtitle: "Среди величественных вершин",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838444/photo_5294161935740294707_w_osfd8l.jpg",
+        className: "md:col-span-2 md:row-span-2 h-[400px] md:h-full", // Большой вертикальный акцент
     },
     {
         id: 2,
         title: "Атмосфера",
-        subtitle: "Туманное утро в лагере",
-        icon: Camera,
-        className: "md:col-span-2 md:row-span-1 h-[250px]", // Широкий блок сверху справа
+        subtitle: "Туманные рассветы",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838472/8_mb7oso.jpg",
+        className: "md:col-span-2 md:row-span-1 h-[400px] md:h-auto", // Широкая панорама
     },
     {
         id: 3,
-        title: "Детали",
-        subtitle: "Иней на хвое",
-        icon: ImageIcon,
-        className: "md:col-span-1 md:row-span-1 h-[250px]", // Маленький квадрат
+        title: "Моменты",
+        subtitle: "Красота в деталях",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838488/%D0%BE%D1%81%D0%B5%D0%BD%D1%8C8_m6f3ja.jpg",
+        className: "md:col-span-1 md:row-span-1 h-[400px] md:h-auto", // Квадрат
     },
     {
         id: 4,
-        title: "Уют",
-        subtitle: "Горячий кофе на привале",
-        icon: Coffee,
-        className: "md:col-span-1 md:row-span-1 h-[250px]", // Маленький квадрат
+        title: "Привал",
+        subtitle: "Отдых на тропе",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838501/1%D0%BE%D1%81%D0%B5%D0%BD%D1%8C_helnpn.jpg",
+        className: "md:col-span-1 md:row-span-1 h-[400px] md:h-auto", // Квадрат
     },
     {
         id: 5,
         title: "Путь",
-        subtitle: "Тропа, ведущая к облакам",
-        icon: ImageIcon,
-        className: "md:col-span-4 md:row-span-1 h-[300px]", // Широкая панорама снизу
+        subtitle: "Дорога к облакам",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838649/3_x7hpes.jpg",
+        className: "md:col-span-2 md:row-span-1 h-[400px] md:h-auto", // Широкая панорама снизу
+    },
+    {
+        id: 6,
+        title: "Свобода",
+        subtitle: "Весь мир на ладони",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838760/8_e69ysh.jpg",
+        className: "md:col-span-1 md:row-span-1 h-[400px] md:h-auto", // Квадрат
+    },
+    {
+        id: 7,
+        title: "Команда",
+        subtitle: "Вместе теплее",
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838702/photo_5449540439326709334_y_rksj5c.jpg",
+        className: "md:col-span-1 md:row-span-1 h-[400px] md:h-auto", // Квадрат
     }
 ];
 
 export default function HikesGallery() {
     return (
-        <section className="py-12 md:py-20 bg-stone-950 border-t border-white/5 relative overflow-hidden">
+        // 🔥 1. Срезали отступы (было py-12 md:py-20)
+        <section className="py-8 md:py-16 bg-stone-950 border-t border-white/5 relative overflow-hidden">
             
             {/* Фоновое свечение */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-teal-900/20 blur-[150px] rounded-full pointer-events-none opacity-50" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none opacity-50" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
+                {/* 🔥 2. ЛЕВОЕ ВЫРАВНИВАНИЕ */}
                 <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="mb-16 text-center"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    className="text-left mb-8 md:mb-12 max-w-3xl"
                 >
-                     <div className="text-sm font-bold tracking-[0.2em] text-teal-600 uppercase mb-4">
-                        Фотоархив
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-900 border border-stone-800 rounded-full mb-4 md:mb-6 backdrop-blur-md">
+                        <Camera className="w-4 h-4 text-stone-400" />
+                        <span className="text-[12px] md:text-[14px] font-bold tracking-widest text-stone-300 uppercase">
+                            Фотоархив
+                        </span>
                     </div>
-                    <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
+                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                         ЭМОЦИИ БЕЗ <span className="text-teal-500">ФИЛЬТРОВ</span>
                     </h2>
-                    <p className="text-stone-400 font-medium text-lg max-w-2xl mx-auto">
+                    <p className="text-[14px] md:text-base text-stone-400 font-medium leading-relaxed">
                         В каждой тропе есть история. Никаких постановочных кадров — только настоящие моменты, прожитые в горах.
                     </p>
                 </motion.div>
 
-                {/* Бенто-сетка */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
-                    {GALLERY_ITEMS.map((item, i) => {
-                        const Icon = item.icon;
-                        return (
+                {/* 🔥 3. ОБЕРТКА ДЛЯ СКРОЛЛА (Bento на десктопе, Свайп на мобилке) */}
+                <div className="relative">
+                    <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-4 md:auto-rows-[250px] md:gap-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {GALLERY_ITEMS.map((item, i) => (
                             <motion.div
                                 key={item.id}
-                                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1, duration: 0.6 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ delay: i * 0.1, duration: 0.5 }}
                                 className={cn(
-                                    "relative rounded-[2rem] overflow-hidden group isolate border border-white/10 bg-stone-900/50 backdrop-blur-sm hover:border-teal-500/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-900/20",
+                                    // Карточка: 85vw для свайпа на мобилке, сетка на десктопе
+                                    "relative shrink-0 snap-center w-[85vw] md:w-auto rounded-[2rem] overflow-hidden group isolate border border-white/10 bg-stone-900 shadow-xl cursor-pointer",
                                     item.className
                                 )}
                             >
-                                {/* Плейсхолдер для фото (Темное стекло) */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-stone-800/50 via-stone-900/50 to-stone-950/80 flex flex-col items-center justify-center p-6 transition-transform duration-700 group-hover:scale-105">
-                                    <Icon className="w-12 h-12 text-stone-600 mb-4 group-hover:text-teal-500 transition-colors duration-500" />
-                                    <span className="text-stone-500 text-xs font-bold uppercase tracking-widest opacity-50">Место для фото</span>
-                                </div>
+                                <Image 
+                                    src={item.img} 
+                                    alt={item.subtitle} 
+                                    fill 
+                                    className="object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                    sizes="(max-width: 768px) 85vw, 50vw"
+                                />
                                 
-                                {/* Затемнение при наведении */}
-                                <div className="absolute inset-0 bg-stone-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                {/* 🔥 Плотный градиент для читаемости текста всегда (убрали ховер-скрытие) */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent pointer-events-none" />
 
                                 {/* Текст поверх фото */}
-                                <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-stone-950 via-stone-950/60 to-transparent translate-y-4 group-hover:translate-y-0 opacity-80 group-hover:opacity-100 transition-all duration-500">
-                                    <div className="text-teal-400 font-bold uppercase tracking-widest text-xs mb-1">
+                                <div className="absolute bottom-0 left-0 w-full p-6 z-10">
+                                    <div className="text-teal-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1.5">
                                         {item.title}
                                     </div>
-                                    <div className="text-white font-bold text-lg md:text-xl leading-tight">
+                                    <div className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-md">
                                         {item.subtitle}
                                     </div>
                                 </div>
                             </motion.div>
-                        )
-                    })}
+                        ))}
+                    </div>
+
+                    {/* 🔥 4. Подсказка "Мотай" */}
+                    <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+                        <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                        <ChevronRight size={14} />
+                    </div>
                 </div>
 
             </div>
