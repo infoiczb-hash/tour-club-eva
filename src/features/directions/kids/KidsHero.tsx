@@ -47,7 +47,7 @@ export default function KidsHero({ onScrollDown }: { onScrollDown?: () => void }
 
           {/* Описание */}
           <p className="text-base md:text-xl text-slate-300 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
-            Мы возвращаем детям детство. Настоящие друзья и приключения, которыми гордишься.
+            Мы возвращаем детям детство, а подросткам даём приключения, которыми гордишься.
           </p>
 
           {/* Кнопка плавного скролла (как в SUP) */}

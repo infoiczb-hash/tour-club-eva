@@ -31,9 +31,9 @@ export default function LocalLanding({ tours }: { tours: Tour[] }) {
       <LocalPhilosophy />
       
       {/* 3. Фирменные маршруты */}
-      <LocalRoutes />
-      <LocalConditions />
-      <LocalGallery />
+       <LocalConditions />
+       <LocalRoutes />
+           <LocalGallery />
       <LocalFAQ />
 
       {/* 5. Каталог / Расписание */}

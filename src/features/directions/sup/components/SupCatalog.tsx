@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { type ElementType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, Users, Star, Compass } from 'lucide-react';
+import { Clock, MapPin, Users, Star, Compass, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
@@ -14,7 +14,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 // 1. Описываем, как выглядит маршрут
 type RouteType = { name: string; dist: string; time: string };
 
-// 2. Описываем общую структуру карточки (без цены, но с новыми фичами)
+// 2. Описываем общую структуру карточки
 type CatalogItemType = {
   id: string;
   title: string;
@@ -23,12 +23,12 @@ type CatalogItemType = {
   description: string;
   duration: string;
   format: string;
-  features: string[]; // Добавили массив для галочек "Что включено"
+  features: string[];
   locations?: string[]; 
   routes?: RouteType[]; 
 };
 
-// 3. Данные каталога со строгой типизацией
+// 3. Данные каталога
 const CATALOG_DATA: Record<'lessons' | 'tours', CatalogItemType> = {
   lessons: {
     id: 'lessons',
@@ -64,45 +64,47 @@ export default function SupCatalog() {
   const data = CATALOG_DATA[activeTab];
 
   return (
-    <section className="py-12 md:py-18 bg-slate-950 relative overflow-hidden border-t border-white/5">
+    <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
       <div className="container mx-auto px-4 max-w-5xl relative z-10">
         
-        {/* HEADER */}
-        <div className="flex flex-col items-center text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-8">
-                Выберите свой <span className="text-teal-500">Формат</span>
+        {/* 🔥 HEADER (Только заголовок, без кнопок) */}
+        <div className="flex flex-col items-center text-center mb-6 md:mb-10">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter">
+                Выберите свой <br className="hidden md:block" /><span className="text-teal-500">Формат</span>
             </h2>
+        </div>
 
-            {/* SWITCHER */}
-            <div className="bg-slate-900 p-1.5 rounded-2xl border border-white/5 inline-flex gap-1 shadow-2xl">
+        {/* 🔥 STICKY SWITCHER (Прилипает к верху при скролле) */}
+        <div className="sticky top-[70px] md:top-[90px] z-50 py-3 mb-6 md:mb-10 bg-slate-950/90 backdrop-blur-xl -mx-4 px-4 md:mx-0 md:px-0 border-b border-white/5 md:border-none flex justify-center">
+            <div className="bg-slate-900 p-1.5 rounded-2xl border border-white/5 inline-flex gap-1 shadow-2xl w-full sm:w-auto">
                 <button 
                     onClick={() => setActiveTab('lessons')}
                     className={cn(
-                        "relative px-8 py-3 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-300",
+                        "relative flex-1 sm:flex-none px-4 md:px-8 py-3 rounded-xl text-[12px] md:text-sm font-bold uppercase tracking-widest transition-all duration-300",
                         activeTab === 'lessons' ? "text-slate-950" : "text-slate-400 hover:text-white"
                     )}
                 >
                     {activeTab === 'lessons' && (
-                        <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl" />
+                        <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl shadow-md" />
                     )}
                     <span className="relative z-10">ПРОГУЛКИ</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('tours')}
                     className={cn(
-                        "relative px-8 py-3 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-300",
+                        "relative flex-1 sm:flex-none px-4 md:px-8 py-3 rounded-xl text-[12px] md:text-sm font-bold uppercase tracking-widest transition-all duration-300",
                         activeTab === 'tours' ? "text-slate-950" : "text-slate-400 hover:text-white"
                     )}
                 >
                     {activeTab === 'tours' && (
-                        <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl" />
+                        <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl shadow-md" />
                     )}
                     <span className="relative z-10">СПЛАВЫ</span>
                 </button>
             </div>
         </div>
 
-        {/* CONTENT CARD (Тот самый полноширинный блок) */}
+        {/* CONTENT CARD */}
         <AnimatePresence mode="wait">
             <motion.div
                 key={activeTab}
@@ -110,80 +112,90 @@ export default function SupCatalog() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-6 md:p-12 backdrop-blur-md flex flex-col"
+                className="bg-slate-900/40 border border-white/5 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-12 backdrop-blur-md flex flex-col shadow-xl"
             >
                 {/* 1. Бейдж и Заголовок */}
-                <div className="mb-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-4">
+                <div className="mb-6 md:mb-8">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-3 md:mb-4">
                         {data.badge}
                     </div>
-                    <h3 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
+                    <h3 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-3 md:mb-4 leading-none">
                         {data.title}
                     </h3>
-                    <p className="text-slate-400 text-base md:text-lg leading-relaxed font-medium max-w-3xl">
+                    <p className="text-[14px] md:text-lg text-slate-400 leading-relaxed font-medium max-w-3xl">
                         {data.description}
                     </p>
                 </div>
 
-                {/* 2. Характеристики и Включено (Сетка на 3 колонки) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 pb-10 border-b border-white/5">
+                {/* 🔥 2. СЕТКА ХАРАКТЕРИСТИК (2 колонки на мобилке, 3 на десктопе) */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-6 md:mb-10 pb-6 md:pb-10 border-b border-white/5">
+                    
                     {/* Время */}
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center shrink-0 text-teal-500 border border-white/5">
-                            <Clock size={24} />
+                    <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-950 flex items-center justify-center shrink-0 text-teal-500 border border-white/5 shadow-inner">
+                            <Clock size={20} className="md:w-6 md:h-6" />
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Время</p>
-                            <p className="text-white font-black text-lg">{data.duration}</p>
+                            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Время</p>
+                            <p className="text-[14px] md:text-lg text-white font-black">{data.duration}</p>
                         </div>
                     </div>
                     
                     {/* Особенности */}
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center shrink-0 text-teal-500 border border-white/5">
-                            <Users size={24} />
+                    <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-950 flex items-center justify-center shrink-0 text-teal-500 border border-white/5 shadow-inner">
+                            <Users size={20} className="md:w-6 md:h-6" />
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Особенности</p>
-                            <p className="text-white font-bold text-sm leading-snug">{data.format}</p>
+                            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Особенности</p>
+                            <p className="text-[13px] md:text-sm text-white font-bold leading-snug">{data.format}</p>
                         </div>
                     </div>
 
-                    {/* Что включено (Список) */}
-                    <div className="flex flex-col justify-center gap-2 border-l border-white/5 pl-0 md:pl-6 pt-4 md:pt-0">
+                    {/* Что включено (На мобилке занимает обе колонки снизу) */}
+                    <div className="col-span-2 md:col-span-1 flex flex-col justify-center gap-2 border-t md:border-t-0 md:border-l border-white/5 pt-4 md:pt-0 pl-0 md:pl-6 mt-1 md:mt-0">
                         {data.features.map((feat, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm text-slate-300 font-medium">
-                                <span className="text-teal-400 font-black">✓</span> 
-                                <span>{feat}</span>
+                            <div key={idx} className="flex items-center gap-2 text-[13px] md:text-sm text-slate-300 font-medium">
+                                <span className="text-teal-400 font-black shrink-0">✓</span> 
+                                <span className="leading-snug">{feat}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* 3. Маршруты или Локации */}
-                <div className="bg-slate-950/50 rounded-[2rem] p-6 md:p-8 border border-white/5">
-                    <p className="text-sm font-bold text-teal-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <MapPin size={18} /> 
+                {/* 🔥 3. МАРШРУТЫ И ЛОКАЦИИ (Свайп на мобилке) */}
+                <div className="bg-slate-950/50 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 border border-white/5 relative">
+                    <p className="text-[12px] md:text-sm font-bold text-teal-500 uppercase tracking-widest mb-4 md:mb-6 flex items-center gap-2">
+                        <MapPin size={16} /> 
                         {activeTab === 'lessons' ? "Доступные акватории:" : "Популярные маршруты:"}
                     </p>
                     
-                    <div className="flex flex-wrap gap-3">
+                    {/* Контейнер со скроллом */}
+                    <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 md:pb-0 -mx-5 px-5 md:mx-0 md:px-0 md:flex-wrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {activeTab === 'lessons' 
                             ? data.locations?.map(loc => (
-                                <span key={loc} className="px-5 py-3 bg-white/5 rounded-xl text-sm font-bold text-white border border-white/5 hover:border-teal-500/30 transition-colors">
+                                <span key={loc} className="shrink-0 snap-center px-4 md:px-5 py-2.5 md:py-3 bg-slate-900 rounded-xl text-[13px] md:text-sm font-bold text-white border border-white/5 hover:border-teal-500/30 transition-colors shadow-sm">
                                     {loc}
                                 </span>
                               ))
                             : data.routes?.map(route => (
-                                <div key={route.name} className="flex flex-col p-4 bg-white/5 rounded-xl border border-white/5 hover:border-teal-500/30 transition-colors min-w-[160px]">
-                                    <span className="text-sm font-black text-white mb-1">{route.name}</span>
-                                    <span className="text-xs text-slate-400 uppercase tracking-widest font-bold">
-                                        {route.dist} <span className="text-teal-500 mx-1">•</span> {route.time}
+                                <div key={route.name} className="shrink-0 snap-center w-[75vw] md:w-auto flex flex-col p-4 bg-slate-900 rounded-xl border border-white/5 hover:border-teal-500/30 transition-colors md:min-w-[180px] shadow-sm">
+                                    <span className="text-[14px] md:text-sm font-black text-white mb-1.5">{route.name}</span>
+                                    <span className="text-[11px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">
+                                        {route.dist} <span className="text-teal-500 mx-1.5">•</span> {route.time}
                                     </span>
                                 </div>
                               ))
                         }
                     </div>
+
+                    {/* Подсказка "Мотай" для длинных маршрутов */}
+                    {activeTab === 'tours' && (
+                        <div className="md:hidden absolute top-5 right-5 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
+                            <ChevronRight size={12} />
+                        </div>
+                    )}
                 </div>
 
             </motion.div>

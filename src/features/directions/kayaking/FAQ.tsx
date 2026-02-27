@@ -210,7 +210,7 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
       <ContactHubModal 
         isOpen={isHubOpen} 
         onClose={() => setIsHubOpen(false)} 
-        initialTab="HELP" 
+        initialTab="TOUR" 
       />
 
     </section>

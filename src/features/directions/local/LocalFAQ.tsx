@@ -91,7 +91,7 @@ export default function LocalFAQ() {
             <ContactHubModal 
                 isOpen={isHubOpen} 
                 onClose={() => setIsHubOpen(false)} 
-                initialTab="HELP" 
+                initialTab="TOUR" 
             />
         </section>
     );

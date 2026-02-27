@@ -29,7 +29,7 @@ const DESTINATIONS = [
 
 export default function HikesDestinations() {
   return (
-    <section className="py-12 md:py-20 bg-stone-900 border-t border-white/5 relative overflow-hidden">
+    <section className="py-10 md:py-14 bg-stone-900 border-t border-white/5 relative overflow-hidden">
       
       {/* Мягкое атмосферное свечение на фоне */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />

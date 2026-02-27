@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Flame, Compass, Users, ArrowRight, Smartphone, Frown, User } from 'lucide-react';
+import { Flame, Compass, Users, ArrowRight, Smartphone, Frown, User, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
@@ -44,66 +44,80 @@ const TRANSFORMATIONS = [
 
 export default function KidsTransformation() {
     return (
-        <section className="py-12 md:py-18 bg-slate-950 relative overflow-hidden">
+        // 🔥 1. Уплотнили внешние отступы (py-8 md:py-16)
+        <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden">
              <div className="container mx-auto px-4 max-w-6xl relative z-10">
                  
+                 {/* 🔥 2. Заголовок: выровняли по левому краю для консистентности */}
                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    className="text-center mb-12 md:mb-16"
+                    className="text-left mb-8 md:mb-12"
                  >
-                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">
+                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter">
                         Что <span className="text-amber-500">Меняется?</span>
                      </h2>
                  </motion.div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                     {TRANSFORMATIONS.map((item, idx) => {
-                         const NewIcon = item.icon;
-                         const OldIcon = item.oldIcon;
-                         
-                         return (
-                             <motion.div 
-                                key={idx}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: idx * 0.15, duration: 0.5 }}
-                                className="p-8 md:p-10 bg-slate-900/40 backdrop-blur-sm rounded-[2.5rem] border border-white/5 hover:bg-slate-900 transition-colors group flex flex-col items-center text-center relative isolate overflow-hidden"
-                             >
-                                 {/* Легкий блик при наведении */}
-                                 <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none", item.bg)} />
+                 {/* 🔥 3. ОБЕРТКА ДЛЯ СКРОЛЛА */}
+                 <div className="relative">
+                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                         {TRANSFORMATIONS.map((item, idx) => {
+                             const NewIcon = item.icon;
+                             const OldIcon = item.oldIcon;
+                             
+                             return (
+                                 <motion.div 
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.1, duration: 0.5 }}
+                                    // 🔥 Карточка: ширина 85vw для свайпа, уплотненный паддинг
+                                    className="shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm rounded-[2.5rem] border border-white/5 hover:bg-slate-900 transition-colors group flex flex-col items-center text-center relative isolate overflow-hidden shadow-xl"
+                                 >
+                                     {/* Легкий блик при наведении */}
+                                     <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none", item.bg)} />
 
-                                 {/* Иконки трансформации */}
-                                 <div className="flex items-center gap-4 mb-8">
-                                     <div className="w-12 h-12 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-600">
-                                         <OldIcon size={20} strokeWidth={1.5} />
+                                     {/* Иконки трансформации */}
+                                     <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                                         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-600 shrink-0">
+                                             <OldIcon size={18} strokeWidth={1.5} className="md:w-5 md:h-5" />
+                                         </div>
+                                         <ArrowRight size={18} className="text-slate-700 shrink-0 md:w-5 md:h-5" />
+                                         <div className={cn("w-14 h-14 md:w-16 md:h-16 rounded-full border flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-xl shrink-0", item.bg, item.border, item.color)}>
+                                             <NewIcon size={24} strokeWidth={1.5} className="md:w-7 md:h-7" />
+                                         </div>
                                      </div>
-                                     <ArrowRight size={20} className="text-slate-700" />
-                                     <div className={cn("w-16 h-16 rounded-full border flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-xl", item.bg, item.border, item.color)}>
-                                         <NewIcon size={28} strokeWidth={1.5} />
+
+                                     {/* Текст: Было -> Стало */}
+                                     <div className="flex items-center justify-center gap-3 text-lg md:text-xl font-black tracking-tight mb-3 md:mb-4 w-full">
+                                         <span className="text-slate-600 line-through decoration-red-500/30 decoration-2">
+                                             {item.from}
+                                         </span>
+                                         <ArrowRight size={16} className="text-slate-600" />
+                                         <span className="text-white">
+                                             {item.to}
+                                         </span>
                                      </div>
-                                 </div>
 
-                                 {/* Текст: Было -> Стало */}
-                                 <div className="flex items-center justify-center gap-3 text-lg md:text-xl font-black tracking-tight mb-4 w-full">
-                                     <span className="text-slate-600 line-through decoration-red-500/30 decoration-2">
-                                         {item.from}
-                                     </span>
-                                     <ArrowRight size={16} className="text-slate-600" />
-                                     <span className="text-white">
-                                         {item.to}
-                                     </span>
-                                 </div>
+                                     {/* 🔥 Текст 14px */}
+                                     <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
+                                         {item.desc}
+                                     </p>
+                                 </motion.div>
+                             );
+                         })}
+                     </div>
 
-                                 <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium">
-                                     {item.desc}
-                                 </p>
-                             </motion.div>
-                         );
-                     })}
+                     {/* 🔥 4. Подсказка "Мотай" (Янтарная) */}
+                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-amber-500/80 animate-pulse pointer-events-none">
+                         <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                         <ChevronRight size={14} />
+                     </div>
                  </div>
+
              </div>
         </section>
     );

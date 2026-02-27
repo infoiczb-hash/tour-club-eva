@@ -2,10 +2,11 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { Camera, ChevronRight } from 'lucide-react'; // 🔥 Добавили иконки
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
-// Функция для объединения классов (чтобы сетка работала корректно)
+// Функция для объединения классов
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
@@ -28,56 +29,77 @@ const GALLERY_IMAGES = [
 
 export default function LocalGallery() {
     return (
-        <section className="py-12 md:py-20 bg-slate-950 border-t border-white/5">
-            <div className="container mx-auto px-4 max-w-6xl">
+        // 🔥 1. Уплотнили внешние отступы
+        <section className="py-8 md:py-16 bg-slate-950 border-t border-white/5 relative overflow-hidden">
+            
+            {/* Фоновое свечение */}
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-900/10 blur-[150px] rounded-full pointer-events-none" />
+
+            <div className="container mx-auto px-4 max-w-6xl relative z-10">
+                
+                {/* 🔥 2. ВЫРАВНИВАНИЕ ВЛЕВО */}
                 <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="mb-12 md:mb-20 text-center"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    className="text-left mb-8 md:mb-12 max-w-3xl"
                 >
-                    <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 md:mb-6 backdrop-blur-md">
+                        <Camera className="w-4 h-4 text-stone-400" />
+                        <span className="text-[12px] md:text-[14px] font-bold tracking-widest text-stone-300 uppercase">
+                            Без фильтров и постановки
+                        </span>
+                    </div>
+                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                         Живые <span className="text-emerald-500">Моменты</span>
                     </h2>
-                    <p className="text-stone-400 font-medium text-base md:text-lg max-w-2xl mx-auto">
+                    <p className="text-[14px] md:text-base text-stone-400 font-medium leading-relaxed">
                         Никакого позирования — только настоящие эмоции, красивые виды и атмосфера наших выездов.
                     </p>
                 </motion.div>
 
-                {/* Асимметричная сетка для 6 фото (3 колонки на десктопе) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[250px] md:auto-rows-[300px]">
-                    {GALLERY_IMAGES.map((src, i) => {
-                        // Логика для создания асимметрии (чередуем широкие и обычные блоки)
-                        // Фото 0, 3, 5 будут занимать 2 колонки на десктопе
-                        const isWide = i === 0 || i === 3 || i === 5;
-                        
-                        return (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true, margin: "-50px" }}
-                                transition={{ delay: i * 0.1, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-                                className={cn(
-                                    "relative rounded-3xl overflow-hidden group h-full w-full",
-                                    isWide ? "md:col-span-2" : "md:col-span-1",
-                                    // На мобилках первое фото делаем большим
-                                    i === 0 && "sm:col-span-2"
-                                )}
-                            >
-                                <Image 
-                                    src={src} 
-                                    alt={`Фото из похода ${i + 1}`}
-                                    fill 
-                                    className="object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                />
-                                {/* Легкое затемнение при наведении */}
-                                <div className="absolute inset-0 bg-slate-950/10 group-hover:bg-transparent transition-colors duration-500" />
-                            </motion.div>
-                        );
-                    })}
+                {/* 🔥 3. ОБЕРТКА ДЛЯ СКРОЛЛА (СВАЙП НА МОБИЛКЕ) */}
+                <div className="relative">
+                    <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-4 md:mx-0 md:px-0 md:auto-rows-[300px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {GALLERY_IMAGES.map((src, i) => {
+                            // Логика для создания асимметрии на десктопе
+                            const isWide = i === 0 || i === 3 || i === 5;
+                            
+                            return (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    transition={{ delay: i * 0.1, duration: 0.5 }}
+                                    className={cn(
+                                        // 🔥 На мобилке: w-[85vw] h-[400px]. На десктопе: h-full, сетка.
+                                        "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 cursor-pointer shadow-xl",
+                                        isWide ? "md:col-span-2" : "md:col-span-1"
+                                    )}
+                                >
+                                    <Image 
+                                        src={src} 
+                                        alt={`Фото из похода ${i + 1}`}
+                                        fill 
+                                        className="object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                        sizes={isWide ? "(max-width: 768px) 85vw, 66vw" : "(max-width: 768px) 85vw, 33vw"}
+                                        priority={i === 0}
+                                    />
+                                    {/* Легкое затемнение при наведении */}
+                                    <div className="absolute inset-0 bg-slate-950/10 group-hover:bg-transparent transition-colors duration-500" />
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+
+                    {/* 🔥 4. Подсказка "Мотай" */}
+                    <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-emerald-500/80 animate-pulse pointer-events-none">
+                        <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                        <ChevronRight size={14} />
+                    </div>
                 </div>
+
             </div>
         </section>
     );
