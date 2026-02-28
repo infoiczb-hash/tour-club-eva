@@ -5,6 +5,7 @@ import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags } 
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image' 
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -69,7 +70,13 @@ const ReviewCard = ({ review }: { review: Review }) => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden shrink-0">
              {review.avatar ? (
-               <img src={review.avatar} alt={review.name} className="w-full h-full object-cover"/>
+             <Image
+  src={review.avatar}
+  alt={review.name}
+  width={40}
+  height={40}
+  className="w-full h-full object-cover"
+/>
              ) : (
                review.name[0]
              )}

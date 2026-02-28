@@ -4,7 +4,6 @@ import { Metadata } from 'next';
 import { getTourBySlug } from '@/features/tours/api'; 
 import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper'; 
 
-
 // Базовый URL сайта (из env или фолбек на прод)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -12,6 +11,7 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+// --- 1. SEO МЕТАДАННЫЕ ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
@@ -19,36 +19,47 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!tour) {
     return { 
-      title: 'Тур не найден | Турклуб ЭВА',
+      title: 'Тур не найден | Турклуб «Эва»',
       robots: { index: false } 
     };
   }
 
-  const url = `${BASE_URL}/tours/${tour.slug}`; // Убедись, что тут правильный путь (/tours/ или /tour/)
+  // ✅ ИСПРАВЛЕНО: Правильный путь (/tour/ вместо /tours/) для защиты от дублей
+  const url = `${BASE_URL}/tour/${tour.slug}`; 
   
-  // 1. Бронебойная логика картинки (Абсолютный URL)
-  // Если у тура нет картинки, ставим красивую общую обложку сайта (создай файл og-default.jpg в папке public)
+  // Бронебойная логика картинки (Абсолютный URL)
   let imageUrl = tour.image || `${BASE_URL}/og-default.jpg`;
-  
-  // Если картинка лежит у нас на сервере (начинается с /), приклеиваем домен
   if (imageUrl.startsWith('/')) {
     imageUrl = `${BASE_URL}${imageUrl}`;
   }
 
-  // 2. Чистое описание (без возможных HTML тегов)
-  const cleanDescription = tour.subtitle || 'Отправьтесь в туры вместе с турклубом ЭВА!';
+  // ✅ ИСПРАВЛЕНО: Мощный fallback с гео-привязкой и призывом к действию
+  const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
+
+  // ✅ ДОБАВЛЕНО: Динамические ключевые слова (Keywords)
+  const typeKeyword = tour.type ? tour.type : 'приключения';
+  const keywords = [
+    `тур ${tour.title}`,
+    `${typeKeyword} Приднестровье`,
+    `активный отдых Тирасполь`,
+    `Турклуб Эва`,
+    `походы Молдова`,
+     `горы Румыния`,
+    `SUP и сплавы на байдарках на Днестре`
+  ];
 
   return {
-    title: `${tour.title} | Турклуб ЭВА`,
+    title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
+    keywords: keywords,
     alternates: {
       canonical: url, 
     },
     openGraph: {
-      title: `${tour.title} | Турклуб ЭВА`,
+      title: `${tour.title} | Турклуб «Эва»`,
       description: cleanDescription,
       url: url,
-      siteName: 'Турклуб ЭВА',
+      siteName: 'Турклуб «Эва»',
       images: [
         {
           url: imageUrl,
@@ -60,86 +71,85 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
       locale: 'ru_RU',
     },
-    // 3. ДОБАВЛЕНО: Twitter Card (Обязательно для больших картинок в Telegram)
     twitter: {
-      card: 'summary_large_image', // Эта строчка делает картинку БОЛЬШОЙ, а не маленьким квадратиком
+      card: 'summary_large_image', 
       title: tour.title,
       description: cleanDescription,
       images: [imageUrl],
     },
   };
 }
+
 // --- 2. СТРАНИЦА ТУРА ---
 export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   
-  // 1. Декодируем slug перед запросом в БД
   const decodedSlug = decodeURIComponent(slug);
-  
-  // 2. Получаем данные (уже очищенные и типизированные через API адаптер)
   const tour = await getTourBySlug(decodedSlug);
 
   if (!tour) {
     notFound(); 
   }
 
-  // 3. Собираем картинки для микроразметки (Обложка + Галерея)
+  // Собираем картинки для микроразметки
   const schemaImages = [
     tour.image,
     ...(tour.gallery || [])
   ].filter(Boolean) as string[];
 
-  // 4. JSON-LD (Structured Data для Google)
-  // Это помогает поисковикам понять цену, даты и наличие мест
+  // ✅ ИСПРАВЛЕНО: Гибридная Schema.org (Event + TouristTrip)
+  // Это дает расширенный сниппет с ценами, датами и статусом наличия мест
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Event',
+    '@type': ['Event', 'TouristTrip'],
     name: tour.title,
     description: tour.subtitle || tour.description,
     image: schemaImages,
-    // API возвращает date (ISO) первого заезда. Если даты нет — ставим текущую (фолбек)
+    touristType: [
+      "Любители природы",
+      "Активный отдых"
+    ],
     startDate: tour.date || new Date().toISOString(), 
     endDate: tour.endDate || tour.date || new Date().toISOString(),
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
       '@type': 'Place',
-      name: tour.location,
+      name: tour.location || 'Приднестровье',
       address: {
         '@type': 'PostalAddress',
-        addressCountry: 'MD', // Или брать из локации, если там есть страна
-        addressLocality: tour.location
+        addressCountry: 'MD', 
+        addressLocality: tour.location || 'Тирасполь'
       }
     },
     offers: {
       '@type': 'Offer',
       url: `${BASE_URL}/tour/${tour.slug}`,
-      price: tour.price, // Используем основную цену
-      priceCurrency: tour.currency || 'RUB',
+      price: tour.price, 
+      priceCurrency: tour.currency || 'MDL',
       availability: (tour.spotsLeft || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
       validFrom: new Date().toISOString(),
     },
     organizer: {
       '@type': 'Organization',
-      name: 'Турклуб ЭВА',
+      name: 'Турклуб «Эва»',
       url: BASE_URL,
-      logo: `${BASE_URL}/logo.png` // Убедитесь, что логотип доступен по этому адресу
+      logo: `${BASE_URL}/logo.png` 
     },
-   performer: (typeof tour.guide === 'object' && tour.guide) ? {
-  '@type': 'Person',
-  name: tour.guide.name
-} : undefined
+    performer: (typeof tour.guide === 'object' && tour.guide) ? {
+      '@type': 'Person',
+      name: tour.guide.name
+    } : undefined
   };
 
- return (
+  return (
     <main className="print:bg-white print:text-slate-900">
+      {/* Скрытый код для поисковых ботов */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* Передаем тур в интерактивный клиентский компонент.
-         Типы данных Tour полностью совпадают.
-      */}
+      {/* Передаем тур в интерактивный клиентский компонент */}
       <TourDetailsWrapper tour={tour} />
     </main>
   );

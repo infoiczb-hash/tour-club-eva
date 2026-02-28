@@ -1,16 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-// import { Metadata } from 'next'; // В Next.js metadata не работает вместе с "use client"
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, HelpCircle } from 'lucide-react';
 import ContactHubModal from "@/components/modals/ContactHubModal";
 import LegalNav from "@/components/LegalNav" 
 
-// export const metadata: Metadata = {
-//   title: 'Политика конфиденциальности | Турклуб ЭВА',
-//   description: 'Как мы работаем с вашими данными и контентом.',
-// };
+
 
 export default function PrivacyPage() {
   const [isHubOpen, setIsHubOpen] = useState(false);

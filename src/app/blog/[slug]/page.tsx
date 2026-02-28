@@ -7,6 +7,9 @@ import { ArrowLeft, Calendar, Clock, User, ArrowRight } from "lucide-react";
 import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 
+// Базовый URL для SEO (канонические ссылки и микроразметка)
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
+
 // --- ТИПЫ ---
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -43,15 +46,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!data) return { title: "Статья не найдена | Турклуб Эва" };
   
   const post = data.post;
-  // Если у статьи нет картинки, подставим дефолтную обложку сайта
-  const imageUrl = post.image || '/og-default.jpg'; 
+  const postUrl = `${BASE_URL}/blog/${post.slug}`;
+  
+  // Делаем URL картинки абсолютным для соцсетей
+  let imageUrl = post.image || '/og-default.jpg'; 
+  if (imageUrl.startsWith('/')) {
+    imageUrl = `${BASE_URL}${imageUrl}`;
+  }
+
+  // ✅ ИСПРАВЛЕНО: Динамические Keywords с надежным фолбеком
+const keywordsStr = `${post.category}, поход Приднестровье, активный отдых, турклуб Эва, советы туристам, маршруты Молдова`;
 
   return {
-    title: `${post.title} | Турклуб Эва`,
-    description: post.excerpt,
+    title: `${post.title} | Турклуб «Эва»`,
+    description: post.excerpt || `Статья от турклуба «Эва»: ${post.title}`,
+    keywords: keywordsStr,
+    alternates: {
+      canonical: postUrl, // ✅ ИСПРАВЛЕНО: Защита от дублей с UTM-метками
+    },
     openGraph: {
-      title: `${post.title} | Турклуб Эва`,
+      title: `${post.title} | Турклуб «Эва»`,
       description: post.excerpt || '',
+      url: postUrl,
+      siteName: 'Турклуб «Эва»',
       images: [
         {
           url: imageUrl,
@@ -61,6 +78,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         },
       ],
       type: 'article',
+      locale: 'ru_RU',
     },
     twitter: {
       card: 'summary_large_image',
@@ -79,12 +97,80 @@ export default async function BlogPostPage({ params }: PageProps) {
   if (!data) notFound();
 
   const { post, relatedPosts } = data;
+  const postUrl = `${BASE_URL}/blog/${post.slug}`;
 
+  // Форматирование даты
   const formatDate = (date: Date) => new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const isoDate = new Date(post.date).toISOString();
+
+  // Делаем URL картинки абсолютным для микроразметки
+  let absoluteImageUrl = post.image || '/og-default.jpg'; 
+  if (absoluteImageUrl.startsWith('/')) {
+    absoluteImageUrl = `${BASE_URL}${absoluteImageUrl}`;
+  }
+
+  // ✅ ИСПРАВЛЕНО: Внедряем мощную микроразметку (Article + Breadcrumbs)
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': postUrl
+      },
+      headline: post.title,
+      description: post.excerpt || '',
+      image: [absoluteImageUrl],
+      datePublished: isoDate,
+      dateModified: isoDate, // Если в БД появится поле updatedAt, можно будет подставить его
+      author: {
+        '@type': 'Person',
+        name: post.author_name || 'Турклуб Эва',
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Турклуб «Эва»',
+        logo: {
+          '@type': 'ImageObject',
+          url: `${BASE_URL}/logo.png`
+        }
+      }
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Главная',
+          item: BASE_URL
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Журнал',
+          item: `${BASE_URL}/blog`
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: post.title,
+          item: postUrl
+        }
+      ]
+    }
+  ];
 
   return (
     <article className="min-h-screen bg-[#0B1120] pb-10 md:pb-20">
       
+      {/* СКРЫТЫЙ КОД ДЛЯ ПОИСКОВЫХ БОТОВ (JSON-LD) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* --- 1. HERO HEADER --- */}
       <div className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden">
         <Image 

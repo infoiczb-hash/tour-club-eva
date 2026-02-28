@@ -9,6 +9,8 @@ export interface Tour {
   title: string;
   subtitle?: string | null;
   description?: string | null; // HTML описание
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
 
   // === ЦЕНЫ ===
   price: number;           

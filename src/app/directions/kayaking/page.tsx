@@ -5,8 +5,40 @@ import { Metadata } from 'next';
 import KayakingLanding from '@/features/directions/kayaking/KayakingLanding';
 
 export const metadata: Metadata = {
-  title: 'Сплавы на байдарках по Днестру | Турклуб ЭВА',
-  description: 'Водные походы на каяках и байдарках. Маршруты по Днестру, каньоны, дикие пляжи.',
+  title: 'Сплав на байдарках по Днестру в Приднестровье | Турклуб «Эва»',
+  description: 'Однодневные и многодневные сплавы на байдарках по реке Днестр. Для новичков и семей с детьми.',
+  keywords: [
+    'сплав байдарки Днестр',
+    'каяки Приднестровье',
+    'водный поход Тирасполь',
+    'байдарки Молдова',
+    'сплав по Днестру цена'
+  ],
+  alternates: {
+    canonical: '/directions/kayaking', // Защита от дублей
+  },
+  openGraph: {
+    title: 'Сплав на байдарках по Днестру | Турклуб «Эва»',
+    description: 'Маршруты по Днестру для новичков и семей и для команд',
+    url: 'https://evatur.club/directions/kayaking',
+    siteName: 'Турклуб «Эва»',
+    images: [
+      {
+        url: '/og-default.jpg', // Надежный фолбэк для соцсетей
+        width: 1200,
+        height: 630,
+        alt: 'Сплав на байдарках по Днестру с турклубом Эва',
+      }
+    ],
+    type: 'website',
+    locale: 'ru_RU',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Сплав на байдарках по Днестру | Турклуб Эва',
+    description: 'Маршруты по Днестру для новичков и семей и для команд',
+    images: ['/og-default.jpg'],
+  }
 };
 
 // УБРАЛИ async! Это теперь обычный синхронный компонент

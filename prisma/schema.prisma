@@ -79,22 +79,36 @@ model Tour {
 }
 
 model Guide {
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String?  @unique @default(cuid())
   name         String
   role         String   @default("GID")
-  image        String?
-  superpower   String?
-  experience   String?
-  bio          String?
-  achievements String[]
+  
+  image        String?  
+  actionImage  String?  
+  
+  bio          String?  
+  fullBio      String?  
+  quotes       String[] 
+  experience   String?  
+  superpower   String?  
+  tags         String[] 
+  achievements String[] 
+  
+  stats        Json?    
+  
   contact      String?
   instagram    String?
   telegram     String?
+  
+  order        Int      @default(0) 
   isActive     Boolean  @default(true) @map("is_active")
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  actionImage  String?
+  
   posts        Blog[]
   tours        Tour[]
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("guides")
 }

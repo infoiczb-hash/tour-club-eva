@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { 
   X, Save, Sparkles, Loader2, Wand2, 
   Instagram, Send, Upload, User, 
-  Award, Clock, Camera 
+  Award, Clock, Camera, Plus, Trash2, Zap, Flame, Utensils, Activity, Heart, Compass
 } from 'lucide-react';
 import Button from '@/shared/ui/Button';
 import { performAiTask } from '@/features/admin/actions/ai';
@@ -16,10 +16,13 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- КОМПОНЕНТ РЕДАКТОРА С AI (Оставляем твой) ---
+// Словарь иконок для статов
+const ICONS: Record<string, React.ElementType> = {
+  Zap, Flame, Utensils, Activity, Heart, Compass, Sparkles
+};
+
 const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: any) => {
     const [aiLoading, setAiLoading] = useState(false);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
   
     const handleAiImprove = async () => {
       if (!value || value.length < 3) return alert('Напишите хоть пару слов!');
@@ -34,14 +37,13 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
     return (
       <div className="space-y-2 group">
          <div className="flex justify-between items-end">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-focus-within:text-teal-500 transition-colors ml-1">{label}</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-1">{label}</label>
             <button type="button" onClick={handleAiImprove} disabled={aiLoading} className="text-[10px] flex items-center gap-1 text-teal-600 hover:text-teal-400 disabled:opacity-50 transition-colors bg-teal-950/30 px-2 py-1 rounded-md border border-teal-900/50">
                 {aiLoading ? <Loader2 className="animate-spin" size={10}/> : <Wand2 size={10}/>}
                 <span>AI Rewrite</span>
             </button>
          </div>
          <textarea 
-            ref={textareaRef}
             className={`w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50 transition-all resize-none ${height}`}
             placeholder={placeholder}
             value={value}
@@ -51,31 +53,53 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
     );
 };
 
-// --- ОСНОВНАЯ ФОРМА ---
-interface Props {
-  initialData?: any;
-  onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
-}
-
-export default function GuideForm({ initialData, onClose, onSubmit }: Props) {
+export default function GuideForm({ initialData, onClose, onSubmit }: any) {
   const [isUploading, setIsUploading] = useState(false);
   const [loadingField, setLoadingField] = useState<string | null>(null);
   
+  // Умный парсинг JSON со статами, если они пришли строкой
+  const parseStats = (stats: any) => {
+      if (!stats) return [];
+      if (typeof stats === 'string') return JSON.parse(stats);
+      return stats;
+  };
+
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
+    slug: initialData?.slug || '',
     role: initialData?.role || 'Гид',
     image: initialData?.image || '',
-    actionImage: initialData?.actionImage || '', // Новое поле
+    actionImage: initialData?.actionImage || '', 
     bio: initialData?.bio || '',
-    experience: initialData?.experience || '',   // Новое поле
-    superpower: initialData?.superpower || '',   // Новое поле
-    // Превращаем массив тегов в строку для редактирования
+    fullBio: initialData?.fullBio || '',
+    experience: initialData?.experience || '',   
+    superpower: initialData?.superpower || '',   
     achievements: initialData?.achievements ? initialData.achievements.join(', ') : '', 
+    tags: initialData?.tags ? initialData.tags.join(', ') : '', 
+    quotes: initialData?.quotes ? initialData.quotes.join('\n') : '', 
     instagram: initialData?.instagram || '', 
     telegram: initialData?.telegram || '', 
-    contact: initialData?.contact || ''
+    contact: initialData?.contact || '',
+    order: initialData?.order || 0,
+    isActive: initialData?.isActive ?? true,
+    stats: parseStats(initialData?.stats)
   });
+
+  const handleStatChange = (index: number, field: string, value: string | number) => {
+      const newStats = [...formData.stats];
+      newStats[index] = { ...newStats[index], [field]: value };
+      setFormData({ ...formData, stats: newStats });
+  };
+
+  const addStat = () => {
+      setFormData({ ...formData, stats: [...formData.stats, { label: 'Новый навык', value: 50, icon: 'Zap' }] });
+  };
+
+  const removeStat = (index: number) => {
+      const newStats = [...formData.stats];
+      newStats.splice(index, 1);
+      setFormData({ ...formData, stats: newStats });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,8 +109,9 @@ export default function GuideForm({ initialData, onClose, onSubmit }: Props) {
             ...formData,
             image: formData.image || null,
             actionImage: formData.actionImage || null,
-            // Превращаем строку обратно в массив, убираем пробелы
             achievements: formData.achievements.split(',').map((s: string) => s.trim()).filter(Boolean),
+            tags: formData.tags.split(',').map((s: string) => s.trim()).filter(Boolean),
+            quotes: formData.quotes.split('\n').map((s: string) => s.trim()).filter(Boolean),
             id: initialData?.id
         };
         await onSubmit(payload);
@@ -105,20 +130,14 @@ export default function GuideForm({ initialData, onClose, onSubmit }: Props) {
     try {
         const url = await uploadImage(file);
         if (url) setFormData(prev => ({ ...prev, [field]: url }));
-        else alert("Ошибка получения ссылки на файл");
-    } catch (err) { 
-        console.error(err);
-        alert("Ошибка загрузки"); 
-    } 
-    finally { setLoadingField(null); }
+    } finally { setLoadingField(null); }
   };
 
   return (
     <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-xl">
       <div className="bg-slate-950 rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[95vh] border border-slate-800 relative overflow-hidden">
         
-        {/* HEADER */}
-        <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+        <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 shrink-0">
           <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"/>
               <h2 className="text-xl font-black text-white uppercase tracking-tight">
@@ -128,25 +147,16 @@ export default function GuideForm({ initialData, onClose, onSubmit }: Props) {
           <button onClick={onClose} className="hover:bg-slate-800 p-2 rounded-xl transition text-slate-400"><X size={24}/></button>
         </div>
 
-        {/* BODY */}
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-8 flex-1 scrollbar-thin scrollbar-thumb-slate-800">
           
-          {/* --- ФОТОГРАФИИ (GRID) --- */}
+          {/* ФОТОГРАФИИ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {/* 1. Портрет (Card) */}
              <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-                    <User size={12}/> Портрет (Карточка)
+                    <User size={12}/> Портрет (Сетка 3:4)
                 </label>
                 <div className="aspect-[3/4] rounded-xl border-2 border-dashed border-slate-800 relative group overflow-hidden bg-slate-900 hover:border-teal-500/50 transition-colors">
-                    {formData.image ? (
-                        <img src={formData.image} className="w-full h-full object-cover" alt="Portrait"/>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-700 flex-col gap-2">
-                            <User size={40} strokeWidth={1}/>
-                            <span className="text-xs">Загрузить фото</span>
-                        </div>
-                    )}
+                    {formData.image ? <img src={formData.image} className="w-full h-full object-cover" alt="Portrait"/> : <div className="w-full h-full flex items-center justify-center text-slate-700 flex-col gap-2"><User size={40} strokeWidth={1}/><span className="text-xs">Загрузить аватарку</span></div>}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer backdrop-blur-sm">
                        {loadingField === 'image' ? <Loader2 className="animate-spin text-teal-500"/> : <Upload className="text-white"/>}
                     </div>
@@ -154,20 +164,12 @@ export default function GuideForm({ initialData, onClose, onSubmit }: Props) {
                 </div>
              </div>
 
-             {/* 2. Экшен (Modal) */}
              <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-                    <Camera size={12}/> Экшен (Модалка)
+                    <Camera size={12}/> Экшен (Широкое фото для SEO)
                 </label>
-                <div className="aspect-[3/4] rounded-xl border-2 border-dashed border-slate-800 relative group overflow-hidden bg-slate-900 hover:border-teal-500/50 transition-colors">
-                    {formData.actionImage ? (
-                        <img src={formData.actionImage} className="w-full h-full object-cover" alt="Action"/>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-700 flex-col gap-2">
-                            <Camera size={40} strokeWidth={1}/>
-                            <span className="text-xs">Загрузить фото в деле</span>
-                        </div>
-                    )}
+                <div className="aspect-[4/3] rounded-xl border-2 border-dashed border-slate-800 relative group overflow-hidden bg-slate-900 hover:border-teal-500/50 transition-colors">
+                    {formData.actionImage ? <img src={formData.actionImage} className="w-full h-full object-cover" alt="Action"/> : <div className="w-full h-full flex items-center justify-center text-slate-700 flex-col gap-2"><Camera size={40} strokeWidth={1}/><span className="text-xs">Загрузить фото в деле</span></div>}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer backdrop-blur-sm">
                        {loadingField === 'actionImage' ? <Loader2 className="animate-spin text-teal-500"/> : <Upload className="text-white"/>}
                     </div>
@@ -178,77 +180,98 @@ export default function GuideForm({ initialData, onClose, onSubmit }: Props) {
 
           <div className="h-px bg-slate-800 w-full" />
 
-          {/* --- ОСНОВНАЯ ИНФО --- */}
+          {/* ОСНОВНАЯ ИНФО */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
              <div className="space-y-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Имя Фамилия</label>
-                <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm font-bold text-white placeholder-slate-600 transition-colors"
+                <input required className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm font-bold text-white transition-colors"
                     value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Роман Санду"
                 />
              </div>
              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 text-teal-500">SEO Slug (Ссылка)</label>
+                <input required className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-teal-400 transition-colors"
+                    value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="roman-sandu"
+                />
+             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+             <div className="space-y-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Роль (Бейдж)</label>
-                <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white placeholder-slate-600 transition-colors"
-                    value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} placeholder="Основатель"
-                />
+                <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} placeholder="Основатель"/>
+             </div>
+             <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 flex items-center gap-1"><Sparkles size={10} className="text-amber-400"/> Суперсила</label>
+                <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white" value={formData.superpower} onChange={e => setFormData({...formData, superpower: e.target.value})} placeholder="Специалист по кухне"/>
+             </div>
+             <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Порядок сортировки</label>
+                <input type="number" className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white" value={formData.order} onChange={e => setFormData({...formData, order: parseInt(e.target.value) || 0})}/>
              </div>
           </div>
 
-          {/* Superpower & Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-             <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 flex items-center gap-1"><Sparkles size={10} className="text-amber-400"/> Статус (Superpower)</label>
-                <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white placeholder-slate-600 transition-colors"
-                    value={formData.superpower} onChange={e => setFormData({...formData, superpower: e.target.value})} placeholder="Организация экспедиций"
-                />
+          {/* 🔥 RPG STATS BUILDER 🔥 */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 space-y-4">
+             <div className="flex justify-between items-center">
+                 <label className="text-[12px] font-bold text-white uppercase flex items-center gap-2"><Zap className="text-amber-400" size={16}/> Характеристики (RPG Stats)</label>
+                 <Button type="button" onClick={addStat} variant="secondary" className="text-xs px-3 py-1 bg-slate-800 hover:bg-slate-700">
+                    <Plus size={14} className="mr-1"/> Добавить навык
+                 </Button>
              </div>
-             <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 flex items-center gap-1"><Clock size={10} className="text-teal-400"/> Опыт</label>
-                <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white placeholder-slate-600 transition-colors"
-                    value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="15 лет"
-                />
+             
+             {formData.stats.length === 0 && <p className="text-xs text-slate-500">Нет характеристик. Добавьте "Выносливость", "Кулинария" и т.д.</p>}
+
+             <div className="space-y-3">
+                 {formData.stats.map((stat: any, i: number) => (
+                    <div key={i} className="flex flex-wrap md:flex-nowrap items-center gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
+                       <input 
+                         className="flex-1 min-w-[120px] p-2 bg-slate-900 border border-slate-700 rounded-lg outline-none text-sm text-white focus:border-teal-500"
+                         value={stat.label} onChange={(e) => handleStatChange(i, 'label', e.target.value)} placeholder="Название (напр. Харизма)"
+                       />
+                       <select 
+                         className="p-2 bg-slate-900 border border-slate-700 rounded-lg outline-none text-sm text-white focus:border-teal-500"
+                         value={stat.icon} onChange={(e) => handleStatChange(i, 'icon', e.target.value)}
+                       >
+                         {Object.keys(ICONS).map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                       </select>
+                       <div className="flex items-center gap-3 w-full md:w-1/3">
+                          <input type="range" min="0" max="100" value={stat.value} onChange={(e) => handleStatChange(i, 'value', parseInt(e.target.value))} className="w-full accent-teal-500"/>
+                          <span className="text-xs font-mono font-bold text-teal-400 w-8">{stat.value}%</span>
+                       </div>
+                       <button type="button" onClick={() => removeStat(i)} className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <Trash2 size={16}/>
+                       </button>
+                    </div>
+                 ))}
              </div>
           </div>
 
+          {/* ТЕКСТЫ */}
           <div className="space-y-1">
-             <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 flex items-center gap-1"><Award size={10}/> Навыки (теги через запятую)</label>
-             <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white placeholder-slate-600 transition-colors"
-                 value={formData.achievements} onChange={e => setFormData({...formData, achievements: e.target.value})} placeholder="Альпинизм, Первая помощь, Психология"
-             />
+             <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Теги-фишки (через запятую)</label>
+             <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none text-sm text-white" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="играет на гитаре, воспитывает черепаху"/>
           </div>
 
-          {/* БИОГРАФИЯ (с AI) */}
-          <RichTextarea 
-             label="БИОГРАФИЯ / ДОСЬЕ"
-             placeholder="Расскажите историю гида..."
-             value={formData.bio}
-             onChange={(val: string) => setFormData({...formData, bio: val})}
-          />
-
-          {/* SOCIALS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
-             <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 flex items-center gap-1"><Instagram size={10}/> Instagram (URL)</label>
-                <input className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white placeholder-slate-600"
-                    value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})}
-                />
-             </div>
-             <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 flex items-center gap-1"><Send size={10}/> Telegram (URL)</label>
-                <input className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white placeholder-slate-600"
-                    value={formData.telegram} onChange={e => setFormData({...formData, telegram: e.target.value})}
-                />
-             </div>
-          </div>
+          <RichTextarea label="Превью для карточки (Коротко)" placeholder="2-3 предложения для сетки..." value={formData.bio} onChange={(val: string) => setFormData({...formData, bio: val})} height="h-24" />
+          <RichTextarea label="Полная биография (Для SEO-страницы)" placeholder="Развернутая история..." value={formData.fullBio} onChange={(val: string) => setFormData({...formData, fullBio: val})} height="h-40" />
           
+          <div className="space-y-1">
+             <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Цитаты гида (каждая с новой строки)</label>
+             <textarea className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 h-28" value={formData.quotes} onChange={e => setFormData({...formData, quotes: e.target.value})} placeholder="«Горы не покоряют, в них гостят»"/>
+          </div>
+
+          <label className="flex items-center gap-3 p-4 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-900/50 transition">
+             <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} className="w-5 h-5 accent-teal-500 rounded bg-slate-800 border-slate-700"/>
+             <span className="text-sm font-bold text-white">Гид активен (Показывать на сайте)</span>
+          </label>
+
         </form>
 
-        {/* FOOTER */}
-        <div className="p-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex justify-end gap-3 z-10">
+        <div className="p-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex justify-end gap-3 shrink-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isUploading}>Отмена</Button>
-            <Button type="submit" onClick={handleSubmit} variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white shadow-[0_0_20px_rgba(20,184,166,0.2)]">
-              {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} 
-              Сохранить досье
+            <Button type="submit" onClick={handleSubmit} variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white">
+              {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} Сохранить досье
             </Button>
         </div>
 
