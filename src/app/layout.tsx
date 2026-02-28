@@ -66,47 +66,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html 
-      lang="ru" 
-      className={`scroll-smooth ${inter.variable}`} 
-      suppressHydrationWarning
-      // ✅ Добавляем только эту строку, чтобы Next.js не ругался на плавный скролл
-      data-scroll-behavior="smooth" 
-    >
-      <body
-        suppressHydrationWarning={true}
-        className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col"
-      >
-        <Providers>
-          <ToastProvider>
-            {/* 👇 СКРЫТЫЙ СКРИПТ ОРГАНИЗАЦИИ */}
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-            />
-            {/* ✅ ПЕРЕДАЕМ КОМПОНЕНТЫ КАК ПРОПСЫ */}
-            <MainLayoutWrapper
-              header={<Header />}
-              footer={<Footer />}
-              promo={<PromoBlock />}
-            >
-              {children}
-            </MainLayoutWrapper>
-          </ToastProvider>
-        </Providers>
-        <Analytics />
-        <SpeedInsights />
-        <AxeReporter />
-      </body>
-    </html>
-  );
-}
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': ['TravelAgency', 'LocalBusiness'],
@@ -150,3 +109,45 @@ const organizationSchema = {
     'https://t.me/evaturclub',
   ],
 };
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html 
+      lang="ru" 
+      className={`scroll-smooth ${inter.variable}`} 
+      suppressHydrationWarning
+      // ✅ Добавляем только эту строку, чтобы Next.js не ругался на плавный скролл
+      data-scroll-behavior="smooth" 
+    >
+      <body
+        suppressHydrationWarning={true}
+        className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col"
+      >
+        <Providers>
+          <ToastProvider>
+            {/* 👇 СКРЫТЫЙ СКРИПТ ОРГАНИЗАЦИИ */}
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            />
+            {/* ✅ ПЕРЕДАЕМ КОМПОНЕНТЫ КАК ПРОПСЫ */}
+            <MainLayoutWrapper
+              header={<Header />}
+              footer={<Footer />}
+              promo={<PromoBlock />}
+            >
+              {children}
+            </MainLayoutWrapper>
+          </ToastProvider>
+        </Providers>
+        <Analytics />
+        <SpeedInsights />
+        <AxeReporter />
+      </body>
+    </html>
+  );
+}
