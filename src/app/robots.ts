@@ -1,14 +1,27 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://tour-club-eva.vercel.app'; // Или твой домен
+const BASE_URL = 'https://www.evatur.club';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: '/admin/', // Запрещаем сканировать админку
-    },
+    rules: [
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: ['/admin/', '/api/', '/_next/'],
+      },
+      {
+        userAgent: 'Yandexbot',
+        allow: '/',
+        disallow: ['/admin/', '/api/', '/_next/'],
+      },
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin/', '/api/', '/_next/', '/offer', '/privacy'],
+      },
+    ],
     sitemap: `${BASE_URL}/sitemap.xml`,
+    host: BASE_URL, 
   };
 }

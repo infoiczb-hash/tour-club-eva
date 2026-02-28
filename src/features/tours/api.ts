@@ -91,6 +91,8 @@ function mapPrismaTourToFrontend(item: any): Tour {
     } : null,
     
     isActive: item.isActive,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   };
 }
 

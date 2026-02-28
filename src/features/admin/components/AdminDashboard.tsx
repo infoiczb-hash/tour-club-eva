@@ -103,7 +103,7 @@ const [modalState, setModalState] = useState({
 
   const loadAllData = async () => {
     try {
-        const [bRes, gRes, pRes, rRes, inqRes, heroRes, footerRes] = await Promise.all([
+        const [bRes, gRes, pRes, rRes, inqRes, heroRes, funRes, footerRes] = await Promise.all([
             getRegistrationsAction(),
             getGuides(),
             getBlogPosts(),
@@ -120,6 +120,7 @@ const [modalState, setModalState] = useState({
         setPosts(pRes);
         setReviews(rRes);
         if (inqRes.success && inqRes.data) setInquiries(inqRes.data); // 👇 Сохраняем заявки
+        if (funRes && funRes.success) setFunTests(funRes.data);
         setContentBlocks({ hero: heroRes, footer: footerRes });
     } catch (error) {
         console.error("Data load error:", error);
@@ -377,15 +378,17 @@ const [modalState, setModalState] = useState({
           <GuideForm 
             initialData={editingItem}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
-            onSubmit={async (data) => { await saveGuideAction(data); loadAllData(); }}
+            // 👇 Надежно и строго: мы ожидаем объект (Record)
+            onSubmit={async (data: Record<string, any>) => { await saveGuideAction(data); loadAllData(); }}
           />
       )}
       
       {modalState.post && (
-          <PostForm
+     <PostForm
             initialData={editingItem}
             onClose={() => setModalState(p => ({ ...p, post: false }))}
-            onSubmit={async (data) => { await savePostAction(data); loadAllData(); }}
+            // 👇 ИСПРАВЛЕНО: добавлена строгая типизация (data: Record<string, unknown>)
+            onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
           />
       )}
 

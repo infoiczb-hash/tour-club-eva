@@ -22,12 +22,48 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: {
-    template: "%s | Турклуб ЭВА",
-    default: "Турклуб ЭВА | Походы и приключения",
-  },
-  description: "Авторские путешествия, сплавы и походы по Молдове и миру.",
   metadataBase: new URL("https://evatur.club"),
+  title: {
+    template: "%s | Турклуб «Эва»",
+    default: "Турклуб «Эва» — Активный отдых в Приднестровье",
+  },
+  description: "Турклуб «Эва» — сплавы на байдарках по Днестру, походы и SUP в Приднестровье и Молдове. Активный отдых каждые выходные из Тирасполя.",
+  keywords: [
+    "турклуб Приднестровье", 
+    "активный отдых Тирасполь", 
+    "сплав Днестр", 
+    "байдарки Приднестровье", 
+    "походы Молдова"
+  ],
+  openGraph: {
+    title: "Турклуб «Эва» — Активный отдых в Приднестровье",
+    description: "Турклуб «Эва» — сплавы на байдарках по Днестру, походы и SUP в Приднестровье и Молдове. Активный отдых каждые выходные из Тирасполя. Туры в румынские горы.",
+    url: "https://evatur.club",
+    siteName: "Турклуб «Эва»",
+    images: [
+      {
+        url: "/og-default.jpg", // ⚠️ ВАЖНО: положи картинку 1200x630 с таким названием в папку public
+        width: 1200,
+        height: 630,
+        alt: "Турклуб Эва — сплавы и приключенческие туры",
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Турклуб «Эва» — Активный отдых в Приднестровье",
+    description: "Сплавы на байдарках, приключенчиские туры и SUP в Приднестровье и Молдове.",
+    images: ["/og-default.jpg"],
+  },
+  verification: {
+    google: "bQzEK-w6DrRPryfEde5_dJSFHBskbBJRcWeiPgMu0N0",
+    yandex: "115d8eefc0d25672",
+  },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({

@@ -6,7 +6,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Instagram, Send, X, ArrowRight, ShieldCheck, 
-  MapPin, User, ChevronRight, Zap, Flame, Sparkles, Utensils
+  MapPin, User, ChevronRight, Zap, Flame, Sparkles, 
+  Utensils, Activity, Heart, Compass 
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -16,23 +17,41 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- TYPES ---
+// --- СЛОВАРЬ ИКОНОК ДЛЯ RPG-СТАТОВ ---
+const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
+  Zap: { icon: Zap, color: "text-amber-400" },
+  Utensils: { icon: Utensils, color: "text-rose-400" },
+  Sparkles: { icon: Sparkles, color: "text-purple-400" },
+  Flame: { icon: Flame, color: "text-teal-400" },
+  Activity: { icon: Activity, color: "text-sky-400" },
+  Heart: { icon: Heart, color: "text-red-500" },
+  Compass: { icon: Compass, color: "text-emerald-400" },
+};
+
+// --- ТИПЫ ИЗ НОВОЙ СХЕМЫ PRISMA ---
 interface Guide {
-  id: string | number;
+  id: string;
+  slug: string;
   name: string;
   role: string;
   image: string | null;       
-  actionImage?: string | null; 
-  bio?: string | null;
-  superpower?: string | null;
-  experience?: string | null;
-  achievements?: string[];
-  instagram?: string | null;
-  telegram?: string | null;
-  contact?: string | null;
+  actionImage: string | null; 
+  bio: string | null;
+  fullBio: string | null;
+  superpower: string | null;
+  experience: string | null;
+  tags: string[];
+  achievements: string[];
+  quotes: string[];
+  stats: any; // JSON из базы
+  instagram: string | null;
+  telegram: string | null;
+  contact: string | null;
+  order: number;
+  isActive: boolean;
 }
 
-// --- RPG STATS COMPONENT ---
+// --- КОМПОНЕНТ ШКАЛЫ НАВЫКА (RPG) ---
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     <div className="mb-2">
        <div className="flex justify-between items-end mb-2">
@@ -57,10 +76,12 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
 
-  const displayGuides = Array.isArray(guides) ? guides : [];
+  // Сортируем гидов по полю order (чтобы основатели были первыми)
+  const displayGuides = Array.isArray(guides) 
+    ? [...guides].sort((a, b) => (a.order || 0) - (b.order || 0)) 
+    : [];
 
   return (
-    // Уменьшили отступы секции: py-12 md:py-24 (было больше)
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden" id="team">
       
       {/* --- BACKGROUND --- */}
@@ -74,33 +95,26 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-8">
             <div className="max-w-2xl">
                 <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-                    {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
                         <ShieldCheck size={14} className="text-teal-400" />
                         <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
                     </div>
                     
-                    {/* Title: Чистый белый цвет */}
                     <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-            <span className="font-light text-slate-400 block md:inline">Команда </span>
-            <span className="font-black text-white">Клуба</span>
-            <span className="text-teal-500">.</span>
-        </h2>
+                        <span className="font-light text-slate-400 block md:inline">Команда </span>
+                        <span className="font-black text-white">Клуба</span>
+                        <span className="text-teal-500">.</span>
+                    </h2>
                     
-                    {/* Subtitle */}
                     <p className="text-slate-400 text-s md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
                         Профессионалы, с которыми безопасно и интересно в любой точке мира.
                         Знают каждый камень на маршруте.
                     </p>
                 </motion.div>
             </div>
-
-            </div>
+        </div>
 
         {/* --- GRID / SCROLL --- */}
-        {/* gap-4 : Добавлен отступ между карточками на мобильном (чтобы не слипались)
-           -mx-4 px-4 : Отрицательные отступы чтобы скролл уходил за край экрана
-        */}
         <div className="
             flex overflow-x-auto snap-x snap-mandatory hide-scrollbar 
             gap-4 -mx-4 px-4 pb-8
@@ -136,7 +150,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                 </div>
                 <h3 className="text-xl md:text-2xl font-black uppercase text-white mb-3">Ты?</h3>
                 <p className="text-xs text-slate-400 font-medium mb-8 max-w-[220px] leading-relaxed">
-                    Хочешь водить группы или стать частью команды? Нам нужны гиды, технические ассистенты, повара и просто хорошие люди.
+                    Хочешь водить группы или стать частью команды? Нам нужны гиды, ассистенты, повара и просто хорошие люди.
                 </p>
                 <span className="px-5 py-2 rounded-full border border-teal-500/30 text-[12px] font-bold uppercase tracking-widest text-teal-400 flex items-center gap-2 group-hover:bg-teal-500 group-hover:text-slate-900 transition-all">
                     ПОДАТЬ ЗАЯВКУ <ArrowRight size={14} />
@@ -165,7 +179,6 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 
 // --- GUIDE CARD ---
 function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onClick: () => void }) {
-    // Ритм: четные ниже на десктопе
     const rhythmClass = index % 2 !== 0 ? 'lg:mt-12' : '';
 
     return (
@@ -182,15 +195,12 @@ function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onC
             )}
             onClick={onClick}
         >
-            {/* PHOTO: Color on mobile, BW on desktop until hover */}
             {guide.image ? (
                 <Image
                     src={guide.image}
                     alt={guide.name}
                     fill
-                    className="object-cover transition-all duration-700 
-                    md:grayscale md:group-hover:grayscale-0 
-                    md:scale-100 md:group-hover:scale-110"
+                    className="object-cover transition-all duration-700 md:grayscale md:group-hover:grayscale-0 md:scale-100 md:group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, 25vw"
                 />
             ) : (
@@ -201,15 +211,21 @@ function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onC
 
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 md:opacity-60 md:group-hover:opacity-80 transition-opacity" />
 
-            {/* INFO */}
             <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
                 <div className="transform translate-y-2 md:translate-y-8 group-hover:translate-y-0 transition-transform duration-500">
-                    <span className="inline-block px-2 py-0.5 rounded bg-teal-500 text-slate-900 text-[12px] font-black uppercase tracking-widest mb-3">
+                    <span className="inline-block px-2 py-0.5 rounded bg-teal-500 text-slate-900 text-[12px] font-black uppercase tracking-widest mb-3 shadow-lg">
                         {guide.role}
                     </span>
                     <h3 className="text-2xl md:text-3xl font-black text-white leading-none uppercase tracking-tight mb-2">
                         {guide.name}
                     </h3>
+                    
+                    {/* Короткое био (превью) на десктопе при наведении */}
+                    {guide.bio && (
+                        <p className="text-xs text-slate-300 font-medium line-clamp-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+                            {guide.bio}
+                        </p>
+                    )}
                     
                     <div className="flex items-center gap-2 text-teal-400 text-[12px] font-bold uppercase tracking-widest opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
                         <span>Смотреть профиль</span>
@@ -221,17 +237,18 @@ function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onC
     );
 }
 
-// --- HERO MODAL ---
-// --- HERO MODAL ---
+// --- HERO MODAL (ОБНОВЛЕННЫЙ С ДАННЫМИ ИЗ БД) ---
 function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void }) {
     
-    // DEMO STATS (в будущем из БД)
-    const stats = [
-        { label: "ВЫНОСЛИВОСТЬ", value: 95, icon: Zap, color: "text-amber-400" },
-        { label: "КУЛИНАРИЯ", value: 80, icon: Utensils, color: "text-rose-400" },
-        { label: "ХАРИЗМА", value: 90, icon: Sparkles, color: "text-purple-400" },
-        { label: "ОПЫТ", value: 100, icon: Flame, color: "text-teal-400" },
-    ];
+    // Парсим статы из БД
+    let parsedStats: any[] = [];
+    if (guide.stats) {
+        try {
+            parsedStats = typeof guide.stats === 'string' ? JSON.parse(guide.stats) : guide.stats;
+        } catch (e) {
+            console.error("Ошибка парсинга статов", e);
+        }
+    }
 
     return (
         <motion.div 
@@ -241,7 +258,6 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
         >
             <motion.div 
                 layoutId={`guide-${guide.id}`}
-                // Убрали жесткий aspect-ratio, разрешили тянуться по высоте (h-auto), но не больше 90% экрана
                 className="relative w-full h-full md:max-w-4xl lg:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-950 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -249,20 +265,19 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                     <X size={24} />
                 </button>
 
-                {/* LEFT: PHOTO */}
-                {/* Заменили md:h-full на md:h-auto, чтобы фото тянулось за текстом */}
+                {/* LEFT: PHOTO (Приоритет у широкого Action Image) */}
                 <div className="w-full md:w-5/12 h-[40vh] md:h-auto relative">
-                    {guide.image ? (
+                    {guide.actionImage || guide.image ? (
                        <Image 
-  src={guide.actionImage || guide.image} 
-  alt={guide.name} 
-  fill 
-  className="object-cover"
-   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-   quality={80}
-/>
+                          src={guide.actionImage || guide.image || ''} 
+                          alt={guide.name} 
+                          fill 
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          quality={85}
+                       />
                     ) : (
-                        <div className="w-full h-full bg-slate-900 flex items-center justify-center"><User size={64}/></div>
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center"><User size={64} className="text-slate-700" /></div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-950/90 md:to-transparent" />
                     
@@ -272,42 +287,68 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                 </div>
 
                 {/* RIGHT: INFO */}
-                {/* Заменили md:h-full на md:h-auto */}
                 <div className="w-full md:w-7/12 p-6 md:p-10 flex flex-col h-[60vh] md:h-auto bg-slate-950 relative">
                     
-                    {/* Header Desktop */}
                     <div className="hidden md:block mb-8 shrink-0">
-                         <div className="text-[12px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Instuctor Profile</div>
+                         <div className="text-[12px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">
+                             {guide.experience ? `Опыт: ${guide.experience}` : 'Instructor Profile'}
+                         </div>
                          <h2 className="text-5xl lg:text-6xl font-black text-white uppercase leading-[0.85] tracking-tight">{guide.name}</h2>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide pb-24 md:pb-32">
-                        {/* Tags */}
+                    <div className="flex-1 overflow-y-auto pr-4 -mr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-24 md:pb-32">
+                        
+                        {/* Суперсила и Теги */}
                         <div className="flex flex-wrap gap-2 mb-8">
-                             <span className="px-3 py-1 bg-teal-500 text-slate-950 text-[12px] font-black uppercase rounded">{guide.role}</span>
+                             <span className="px-3 py-1 bg-teal-500 text-slate-950 text-[12px] font-black uppercase rounded shadow-lg">{guide.role}</span>
                              {guide.superpower && (
-                                <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 text-[12px] font-bold uppercase rounded flex items-center gap-1">
-                                    <Sparkles size={10} className="text-amber-400"/> {guide.superpower}
+                                <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 text-[12px] font-bold uppercase rounded flex items-center gap-1 shadow-sm">
+                                    <Sparkles size={12} className="text-amber-400"/> {guide.superpower}
                                 </span>
                              )}
+                             {guide.tags && guide.tags.map((tag, idx) => (
+                                 <span key={idx} className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider rounded">
+                                     {tag}
+                                 </span>
+                             ))}
                         </div>
 
-                        {/* STATS */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10 p-6 bg-white/[0.03] rounded-3xl border border-white/5">
-                            {stats.map((stat, i) => (
-                                <SkillBar key={i} {...stat} colorClass={stat.color} />
-                            ))}
-                        </div>
+                        {/* RPG СТАТИСТИКА */}
+                        {parsedStats.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10 p-6 bg-white/[0.03] rounded-3xl border border-white/5 shadow-inner">
+                                {parsedStats.map((stat, i) => {
+                                    const mapping = ICON_MAP[stat.icon] || ICON_MAP['Zap'];
+                                    return (
+                                        <SkillBar 
+                                            key={i} 
+                                            label={stat.label} 
+                                            value={stat.value} 
+                                            icon={mapping.icon} 
+                                            colorClass={mapping.color} 
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )}
 
-                        {/* BIO */}
+                        {/* ЦИТАТА */}
+                        {guide.quotes && guide.quotes.length > 0 && (
+                            <div className="mb-8 border-l-2 border-teal-500 pl-4 py-1">
+                                <p className="text-lg md:text-xl font-medium text-white italic leading-snug">
+                                    «{guide.quotes[0]}»
+                                </p>
+                            </div>
+                        )}
+
+                        {/* БИОГРАФИЯ (Full Bio приоритетнее в модалке) */}
                         <div className="mb-8">
-                            <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-2">Биография</h4>
-                            <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                                {guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию. Всегда знает, где самый красивый вид и вкусная вода."}
+                            <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Досье</h4>
+                            <p className="text-sm text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
+                                {guide.fullBio || guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию."}
                             </p>
                         </div>
 
-                        {/* Socials */}
+                        {/* СОЦСЕТИ */}
                         <div className="flex gap-3 mb-4">
                             {guide.instagram && <SocialBtn href={guide.instagram} icon={Instagram} />}
                             {guide.telegram && <SocialBtn href={guide.telegram} icon={Send} />}
@@ -317,7 +358,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                     {/* STICKY FOOTER */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:px-10 md:pb-10 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent">
                          <Link 
-                            href={`/tour`} 
+                            href={`/tour`} // В будущем можно сделать: href={`/tour?guide=${guide.slug}`}
                             className="w-full py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] active:scale-[0.98]"
                          >
                             <MapPin size={18} strokeWidth={2.5} />
