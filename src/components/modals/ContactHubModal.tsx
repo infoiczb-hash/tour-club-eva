@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, Phone, AtSign, MessageSquare, Briefcase, Heart, Star, Tent, FileText, CheckCircle2 } from 'lucide-react';
+import { X, Send, User, Phone, AtSign, MessageSquare, Briefcase, Heart, Star, Tent, FileText, CheckCircle2, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { submitInquiry } from '@/features/inquiries/actions';
 import { InquiryInput } from '@/features/inquiries/schema';

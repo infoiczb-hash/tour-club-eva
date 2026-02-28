@@ -171,12 +171,16 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
       </div>
 
       {/* --- ДИНАМИЧЕСКИЙ РЕНДЕР МОДАЛОК --- */}
-      {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
+     {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
         if (!ModalComponent) return null;
+        
+        const isActive = activeQuizSlug === slug;
+
         return (
           <ModalComponent 
             key={slug} 
-            isOpen={activeQuizSlug === slug} 
+            isOpen={isActive} // 👈 Команда для новых AI-тестов
+            open={isActive}   // 👈 Команда для старых тестов (Рюкзак, Выживание и т.д.)
             // Для старых тестов прокидываем onComplete, новые игнорируют
             onComplete={['backpack', 'survival', 'tourist-type', 'totem'].includes(slug) ? handleOldQuizResult : undefined}
             onClose={() => setActiveQuizSlug(null)} 
