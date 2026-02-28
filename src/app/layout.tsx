@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "bQzEK-w6DrRPryfEde5_dJSFHBskbBJRcWeiPgMu0N0",
-    yandex: "115d8eefc0d25672",
+    yandex: "d9d080aa11f7b5b3",
   },
   alternates: {
     canonical: "/",
