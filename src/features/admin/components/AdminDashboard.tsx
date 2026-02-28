@@ -103,14 +103,15 @@ const [modalState, setModalState] = useState({
 
   const loadAllData = async () => {
     try {
-        const [bRes, gRes, pRes, rRes, inqRes, heroRes, funRes, footerRes] = await Promise.all([
+        // 👇 ИСПРАВЛЕНО: Поменяли местами funRes и heroRes, чтобы они совпадали с функциями ниже
+        const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes] = await Promise.all([
             getRegistrationsAction(),
             getGuides(),
             getBlogPosts(),
             getReviews(),
-            getInquiriesAction(), // 👇 Загружаем заявки
-            getFunTestsAction(),
-            getContentBlock('hero'),
+            getInquiriesAction(),
+            getFunTestsAction(),      // Теперь попадает точно в funRes
+            getContentBlock('hero'),  // Теперь попадает точно в heroRes
             getContentBlock('footer')
 
         ]);
@@ -119,8 +120,8 @@ const [modalState, setModalState] = useState({
         setGuides(gRes as unknown as GuideItem[]);
         setPosts(pRes);
         setReviews(rRes);
-        if (inqRes.success && inqRes.data) setInquiries(inqRes.data); // 👇 Сохраняем заявки
-        if (funRes && funRes.success) setFunTests(funRes.data);
+        if (inqRes.success && inqRes.data) setInquiries(inqRes.data); 
+        if (funRes && funRes.success) setFunTests(funRes.data); // ✅ Теперь тут реальные тесты
         setContentBlocks({ hero: heroRes, footer: footerRes });
     } catch (error) {
         console.error("Data load error:", error);

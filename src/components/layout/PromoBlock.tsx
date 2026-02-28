@@ -48,7 +48,7 @@ export default function PromoBlock() {
         </h2>
           
           <p className="text-slate-300 text-s md:text-base font-medium leading-relaxed max-w-xs md:max-w-xl">
-            Три простых шаг, чтоб найти своё идеальное приключение. Понять/Вдохновиться/Спросить.
+            Три простых шага, чтоб найти своё идеальное приключение. Понять/Вдохновиться/Спросить.
           </p>
         </div>
 

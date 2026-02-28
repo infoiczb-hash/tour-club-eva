@@ -137,7 +137,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                             <div className="flex items-center gap-4 pt-6 border-t border-white/10 w-full">
                                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800">
                                     {featuredPost.author_image ? (
-                                        <Image src={featuredPost.author_image} alt="Author" fill className="object-cover" />
+                                        <Image src={featuredPost.author_image} alt={featuredPost.author_name || "Автор статьи"} fill className="object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-300"><User size={16}/></div>
                                     )}
