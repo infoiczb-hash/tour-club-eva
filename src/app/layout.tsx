@@ -85,6 +85,11 @@ export default function RootLayout({
       >
         <Providers>
           <ToastProvider>
+            {/* 👇 СКРЫТЫЙ СКРИПТ ОРГАНИЗАЦИИ */}
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            />
             {/* ✅ ПЕРЕДАЕМ КОМПОНЕНТЫ КАК ПРОПСЫ */}
             <MainLayoutWrapper
               header={<Header />}
@@ -102,3 +107,46 @@ export default function RootLayout({
     </html>
   );
 }
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': ['TravelAgency', 'LocalBusiness'],
+  name: 'Турклуб «Эва»',
+  alternateName: ['ТурклубЭВА', 'EvaClub', 'evatur.club'],
+  url: 'https://evatur.club',
+  logo: {
+    '@type': 'ImageObject',
+    url: 'https://evatur.club/icon.png', // Твой будущий фавикон/лого
+    width: 200,
+    height: 200,
+  },
+  image: 'https://evatur.club/og-default.jpg',
+  telephone: '+37377770141',
+  email: 'info@evatur.club',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '', // Если есть физический офис, впиши сюда
+    addressLocality: 'Тирасполь',
+    addressRegion: 'Приднестровье',
+    addressCountry: 'MD',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 46.8403,  // Координаты Тирасполя
+    longitude: 29.6433,
+  },
+  areaServed: [
+    { '@type': 'State', name: 'Приднестровье' },
+    { '@type': 'Country', name: 'Молдова' },
+    { '@type': 'City', name: 'Тирасполь' },
+    { '@type': 'City', name: 'Бендеры' },
+  ],
+  knowsAbout: [
+    'Активный туризм', 'Байдарки', 'Сплавы по Днестру',
+    'SUP', 'Пешие походы', 'Детские лагеря',
+  ],
+  priceRange: '$$', // Средний ценовой сегмент
+  sameAs: [
+    'https://instagram.com/evaturclub',
+    'https://t.me/evaturclub',
+  ],
+};
