@@ -205,7 +205,7 @@ function QuizCard({ onClick, image, color, icon, title, desc, badge }: any) {
 
     return (
         <motion.div variants={itemVariants} whileHover={{ y: -8 }} onClick={onClick} className={clsx("group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all shadow-2xl", activeColor.split(" ").pop())}>
-           {image && <Image src={image} alt="Quiz bg" fill className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 33vw" />}
+           {image && <Image src={image} alt={title} fill className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 33vw" />}
            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
            
            {badge && (

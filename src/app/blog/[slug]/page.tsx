@@ -207,7 +207,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 <div className="flex items-center gap-2 md:gap-3">
                     <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800">
                          {post.author_image ? (
-                             <Image src={post.author_image} alt="Author" fill className="object-cover" />
+                             <Image src={post.author_image} alt={post.author_name || "Автор статьи"} fill className="object-cover" />
                          ) : (
                              <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={16}/></div>
                          )}
