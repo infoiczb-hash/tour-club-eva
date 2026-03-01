@@ -4,12 +4,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { Tour } from '@/features/tours/types'; 
-import { Blog, BookingStatus, Guide, Review, Inquiry } from '@prisma/client'; 
+import { Blog, BookingStatus, Guide, Review, Inquiry, FunTest } from '@prisma/client'; 
 import AdminNavigation from './AdminNavigation';
-import { FunTest } from '@prisma/client'; 
 import FunTestTable from '@/features/admin/components/FunTestTab';
 import FanForm from '@/features/admin/components/FanForm';
-import { getFunTestsAction } from '@/features/admin/actions/fun';
 
 // VIEWS
 import DashboardTab from './views/DashboardTab';
@@ -19,40 +17,50 @@ import ReviewsTab from './views/ReviewsTab';
 import BlogTab from './views/BlogTab';
 import GuidesTab from './views/GuidesTab';
 import ContentTab from './views/ContentTab';
-// 👇 НОВЫЙ ИМПОРТ
 import InquiriesTab from './views/InquiriesTab';
+import CategoryForm from './views/CategoryForm'; 
 
-// FORMS & ACTIONS
+// FORMS
 import TourForm from './TourForm'; 
 import GuideForm from './GuideForm';
 import PostForm from './PostForm';
 import ContentForm from './ContentForm';
 import ReviewForm from './ReviewForm'; 
 import AiAssistant from './AiAssistant';
+import LoginModal from '@/shared/ui/LoginModal';
 
+// ACTIONS & API
 import { saveTour, updateTourStatus } from '@/features/admin/actions/tour'; 
 import { deleteTour } from '@/features/tours/actions';
-import { 
-  getRegistrationsAction, 
-  updateRegistrationStatus, 
-  saveGuideAction, 
-  deleteGuideAction, 
-  savePostAction, 
-  deletePostAction, 
-  saveContentBlockAction 
-} from '@/features/admin/actions';
-// 👇 НОВЫЙ ЭКШЕН
 import { getInquiriesAction } from '@/features/admin/actions/inquiries';
-
+import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { getReviews, deleteReview, upsertReview } from '@/features/reviews/actions';
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { getGuides } from '@/features/guides/api';
 import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
-import LoginModal from '@/shared/ui/LoginModal';
+
+// 👇 ВОССТАНОВЛЕННЫЕ ИМПОРТЫ ДЛЯ СТАРЫХ ФУНКЦИЙ
+import { 
+  saveGuideAction, 
+  deleteGuideAction, 
+  savePostAction, 
+  deletePostAction, 
+  saveContentBlockAction, 
+  getRegistrationsAction, 
+  updateRegistrationStatus 
+} from '@/features/admin/actions';
+// 👇 ЖЕЛЕЗОБЕТОННЫЙ ИМПОРТ НАПРЯМУЮ ИЗ ФАЙЛА КАТЕГОРИЙ
+import {  
+  getTourCategoriesAction, getBlogCategoriesAction,
+  upsertTourCategoryAction, upsertBlogCategoryAction,
+  deleteTourCategoryAction, deleteBlogCategoryAction,
+  toggleTourCategoryStatusAction, toggleBlogCategoryStatusAction 
+} from '@/features/admin/actions/categories';
 
 // TYPES
 export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun';
+
 interface BookingItem {
   id: string;
   user_name: string;
@@ -81,17 +89,29 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [guides, setGuides] = useState<GuideItem[]>([]);
   const [posts, setPosts] = useState<Blog[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  // 👇 НОВОЕ СОСТОЯНИЕ
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [contentBlocks, setContentBlocks] = useState<any>({});
+  const [funTests, setFunTests] = useState<FunTest[]>([]);
+  
+  // Categories State
+  const [tourCategories, setTourCategories] = useState<any[]>([]);
+  const [blogCategories, setBlogCategories] = useState<any[]>([]);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [categoryType, setCategoryType] = useState<'tour' | 'blog'>('tour');
 
-  // Modals
-const [modalState, setModalState] = useState({
-    tour: false, guide: false, post: false, content: false, review: false, fun: false 
+  // Modals (👇 ИСПРАВЛЕНА СИНТАКСИЧЕСКАЯ ОШИБКА)
+  const [modalState, setModalState] = useState({
+    tour: false, 
+    guide: false, 
+    post: false, 
+    content: false, 
+    review: false, 
+    fun: false, 
+    category: false 
   });
+  
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingSlug, setEditingSlug] = useState('');
-  const [funTests, setFunTests] = useState<FunTest[]>([]);
 
   // --- INIT ---
   useEffect(() => {
@@ -103,17 +123,17 @@ const [modalState, setModalState] = useState({
 
   const loadAllData = async () => {
     try {
-        // 👇 ИСПРАВЛЕНО: Поменяли местами funRes и heroRes, чтобы они совпадали с функциями ниже
-        const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes] = await Promise.all([
+        const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes] = await Promise.all([
             getRegistrationsAction(),
             getGuides(),
             getBlogPosts(),
             getReviews(),
             getInquiriesAction(),
-            getFunTestsAction(),      // Теперь попадает точно в funRes
-            getContentBlock('hero'),  // Теперь попадает точно в heroRes
-            getContentBlock('footer')
-
+            getFunTestsAction(),
+            getContentBlock('hero'),
+            getContentBlock('footer'),
+            getTourCategoriesAction(), 
+            getBlogCategoriesAction()  
         ]);
 
         if (bRes.data) setBookings(bRes.data as BookingItem[]);
@@ -121,8 +141,12 @@ const [modalState, setModalState] = useState({
         setPosts(pRes);
         setReviews(rRes);
         if (inqRes.success && inqRes.data) setInquiries(inqRes.data); 
-        if (funRes && funRes.success) setFunTests(funRes.data); // ✅ Теперь тут реальные тесты
+        if (funRes && funRes.success) setFunTests(funRes.data);
         setContentBlocks({ hero: heroRes, footer: footerRes });
+        
+        if (tCatRes && tCatRes.success) setTourCategories(tCatRes.data || []);
+        if (bCatRes && bCatRes.success) setBlogCategories(bCatRes.data || []);
+               
     } catch (error) {
         console.error("Data load error:", error);
         showToast("Ошибка загрузки данных", "error");
@@ -140,10 +164,54 @@ const [modalState, setModalState] = useState({
     setIsAuth(false);
   };
 
+  // ==========================================
+  // ОБРАБОТЧИКИ КАТЕГОРИЙ
+  // ==========================================
+  const handleSaveCategory = async (data: any) => {
+    const action = categoryType === 'tour' ? upsertTourCategoryAction : upsertBlogCategoryAction;
+    const res = await action(data);
+    if (res.success) {
+      showToast('Категория сохранена!', 'success');
+      setModalState(p => ({ ...p, category: false }));
+      loadAllData();
+    } else {
+      showToast(res.error || 'Ошибка сохранения', 'error');
+    }
+  };
+
+  const handleDeleteCategory = async (id: string, type: 'tour' | 'blog') => {
+    if (!confirm('Точно удалить эту категорию?')) return;
+    const action = type === 'tour' ? deleteTourCategoryAction : deleteBlogCategoryAction;
+    const res = await action(id);
+    if (res.success) {
+      showToast('Категория удалена', 'success');
+      loadAllData();
+    } else {
+      showToast(res.error || 'Ошибка удаления', 'error');
+    }
+  };
+
+  const handleToggleCategory = async (id: string, currentStatus: boolean, type: 'tour' | 'blog') => {
+    const action = type === 'tour' ? toggleTourCategoryStatusAction : toggleBlogCategoryStatusAction;
+    const res = await action(id, currentStatus);
+    if (res.success) {
+      showToast('Статус обновлен', 'success');
+      loadAllData();
+    } else {
+      showToast(res.error || 'Ошибка обновления', 'error');
+    }
+  };
+
+  const openCategoryModal = (type: 'tour' | 'blog', category: any = null) => {
+    setCategoryType(type);
+    setEditingCategory(category);
+    setModalState(p => ({ ...p, category: true }));
+  };
+
   // --- STATS ---
   const stats = useMemo(() => {
     const newBookings = bookings.filter(b => b.status === 'pending').length;
-    const newInquiries = inquiries.filter(i => i.status === 'NEW').length; // 👇 Считаем новые заявки
+    const newInquiries = inquiries.filter(i => i.status === 'NEW').length;
     const totalTours = tours.length;
     const activeTours = tours.filter(t => t.isActive).length;
     const finishedTours = tours.filter(t => new Date(t.date) < new Date()).length;
@@ -169,7 +237,6 @@ const [modalState, setModalState] = useState({
   const guidesForForm = useMemo(() => guides.map(g => ({ id: g.id, name: g.name })), [guides]);
 
   // --- HANDLERS ---
-  
   const toggleTourStatus = async (tour: Tour) => {
     const newStatus = !tour.isActive;
     setTours(prev => prev.map(t => t.id === tour.id ? { ...t, isActive: newStatus } : t));
@@ -220,14 +287,13 @@ const [modalState, setModalState] = useState({
       if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
   };
 
-  // --- POSTS ---
+  // --- POSTS & REVIEWS ---
   const togglePostStatus = async (post: any, field: 'isActive' | 'is_trending') => {
       const newVal = !post[field];
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, [field]: newVal } : p));
       await savePostAction({ id: post.id, title: post.title, [field === 'isActive' ? 'is_active' : 'is_trending']: newVal });
   };
 
-  // --- REVIEWS ---
   const toggleReviewStatus = async (review: Review) => {
       const newVal = !review.isActive;
       setReviews(prev => prev.map(r => r.id === review.id ? { ...r, isActive: newVal } : r));
@@ -244,7 +310,6 @@ const [modalState, setModalState] = useState({
         setActiveTab={setActiveTab}
         onLogout={handleLogout}
         onFabClick={handleFabClick}
-        // 👇 ПЕРЕДАЕМ ОБНОВЛЕННЫЕ СТАТЫ
         stats={{ pendingBookings: stats.newBookings, newInquiries: stats.newInquiries }}
       />
             
@@ -259,10 +324,11 @@ const [modalState, setModalState] = useState({
             />
         )}
 
-        {activeTab === 'tours' && (
+       {activeTab === 'tours' && (
             <ToursTab 
                 tours={tours}
                 bookings={bookings as any} 
+                categories={tourCategories} // 👈 НОВОЕ
                 onAdd={() => { setEditingItem(null); setModalState(p => ({...p, tour: true})); }}
                 onEdit={(tour) => { setEditingItem(tour); setModalState(p => ({...p, tour: true})); }}
                 onDuplicate={(tour) => { 
@@ -273,9 +339,13 @@ const [modalState, setModalState] = useState({
                 onDelete={(id) => handleDelete('tour', id)}
                 onToggleStatus={toggleTourStatus}
                 onSendTg={handleSendTg}
+                // 👇 НОВЫЕ ХЕНДЛЕРЫ
+                onAddCategory={() => openCategoryModal('tour')}
+                onEditCategory={(cat) => openCategoryModal('tour', cat)}
+                onDeleteCategory={handleDeleteCategory}
+                onToggleCategoryStatus={handleToggleCategory}
             />
-        )}
-
+ )}
         {activeTab === 'bookings' && (
             <BookingsTab 
                 bookings={bookings}
@@ -283,7 +353,6 @@ const [modalState, setModalState] = useState({
             />
         )}
 
-        {/* 👇 НОВАЯ ВКЛАДКА */}
         {activeTab === 'inquiries' && (
             <InquiriesTab inquiries={inquiries} />
         )}
@@ -307,9 +376,10 @@ const [modalState, setModalState] = useState({
             />
         )}
 
-        {activeTab === 'blog' && (
+       {activeTab === 'blog' && (
             <BlogTab
                 posts={posts}
+                categories={blogCategories} // 👈 НОВОЕ
                 onAdd={() => { setEditingItem(null); setModalState(p => ({...p, post: true})); }}
                 onEdit={(post) => { setEditingItem(post); setModalState(p => ({...p, post: true})); }}
                 onDuplicate={(post) => { 
@@ -319,6 +389,11 @@ const [modalState, setModalState] = useState({
                 }}
                 onDelete={(id) => handleDelete('post', id)}
                 onToggleStatus={togglePostStatus}
+                // 👇 НОВЫЕ ХЕНДЛЕРЫ
+                onAddCategory={() => openCategoryModal('blog')}
+                onEditCategory={(cat) => openCategoryModal('blog', cat)}
+                onDeleteCategory={handleDeleteCategory}
+                onToggleCategoryStatus={handleToggleCategory}
             />
         )}
 
@@ -328,44 +403,40 @@ const [modalState, setModalState] = useState({
                 setModalState(p => ({...p, content: true})); 
             }} />
         )}
+        
        {activeTab === 'fun' && (
-  <div className="space-y-6">
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
-        <p className="text-sm text-slate-500 mt-1">Управляй карточками тестов на сайте</p>
-      </div>
-      
-      {/* Кнопка добавления нового теста */}
-      <button
-        onClick={() => {
-          setEditingItem(null); // Важно: очищаем форму для создания НОВОГО теста
-          setModalState(p => ({...p, fun: true})); // Открываем модалку Фан-сектора
-        }}
-        className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-      >
-        <Plus size={18} />
-        Добавить тест
-      </button>
-    </div>
-
-    <FunTestTable 
-      initialTests={funTests} 
-      onEdit={(test) => { 
-        setEditingItem(test); 
-        setModalState(p => ({...p, fun: true})); 
-      }} 
-    />
-  </div>
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
+                <p className="text-sm text-slate-500 mt-1">Управляй карточками тестов на сайте</p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setModalState(p => ({...p, fun: true}));
+                }}
+                className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+              >
+                <Plus size={18} /> Добавить тест
+              </button>
+            </div>
+            <FunTestTable 
+              initialTests={funTests} 
+              onEdit={(test) => { setEditingItem(test); setModalState(p => ({...p, fun: true})); }} 
+            />
+          </div>
         )}
 
       </main>
 
       {/* МОДАЛКИ */}
+     {/* МОДАЛКИ */}
       {modalState.tour && (
         <TourForm 
             initialData={editingItem} 
             guides={guidesForForm}
+            categories={tourCategories} // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
             onClose={() => setModalState(p => ({ ...p, tour: false }))}
             onSuccess={async () => {
                 setModalState(p => ({ ...p, tour: false }));
@@ -379,16 +450,14 @@ const [modalState, setModalState] = useState({
           <GuideForm 
             initialData={editingItem}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
-            // 👇 Надежно и строго: мы ожидаем объект (Record)
             onSubmit={async (data: Record<string, any>) => { await saveGuideAction(data); loadAllData(); }}
           />
       )}
       
       {modalState.post && (
-     <PostForm
+         <PostForm
             initialData={editingItem}
             onClose={() => setModalState(p => ({ ...p, post: false }))}
-            // 👇 ИСПРАВЛЕНО: добавлена строгая типизация (data: Record<string, unknown>)
             onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
           />
       )}
@@ -409,6 +478,7 @@ const [modalState, setModalState] = useState({
             onSubmit={async (s, d) => { await saveContentBlockAction(s, d); loadAllData(); }}
           />
       )}
+      
       {modalState.fun && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl relative shadow-2xl my-auto">
@@ -423,6 +493,16 @@ const [modalState, setModalState] = useState({
         </div>
       )}
 
+      {/* НОВАЯ МОДАЛКА КАТЕГОРИЙ */}
+      {modalState.category && (
+        <CategoryForm
+          initialData={editingCategory}
+          type={categoryType}
+          onClose={() => setModalState(p => ({ ...p, category: false }))}
+          onSubmit={handleSaveCategory}
+        />
+      )}
+      
       <AiAssistant />
     </div>
   );

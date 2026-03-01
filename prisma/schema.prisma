@@ -14,7 +14,11 @@ model Blog {
   title        String
   excerpt      String
   content      String
-  category     String     @default("OTHER")
+  
+  category     String     @default("OTHER") // ⚠️ Старое поле (пока оставляем)
+  categoryId   String?    @map("category_id") @db.Uuid // ✅ НОВОЕ: Связь с категорией
+  tags         String[]   @default([])      // ✅ НОВОЕ: Теги для блога
+  
   image        String?
   read_time    Int        @default(5)
   date         DateTime   @default(now()) @db.Timestamp(6)
@@ -27,7 +31,9 @@ model Blog {
   author_image String?
   guideId      String?    @map("guide_id") @db.Uuid
   isActive     Boolean    @default(false) @map("is_active")
-  guide        Guide?     @relation(fields: [guideId], references: [id])
+  
+  guide        Guide?        @relation(fields: [guideId], references: [id])
+  blogCategory BlogCategory? @relation(fields: [categoryId], references: [id]) // ✅ Связь
 
   @@map("blog_posts")
 }
@@ -38,7 +44,10 @@ model Tour {
   title              String
   subtitle           String?
   description        String?
-  type               String         @default("hiking")
+  
+  type               String         @default("hiking") // ⚠️ Старое поле (пока оставляем)
+  categoryId         String?        @map("category_id") @db.Uuid // ✅ НОВОЕ: Связь с категорией
+  
   label              String         @default("")
   duration           String?
   location           String
@@ -71,11 +80,46 @@ model Tour {
   tags               String[]       @default([])
   checklist          Json?          @default("[]")
   priceFamily        Int?           @map("price_family")
+  
   bookings           Booking[]
   registrations      Registration[]
   guide              Guide?         @relation(fields: [guideId], references: [id])
+  category           TourCategory?  @relation(fields: [categoryId], references: [id]) // ✅ Связь
 
   @@map("tours")
+}
+
+// ✅ НОВАЯ МОДЕЛЬ: КАТЕГОРИИ ТУРОВ
+model TourCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique
+  title       String
+  icon        String   @default("Compass") // Название иконки для фронта (Lucide)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  tours       Tour[]
+
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("tour_categories")
+}
+
+// ✅ НОВАЯ МОДЕЛЬ: КАТЕГОРИИ БЛОГА
+model BlogCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique
+  title       String
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  posts       Blog[]
+
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("blog_categories")
 }
 
 model Guide {
@@ -186,10 +230,10 @@ model Inquiry {
   status    InquiryStatus @default(NEW)
   name      String
   phone     String?
-  social    String?       @map("social_link") // Telegram/Instagram
+  social    String?       @map("social_link") 
   
-  message   String?       // Main text
-  payload   Json?         // Additional info
+  message   String?       
+  payload   Json?         
   
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -198,31 +242,29 @@ model Inquiry {
 }
 
 enum InquiryType {
-  TOUR      // Tour
-  HR        // Team
-  BLOG      // Blog
-  B2B       // Partnership
-  REVIEW    // Review
-  HELP      // Help
+  TOUR      
+  HR        
+  BLOG      
+  B2B       
+  REVIEW    
+  HELP      
 }
 
 enum InquiryStatus {
-  NEW       // New
-  WORK      // In Work
-  DONE      // Finish / Spam
+  NEW       
+  WORK      
+  DONE      
 }
-
-// schema.prisma
 
 model FunTest {
   id          String   @id @default(cuid())
-  slug        String   @unique // Уникальный ключ-связка с кодом (например, "fear-debrief")
-  title       String   // Название карточки
-  description String   // Описание карточки
-  image       String?  // Ссылка на картинку-обложку
+  slug        String   @unique 
+  title       String   
+  description String   
+  image       String?  
   category    String   @default("general")
-  isActive    Boolean  @default(false) // Показывать ли на сайте
-  passCount   Int      @default(0)     // Сколько раз прошли
+  isActive    Boolean  @default(false) 
+  passCount   Int      @default(0)     
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

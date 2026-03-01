@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormInput, FormSelect, FormSwitch, FormTextarea } from '../ui/FormUI';
 import { ImageUploader } from '../ui/ImageUploader';
-import { AlignLeft, Plus, X } from 'lucide-react'; // Убрали лишние импорты
+import { AlignLeft, Plus, X } from 'lucide-react'; 
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
 
-export const MainInfo = () => {
+// 👇 ДОБАВИЛИ ПРОПС ДЛЯ КАТЕГОРИЙ
+export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
   const { control, watch } = useFormContext();
   
-  // Управление массивом галереи
   const { fields, append, remove } = useFieldArray({
     control,
     name: "gallery" 
   });
 
-  // Временное состояние для загрузчика галереи
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,6 +35,12 @@ export const MainInfo = () => {
     }
   };
 
+  // 👇 ФОРМИРУЕМ ОПЦИИ ДЛЯ СЕЛЕКТА ИЗ БАЗЫ ДАННЫХ
+  const categoryOptions = [
+    { value: '', label: '— Выберите категорию —' },
+    ...categories.map(c => ({ value: c.id, label: c.title }))
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
@@ -54,7 +59,7 @@ export const MainInfo = () => {
           <FormInput 
             name="title" 
             label="Название тура" 
-            placeholder="Например: Восхождение на Говерлу" 
+            placeholder="Придумай красивое название тура" 
           />
           
           <FormInput 
@@ -73,15 +78,11 @@ export const MainInfo = () => {
            />
 
           <div className="grid grid-cols-2 gap-4">
+             {/* 👇 ИЗМЕНИЛИ NAME НА category_id И ПОДСТАВИЛИ ДИНАМИЧЕСКИЕ ОПЦИИ */}
              <FormSelect 
-                name="type" 
-                label="Тип тура"
-                options={[
-                  { value: 'hiking', label: 'Поход' },
-                  { value: 'excursion', label: 'Экскурсия' },
-                  { value: 'weekend', label: 'Выходной день' },
-                  { value: 'expedition', label: 'Экспедиция' }
-                ]}
+                name="category_id" 
+                label="Категория тура"
+                options={categoryOptions}
              />
              <FormInput 
                 name="label" 
@@ -93,12 +94,10 @@ export const MainInfo = () => {
 
         {/* ПРАВАЯ КОЛОНКА: МЕДИА */}
         <div className="space-y-6">
-           {/* Обложка */}
            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
               <ImageUploader name="coverImage" label="Главная обложка" folder="tours" />
            </div>
            
-           {/* Галерея */}
            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
               <label className="text-xs font-bold uppercase text-slate-600 mb-3 flex items-center justify-between">
                  <span>Галерея ({fields.length})</span>
@@ -108,7 +107,6 @@ export const MainInfo = () => {
               <div className="grid grid-cols-3 gap-2">
                 {fields.map((field, index) => (
                   <div key={field.id} className="relative aspect-square rounded-lg overflow-hidden group border border-slate-200 bg-white">
-                    {/* ✅ ИСПРАВЛЕНО: Удалили input type="hidden", который вызывал ошибку */}
                     <Image 
                        src={watch(`gallery.${index}`) || ''} 
                        alt="Gallery" 
@@ -125,7 +123,6 @@ export const MainInfo = () => {
                   </div>
                 ))}
 
-                {/* Кнопка добавления */}
                 <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-400 hover:text-teal-600">
                   <Plus size={24} />
                   <span className="text-[12px] font-bold uppercase mt-1">Добавить</span>

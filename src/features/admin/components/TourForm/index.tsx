@@ -21,12 +21,16 @@ interface TourFormProps {
   initialData?: any;
   onClose: () => void;
   guides: { id: string; name: string }[];
+  categories?: { id: string; title: string }[]; // ✅ ДОБАВЛЕНО: Массив категорий
   onSuccess?: () => void;
 }
 
-export default function TourForm({ initialData, onClose, guides, onSuccess }: TourFormProps) {
+export default function TourForm({ initialData, onClose, guides, categories = [], onSuccess }: TourFormProps) {
   const { showToast } = useToast();
   
+  // ✅ ДОБАВЛЕНО: Умный выбор дефолтной категории
+  const defaultCategoryId = categories.length > 0 ? categories[0].id : '';
+
   // =========================================================
   // 1. МАППИНГ ДАННЫХ (БАЗА -> ФОРМА)
   // =========================================================
@@ -36,6 +40,7 @@ export default function TourForm({ initialData, onClose, guides, onSuccess }: To
       return {
          currency: 'RUB',
          type: 'hiking',
+         category_id: defaultCategoryId, // ✅ ДОБАВЛЕНО: Дефолтная категория
          isActive: false,
          price: 0, // Важно: для нового тура цена 0
          dates: [],
@@ -58,6 +63,8 @@ export default function TourForm({ initialData, onClose, guides, onSuccess }: To
       ...initialData,
       // Приводим поля к формату схемы
       isActive: initialData.isActive ?? initialData.is_active ?? false,
+      
+      category_id: initialData.categoryId ?? initialData.category_id ?? defaultCategoryId, // ✅ ДОБАВЛЕНО: Маппинг категории
       
       // ✅ ИСПРАВЛЕНО: Принудительная конвертация в число (Number)
       // Это решает проблему "expected number, received NaN"
@@ -106,7 +113,7 @@ export default function TourForm({ initialData, onClose, guides, onSuccess }: To
       // Даты
       dates: Array.isArray(initialData.dates) ? initialData.dates : [],
     };
-  }, [initialData]);
+  }, [initialData, defaultCategoryId]); // ✅ ДОБАВЛЕНО: defaultCategoryId в зависимости
 
   // =========================================================
   // 2. ИНИЦИАЛИЗАЦИЯ ФОРМЫ
@@ -133,7 +140,14 @@ export default function TourForm({ initialData, onClose, guides, onSuccess }: To
     try {
       console.log("📤 Отправка данных...", data);
       
-      const res = await saveTour(data); 
+      const payload = { ...data };
+      
+      // ✅ ДОБАВЛЕНО: Защита от пустой строки в UUID
+      if (payload.category_id === '') {
+          delete payload.category_id;
+      }
+
+      const res = await saveTour(payload); 
       
       if (res.success) {
         showToast('Тур успешно сохранен!', 'success');
@@ -183,7 +197,7 @@ export default function TourForm({ initialData, onClose, guides, onSuccess }: To
             >
                {/* 1. Главная инфо */}
                <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-                  <MainInfo />
+                  <MainInfo categories={categories} /> {/* ✅ ДОБАВЛЕНО: Прокидываем категории */}
                </section>
 
                {/* 2. Логистика */}

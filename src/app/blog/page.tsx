@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"; // Проверь правильность пути к твоей Prisma
 import BlogFeed from "./BlogFeed";
 import { Metadata } from "next";
+import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
 
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
 export const metadata: Metadata = {
@@ -42,17 +43,24 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  // Получаем все посты, сортируем от новых к старым
+  // 1. Получаем все посты, сортируем от новых к старым
   const posts = await prisma.blog.findMany({
     orderBy: {
       date: 'desc',
     },
   });
 
+  // 2. Получаем категории
+  const catRes = await getBlogCategoriesAction();
+  const categories = catRes.success ? catRes.data : [];
+
   return (
     // Обернул в main, чтобы поисковики правильно читали структуру документа
     <main className="min-h-screen bg-slate-950">
-      <BlogFeed initialPosts={posts} />
+      <BlogFeed 
+        initialPosts={posts} 
+        categories={categories}
+      />
     </main>
   );
 }

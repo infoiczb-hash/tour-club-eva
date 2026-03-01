@@ -14,6 +14,7 @@ export const tourFormSchema = z.object({
   
   // === МАРКЕТИНГ ===
   type: z.string().default("hiking"),
+  category_id: z.string().optional(),
   difficulty: z.string().default("medium"),
   label: z.string().optional().nullable(), // "Хит", "New"
   tags: z.array(z.string()).default([]),   // Теги: ["Горы", "Семья"]
