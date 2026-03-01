@@ -8,9 +8,7 @@ export interface Tour {
   slug: string;
   title: string;
   subtitle?: string | null;
-  description?: string | null; // HTML описание
-  createdAt?: Date | string | null;
-  updatedAt?: Date | string | null;
+  description?: string | null; 
 
   // === ЦЕНЫ ===
   price: number;           
@@ -29,7 +27,7 @@ export interface Tour {
     end?: string;
     guide_id?: string;
     time?: string;
-    spots?: number; // Добавили spots сюда тоже на всякий случай
+    spots?: number; 
   }[];
 
   // === МЕДИА ===
@@ -38,33 +36,39 @@ export interface Tour {
 
   // === МАРКЕТИНГ И ТЕГИ ===
   label?: string | null;   
-  type: string;            // "hiking", "weekend", etc.
+  type: string;            // Старое поле "hiking", "weekend", etc.
+  categoryId?: string | null; // ✅ НОВОЕ ПОЛЕ (Связь с TourCategory)
+  
+  // Мы также можем подтянуть объект категории целиком в будущем:
+  category?: {
+    id: string;
+    title: string;
+    slug: string;
+    icon: string;
+  } | null;
+
   tags?: string[];         
   highlights?: any[];      
 
   // === ЛОГИСТИКА И ХАРАКТЕРИСТИКИ ===
   location: string;
-  startLocation?: string | null; // ✅ ДОБАВЛЕНО: Для TourLogistics
-  meetingPoint?: string | null;  // Альтернатива startLocation
+  startLocation?: string | null; 
+  meetingPoint?: string | null;  
   
   duration?: string | null;
   
-  // ✅ ОБНОВЛЕНО: Строгая типизация для TourStats, чтобы ключи совпадали
   difficulty?: 'easy' | 'medium' | 'hard' | 'expert' | string | null;
   
   route?: string | null;
-  
-  distance?: string | null; // ✅ ДОБАВЛЕНО: Для TourStats (например "12 км")
-  
+  distance?: string | null; 
   meta?: any; 
 
   // === СТАТИСТИКА ===
-  spots: number;     // Общее кол-во мест
-  spotsLeft: number; // Осталось мест
-  groupSize?: number; // ✅ ДОБАВЛЕНО: Максимальный размер группы для TourStats
+  spots: number;     
+  spotsLeft: number; 
+  groupSize?: number; 
 
   // === СВЯЗЬ С ГИДОМ ===
-  // ✅ ОБНОВЛЕНО: Разрешаем и объект, и строку, чтобы не ломать простые компоненты
   guide?: string | {
     id: string;
     name: string;
@@ -90,6 +94,8 @@ export interface Tour {
 
   // === СТАТУС ===
   isActive: boolean;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
 }
 
 // ==========================================
@@ -116,7 +122,7 @@ export interface TourProgramDay {
   date?: string;
   activities: TourActivity[];
   description?: string; 
-  location?: string; // ✅ Добавлено, так как используется в TourProgram
+  location?: string; 
 }
 
 export interface TourGuide {

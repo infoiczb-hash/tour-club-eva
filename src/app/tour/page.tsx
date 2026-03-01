@@ -1,6 +1,7 @@
 import { getTours } from '@/features/tours/api';
 import ToursBrowser from '@/features/tours/components/ToursBrowser';
 import { Metadata } from 'next';
+import { getTourCategoriesAction } from '@/features/admin/actions/categories';
 
 // 1. 🔥 СУПЕР-SEO ДЛЯ КАТАЛОГА ТУРОВ (Приднестровье/Молдова)
 export const metadata: Metadata = {
@@ -35,12 +36,15 @@ export const metadata: Metadata = {
 export default async function AllToursPage() {
   // Получаем ВСЕ активные туры
   const tours = await getTours();
+  const catRes = await getTourCategoriesAction();
+  const categories = catRes.success ? catRes.data : [];
 
-  return (
+ return (
     // pt-20 нужен, чтобы контент не залез под фиксированный Header
     <main className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
       <ToursBrowser 
          tours={tours} 
+         categories={categories} // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
          title="Все Приключения" 
          subtitle="Полный каталог 2026"
       />

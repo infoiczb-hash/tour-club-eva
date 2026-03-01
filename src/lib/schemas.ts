@@ -18,90 +18,108 @@ const jsonHelper = z.any()
   });
 
 // ==========================================
-// 1. ТУРЫ (EVENTS)
+// 1. КАТЕГОРИИ (НОВОЕ)
 // ==========================================
 
-// 1.1. Схема "Сырого" тура из БД (соответствует Prisma Model Tour)
+export const TourCategorySchema = z.object({
+  id: z.string().uuid().optional(),
+  slug: z.string().min(1, "Slug обязателен"),
+  title: z.string().min(1, "Название обязательно"),
+  icon: z.string().default("Compass"),
+  sort_order: z.coerce.number().default(0),
+  is_active: z.boolean().default(true),
+});
+export type TourCategoryType = z.infer<typeof TourCategorySchema>;
+
+export const BlogCategorySchema = z.object({
+  id: z.string().uuid().optional(),
+  slug: z.string().min(1, "Slug обязателен"),
+  title: z.string().min(1, "Название обязательно"),
+  sort_order: z.coerce.number().default(0),
+  is_active: z.boolean().default(true),
+});
+export type BlogCategoryType = z.infer<typeof BlogCategorySchema>;
+
+// ==========================================
+// 2. ТУРЫ (EVENTS)
+// ==========================================
+
+// 2.1. Схема "Сырого" тура из БД (соответствует Prisma Model Tour)
 export const RawTourSchema = z.object({
-  id: z.string().uuid().optional(), // Optional для создания
+  id: z.string().uuid().optional(),
   slug: z.string().optional(),
   
   // Основное
   title: z.string().min(3, "Название обязательно"),
   subtitle: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
-  is_active: z.boolean().nullable().optional(), // Prisma: isActive (@map("is_active"))
+  is_active: z.boolean().nullable().optional(),
 
   // Маркетинг
-  type: z.string().default('hiking'),
+  type: z.string().default('hiking'), // Старое поле
+  category_id: z.string().uuid().nullable().optional(), // ✅ НОВОЕ ПОЛЕ
   label: z.string().nullable().optional(),
   difficulty: z.string().default('medium'),
-  tags: z.array(z.string()).optional(), // ✅ Добавлено (было пропущено)
+  tags: z.array(z.string()).optional(), 
   
   // Логистика
   location: z.string().min(2, "Локация обязательна"),
-  meeting_point: z.string().nullable().optional(), // Prisma: meetingPoint
+  meeting_point: z.string().nullable().optional(),
   route: z.string().nullable().optional(),
-  duration: z.string().nullable().optional(), // Prisma: String?
-  distance: z.string().nullable().optional(), // Prisma: String?
+  duration: z.string().nullable().optional(),
+  distance: z.string().nullable().optional(),
   
-  // 📅 ДАТЫ (Исправлено под Prisma JSON)
-  // Мы принимаем JSON helper, так как в базе это jsonb column "dates"
+  // Даты
   dates: jsonHelper, 
-  
-  // Поля для обратной совместимости (если фронт шлет их отдельно), делаем optional
   date: z.string().optional(),
   time: z.string().optional(),
 
   // Контент (JSON поля)
   program: jsonHelper, 
   faq: jsonHelper,
-  highlights: jsonHelper, // ✅ Добавлено (было пропущено)
-  checklist: jsonHelper,  // ✅ Добавлено (было пропущено)
+  highlights: jsonHelper,
+  checklist: jsonHelper, 
   documents: jsonHelper,
 
   // Медиа
-  cover_image: z.string().nullable().optional(), // Prisma: coverImage
-  image: z.string().nullable().optional(),       // Алиас для удобства
+  cover_image: z.string().nullable().optional(),
+  image: z.string().nullable().optional(),
   gallery: z.array(z.string()).nullable().optional(),
 
   // Цены
-  price: z.coerce.number().default(0),        // Prisma: price
-  price_old: z.coerce.number().nullable().optional(), // Prisma: priceOld
-  price_child: z.coerce.number().nullable().optional(), // Prisma: priceChild
-  price_family: z.coerce.number().nullable().optional(), // Prisma: priceFamily
-  price_member: z.coerce.number().nullable().optional(), // ✅ Добавлено (Prisma: priceMember)
+  price: z.coerce.number().default(0),        
+  price_old: z.coerce.number().nullable().optional(), 
+  price_child: z.coerce.number().nullable().optional(), 
+  price_family: z.coerce.number().nullable().optional(), 
+  price_member: z.coerce.number().nullable().optional(), 
   currency: z.string().default('RUB'),
 
   // Места
   spots: z.coerce.number().default(15),
-  spots_left: z.coerce.number().optional(), // Prisma: spotsLeft
+  spots_left: z.coerce.number().optional(),
 
   // Списки
   included: z.array(z.string()).nullable().optional(),
   additional_expenses: z.array(z.string()).nullable().optional(),
 
-  // SEO (✅ Добавлено)
+  // SEO
   meta_title: z.string().nullable().optional(),
   meta_desc: z.string().nullable().optional(),
 
   // Гид
-  guide_id: z.string().nullable().optional(), // Prisma: guideId
-  guide: jsonHelper, // Если мы пробрасываем объект гида целиком
-}).passthrough(); // passthrough разрешает лишние поля, чтобы не падало, если что-то забыли
+  guide_id: z.string().nullable().optional(),
+  guide: jsonHelper,
+}).passthrough(); 
 
-// 1.2. Схема "Чистого" тура для фронтенда (Трансформация)
+// 2.2. Схема "Чистого" тура для фронтенда
 export const TourSchema = RawTourSchema.transform((data) => {
-  // Логика вычисления главной даты (для карточки)
   let startDate = '';
   let endDate = null;
 
-  // Если есть массив dates, берем первую
   if (Array.isArray(data.dates) && data.dates.length > 0) {
     startDate = data.dates[0].start || '';
     endDate = data.dates[0].end || null;
   } else if (data.date) {
-    // Фолбек на старое поле, если вдруг оно пришло
     startDate = data.date;
   }
 
@@ -113,6 +131,8 @@ export const TourSchema = RawTourSchema.transform((data) => {
     description: data.description,
     
     type: data.type,
+    categoryId: data.category_id, // ✅ НОВОЕ ПОЛЕ ПРОКИНУТО НА ФРОНТ
+    
     label: data.label,
     tags: data.tags || [],
     
@@ -121,17 +141,15 @@ export const TourSchema = RawTourSchema.transform((data) => {
     route: data.route,
     
     difficulty: data.difficulty,
-    duration: data.duration, // Теперь строка, как в Prisma
+    duration: data.duration,
     distance: data.distance,
     
-    // Даты
     date: startDate,
     endDate: endDate,
-    dates: data.dates || [], // Сохраняем полный массив
+    dates: data.dates || [], 
 
-    // Цены
     price: {
-      adult: data.price, // Prisma поле называется просто price
+      adult: data.price,
       child: data.price_child || 0,
       family: data.price_family || 0,
       member: data.price_member || 0,
@@ -145,7 +163,6 @@ export const TourSchema = RawTourSchema.transform((data) => {
     image: data.cover_image || data.image || '', 
     gallery: data.gallery || [],
     
-    // JSON контент
     program: data.program, 
     faq: data.faq,
     highlights: data.highlights,
@@ -155,12 +172,10 @@ export const TourSchema = RawTourSchema.transform((data) => {
     included: data.included || [],
     additionalExpenses: data.additional_expenses || [],
     
-    // SEO
     meta_title: data.meta_title,
     meta_desc: data.meta_desc,
 
-    // Гид
-    guide: data.guide, // Объект гида
+    guide: data.guide,
     
     isActive: data.is_active !== false,
   };
@@ -168,12 +183,11 @@ export const TourSchema = RawTourSchema.transform((data) => {
 
 export type Tour = z.infer<typeof TourSchema>;
 
-// Схемы для форм (без изменений логики, но наследуют исправленный RawTourSchema)
 export const CreateTourSchema = RawTourSchema;
 export const UpdateTourSchema = RawTourSchema.partial();
 
 // ==========================================
-// ОСТАЛЬНЫЕ СХЕМЫ (Guide, Post, Booking) - Оставляем как есть, они выглядят ок
+// 3. ОСТАЛЬНЫЕ СХЕМЫ (Guide, Post, Booking)
 // ==========================================
 
 export const GuideSchema = z.object({
@@ -202,7 +216,11 @@ export const PostSchema = z.object({
   image: z.string().nullable().optional(),
   date: z.union([z.string(), z.date()]).optional().transform(val => val ? new Date(val).toISOString() : new Date().toISOString()),
   read_time: z.union([z.string(), z.number()]).transform(val => Number(val) || 5),
-  category: z.string().nullable().optional(),
+  
+  category: z.string().nullable().optional(), // Старое поле
+  category_id: z.string().uuid().nullable().optional(), // ✅ НОВОЕ ПОЛЕ
+  tags: z.array(z.string()).default([]), // ✅ НОВОЕ ПОЛЕ (МАССИВ ТЕГОВ)
+  
   is_trending: z.boolean().nullable().optional().transform(val => !!val),
   is_active: z.boolean().nullable().optional().transform(val => !!val),
   author_name: z.string().nullable().optional(),
@@ -229,10 +247,8 @@ export const RegistrationSchema = z.object({
 });
 export type Registration = z.infer<typeof RegistrationSchema>;
 
-// Схема для формы (Form Input)
 export const TourFormSchema = RawTourSchema.extend({
   difficulty: z.string().default('medium'),
-  // Разрешаем ввод строк для чисел (из инпутов), но трансформируем в числа
   price: z.union([z.string(), z.number()]).transform(v => Number(v) || 0),
   price_child: z.union([z.string(), z.number()]).optional().transform(v => Number(v) || 0),
   price_family: z.union([z.string(), z.number()]).optional().transform(v => Number(v) || 0),

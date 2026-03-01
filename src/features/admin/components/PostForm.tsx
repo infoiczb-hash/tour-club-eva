@@ -50,17 +50,21 @@ const calculateReadTime = (html: string): number => {
   return time < 1 ? 1 : time;
 };
 
-interface ExtendedBlog extends Omit<Blog, 'guideId'> {
+interface ExtendedBlog extends Omit<Blog, 'guideId' | 'categoryId' | 'tags'> {
   guideId?: string | null;
+  categoryId?: string | null;
+  category_id?: string | null;
+  tags?: string[];
 }
 
 interface Props {
   initialData?: ExtendedBlog | null;
+  categories?: any[]; // ✅ ДОБАВЛЕНО: Массив категорий блога
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
 }
 
-export default function PostForm({ initialData, onClose, onSubmit }: Props) {
+export default function PostForm({ initialData, categories = [], onClose, onSubmit }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isImageGenerating, setIsImageGenerating] = useState(false);
@@ -68,13 +72,23 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
   
   const [guides, setGuides] = useState<any[]>([]);
 
+  // ✅ ДОБАВЛЕНО: Состояние для ввода нового тега
+  const [tagInput, setTagInput] = useState('');
+
+  const defaultCategoryId = categories.length > 0 ? categories[0].id : '';
+
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
-    slug: initialData?.slug || '', // Добавили поле SLUG
-    excerpt: initialData?.excerpt || '', // Важно: используем excerpt (как в схеме), а не desc
+    slug: initialData?.slug || '', 
+    excerpt: initialData?.excerpt || '', 
     content: initialData?.content || '',
     image: initialData?.image || '',
-    category: initialData?.category || 'TIPS', // Default uppercase matches Filters
+    
+    // ✅ ДОБАВЛЕНО: Маппинг category_id и tags
+    category_id: initialData?.categoryId ?? initialData?.category_id ?? defaultCategoryId,
+    category: initialData?.category || '', 
+    tags: initialData?.tags || [], 
+    
     read_time: initialData?.read_time?.toString() || '5',
     is_trending: initialData?.is_trending || false,
     
@@ -92,28 +106,42 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
     loadGuides();
   }, []);
 
-  // АВТО-SLUG: Если создаем новую статью, генерируем slug из заголовка на лету
   useEffect(() => {
     if (!initialData && formData.title) {
         setFormData(prev => ({ ...prev, slug: slugify(prev.title) }));
     }
   }, [formData.title, initialData]);
 
-  // АВТО-ВРЕМЯ: При изменении контента пересчитываем время
   const handleContentChange = (html: string) => {
     const time = calculateReadTime(html);
     setFormData(prev => ({ 
         ...prev, 
         content: html,
-        read_time: String(time) // Обновляем время автоматически
+        read_time: String(time)
     }));
+  };
+
+  // ✅ ДОБАВЛЕНО: Обработчик добавления тегов (Enter или запятая)
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault(); // Предотвращаем отправку формы
+      const newTag = tagInput.trim().replace(/^#/, ''); // Убираем решетку, если ввели
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData(prev => ({ ...prev, tags: [...prev.tags, newTag] }));
+      }
+      setTagInput('');
+    }
+  };
+
+  // ✅ ДОБАВЛЕНО: Удаление тега
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUploading(true);
     try {
-      // Генерируем слаг, если он пустой
       const finalSlug = formData.slug || slugify(formData.title) || `post-${Date.now()}`;
 
       const payload = { 
@@ -125,6 +153,10 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
           guide_id: formData.guide_id || null,
           id: initialData?.id 
       };
+
+      // ✅ ДОБАВЛЕНО: Очистка пустой категории
+      if (payload.category_id === '') delete payload.category_id;
+
       await onSubmit(payload);
       onClose();
     } catch (error) {
@@ -135,7 +167,6 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
     }
   };
 
-  // ... (Остальные хендлеры handleSelectGuide, handleFile, handleAiImage, handleAiText без изменений)
   const handleSelectGuide = (guideId: string) => {
     if (!guideId) {
       setFormData(prev => ({ ...prev, guide_id: '' }));
@@ -188,15 +219,15 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
             excerpt: data.excerpt, 
             content: data.content, 
             read_time: String(data.read_time), 
-            category: data.category,
-            slug: slugify(data.title) // AI тоже должен генерировать слаг
+            category: data.category, // Оставляем для AI, но пользователь выберет category_id ручками
+            slug: slugify(data.title) 
         }));
     } else { alert("AI Error: " + res.error); }
   };
 
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-950 rounded-2xl w-full max-w-6xl shadow-2xl flex flex-col max-h-[95vh] border border-slate-200 dark:border-slate-800 relative overflow-hidden">
         
         {/* HEADER */}
@@ -209,11 +240,11 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
              <button type="button" onClick={handleAiText} disabled={isAiGenerating} className="hidden sm:flex bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-100 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800 px-3 py-2 rounded-xl text-xs font-bold items-center gap-2 transition shadow-sm">
                 {isAiGenerating ? <Loader2 className="animate-spin" size={16}/> : <Sparkles size={16}/>} AI Generator
              </button>
-             <button onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition text-slate-400"><X size={24}/></button>
+             <button type="button" onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition text-slate-400"><X size={24}/></button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
+        <form id="post-form" onSubmit={handleSubmit} className="p-6 sm:p-8 overflow-y-auto space-y-8 flex-1 custom-scrollbar pb-24">
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
@@ -229,7 +260,7 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                         />
                     </div>
                     
-                    {/* SLUG FIELD (NEW) */}
+                    {/* SLUG FIELD */}
                     <div className="flex gap-2 items-end">
                         <div className="flex-1">
                              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
@@ -253,13 +284,13 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Tag size={10}/> Category</label>
+                        {/* ✅ ИЗМЕНЕНО: Динамический селект категорий */}
                         <select className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white appearance-none cursor-pointer" 
-                            value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                            <option value="HIKING">HIKING (Походы)</option>
-                            <option value="TIPS">TIPS (Советы)</option>
-                            <option value="GEAR">GEAR (Снаряжение)</option>
-                            <option value="STORIES">STORIES (Истории)</option>
-                            <option value="OTHER">OTHER (Разное)</option>
+                            value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
+                            <option value="">-- Выберите категорию --</option>
+                            {categories.map(c => (
+                                <option key={c.id} value={c.id}>{c.title}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -271,6 +302,31 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                             <div className="absolute right-3 top-3 text-[10px] text-slate-400 font-bold uppercase pointer-events-none">Auto-calc</div>
                         </div>
                     </div>
+                </div>
+
+                {/* ✅ ДОБАВЛЕНО: Блок для ввода тегов */}
+                <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
+                        <Tag size={10}/> Tags (Теги статьи)
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {formData.tags.map(tag => (
+                            <span key={tag} className="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
+                                #{tag}
+                                <button type="button" onClick={() => removeTag(tag)} className="hover:text-violet-900 dark:hover:text-violet-100 ml-1">
+                                    <X size={12}/>
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                    <input 
+                        type="text" 
+                        className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white transition-all placeholder:text-slate-400 placeholder:font-normal" 
+                        placeholder="Введите тег и нажмите Enter (или запятую)..." 
+                        value={tagInput}
+                        onChange={e => setTagInput(e.target.value)}
+                        onKeyDown={handleAddTag}
+                    />
                 </div>
 
                 <div 
@@ -298,11 +354,10 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: AUTHOR (Остался без изменений, код валидный) */}
+              {/* RIGHT COLUMN: AUTHOR */}
               <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 h-fit">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={12}/> Author Details</h3>
                   
-                  {/* GUIDE SELECTION */}
                   <div className="mb-4 relative">
                       <label className="text-[12px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select from Team</label>
                       <div className="relative">
@@ -368,10 +423,9 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
 
               <div>
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Content</label>
-                  {/* TIPTAP EDITOR: Передаем обновленный хендлер */}
                   <TiptapEditor 
                     content={formData.content} 
-                    onChange={handleContentChange} // Используем функцию с авто-расчетом времени
+                    onChange={handleContentChange} 
                     placeholder="Write your story here..."
                   />
               </div>
@@ -379,7 +433,7 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
 
           <hr className="border-slate-100 dark:border-slate-800"/>
           
-          {/* 3. COVER IMAGE (Без изменений) */}
+          {/* 3. COVER IMAGE */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cover Image</label>
@@ -437,9 +491,9 @@ export default function PostForm({ initialData, onClose, onSubmit }: Props) {
         </form>
 
         {/* FOOTER */}
-        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur rounded-b-2xl flex justify-end gap-3 z-10">
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur rounded-b-2xl flex justify-end gap-3 z-10 absolute bottom-0 left-0 right-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isUploading}>Cancel</Button>
-            <Button type="submit" onClick={handleSubmit} variant="primary" disabled={isUploading} className="bg-violet-600 hover:bg-violet-700 text-white shadow-xl shadow-violet-500/20 px-8">
+            <Button type="submit" form="post-form" variant="primary" disabled={isUploading} className="bg-violet-600 hover:bg-violet-700 text-white shadow-xl shadow-violet-500/20 px-8">
               {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} Save Post
             </Button>
         </div>

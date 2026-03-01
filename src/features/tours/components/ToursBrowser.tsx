@@ -2,37 +2,39 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'; // ✅ ДОБАВИЛИ ДЛЯ URL-ФИЛЬТРОВ
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
   Flame, Mountain, Tent, Droplets, Baby, ArrowRight,
-  Sparkles, Layers, Filter, X, Bell // <-- Добавили Bell
+  Sparkles, Layers, Filter, X, Bell,
+  // ✅ ДОБАВИЛИ ИКОНКИ ДЛЯ МАППЕРА
+  Compass, Map as MapIcon, Sun, Snowflake, TreePine, Bike, Footprints, MapPin, Anchor, Star, Waves
 } from 'lucide-react';
 import Link from 'next/link';
 import { Tour } from '@/features/tours/types'; 
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import TourCard from './TourCard';
-// ✅ Импорт реального календаря
 import CalendarView from './CalendarView'; 
-// ✅ Импорт модалки для сбора лидов
 import ContactHubModal from "@/components/modals/ContactHubModal"; 
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- CONFIG ---
-const CATEGORIES = [
-  { id: 'all', label: 'Все', icon: <Layers size={14}/> },
-  { id: 'water', label: 'На воде', icon: <Droplets size={14} /> },
-  { id: 'hiking', label: 'Походы', icon: <Tent size={14} /> },
-  { id: 'weekend', label: 'Weekend', icon: <Flame size={14} /> },
-  { id: 'kids', label: 'Детям', icon: <Baby size={14} /> },
-  { id: 'expedition', label: 'Экспедиции', icon: <Mountain size={14} /> },
-];
+// ✅ 1. ИНТЕЛЛЕКТУАЛЬНЫЙ МАППЕР ИКОНОК
+const getIconComponent = (iconName: string, size = 14) => {
+  const icons: Record<string, any> = {
+    Compass, Tent, Mountain, Waves, Map: MapIcon, Sun, Snowflake,
+    TreePine, Bike, Footprints, MapPin, Anchor, Flame, Star, Droplets, Baby
+  };
+  const IconComponent = icons[iconName] || Layers; // Дефолтная иконка, если не найдена
+  return <IconComponent size={size} />;
+};
 
 interface ToursBrowserProps {
   tours: Tour[];
+  categories?: any[]; // ✅ ДОБАВИЛИ ДИНАМИЧЕСКИЕ КАТЕГОРИИ
   title?: string;
   subtitle?: string;
   limit?: number;
@@ -40,27 +42,63 @@ interface ToursBrowserProps {
 
 export default function ToursBrowser({ 
     tours = [], 
+    categories = [], // Принимаем категории с сервера
     title = "Афиша Приключений", 
     subtitle = "ТУРЫ КЛУБА",
     limit = 16
 }: ToursBrowserProps) {
-  const [activeCategory, setActiveCategory] = useState('all');
+  
+  // ✅ 2. URL-СИНХРОНИЗАЦИЯ (Вместо локального useState)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  
+  const activeCategory = searchParams.get('category') || 'all';
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   
   // State для мобильных фильтров
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  
   // State для модалки захвата лидов
   const [isContactOpen, setIsContactOpen] = useState(false);
+
+  // ✅ 3. ФОРМИРУЕМ СПИСОК КАТЕГОРИЙ (Все + Из Базы)
+  const displayCategories = useMemo(() => {
+    const allBtn = { id: 'all', slug: 'all', label: 'Все', icon: <Layers size={14}/> };
+    
+    // Фильтруем только активные категории
+    const dbCats = categories.filter(c => c.isActive !== false).map(c => ({
+       id: c.id,
+       slug: c.slug,
+       label: c.title,
+       icon: getIconComponent(c.icon)
+    }));
+
+    return [allBtn, ...dbCats];
+  }, [categories]);
   
+  // Хендлер изменения URL
+  const handleCategoryClick = (slug: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (slug === 'all') {
+      params.delete('category'); // Убираем параметр, если "Все"
+    } else {
+      params.set('category', slug); // Ставим slug категории
+    }
+    // Обновляем URL без перезагрузки страницы
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   // --- SMART FEED LOGIC ---
   const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
     const safeTours = tours || [];
     
-    // 1. Фильтрация
+    // ✅ 4. ОБНОВЛЕННАЯ ФИЛЬТРАЦИЯ (поддерживает и новые категории из БД, и старые поля type)
     const filtered = safeTours.filter(tour => {
       if (activeCategory === 'all') return true;
-      return tour.type?.toLowerCase() === activeCategory.toLowerCase();
+      
+      // Ищем либо по новому слагу категории (если связи подгружены), либо по старому текстовому type
+      const tourCategorySlug = (tour as any).category?.slug || tour.type?.toLowerCase();
+      return tourCategorySlug === activeCategory.toLowerCase();
     });
 
     // 2. Сортировка по дате
@@ -192,16 +230,14 @@ export default function ToursBrowser({
                                 Категории туров:
                             </span>
                             <div className="flex flex-wrap gap-2">
-                                {CATEGORIES.map(cat => (
+                                {/* ✅ ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЕ КАТЕГОРИИ */}
+                                {displayCategories.map(cat => (
                                     <button
                                         key={cat.id}
-                                        onClick={() => {
-                                            setActiveCategory(cat.id);
-                                            // setIsMobileFiltersOpen(false); // Опционально: авто-закрытие
-                                        }}
+                                        onClick={() => handleCategoryClick(cat.slug)}
                                         className={cn(
                                             "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border",
-                                            activeCategory === cat.id
+                                            activeCategory === cat.slug
                                                 ? "text-teal-900 bg-teal-500 border-teal-500" 
                                                 : "text-slate-300 bg-white/5 border-white/5 hover:bg-white/10"
                                         )}
@@ -248,14 +284,15 @@ export default function ToursBrowser({
                 <div className="w-px h-8 bg-white/10" />
 
                 {/* Categories */}
-                <div className="flex-1 flex items-center justify-center gap-1">
-                    {CATEGORIES.map(cat => (
+                <div className="flex-1 flex flex-wrap items-center justify-center gap-1">
+                    {/* ✅ ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЕ КАТЕГОРИИ */}
+                    {displayCategories.map(cat => (
                         <button
                             key={cat.id}
-                            onClick={() => setActiveCategory(cat.id)}
+                            onClick={() => handleCategoryClick(cat.slug)}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border border-transparent",
-                                activeCategory === cat.id
+                                activeCategory === cat.slug
                                     ? "text-teal-400 bg-teal-500/10 border-teal-500/20" 
                                     : "text-slate-400 hover:text-white hover:bg-white/5"
                             )}
@@ -270,7 +307,7 @@ export default function ToursBrowser({
                 {/* All Tours Link */}
                 <Link 
                     href="/tour" 
-                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-teal-500 hover:text-slate-900 border border-white/10 text-white text-xs font-bold uppercase tracking-widest transition-all group"
+                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-teal-500 hover:text-slate-900 border border-white/10 text-white text-xs font-bold uppercase tracking-widest transition-all group shrink-0"
                 >
                     <span>Все туры</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
@@ -293,10 +330,9 @@ export default function ToursBrowser({
                 
                 {/* HOT SECTION */}
                 {displayHot.length > 0 && (
-                    <section aria-labelledby="hot-tours-heading"> {/* 👈 Добавили связь с заголовком */}
+                    <section aria-labelledby="hot-tours-heading">
                     <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                         <Flame size={18} className="text-amber-500 animate-pulse" />
-                        {/* 👇 Добавили id сюда */}
                         <h3 id="hot-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
                             Ближайшие туры на 2 недели
                         </h3>
@@ -312,10 +348,9 @@ export default function ToursBrowser({
 
             {/* COMING SOON SECTION */}
             {displaySoon.length > 0 && (
-                <section aria-labelledby="soon-tours-heading"> {/* 👈 Добавили связь со вторым заголовком */}
+                <section aria-labelledby="soon-tours-heading">
                     <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                         <Sparkles size={18} className="text-slate-400" />
-                        {/* 👇 И id сюда */}
                         <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-400">
                             Планируй заранее (Анонсы)
                         </h3>
@@ -345,7 +380,7 @@ export default function ToursBrowser({
                                 Расписание формируется
                             </h3>
                             <p className="text-sm md:text-base text-slate-400 font-medium mb-8 max-w-md mx-auto leading-relaxed">
-                                Мы готовим новые даты. Хотите узнать о них первыми или заказать индивидуальный корпоративный сплав?
+                                Мы готовим новые даты в эту категорию. Хотите узнать о них первыми или заказать индивидуальный корпоративный сплав?
                             </p>
                             
                             <button 
@@ -368,7 +403,7 @@ export default function ToursBrowser({
         isOpen={isContactOpen} 
         onClose={() => setIsContactOpen(false)} 
         initialTab="TOUR" 
-        tourContext="Запрос уведомления о новых турах (Пустое расписание)"
+        tourContext={`Запрос уведомления о новых турах (Категория: ${activeCategory})`}
       />
     </section>
   );

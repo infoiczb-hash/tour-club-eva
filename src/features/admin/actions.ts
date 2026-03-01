@@ -133,9 +133,7 @@ export async function deleteGuideAction(id: string | number) {
 
 // ==========================================
 // 3. БЛОГ (BLOG)
-// ==========================================
 
-// ✅ 1. ФУНКЦИЯ СОХРАНЕНИЯ (которую мы обновили)
 export async function savePostAction(data: any) {
   try {
     const { id } = data;
@@ -157,7 +155,12 @@ export async function savePostAction(data: any) {
       slug: slug,
       excerpt: data.excerpt || "",
       content: data.content,
-      category: data.category || "OTHER",
+      
+      // ✅ ДОБАВЛЕНО: Сохранение связи с категорией и массива тегов
+      categoryId: data.category_id || null, // Связь с новой таблицей BlogCategory
+      tags: data.tags || [],                // Массив тегов (String[])
+      
+      category: data.category || "OTHER",   // Оставляем для обратной совместимости старых постов
       image: data.image || null,
       read_time: Number(data.read_time) || 5,
       is_trending: Boolean(data.is_trending),
