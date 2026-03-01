@@ -233,6 +233,19 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
         </div>
       </div>
+      {/* ================= ТЕГИ СТАТЬИ ================= */}
+{post.tags && post.tags.length > 0 && (
+    <div className="flex flex-wrap gap-2 mt-6 mb-8">
+        {post.tags.map((tag: string) => (
+            <span 
+                key={tag} 
+                className="px-3 py-1 text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 border border-teal-500/20 rounded-lg"
+            >
+                #{tag}
+            </span>
+        ))}
+    </div>
+)}
 
       {/* --- 2. CONTENT GRID --- */}
       <div className="container mx-auto px-4 max-w-7xl mt-4 md:mt-16">

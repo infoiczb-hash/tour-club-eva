@@ -144,7 +144,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
                         
                         {/* ЛЕВАЯ КОЛОНКА: ИЗОБРАЖЕНИЕ */}
-                        <div className="relative aspect-[4/3] lg:aspect-[4/5] xl:aspect-square w-full rounded-[2rem] lg:rounded-[3rem] overflow-hidden bg-slate-800 border border-white/5 order-1 lg:order-none shadow-2xl">
+                        <div className="relative aspect-[4/3] lg:aspect-[16/9] xl:aspect-[16/9] w-full rounded-[2rem] lg:rounded-[3rem] overflow-hidden bg-slate-800 border border-white/5 order-1 lg:order-none shadow-2xl"> 
                             <Image 
                                 src={featuredPost.image || '/placeholder.jpg'} 
                                 alt={featuredPost.title} 

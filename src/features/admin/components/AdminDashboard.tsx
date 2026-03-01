@@ -456,11 +456,13 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       
       {modalState.post && (
          <PostForm
-            initialData={editingItem}
-            onClose={() => setModalState(p => ({ ...p, post: false }))}
-            onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
-          />
-      )}
+  initialData={editingItem}
+  categories={blogCategories} // 👈 ВОТ ЭТА НОВАЯ СТРОКА
+  onClose={() => setModalState(p => ({ ...p, post: false }))}
+  onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
+
+/>
+)}
 
       {modalState.review && (
           <ReviewForm
@@ -502,7 +504,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
           onSubmit={handleSaveCategory}
         />
       )}
-      
+            
       <AiAssistant />
     </div>
   );

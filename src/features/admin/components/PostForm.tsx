@@ -188,7 +188,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     const file = e.target.files?.[0]; if (!file) return;
     setLoadingField(field);
     try {
-        const url = await uploadImage(file);
+       const url = await uploadImage(file, 'blog');
         if (url) setFormData(prev => ({ ...prev, [field]: url }));
         else alert("Upload failed");
     } catch (err) { alert("Upload failed"); } 
