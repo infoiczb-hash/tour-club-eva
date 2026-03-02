@@ -18,11 +18,11 @@ export async function getRegistrationsAction() {
     });
 
     const data = rawData.map((item) => {
-        // Достаем первую дату из JSON массива dates
+        // Достаем первую дату из JSON массива dates (если нет bookedDate)
         const dates = (item.tour?.dates as any[]) || [];
         const firstDate = dates[0]?.start ? new Date(dates[0].start) : null;
 
-        // Разбираем JSON билетов
+        // Разбираем JSON билетов, чтобы достать все детали
         const tickets = (item.tickets as any) || {};
 
         return {
@@ -32,14 +32,20 @@ export async function getRegistrationsAction() {
           status: item.status || 'pending',
           created_at: item.createdAt,
           
-          tickets_adult: tickets.adult || 0,
-          tickets_child: tickets.child || 0,
+          // Экономика
+          tickets_adult: Number(tickets.adult || 0),
+          tickets_child: Number(tickets.child || 0),
+          tickets_member: Number(tickets.member || 0),
           total_price: item.totalPrice,
+          
+          // Доп. информация
+          comment: tickets.comment || '',
+          social: item.email || tickets.social || '',
           
           event_id: item.tourId,
           tour: item.tour ? { 
             title: item.tour.title, 
-            date: firstDate
+            date: item.bookedDate || firstDate 
           } : undefined
         };
     });

@@ -23,6 +23,9 @@ export default function SuperHero({ onScrollDown }: { onScrollDown?: () => void 
            fill
            className="object-cover opacity-60"
            priority
+           fetchPriority="high" // 👈 ДОБАВИТЬ
+           sizes="100vw"        // 👈 ДОБАВИТЬ
+           quality={85}         // 👈 ДОБАВИТЬ
         />
         {/* Градиент для читаемости текста */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/50 to-slate-950" />

@@ -147,10 +147,23 @@ export default function HeaderClient({ navLinks }: HeaderClientProps) {
                 
                 {/* Соцсети */}
                 <div className="flex gap-3">
-                  <a href="https://t.me/your_telegram" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
-                    <Send size={16} className="-ml-0.5" /> {/* Чуть сдвигаем иконку телеги для визуала */}
+                <a 
+                    href="https://t.me/evaturclub" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all"
+                    aria-label="Наш Telegram"
+                  >
+                    <Send size={16} className="-ml-0.5" />
                   </a>
-                  <a href="https://instagram.com/your_inst" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
+
+                  <a 
+                    href="https://instagram.com/evaturclub" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all"
+                    aria-label="Наш Instagram"
+                  >
                     <Instagram size={16} />
                   </a>
                 </div>

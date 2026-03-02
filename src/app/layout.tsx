@@ -18,7 +18,8 @@ const inter = Inter({
   subsets: ["latin", "cyrillic"],
   display: "swap",
   variable: "--font-inter",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "600", "700"], // Оставили только нужные!
+  preload: false, // Отключаем принудительный preload, чтобы убрать warning
 });
 
 export const metadata: Metadata = {
@@ -146,7 +147,7 @@ export default function RootLayout({
         </Providers>
         <Analytics />
         <SpeedInsights />
-        <AxeReporter />
+    {process.env.NODE_ENV !== 'production' && <AxeReporter />}
       </body>
     </html>
   );

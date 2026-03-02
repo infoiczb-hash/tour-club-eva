@@ -16,7 +16,9 @@ import TourFAQ from './TourFAQ';
 import TourSidebar from './TourSidebar';
 import TourActionButtons from './TourActionButtons';
 import TourBottomActions from './TourBottomActions';
-import BookingModal from './BookingModal';
+import dynamic from 'next/dynamic';
+
+const BookingModal = dynamic(() => import('./BookingModal'), { ssr: false });
 
 interface TourDetailsWrapperProps {
   tour: Tour;

@@ -69,6 +69,10 @@ interface BookingItem {
   created_at: Date | string;
   tickets_adult: number;
   tickets_child: number;
+  tickets_member?: number; // 👈 добавлено
+  total_price: number;     // 👈 добавлено
+  comment?: string;        // 👈 добавлено
+  social?: string;         // 👈 добавлено
   event_id: string;
   tour?: { title: string; date: Date | string };
 }

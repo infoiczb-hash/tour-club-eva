@@ -13,7 +13,7 @@ export default function HikesHero({ onScrollDown }: { onScrollDown?: () => void 
     <section className="relative min-h-[100svh] flex flex-col justify-center overflow-hidden bg-stone-950 pt-28 pb-16 md:pt-0 md:pb-0">
       
       {/* Анимированный фоновый свет */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-800/20 blur-[120px] rounded-full animate-pulse pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-800/20 blur-[120px] rounded-full pointer-events-none" />
 
       <motion.div
         style={{ opacity, scale }}

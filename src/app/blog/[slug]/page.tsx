@@ -22,6 +22,7 @@ async function getPost(slug: string) {
 
   const post = await prisma.blog.findUnique({
     where: { slug: decodedSlug },
+    include: { blogCategory: true } // ✅ ДОБАВЛЕНО
   });
   
   if (!post) return null;
@@ -32,7 +33,8 @@ async function getPost(slug: string) {
         // isActive: true 
     },
     take: 3,
-    orderBy: { date: 'desc' }
+    orderBy: { date: 'desc' },
+    include: { blogCategory: true } // ✅ ДОБАВЛЕНО
   });
 
   return { post, relatedPosts };
@@ -55,7 +57,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   // ✅ ИСПРАВЛЕНО: Динамические Keywords с надежным фолбеком
-const keywordsStr = `${post.category}, поход Приднестровье, активный отдых, турклуб Эва, советы туристам, маршруты Молдова`;
+const keywordsStr = `${(post as any).blogCategory?.title || post.category}, маршруты Приднестровье, активный отдых, турклуб Эва, советы туристам, мотивация, туризм, сплавы`;
 
   return {
     title: `${post.title} | Турклуб «Эва»`,
@@ -194,7 +196,8 @@ export default async function BlogPostPage({ params }: PageProps) {
 
             {/* Категория */}
             <span className="inline-block px-2.5 py-1 bg-teal-500 text-slate-900 text-[12px] md:text-[14px] font-black uppercase tracking-widest rounded md:rounded-lg mb-2 md:mb-5 w-fit shadow-[0_0_15px_rgba(20,184,166,0.3)]">
-                {post.category}
+                {/* ✅ ИСПРАВЛЕНО */}
+                {(post as any).blogCategory?.title || post.category}
             </span>
 
             {/* ЗАГОЛОВОК */}
@@ -277,11 +280,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                 <ArticleShare title={post.title} slug={post.slug} />
 
-                <div className="mt-6 flex flex-wrap gap-2">
-                    <span className="text-slate-500 text-xs font-bold mr-1 py-1">Тема:</span>
-                    <span className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-[14px] md:text-xs hover:text-white transition-colors cursor-pointer border border-white/5">#{post.category}</span>
                 </div>
-            </div>
 
             {/* SIDEBAR */}
             <aside className="lg:col-span-4 space-y-6 md:space-y-8 mt-6 lg:mt-0">
@@ -299,7 +298,10 @@ export default async function BlogPostPage({ params }: PageProps) {
                                         <Image src={relPost.image || '/placeholder.jpg'} alt={relPost.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                                     </div>
                                     <div className="py-1">
-                                        <span className="text-[12px] text-teal-400 font-bold uppercase tracking-wider mb-1 block opacity-80">{relPost.category}</span>
+                                        <span className="text-[12px] text-teal-400 font-bold uppercase tracking-wider mb-1 block opacity-80">
+                                            {/* ✅ ИСПРАВЛЕНО */}
+                                            {(relPost as any).blogCategory?.title || relPost.category}
+                                        </span>
                                         <h4 className="text-xs md:text-sm font-bold text-white leading-snug group-hover:text-teal-400 transition-colors line-clamp-3">
                                             {relPost.title}
                                         </h4>

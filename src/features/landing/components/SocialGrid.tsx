@@ -339,6 +339,7 @@ function ReelCard({ post, onClick }: { post: SocialPost; onClick: () => void }) 
           muted
           loop
           playsInline
+          aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover filter brightness-[0.85] group-hover:brightness-100 transition-all duration-700 z-0"
         />
         

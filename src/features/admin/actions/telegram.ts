@@ -2,46 +2,50 @@
 
 /**
  * Продвинутая отправка в Telegram с поддержкой фото и кнопок.
+ * @param isPublic Если true - отправляет в публичный канал @evaturclub. По умолчанию false.
  */
-export async function publishToTelegram(text: string, imageUrl?: string, link?: string) {
-  // 1. Берем ключи (можно использовать те же переменные, что были, или новые)
+export async function publishToTelegram(
+  text: string, 
+  imageUrl?: string, 
+  link?: string,
+  isPublic: boolean = false // 👈 Добавили флаг публичности
+) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  // Поддерживаем оба варианта названия переменной для совместимости
-  const chatId = process.env.TELEGRAM_CHANNEL_ID || process.env.TELEGRAM_CHAT_ID;
+  
+  // 👈 МАГИЯ РАЗДЕЛЕНИЯ:
+  const chatId = isPublic 
+    ? process.env.TELEGRAM_CHANNEL_ID 
+    : process.env.TELEGRAM_ADMIN_CHAT_ID;
 
   if (!token || !chatId) {
     console.error("❌ Telegram Error: Нет ключей в .env");
-    return { success: false, error: "Не настроен .env (TELEGRAM_BOT_TOKEN)" };
+    return { success: false, error: "Не настроен .env" };
   }
 
   try {
-    // 2. Определяем метод: если есть картинка -> sendPhoto, иначе -> sendMessage
     const method = imageUrl ? 'sendPhoto' : 'sendMessage';
     const url = `https://api.telegram.org/bot${token}/${method}`;
     
-    // 3. Формируем тело запроса
     const body: any = {
       chat_id: chatId,
-      parse_mode: 'HTML', // Поддержка жирного текста и ссылок
+      parse_mode: 'HTML',
     };
 
     if (imageUrl) {
       body.photo = imageUrl;
-      body.caption = text.slice(0, 1024); // Лимит Telegram на подпись к фото
+      body.caption = text.slice(0, 1024);
     } else {
       body.text = text;
     }
 
-    // 4. Добавляем Inline-кнопку (если есть ссылка)
     if (link) {
       body.reply_markup = JSON.stringify({
         inline_keyboard: [
-          [{ text: "🔥 Забронировать место", url: link }]
+          [{ text: isPublic ? "🔥 Забронировать место" : "⚙️ Открыть CRM", url: link }]
         ]
       });
     }
 
-    // 5. Отправка
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -63,8 +67,7 @@ export async function publishToTelegram(text: string, imageUrl?: string, link?: 
   }
 }
 
-// Оставляем старую функцию для совместимости (если она где-то используется),
-// но перенаправляем её на новую логику
+// 👈 Старая функция теперь по умолчанию шлет всё админам (isPublic = false)
 export async function sendToTelegram(text: string) {
-  return publishToTelegram(text);
+  return publishToTelegram(text, undefined, undefined, false);
 }

@@ -83,14 +83,14 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
         {/* =======================================
             1. ИЗОБРАЖЕНИЕ И МАРКЕТИНГОВЫЕ БЕЙДЖИ
         ======================================= */}
-        <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden isolate">
-             <Image
-                src={image || '/placeholder-tour.jpg'}
-                alt={title}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-             />
+       <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
+   <Image
+      src={image || '/placeholder-tour.jpg'}
+      alt={title}
+      fill
+      className="object-cover transition-transform duration-700 group-hover:scale-105"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+   />
              
              {/* Градиент для читаемости элементов поверх фото */}
              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90" />

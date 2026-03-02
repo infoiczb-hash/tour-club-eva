@@ -1,3 +1,4 @@
+// src/features/blog/api.ts
 "use server"; 
 import { prisma } from '@/lib/prisma';
 
@@ -7,7 +8,7 @@ export async function getBlogPosts() {
       orderBy: {
         date: 'desc', // Или createdAt, если используете его
       },
-      // 👇 ВАЖНО: Подтягиваем данные связанного гида
+      // 👇 ВАЖНО: Подтягиваем данные связанного гида и категории
       include: {
         guide: {
           select: {
@@ -16,7 +17,8 @@ export async function getBlogPosts() {
             image: true,
             role: true
           }
-        }
+        },
+        blogCategory: true // ✅ ДОБАВЛЕНО: Связь с категорией
       }
     });
     return posts;
@@ -41,7 +43,8 @@ export async function getBlogPostBySlug(slug: string) {
             bio: true,
             instagram: true
           }
-        }
+        },
+        blogCategory: true // ✅ ДОБАВЛЕНО: Связь с категорией
       }
     });
     return post;
