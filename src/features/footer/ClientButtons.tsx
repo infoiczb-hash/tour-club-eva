@@ -13,7 +13,7 @@ export default function ClientButtons() {
         <Link
           href="/about"
           // Сделали px-4 для мобилок и px-6 для десктопа, чтобы точно влезли в один ряд
-          className="group inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-teal-600 px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-white transition-all hover:bg-teal-700 shadow-lg shadow-teal-500/20 whitespace-nowrap"
+          className="group inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-teal-700 px-4 sm:px-6 py-3 text-xs sm:text-sm font-bold text-white transition-all hover:bg-teal-700 shadow-lg shadow-teal-500/20 whitespace-nowrap"
         >
           <Compass className="h-4 w-4 shrink-0" />
           <span>Впервые с нами?</span>

@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import { Compass, MessageCircle, BookOpen, ChevronRight, Map, Sparkles } from "lucide-react";
 import Link from "next/link";
-import ContactHubModal from "@/components/modals/ContactHubModal";
-import TourQuizModal from "@/components/modals/TourQuizModal";
+import dynamic from "next/dynamic"; 
+
+const ContactHubModal = dynamic(() => import("@/components/modals/ContactHubModal"), { ssr: false });
+const TourQuizModal = dynamic(() => import("@/components/modals/TourQuizModal"), { ssr: false });
 
 export default function PromoBlock() {
   const [isContactOpen, setIsContactOpen] = useState(false);

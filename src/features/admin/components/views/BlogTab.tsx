@@ -129,9 +129,9 @@ export default function BlogTab({
                         </div>
                       </td>
                       <td className="p-5">
-                        {/* Пока выводим старое текстовое поле, позже заменим на название связи */}
+                        {/* ✅ ИСПРАВЛЕНО: Выводим название из связи, фолбэк на старое поле */}
                         <span className="px-2 py-1 bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400 rounded-md text-xs font-bold uppercase">
-                          {post.category || 'Без категории'}
+                          {(post as any).blogCategory?.title || post.category || 'Без категории'}
                         </span>
                       </td>
                       <td className="p-5 text-xs font-bold text-slate-500">
@@ -182,7 +182,10 @@ export default function BlogTab({
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start">
-                          <span className="text-[10px] font-bold text-violet-600 bg-violet-50 dark:bg-violet-900/20 dark:text-violet-400 px-2 py-0.5 rounded uppercase">{post.category}</span>
+                          {/* ✅ ИСПРАВЛЕНО */}
+                          <span className="text-[10px] font-bold text-violet-600 bg-violet-50 dark:bg-violet-900/20 dark:text-violet-400 px-2 py-0.5 rounded uppercase">
+                            {(post as any).blogCategory?.title || post.category || 'Без категории'}
+                          </span>
                           <StatusSwitch active={isPostActive} onClick={() => onToggleStatus(post, 'isActive')} />
                         </div>
                         <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 mt-1">{post.title}</h4>

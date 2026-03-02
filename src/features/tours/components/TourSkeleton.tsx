@@ -4,7 +4,7 @@ export const TourSkeletonCard = () => (
     <div className="bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden h-full flex flex-col relative">
         
         {/* 1. ФОТО */}
-        <div className="relative h-64 w-full bg-slate-100">
+      <div className="relative w-full aspect-[4/3] bg-slate-100">
              {/* Имитация метки типа тура (слева сверху) */}
              <div className="absolute top-4 left-4">
                 <Skeleton className="h-6 w-20 rounded-lg" />

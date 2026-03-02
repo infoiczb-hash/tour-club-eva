@@ -10,13 +10,15 @@ export default function KidsHero({ onScrollDown }: { onScrollDown?: () => void }
       
       {/* ФОН: Темный и атмосферный */}
       <div className="absolute inset-0 z-0">
-        <Image 
-          // Замените на вашу реальную фотографию детей у костра, если есть
+       <Image 
           src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771662349/kids-bg_don8xd.webp"
           alt="Дети у костра"
           fill
           className="object-cover opacity-40 md:opacity-50"
           priority
+          fetchPriority="high" // ✅ ДОБАВЛЕНО
+          quality={85}         // ✅ ДОБАВЛЕНО
+          sizes="100vw"        // ✅ ДОБАВЛЕНО
         />
         {/* Градиент для читаемости текста */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />

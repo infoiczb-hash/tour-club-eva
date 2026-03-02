@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, Loader2, Phone, User, MessageSquare, Calendar, AtSign, Minus, Plus } from 'lucide-react';
+import { X, CheckCircle, Loader2, Phone, User, MessageSquare, Calendar, AtSign, Minus, Plus, AlertCircle } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
+import { createBookingAction } from '@/features/tours/actions/createBooking';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface BookingModalProps {
 export default function BookingModal({ isOpen, onClose, tour, initialDate }: BookingModalProps) {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -47,7 +49,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
     member: 0,
   });
 
-  // --- ИСПРАВЛЕНИЕ: БЛОКИРОВКА СКРОЛЛА ---
+  // Блокировка скролла
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -55,6 +57,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
       document.body.style.overflow = '';
       const timer = setTimeout(() => {
         setStep('form');
+        setErrorMsg(null);
         setFormData({ name: '', phone: '+373 ', social: '', comment: '' });
         setTickets({ adult: 1, child: 0, member: 0 });
       }, 300);
@@ -62,7 +65,6 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
-  // ---------------------------------------
 
   const totalPrice = useMemo(() => {
     let sum = tickets.adult * tour.price;
@@ -81,11 +83,34 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setErrorMsg(null);
+
+    try {
+      const result = await createBookingAction({
+        tourId:        String(tour.id),
+        tourTitle:     tour.title,
+        tourDate:      selectedDateStr,
+        name:          formData.name.trim(),
+        phone:         formData.phone.trim(),
+        social:        formData.social.trim() || undefined,
+        comment:       formData.comment.trim() || undefined,
+        ticketsAdult:  tickets.adult,
+        ticketsChild:  tickets.child,
+        ticketsMember: tickets.member,
+        totalPrice,
+        currency:      tour.currency ?? 'MDL',
+      });
+
+      if (result.success) {
+        setStep('success');
+      } else {
+        setErrorMsg(result.error ?? 'Что-то пошло не так. Попробуйте ещё раз.');
+      }
+    } catch {
+      setErrorMsg('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+    } finally {
       setIsLoading(false);
-      setStep('success');
-      console.log('Заявка:', { tour: tour.title, date: selectedDateStr, tickets, total: totalPrice, ...formData });
-    }, 1500);
+    }
   };
 
   const Counter = ({ label, price, value, type }: { label: string, price: number, value: number, type: 'adult'|'child'|'member' }) => (
@@ -118,7 +143,6 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* --- ИСПРАВЛЕНИЕ: FIXED INSET-0 Z-INDEX --- */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -180,7 +204,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
                             </div>
                           ) : (
                              <div className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-300">
-                                {new Date(tour.date).toLocaleDateString()}
+                                {new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
                              </div>
                           )
                        )}
@@ -188,12 +212,12 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
 
                     <div className="bg-white/5 rounded-xl p-4 border border-white/5">
                         <Counter label="Взрослый" price={tour.price} value={tickets.adult} type="adult" />
-                        {tour.priceChild && tour.priceChild > 0 && (
+                        {tour.priceChild && tour.priceChild > 0 ? (
                            <Counter label="Детский" price={tour.priceChild} value={tickets.child} type="child" />
-                        )}
-                        {tour.priceMember && tour.priceMember > 0 && (
+                        ) : null}
+                        {tour.priceMember && tour.priceMember > 0 ? (
                            <Counter label="Клубная карта" price={tour.priceMember} value={tickets.member} type="member" />
-                        )}
+                        ) : null}
                         <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
                            <span className="text-xs font-bold text-slate-400 uppercase">Итого:</span>
                            <span className="text-xl font-black text-teal-400">
@@ -245,9 +269,16 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
                         </div>
                     </div>
 
+                    {errorMsg && (
+                      <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                        <span>{errorMsg}</span>
+                      </div>
+                    )}
+
                     <button
                       type="submit" disabled={isLoading}
-                      className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_30px_rgba(20,184,166,0.4)]"
+                      className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_30px_rgba(20,184,166,0.4)]"
                     >
                       {isLoading ? <Loader2 className="animate-spin" size={20} /> : `Записаться за ${totalPrice.toLocaleString()} ${tour.currency}`}
                     </button>
@@ -266,7 +297,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate }: Boo
                       Заявка принята!
                     </h3>
                     <p className="text-slate-400 text-sm mb-8 leading-relaxed max-w-[260px]">
-                      Мы свяжемся с вами в ближайшее время по номеру <span className="text-white font-bold">{formData.phone}</span>.
+                      Мы свяжемся с вами в ближайшее время по номеру <span className="text-white font-bold">{formData.phone}</span> для подтверждения.
                     </p>
                     <button
                       onClick={onClose}

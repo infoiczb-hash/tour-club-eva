@@ -114,8 +114,9 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
 
       {/* --- ДИНАМИЧЕСКИЕ РАЗДЕЛЫ --- */}
       <div className="container mx-auto px-4 pb-24 relative z-10 space-y-24">
-         {Object.entries(groupedContent).map(([categoryName, tests]) => {
-            const config = CATEGORY_UI_CONFIG[categoryName] || CATEGORY_UI_CONFIG["Другое"];
+         {/* ✅ ДОБАВИЛИ categoryIndex */}
+         {Object.entries(groupedContent).map(([categoryName, tests], categoryIndex) => {
+            const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
             
             return (
               <section key={categoryName} className="space-y-8">
@@ -131,8 +132,9 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
                 </div>
 
                 {/* СЕТКА КАРТОЧЕК */}
-                <motion.div variants={containerVariants} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                    {tests.map((test) => {
+              <motion.div variants={containerVariants} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    {/* ✅ ДОБАВИЛИ index */}
+                    {tests.map((test, index) => {
                        const visual = VISUAL_REGISTRY[test.slug] || VISUAL_REGISTRY['default'];
                        return (
                          <QuizCard 
@@ -143,7 +145,9 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
                             icon={visual.icon}
                             title={test.title}
                             desc={test.description}
-                            badge={visual.badge}
+                            category={test.category}
+                            // ✅ ПЕРЕДАЕМ ПРИОРИТЕТ ТОЛЬКО ПЕРВОЙ КАРТОЧКЕ ПЕРВОЙ КАТЕГОРИИ
+                            priority={categoryIndex === 0 && index === 0} 
                          />
                        );
                     })}
@@ -194,8 +198,8 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
 }
 
 // --- КОМПОНЕНТ КАРТОЧКИ ---
-function QuizCard({ onClick, image, color, icon, title, desc, badge }: any) {
-    const colors: Record<string, string> = {
+function QuizCard({ onClick, image, color, icon, badge, title, desc, category, priority }: any) {
+        const colors: Record<string, string> = {
         orange: "bg-orange-500 shadow-orange-500/20 text-orange-400 group-hover:border-orange-500/50",
         blue: "bg-blue-500 shadow-blue-500/20 text-blue-400 group-hover:border-blue-500/50",
         emerald: "bg-emerald-500 shadow-emerald-500/20 text-emerald-400 group-hover:border-emerald-500/50",
@@ -208,8 +212,9 @@ function QuizCard({ onClick, image, color, icon, title, desc, badge }: any) {
     const activeColor = colors[color] || colors.teal;
 
     return (
-        <motion.div variants={itemVariants} whileHover={{ y: -8 }} onClick={onClick} className={clsx("group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all shadow-2xl", activeColor.split(" ").pop())}>
-           {image && <Image src={image} alt={title} fill className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 33vw" />}
+       <motion.div variants={itemVariants} whileHover={{ y: -8 }} onClick={onClick} className="group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all shadow-2xl">
+           {/* ✅ 2. Передали priority={priority} в компонент Image */}
+           {image && <Image src={image} alt={title} fill priority={priority} className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700" />}
            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
            
            {badge && (

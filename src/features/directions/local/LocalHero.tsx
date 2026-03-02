@@ -13,12 +13,15 @@ export default function LocalHero({ onScrollDown }: { onScrollDown?: () => void 
     <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Фон с параллаксом */}
       <motion.div style={{ opacity: opacityHero, y: yHero }} className="absolute inset-0 z-0">
-        <Image
+     <Image
           src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771665911/1_suclsq.jpg" 
           alt="Природа Приднестровья"
           fill
           className="object-cover opacity-50"
           priority
+          fetchPriority="high" // ✅ ДОБАВЛЕНО
+          quality={85}         // ✅ ДОБАВЛЕНО
+          sizes="100vw"        // ✅ ДОБАВЛЕНО
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />
       </motion.div>

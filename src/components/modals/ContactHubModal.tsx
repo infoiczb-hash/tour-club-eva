@@ -274,7 +274,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
 
             {/* FOOTER */}
             <div className="p-5 border-t border-white/5 bg-slate-950/80 backdrop-blur-md text-center shrink-0">
-               <a href="https://t.me/romansvtirase" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm font-bold text-slate-500 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2">
+               <a href="https://t.me/romansvtirase" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm font-bold text-slate-500 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2" aria-label="Наш Telegram">
                   <MessageSquare size={16}/> Срочно? Написать в Telegram
                </a>
             </div>

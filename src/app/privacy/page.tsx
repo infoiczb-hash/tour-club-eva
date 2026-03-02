@@ -35,9 +35,10 @@ export default function PrivacyPage() {
             </div>
         </div>
 
-        {/* Content (Адаптивный Prose) */}
+      {/* Content (Адаптивный Prose) */}
         <div className="prose prose-sm md:prose-lg prose-invert max-w-none 
             prose-headings:font-bold prose-headings:uppercase prose-headings:text-white prose-headings:mt-8 prose-headings:mb-4
+            prose-h2:text-xl md:prose-h2:text-2xl
             prose-p:text-slate-300 prose-p:leading-relaxed prose-p:mb-4
             prose-a:text-teal-400 hover:prose-a:text-teal-300 
             prose-li:text-slate-300 prose-li:my-1
@@ -45,7 +46,7 @@ export default function PrivacyPage() {
             prose-strong:text-teal-400">
             
             <section className="mb-8 md:mb-10">
-                <h3>1. Общие положения</h3>
+                <h2>1. Общие положения</h2>
                 <p>
                     Туристический клуб «Эва» уважает ваше личное пространство. Мы собираем только те данные, которые реально нужны для организации вашего тура или мероприятия.
                 </p>
@@ -53,7 +54,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8 md:mb-10">
-                <h3>2. Какие данные мы собираем</h3>
+                <h2>2. Какие данные мы собираем</h2>
                 <p>Для записи в тур или события для логистики нам могут понадобиться:</p>
                 <ul>
                     <li>Имя и Фамилия (чтобы знать, как к вам обращаться);</li>
@@ -63,7 +64,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8 md:mb-10">
-                <h3>3. Фото и Видео (Контент)</h3>
+                <h2>3. Фото и Видео (Контент)</h2>
                 <p>
                     Путешествия — это эмоции, и мы любим их сохранять!
                 </p>
@@ -78,26 +79,26 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8 md:mb-10">
-                <h3>4. Передача данных</h3>
+                <h2>4. Передача данных</h2>
                 <p>
                     Мы не продаем и не передаем ваши контакты спамерам. Ваши данные могут быть переданы третьим лицам только в случаях, необходимых для исполнения тура:
                 </p>
                 <ul>
                     <li>Транспортным компаниям (для списков пассажиров);</li>
+                     <li>Пограничным службам и другим органам отвественных за безопасность;</li>
                     <li>Отелям и гостевым домам (для заселения);</li>
                     <li>Страховым агентам (для оформления полиса).</li>
                 </ul>
             </section>
 
             <section className="mb-8 md:mb-10">
-                <h3>5. Согласие</h3>
+                <h2>5. Согласие</h2>
                 <p>
                     Оставляя заявку на сайте, бронируя тур или вступая в чат поездки, вы подтверждаете, что ознакомились с данной политикой и принимаете её условия.
                 </p>
             </section>
 
         </div>
-
         {/* Блок Центр Связи */}
         <div className="mt-8 md:mt-12 p-5 md:p-6 bg-slate-900/80 border border-white/5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
             <div>

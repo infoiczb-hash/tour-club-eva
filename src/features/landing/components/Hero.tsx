@@ -42,13 +42,14 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
       {/* 1. BACKGROUND WITH PARALLAX */}
       <motion.div style={{ y: yBg }} className="absolute inset-0 z-0">
          <div className="relative w-full h-[120%] -top-[10%]">
-             <Image 
+           <Image 
                 src={content.bg_image} 
                 alt="Турклуб Эва" 
                 fill
                 className="object-cover object-center"
                 priority
-                quality={80}
+                fetchPriority="high" // ✅ ДОБАВЛЕНО: Ключевой буст для Lighthouse
+                quality={85}         // ✅ ИЗМЕНЕНО: Слегка повысили с 80 до 85 для ретины
                 sizes="100vw"
              />
              
@@ -121,9 +122,10 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
 
       </motion.div>
 
-      {/* 3. SCROLL BUTTON */}
+     {/* 3. SCROLL BUTTON */}
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
           <motion.button
+            aria-label="Прокрутить вниз к турам" // ✅ ДОБАВЛЕНО СЮДА
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 1 }}
@@ -134,6 +136,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
                   <ArrowDown className="text-white group-hover:text-slate-900 animate-bounce w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
               </div>
           </motion.button>
-      </div> </section> 
+      </div> 
+</section>
   );
   }
