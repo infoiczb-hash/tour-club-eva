@@ -89,17 +89,16 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
 
       {/* ==========================================
           2. КОНТЕНТ (Типографика)
-      ========================================== */}
+          ========================================== */}
+      {/* ВАЖНО: Внешний контейнер оставляем motion.div ради эффекта при скролле */}
       <motion.div 
         className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center mt-20"
         style={{ y: yText, opacity: opacityText }}
       >
-        {/* Динамический бейдж с цветом темы */}
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-6 sm:mb-8 shadow-2xl"
+        
+        {/* Динамический бейдж: появляется первым (без задержки) */}
+        <div 
+            className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-6 sm:mb-8 shadow-2xl"
             style={{ 
                 backgroundColor: `${theme.glow.replace('0.4', '0.1')}`, 
                 borderColor: `${theme.glow.replace('0.4', '0.3')}` 
@@ -111,27 +110,22 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
             >
                 {data.hero.badge}
             </span>
-        </motion.div>
+        </div>
 
-        {/* Гигантский заголовок */}
-        <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-            className="text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.95] mb-6 drop-shadow-2xl max-w-5xl"
+        {/* Гигантский заголовок (LCP): появляется через 100мс */}
+        <h1 
+            className="animate-fade-in-up opacity-0 [animation-delay:100ms] text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.95] mb-6 drop-shadow-2xl max-w-5xl"
         >
             {data.hero.title}
-        </motion.h1>
+        </h1>
 
-        {/* Подзаголовок */}
-        <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-sm sm:text-lg md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed drop-shadow-md"
+        {/* Подзаголовок: появляется через 200мс */}
+        <p 
+            className="animate-fade-in-up opacity-0 [animation-delay:200ms] text-sm sm:text-lg md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed drop-shadow-md"
         >
             {data.hero.subtitle}
-        </motion.p>
+        </p>
+        
       </motion.div>
 
       {/* ==========================================

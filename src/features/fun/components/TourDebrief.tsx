@@ -159,10 +159,10 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
                 <BookOpen className="w-4 h-4 text-violet-400" />
                 <span className="text-xs font-bold text-violet-400 tracking-[0.2em] uppercase">Разбор тура</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
+              <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
                 Что открыл<br />
                 <span className="text-violet-400">этот поход?</span>
-              </h1>
+              </h2>
               <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-8 font-medium">
                 Структурированная рефлексия опыта. 9 вопросов — про тело, голову и группу. Отвечай честно. В конце AI-консультант составит твой персональный психологический разбор.
               </p>

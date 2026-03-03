@@ -77,7 +77,7 @@ export default function HikesDestinations() {
                       alt={dest.subtitle} 
                       fill 
                       className="object-cover transition-transform duration-1000 group-hover:scale-105" 
-                      sizes="(max-width: 768px) 85vw, 33vw"
+                    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-800/90 via-transparent to-transparent opacity-100" />
                   </div>
@@ -115,7 +115,7 @@ export default function HikesDestinations() {
 
           {/* 🔥 Подсказка "Мотай" */}
           <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
-              <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+              <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} />
           </div>
         </div>

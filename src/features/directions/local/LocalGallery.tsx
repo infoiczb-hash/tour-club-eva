@@ -83,7 +83,9 @@ export default function LocalGallery() {
                                         alt={`Фото из похода ${i + 1}`}
                                         fill 
                                         className="object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                        sizes={isWide ? "(max-width: 768px) 85vw, 66vw" : "(max-width: 768px) 85vw, 33vw"}
+                                        sizes={isWide
+  ? "(max-width: 640px) 85vw, (max-width: 1024px) 85vw, 66vw"
+  : "(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"}
                                         priority={i === 0}
                                     />
                                     {/* Легкое затемнение при наведении */}
@@ -95,7 +97,7 @@ export default function LocalGallery() {
 
                     {/* 🔥 4. Подсказка "Мотай" */}
                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-emerald-500/80 animate-pulse pointer-events-none">
-                        <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                         <ChevronRight size={14} />
                     </div>
                 </div>

@@ -111,9 +111,9 @@ const guideImage = guideData?.image || null;
                         </div>
                         
                         <div>
-                           <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5 leading-none">
+                           <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5 leading-none">
                               Ведет группу
-                           </h4>
+                           </h3>
                            <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
                               {guideName}
                            </p>

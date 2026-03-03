@@ -1,0 +1,22 @@
+# Целевые браузеры для evatur.club
+# FIX: убирает legacy JavaScript (14 КБ на страницу)
+# Lighthouse: "Avoid serving legacy JavaScript to modern browsers"
+#
+# Аудитория: Молдова/Приднестровье — Chrome Android доминирует
+# Источник: caniuse.com + типичная аудитория туристических сайтов СНГ
+
+[production]
+Chrome >= 80
+Firefox >= 78
+Safari >= 14
+Edge >= 80
+Opera >= 67
+Samsung >= 12
+> 0.5%
+not dead
+not IE 11
+
+[development]
+last 1 Chrome version
+last 1 Firefox version
+last 1 Safari version

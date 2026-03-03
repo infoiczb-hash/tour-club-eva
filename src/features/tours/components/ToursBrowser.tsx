@@ -14,13 +14,27 @@ import Link from 'next/link';
 import { Tour } from '@/features/tours/types'; 
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import TourCard from './TourCard';
-import CalendarView from './CalendarView'; 
+import dynamic from 'next/dynamic';
 import ContactHubModal from "@/components/modals/ContactHubModal"; 
+
+const CalendarView = dynamic(() => import('./CalendarView'), {
+  ssr: true,
+  loading: () => (
+    <div className="h-[300px] w-full bg-slate-800/30 animate-pulse rounded-[1.5rem] border border-white/5 mt-4" />
+  ),
+});
+
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const TourCard = dynamic(() => import('./TourCard'), {
+  ssr: true, // Оставляем true, чтобы SEO-роботы видели карточки
+  loading: () => (
+    <div className="h-[450px] w-full bg-slate-800/30 animate-pulse rounded-2xl border border-white/5" />
+  ),
+});
 
 // ✅ 1. ИНТЕЛЛЕКТУАЛЬНЫЙ МАППЕР ИКОНОК
 const getIconComponent = (iconName: string, size = 14) => {
@@ -328,9 +342,9 @@ export default function ToursBrowser({
             /* 2. GRID VIEW (SMART FEED) */
             <div className="space-y-12 md:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* HOT SECTION */}
-                {displayHot.length > 0 && (
-                    <section aria-labelledby="hot-tours-heading">
+              {/* HOT SECTION */}
+            {displayHot.length > 0 && (
+                <section aria-labelledby="hot-tours-heading">
                     <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                         <Flame size={18} className="text-amber-500 animate-pulse" />
                         <h3 id="hot-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
@@ -339,8 +353,8 @@ export default function ToursBrowser({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {displayHot.map((tour) => (
-                            <TourCard key={tour.id} tour={tour} isHot />
+                        {displayHot.map((tour, index) => (
+                            <TourCard key={tour.id} tour={tour} isHot priority={index === 0} />
                         ))}
                     </div>
                 </section>
@@ -357,8 +371,12 @@ export default function ToursBrowser({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-90 hover:opacity-100 transition-opacity">
-                        {displaySoon.map((tour) => (
-                            <TourCard key={tour.id} tour={tour} />
+                        {displaySoon.map((tour, index) => (
+                         <TourCard  
+                            key={tour.id} 
+                            tour={tour} 
+                            priority={displayHot.length === 0 && index === 0} 
+                         />
                         ))}
                     </div>
                 </section>

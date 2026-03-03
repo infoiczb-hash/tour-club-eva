@@ -173,10 +173,10 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
                 <Dumbbell className="w-5 h-5 text-emerald-500" />
                 <span className="text-xs font-bold text-emerald-500 tracking-[0.2em] uppercase">Физическая готовность</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
+              <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
                 Готов ли я<br />
                 <span className="text-emerald-400">физически?</span>
-              </h1>
+              </h2>
               <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-10 font-medium">
                 Честная самооценка на основе твоего реального образа жизни. Не медицинская диагностика — ориентир для понимания своей точки старта.
               </p>

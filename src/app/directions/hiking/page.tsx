@@ -4,6 +4,8 @@ import { Metadata } from 'next';
 // import { getTours } from '@/features/tours/api'; 
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 export const metadata: Metadata = {
   title: 'Приключенческие туры в горы из Приднестровья и Молдовы | Турклуб «Эва»',
   description: 'Туры с гидами. Многодневные в горы Румынии. Для начинающих и опытных туристов.',

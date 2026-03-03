@@ -3,6 +3,8 @@ import ToursBrowser from '@/features/tours/components/ToursBrowser';
 import { Metadata } from 'next';
 import { getTourCategoriesAction } from '@/features/admin/actions/categories';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 // 1. 🔥 СУПЕР-SEO ДЛЯ КАТАЛОГА ТУРОВ (Приднестровье/Молдова)
 export const metadata: Metadata = {
   title: 'Туры и Походы в Приднестровье — Расписание | Турклуб «Эва»',

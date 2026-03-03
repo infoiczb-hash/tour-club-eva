@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
 import { Metadata } from 'next';
-import dynamic from 'next/dynamic'; // ✅ Импортируем dynamic
 
 // Оставляем статичными блоки с высокой SEO-ценностью (первый экран и текст)
 import { getBlogPosts } from '@/features/blog/api';
@@ -10,11 +9,15 @@ import { getReviews } from '@/features/reviews/actions';
 
 import Hero from '@/features/landing/components/Hero';
 import Philosophy from '@/features/landing/components/Philosophy';
-import ToursBrowser from '@/features/tours/components/ToursBrowser';
 import BlogList from '@/features/blog/components/BlogSection';
 import LazySocialGrid from '@/features/landing/components/LazySocialGrid';
 import LazyFunSector from '@/features/fun/components/LazyFunSector';
 import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
+import dynamic from 'next/dynamic';
+
+const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
+  ssr: true,
+});
 
 const LazyGuidesList = dynamic(() => import('@/features/guides/components/GuidesList'), {
   loading: () => <section className="min-h-[400px] w-full bg-slate-50 dark:bg-slate-950 animate-pulse" />

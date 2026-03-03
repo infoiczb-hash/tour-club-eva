@@ -49,15 +49,13 @@ export default function Hero({ activeTab, setActiveTab }: HeroProps) {
           </span>
         </motion.div>
 
-        <motion.h1 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl"
+       {/* Убрали motion., initial, animate и transition */}
+        <h1 
+          className="animate-fade-in-up opacity-0 [animation-delay:100ms] text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl"
         >
           Сплавы на <br className="hidden md:block"/>
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">байдарках</span>
-        </motion.h1>
+        </h1>
 
         <motion.p 
           initial={{ y: 20, opacity: 0 }}

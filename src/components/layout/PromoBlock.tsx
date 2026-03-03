@@ -1,30 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Compass, MessageCircle, BookOpen, ChevronRight, Map, Sparkles } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic"; 
-
-const ContactHubModal = dynamic(() => import("@/components/modals/ContactHubModal"), { ssr: false });
-const TourQuizModal = dynamic(() => import("@/components/modals/TourQuizModal"), { ssr: false });
+import { useModalStore } from '@/shared/store/useModalStore';
 
 export default function PromoBlock() {
-  const [isContactOpen, setIsContactOpen] = useState(false);
-  const [contactTab, setContactTab] = useState<'TOUR' | 'HR' | 'BLOG' | 'B2B' | 'REVIEW' | 'HELP'>('TOUR');
-  const [tourContext, setTourContext] = useState<string | undefined>(undefined);
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  // Достаем функции открытия из глобального стора
+  const openQuizModal = useModalStore((state) => state.openQuizModal);
+  const openContactModal = useModalStore((state) => state.openContactModal);
 
-  const openHub = (tab: typeof contactTab) => {
-      setContactTab(tab);
-      setTourContext(undefined);
-      setIsContactOpen(true);
-  };
-
-  const handleQuizResult = (tourTitle: string) => {
-      setIsQuizOpen(false);
-      setContactTab('TOUR');
-      setTourContext(`Подобрано AI: ${tourTitle}`);
-      setTimeout(() => setIsContactOpen(true), 300);
+  // Локальная функция для удобства вызова Центра Связи
+  const openHub = (tab: 'TOUR' | 'HR' | 'BLOG' | 'B2B' | 'REVIEW' | 'HELP') => {
+      // Вызываем глобальную модалку, передавая нужный таб
+      openContactModal(undefined, tab);
   };
 
   return (
@@ -36,7 +25,7 @@ export default function PromoBlock() {
 
       <div className="container relative z-10 mx-auto px-4 max-w-7xl">
         
-        {/* ЗАГОЛОВОК: Выравнивание ВЛЕВО везде */}
+        {/* ЗАГОЛОВОК */}
         <div className="flex flex-col items-start mb-6 md:mb-12 max-w-4xl">
            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-3 md:mb-6">
                <Map size={10} className="text-teal-400 md:w-4 md:h-4" />
@@ -49,7 +38,7 @@ export default function PromoBlock() {
             <span className="text-teal-500">?</span>
         </h2>
           
-          <p className="text-slate-300 text-s md:text-base font-medium leading-relaxed max-w-xs md:max-w-xl">
+          <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed max-w-xs md:max-w-xl">
             Три простых шага, чтоб найти своё идеальное приключение. Понять/Вдохновиться/Спросить.
           </p>
         </div>
@@ -57,9 +46,9 @@ export default function PromoBlock() {
        {/* СЕТКА */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 auto-rows-[180px] sm:auto-rows-[200px] md:auto-rows-[280px]">
           
-          {/* 1. QUIZ (Мобильный: снизу слева / Десктоп: слева) */}
+          {/* 1. QUIZ */}
           <div 
-            onClick={() => setIsQuizOpen(true)}
+            onClick={() => openQuizModal()}
             className="order-2 md:order-1 col-span-1 group cursor-pointer relative overflow-hidden rounded-[2rem] bg-slate-900/40 backdrop-blur-md border border-white/5 hover:border-teal-500/50 hover:bg-slate-900/60 transition-all duration-500 flex flex-col p-4 md:p-8"
           >
             <Compass strokeWidth={1} className="absolute -right-4 -top-4 w-32 h-32 md:-right-8 md:-top-8 md:w-48 md:h-48 text-teal-500/5 group-hover:text-teal-500/10 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700 pointer-events-none" />
@@ -86,7 +75,7 @@ export default function PromoBlock() {
             </div>
           </div>
 
-          {/* 2. BLOG (Мобильный: снизу справа / Десктоп: в центре) */}
+          {/* 2. BLOG */}
           <Link 
             href="/blog" 
             className="order-3 md:order-2 col-span-1 group relative overflow-hidden rounded-[2rem] bg-slate-900/40 backdrop-blur-md border border-white/5 hover:border-amber-500/50 hover:bg-slate-900/60 transition-all duration-500 flex flex-col p-4 md:p-8"
@@ -115,49 +104,46 @@ export default function PromoBlock() {
             </div>
           </Link>
 
-          {/* 3. CENTER OF CONNECTION (Мобильный: сверху, на всю ширину / Десктоп: справа) */}
-<div 
-  onClick={() => openHub('TOUR')}
-  className="order-1 md:order-3 col-span-2 md:col-span-1 group cursor-pointer relative overflow-hidden rounded-[2rem] bg-slate-900/60 backdrop-blur-xl border border-white/10 hover:border-sky-500/50 hover:bg-slate-900/80 transition-all duration-500 flex flex-col p-5 md:p-6" // 👈 Чуть уменьшили десктопный padding (с p-8 на p-6), чтобы дать больше места
->
-  <MessageCircle strokeWidth={1} className="absolute -right-4 -bottom-4 w-40 h-40 md:-right-8 md:-top-8 md:w-48 md:h-48 text-sky-500/5 group-hover:text-sky-500/10 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-700 pointer-events-none" />
-  
-  {/* Иконка: ❌ УБРАЛИ mb-auto */}
-  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-sky-500/10 flex items-center justify-center text-sky-400 border border-sky-500/20 group-hover:scale-110 transition-transform">
-      <MessageCircle size={20} className="md:w-7 md:h-7" />
-  </div>
+          {/* 3. CENTER OF CONNECTION */}
+          <div 
+            onClick={() => openHub('TOUR')}
+            className="order-1 md:order-3 col-span-2 md:col-span-1 group cursor-pointer relative overflow-hidden rounded-[2rem] bg-slate-900/60 backdrop-blur-xl border border-white/10 hover:border-sky-500/50 hover:bg-slate-900/80 transition-all duration-500 flex flex-col p-5 md:p-6"
+          >
+            <MessageCircle strokeWidth={1} className="absolute -right-4 -bottom-4 w-40 h-40 md:-right-8 md:-top-8 md:w-48 md:h-48 text-sky-500/5 group-hover:text-sky-500/10 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-700 pointer-events-none" />
+            
+            {/* Иконка */}
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-sky-500/10 flex items-center justify-center text-sky-400 border border-sky-500/20 group-hover:scale-110 transition-transform">
+                <MessageCircle size={20} className="md:w-7 md:h-7" />
+            </div>
 
-  {/* Текст: 📉 Слегка уплотнили верхний отступ (mt-4 md:mt-5) */}
-  <div className="mt-4 md:mt-5 mb-4 max-w-[85%] md:max-w-full relative z-10">
-      <h3 className="text-xl md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-2">Центр связи</h3>
-      <p className="text-sm text-slate-300 leading-relaxed font-medium">
-          Напиши нам в мессенджер, и мы найдем для тебя идеальное решение или маршрут.
-      </p>
-  </div>
-      
-  {/* Кнопка: ✅ mt-auto теперь корректно прижмет ее к низу, не выдавливая за край */}
-  <button 
-    type="button" 
-    className="flex items-center gap-3 mt-auto justify-end md:justify-start group outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-full transition-all relative z-10"
-    onClick={(e) => { 
-      e.stopPropagation(); // 👈 Добавил защиту: чтобы клик по кнопке не вызывал двойной клик по самой карточке
-      /* твоя логика */ 
-    }}
-  >
-    <span className="text-xs font-bold text-sky-500 uppercase tracking-widest group-hover:text-white transition-colors">
-      Связаться
-    </span>
-    
-    <div aria-hidden="true" className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:bg-sky-500 group-hover:text-white group-hover:translate-x-2 transition-all">
-      <ChevronRight size={16} className="md:w-5 md:h-5" />
-    </div>
-  </button>
-</div>
+            {/* Текст */}
+            <div className="mt-4 md:mt-5 mb-4 max-w-[85%] md:max-w-full relative z-10">
+                <h3 className="text-xl md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-2">Центр связи</h3>
+                <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                    Напиши нам в мессенджер, и мы найдем для тебя идеальное решение или маршрут.
+                </p>
+            </div>
+                
+            {/* Кнопка */}
+            <button 
+              type="button" 
+              className="flex items-center gap-3 mt-auto justify-end md:justify-start group outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-full transition-all relative z-10"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                openHub('TOUR');
+              }}
+            >
+              <span className="text-xs font-bold text-sky-500 uppercase tracking-widest group-hover:text-white transition-colors">
+                Связаться
+              </span>
+              
+              <div aria-hidden="true" className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:bg-sky-500 group-hover:text-white group-hover:translate-x-2 transition-all">
+                <ChevronRight size={16} className="md:w-5 md:h-5" />
+              </div>
+            </button>
+          </div>
         </div>
       </div>
-      <ContactHubModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} initialTab={contactTab} tourContext={tourContext} />
-       <TourQuizModal isOpen={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
-
-         </section>
+    </section>
   );
 }

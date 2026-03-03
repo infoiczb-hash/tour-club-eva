@@ -10,7 +10,11 @@ import LocalRoutes from '@/features/directions/local/LocalRoutes';
 import LocalConditions from '@/features/directions/local/LocalConditions'; 
 import LocalGallery from '@/features/directions/local/LocalGallery';
 import LocalFAQ from '@/features/directions/local/LocalFAQ';
-import ToursBrowser from '@/features/tours/components/ToursBrowser';
+import dynamic from 'next/dynamic';
+
+const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
+  ssr: true,
+});
 
 
 export default function LocalLanding({ tours }: { tours: Tour[] }) {

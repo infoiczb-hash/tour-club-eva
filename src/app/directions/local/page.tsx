@@ -3,6 +3,8 @@ import { Metadata } from 'next';
 import { getTours } from '@/features/tours/api'; // Проверьте путь к вашему API
 import LocalProgram from '@/features/directions/local/LocalLanding';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 export const metadata: Metadata = {
   title: 'Локальные Маршруты по Приднестровью — Цыпово, Строенцы, Рашков, Ягорлык, Кицканский лес, Север Приднестровья | Турклуб Эва',
   description: 'Куда поехать в Приднестровье: авторские маршруты Цыпово, Рашков, Ягорлык, Строенцы, Север Приднестровья. Однодневные и двухдневные программы по Приднестровью.',

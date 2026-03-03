@@ -2,6 +2,8 @@ import React from 'react';
 import { Metadata } from 'next';
 import OrganizersLanding from '@/features/directions/organizers/OrganizersLanding';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 export const metadata: Metadata = {
   title: 'Корпоративный Отдых и организация ретритов в Приднестровье | Турклуб «Эва»',
   description: 'Организация корпоративных выездов и ретритов в Приднестровье и Молдове. Сплавы, приключения, ретриты, стратегические сессии на природе.',

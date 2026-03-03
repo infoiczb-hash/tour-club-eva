@@ -79,15 +79,12 @@ export default function Gallery() {
                         className="group relative flex-shrink-0 snap-center h-[400px] md:h-full w-[85vw] md:w-auto rounded-[2.5rem] overflow-hidden border border-white/5 bg-slate-900 transition-all duration-500 hover:border-teal-500/30 hover:shadow-2xl shadow-teal-500/5"
                     >
                         <Image 
-                            src={img.src} 
-                            alt={img.alt} 
-                            fill 
-                            className={cn(
-                                "object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[20%] group-hover:grayscale-0",
-                                img.focus
-                            )}
-                            sizes="(max-width: 768px) 85vw, 50vw"
-                        />
+    src={img.src} 
+    alt={img.alt} 
+    fill 
+    className={cn("object-cover transition-transform duration-1000 ...", img.focus)}
+    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+/>
                         
                         {/* Кинематографичный градиент */}
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-500" />
@@ -100,7 +97,7 @@ export default function Gallery() {
 
             {/* 🔥 Подсказка "Мотай" */}
             <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
-                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                 <ChevronRight size={14} />
             </div>
         </div>

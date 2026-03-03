@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 // import { getTours } from '@/features/tours/api'; 
 import KayakingLanding from '@/features/directions/kayaking/KayakingLanding';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
 export const metadata: Metadata = {
   title: 'Сплав на байдарках по Днестру в Приднестровье | Турклуб «Эва»',
   description: 'Однодневные и многодневные сплавы на байдарках по реке Днестр. Для новичков и семей с детьми.',
