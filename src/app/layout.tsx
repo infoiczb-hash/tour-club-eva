@@ -13,6 +13,7 @@ import PromoBlock from "@/components/layout/PromoBlock";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import AxeReporter from '@/components/AxeReporter'; 
+import GlobalModals from "@/components/modals/GlobalModals"; 
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -145,6 +146,7 @@ export default function RootLayout({
             </MainLayoutWrapper>
           </ToastProvider>
         </Providers>
+        <GlobalModals />
         <Analytics />
         <SpeedInsights />
     {process.env.NODE_ENV !== 'production' && <AxeReporter />}

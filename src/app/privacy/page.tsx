@@ -7,7 +7,6 @@ import ContactHubModal from "@/components/modals/ContactHubModal";
 import LegalNav from "@/components/LegalNav" 
 
 
-
 export default function PrivacyPage() {
   const [isHubOpen, setIsHubOpen] = useState(false);
 

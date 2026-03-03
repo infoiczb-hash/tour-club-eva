@@ -2,6 +2,8 @@ import React from 'react';
 import { Metadata } from 'next';
 import KidsLandingClient from '@/features/directions/kids/KidsLanding'
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 export const metadata: Metadata = {
   title: 'Детские и подростковые приключения в Приднестровье | Junior Академия «Эва»',
   description: 'Детские  и подростковые туристические программы в Приднестровье для детей 8–16 лет. Безопасно, без гаджетов. Тирасполь.',

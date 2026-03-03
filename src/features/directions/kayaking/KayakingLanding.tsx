@@ -13,10 +13,12 @@ import KayakRules from "./KayakRules";
 import VideoGuide from "./VideoGuide";
 import SafetyRegulations from "./SafetyRegulations";
 import PreparationCTA from "./PreparationCTA";
-
-
-import ToursBrowser from "@/features/tours/components/ToursBrowser";
 import { Tour } from "@/features/tours/types";
+import dynamic from 'next/dynamic';
+
+const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
+  ssr: true,
+});
 
 // Тип для наших двух потоков
 export type FlowTab = "newbie" | "participant";

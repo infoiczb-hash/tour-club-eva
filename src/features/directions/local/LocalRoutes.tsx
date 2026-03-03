@@ -71,7 +71,7 @@ export default function LocalRoutes() {
                                     alt={route.title} 
                                     fill 
                                     className="object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                    sizes="(max-width: 768px) 85vw, 33vw"
+                                   sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
                                 />
                                 
                                 {/* 🔥 Сделали градиент чуть плотнее, чтобы текст ВСЕГДА читался хорошо */}
@@ -96,7 +96,7 @@ export default function LocalRoutes() {
 
                     {/* 🔥 Подсказка "Мотай" */}
                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-emerald-500/80 animate-pulse pointer-events-none">
-                        <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                         <ChevronRight size={14} />
                     </div>
                 </div>

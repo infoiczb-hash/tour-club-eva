@@ -285,10 +285,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             {/* SIDEBAR */}
             <aside className="lg:col-span-4 space-y-6 md:space-y-8 mt-6 lg:mt-0">
                 <div className="lg:sticky lg:top-24 p-5 md:p-6 rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-sm">
-                    <h3 className="text-sm md:text-base font-black uppercase tracking-widest text-white mb-5 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                        Читайте также
-                    </h3>
+                  <h2 className="text-sm md:text-base   font-black uppercase   tracking-widest text-white mb-5   flex items-center gap-2">   Читайте также </h2>
 
                     {relatedPosts.length > 0 ? (
                         <div className="flex flex-col gap-5">
@@ -302,9 +299,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                                             {/* ✅ ИСПРАВЛЕНО */}
                                             {(relPost as any).blogCategory?.title || relPost.category}
                                         </span>
-                                        <h4 className="text-xs md:text-sm font-bold text-white leading-snug group-hover:text-teal-400 transition-colors line-clamp-3">
-                                            {relPost.title}
-                                        </h4>
+                                        <h3 className="text-xs md:text-sm   font-bold text-white leading-snug   group-hover:text-teal-400">   {relPost.title} </h3>
                                     </div>
                                 </Link>
                             ))}
@@ -324,7 +319,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
 
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-teal-900/30 to-slate-900 border border-teal-500/20 text-center shadow-lg">
-                    <h3 className="text-lg font-black text-white mb-2 uppercase">Хотите с нами?</h3>
+                    <h2 className="text-lg font-black   text-white mb-2 uppercase">   Хотите с нами? </h2>
                     <p className="text-xs md:text-sm text-slate-300 mb-5 leading-relaxed">Наши гиды проведут вас по самым красивым маршрутам.</p>
                     <Link href="/tour" className="inline-flex w-full justify-center py-3 rounded-xl bg-teal-500 text-slate-900 font-bold uppercase text-[14px] md:text-xs hover:bg-teal-400 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.3)]">
                         Выбрать тур

@@ -84,12 +84,12 @@ export default function PopularRoutes() {
 
                         {/* Обложка */}
                         <Image 
-                            src={route.images[0]} 
-                            alt={route.title} 
-                            fill 
-                            className="object-cover transition-transform duration-1000 group-hover:scale-110 md:grayscale-[30%] group-hover:grayscale-0"
-                            sizes="(max-width: 768px) 85vw, 25vw"
-                        />
+    src={route.images[0]} 
+    alt={route.title} 
+    fill 
+    className="object-cover transition-transform duration-1000 group-hover:scale-110 md:grayscale-[30%] group-hover:grayscale-0"
+    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 25vw"
+/>
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                         
                         <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
@@ -114,7 +114,7 @@ export default function PopularRoutes() {
 
             {/* 🔥 2. Подсказка "Мотай" для главных маршрутов */}
             <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
-                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                 <ChevronRight size={14} />
             </div>
         </div>
@@ -164,7 +164,7 @@ export default function PopularRoutes() {
 
                 {/* 🔥 Янтарная подсказка "Мотай" */}
                 <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-amber-500/80 animate-pulse pointer-events-none">
-                    <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                    <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                     <ChevronRight size={14} />
                 </div>
             </div>
@@ -199,11 +199,12 @@ export default function PopularRoutes() {
                         className="absolute inset-0"
                     >
                         <Image 
-                            src={selectedRoute.images[currentImgIdx]} 
-                            alt={`${selectedRoute.title} - фото ${currentImgIdx + 1}`} 
-                            fill 
-                            className="object-cover" 
-                        />
+    src={selectedRoute.images[currentImgIdx]} 
+    alt={`${selectedRoute.title} - фото ${currentImgIdx + 1}`} 
+    fill 
+    className="object-cover"
+    sizes="(max-width: 768px) 100vw, 60vw"
+/>
                     </motion.div>
                 </AnimatePresence>
                 

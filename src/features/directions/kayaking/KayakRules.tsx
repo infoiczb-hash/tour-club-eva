@@ -54,8 +54,13 @@ export default function KayakRules() {
                         className="flex-shrink-0 snap-center w-[80vw] md:w-auto group bg-slate-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-amber-500/40 transition-all duration-500 flex flex-col"
                     >
                         <div className="relative h-48 w-full grayscale-[50%] group-hover:grayscale-0 transition-all duration-700">
-                            <Image src={rule.image} alt={rule.title} fill className="object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />
+                           <Image 
+    src={rule.image} 
+    alt={rule.title} 
+    fill 
+    className="object-cover"
+    sizes="(max-width: 768px) 100vw, 40vw"
+/>
                             <div className="absolute top-4 left-4 w-8 h-8 bg-red-500/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.5)]">
                                 <XCircle size={18} className="text-white" />
                             </div>
@@ -75,7 +80,7 @@ export default function KayakRules() {
 
             {/* 🔥 5. Подсказка "Мотай" */}
             <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
-                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                 <ChevronRight size={14} />
             </div>
         </div>

@@ -64,14 +64,14 @@ export default function Fleet() {
                     >
                         {/* 🔥 ГИГАНТСКАЯ ЛОДКА: 125% ширины карточки, выходит за края! */}
                         <div className="absolute -top-20 md:-top-28 left-1/2 -translate-x-1/2 w-[110%] md:w-[125%] aspect-[2/1] z-20 pointer-events-none transition-transform duration-700 ease-out group-hover:-translate-y-6 group-hover:scale-110">
-                            <Image 
-                                src={boat.image} 
-                                alt={boat.title} 
-                                fill 
-                                className="object-contain drop-shadow-[0_25px_25px_rgba(0,0,0,0.85)]" 
-                                sizes="(max-width: 768px) 110vw, 40vw"
-                                priority
-                            />
+                           <Image 
+    src={boat.image} 
+    alt={boat.title} 
+    fill 
+    className="object-contain drop-shadow-[0_25px_25px_rgba(0,0,0,0.85)]" 
+    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+    priority
+/>
                         </div>
 
                         {/* КАРТОЧКА (С увеличенным pt-16, чтобы огромная лодка не перекрывала текст) */}
@@ -94,7 +94,7 @@ export default function Fleet() {
 
             {/* 🔥 Пульсирующая подсказка "Мотай" в фирменном бирюзовом цвете */}
             <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
-                <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                 <ChevronRight size={14} />
             </div>
         </div>

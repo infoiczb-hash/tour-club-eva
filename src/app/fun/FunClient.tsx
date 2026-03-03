@@ -100,18 +100,30 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
 
       {/* ШАПКА */}
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
+        
+        {/* 1. Бейдж: появляется сразу (без задержки) */}
+        <div 
+          className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md"
+        >
            <Sparkles size={16} className="text-teal-400" />
            <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
-        </motion.div>
-        <motion.h1 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
-           Твой <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Фан-Сектор</span>
-        </motion.h1>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-           Узнай себя, проработай страхи с AI-психологом и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
-        </motion.p>
-      </section>
+        </div>
 
+        {/* 2. Заголовок (LCP): увеличивается с задержкой 100мс */}
+        <h1 
+          className="animate-hero-title opacity-0 [animation-delay:100ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]"
+        >
+           Твой <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Фан-Сектор</span>
+        </h1>
+
+        {/* 3. Описание: плавно выезжает с задержкой 200мс */}
+        <p 
+          className="animate-fade-in-up opacity-0 [animation-delay:200ms] text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium"
+        >
+           Узнай себя, проработай страхи с AI-психологом и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
+        </p>
+        
+      </section>
       {/* --- ДИНАМИЧЕСКИЕ РАЗДЕЛЫ --- */}
       <div className="container mx-auto px-4 pb-24 relative z-10 space-y-24">
          {/* ✅ ДОБАВИЛИ categoryIndex */}

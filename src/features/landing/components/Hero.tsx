@@ -16,7 +16,7 @@ const DEFAULT_HERO: HeroContent = {
   title: 'ЭВА',
   subtitle: 'Приключения каждые выходные',
   tagline: 'ОПЫТ — КОТОРЫЙ ВДОХНОВЛЯЕТ',
-  bg_image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771673823/hero-bg_cz1j25.webp'
+  bg_image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_auto/v1771673823/hero-bg_cz1j25.webp'
 };
 
 export default function HeroSection({ content = DEFAULT_HERO }: { content?: HeroContent }) {
@@ -87,28 +87,20 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
             <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
          </motion.div>
 
-         {/* B. ЗАГОЛОВОК ГРУППЫ */}
-         <div className="relative flex flex-col items-center leading-none">
-             {/* "ТУРКЛУБ" */}
-             <motion.span 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-                className="text-6xl sm:text-7xl md:text-8xl font-black text-white uppercase tracking-tight mb-2 drop-shadow-xl block"
-             >
-                Турклуб
-             </motion.span>
+         {/* B. ЗАГОЛОВОК ГРУППЫ (SEO-оптимизированный H1 без блокирующего JS) */}
+         <h1 className="relative flex flex-col items-center leading-none text-center">
              
-             {/* "ЭВА" (Massive Solid Text) */}
-             <motion.h1 
-               initial={{ opacity: 0, scale: 0.95 }}
-               animate={{ opacity: 1, scale: 1 }}
-               transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-               className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85]"
-             >
+             {/* "ТУРКЛУБ" - Выезжает снизу через CSS */}
+             <span className="text-6xl sm:text-7xl md:text-8xl font-black text-white uppercase tracking-tight mb-2 drop-shadow-xl block animate-in fade-in slide-in-from-bottom-8 duration-700">
+                Турклуб
+             </span>
+             
+            {/* "ЭВА" - Появляется с легким увеличением через CSS */}
+             <span className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85] block animate-in fade-in zoom-in-95 duration-1000 delay-150">
                 {content.title}
-             </motion.h1>
-         </div>
+             </span>
+             
+         </h1>
 
          {/* C. ПОДЗАГОЛОВОК */}
          <motion.p 
@@ -125,7 +117,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
      {/* 3. SCROLL BUTTON */}
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
           <motion.button
-            aria-label="Прокрутить вниз к турам" // ✅ ДОБАВЛЕНО СЮДА
+            aria-label="Прокрутить вниз к турам"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 1 }}
@@ -137,6 +129,6 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
               </div>
           </motion.button>
       </div> 
-</section>
+    </section>
   );
-  }
+}

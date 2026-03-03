@@ -166,7 +166,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
                 <Heart className="w-4 h-4 text-rose-500" />
                 <span className="text-rose-500 text-xs font-bold tracking-widest uppercase">Что говорит тело</span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">Что происходит<br /><span className="text-rose-400">с тобой в туре?</span></h1>
+              <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">Что происходит<br /><span className="text-rose-400">с тобой в туре?</span></h2>
               <p className="text-slate-400 text-sm leading-relaxed mb-8 font-medium">Выбери симптомы, которые ты замечаешь — и получи объяснение, почему это происходит и что делать.</p>
 
               {(Object.entries(grouped) as [string, typeof SYMPTOMS][]).map(([cat, symptoms]) => (

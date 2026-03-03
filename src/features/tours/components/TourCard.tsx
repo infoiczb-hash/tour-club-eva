@@ -38,9 +38,10 @@ const TYPE_CONFIG: Record<string, { bg: string, border: string, text: string, la
 interface TourCardProps {
   tour: Tour;
   isHot?: boolean;
+  priority?: boolean;
 }
 
-export default function TourCard({ tour, isHot = false }: TourCardProps) {
+export default function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
   const { 
     slug, title, date, id,
     price, priceOld, currency,
@@ -84,13 +85,14 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
             1. ИЗОБРАЖЕНИЕ И МАРКЕТИНГОВЫЕ БЕЙДЖИ
         ======================================= */}
        <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
-   <Image
-      src={image || '/placeholder-tour.jpg'}
-      alt={title}
-      fill
-      className="object-cover transition-transform duration-700 group-hover:scale-105"
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-   />
+  <Image
+       src={image || '/placeholder-tour.jpg'}
+       alt={title}
+       fill
+       priority={priority} // 👈 ВОТ ГЛАВНАЯ МАГИЯ
+       className="object-cover transition-transform duration-700 group-hover:scale-105"
+       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+    />
              
              {/* Градиент для читаемости элементов поверх фото */}
              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90" />
@@ -148,14 +150,14 @@ export default function TourCard({ tour, isHot = false }: TourCardProps) {
             {/* Информация: Локация и Длительность */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
                 <div className="flex items-center gap-1.5">
-                    <MapPin size={14} className="text-teal-500/70" strokeWidth={2.5} /> 
+                    <MapPin size={14} className="text-teal-600" strokeWidth={2.5} /> 
                     <span className="truncate max-w-[140px] sm:max-w-full text-slate-300">{location}</span>
                 </div>
                 
                 <div className="w-1 h-1 rounded-full bg-slate-700 shrink-0" />
 
                 <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-teal-500/70" strokeWidth={2.5} /> 
+                    <Clock size={14} className="text-teal-600" strokeWidth={2.5} /> 
                     <span className="text-slate-300">{duration || '1 день'}</span>
                 </div>
             </div>

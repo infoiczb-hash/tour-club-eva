@@ -3,6 +3,8 @@ import BlogFeed from "./BlogFeed";
 import { Metadata } from "next";
 import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
 export const metadata: Metadata = {
   title: "Блог о Походах и Активном Отдыхе в Приднестровье | Турклуб «Эва»",

@@ -85,14 +85,23 @@ export default function FunSectorContent({ activeTests }: Props) {
       </div>
 
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
+        
+        {/* Бейдж: выезжает снизу вверх */}
+        <div className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
            <Sparkles size={16} className="text-teal-400" />
            <span className="text-xs font-black uppercase tracking-widest text-teal-300">Интерактивы и квизы</span>
-        </motion.div>
-        <motion.h1 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-4 leading-[0.9]">
+        </div>
+
+        {/* Главный заголовок: увеличивается с задержкой 150мс */}
+        <h1 className="animate-hero-title opacity-0 [animation-delay:150ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-4 leading-[0.9]">
            Твой <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Фан-Сектор</span>
-        </motion.h1>
-        <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base font-medium">Выбирай раздел, проходи тесты и получай персональные рекомендации от нашего ИИ-гида.</p>
+        </h1>
+
+        {/* Описание (оставляем как было, либо тоже можно добавить animate-fade-in-up и задержку 300ms) */}
+        <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base font-medium">
+          Выбирай раздел, проходи тесты и получай персональные рекомендации от нашего ИИ-гида.
+        </p>
+
       </section>
 
       {/* --- ГРУППЫ ТЕСТОВ ПО РАЗДЕЛАМ --- */}

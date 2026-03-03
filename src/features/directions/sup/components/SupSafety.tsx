@@ -81,9 +81,9 @@ export default function SupSafety() {
                                      </div>
                                      
                                      <div>
-                                         <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-blue-300 transition-colors leading-tight">
+                                         <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-blue-300 transition-colors leading-tight">
                                              {item.title}
-                                         </h4>
+                                         </h3>
                                          {/* 🔥 Текст описания строго 14px */}
                                          <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
                                              {item.desc}
@@ -96,7 +96,7 @@ export default function SupSafety() {
 
                      {/* 🔥 4. Синяя пульсирующая подсказка "Мотай" */}
                      <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-blue-500/80 animate-pulse pointer-events-none">
-                         <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                         <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                          <ChevronRight size={14} />
                      </div>
                  </div>

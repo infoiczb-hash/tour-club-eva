@@ -17,9 +17,11 @@ import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
 import { Tour } from '@/features/tours/types';
 
+
 interface PageProps {
   params: { slug: string };
 }
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
 
 export default async function DirectionPage({ params }: PageProps) {
   const { slug } = params;

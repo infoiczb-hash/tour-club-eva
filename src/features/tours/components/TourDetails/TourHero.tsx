@@ -62,13 +62,13 @@ export default function TourHero({ tour }: TourHeroProps) {
       {/* 1. ФОН (Ваш код) */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584228/изображение_viber_2025-06-21_11-50-14-080_a7uba5.jpg" 
-          alt="Сплав на байдарках"
+          src={tour.image || '/placeholder-tour.jpg'} // Берем фото из БД (Supabase)
+          alt={tour.title || "Тур"}
           fill
           className="object-cover opacity-60"
           priority
-          fetchPriority="high" // 👈 ДОБАВИТЬ
-          quality={85}         // 👈 ДОБАВИТЬ
+          fetchPriority="high"
+          quality={85}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />

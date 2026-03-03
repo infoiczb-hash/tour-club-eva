@@ -9,7 +9,11 @@ import HikesDestinations from './HikesDestinations';
 import HikesLogistics from './HikesLogistics';
 import HikesGallery from './HikesGallery';
 import HikesFAQ from './HikesFAQ';
-import ToursBrowser from '@/features/tours/components/ToursBrowser';
+import dynamic from 'next/dynamic';
+
+const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
+  ssr: true,
+});
 
 export default function HikesLanding({ tours = [] }: { tours?: Tour[] }) {
   const catalogRef = useRef<HTMLDivElement>(null);

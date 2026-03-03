@@ -3,6 +3,8 @@ import { Metadata } from 'next';
 import { getTours } from '@/features/tours/api';
 import SupLandingClient from '@/features/directions/sup/SupLanding';
 
+export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+
 export const metadata: Metadata = {
   title: 'SUP-прогулки на Днестре — Приднестровье и Молдова | Турклуб «Эва»',
   description: 'SUP-прогулки по реке Днестр в Приднестровье. Обучение с нуля за 15 минут, йога на воде, рассветы и закаты на воде. Для новичков и продвинутых.',

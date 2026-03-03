@@ -8,7 +8,6 @@ import TourHero from './TourHero';
 import TourStats from './TourStats';
 import TourLogistics from './TourLogistics';
 import TourDescription from './TourDescription';
-import TourProgram from './TourProgram';
 import TourGallery from './TourGallery';
 import TourEssentials from './TourEssentials';
 import TourDates from './TourDates';
@@ -17,6 +16,8 @@ import TourSidebar from './TourSidebar';
 import TourActionButtons from './TourActionButtons';
 import TourBottomActions from './TourBottomActions';
 import dynamic from 'next/dynamic';
+
+const TourProgram = dynamic(() => import('./TourProgram'), { ssr: true });
 
 const BookingModal = dynamic(() => import('./BookingModal'), { ssr: false });
 

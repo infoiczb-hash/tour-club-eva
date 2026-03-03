@@ -78,9 +78,9 @@ export default function LocalConditions() {
                                         <Icon size={24} strokeWidth={1.5} className="text-stone-400 group-hover:text-emerald-500 transition-colors" />
                                     </div>
                                     <div>
-                                        <h4 className="text-lg md:text-xl font-bold text-white mb-2 tracking-tight group-hover:text-emerald-400 transition-colors">
+                                        <h3 className="text-lg md:text-xl font-bold text-white mb-2 tracking-tight group-hover:text-emerald-400 transition-colors">
                                             {item.title}
-                                        </h4>
+                                        </h3>
                                         {/* Увеличили текст до 14px/15px для идеального чтения */}
                                         <p className="text-[14px] md:text-[15px] text-stone-400 leading-relaxed font-medium">
                                             {item.desc}
@@ -93,7 +93,7 @@ export default function LocalConditions() {
 
                     {/* 🔥 4. Подсказка "Мотай" */}
                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-emerald-500/80 animate-pulse pointer-events-none">
-                        <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                         <ChevronRight size={14} />
                     </div>
                 </div>
