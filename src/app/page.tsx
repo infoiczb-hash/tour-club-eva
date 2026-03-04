@@ -107,7 +107,7 @@ export default async function Home() {
       </Suspense>
       
       <Philosophy />
-      <LazyGuidesList guides={guides} />
+      <LazyGuidesList guides={guides} /> 
       
       {/* Ленивая загрузка видео-сетки */}
       <LazySocialGrid />
