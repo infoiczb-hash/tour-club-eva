@@ -164,16 +164,28 @@ function DirectionJsonLd({ slug }: { slug: string }) {
 // ==========================================
 // СТРАНИЦА
 // ==========================================
-
+export const revalidate = 60;
+export async function generateStaticParams() {
+  return [
+    { slug: 'kayaking' },
+    { slug: 'sup' },
+    { slug: 'kids' },
+    { slug: 'local' },
+    { slug: 'organizers' },
+    { slug: 'hiking' },
+  ];
+}
 interface PageProps {
   params: { slug: string };
 }
 
-export const revalidate = 60;
 
 export default async function DirectionPage({ params }: PageProps) {
+  const resolvedParams = await params;
   const { slug } = params;
   const tours: Tour[] = [];
+ 
+   
 
   switch (slug) {
     case 'kayaking':
