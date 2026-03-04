@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     'SUP Тирасполь'
   ],
   alternates: {
-    canonical: '/directions', // Каноническая ссылка для хаб-страницы
+    canonical: 'https://evatur.club/directions',
   },
   openGraph: {
     title: 'Направления и Туры в Приднестровье | Турклуб «Эва»',

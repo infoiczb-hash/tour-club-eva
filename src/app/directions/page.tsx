@@ -9,7 +9,8 @@ import {
   ArrowUpRight, Compass, Anchor, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
+
 
 // --- ДАННЫЕ НАПРАВЛЕНИЙ ---
 const DIRECTIONS = [
@@ -83,7 +84,8 @@ const DIRECTIONS = [
 ];
 
 export default function DirectionsPage() {
-  const [isHubOpen, setIsHubOpen] = useState(false);
+const openContactModal = useModalStore((state) => state.openContactModal);
+
 
   return (
     <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-24 px-4 relative overflow-hidden selection:bg-teal-500/30">
@@ -178,14 +180,14 @@ export default function DirectionsPage() {
                                 </p>
                             </div>
 
-                            {/* B2B Кнопка (Только для Организаторов) */}
+                         {/* B2B Кнопка (Только для Организаторов) */}
                             {dir.isB2B && (
                                 <div className="mt-5 pointer-events-auto relative z-30">
                                     <button 
                                         onClick={(e) => {
                                             e.preventDefault(); 
                                             e.stopPropagation();
-                                            setIsHubOpen(true);
+                                            openContactModal('Заявка на сотрудничество (от организатора)', 'B2B');
                                         }}
                                         className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors shadow-[0_0_20px_rgba(139,92,246,0.3)] active:scale-95 w-full sm:w-auto justify-center"
                                     >
@@ -200,14 +202,8 @@ export default function DirectionsPage() {
             })}
 
         </div>
-      </div>
+        </div>
+   </ main>
 
-      {/* Модалка для B2B */}
-      <ContactHubModal 
-        isOpen={isHubOpen} 
-        onClose={() => setIsHubOpen(false)} 
-        initialTab="B2B" 
-      />
-    </main>
-  );
+    );
 }

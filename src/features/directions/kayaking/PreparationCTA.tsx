@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Map, Sparkles } from "lucide-react";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
+
 
 // Добавили пропс, чтобы по клику на "Другой маршрут" мы могли вернуть пользователя на главную вкладку
 export default function PreparationCTA({ onNavigateToRoutes }: { onNavigateToRoutes?: () => void }) {
-  const [isHubOpen, setIsHubOpen] = useState(false);
+const openContactModal = useModalStore((state) => state.openContactModal);
+
 
   return (
     <section className="py-10 md:py-14 bg-[#020617] relative overflow-hidden font-sans">
@@ -49,7 +51,7 @@ export default function PreparationCTA({ onNavigateToRoutes }: { onNavigateToRou
 
                 {/* Второстепенная кнопка: Центр связи */}
                 <button 
-                    onClick={() => setIsHubOpen(true)}
+                    onClick={() => openContactModal('Сплавы на байдарках', 'TOUR')}
                     className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                 >
                     <MessageCircle size={18} className="text-slate-400" />
@@ -60,12 +62,7 @@ export default function PreparationCTA({ onNavigateToRoutes }: { onNavigateToRou
 
       </div>
 
-      {/* Модалка Связи (идентично той, что в FAQ) */}
-      <ContactHubModal 
-        isOpen={isHubOpen} 
-        onClose={() => setIsHubOpen(false)} 
-        initialTab="HELP" 
-      />
+    
     </section>
   );
 }

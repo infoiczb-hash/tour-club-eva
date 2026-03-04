@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircleQuestion, MessageCircle, Sparkles, Map } from 'lucide-react';
 import Link from 'next/link';
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
@@ -38,8 +38,7 @@ const FAQ_DATA = [
 
 export default function SupFAQ() {
     const [openId, setOpenId] = useState<number | null>(null);
-    const [isHubOpen, setIsHubOpen] = useState(false);
-
+    const openContactModal = useModalStore((state) => state.openContactModal);		
     const toggleAccordion = (id: number) => {
         setOpenId(openId === id ? null : id);
     };
@@ -160,7 +159,7 @@ export default function SupFAQ() {
 
                         {/* ВТОРОСТЕПЕННАЯ КНОПКА (Связь с гидом) */}
                         <button 
-                            onClick={() => setIsHubOpen(true)}
+                            onClick={() => openContactModal('Вопрос по SUP-турам', 'TOUR')}
                             className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                         >
                             <MessageCircle size={18} className="text-slate-400" />
@@ -171,13 +170,6 @@ export default function SupFAQ() {
                 </motion.div>
 
             </div>
- {/* Модалка Связи */}
-      <ContactHubModal 
-        isOpen={isHubOpen} 
-        onClose={() => setIsHubOpen(false)} 
-        initialTab="TOUR" 
-      />
-
         </section>
     );
 }

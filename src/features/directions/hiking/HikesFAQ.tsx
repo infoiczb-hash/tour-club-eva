@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircle, Sparkles } from 'lucide-react';
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
+
 
 const FAQ_DATA = [
     { 
@@ -22,7 +23,8 @@ const FAQ_DATA = [
 
 export default function HikesFAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
-    const [isHubOpen, setIsHubOpen] = useState(false);
+   const openContactModal = useModalStore((state) => state.openContactModal);
+
 
     return (
         // 🔥 Уплотнили внешние отступы
@@ -103,7 +105,7 @@ export default function HikesFAQ() {
                             <div className="flex flex-col relative z-10">
                                 {/* 🔥 Сделали единственную кнопку главной (Primary CTA) */}
                                 <button 
-                                    onClick={() => setIsHubOpen(true)}
+                                   onClick={() => openContactModal('Вопрос по турам в горы', 'TOUR')}
                                     className="w-full py-4 bg-teal-600 text-white font-bold uppercase tracking-wider text-[13px] md:text-sm rounded-xl hover:bg-teal-500 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(20,184,166,0.3)]"
                                 >
                                     <MessageCircle size={18} />
@@ -116,11 +118,6 @@ export default function HikesFAQ() {
                 </div>
             </div>
 
-            <ContactHubModal 
-                isOpen={isHubOpen} 
-                onClose={() => setIsHubOpen(false)} 
-                initialTab="TOUR" 
-            />
-        </section>
+            </section>
     );
 }

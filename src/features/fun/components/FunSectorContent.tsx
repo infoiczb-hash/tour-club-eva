@@ -14,12 +14,15 @@ import FearDebriefModal from "@/features/fun/components/FearDebrief";
 import PhysicalReadinessModal from "@/features/fun/components/PhysicalReadiness";
 import BodySignalsModal from "@/features/fun/components/BodySignals";
 import TourDebriefModal from "@/features/fun/components/TourDebrief";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';	
 import QuizBackpack from "@/features/fun/components/QuizBackpack";
 import QuizSurvival from "@/features/fun/components/QuizSurvival";
 import QuizTotem from "@/features/fun/components/QuizTotem";
 import QuizTouristType from "@/features/fun/components/QuizTouristType";
 import PsychProfile from "@/features/fun/components/PsychProfile";
+
+const openContactModal = useModalStore((state) => state.openContactModal);		
+
 
 const MODAL_REGISTRY: Record<string, React.FC<any>> = {
   'fear-debrief': FearDebriefModal,

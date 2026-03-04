@@ -14,7 +14,8 @@ import QuizBackpack from "@/features/fun/components/QuizBackpack";
 import QuizSurvival from "@/features/fun/components/QuizSurvival";
 import QuizTouristType from "@/features/fun/components/QuizTouristType";
 import QuizTotem from "@/features/fun/components/QuizTotem";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
+
 
 // НОВЫЕ AI-МОДАЛКИ
 import FearDebriefModal from "@/features/fun/components/FearDebrief";
@@ -61,11 +62,14 @@ const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transiti
 const itemVariants = { hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } };
 
 export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
+  // Оставляем только управление самим квизом
   const [activeQuizSlug, setActiveQuizSlug] = useState<string | null>(null);
-  const [isHubOpen, setIsHubOpen] = useState(false);
-  const [hubContext, setHubContext] = useState<string | undefined>(undefined);
+  
   
   const searchParams = useSearchParams();
+  
+  // ✅ Достаем экшен из стора
+  const openContactModal = useModalStore((state) => state.openContactModal);
 
   useEffect(() => {
     const quizParam = searchParams.get('quiz');
@@ -73,9 +77,13 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   }, [searchParams]);
 
   const handleOldQuizResult = (resultText: string) => {
-    setActiveQuizSlug(null);
-    setHubContext(resultText);
-    setTimeout(() => setIsHubOpen(true), 400);
+    setActiveQuizSlug(null); // Плавно закрываем окно квиза
+    
+    // ✅ Ждем 400мс (пока пройдет анимация закрытия квиза) 
+    // и открываем глобальную модалку, сразу передавая ей результат!
+    setTimeout(() => {
+      openContactModal(resultText, 'TOUR');
+    }, 400);
   };
 
   // 🔥 МАГИЯ: Группируем тесты из БД по категориям
@@ -204,8 +212,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         );
       })}
 
-      <ContactHubModal isOpen={isHubOpen} onClose={() => setIsHubOpen(false)} initialTab="TOUR" tourContext={hubContext} />
-    </main>
+     </main>
   );
 }
 

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Clock, PenLine, BookOpen, User, ArrowRight, Sparkles, Tag } from "lucide-react";
 import { Blog } from "@prisma/client";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -39,7 +39,8 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   const pathname = usePathname();
   
   const activeCategory = searchParams.get('category') || 'all';
-  const [isHubOpen, setIsHubOpen] = useState(false);
+ const openContactModal = useModalStore((state) => state.openContactModal);
+
 
   const formatDate = (date: Date | string) => new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
@@ -248,7 +249,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
 
         {/* ================= ✅ CTA: СТАТЬ АВТОРОМ (ТЕПЕРЬ ВНИЗУ) ================= */}
         <div 
-            onClick={() => setIsHubOpen(true)}
+           onClick={() => openContactModal('Стать автором блога', 'BLOG')}
             className="group relative w-full rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-teal-500/20 cursor-pointer hover:border-teal-500/50 transition-all duration-500 shadow-xl"
         >
             <div className="absolute inset-0 bg-gradient-to-r from-teal-900/20 via-transparent to-slate-900/50" />
@@ -277,7 +278,6 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
 
       </div>
 
-      <ContactHubModal isOpen={isHubOpen} onClose={() => setIsHubOpen(false)} initialTab="BLOG" />
-    </div>
+        </div>
   );
 }

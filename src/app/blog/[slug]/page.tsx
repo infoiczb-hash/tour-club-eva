@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { ArrowLeft, Calendar, Clock, User, ArrowRight } from "lucide-react";
 import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
+import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 
 // Базовый URL для SEO (канонические ссылки и микроразметка)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -60,6 +61,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 const keywordsStr = `${(post as any).blogCategory?.title || post.category}, маршруты Приднестровье, активный отдых, турклуб Эва, советы туристам, мотивация, туризм, сплавы`;
 
   return {
+    
     title: `${post.title} | Турклуб «Эва»`,
     description: post.excerpt || `Статья от турклуба «Эва»: ${post.title}`,
     keywords: keywordsStr,
@@ -165,6 +167,13 @@ export default async function BlogPostPage({ params }: PageProps) {
   ];
 
   return (
+    <>
+      <BreadcrumbJsonLd items={[
+        { name: "Главная", url: "https://evatur.club" },
+        { name: "Блог", url: "https://evatur.club/blog" },
+        { name: post.title, url: `https://evatur.club/blog/${post.slug}` },
+      ]} />
+    
     <article className="min-h-screen bg-[#0B1120] pb-10 md:pb-20">
       
       {/* СКРЫТЫЙ КОД ДЛЯ ПОИСКОВЫХ БОТОВ (JSON-LD) */}
@@ -330,5 +339,6 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
       </div>
     </article>
+     </>
   );
 }
