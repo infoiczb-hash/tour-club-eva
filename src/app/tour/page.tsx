@@ -1,5 +1,6 @@
 import { getTours } from '@/features/tours/api';
-import ToursBrowser from '@/features/tours/components/ToursBrowser';
+// 👇 1. ЗАМЕНИЛИ ИМПОРТ: Теперь тянем обертку (которая сама подтянет ToursBrowser лениво)
+import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
 import { Metadata } from 'next';
 import { getTourCategoriesAction } from '@/features/admin/actions/categories';
 
@@ -7,7 +8,7 @@ export const revalidate = 60; // Страница будет кэшироват�
 
 // 1. 🔥 СУПЕР-SEO ДЛЯ КАТАЛОГА ТУРОВ (Приднестровье/Молдова)
 export const metadata: Metadata = {
-  title: 'Расписание Туров 2026 — Сплавы, ТУРЫ и SUP | Турклуб «Эва»"',
+  title: 'Расписание Туров 2026 — Сплавы, ТУРЫ и SUP | Турклуб «Эва»',
   description: 'Афиша приключений 2026. Сплавы по Днестру, горные походы,SUP. Группы до 12 чел., с гидами. Бронируй место на ближайший тур.',
   keywords: [
     'туры Приднестровье 2026',
@@ -44,9 +45,10 @@ export default async function AllToursPage() {
  return (
     // pt-20 нужен, чтобы контент не залез под фиксированный Header
     <main className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
-      <ToursBrowser 
+      {/* 👇 2. ИСПОЛЬЗУЕМ ОБЁРТКУ */}
+      <ToursBrowserWrapper 
          tours={tours} 
-         categories={categories} // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
+         categories={categories} 
          title="Все Приключения" 
          subtitle="Полный каталог 2026"
       />

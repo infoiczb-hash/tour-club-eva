@@ -1,15 +1,26 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { getTourBySlug } from '@/features/tours/api'; 
+import { getTourBySlug, getTours} from '@/features/tours/api'; 
 import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper'; 
 
 // Базовый URL сайта (из env или фолбек на прод)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
+export async function generateStaticParams() {
+  const tours = await getTours();
+  
+  return tours.map((tour) => ({
+    slug: tour.slug,
+  }));
+}
+
+export const revalidate = 60;
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
 
 // --- 1. SEO МЕТАДАННЫЕ ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

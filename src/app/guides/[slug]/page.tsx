@@ -13,6 +13,22 @@ import {
 // Базовый URL для SEO
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
+// 🔥 ГЕНЕРАЦИЯ СТАТИКИ И КЭШИРОВАНИЕ (ISR)
+// ==========================================
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const guides = await prisma.guide.findMany({
+    select: { slug: true },
+    where: { isActive: true }
+  });
+  
+  return guides
+    .filter(guide => guide.slug) // Защита от пустых слагов
+    .map((guide) => ({
+      slug: guide.slug as string,
+    }));
+}
 // Словарь иконок (как в карточках)
 const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
   Zap: { icon: Zap, color: "text-amber-400" },

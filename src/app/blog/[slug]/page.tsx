@@ -10,7 +10,21 @@ import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 
 // Базовый URL для SEO (канонические ссылки и микроразметка)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
+// 🔥 ГЕНЕРАЦИЯ СТАТИКИ И КЭШИРОВАНИЕ (ISR)
+// ==========================================
+export const revalidate = 60;
 
+export async function generateStaticParams() {
+  // Берем только опубликованные статьи, чтобы не билдить черновики
+  const posts = await prisma.blog.findMany({
+    select: { slug: true },
+    where: { isActive: true } 
+  });
+  
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
 // --- ТИПЫ ---
 interface PageProps {
   params: Promise<{ slug: string }>;
