@@ -14,10 +14,8 @@ import LazySocialGrid from '@/features/landing/components/LazySocialGrid';
 import LazyFunSector from '@/features/fun/components/LazyFunSector';
 import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 import dynamic from 'next/dynamic';
+import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
 
-const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: false,
-});
 
 const LazyGuidesList = dynamic(() => import('@/features/guides/components/GuidesList'), {
   loading: () => <section className="min-h-[400px] w-full bg-slate-50 dark:bg-slate-950 animate-pulse" />
@@ -105,7 +103,7 @@ export default async function Home() {
       <Hero />
       
       <Suspense fallback={<TourSkeleton />}>
-        <ToursBrowser tours={tours} limit={8} title="Афиша Приключений" />
+        <ToursBrowserWrapper tours={tours} limit={8} title="Афиша Приключений" />
       </Suspense>
       
       <Philosophy />

@@ -17,7 +17,7 @@ import TourActionButtons from './TourActionButtons';
 import TourBottomActions from './TourBottomActions';
 import dynamic from 'next/dynamic';
 
-const TourProgram = dynamic(() => import('./TourProgram'), { ssr: true });
+const TourProgram = dynamic(() => import('./TourProgram'), { ssr: false  });
 
 const BookingModal = dynamic(() => import('./BookingModal'), { ssr: false });
 
