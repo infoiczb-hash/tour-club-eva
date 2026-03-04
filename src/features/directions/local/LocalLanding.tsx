@@ -13,7 +13,7 @@ import LocalFAQ from '@/features/directions/local/LocalFAQ';
 import dynamic from 'next/dynamic';
 
 const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: true,
+  ssr: false,
 });
 
 

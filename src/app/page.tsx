@@ -16,7 +16,7 @@ import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 import dynamic from 'next/dynamic';
 
 const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: true,
+  ssr: false,
 });
 
 const LazyGuidesList = dynamic(() => import('@/features/guides/components/GuidesList'), {
