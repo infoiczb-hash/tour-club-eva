@@ -27,7 +27,9 @@ import PostForm from './PostForm';
 import ContentForm from './ContentForm';
 import ReviewForm from './ReviewForm'; 
 import AiAssistant from './AiAssistant';
-import LoginModal from '@/shared/ui/LoginModal';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+
 
 // ACTIONS & API
 import { saveTour, updateTourStatus } from '@/features/admin/actions/tour'; 
@@ -157,16 +159,15 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     }
   };
 
-  const handleLogin = () => {
-    localStorage.setItem('is_admin', 'true');
-    setIsAuth(true);
-    loadAllData();
-  };
+const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('is_admin');
-    setIsAuth(false);
-  };
+async function handleLogout() {
+  const supabase = createClient();
+  await supabase.auth.signOut();
+  router.push('/admin/login');
+  router.refresh();
+}
+
 
   // ==========================================
   // ОБРАБОТЧИКИ КАТЕГОРИЙ
@@ -304,8 +305,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       await upsertReview({ ...review, isActive: newVal });
   };
 
-  if (!isAuth) return <LoginModal onClose={() => {}} onLogin={handleLogin} />;
-
+ 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] flex font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
       

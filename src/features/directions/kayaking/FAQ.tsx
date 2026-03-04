@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -36,7 +36,8 @@ interface FAQProps {
 
 export default function FAQ({ onNavigateToPrep }: FAQProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [isHubOpen, setIsHubOpen] = useState(false);
+const openContactModal = useModalStore((state) => state.openContactModal);
+
 
   // 🔥 ВЫНОСИМ КНОПКИ В ОТДЕЛЬНУЮ ПЕРЕМЕННУЮ (ЧТОБЫ НЕ ДУБЛИРОВАТЬ КОД)
   const actionCardsContent = (
@@ -88,7 +89,7 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
             </div>
             
             <button 
-                onClick={() => setIsHubOpen(true)}
+              onClick={() => openContactModal('Сплавы на байдарках', 'TOUR')}
                 className="w-full xl:w-auto shrink-0 px-6 py-3.5 bg-white text-slate-950 font-black uppercase tracking-wider text-s rounded-xl hover:bg-teal-50 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
             >
                 <MessageCircle size={20} />
@@ -206,13 +207,6 @@ export default function FAQ({ onNavigateToPrep }: FAQProps) {
         </div>
       </div>
 
-      {/* Модалка Связи */}
-      <ContactHubModal 
-        isOpen={isHubOpen} 
-        onClose={() => setIsHubOpen(false)} 
-        initialTab="TOUR" 
-      />
-
-    </section>
+      </section>
   );
 }

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Send, ArrowRight, MessageSquareText } from 'lucide-react';
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
+
 
 export default function OrgContact() {
-    const [isHubOpen, setIsHubOpen] = useState(false);
+  const openContactModal = useModalStore((state) => state.openContactModal);
+
 
     return (
         <section className="py-12 md:py-20 bg-slate-950 border-t border-white/5 relative overflow-hidden">
@@ -58,7 +60,7 @@ export default function OrgContact() {
                         </div>
                         
                         <button 
-                            onClick={() => setIsHubOpen(true)}
+                            onClick={() => openContactModal('Заявка на сотрудничество (от организатора)', 'B2B')}
                             className="w-full py-4 bg-white/5 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all border border-white/10 hover:border-transparent flex items-center justify-center gap-3 group/btn"
                         >
                             <MessageSquareText size={20} className="text-indigo-400 group-hover/btn:text-white transition-colors" />
@@ -110,11 +112,6 @@ export default function OrgContact() {
             </div>
 
             {/* Ваша универсальная модалка связи */}
-            <ContactHubModal 
-                isOpen={isHubOpen} 
-                onClose={() => setIsHubOpen(false)} 
-                initialTab="HELP" 
-            />
-        </section>
+                   </section>
     );
 }

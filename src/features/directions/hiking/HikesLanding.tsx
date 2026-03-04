@@ -12,7 +12,7 @@ import HikesFAQ from './HikesFAQ';
 import dynamic from 'next/dynamic';
 
 const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: true,
+  ssr: false, // ← заменить true на false
 });
 
 export default function HikesLanding({ tours = [] }: { tours?: Tour[] }) {

@@ -15,8 +15,9 @@ import { Tour } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import dynamic from 'next/dynamic';
-import ContactHubModal from "@/components/modals/ContactHubModal"; 
+import { useModalStore } from '@/shared/store/useModalStore'; 
 
+const openContactModal = useModalStore((state) => state.openContactModal);
 const CalendarView = dynamic(() => import('./CalendarView'), {
   ssr: true,
   loading: () => (
@@ -402,7 +403,7 @@ export default function ToursBrowser({
                             </p>
                             
                             <button 
-                                onClick={() => setIsContactOpen(true)}
+                               onClick={() => openContactModal('Помогите подобрать тур', 'TOUR')}
                                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-950 font-black uppercase tracking-wider rounded-xl hover:bg-teal-50 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95 w-full sm:w-auto"
                             >
                                 <Bell size={18} />
@@ -415,14 +416,6 @@ export default function ToursBrowser({
         )}
 
       </div>
-      
-      {/* Модалка для сбора контактов */}
-      <ContactHubModal 
-        isOpen={isContactOpen} 
-        onClose={() => setIsContactOpen(false)} 
-        initialTab="TOUR" 
-        tourContext={`Запрос уведомления о новых турах (Категория: ${activeCategory})`}
-      />
-    </section>
+       </section>
   );
 }

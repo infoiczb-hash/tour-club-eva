@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircle, PhoneCall } from 'lucide-react';
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';	
+
 
 const FAQ_DATA = [
     { 
@@ -26,7 +27,7 @@ const FAQ_DATA = [
 
 export default function LocalFAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
-    const [isHubOpen, setIsHubOpen] = useState(false);
+   const openContactModal = useModalStore((state) => state.openContactModal);		
 
     return (
         <section className="py-12 bg-slate-950 border-t border-white/5 relative overflow-hidden">
@@ -77,22 +78,16 @@ export default function LocalFAQ() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
                         <button 
-                            onClick={() => setIsHubOpen(true)}
+                            onClick={() => openContactModal('Вопрос по местным турам', 'TOUR')}
                             className="w-full sm:w-auto px-8 py-4 bg-emerald-600 text-white font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2"
                         >
                             <MessageCircle size={18} />
-                            <span>Написать гиду</span>
+                            <span>Написать нам</span>
                         </button>
                     </div>
                 </div>
 
             </div>
-
-            <ContactHubModal 
-                isOpen={isHubOpen} 
-                onClose={() => setIsHubOpen(false)} 
-                initialTab="TOUR" 
-            />
         </section>
     );
 }

@@ -14,10 +14,8 @@ import LazySocialGrid from '@/features/landing/components/LazySocialGrid';
 import LazyFunSector from '@/features/fun/components/LazyFunSector';
 import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 import dynamic from 'next/dynamic';
+import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
 
-const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: true,
-});
 
 const LazyGuidesList = dynamic(() => import('@/features/guides/components/GuidesList'), {
   loading: () => <section className="min-h-[400px] w-full bg-slate-50 dark:bg-slate-950 animate-pulse" />
@@ -30,16 +28,18 @@ const LazyReviewsMarquee = dynamic(() => import('@/features/reviews/components/R
 export const revalidate = 60; 
 
 export const metadata: Metadata = {
-  title: "Турклуб «Эва» — Сплавы, Походы и SUP в Приднестровье",
-  description: "Турклуб «Эва» — активный отдых в Приднестровье каждые выходные. Сплавы на байдарках по Днестру, пешие походы в горы, SUP, детские программы. Тирасполь и Молдова.",
+  title: "Турклуб «Эва» — Активный отдых в Приднестровье",
+  description: "Сплавы по Днестру, походы в Карпаты, SUP и детские лагеря. Туры с гидами из Тирасполя. Расписание 2026 — смотри сейчас.",
   keywords: [
-    "турклуб Приднестровье", 
-    "сплав по Днестру", 
-    "байдарки Тирасполь", 
-    "активный отдых Приднестровье", 
-    "Let's Go на сплав", 
-    "Хочу туда в Приднестровье и Румынии",
-    "SUP Днестр"
+  "турклуб Приднестровье",
+  "активный отдых Тирасполь",
+  "сплав на байдарках Днестр",
+  "поход выходного дня Тирасполь",
+  "туризм Приднестровье",
+  "отдых на природе Молдова",
+  "туры с гидом Тирасполь",
+  "SUP Днестр",
+
   ],
   openGraph: {
     title: "Турклуб «Эва» — Приключения каждые выходные",
@@ -103,11 +103,11 @@ export default async function Home() {
       <Hero />
       
       <Suspense fallback={<TourSkeleton />}>
-        <ToursBrowser tours={tours} limit={8} title="Афиша Приключений" />
+        <ToursBrowserWrapper tours={tours} limit={8} title="Афиша Приключений" />
       </Suspense>
       
       <Philosophy />
-      <LazyGuidesList guides={guides} />
+      <LazyGuidesList guides={guides} /> 
       
       {/* Ленивая загрузка видео-сетки */}
       <LazySocialGrid />

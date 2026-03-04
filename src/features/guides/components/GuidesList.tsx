@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';	
+
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -73,8 +74,8 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
 );
 
 export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
-  const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null);
-  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null); 
+const openContactModal = useModalStore((state) => state.openContactModal);
 
   // Сортируем гидов по полю order (чтобы основатели были первыми)
   const displayGuides = Array.isArray(guides) 
@@ -135,7 +136,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                onClick={() => setIsContactOpen(true)}
+               onClick={() => openContactModal(undefined, 'HR')}
                 className="
                     relative group flex-shrink-0 cursor-pointer snap-center
                     w-[85vw] sm:w-[300px] aspect-[3/4] md:w-auto md:aspect-auto md:h-[450px]
@@ -166,13 +167,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
           <GuideHeroModal guide={selectedGuide} onClose={() => setSelectedGuide(null)} />
         )}
       </AnimatePresence>
-
-      <ContactHubModal 
-        isOpen={isContactOpen} 
-        onClose={() => setIsContactOpen(false)} 
-        initialTab="HR"
-      />
-      
+         
     </section>
   );
 }

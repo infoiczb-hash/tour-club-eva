@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, PenLine, Filter, Calendar, User } from "lucide-react";
 import { Blog } from "@prisma/client";
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
 
 interface BlogSectionProps {
   posts: Blog[];
@@ -14,7 +14,8 @@ interface BlogSectionProps {
 export default function BlogSection({ posts }: BlogSectionProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedAuthor, setSelectedAuthor] = useState("all");
-  const [isHubOpen, setIsHubOpen] = useState(false);
+  const openContactModal = useModalStore((state) => state.openContactModal);
+
 
   // 1. Уникальные категории и авторы
   const categories = ["all", ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))];
@@ -200,7 +201,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                     
                     {/* Secondary Button: BECOME AUTHOR */}
                     <button 
-                       onClick={() => setIsHubOpen(true)}
+                      onClick={() => openContactModal('Хочу стать автором блога', 'HELP')}
                        className="group flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed border-slate-700 text-slate-300 hover:text-teal-400 hover:border-teal-500/50 hover:bg-teal-500/5 transition-all text-xs font-bold uppercase tracking-wider"
                     >
                         <PenLine size={14} className="group-hover:-rotate-12 transition-transform"/>
@@ -211,13 +212,6 @@ export default function BlogSection({ posts }: BlogSectionProps) {
             </div>
         </div>
       </div>
-
-      <ContactHubModal 
-        isOpen={isHubOpen} 
-        onClose={() => setIsHubOpen(false)} 
-        initialTab="BLOG" 
-      />
-
-    </section>
+          </section>
   );
 }

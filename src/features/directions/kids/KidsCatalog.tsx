@@ -14,7 +14,7 @@ import { twMerge } from "tailwind-merge";
 // Скорее всего они лежат в папке туров. Замените пути на свои, если они отличаются.
 import TourCard from '@/features/tours/components/TourCard'; 
 import CalendarView from '@/features/tours/components/CalendarView'; 
-import ContactHubModal from "@/components/modals/ContactHubModal"; 
+import { useModalStore } from '@/shared/store/useModalStore'; 
 import { Tour } from '@/features/tours/types'; 
 
 function cn(...inputs: ClassValue[]) {
@@ -28,6 +28,8 @@ interface KidsCatalogProps {
 export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const openContactModal = useModalStore((state) => state.openContactModal);
+
   
   // --- SMART FEED LOGIC (Как в вашем ToursBrowser) ---
   const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
@@ -201,7 +203,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                             </p>
                             
                             <button 
-                                onClick={() => setIsContactOpen(true)}
+                                onClick={() => openContactModal('Заявка: Junior Академия', 'TOUR')}	
                                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-amber-500 text-slate-950 font-black uppercase tracking-wider rounded-xl hover:bg-amber-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-95 w-full sm:w-auto"
                             >
                                 <Bell size={18} />
@@ -225,13 +227,6 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
 
       </div>
       
-      {/* Модалка для сбора контактов */}
-      <ContactHubModal 
-        isOpen={isContactOpen} 
-        onClose={() => setIsContactOpen(false)} 
-        initialTab="TOUR" 
-        tourContext="Запрос уведомления о новых детских турах (Пустое расписание)"
-      />
-    </section>
+      </section>
   );
 }

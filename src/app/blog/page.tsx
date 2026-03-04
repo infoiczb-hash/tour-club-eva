@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"; // Проверь правильност�
 import BlogFeed from "./BlogFeed";
 import { Metadata } from "next";
 import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
-
+import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
 
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
@@ -56,13 +56,18 @@ export default async function BlogPage() {
   const catRes = await getBlogCategoriesAction();
   const categories = catRes.success ? catRes.data : [];
 
-  return (
-    // Обернул в main, чтобы поисковики правильно читали структуру документа
+return (
+  <>
+    <BreadcrumbJsonLd items={[
+      { name: "Главная", url: "https://evatur.club" },
+      { name: "Блог", url: "https://evatur.club/blog" },
+    ]} />
     <main className="min-h-screen bg-slate-950">
       <BlogFeed 
         initialPosts={posts} 
         categories={categories}
       />
     </main>
-  );
+  </>
+);
 }

@@ -17,7 +17,7 @@ import { Tour } from "@/features/tours/types";
 import dynamic from 'next/dynamic';
 
 const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: true,
+  ssr: false,
 });
 
 // Тип для наших двух потоков

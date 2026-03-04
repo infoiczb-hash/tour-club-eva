@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Share2, Printer, MessageCircle, MousePointerClick, Check } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 // ✅ Импорт нового Хаба
-import ContactHubModal from "@/components/modals/ContactHubModal";
+import { useModalStore } from '@/shared/store/useModalStore';
 
 interface TourActionButtonsProps {
   tour: Tour;
@@ -12,8 +12,9 @@ interface TourActionButtonsProps {
 
 export default function TourActionButtons({ tour }: TourActionButtonsProps) {
   const [isCopied, setIsCopied] = useState(false);
-  // ✅ Состояние для открытия модалки
-  const [isContactOpen, setIsContactOpen] = useState(false);
+  
+  // Достаем функцию открытия из глобального стора
+  const openContactModal = useModalStore((state) => state.openContactModal);
 
   // Логика "Поделиться"
   const handleShare = async () => {
@@ -97,7 +98,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
 
         {/* КНОПКА: ВОПРОСЫ (ОБНОВЛЕНО) */}
         <button 
-          onClick={() => setIsContactOpen(true)}
+          onClick={() => openContactModal(tour.title, 'TOUR')}
           className="group flex items-center gap-4 p-5 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all hover:bg-slate-800 text-left"
         >
           <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform shrink-0">
@@ -114,14 +115,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
         </button>
 
       </div>
-
-      {/* ✅ ПОДКЛЮЧЕНИЕ МОДАЛКИ С КОНТЕКСТОМ */}
-      <ContactHubModal
-        isOpen={isContactOpen}
-        onClose={() => setIsContactOpen(false)}
-        initialTab="TOUR"
-        tourContext={tour.title} // Передаем название тура
-      />
+        
     </section>
   );
 }
