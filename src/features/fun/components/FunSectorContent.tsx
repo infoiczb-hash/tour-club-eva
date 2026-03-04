@@ -3,26 +3,25 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Gamepad2, Backpack, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import type { FunTest } from "@prisma/client";
 
-// Импорт модалок (оставляем как есть)
+// Импорт Zustand стора
+import { useModalStore } from '@/shared/store/useModalStore';	
+
+// Импорт модалок (Только квизы, ContactHubModal здесь больше не нужен!)
 import FearDebriefModal from "@/features/fun/components/FearDebrief";
 import PhysicalReadinessModal from "@/features/fun/components/PhysicalReadiness";
 import BodySignalsModal from "@/features/fun/components/BodySignals";
 import TourDebriefModal from "@/features/fun/components/TourDebrief";
-import { useModalStore } from '@/shared/store/useModalStore';	
 import QuizBackpack from "@/features/fun/components/QuizBackpack";
 import QuizSurvival from "@/features/fun/components/QuizSurvival";
 import QuizTotem from "@/features/fun/components/QuizTotem";
 import QuizTouristType from "@/features/fun/components/QuizTouristType";
 import PsychProfile from "@/features/fun/components/PsychProfile";
-
-const openContactModal = useModalStore((state) => state.openContactModal);		
-
 
 const MODAL_REGISTRY: Record<string, React.FC<any>> = {
   'fear-debrief': FearDebriefModal,
@@ -63,6 +62,9 @@ interface Props {
 export default function FunSectorContent({ activeTests }: Props) {
   const [activeQuizSlug, setActiveQuizSlug] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  
+  // Достаем метод открытия глобальной модалки из стора
+  const openContactModal = useModalStore((state) => state.openContactModal);
 
   useEffect(() => {
     const quizParam = searchParams.get('quiz');
@@ -79,6 +81,14 @@ export default function FunSectorContent({ activeTests }: Props) {
     });
     return groups;
   }, [activeTests]);
+
+  // Обработчик успешного прохождения квиза
+  const handleQuizComplete = (resultText: string) => {
+    setActiveQuizSlug(null); // Закрываем квиз
+    setTimeout(() => {
+      openContactModal('TOUR', resultText); // Открываем глобальный хаб с контекстом
+    }, 400); // Даем время на закрытие первой модалки (предотвращаем баги с overflow)
+  };
 
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
@@ -100,7 +110,6 @@ export default function FunSectorContent({ activeTests }: Props) {
            Твой <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Фан-Сектор</span>
         </h1>
 
-        {/* Описание (оставляем как было, либо тоже можно добавить animate-fade-in-up и задержку 300ms) */}
         <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base font-medium">
           Выбирай раздел, проходи тесты и получай персональные рекомендации от нашего ИИ-гида.
         </p>
@@ -164,15 +173,27 @@ export default function FunSectorContent({ activeTests }: Props) {
          </motion.div>
       </div>
 
-      {/* Модалки (оставляем без изменений) */}
-      {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => (
-        <ModalComponent key={slug} isOpen={activeQuizSlug === slug} onClose={() => setActiveQuizSlug(null)} />
-      ))}
+      {/* --- ДИНАМИЧЕСКИЙ РЕНДЕР МОДАЛОК --- */}
+      {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
+        if (!ModalComponent) return null;
+        
+        const isActive = activeQuizSlug === slug;
+
+        return (
+          <ModalComponent 
+            key={slug} 
+            isOpen={isActive} // Для новых AI-тестов
+            open={isActive}   // Для старых тестов (Рюкзак, Выживание)
+            onComplete={handleQuizComplete} // Подключаем наш мостик
+            onClose={() => setActiveQuizSlug(null)} 
+          />
+        );
+      })}
     </main>
   );
 }
 
-// Subcomponent: QuizCard (оставляем твою логику, просто чуть почистил стили)
+// Subcomponent: QuizCard
 function QuizCard({ onClick, image, color, icon, title, desc, category }: any) {
     const colors: Record<string, string> = {
         orange: "bg-orange-500 shadow-orange-500/20 text-orange-400",
