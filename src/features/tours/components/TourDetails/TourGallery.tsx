@@ -113,7 +113,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
           >
             <button 
               className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
-              onClick={closeLightbox}
+              aria-label="Закрыть галерею" onClick={closeLightbox}
             >
                <X size={32} />
             </button>
@@ -140,13 +140,13 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
 
             <button 
               className="absolute left-2 md:left-4 p-4 text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95"
-              onClick={prevImage}
+             aria-label="Предыдущее фото" onClick={prevImage}
             >
                <ChevronLeft size={40} />
             </button>
             <button 
               className="absolute right-2 md:right-4 p-4 text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95"
-              onClick={nextImage}
+              Аria-label="Следующее фото" onClick={nextImage}
             >
                <ChevronRight size={40} />
             </button>

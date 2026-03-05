@@ -16,7 +16,6 @@ interface ToursBrowserWrapperProps {
 const ToursBrowser = dynamic(
   () => import('@/features/tours/components/ToursBrowser'),
   { 
-    ssr: false,
     // Рекомендую добавить лоадер, чтобы при загрузке на клиенте 
     // страница не прыгала (улучшает метрику CLS)
     loading: () => (
