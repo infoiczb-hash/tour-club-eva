@@ -51,7 +51,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
        {/* Твои крутые градиенты оставляем */}
        <div className="absolute inset-0 bg-slate-950/30" />
        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.5)_100%)]" />
-       <div className="absolute inset-0 bg-[url('...')] opacity-10 mix-blend-overlay pointer-events-none" />
+       <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
        <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
    </div>
 </div>
