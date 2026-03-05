@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
+import { useKayakTab } from "./KayakingTabProvider"; // 🔥 ДОБАВИЛИ ИМПОРТ ХУКА
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -30,47 +31,44 @@ const faqs = [
   }
 ];
 
-interface FAQProps {
-  onNavigateToPrep?: () => void;
-}
-
-export default function FAQ({ onNavigateToPrep }: FAQProps) {
+export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-const openContactModal = useModalStore((state) => state.openContactModal);
+  const openContactModal = useModalStore((state) => state.openContactModal);
+  
+  // 🔥 ДОСТАЕМ ФУНКЦИЮ ИЗ ПРОВАЙДЕРА
+  const { setActiveTab } = useKayakTab(); 
 
-
-  // 🔥 ВЫНОСИМ КНОПКИ В ОТДЕЛЬНУЮ ПЕРЕМЕННУЮ (ЧТОБЫ НЕ ДУБЛИРОВАТЬ КОД)
+  // ВЫНОСИМ КНОПКИ В ОТДЕЛЬНУЮ ПЕРЕМЕННУЮ
   const actionCardsContent = (
     <div className="flex flex-col gap-4 mt-2">
         {/* Кнопка "Подготовка к сплаву" */}
-        {onNavigateToPrep && (
-            <motion.button 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                onClick={onNavigateToPrep} 
-                className="group block w-full text-left outline-none"
-            >
-                <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
-                    <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
-                    
-                    <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">
-                        <BookOpen size={24} strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
-                        Подготовка к сплаву
-                    </h3>
-                    <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
-                        Полный гайд: что надеть, что взять с собой и как вести себя на воде.
-                    </p>
-                    
-                    <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
-                        <span>Перейти в раздел</span>
-                        <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
-                    </div>
+        <motion.button 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            // 🔥 ИСПОЛЬЗУЕМ ХУК ДЛЯ ПЕРЕКЛЮЧЕНИЯ ТАБА
+            onClick={() => setActiveTab('participant')} 
+            className="group block w-full text-left outline-none"
+        >
+            <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
+                <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
+                
+                <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">
+                    <BookOpen size={24} strokeWidth={1.5} />
                 </div>
-            </motion.button>
-        )}
+                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
+                    Подготовка к сплаву
+                </h3>
+                <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
+                    Полный гайд: что надеть, что взять с собой и как вести себя на воде.
+                </p>
+                
+                <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
+                    <span>Перейти в раздел</span>
+                    <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
+                </div>
+            </div>
+        </motion.button>
 
         {/* Карточка "Остались вопросы?" */}
         <motion.div 
@@ -207,6 +205,6 @@ const openContactModal = useModalStore((state) => state.openContactModal);
         </div>
       </div>
 
-      </section>
+    </section>
   );
 }

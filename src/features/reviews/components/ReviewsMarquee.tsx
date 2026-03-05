@@ -174,7 +174,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                     className={cn(
                         "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border",
                         activeCategory === 'all' 
-                            ? "bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-900/20" 
+                            ? "bg-teal-700 text-white border-teal-600 shadow-lg shadow-teal-900/20" 
                             : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
                     )}
                 >
@@ -209,20 +209,25 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
          <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
          {/* Анимация смены списка при фильтрации */}
-         <AnimatePresence mode="wait">
-            <motion.div 
-                key={activeCategory} // Триггерит анимацию при смене категории
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar md:animate-marquee md:hover:[animation-play-state:paused] w-full md:w-max md:[animation-duration:100s] pb-8 md:pb-0"
-            >
-                {marqueeList.map((review, i) => (
-                <ReviewCard key={`${review.id}-${i}`} review={review} />
-                ))}
-            </motion.div>
-         </AnimatePresence>
+       <AnimatePresence mode="wait">
+  <motion.div 
+    key={activeCategory}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.3 }}
+    // ✅ ДОБАВЛЯЕМ АТРИБУТЫ ДОСТУПНОСТИ
+    tabIndex={0} 
+    role="region" 
+    aria-label={`Отзывы в категории ${activeCategory}`} 
+    // ✅ ДОБАВЛЯЕМ КЛАССЫ ФОКУСА
+    className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar md:animate-marquee md:hover:[animation-play-state:paused] md:focus:[animation-play-state:paused] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full md:w-max md:[animation-duration:100s] pb-8 md:pb-0"
+  >
+    {marqueeList.map((review, i) => (
+      <ReviewCard key={`${review.id}-${i}`} review={review} />
+    ))}
+  </motion.div>
+</AnimatePresence>
       </div>
 
     </section>

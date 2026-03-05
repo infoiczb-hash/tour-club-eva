@@ -277,29 +277,31 @@ export default async function BlogPostPage({ params }: PageProps) {
       <div className="container mx-auto px-4 max-w-7xl mt-4 md:mt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
             
-            {/* MAIN TEXT */}
-            <div className="lg:col-span-8">
-                <div 
-                    className="prose prose-sm md:prose-lg prose-invert max-w-none 
-                    
-                    [&_p:empty]:hidden 
-                    [&_br]:hidden
+           <div className="lg:col-span-8">  
+    <div 
+        className="prose prose-sm md:prose-lg prose-invert max-w-none 
+        
+        [&_p:empty]:hidden 
+        [&_br]:hidden
 
-                    prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-white
-                    prose-h2:mt-8 prose-h2:mb-3 prose-h2:text-xl md:prose-h2:text-3xl
-                    prose-h3:text-teal-400 prose-h3:text-lg
-                    
-                    prose-p:text-slate-300 prose-p:leading-normal prose-p:my-3
-                    
-                    prose-strong:text-white prose-strong:font-bold
-                    
-                    prose-ul:my-4 prose-li:my-1 prose-li:text-slate-300 prose-li:marker:text-teal-500
-                    
-                    prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline
-                    
-                    prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-white/5 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6"
-                    dangerouslySetInnerHTML={{ __html: post.content }} 
-                />
+        prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-white
+        prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl md:prose-h2:text-3xl
+        prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
+        
+        /* 🔥 ЧИТАЕМОСТЬ: Светлее цвет, больше межстрочный интервал, больше отступ снизу */
+        prose-p:text-slate-200 prose-p:leading-relaxed prose-p:mb-6 prose-p:mt-0
+        
+        prose-strong:text-white prose-strong:font-bold
+        
+        /* 🔥 СПИСКИ: Тоже светлее и с воздухом */
+        prose-ul:my-6 prose-li:mb-2 prose-li:text-slate-200 prose-li:leading-relaxed prose-li:marker:text-teal-500
+        
+        prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
+        
+        /* 🔥 ЦИТАТЫ: Чуть больше контраста и отступов */
+        prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-4 prose-blockquote:px-5 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium"
+        dangerouslySetInnerHTML={{ __html: post.content }} 
+    />
 
                 <ArticleShare title={post.title} slug={post.slug} />
 

@@ -95,7 +95,7 @@ export default function LocalRoutes() {
                     </div>
 
                     {/* 🔥 Подсказка "Мотай" */}
-                    <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-emerald-500/80 animate-pulse pointer-events-none">
+                    <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                         <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                         <ChevronRight size={14} />
                     </div>

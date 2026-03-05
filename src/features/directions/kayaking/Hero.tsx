@@ -3,14 +3,12 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { Waves, Compass, CheckCircle2 } from "lucide-react";
-import { FlowTab } from "./KayakingLanding";
+import { useKayakTab } from "./KayakingTabProvider";
 
-interface HeroProps {
-  activeTab: FlowTab;
-  setActiveTab: (tab: FlowTab) => void;
-}
-
-export default function Hero({ activeTab, setActiveTab }: HeroProps) {
+export default function Hero() {
+  // 🔥 ДОСТАЕМ СОСТОЯНИЕ И ФУНКЦИЮ ИЗ ПРОВАЙДЕРА
+  const { activeTab, setActiveTab } = useKayakTab();
+  
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], [0, 300]);
   const opacity = useTransform(scrollY, [0, 400], [1, 0]);

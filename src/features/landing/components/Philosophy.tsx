@@ -183,33 +183,38 @@ export default function Philosophy() {
             <div className="lg:hidden mb-6 flex items-center justify-between pl-2">
               <span className="text-s font-black uppercase tracking-widest text-slate-300">Направления</span>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-white/5 shadow-inner animate-pulse pointer-events-none">
-                <span className="text-xs font-bold uppercase tracking-widest text-teal-500/80">МОТАЙ</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-teal-400">МОТАЙ</span>
                 <MoveRight size={14} className="text-teal-400 animate-pulse" />
               </div>
             </div>
 
-            <div
-              ref={scrollContainerRef}
-              onScroll={checkScroll}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeave}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              style={{ WebkitOverflowScrolling: 'touch' }}
-              className={cn(
-                "flex gap-4 sm:gap-6 overflow-x-auto pb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:pb-12 hide-scrollbar scroll-smooth",
-                isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab lg:snap-x lg:snap-mandatory"
-              )}
-            >
-              {directions.map((dir, idx) => (
-                <DirectionCard
-                  key={dir.id}
-                  direction={dir}
-                  index={idx}
-                  onPreventClick={() => dragDistance > 10}
-                />
-              ))}
-            </div>
+           <div
+  ref={scrollContainerRef}
+  onScroll={checkScroll}
+  onMouseDown={handleMouseDown}
+  onMouseLeave={handleMouseLeave}
+  onMouseUp={handleMouseUp}
+  onMouseMove={handleMouseMove}
+  style={{ WebkitOverflowScrolling: 'touch' }}
+  // ✅ ДОБАВЛЕНО ДЛЯ ДОСТУПНОСТИ (a11y)
+  tabIndex={0} 
+  role="region" 
+  aria-label="Карусель туристических направлений" 
+  className={cn(
+    // ✅ ДОБАВЛЕНЫ СТИЛИ ФОКУСА (ring) И СКРУГЛЕНИЕ ДЛЯ РАМКИ
+    "flex gap-4 sm:gap-6 overflow-x-auto pb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:pb-12 hide-scrollbar scroll-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl",
+    isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab lg:snap-x lg:snap-mandatory"
+  )}
+>
+  {directions.map((dir, idx) => (
+    <DirectionCard
+      key={dir.id}
+      direction={dir}
+      index={idx}
+      onPreventClick={() => dragDistance > 10}
+    />
+  ))}
+</div>
 
             <div className="hidden lg:block w-full h-1 bg-slate-900 mt-[-20px] relative overflow-hidden rounded-full">
               <div
