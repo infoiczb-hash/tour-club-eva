@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import { Star, Zap, Shield, Heart, Camera, Coffee, Mountain, Map, Sun, Compass, Hash } from 'lucide-react';
 import { clsx } from 'clsx';

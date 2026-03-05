@@ -1,7 +1,3 @@
-'use client';
-
-import { useRef } from 'react';
-
 // Импортируем все наши премиальные блоки
 import SuperHero from './components/SuperHero';
 import SupBenefits from './components/SupBenefits';
@@ -15,18 +11,11 @@ import SupVideo from './components/SupVideo';
 import SupFAQ from './components/SupFAQ';
 
 export default function SupLanding() {
-  // Реф для кнопки на главном экране, чтобы плавно скроллить к каталогу
-  const catalogRef = useRef<HTMLDivElement>(null);
-
-  const scrollToCatalog = () => {
-    catalogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30 selection:text-white">
       
       {/* 1. Эмоция и Главный экран */}
-      <SuperHero onScrollDown={scrollToCatalog} />
+      <SuperHero />
       
       {/* 2. Выгоды (Почему мы) */}
       <SupBenefits />
@@ -38,7 +27,8 @@ export default function SupLanding() {
       <SupSafety />
       
       {/* 5. Каталог (Предлагаем продукт) */}
-      <div ref={catalogRef} className="scroll-mt-10">
+      {/* ✅ Добавили id="catalog" для нативного якорного скролла */}
+      <div id="catalog" className="scroll-mt-10">
         <SupCatalog />
       </div>
 

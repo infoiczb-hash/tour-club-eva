@@ -11,9 +11,10 @@ interface BookingModalProps {
   onClose: () => void;
   tour: Tour;
   initialDate?: string;
+  initialDateId?: string; // <--- ДОБАВЬ ЭТУ СТРОКУ СЮДА
 }
 
-export default function BookingModal({ isOpen, onClose, tour, initialDate }: BookingModalProps) {
+export default function BookingModal({ isOpen, onClose, tour, initialDate, initialDateId }: BookingModalProps) {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

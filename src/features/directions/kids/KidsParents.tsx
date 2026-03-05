@@ -63,7 +63,7 @@ export default function KidsParents() {
                     className="mb-16 md:mb-24 max-w-4xl text-left"
                 >
                     <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 md:mb-8 leading-none">
-                        Вместо экрана <br className="hidden md:block"/><span className="text-amber-500">— Костёр</span>
+                        Детство должно быть с <br className="hidden md:block"/><span className="text-amber-500"> приключениями</span>
                     </h2>
                     
                     <div className="border-l-4 border-amber-500 pl-5 md:pl-8 py-2">
