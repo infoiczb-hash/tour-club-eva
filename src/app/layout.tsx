@@ -6,21 +6,24 @@ import { Providers } from "./providers";
 import { ToastProvider } from "@/shared/context/ToastContext";
 import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 
-// Импортируем компоненты, которые должны быть глобальными
 import Header from "@/components/Header"; 
 import { Footer } from "@/components/layout/Footer";
 import PromoBlock from "@/components/layout/PromoBlock"; 
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import AxeReporter from '@/components/AxeReporter'; 
 import GlobalModals from "@/components/modals/GlobalModals"; 
+import dynamic from "next/dynamic";
+
+// ✅ ИСПРАВЛЕНО: Убрали { ssr: false }, так как это вызывает ошибку в Server Components
+const AxeReporter = dynamic(() => import('@/components/AxeReporter'));
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   display: "swap",
   variable: "--font-inter",
-  weight: ["400", "600", "700"], // Оставили только нужные!
-  preload: false, // Отключаем принудительный preload, чтобы убрать warning
+  weight: ["400", "600", "700"],
+  preload: true,        
+  adjustFontFallback: true, 
 });
 
 export const metadata: Metadata = {
@@ -44,7 +47,7 @@ export const metadata: Metadata = {
     siteName: "Турклуб «Эва»",
     images: [
       {
-        url: "/og-default.jpg", // ⚠️ ВАЖНО: положи картинку 1200x630 с таким названием в папку public
+        url: "/og-default.jpg",
         width: 1200,
         height: 630,
         alt: "Турклуб Эва — сплавы и приключенческие туры",
@@ -76,7 +79,7 @@ const organizationSchema = {
   url: 'https://evatur.club',
   logo: {
     '@type': 'ImageObject',
-    url: 'https://evatur.club/icon.png', // Твой будущий фавикон/лого
+    url: 'https://evatur.club/icon.png', 
     width: 200,
     height: 200,
   },
@@ -85,31 +88,15 @@ const organizationSchema = {
   email: 'info@evatur.club',
   address: {
     '@type': 'PostalAddress',
-    streetAddress: '', // Если есть физический офис, впиши сюда
     addressLocality: 'Тирасполь',
     addressRegion: 'Приднестровье',
     addressCountry: 'MD',
   },
   geo: {
     '@type': 'GeoCoordinates',
-    latitude: 46.8403,  // Координаты Тирасполя
+    latitude: 46.8403,  
     longitude: 29.6433,
   },
-  areaServed: [
-    { '@type': 'State', name: 'Приднестровье' },
-    { '@type': 'Country', name: 'Молдова' },
-    { '@type': 'City', name: 'Тирасполь' },
-    { '@type': 'City', name: 'Бендеры' },
-  ],
-  knowsAbout: [
-    'Активный туризм', 'Байдарки', 'Сплавы по Днестру',
-    'SUP', 'Пешие походы', 'Детские лагеря',
-  ],
-  priceRange: '$$', // Средний ценовой сегмент
-  sameAs: [
-    'https://instagram.com/evaturclub',
-    'https://t.me/evaturclub',
-  ],
 };
 
 export default function RootLayout({
@@ -118,38 +105,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html 
-      lang="ru" 
-      className={`scroll-smooth ${inter.variable}`} 
-      suppressHydrationWarning
-      // ✅ Добавляем только эту строку, чтобы Next.js не ругался на плавный скролл
-      data-scroll-behavior="smooth" 
-    >
-      <body
-        suppressHydrationWarning={true}
-        className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col"
-      >
+    <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
+      <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
         <Providers>
           <ToastProvider>
-            {/* 👇 СКРЫТЫЙ СКРИПТ ОРГАНИЗАЦИИ */}
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-            />
-            {/* ✅ ПЕРЕДАЕМ КОМПОНЕНТЫ КАК ПРОПСЫ */}
-            <MainLayoutWrapper
-              header={<Header />}
-              footer={<Footer />}
-              promo={<PromoBlock />}
-            >
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+            <MainLayoutWrapper header={<Header />} footer={<Footer />} promo={<PromoBlock />}>
               {children}
             </MainLayoutWrapper>
           </ToastProvider>
         </Providers>
         <GlobalModals />
+        <AxeReporter />
         <Analytics />
         <SpeedInsights />
-    {process.env.NODE_ENV !== 'production' && <AxeReporter />}
       </body>
     </html>
   );

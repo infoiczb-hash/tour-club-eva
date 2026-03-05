@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { HelpCircle, FileText, ShieldCheck, ChevronRight } from "lucide-react";
 

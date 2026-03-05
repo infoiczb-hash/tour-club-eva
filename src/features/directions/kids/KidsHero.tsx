@@ -1,10 +1,9 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import { Flame, Compass } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link'; // ✅ Добавили нативный линк Next.js
 
-export default function KidsHero({ onScrollDown }: { onScrollDown?: () => void }) {
+// ✅ Убрали "use client" и пропс onScrollDown
+export default function KidsHero() {
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pb-12">
       
@@ -16,23 +15,18 @@ export default function KidsHero({ onScrollDown }: { onScrollDown?: () => void }
           fill
           className="object-cover opacity-40 md:opacity-50"
           priority
-          fetchPriority="high" // ✅ ДОБАВЛЕНО
-          quality={85}         // ✅ ДОБАВЛЕНО
-          sizes="100vw"        // ✅ ДОБАВЛЕНО
+          fetchPriority="high"
+          quality={85}
+          sizes="100vw"
         />
-        {/* Градиент для читаемости текста */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 text-center mt-20 md:mt-0">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="flex flex-col items-center"
-        >
+        <div className="flex flex-col items-center">
+          
           {/* Бейдж */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 backdrop-blur-md rounded-full mb-8">
+          <div className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 backdrop-blur-md rounded-full mb-8">
             <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
             <span className="text-[10px] md:text-xs font-bold tracking-widest text-amber-400 uppercase">
               Детское направление
@@ -40,7 +34,7 @@ export default function KidsHero({ onScrollDown }: { onScrollDown?: () => void }
           </div>
 
           {/* Заголовок */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter">
+          <h1 className="opacity-0 animate-fade-in-up [animation-delay:150ms] text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter">
             ВМЕСТО ЭКРАНА <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
               КОСТЁР
@@ -48,19 +42,22 @@ export default function KidsHero({ onScrollDown }: { onScrollDown?: () => void }
           </h1>
 
           {/* Описание */}
-          <p className="text-base md:text-xl text-slate-300 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="opacity-0 animate-fade-in-up [animation-delay:300ms] text-base md:text-xl text-slate-300 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
             Мы возвращаем детям детство, а подросткам даём приключения, которыми гордишься.
           </p>
 
-          {/* Кнопка плавного скролла (как в SUP) */}
-          <button 
-            onClick={onScrollDown}
-            className="group px-8 py-4 bg-amber-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(245,158,11,0.3)] flex items-center gap-3 mx-auto"
-          >
-            <Compass className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
-            <span>Выбрать формат</span>
-          </button>
-        </motion.div>
+          {/* ✅ Кнопка превращена в якорную ссылку */}
+          <div className="opacity-0 animate-fade-in-up [animation-delay:450ms]">
+            <Link 
+              href="#formats"
+              className="group px-8 py-4 bg-amber-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(245,158,11,0.3)] flex items-center gap-3 mx-auto"
+            >
+              <Compass className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
+              <span>Выбрать формат</span>
+            </Link>
+          </div>
+
+        </div>
       </div>
     </section>
   );

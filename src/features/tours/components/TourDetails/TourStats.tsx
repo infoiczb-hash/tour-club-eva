@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import { Ruler, Signal, Users, Hash } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
