@@ -69,7 +69,7 @@ export default function HikesGallery() {
         <section className="py-8 md:py-16 bg-stone-950 border-t border-white/5 relative overflow-hidden">
             
             {/* Фоновое свечение */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none opacity-50" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none opacity-50" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 

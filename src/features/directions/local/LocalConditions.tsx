@@ -39,7 +39,7 @@ export default function LocalConditions() {
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
             {/* Легкое фоновое свечение для глубины */}
-            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-emerald-900/10 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-emerald-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 

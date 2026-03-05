@@ -31,7 +31,7 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
       
       {/* Декоративные фоновые свечения */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[400px] blur-[120px] rounded-full opacity-10 pointer-events-none transition-opacity duration-700"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[400px] md:blur-[120px] rounded-full opacity-10 pointer-events-none transition-opacity duration-700"
         style={{ 
             backgroundColor: theme.hex,
             opacity: isFocused ? 0.2 : 0.1 // Свечение усиливается, когда юзер вводит текст!

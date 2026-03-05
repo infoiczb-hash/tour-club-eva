@@ -93,8 +93,8 @@ export default function FunSectorContent({ activeTests }: Props) {
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
       <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 blur-[150px] rounded-full opacity-40 animate-pulse" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 blur-[150px] rounded-full opacity-30" />
+          <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40 animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 md:blur-[150px] rounded-full opacity-30" />
       </div>
 
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
@@ -157,7 +157,7 @@ export default function FunSectorContent({ activeTests }: Props) {
 
          {/* ФИНАЛЬНЫЙ CTA BANNER (внизу страницы) */}
          <motion.div variants={itemVariants} className="max-w-6xl mx-auto bg-gradient-to-r from-teal-900/40 to-slate-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
                <div>
                   <h3 className="text-3xl font-black text-white uppercase mb-2 flex flex-col md:flex-row items-center gap-3">

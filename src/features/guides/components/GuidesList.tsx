@@ -87,7 +87,7 @@ const openContactModal = useModalStore((state) => state.openContactModal);
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 pointer-events-none">
-         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-teal-900/5 blur-[120px] rounded-full" />
+         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-teal-900/5 md:md:blur-[150px] rounded-full" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">

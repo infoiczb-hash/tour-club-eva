@@ -29,7 +29,7 @@ const fleet = [
 export default function Fleet() {
   return (
     <section className="pt-12 md:pt-20 pb-10 bg-[#020617] relative overflow-hidden text-slate-200 border-t border-white/5">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
         

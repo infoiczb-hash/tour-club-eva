@@ -67,7 +67,7 @@ export default function LocalFAQ() {
 
                 {/* ФИНАЛЬНЫЙ ПРИЗЫВ К ДЕЙСТВИЮ */}
                 <div className="bg-gradient-to-br from-slate-900 to-[#020617] border border-emerald-500/20 rounded-[2.5rem] p-8 md:p-12 text-center shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-emerald-500/10 md:blur-[100px] rounded-full pointer-events-none" />
                     
                     <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4 relative z-10">
                         Остались <span className="text-emerald-500">Вопросы?</span>

@@ -40,7 +40,7 @@ export default function DirectionBento({ data }: DirectionBentoProps) {
       
       {/* Декоративный фоновый свет из темы */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] blur-[150px] rounded-full pointer-events-none opacity-20"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] md:blur-[150px] rounded-full pointer-events-none opacity-20"
         style={{ backgroundColor: theme.hex }}
       />
 

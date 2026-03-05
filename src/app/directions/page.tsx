@@ -91,8 +91,8 @@ const openContactModal = useModalStore((state) => state.openContactModal);
     <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-24 px-4 relative overflow-hidden selection:bg-teal-500/30">
       
       {/* --- AMBIENCE --- */}
-      <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-900/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto max-w-7xl relative z-10">
         

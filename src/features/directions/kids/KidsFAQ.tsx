@@ -133,7 +133,7 @@ export default function KidsFAQ() {
                     viewport={{ once: true }}
                     className="relative p-6 md:p-12 lg:p-16 rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-900 to-[#020617] border border-amber-500/20 overflow-hidden text-center shadow-2xl isolate"
                 >
-                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/5 md:blur-[120px] rounded-full pointer-events-none" />
 
                     {/* Цитата Романа */}
                     <div className="mb-10 md:mb-16 relative">

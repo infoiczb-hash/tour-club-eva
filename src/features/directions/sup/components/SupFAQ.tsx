@@ -131,7 +131,7 @@ export default function SupFAQ() {
                     className="relative p-8 md:p-16 rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-teal-900/40 via-slate-900 to-[#020617] border border-teal-500/20 overflow-hidden text-center flex flex-col items-center shadow-2xl"
                 >
                     {/* Декоративные свечения */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none" />
                     
                     {/* Иконка */}
                     <div className="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-8 relative z-10">

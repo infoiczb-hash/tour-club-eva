@@ -7,7 +7,7 @@ export default function ProLogistics() {
         // 🔥 1. Уменьшили внешние отступы (было py-12, стало py-8 md:py-16)
         <section className="py-8 md:py-12 bg-slate-950 border-t border-white/5 relative overflow-hidden">
             {/* Легкий фоновый акцент */}
-            <div className="absolute top-0 right-1/4 w-96 h-96 bg-teal-900/10 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-teal-900/10 md:blur-[100px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <div className="grid md:grid-cols-2 gap-4 md:gap-6">

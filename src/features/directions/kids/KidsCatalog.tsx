@@ -78,7 +78,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
     <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
       
       {/* Фоновое свечение (Янтарное для детей) */}
-      <div className="absolute top-0 left-0 w-[600px] h-[500px] bg-amber-900/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-0 w-[600px] h-[500px] bg-amber-900/5 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
@@ -188,7 +188,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                     ==================================================== */}
                 {hotTours.length === 0 && comingSoonTours.length === 0 && (
                     <div className="text-center py-12 md:py-24 px-4 border border-dashed border-white/10 rounded-[2rem] md:rounded-[3rem] bg-gradient-to-b from-white/[0.02] to-transparent relative overflow-hidden shadow-2xl">
-                        <div className="absolute inset-0 bg-amber-500/5 blur-[100px] rounded-full" />
+                        <div className="absolute inset-0 bg-amber-500/5 md:blur-[100px] rounded-full" />
                         
                         <div className="relative z-10">
                             <div className="w-16 h-16 bg-slate-900 border border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">

@@ -56,7 +56,7 @@ export default function SupEquipment() {
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
             {/* Фоновые свечения для кинематографичности */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 md:blur-[120px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 

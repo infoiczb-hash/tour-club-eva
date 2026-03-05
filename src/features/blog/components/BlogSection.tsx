@@ -46,7 +46,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
       
       {/* Background Ambience */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-500/5 blur-[120px] rounded-full opacity-30" />
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-500/5 md:md:blur-[120px] rounded-full opacity-30" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">
