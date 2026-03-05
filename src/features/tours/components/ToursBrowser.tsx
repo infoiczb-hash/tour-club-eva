@@ -2,12 +2,11 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'; // ✅ ДОБАВИЛИ ДЛЯ URL-ФИЛЬТРОВ
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
   Flame, Mountain, Tent, Droplets, Baby, ArrowRight,
   Sparkles, Layers, Filter, X, Bell,
-  // ✅ ДОБАВИЛИ ИКОНКИ ДЛЯ МАППЕРА
   Compass, Map as MapIcon, Sun, Snowflake, TreePine, Bike, Footprints, MapPin, Anchor, Star, Waves
 } from 'lucide-react';
 import Link from 'next/link';
@@ -16,8 +15,6 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import dynamic from 'next/dynamic';
 import { useModalStore } from '@/shared/store/useModalStore'; 
-
-// ❌ БЫЛО ТУТ: const openContactModal = useModalStore((state) => state.openContactModal);
 
 const CalendarView = dynamic(() => import('./CalendarView'), {
   ssr: true,
@@ -32,25 +29,24 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const TourCard = dynamic(() => import('./TourCard'), {
-  ssr: true, // Оставляем true, чтобы SEO-роботы видели карточки
+  ssr: true,
   loading: () => (
     <div className="h-[450px] w-full bg-slate-800/30 animate-pulse rounded-2xl border border-white/5" />
   ),
 });
 
-// ✅ 1. ИНТЕЛЛЕКТУАЛЬНЫЙ МАППЕР ИКОНОК
 const getIconComponent = (iconName: string, size = 14) => {
   const icons: Record<string, any> = {
     Compass, Tent, Mountain, Waves, Map: MapIcon, Sun, Snowflake,
     TreePine, Bike, Footprints, MapPin, Anchor, Flame, Star, Droplets, Baby
   };
-  const IconComponent = icons[iconName] || Layers; // Дефолтная иконка, если не найдена
+  const IconComponent = icons[iconName] || Layers;
   return <IconComponent size={size} />;
 };
 
 interface ToursBrowserProps {
   tours: Tour[];
-  categories?: any[]; // ✅ ДОБАВИЛИ ДИНАМИЧЕСКИЕ КАТЕГОРИИ
+  categories?: any[];
   title?: string;
   subtitle?: string;
   limit?: number;
@@ -58,16 +54,14 @@ interface ToursBrowserProps {
 
 export default function ToursBrowser({ 
     tours = [], 
-    categories = [], // Принимаем категории с сервера
+    categories = [], 
     title = "Афиша Приключений", 
     subtitle = "ТУРЫ КЛУБА",
     limit = 16
 }: ToursBrowserProps) {
   
-  // ✅ ПЕРЕНЕСЛИ ВЫЗОВ ХУКА СЮДА, ВНУТРЬ КОМПОНЕНТА!
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  // ✅ 2. URL-СИНХРОНИЗАЦИЯ (Вместо локального useState)
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -75,14 +69,11 @@ export default function ToursBrowser({
   const activeCategory = searchParams.get('category') || 'all';
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   
-  // State для мобильных фильтров
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-  // ✅ 3. ФОРМИРУЕМ СПИСОК КАТЕГОРИЙ (Все + Из Базы)
   const displayCategories = useMemo(() => {
     const allBtn = { id: 'all', slug: 'all', label: 'Все', icon: <Layers size={14}/> };
     
-    // Фильтруем только активные категории
     const dbCats = categories.filter(c => c.isActive !== false).map(c => ({
        id: c.id,
        slug: c.slug,
@@ -93,39 +84,32 @@ export default function ToursBrowser({
     return [allBtn, ...dbCats];
   }, [categories]);
   
-  // Хендлер изменения URL
   const handleCategoryClick = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (slug === 'all') {
-      params.delete('category'); // Убираем параметр, если "Все"
+      params.delete('category');
     } else {
-      params.set('category', slug); // Ставим slug категории
+      params.set('category', slug);
     }
-    // Обновляем URL без перезагрузки страницы
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // --- SMART FEED LOGIC ---
   const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
     const safeTours = tours || [];
     
-    // ✅ 4. ОБНОВЛЕННАЯ ФИЛЬТРАЦИЯ (поддерживает и новые категории из БД, и старые поля type)
     const filtered = safeTours.filter(tour => {
       if (activeCategory === 'all') return true;
       
-      // Ищем либо по новому слагу категории (если связи подгружены), либо по старому текстовому type
       const tourCategorySlug = (tour as any).category?.slug || tour.type?.toLowerCase();
       return tourCategorySlug === activeCategory.toLowerCase();
     });
 
-    // 2. Сортировка по дате
     const sorted = filtered.sort((a, b) => {
         const dateA = a.date ? new Date(a.date).getTime() : Infinity;
         const dateB = b.date ? new Date(b.date).getTime() : Infinity;
         return dateA - dateB;
     });
 
-    // 3. Разделение на группы (для режима СЕТКИ)
     const now = new Date();
     const twoWeeksLater = new Date();
     twoWeeksLater.setDate(now.getDate() + 14);
@@ -146,7 +130,6 @@ export default function ToursBrowser({
         }
     });
 
-    // Балансировка (если мало горящих)
     if (hot.length < 3 && soon.length > 0) {
         const needed = 3 - hot.length;
         const toMove = soon.splice(0, needed);
@@ -162,12 +145,10 @@ export default function ToursBrowser({
   return (
     <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
       
-      {/* Background Ambience */}
       <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 blur-[120px] rounded-full pointer-events-none opacity-60" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
-        {/* --- HEADER --- */}
         <div className="mb-8 md:mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                <CalendarIcon size={14} className="text-teal-400" />
@@ -178,13 +159,9 @@ export default function ToursBrowser({
             </h2>
         </div>
 
-        {/* =======================================================
-           MOBILE CONTROLS (КОМПАКТНАЯ ПАНЕЛЬ)
-           ======================================================= */}
         <div className="lg:hidden mb-8 sticky top-4 z-40">
             <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
                 
-                {/* 1. СЕТКА */}
                 <button 
                     onClick={() => {
                         setViewMode('grid');
@@ -201,7 +178,6 @@ export default function ToursBrowser({
                     <span className="text-[12px] font-bold uppercase tracking-wider mt-0.5">Сетка</span>
                 </button>
 
-                {/* 2. КАЛЕНДАРЬ */}
                 <button 
                     onClick={() => {
                         setViewMode('calendar');
@@ -218,7 +194,6 @@ export default function ToursBrowser({
                     <span className="text-[12px] font-bold uppercase tracking-wider mt-0.5">Календарь</span>
                 </button>
 
-                {/* 3. ФИЛЬТРЫ */}
                 <button 
                     onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
                     className={cn(
@@ -233,7 +208,6 @@ export default function ToursBrowser({
                 </button>
             </div>
 
-            {/* ВЫЕЗЖАЮЩАЯ ПАНЕЛЬ С ЧИПСАМИ */}
             <AnimatePresence>
                 {isMobileFiltersOpen && (
                     <motion.div 
@@ -247,7 +221,6 @@ export default function ToursBrowser({
                                 Категории туров:
                             </span>
                             <div className="flex flex-wrap gap-2">
-                                {/* ✅ ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЕ КАТЕГОРИИ */}
                                 {displayCategories.map(cat => (
                                     <button
                                         key={cat.id}
@@ -270,13 +243,9 @@ export default function ToursBrowser({
         </div>
 
 
-        {/* =======================================================
-            DESKTOP CONTROLS (Классическая панель)
-           ======================================================= */}
         <div className="hidden lg:block sticky top-4 z-40 mb-12">
             <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl flex flex-row items-center justify-between gap-4">
                 
-                {/* View Switcher */}
                 <div className="bg-white/5 p-1 rounded-xl flex items-center">
                     <button 
                         onClick={() => setViewMode('grid')}
@@ -300,9 +269,7 @@ export default function ToursBrowser({
 
                 <div className="w-px h-8 bg-white/10" />
 
-                {/* Categories */}
                 <div className="flex-1 flex flex-wrap items-center justify-center gap-1">
-                    {/* ✅ ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЕ КАТЕГОРИИ */}
                     {displayCategories.map(cat => (
                         <button
                             key={cat.id}
@@ -321,7 +288,6 @@ export default function ToursBrowser({
 
                 <div className="w-px h-8 bg-white/10" />
 
-                {/* All Tours Link */}
                 <Link 
                     href="/tour" 
                     className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-teal-500 hover:text-slate-900 border border-white/10 text-white text-xs font-bold uppercase tracking-widest transition-all group shrink-0"
@@ -332,20 +298,13 @@ export default function ToursBrowser({
             </div>
         </div>
 
-        {/* =======================================================
-            CONTENT RENDERER
-           ======================================================= */}
-        
-        {/* 1. CALENDAR VIEW */}
         {viewMode === 'calendar' ? (
              <div className="animate-in fade-in zoom-in duration-300">
                 <CalendarView events={allFilteredTours} />
              </div>
         ) : (
-            /* 2. GRID VIEW (SMART FEED) */
             <div className="space-y-12 md:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-              {/* HOT SECTION */}
             {displayHot.length > 0 && (
                 <section aria-labelledby="hot-tours-heading">
                     <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
@@ -357,14 +316,13 @@ export default function ToursBrowser({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {displayHot.map((tour, index) => (
-                            // @ts-ignore - игнорируем ошибку пропов priority для dynamic компонентов, если она есть
+                            // @ts-ignore
                             <TourCard key={tour.id} tour={tour} isHot priority={index === 0} />
                         ))}
                     </div>
                 </section>
             )}
 
-            {/* COMING SOON SECTION */}
             {displaySoon.length > 0 && (
                 <section aria-labelledby="soon-tours-heading">
                     <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
@@ -387,9 +345,6 @@ export default function ToursBrowser({
                 </section>
              )}
 
-                {/* ====================================================
-                    UX 2026: ИДЕАЛЬНОЕ ПУСТОЕ СОСТОЯНИЕ (ЛИДОГЕНЕРАЦИЯ)
-                    ==================================================== */}
                 {displayHot.length === 0 && displaySoon.length === 0 && (
                     <div className="text-center py-12 md:py-24 px-4 border border-dashed border-white/10 rounded-[2rem] md:rounded-[3rem] bg-gradient-to-b from-white/[0.02] to-transparent relative overflow-hidden shadow-2xl">
                         <div className="absolute inset-0 bg-teal-500/5 blur-[100px] rounded-full" />
@@ -407,7 +362,7 @@ export default function ToursBrowser({
                             </p>
                             
                             <button 
-                               onClick={() => openContactModal('TOUR', `Запрос уведомления о новых турах (Категория: ${activeCategory})`)}
+                               onClick={() => openContactModal(`Запрос уведомления о новых турах (Категория: ${activeCategory})`, 'TOUR')}
                                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-950 font-black uppercase tracking-wider rounded-xl hover:bg-teal-50 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95 w-full sm:w-auto"
                             >
                                 <Bell size={18} />
