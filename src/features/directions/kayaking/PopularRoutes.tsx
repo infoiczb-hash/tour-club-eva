@@ -98,7 +98,7 @@ export default function PopularRoutes() {
                       <Navigation size={12} className="text-teal-400" /> {route.details.level}
                     </span>
                   </div>
-                  <h4 className="font-black text-2xl md:text-3xl text-white uppercase leading-[1.1] mb-2 group-hover:text-teal-400 transition-colors drop-shadow-lg">{route.title}</h4>
+                  <h3 className="font-black text-2xl md:text-3xl text-white uppercase leading-[1.1] mb-2 group-hover:text-teal-400 transition-colors drop-shadow-lg">{route.title}</h3>
                   <p className="text-xs md:text-sm text-slate-300 font-medium line-clamp-2 drop-shadow-md">{route.path}</p>
                 </div>
               </motion.div>

@@ -75,9 +75,9 @@ export default function Fleet() {
                   <span className="inline-block mb-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[14px] font-black uppercase text-teal-500 tracking-widest relative z-10">
                     {boat.tag}
                   </span>
-                  <h4 className="font-black text-2xl text-white uppercase tracking-tight mb-3 relative z-10 group-hover:text-teal-300 transition-colors">
+                  <h3 className="font-black text-2xl text-white uppercase tracking-tight mb-3 relative z-10 group-hover:text-teal-300 transition-colors">
                     {boat.title}
-                  </h4>
+                  </h3>
                   <p className="text-sm text-slate-400 font-medium leading-relaxed relative z-10">{boat.desc}</p>
                 </div>
               </div>
