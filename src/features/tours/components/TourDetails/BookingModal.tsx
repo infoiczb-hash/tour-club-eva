@@ -123,7 +123,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
       <div className="flex items-center gap-3 bg-slate-950 rounded-lg p-1 border border-white/10">
         <button 
           type="button"
-          onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(0, prev[type] - 1) }))}
+          aria-label="Уменьшить количество билетов" onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(0, prev[type] - 1) }))}
           className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"
         >
           <Minus size={16} />
@@ -131,7 +131,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
         <span className="text-sm font-bold text-white w-4 text-center">{value}</span>
         <button 
           type="button"
-          onClick={() => setTickets(prev => ({ ...prev, [type]: prev[type] + 1 }))}
+          aria-label="Увеличить количество билетов" onClick={() => setTickets(prev => ({ ...prev, [type]: prev[type] + 1 }))}
           className="w-8 h-8 flex items-center justify-center text-teal-500 hover:bg-teal-500/20 rounded-md transition-colors"
         >
           <Plus size={16} />
