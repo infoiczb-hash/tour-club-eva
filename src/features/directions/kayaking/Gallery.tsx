@@ -43,7 +43,7 @@ export default function Gallery() {
     <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">
       
       {/* Background Ambience */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
       {/* Убрали лишние классы из контейнера, оставив строгую структуру */}
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">

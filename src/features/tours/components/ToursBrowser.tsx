@@ -163,7 +163,7 @@ export default function ToursBrowser({
     <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
       
       {/* Background Ambience */}
-      <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 blur-[120px] rounded-full pointer-events-none opacity-60" />
+      <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 md:blur-[120px] rounded-full pointer-events-none opacity-60" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
@@ -392,7 +392,7 @@ export default function ToursBrowser({
                     ==================================================== */}
                 {displayHot.length === 0 && displaySoon.length === 0 && (
                     <div className="text-center py-12 md:py-24 px-4 border border-dashed border-white/10 rounded-[2rem] md:rounded-[3rem] bg-gradient-to-b from-white/[0.02] to-transparent relative overflow-hidden shadow-2xl">
-                        <div className="absolute inset-0 bg-teal-500/5 blur-[100px] rounded-full" />
+                        <div className="absolute inset-0 bg-teal-500/5 md:blur-[100px] rounded-full" />
                         
                         <div className="relative z-10">
                             <div className="w-16 h-16 bg-slate-900 border border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">

@@ -31,7 +31,7 @@ export default function OfferPage() {
    <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-20 px-4 relative overflow-hidden">
       
       {/* Background Decor */}
-      <div className="absolute top-0 right-1/2 translate-x-1/2 w-[800px] h-[500px] bg-indigo-900/20 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-1/2 translate-x-1/2 w-[800px] h-[500px] bg-indigo-900/20 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto max-w-3xl relative z-10">
         

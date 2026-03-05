@@ -27,8 +27,8 @@ export default function SupSafety() {
         <section className="py-8 md:py-14 bg-[#020617] relative overflow-hidden border-t border-white/5">
             
             {/* Фоновые декорации для глубины */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/10 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/10 md:blur-[150px] rounded-full pointer-events-none" />
             
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                  

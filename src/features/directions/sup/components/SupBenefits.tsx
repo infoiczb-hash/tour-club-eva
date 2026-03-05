@@ -34,7 +34,7 @@ export default function SupBenefits() {
     <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden">
       
       {/* Легкое свечение на фоне */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">
         

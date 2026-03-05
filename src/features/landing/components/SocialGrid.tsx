@@ -216,7 +216,7 @@ export default function SocialGrid() {
       
       {/* GLOW */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-teal-900/10 blur-[120px] rounded-full opacity-50" />
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-teal-900/10 md:md:blur-[150px] pacity-50" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">

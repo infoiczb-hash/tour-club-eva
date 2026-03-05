@@ -20,8 +20,8 @@ export default function PromoBlock() {
     <section className="relative py-8 md:py-24 bg-[#0B1120] border-t border-white/5 overflow-hidden">
       
       {/* ФОН */}
-      <div className="absolute top-0 right-0 w-[200px] h-[200px] md:w-[600px] md:h-[600px] bg-teal-900/10 blur-[80px] md:blur-[120px] rounded-full pointer-events-none opacity-40" />
-      <div className="absolute bottom-0 left-0 w-[150px] h-[150px] md:w-[500px] md:h-[500px] bg-purple-900/10 blur-[80px] md:blur-[120px] rounded-full pointer-events-none opacity-30" />
+      <div className="absolute top-0 right-0 w-[200px] h-[200px] md:w-[600px] md:h-[600px] bg-teal-900/10 blur-[80px] md:md:blur-[120px] rounded-full pointer-events-none opacity-40" />
+      <div className="absolute bottom-0 left-0 w-[150px] h-[150px] md:w-[500px] md:h-[500px] bg-purple-900/10 blur-[80px] md:md:blur-[120px] rounded-full pointer-events-none opacity-30" />
 
       <div className="container relative z-10 mx-auto px-4 max-w-7xl">
         

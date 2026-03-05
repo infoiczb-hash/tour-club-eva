@@ -143,7 +143,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
       
       {/* Background Ambience */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none opacity-50" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:md:blur-[150px]  rounded-full pointer-events-none opacity-50" />
 
       <div className="container mx-auto px-4 mb-8 md:mb-12 relative z-10">
         

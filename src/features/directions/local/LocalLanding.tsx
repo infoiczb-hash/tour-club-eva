@@ -30,7 +30,7 @@ export default function LocalLanding({ tours }: { tours: Tour[] }) {
       {/* 5. Каталог / Расписание */}
       {/* ✅ Добавили id="schedule" для нативного якорного скролла */}
       <section id="schedule" className="py-10 md:py-18 bg-slate-950 relative border-t border-white/5 scroll-mt-10">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-900/10 blur-[150px] rounded-full pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-900/10 md:blur-[150px] rounded-full pointer-events-none" />
           <div className="container mx-auto px-4 relative z-10">
               <div className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-4 md:p-8 backdrop-blur-sm">
                   

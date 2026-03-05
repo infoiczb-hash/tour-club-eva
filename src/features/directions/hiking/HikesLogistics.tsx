@@ -32,7 +32,7 @@ export default function HikesLogistics() {
         <section className="py-8 md:py-16 bg-stone-950 border-t border-white/5 relative overflow-hidden">
             
             {/* Легкое атмосферное свечение */}
-            <div className="absolute top-1/2 left-0 w-[400px] h-[400px] -translate-y-1/2 bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute top-1/2 left-0 w-[400px] h-[400px] -translate-y-1/2 bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 

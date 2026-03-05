@@ -16,7 +16,7 @@ export default function PackingList() {
     <section className="py-12 md:py-20 bg-[#020617] text-slate-200 overflow-hidden font-sans border-t border-white/5 relative">
       
       {/* Background Ambience */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         

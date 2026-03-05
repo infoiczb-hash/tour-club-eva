@@ -8,8 +8,8 @@ export default function NotFound() {
       {/* --- AMBIENT BACKGROUND --- */}
       {/* Туман и свечение, как на главной */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-teal-900/20 blur-[150px] rounded-full opacity-40" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-900/20 blur-[150px] rounded-full opacity-40" />
+        <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-teal-900/20 md:blur-[150px] rounded-full opacity-40" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-900/20 md:blur-[150px] rounded-full opacity-40" />
         {/* Текстура шума (опционально) */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
       </div>

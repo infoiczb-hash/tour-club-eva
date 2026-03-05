@@ -50,8 +50,8 @@ export default function KidsParents() {
         // 🔥 1. Максимально убрали отступ сверху (pt-0), чтобы приклеить к Hero
         <section className="pt-0 pb-12 md:pb-20 bg-slate-950 relative overflow-hidden">
             {/* Фоновое свечение для теплой атмосферы */}
-            <div className="absolute top-1/4 left-0 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-900/10 blur-[150px] rounded-full pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-amber-900/10 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute top-1/4 left-0 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-900/10 md:blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-amber-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 

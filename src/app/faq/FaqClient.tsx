@@ -183,8 +183,8 @@ export default function FAQPage() {
     <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-20 px-4 relative overflow-hidden">
       
       {/* Decor */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-900/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-900/10 md:blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto max-w-3xl relative z-10">
         

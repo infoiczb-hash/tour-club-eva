@@ -31,7 +31,7 @@ export default function HikesFAQ() {
         <section className="py-8 md:py-16 bg-stone-950 text-stone-100 border-t border-white/5 relative overflow-hidden">
             
             {/* Фоновое свечение */}
-            <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 

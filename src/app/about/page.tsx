@@ -14,7 +14,7 @@ export default function AboutPage() {
     <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden px-4">
       
       {/* Мягкое фоновое свечение */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 text-center max-w-2xl mx-auto flex flex-col items-center mt-12 md:mt-0">
         

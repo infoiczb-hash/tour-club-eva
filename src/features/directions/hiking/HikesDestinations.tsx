@@ -36,7 +36,7 @@ export default function HikesDestinations() {
     <section className="py-8 md:py-16 bg-stone-900 border-t border-white/5 relative overflow-hidden">
       
       {/* Мягкое атмосферное свечение на фоне */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         

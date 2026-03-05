@@ -17,7 +17,7 @@ export default function SupVideo() {
         <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
             {/* Декоративное свечение */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 md:blur-[150px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-5xl relative z-10">
                 

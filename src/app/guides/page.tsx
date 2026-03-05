@@ -63,7 +63,7 @@ export default async function AllGuidesPage() {
       {/* --- PREMIUM HERO SECTION --- */}
       <section className="relative pt-32 pb-12 md:pt-40 md:pb-20 px-4">
         {/* Фоновые свечения */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none" />
         
         <div className="container mx-auto max-w-5xl relative z-10 text-center flex flex-col items-center">
           
