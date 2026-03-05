@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Map, Sparkles } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
+import { useKayakTab } from "./KayakingTabProvider"; // 🔥 ИМПОРТИРУЕМ ХУК
 
-
-// Добавили пропс, чтобы по клику на "Другой маршрут" мы могли вернуть пользователя на главную вкладку
-export default function PreparationCTA({ onNavigateToRoutes }: { onNavigateToRoutes?: () => void }) {
-const openContactModal = useModalStore((state) => state.openContactModal);
-
+export default function PreparationCTA() {
+  const openContactModal = useModalStore((state) => state.openContactModal);
+  
+  // 🔥 ДОСТАЕМ ФУНКЦИЮ ИЗ ПРОВАЙДЕРА
+  const { setActiveTab } = useKayakTab();
 
   return (
     <section className="py-10 md:py-14 bg-[#020617] relative overflow-hidden font-sans">
@@ -42,7 +42,8 @@ const openContactModal = useModalStore((state) => state.openContactModal);
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto relative z-10">
                 {/* Главная кнопка: Возврат к маршрутам */}
                 <button 
-                    onClick={onNavigateToRoutes}
+                    // 🔥 ПЕРЕКЛЮЧАЕМ ТАБ ЧЕРЕЗ ХУК
+                    onClick={() => setActiveTab('newbie')}
                     className="w-full sm:w-auto px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-xl hover:bg-teal-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
                 >
                     <Map size={18} />
@@ -61,8 +62,6 @@ const openContactModal = useModalStore((state) => state.openContactModal);
         </motion.div>
 
       </div>
-
-    
     </section>
   );
 }

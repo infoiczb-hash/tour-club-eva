@@ -113,7 +113,7 @@ export default function PopularRoutes() {
             </div>
 
             {/* 🔥 2. Подсказка "Мотай" для главных маршрутов */}
-            <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+            <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                 <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                 <ChevronRight size={14} />
             </div>
@@ -163,7 +163,7 @@ export default function PopularRoutes() {
                 </div>
 
                 {/* 🔥 Янтарная подсказка "Мотай" */}
-                <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-amber-500/80 animate-pulse pointer-events-none">
+                <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                     <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                     <ChevronRight size={14} />
                 </div>

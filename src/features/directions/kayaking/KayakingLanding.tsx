@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Hero from "./Hero";
 import Benefits from "./Benefits";
 import Timeline from "./Timeline";
@@ -15,35 +12,31 @@ import SafetyRegulations from "./SafetyRegulations";
 import PreparationCTA from "./PreparationCTA";
 import { Tour } from "@/features/tours/types";
 import dynamic from 'next/dynamic';
+import { KayakingTabProvider, KayakingTabContent } from "./KayakingTabProvider";
 
 const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
   ssr: false,
 });
 
-// Тип для наших двух потоков
-export type FlowTab = "newbie" | "participant";
-
 export default function KayakingLanding({ tours }: { tours: Tour[] }) {
-  // Состояние переключателя (по умолчанию "Хочу на сплав")
-  const [activeTab, setActiveTab] = useState<FlowTab>("newbie");
-
   return (
     <div className="bg-slate-950 min-h-screen selection:bg-teal-500/30">
-      
-      {/* 1. Главный экран передаем ему состояние и функцию переключения */}
-      <Hero activeTab={activeTab} setActiveTab={setActiveTab} />
-      
-      {/* ==========================================
-          ПОТОК 1: "ХОЧУ НА СПЛАВ" (ПРОДАЖА И ЭМОЦИИ)
-          ========================================== */}
-      {activeTab === "newbie" && (
-        <div className="animate-in fade-in duration-700">
+      <KayakingTabProvider>
+        
+        {/* Главный экран сам достанет нужный стейт из контекста */}
+        <Hero />
+        
+        {/* ==========================================
+            ПОТОК 1: "ХОЧУ НА СПЛАВ" (ПРОДАЖА И ЭМОЦИИ)
+            Эти блоки теперь СЕРВЕРНЫЕ КОМПОНЕНТЫ!
+            ========================================== */}
+        <KayakingTabContent value="newbie">
           <Benefits />
           <Fleet />
           <PopularRoutes />
-           <Timeline /> {/* На следующем шаге мы сделаем его горизонтальным */}
+          <Timeline />
           <Gallery />
-        <FAQ onNavigateToPrep={() => setActiveTab("participant")} />
+          <FAQ />
           <div id="tours" className="bg-[#0B1120] border-y border-white/5 relative z-20">
               <ToursBrowser 
                 tours={tours} 
@@ -52,25 +45,20 @@ export default function KayakingLanding({ tours }: { tours: Tour[] }) {
                 limit={3} 
               />
           </div>
-        </div>
-      )}
+        </KayakingTabContent>
 
-      {/* ==========================================
-          ПОТОК 2: "Я УЧАСТНИК" (ИНСТРУКЦИЯ И ПОДГОТОВКА)
-          ========================================== */}
-      {activeTab === "participant" && (
-        <div className="animate-in fade-in duration-700">
-          {/* Сюда позже добавим компонент KayakVideoGuide (адаптированный из Sup) */}
+        {/* ==========================================
+            ПОТОК 2: "Я УЧАСТНИК" (ИНСТРУКЦИЯ И ПОДГОТОВКА)
+            ========================================== */}
+        <KayakingTabContent value="participant">
            <PackingList />
            <KayakRules />
            <VideoGuide />
            <SafetyRegulations />
-           <PreparationCTA onNavigateToRoutes={() => setActiveTab('newbie')} />
-          {/* Сюда позже можно будет добавить специфичный FAQ для участников */}
-        </div>
-      )}
-      
+           <PreparationCTA />
+        </KayakingTabContent>
+        
+      </KayakingTabProvider>
     </div>
   );
 }
-

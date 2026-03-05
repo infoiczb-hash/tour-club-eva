@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Compass, Coffee, ShieldCheck } from 'lucide-react';
 
-export default function HikesHero({ onScrollDown }: { onScrollDown?: () => void }) {
+export default function HikesHero() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);

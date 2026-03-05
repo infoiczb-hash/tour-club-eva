@@ -191,7 +191,7 @@ export default function SupCatalog() {
 
                     {/* Подсказка "Мотай" для длинных маршрутов */}
                     {activeTab === 'tours' && (
-                        <div className="md:hidden absolute top-5 right-5 flex items-center gap-1 text-teal-500/80 animate-pulse pointer-events-none">
+                        <div className="md:hidden absolute top-5 right-5 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                             <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
                             <ChevronRight size={12} />
                         </div>
