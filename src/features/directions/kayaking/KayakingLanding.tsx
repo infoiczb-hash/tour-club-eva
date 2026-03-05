@@ -11,12 +11,8 @@ import VideoGuide from "./VideoGuide";
 import SafetyRegulations from "./SafetyRegulations";
 import PreparationCTA from "./PreparationCTA";
 import { Tour } from "@/features/tours/types";
-import dynamic from 'next/dynamic';
 import { KayakingTabProvider, KayakingTabContent } from "./KayakingTabProvider";
-
-const ToursBrowser = dynamic(() => import('@/features/tours/components/ToursBrowser'), {
-  ssr: false,
-});
+import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic'
 
 export default function KayakingLanding({ tours }: { tours: Tour[] }) {
   return (
@@ -38,7 +34,7 @@ export default function KayakingLanding({ tours }: { tours: Tour[] }) {
           <Gallery />
           <FAQ />
           <div id="tours" className="bg-[#0B1120] border-y border-white/5 relative z-20">
-              <ToursBrowser 
+             <ToursBrowserDynamic 
                 tours={tours} 
                 title="Ближайшие сплавы" 
                 subtitle="Выбери свою дату" 

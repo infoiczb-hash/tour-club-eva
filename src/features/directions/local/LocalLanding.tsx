@@ -8,8 +8,8 @@ import LocalConditions from '@/features/directions/local/LocalConditions';
 import LocalGallery from '@/features/directions/local/LocalGallery';
 import LocalFAQ from '@/features/directions/local/LocalFAQ';
 
-// Теперь можно импортировать компонент браузера туров напрямую
-import ToursBrowser from '@/features/tours/components/ToursBrowser';
+// 🔥 Используем нашу новую динамическую обертку
+import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
 
 export default function LocalLanding({ tours }: { tours: Tour[] }) {
   return (
@@ -33,12 +33,15 @@ export default function LocalLanding({ tours }: { tours: Tour[] }) {
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-900/10 blur-[150px] rounded-full pointer-events-none" />
           <div className="container mx-auto px-4 relative z-10">
               <div className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 p-4 md:p-8 backdrop-blur-sm">
-                  <ToursBrowser 
+                  
+                  {/* 🔥 Заменили ToursBrowser на ToursBrowserDynamic */}
+                  <ToursBrowserDynamic 
                       tours={tours} 
                       limit={6}
                       title="Афиша выездов"
                       subtitle="Локальная программа"
                   />
+                  
               </div>
           </div>
       </section>
