@@ -13,6 +13,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -25,10 +26,19 @@ export default function AdminLoginPage() {
     });
 
     if (error) {
-      setError('Неверный email или пароль');
+      // 🔥 Теперь мы видим реальную причину от Supabase!
+      // Переводим только дефолтную ошибку, остальные выводим как есть (например, "Email not confirmed")
+      if (error.message === 'Invalid login credentials') {
+        setError('Неверный email или пароль');
+      } else {
+        setError(`Ошибка: ${error.message}`);
+      }
       setLoading(false);
       return;
     }
+
+    // 🔥 ИСПРАВЛЕНИЕ: Дашборд ждет этот ключ в localStorage! Без него будет пустой экран.
+    localStorage.setItem('is_admin', 'true');
 
     // Успешный вход → в админку
     router.push('/admin');

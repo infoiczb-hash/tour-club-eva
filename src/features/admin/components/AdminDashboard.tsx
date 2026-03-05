@@ -119,12 +119,11 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingSlug, setEditingSlug] = useState('');
 
-  // --- INIT ---
+   // --- INIT ---
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('is_admin') === 'true') {
-        setIsAuth(true);
-        loadAllData();
-    }
+    // 🔥 Убрали костыль с localStorage. Если юзер здесь, значит middleware его уже пропустил!
+    setIsAuth(true);
+    loadAllData();
   }, []);
 
   const loadAllData = async () => {
