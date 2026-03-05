@@ -35,25 +35,26 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
   return (
     <section ref={containerRef} className="relative w-full h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950">
       
-      {/* 1. ФОН (Остался с JS-параллаксом) */}
-      <motion.div style={{ y: yBg }} className="absolute inset-0 z-0">
-         <div className="relative w-full h-[120%] -top-[10%]">
-           <Image 
-                src={content.bg_image} 
-                alt="Турклуб Эва" 
-                fill
-                className="object-cover object-center"
-                priority
-                fetchPriority="high" 
-                quality={85}         
-                sizes="100vw"
-             />
-             <div className="absolute inset-0 bg-slate-950/30" />
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.5)_100%)]" />
-             <div className="absolute inset-0 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22 opacity=%220.5%22/%3E%3C/svg%3E')] opacity-10 mix-blend-overlay pointer-events-none" />
-             <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
-         </div>
-      </motion.div>
+<div className="absolute inset-0 z-0 overflow-hidden">
+   {/* Обертка для CSS-параллакса (по желанию) или просто статика */}
+   <div className="absolute inset-0 w-full h-full">
+     <Image 
+          src={content.bg_image} 
+          alt="Турклуб Эва" 
+          fill
+          className="object-cover object-center"
+          priority
+          fetchPriority="high" 
+          quality={85}         
+          sizes="100vw"
+       />
+       {/* Твои крутые градиенты оставляем */}
+       <div className="absolute inset-0 bg-slate-950/30" />
+       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.5)_100%)]" />
+       <div className="absolute inset-0 bg-[url('...')] opacity-10 mix-blend-overlay pointer-events-none" />
+       <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
+   </div>
+</div>
 
       {/* 2. ТЕКСТ (Теперь на чистом CSS-аниматоре) */}
       <motion.div 

@@ -1,13 +1,9 @@
 // src/lib/cloudinary-loader.ts
 //
 // Кастомный loader для next/image.
-// Автоматически добавляет оптимизацию ко всем картинкам из Cloudinary:
-//   - f_auto   → формат AVIF/WebP в зависимости от браузера
-//   - q_60     → сжатие 60% вместо дефолтного 75-80%
-//   - w_{width} → точный размер под экран (решает проблему 640px → 436px)
-//
-// Подключается один раз в next.config.mjs → работает на всём сайте.
-// Картинки НЕ из Cloudinary (Supabase, Unsplash) обрабатываются стандартно.
+// Cloudinary:  f_auto,q_{quality},w_{width} — AVIF/WebP + точный размер
+// Supabase:    ?width={width}&quality={quality} — resize через встроенный Image Transform
+// Остальное:   возвращает src без изменений
 
 type LoaderParams = {
   src: string;
@@ -16,18 +12,24 @@ type LoaderParams = {
 };
 
 export default function cloudinaryLoader({ src, width, quality }: LoaderParams): string {
-  // Только Cloudinary URL трансформируем
-  if (!src.includes('res.cloudinary.com')) {
-    return src;
+  // --- Cloudinary ---
+  if (src.includes('res.cloudinary.com')) {
+    const q = quality ?? 75;
+    const transformation = `f_auto,q_${q},w_${width}`;
+    return src.replace('/upload/', `/upload/${transformation}/`);
   }
 
-  // Качество: берём переданное или дефолт 60
-  const q = quality ?? 60;
+  // --- Supabase Storage ---
+  // FIX #7: Supabase поддерживает Image Transformation через query-параметры
+  // Docs: https://supabase.com/docs/guides/storage/serving/image-transformations
+  if (src.includes('supabase.co')) {
+    const q = quality ?? 75;
+    const url = new URL(src);
+    url.searchParams.set('width', String(width));
+    url.searchParams.set('quality', String(q));
+    return url.toString();
+  }
 
-  // Трансформация: вставляем после /upload/
-  // Пример входа:  https://res.cloudinary.com/dwrei7k2z/image/upload/v17.../photo.jpg
-  // Пример выхода: https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60,w_412/v17.../photo.jpg
-  const transformation = `f_auto,q_${q},w_${width}`;
-
-  return src.replace('/upload/', `/upload/${transformation}/`);
+  // --- Всё остальное (Unsplash, YouTube и т.д.) ---
+  return src;
 }

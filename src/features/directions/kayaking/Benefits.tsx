@@ -129,9 +129,9 @@ export default function Benefits() {
                       <Icon size={24} strokeWidth={1.5} />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-[15px] sm:text-base md:text-xl font-black text-white uppercase tracking-tight mb-1 md:mb-3 group-hover:text-amber-400 transition-colors leading-tight">
+                      <h3 className="text-[15px] sm:text-base md:text-xl font-black text-white uppercase tracking-tight mb-1 md:mb-3 group-hover:text-amber-400 transition-colors leading-tight">
                         {role.title}
-                      </h4>
+                      </h3>
                       <p className="text-[14px] md:text-sm text-slate-400 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
                         {role.desc}
                       </p>
