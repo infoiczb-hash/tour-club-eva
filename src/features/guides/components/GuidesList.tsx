@@ -115,12 +115,19 @@ const openContactModal = useModalStore((state) => state.openContactModal);
             </div>
         </div>
 
-        {/* --- GRID / SCROLL --- */}
-        <div className="
-            flex overflow-x-auto snap-x snap-mandatory hide-scrollbar 
-            gap-4 -mx-4 px-4 pb-8
-            md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:mx-0 md:px-0 md:pb-0
-        ">
+      {/* --- GRID / SCROLL --- */}
+<div 
+  // ✅ ДОБАВЛЕНО ДЛЯ a11y:
+  tabIndex={0}
+  role="region"
+  aria-label="Список команды гидов"
+  className="
+    flex overflow-x-auto snap-x snap-mandatory hide-scrollbar 
+    gap-4 -mx-4 px-4 pb-8 
+    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
+    md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:mx-0 md:px-0 md:pb-0
+  "
+>
             {displayGuides.map((guide, idx) => (
                 <GuideCard 
                     key={guide.id} 

@@ -258,21 +258,26 @@ export default function SocialGrid() {
             ))}
           </div>
         </div>
-
-        {/* --- GRID / CAROUSEL --- */}
-        <div className="relative group/carousel">
-            <div className="
-                flex overflow-x-auto snap-x snap-mandatory hide-scrollbar
-                gap-4 md:gap-6 pb-8 px-4 -mx-4 md:px-0 md:mx-0
-            ">
-            {posts.map((post, index) => (
-                <ReelCard 
-                    key={post.id} 
-                    post={post} 
-                    onClick={() => setActivePostIndex(index)} 
-                />
-            ))}
-            </div>
+{/* --- GRID / CAROUSEL --- */}
+<div className="relative group/carousel">
+    <div 
+      // ✅ ДОБАВЛЕНО ДЛЯ a11y:
+      tabIndex={0}
+      role="region"
+      aria-label="Лента моментов из туров"
+      className="
+        flex overflow-x-auto snap-x snap-mandatory hide-scrollbar
+        gap-4 md:gap-6 pb-8 px-4 -mx-4 md:px-0 md:mx-0
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
+    ">
+    {posts.map((post, index) => (
+        <ReelCard 
+            key={post.id} 
+            post={post} 
+            onClick={() => setActivePostIndex(index)} 
+        />
+    ))}
+    </div>
             
             {/* SWIPE HINT (Mobile only, bottom right) */}
             <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
