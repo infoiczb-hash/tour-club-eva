@@ -6,6 +6,8 @@ const baseNavLinks = [
   { name: "Направления", href: "/directions" },
   { name: "Fan-сектор", href: "/fun" },
   { name: "Блог", href: "/blog" },
+  { name: "Гиды", href: "/guides" },
+  { name: "О клубе", href: "/about" },
 ];
 
 export default function Header() {

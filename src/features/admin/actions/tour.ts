@@ -1,84 +1,97 @@
 'use server';
 
-import { z } from 'zod'; // Используем Zod для валидации
-import { prisma } from '@/lib/prisma'; 
+import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAuth } from '@/lib/auth';
 
-// === 1. ZOD SCHEMA (Валидация данных с формы) ===
+// ==========================================
+// ZOD SCHEMA
+// ==========================================
 const tourSchema = z.object({
   id: z.string().optional(),
-  
-  // Статус
-  isActive: z.boolean().default(false), // Было is_active, стало isActive
-  
-  // Шапка
-  title: z.string().min(3, "Название обязательно"),
+
+  isActive: z.boolean().default(false),
+
+  title: z.string().min(3, 'Название обязательно'),
   subtitle: z.string().optional().nullable(),
   slug: z.string().min(3),
-  
-  // Маркетинг
-  type: z.string().default("hiking"),
-  difficulty: z.string().default("medium"),
+
+  type: z.string().default('hiking'),
+  difficulty: z.string().default('medium'),
   label: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
 
-  // Логистика
   location: z.string(),
   route: z.string().optional().nullable(),
   distance: z.string().optional().nullable(),
   duration: z.string().optional().nullable(),
-  meetingPoint: z.string().optional().nullable(), // Было meeting_point
+  meetingPoint: z.string().optional().nullable(),
 
-  // Даты (JSON)
   dates: z.array(z.object({
     start: z.string(),
     end: z.string().optional(),
     time: z.string().optional(),
     guide_id: z.string().optional().nullable(),
   })).default([]),
-  
-  // Деньги
-  currency: z.string().default("RUB"),
-  price: z.coerce.number(), 
-  priceOld: z.coerce.number().optional().nullable(),   
-  priceChild: z.coerce.number().optional().nullable(), // Было price_child
-  priceFamily: z.coerce.number().optional().nullable(), // Было price_family
-  priceMember: z.coerce.number().optional().nullable(), // Было price_member
-  
+
+  currency: z.string().default('RUB'),
+  price: z.coerce.number(),
+  priceOld: z.coerce.number().optional().nullable(),
+  priceChild: z.coerce.number().optional().nullable(),
+  priceFamily: z.coerce.number().optional().nullable(),
+  priceMember: z.coerce.number().optional().nullable(),
+
   spots: z.coerce.number().default(15),
-  spotsLeft: z.coerce.number().default(15), // Было spots_left
+  spotsLeft: z.coerce.number().default(15),
 
-  // Медиа
-  coverImage: z.string().optional().nullable(), // Было cover_image
+  coverImage: z.string().optional().nullable(),
   gallery: z.array(z.string()).default([]),
-  
-  // Контент (JSON)
+
   description: z.string().optional().nullable(),
-  highlights: z.array(z.any()).default([]), 
-  program: z.array(z.any()).default([]),    
-  faq: z.array(z.any()).default([]),
-  checklist: z.array(z.any()).default([]),
-  documents: z.array(z.any()).default([]),
+  highlights: z.array(z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    icon: z.string().optional(),
+  })).default([]),
+  program: z.array(z.object({
+    day: z.number().optional(),
+    title: z.string(),
+    description: z.string().optional(),
+    activities: z.array(z.string()).optional(),
+  })).default([]),
+  faq: z.array(z.object({
+    question: z.string(),
+    answer: z.string(),
+  })).default([]),
+  checklist: z.array(z.object({
+    title: z.string(),
+    items: z.array(z.string()).optional(),
+  })).default([]),
+  documents: z.array(z.object({
+    title: z.string(),
+    url: z.string().optional(),
+  })).default([]),
 
-  // Списки строк
-  included: z.array(z.string()).default([]), 
-  additionalExpenses: z.array(z.string()).default([]), // Было additional_expenses
+  included: z.array(z.string()).default([]),
+  additionalExpenses: z.array(z.string()).default([]),
 
-  // SEO
-  metaTitle: z.string().optional().nullable(), // Было meta_title
-  metaDesc: z.string().optional().nullable(),  // Было meta_desc
+  metaTitle: z.string().optional().nullable(),
+  metaDesc: z.string().optional().nullable(),
 });
 
-// === 2. СОХРАНЕНИЕ ТУРА (CREATE / UPDATE) ===
+type TourPayload = z.infer<typeof tourSchema>;
+
+// ==========================================
+// SAVE TOUR (CREATE / UPDATE)
+// ==========================================
 export async function saveTour(formData: any) {
   try {
-    console.log("💾 Saving tour:", formData.title);
+    // ✅ AUTH CHECK
+    await requireAuth();
 
-    // 1. Предобработка данных перед валидацией
-    // Некоторые поля могут прийти как строки или undefined
     const rawData = {
       ...formData,
-      // Приводим к camelCase, если форма шлет snake_case
       isActive: formData.isActive ?? formData.is_active ?? false,
       meetingPoint: formData.meetingPoint ?? formData.meeting_point,
       priceOld: formData.priceOld ?? formData.price_old,
@@ -90,151 +103,175 @@ export async function saveTour(formData: any) {
       additionalExpenses: formData.additionalExpenses ?? formData.additional_expenses,
       metaTitle: formData.metaTitle ?? formData.meta_title,
       metaDesc: formData.metaDesc ?? formData.meta_desc,
-      
-      // Гарантируем массивы
       tags: Array.isArray(formData.tags) ? formData.tags : [],
       included: Array.isArray(formData.included) ? formData.included : [],
     };
 
-    // 2. Валидация Zod
     const result = tourSchema.safeParse(rawData);
-
     if (!result.success) {
-      console.error("❌ Validation Error:", result.error.flatten());
-      return { success: false, error: "Ошибка проверки данных. Проверьте обязательные поля." };
+      console.error('❌ Validation Error:', result.error.flatten());
+      return { success: false, error: 'Ошибка проверки данных. Проверьте обязательные поля.' };
     }
 
-    const data = result.data;
+    const data: TourPayload = result.data;
+    const mainGuideId = data.dates?.[0]?.guide_id ?? null;
 
-    // 🔥 3. ВЫЧИСЛЯЕМ ГЛАВНОГО ГИДА
-    // Берем guide_id из первой даты. Если там нет, то null.
-    // Это критически важно для отображения гида в карточке.
-    const mainGuideId = data.dates?.[0]?.guide_id || null;
-
-    // 4. ПОДГОТОВКА PAYLOAD ДЛЯ PRISMA
-    // Используем camelCase ключи, как в schema.prisma
+    // ✅ Типизированный payload — без as any
     const prismaPayload = {
       slug: data.slug,
       title: data.title,
-      subtitle: data.subtitle,
+      subtitle: data.subtitle ?? null,
       isActive: data.isActive,
-      
+
       type: data.type,
       difficulty: data.difficulty,
-      label: data.label,
+      label: data.label ?? '',
       tags: data.tags,
-      
+
       location: data.location,
-      route: data.route,      
-      distance: data.distance,
-      duration: data.duration,
-      meetingPoint: data.meetingPoint,
-      
-      dates: data.dates as any, // JSON
-      guideId: mainGuideId,     // 🔥 Связь с таблицей Guide
+      route: data.route ?? null,
+      distance: data.distance ?? null,
+      duration: data.duration ?? null,
+      meetingPoint: data.meetingPoint ?? null,
+
+      dates: data.dates,
+      // ✅ connect/disconnect вместо guideId напрямую — иначе конфликт типов Prisma
+      guide: mainGuideId
+        ? { connect: { id: mainGuideId } }
+        : { disconnect: true },
 
       currency: data.currency,
       price: data.price,
-      priceOld: data.priceOld,
-      priceChild: data.priceChild,
-      priceFamily: data.priceFamily,
-      priceMember: data.priceMember,
-      
+      priceOld: data.priceOld ?? null,
+      priceChild: data.priceChild ?? null,
+      priceFamily: data.priceFamily ?? null,
+      priceMember: data.priceMember ?? null,
+
       spots: data.spots,
       spotsLeft: data.spotsLeft,
-      
-      coverImage: data.coverImage,
+
+      coverImage: data.coverImage ?? null,
       gallery: data.gallery,
-      
-      description: data.description,
-      highlights: data.highlights as any, // JSON
-      program: data.program as any,       // JSON
-      faq: data.faq as any,               // JSON
-      checklist: data.checklist as any,   // JSON
-      documents: data.documents as any,   // JSON
-      
+
+      description: data.description ?? null,
+      highlights: data.highlights,
+      program: data.program,
+      faq: data.faq,
+      checklist: data.checklist,
+      documents: data.documents,
+
       included: data.included,
       additionalExpenses: data.additionalExpenses,
-      
-      metaTitle: data.metaTitle,
-      metaDesc: data.metaDesc,
+
+      metaTitle: data.metaTitle ?? null,
+      metaDesc: data.metaDesc ?? null,
     };
 
-    // 5. ЗАПИСЬ В БД
+    let slug = data.slug;
+
     if (formData.id) {
-      // Обновление
+      // === UPDATE ===
       await prisma.tour.update({
         where: { id: formData.id },
-        // 👇 ДОБАВЛЕНО "as any"
-        data: prismaPayload as any, 
+        data: prismaPayload,
       });
     } else {
-      // Создание
-      // Проверка на уникальность slug
-      const existing = await prisma.tour.findUnique({ where: { slug: data.slug } });
+      // === CREATE — проверка slug, инкремент вместо рандома ===
+      const existing = await prisma.tour.findUnique({ where: { slug } });
       if (existing) {
-        // Если slug занят, добавляем рандом
-        prismaPayload.slug = `${data.slug}-${Math.floor(Math.random() * 1000)}`;
+        let counter = 1;
+        let candidate = `${slug}-${counter}`;
+        while (await prisma.tour.findUnique({ where: { slug: candidate } })) {
+          counter++;
+          candidate = `${slug}-${counter}`;
+        }
+        slug = candidate;
+        prismaPayload.slug = slug;
       }
-      
-      await prisma.tour.create({
-        // 👇 ДОБАВЛЕНО "as any"
-        data: prismaPayload as any, 
-      });
+
+      await prisma.tour.create({ data: prismaPayload });
     }
 
-    // 6. СБРОС КЭША
+    // ✅ revalidatePath со slug
     revalidatePath('/admin');
-    revalidatePath('/tours');
-    revalidatePath('/'); // Обновляем главную
-    
-    return { success: true };
+    revalidatePath('/tour');
+    revalidatePath(`/tour/${slug}`);
+    revalidatePath('/');
 
+    return { success: true };
   } catch (error: any) {
-    console.error("❌ Database Error:", error);
-    return { success: false, error: error.message || "Ошибка сохранения в базу" };
+    if (error.message === 'Unauthorized') {
+      return { success: false, error: 'Unauthorized' };
+    }
+    console.error('❌ Database Error:', error);
+    return { success: false, error: error.message || 'Ошибка сохранения в базу' };
   }
 }
 
-// === 3. ПОЛУЧЕНИЕ СПИСКА АКТИВНЫХ ГИДОВ (Для формы) ===
+// ==========================================
+// GET ACTIVE GUIDES (для формы)
+// ==========================================
 export async function getActiveGuides() {
   try {
     const guides = await prisma.guide.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
     return guides;
   } catch (error) {
-    console.error("Error fetching guides:", error);
+    console.error('Error fetching guides:', error);
     return [];
   }
 }
 
-// === 4. УДАЛЕНИЕ ТУРА ===
+// ==========================================
+// DELETE TOUR
+// ==========================================
 export async function deleteTour(id: string) {
   try {
+    // ✅ AUTH CHECK
+    await requireAuth();
+
+    const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
     await prisma.tour.delete({ where: { id } });
+
     revalidatePath('/admin');
-    revalidatePath('/tours');
+    revalidatePath('/tour');
+    if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); // ✅ slug, не ID
+    revalidatePath('/');
     return { success: true };
-  } catch (error) {
-    console.error("Delete Error:", error);
-    return { success: false, error: "Ошибка удаления" };
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return { success: false, error: 'Unauthorized' };
+    }
+    console.error('Delete Error:', error);
+    return { success: false, error: 'Ошибка удаления' };
   }
 }
 
-// === 5. ОБНОВЛЕНИЕ СТАТУСА (Быстрый тоггл) ===
+// ==========================================
+// TOGGLE STATUS
+// ==========================================
 export async function updateTourStatus(id: string, isActive: boolean) {
   try {
-    await prisma.tour.update({
+    // ✅ AUTH CHECK
+    await requireAuth();
+
+    const tour = await prisma.tour.update({
       where: { id },
       data: { isActive },
+      select: { slug: true },
     });
+
     revalidatePath('/admin');
-    revalidatePath('/tours');
+    revalidatePath('/tour');
+    revalidatePath(`/tour/${tour.slug}`);
     return { success: true };
-  } catch (error) {
-    return { success: false, error: "Ошибка обновления статуса" };
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return { success: false, error: 'Unauthorized' };
+    }
+    return { success: false, error: 'Ошибка обновления статуса' };
   }
 }

@@ -61,14 +61,23 @@ export const tourFormSchema = z.object({
     icon: z.string().optional()
   })).default([]),
   
-  program: z.array(z.any()).default([]),  // Сложная структура, пока any
+  program: z.array(z.object({
+    title: z.string(),
+    description: z.string().optional(),
+  })).default([]),
   faq: z.array(z.object({                 // 👈 ВОТ ОНО, было потеряно
     question: z.string(),
     answer: z.string()
   })).default([]),
   
-  checklist: z.array(z.any()).default([]),
-  documents: z.array(z.any()).default([]),
+  checklist: z.array(z.object({
+    title: z.string(),
+    items: z.string().default(''),  // textarea — строка с переносами
+  })).default([]),
+  documents: z.array(z.object({
+    title: z.string(),
+    url: z.string().optional(),
+  })).default([]),
 
   // Списки строк
   included: z.array(z.string()).default([]),
