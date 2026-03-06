@@ -1,81 +1,63 @@
-'use server'
+'use server';
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAuth } from '@/lib/auth';
 
-// ==========================================
-// 1. ПОЛУЧЕНИЕ ОТЗЫВОВ
-// ==========================================
+// Публичный — отзывы читают все
 export async function getReviews() {
   try {
     const reviews = await prisma.review.findMany({
-      orderBy: { createdAt: 'desc' } // Сначала новые
+      orderBy: { createdAt: 'desc' },
     });
     return reviews;
   } catch (error) {
-    console.error("Ошибка получения отзывов:", error);
+    console.error('Ошибка получения отзывов:', error);
     return [];
   }
 }
 
-// ==========================================
-// 2. СОЗДАНИЕ ИЛИ ОБНОВЛЕНИЕ (UPSERT)
-// ==========================================
 export async function upsertReview(data: any) {
   try {
-    const { id, ...payload } = data;
+    await requireAuth(); // ✅ AUTH CHECK
 
-    // Подготовка данных для Prisma
+    const { id, ...payload } = data;
     const reviewData = {
       name: payload.name,
       text: payload.text,
-      source: payload.source || 'tg', // По умолчанию Telegram
+      source: payload.source || 'tg',
       avatar: payload.avatar || null,
-      category: payload.category || 'general', // 🔥 НОВОЕ: Обработка категории
-      // Если пришло строкой "on" (из формы) или boolean — приводим к boolean
-      isActive: payload.isActive === true || payload.isActive === 'true' || payload.isActive === 'on'
+      category: payload.category || 'general',
+      isActive: payload.isActive === true || payload.isActive === 'true' || payload.isActive === 'on',
     };
 
     if (id) {
-      // --- ОБНОВЛЕНИЕ ---
-      await prisma.review.update({
-        where: { id },
-        data: reviewData
-      });
+      await prisma.review.update({ where: { id }, data: reviewData });
     } else {
-      // --- СОЗДАНИЕ ---
-      await prisma.review.create({
-        data: reviewData
-      });
+      await prisma.review.create({ data: reviewData });
     }
-
-    // Обновляем кэш, чтобы на сайте сразу появились изменения
-    revalidatePath('/');       // Главная страница (ReviewsMarquee)
-    revalidatePath('/admin');  // Админка
-    
-    return { success: true };
-
-  } catch (error: any) {
-    console.error("Ошибка сохранения отзыва:", error);
-    return { success: false, error: error.message || "Не удалось сохранить отзыв" };
-  }
-}
-
-// ==========================================
-// 3. УДАЛЕНИЕ
-// ==========================================
-export async function deleteReview(id: string) {
-  try {
-    await prisma.review.delete({
-      where: { id }
-    });
 
     revalidatePath('/');
     revalidatePath('/admin');
-    
     return { success: true };
   } catch (error: any) {
-    console.error("Ошибка удаления отзыва:", error);
-    return { success: false, error: "Не удалось удалить отзыв" };
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    console.error('Ошибка сохранения отзыва:', error);
+    return { success: false, error: error.message || 'Не удалось сохранить отзыв' };
+  }
+}
+
+export async function deleteReview(id: string) {
+  try {
+    await requireAuth(); // ✅ AUTH CHECK
+
+    await prisma.review.delete({ where: { id } });
+    revalidatePath('/');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    console.error('Ошибка удаления отзыва:', error);
+    return { success: false, error: 'Не удалось удалить отзыв' };
   }
 }

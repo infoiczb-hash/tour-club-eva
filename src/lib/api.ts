@@ -1,9 +1,10 @@
-import { supabase } from './supabaseClient'; // Убедись, что путь верный
+import { createClient } from '@/lib/supabase/client'; // ✅ SSR-клиент с cookies (сессия работает)
 
 // ==========================================
 // 1. ПОЛУЧЕНИЕ КОНТЕНТА
 // ==========================================
 export async function getContentBlock(slug: string): Promise<any> {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('content_blocks')
     .select('content')
@@ -20,6 +21,7 @@ export async function getContentBlock(slug: string): Promise<any> {
 // ==========================================
 export async function uploadImage(file: File, folder: string = ''): Promise<string | null> {
     try {
+        const supabase = createClient();
         const bucket = 'tours-images'; // 👈 Жестко зафиксировали корзину
         
         const fileExt = file.name.split('.').pop();

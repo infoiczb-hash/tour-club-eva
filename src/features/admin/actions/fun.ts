@@ -1,10 +1,9 @@
-// src/features/admin/fun/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma'; // Убедись, что путь к prisma client правильный
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAuth } from '@/lib/auth';
 
-// 1. Создание или обновление теста (Upsert)
 export async function upsertFunTestAction(data: {
   id?: string;
   slug: string;
@@ -16,15 +15,17 @@ export async function upsertFunTestAction(data: {
   passCount?: number;
 }) {
   try {
+    await requireAuth(); // ✅ AUTH CHECK
+
     const test = await prisma.funTest.upsert({
-      where: { slug: data.slug }, // Ищем по slug, так как он уникальный
+      where: { slug: data.slug },
       update: {
         title: data.title,
         description: data.description,
         image: data.image,
         category: data.category,
         isActive: data.isActive,
-        passCount: data.passCount ?? undefined, // Если передали, обновляем
+        passCount: data.passCount ?? undefined,
       },
       create: {
         slug: data.slug,
@@ -37,20 +38,20 @@ export async function upsertFunTestAction(data: {
       },
     });
 
-    // Сбрасываем кэш, чтобы изменения сразу появились на сайте
     revalidatePath('/fun');
     revalidatePath('/admin/fun');
-    
     return { success: true, test };
-  } catch (error) {
-    console.error("Error saving FunTest:", error);
-    return { success: false, error: "Не удалось сохранить тест" };
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    console.error('Error saving FunTest:', error);
+    return { success: false, error: 'Не удалось сохранить тест' };
   }
 }
 
-// 2. Быстрое переключение On/Off прямо из таблицы в админке
 export async function toggleFunTestStatusAction(id: string, currentStatus: boolean) {
   try {
+    await requireAuth(); // ✅ AUTH CHECK
+
     await prisma.funTest.update({
       where: { id },
       data: { isActive: !currentStatus },
@@ -58,27 +59,29 @@ export async function toggleFunTestStatusAction(id: string, currentStatus: boole
     revalidatePath('/fun');
     revalidatePath('/admin/fun');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
     return { success: false };
   }
 }
 
-// 3. Увеличение счетчика прохождений (Это мы потом вызовем внутри самих модалок на клиенте)
+// Публичный — счётчик прохождений, auth не нужен
 export async function incrementFunTestPassAction(slug: string) {
   try {
     await prisma.funTest.update({
       where: { slug },
       data: { passCount: { increment: 1 } },
     });
-    // Тут кэш не сбрасываем, чтобы не дергать сервер при каждом прохождении
     return { success: true };
   } catch (error) {
     return { success: false };
   }
 }
+
+// Публичный — только чтение
 export async function getFunTestsAction() {
   try {
-    const tests = await prisma.funTest.findMany({ orderBy: { createdAt: "desc" } });
+    const tests = await prisma.funTest.findMany({ orderBy: { createdAt: 'desc' } });
     return { success: true, data: tests };
   } catch (error) {
     return { success: false, data: [] };
