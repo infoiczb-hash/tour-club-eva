@@ -135,7 +135,7 @@ export default function TourProgram({ program }: TourProgramProps) {
             </div>
             <div>
               <h4 className="text-amber-500 font-bold uppercase text-xs md:text-sm mb-1 tracking-wide print:text-slate-900">Внимание!</h4>
-              <p className="text-amber-100/80 text-[11px] md:text-xs leading-relaxed print:text-slate-700">
+              <p className="text-amber-100/80 text-sm md:text-sm leading-relaxed print:text-slate-700">
                 Маршрут, программа тура и порядок посещения туристических объектов могут быть изменены без предварительного уведомления гидом/инструктором/сопровождающим в связи с погодными условиями, движением группы, физического состояния участников и других внешних обстоятельств.
               </p>
             </div>

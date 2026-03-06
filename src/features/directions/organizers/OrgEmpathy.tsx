@@ -22,7 +22,7 @@ export default function OrgEmpathy() {
       <div className="container mx-auto px-4 max-w-6xl">
         
         {/* Заголовок-Манифест */}
-        <div className="max-w-4xl mx-auto text-center mb-20">
+        <div className="max-w-4xl mx-auto text-center mb-10 md:mb-12">
            <FadeText>
                <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-6">
                   Когда вы везете группу в лес, <br className="hidden md:block"/>

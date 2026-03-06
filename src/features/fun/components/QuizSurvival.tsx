@@ -239,7 +239,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
           className="relative w-full max-w-2xl bg-[#120a0a]/80 border border-red-500/20 rounded-[2.5rem] p-6 md:p-10 overflow-hidden max-h-[90vh] flex flex-col shadow-[0_0_80px_rgba(239,68,68,0.1)]"
           onClick={(e) => e.stopPropagation()}
         >
-          <button onClick={onClose} className="absolute top-5 right-5 text-red-500/50 hover:text-red-400 transition z-20 p-2 bg-red-500/5 hover:bg-red-500/20 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 text-red-500/50 hover:text-red-400 transition z-20 p-3 bg-red-500/5 hover:bg-red-500/20 rounded-full">
             <X size={20} />
           </button>
 
@@ -252,7 +252,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
                 className="flex flex-col h-full z-10"
               >
                 <div className="mb-8">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full mb-4">
+                  <div className="inline-flex items-center gap-3 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full mb-4">
                      <Flame size={14} className="text-red-500 animate-pulse"/>
                      <span className="text-[12px] font-black uppercase text-red-500 tracking-[0.2em]">Тест на выживание</span>
                   </div>
@@ -299,7 +299,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
 
                 <div className="mt-6 h-6">
                   {step > 0 && (
-                      <button onClick={handleBack} className="text-sm font-bold text-red-500/60 hover:text-red-400 flex items-center gap-2 transition-colors w-fit">
+                      <button onClick={handleBack} className="text-sm font-bold text-red-500/60 hover:text-red-400 flex items-center gap-3 transition-colors w-fit">
                       <ArrowLeft size={16} /> Назад
                       </button>
                   )}
@@ -312,7 +312,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
               <motion.div 
                 key="analyzing"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center h-[400px] text-center z-10"
+                className="flex flex-col items-center justify-center min-h-[400px] text-center z-10"
               >
                   <Map className="w-16 h-16 text-red-500 mb-6 animate-pulse" strokeWidth={1} />
                   <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-2">Анализ ответов</h3>
@@ -376,7 +376,7 @@ export default function QuizSurvival({ open, onClose, onComplete }: any) {
                   ))}
 
                   {finalResult.notRecommended && (
-                     <div className="flex items-center justify-center gap-2 text-[12px] text-slate-500 mt-4 uppercase font-bold">
+                     <div className="flex items-center justify-center gap-3 text-[12px] text-slate-500 mt-4 uppercase font-bold">
                         <AlertTriangle size={14} className="text-red-500/50" />
                         <span>Не лезь сюда: {finalResult.notRecommended.join(", ")}</span>
                      </div>

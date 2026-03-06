@@ -146,7 +146,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
              </div>
         ) : (
             /* 2. РЕЖИМ СЕТКИ (УМНАЯ ЛЕНТА) */
-            <div className="space-y-12 md:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
                 {/* ГОРЯЩИЕ ТУРЫ */}
                 {hotTours.length > 0 && (

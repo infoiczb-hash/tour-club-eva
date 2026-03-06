@@ -95,7 +95,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
             <div className="p-5 md:p-8 pb-4 md:pb-6 border-b border-white/5 bg-slate-900 z-10 shrink-0">
                <div className="flex justify-between items-center mb-6">
                   <h3 className="text-white font-black text-2xl md:text-3xl tracking-tight">Центр связи</h3>
-                  <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+                  <button onClick={onClose} aria-label="Закрыть" className="p-2.5 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
                       <X size={20}/>
                   </button>
                </div>

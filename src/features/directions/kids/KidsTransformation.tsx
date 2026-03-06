@@ -93,7 +93,7 @@ export default function KidsTransformation() {
 
                                      {/* Текст: Было -> Стало */}
                                      <div className="flex items-center justify-center gap-3 text-lg md:text-xl font-black tracking-tight mb-3 md:mb-4 w-full">
-                                         <span className="text-slate-600 line-through decoration-red-500/30 decoration-2">
+                                         <span className="text-slate-400 line-through decoration-red-500/30 decoration-2">
                                              {item.from}
                                          </span>
                                          <ArrowRight size={16} className="text-slate-600" />

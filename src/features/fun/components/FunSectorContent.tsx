@@ -88,7 +88,7 @@ export default function FunSectorContent({ activeTests }: Props) {
         </p>
       </section>
 
-      <div className="container mx-auto px-4 pb-24 relative z-10 space-y-20">
+      <div className="container mx-auto px-4 pb-24 relative z-10 space-y-16">
         {Object.entries(groupedContent).map(([categoryName, tests]) => {
           const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
           return (
@@ -158,7 +158,7 @@ function QuizCard({ onClick, image, color, icon, title, desc, category, idx }: a
     <div
       onClick={onClick}
       style={{ animationDelay: `${idx * 80}ms` }}
-      className="group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all shadow-2xl hover:-translate-y-2"
+      className="group relative min-h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all shadow-2xl hover:-translate-y-2"
     >
       {image && <Image src={image} alt={title} fill className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700" />}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />

@@ -1,10 +1,10 @@
 import { Skeleton } from "@/shared/ui/Skeleton"; // Убедитесь, что этот компонент поддерживает className
 
 export const TourSkeletonCard = () => (
-    <div className="bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden h-full flex flex-col relative">
+    <div className="bg-slate-900 border-white/5 overflow-hidden h-full flex flex-col relative">
         
         {/* 1. ФОТО */}
-      <div className="relative w-full aspect-[4/3] bg-slate-100">
+      <div className="relative w-full aspect-[4/3] bg-slate-800">
              {/* Имитация метки типа тура (слева сверху) */}
              <div className="absolute top-4 left-4">
                 <Skeleton className="h-6 w-20 rounded-lg" />

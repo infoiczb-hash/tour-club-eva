@@ -113,6 +113,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                   // quality передаётся в cloudinaryLoader → supabaseLoader
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   quality={75}
+                  priority
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />

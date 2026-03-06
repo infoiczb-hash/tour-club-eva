@@ -62,7 +62,7 @@ export default function KidsFAQ() {
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                         Частые <span className="text-amber-500">Вопросы</span>
                     </h2>
-                    <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
+                    <p className="text-slate-400 text-[14px] md:text-base font-medium leading-tight md:leading-tight">
                         Отвечаем на то, что больше всего волнует родителей перед первой поездкой.
                     </p>
                 </motion.div>
@@ -115,7 +115,7 @@ export default function KidsFAQ() {
                                             exit={{ height: 0, opacity: 0 }}
                                             transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
                                         >
-                                            <div className="p-5 md:p-6 pt-0 text-slate-400 text-[14px] md:text-base leading-relaxed font-medium border-t border-white/5 mt-2">
+                                            <div className="p-5 md:p-6 pt-0 text-slate-400 text-[14px] md:text-base leading-tight md:leading-tight font-medium border-t border-white/5 mt-2">
                                                 {item.a}
                                             </div>
                                         </motion.div>
@@ -138,7 +138,7 @@ export default function KidsFAQ() {
                     {/* Цитата Романа */}
                     <div className="mb-10 md:mb-16 relative">
                         <Quote className="w-10 h-10 md:w-12 md:h-12 text-amber-500/20 mx-auto mb-4 md:mb-6" />
-                        <h3 className="text-lg md:text-3xl font-bold text-white mb-6 md:mb-8 max-w-3xl mx-auto leading-relaxed md:leading-normal">
+                        <h3 className="text-lg md:text-3xl font-bold text-white mb-6 md:mb-8 max-w-3xl mx-auto leading-tight md:leading-tight md:leading-normal">
                             "Дети раскрываются не в кабинетах, а у костра. Я вижу, как подросток, который вчера боялся лягушек, сегодня ведёт за собой других. <span className="text-amber-500">Это и есть настоящая работа</span>."
                         </h3>
                         <div className="flex items-center justify-center gap-4">
@@ -160,7 +160,7 @@ export default function KidsFAQ() {
                     </h2>
                     
                     <div className="max-w-2xl mx-auto mb-8 md:mb-10 text-left relative z-10">
-                        <p className="text-slate-300 font-medium leading-relaxed text-[14px] md:text-base mb-6 text-center">
+                        <p className="text-slate-300 font-medium leading-tight md:leading-tight text-[14px] md:text-base mb-6 text-center">
                             Напишите нам — мы ответим на все вопросы, подберём тур и пришлём памятку по сборам.
                             <br className="hidden md:block" />
                             <span className="text-amber-500 font-bold">Группы маленькие, поэтому бронируем места заранее.</span> Это нужно, чтобы каждый ребенок получил максимум внимания и заботы.

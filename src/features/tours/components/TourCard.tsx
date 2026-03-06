@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -30,14 +30,13 @@ const TYPE_CONFIG: Record<string, { bg: string, border: string, text: string, la
   kids: { bg: "bg-pink-500/80", border: "border-pink-400", text: "text-white", label: "Детям" },
   default: { bg: "bg-slate-800/80", border: "border-slate-500", text: "text-white", label: "Тур" },
 };
-
-interface TourCardProps {
+export interface TourCardProps {
   tour: Tour;
   isHot?: boolean;
   priority?: boolean;
 }
 
-export default function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
+function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
   const {
     slug, title, date, id,
     price, priceOld, currency,
@@ -140,7 +139,7 @@ export default function TourCard({ tour, isHot = false, priority = false }: Tour
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
               {tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="flex items-center gap-1 text-[12px] font-black uppercase tracking-widest text-slate-600 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                <span key={i} className="flex items-center gap-1 text-[12px] font-black uppercase tracking-widest text-slate-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
                   <Hash size={12} strokeWidth={4} /> {tag}
                 </span>
               ))}
@@ -192,3 +191,4 @@ export default function TourCard({ tour, isHot = false, priority = false }: Tour
     </Link>
   );
 }
+export default memo(TourCard);

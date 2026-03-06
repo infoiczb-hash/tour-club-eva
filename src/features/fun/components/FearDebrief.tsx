@@ -142,16 +142,20 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full">
-            <X size={20} />
-          </button>
+          <button
+  onClick={onClose}
+  aria-label="Закрыть"
+  className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors z-20 p-3 bg-white/5 hover:bg-white/10 rounded-full"
+>
+  <X size={20} />
+</button>
 
           {/* === 1. ВЫБОР СТРАХОВ === */}
           {step === "select" && (
             <motion.div key="select" className="flex flex-col h-full overflow-y-auto custom-scrollbar pr-2 pb-4">
-              <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-3 mb-6">
                 <Shield className="w-4 h-4 text-blue-400" />
-                <span className="text-blue-400 text-xs font-bold tracking-widest uppercase">Разбор страхов</span>
+                <span className="text-blue-400 text-sm font-bold tracking-widest uppercase">Разбор страхов</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">
                 Что тебя <span className="text-blue-400">останавливает?</span>
@@ -162,7 +166,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                 {FEARS.map((fear) => {
                   const isSel = selected.includes(fear.key);
                   return (
-                    <div key={fear.key} className="flex gap-2">
+                    <div key={fear.key} className="flex gap-3">
                       <button onClick={() => toggleFear(fear.key)} className={cn("flex-1 text-left px-5 py-4 rounded-2xl border transition-all duration-300", isSel ? "border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]" : "border-white/5 bg-slate-800/50 hover:bg-slate-800")}>
                         <div className="flex items-center gap-4">
                           <div className={cn("w-6 h-6 rounded-full border flex items-center justify-center shrink-0 transition-all", isSel ? "bg-blue-500 border-blue-500" : "border-slate-600")}>
@@ -170,7 +174,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                           </div>
                           <div>
                             <div className={cn("text-base font-bold transition-colors", isSel ? "text-white" : "text-slate-300")}>{fear.label}</div>
-                            <div className="text-slate-500 text-xs font-medium mt-0.5">{fear.sublabel}</div>
+                            <div className="text-slate-500 text-sm font-medium mt-0.5">{fear.sublabel}</div>
                           </div>
                         </div>
                       </button>
@@ -183,7 +187,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
               </div>
 
               {selected.length > 0 && (
-                <button onClick={() => setStep("summary")} className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">
+                <button onClick={() => setStep("summary")} className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">
                   Разобрать мои страхи ({selected.length}) <ChevronRight size={18} />
                 </button>
               )}
@@ -193,24 +197,24 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
           {/* === 2. ДЕТАЛИ СТРАХА === */}
           {step === "detail" && viewingInfo && viewingFear && (
             <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full">
-              <button onClick={() => setStep("select")} className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors"><ArrowLeft size={16} /> Назад</button>
+              <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-sm font-bold uppercase tracking-widest mb-8 transition-colors"><ArrowLeft size={16} /> Назад</button>
               <h2 className="text-2xl md:text-3xl font-black text-white leading-tight mb-8">{viewingFear.label}</h2>
               <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 <div className="border-l-2 border-slate-700 pl-5">
-                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Честно</p>
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mb-2">Честно</p>
                   <p className="text-slate-300 text-sm leading-relaxed font-medium">{viewingInfo.honest}</p>
                 </div>
                 <div className="border-l-2 border-blue-500/50 pl-5 bg-blue-500/5 py-3 rounded-r-xl">
-                  <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-2">В реальности</p>
+                  <p className="text-blue-400 text-sm font-bold uppercase tracking-widest mb-2">В реальности</p>
                   <p className="text-slate-300 text-sm leading-relaxed font-medium">{viewingInfo.reality}</p>
                 </div>
                 <div className="border-l-2 border-teal-500/80 pl-5">
-                  <p className="text-teal-500 text-xs font-bold uppercase tracking-widest mb-2">Первый шаг</p>
+                  <p className="text-teal-500 text-sm font-bold uppercase tracking-widest mb-2">Первый шаг</p>
                   <p className="text-white text-sm leading-relaxed font-bold">{viewingInfo.step}</p>
                 </div>
               </div>
               <div className="mt-8 flex gap-3 pt-4 border-t border-white/10 shrink-0">
-                <button onClick={() => { if (!selected.includes(viewingFear.key)) toggleFear(viewingFear.key); setStep("select"); }} className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 text-blue-400 rounded-xl py-4 text-xs font-bold uppercase tracking-wider transition-colors">
+                <button onClick={() => { if (!selected.includes(viewingFear.key)) toggleFear(viewingFear.key); setStep("select"); }} className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 text-blue-400 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-colors">
                   Добавить к моим страхам
                 </button>
               </div>
@@ -220,7 +224,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
           {/* === 3. БАЗОВОЕ САММАРИ (Upsell AI) === */}
           {step === "summary" && (
             <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full overflow-y-auto custom-scrollbar pr-2">
-              <button onClick={() => setStep("select")} className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors"><ArrowLeft size={16} /> Назад</button>
+              <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-sm font-bold uppercase tracking-widest mb-8 transition-colors"><ArrowLeft size={16} /> Назад</button>
               <h2 className="text-3xl font-black text-white mb-6 tracking-tight">Резюме</h2>
               <div className="space-y-4 mb-8">
                 {selected.map((key) => {
@@ -228,7 +232,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                   const info = FEAR_INFO[key];
                   return (
                     <div key={key} className="border border-white/10 rounded-2xl p-5 bg-slate-800/30">
-                      <p className="text-white text-base font-bold mb-3 flex items-center gap-2"><Check className="text-blue-500" size={16}/> {f.label}</p>
+                      <p className="text-white text-base font-bold mb-3 flex items-center gap-3"><Check className="text-blue-500" size={16}/> {f.label}</p>
                       <div className="bg-slate-900 rounded-xl p-4">
                           <p className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">Решение</p>
                           <p className="text-slate-300 text-sm leading-relaxed font-medium">{info.step}</p>
@@ -242,7 +246,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                 <Sparkles className="w-10 h-10 text-indigo-400 mx-auto mb-4" />
                 <h3 className="text-xl font-black text-white mb-2">Глубокий разбор от AI</h3>
                 <p className="text-slate-400 text-sm mb-6 leading-relaxed">ИИ проанализирует связку твоих страхов, даст терапевтичный ответ и <strong className="text-white">подберет 1 идеальный тур</strong>.</p>
-                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
+                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
                   <Sparkles size={16} /> Начать анализ
                 </button>
               </div>
@@ -282,7 +286,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                         </div>
                         {recommendedTour && (
                             <div className="mt-4 pt-8 border-t border-white/10">
-                                <div className="flex items-center gap-2 mb-6">
+                                <div className="flex items-center gap-3 mb-6">
                                     <Compass className="text-teal-400" size={20} />
                                     <h3 className="text-lg font-black text-white uppercase tracking-wide">Твой идеальный старт:</h3>
                                 </div>

@@ -67,7 +67,7 @@ export default function KidsParents() {
                     </h2>
                     
                     <div className="border-l-4 border-amber-500 pl-5 md:pl-8 py-2">
-                        <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-relaxed tracking-tight">
+                        <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-snug tracking-tight">
                             Детский и подростковый туризм — это возможность расти <span className="text-white font-bold">сильнее и счастливее</span>. Природа учит смелости, любознательности и <span className="text-white font-bold">уважению к другим</span>. Каждый маршрут — маленькое приключение, которое <span className="text-white font-bold">остаётся в памяти навсегда</span>.
                         </p>
                     </div>

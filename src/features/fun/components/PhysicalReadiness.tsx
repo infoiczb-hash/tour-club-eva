@@ -162,14 +162,14 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
           {/* === 1. INTRO === */}
           {step === "intro" && (
             <motion.div key="intro" className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-2 mb-8">
+              <div className="flex items-center gap-3 mb-8">
                 <Dumbbell className="w-5 h-5 text-emerald-500" />
                 <span className="text-xs font-bold text-emerald-500 tracking-[0.2em] uppercase">Физическая готовность</span>
               </div>
@@ -180,7 +180,7 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
               <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-10 font-medium">
                 Честная самооценка на основе твоего реального образа жизни. Не медицинская диагностика — ориентир для понимания своей точки старта.
               </p>
-              <button onClick={() => setStep("test")} className="mt-auto w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95">
+              <button onClick={() => setStep("test")} className="mt-auto w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95">
                 Начать оценку <ChevronRight size={18} />
               </button>
             </motion.div>
@@ -223,7 +223,7 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
               </div>
 
               {current > 0 && (
-                <button onClick={() => setCurrent(c => c - 1)} className="mt-8 flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest w-fit">
+                <button aria-label="Закрыть" onClick={() => setCurrent(c => c - 1)} className="mt-8 flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest w-fit">
                   <ArrowLeft size={14} /> Назад
                 </button>
               )}
@@ -234,7 +234,7 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
           {step === "result" && result && (
             <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
               <div className={cn(
-                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-6 w-fit",
+                "inline-flex items-center gap-3 px-4 py-1.5 rounded-full border mb-6 w-fit",
                 result.level === "ready" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
                 result.level === "almost" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-rose-500/10 border-rose-500/30 text-rose-400"
               )}>
@@ -258,7 +258,7 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
                 <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                   ИИ проанализирует ответы как спортивный врач и <strong className="text-white">подберет 1 идеальный тур</strong> из нашего расписания.
                 </p>
-                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
+                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
                   <Sparkles size={16} /> Получить разбор
                 </button>
               </div>
@@ -302,7 +302,7 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
                         {/* КАРТОЧКА ТУРА */}
                         {recommendedTour ? (
                             <div className="mt-4 pt-8 border-t border-white/10">
-                                <div className="flex items-center gap-2 mb-6">
+                                <div className="flex items-center gap-3 mb-6">
                                     <Compass className="text-emerald-400" size={20} />
                                     <h3 className="text-lg font-black text-white uppercase tracking-wide">Тур для твоего уровня:</h3>
                                 </div>

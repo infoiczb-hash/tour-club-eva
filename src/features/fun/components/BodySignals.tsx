@@ -155,14 +155,14 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
           {/* === 1. ВЫБОР СИМПТОМОВ === */}
           {step === "select" && (
             <motion.div key="select" className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-3 mb-6">
                 <Heart className="w-4 h-4 text-rose-500" />
                 <span className="text-rose-500 text-xs font-bold tracking-widest uppercase">Что говорит тело</span>
               </div>
@@ -177,7 +177,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
                       const isSel = selected.includes(s.key);
                       const hasWarning = SYMPTOM_INFO[s.key].warning;
                       return (
-                        <div key={s.key} className="flex gap-2">
+                        <div key={s.key} className="flex gap-3">
                           <button onClick={() => toggleSymptom(s.key)}
                             className={cn("flex-1 text-left px-4 py-3.5 rounded-xl border transition-all duration-200 flex items-center gap-3", isSel ? "border-rose-500/50 bg-rose-500/10 text-white shadow-[0_0_15px_rgba(225,29,72,0.15)]" : "border-white/5 bg-slate-800/30 text-slate-300 hover:bg-slate-800")}>
                             <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors", isSel ? "text-rose-400" : "text-slate-500")}>
@@ -197,7 +197,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
               ))}
 
               {selected.length > 0 && (
-                <button onClick={() => setStep("summary")} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider transition-all mt-4 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(225,29,72,0.3)] active:scale-[0.98]">
+                <button onClick={() => setStep("summary")} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider transition-all mt-4 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(225,29,72,0.3)] active:scale-[0.98]">
                   Разобрать симптомы ({selected.length}) <ChevronRight size={18} />
                 </button>
               )}
@@ -207,7 +207,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
           {/* === 2. ДЕТАЛИ СИМПТОМА === */}
           {step === "detail" && viewingInfo && viewingSymptom && (
             <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <button onClick={() => setStep("select")} className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors">
+              <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors">
                 <ArrowLeft size={16} /> Назад
               </button>
 
@@ -249,7 +249,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
           {/* === 3. БАЗОВОЕ САММАРИ (Upsell AI) === */}
           {step === "summary" && (
             <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <button onClick={() => setStep("select")} className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors">
+              <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors">
                 <ArrowLeft size={16} /> Назад
               </button>
 
@@ -283,7 +283,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
                 <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                   ИИ проанализирует эти симптомы в комплексе и <strong className="text-white">подберет безопасный тур</strong>, где твоему телу будет комфортно.
                 </p>
-                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(225,29,72,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
+                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(225,29,72,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
                   <Sparkles size={16} /> Получить разбор
                 </button>
               </div>
@@ -328,7 +328,7 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
                         {/* КАРТОЧКА ТУРА */}
                         {recommendedTour ? (
                             <div className="mt-4 pt-8 border-t border-white/10">
-                                <div className="flex items-center gap-2 mb-6">
+                                <div className="flex items-center gap-3 mb-6">
                                     <Compass className="text-rose-400" size={20} />
                                     <h3 className="text-lg font-black text-white uppercase tracking-wide">Безопасный старт для тебя:</h3>
                                 </div>

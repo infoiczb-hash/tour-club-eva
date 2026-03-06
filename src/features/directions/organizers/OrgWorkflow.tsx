@@ -36,7 +36,7 @@ export default function OrgWorkflow() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="text-center mb-20 md:mb-24"
+                    className="text-center mb-10 md:mb-12"
                 >
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
                         Как мы <span className="text-indigo-500">Работаем</span>

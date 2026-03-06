@@ -155,7 +155,7 @@ export default function PopularRoutes() {
               layoutId={selectedRoute.id}
               className="relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row"
             >
-              <button onClick={() => setSelectedRoute(null)} className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-2 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10 shadow-lg">
+              <button aria-label="Закрыть" onClick={() => setSelectedRoute(null)} className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-3 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10 shadow-lg">
                 <X size={20} />
               </button>
 
@@ -169,10 +169,10 @@ export default function PopularRoutes() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-900 md:to-transparent" />
                 {selectedRoute.images.length > 1 && (
                   <>
-                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
                       <ChevronLeft size={20} />
                     </button>
-                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
                       <ChevronRight size={20} />
                     </button>
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
@@ -218,7 +218,7 @@ export default function PopularRoutes() {
 function PassportItem({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <div className="flex gap-3 items-start">
-      <div className="w-8 h-8 mt-0.5 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0 text-teal-400">
+      <div className="w-10 h-10 mt-0.5 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0 text-teal-400">
         <Icon size={14} strokeWidth={2.5} />
       </div>
       <div>

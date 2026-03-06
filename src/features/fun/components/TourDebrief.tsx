@@ -148,14 +148,14 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
           {/* === 1. INTRO === */}
           {step === "intro" && (
             <motion.div key="intro" className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-2 mb-8">
+              <div className="flex items-center gap-3 mb-8">
                 <BookOpen className="w-4 h-4 text-violet-400" />
                 <span className="text-xs font-bold text-violet-400 tracking-[0.2em] uppercase">Разбор тура</span>
               </div>
@@ -176,7 +176,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
                 ))}
               </div>
 
-              <button onClick={() => setStep("test")} className="mt-auto w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] active:scale-95">
+              <button onClick={() => setStep("test")} className="mt-auto w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] active:scale-95">
                 Начать рефлексию <ChevronRight size={18} />
               </button>
               <p className="text-slate-500 text-[11px] text-center mt-4">
@@ -212,7 +212,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
               />
 
               <div className="flex gap-3 mt-auto">
-                <button onClick={handleNext} disabled={!answers[q.id]?.trim() && current < QUESTIONS.length - 1} className="flex-1 bg-white text-slate-950 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                <button onClick={handleNext} disabled={!answers[q.id]?.trim() && current < QUESTIONS.length - 1} className="flex-1 bg-white text-slate-950 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                   {current + 1 === QUESTIONS.length ? "Завершить" : "Далее"} <ChevronRight size={16} />
                 </button>
                 {!answers[q.id]?.trim() && (
@@ -227,7 +227,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
           {/* === 3. BASE RESULT === */}
           {step === "result" && (
             <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 w-fit mb-6">
+              <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 w-fit mb-6">
                 <CheckCircle2 size={14} />
                 <span className="text-xs font-bold uppercase tracking-widest">Рефлексия собрана</span>
               </div>
@@ -261,7 +261,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
                 <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                   ИИ проанализирует твои ответы, выделит скрытые смыслы и <strong className="text-white">подберет идеальный тур</strong> для следующего приключения на основе твоих инсайтов.
                 </p>
-                <button onClick={handleGetAiMagic} disabled={isAiLoading || answeredCount === 0} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
+                <button onClick={handleGetAiMagic} disabled={isAiLoading || answeredCount === 0} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
                   <Sparkles size={16} /> Синтезировать опыт
                 </button>
               </div>
@@ -272,7 +272,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
           {step === "ai_result" && (
             <motion.div key="ai_result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10">
                 {isAiLoading ? (
-                    <div className="flex flex-col items-center justify-center h-[400px]">
+                    <div className="flex flex-col items-center justify-center min-h-[400px]">
                         <div className="relative mb-8">
                             <div className="absolute inset-0 bg-violet-500/30 blur-2xl rounded-full animate-pulse" />
                             <Loader2 className="w-16 h-16 text-violet-400 animate-spin relative z-10" />

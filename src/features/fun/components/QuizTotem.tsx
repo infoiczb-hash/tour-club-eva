@@ -229,7 +229,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
            initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
            onClick={(e) => e.stopPropagation()}
         >
-            <button onClick={onClose} className="absolute top-5 right-5 text-indigo-300/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition z-20 p-2"><X size={20}/></button>
+            <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 text-indigo-300/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition z-20 p-3"><X size={20}/></button>
 
             <AnimatePresence mode="wait">
               {/* VIEW 1: QUESTIONS */}
@@ -279,7 +279,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                   <motion.div 
                     key="summoning"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="flex flex-col items-center justify-center h-[400px] text-center z-10"
+                    className="flex flex-col items-center justify-center min-h-[400px] text-center z-10"
                   >
                       <div className="relative mb-8 w-32 h-32 flex items-center justify-center">
                            <motion.div 
@@ -328,7 +328,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                           <p className="text-indigo-100/90 font-medium leading-relaxed mb-5 text-sm">
                               {finalResult.description}
                           </p>
-                          <div className="flex items-center justify-center gap-2 text-xs font-black uppercase text-indigo-200 bg-indigo-900/40 py-2.5 rounded-xl border border-indigo-500/10">
+                          <div className="flex items-center justify-center gap-3 text-xs font-black uppercase text-indigo-200 bg-indigo-900/40 py-2.5 rounded-xl border border-indigo-500/10">
                               <Crown size={16} className={finalResult.colorClass}/>
                               Сила: {finalResult.power}
                           </div>

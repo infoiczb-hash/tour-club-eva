@@ -15,6 +15,8 @@ import { Tour } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import dynamic from 'next/dynamic';
+import TourCard from './TourCard';
+import type { TourCardProps } from './TourCard';
 import { useModalStore } from '@/shared/store/useModalStore'; 
 
 // ❌ БЫЛО ТУТ: const openContactModal = useModalStore((state) => state.openContactModal);
@@ -30,13 +32,6 @@ const CalendarView = dynamic(() => import('./CalendarView'), {
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
-const TourCard = dynamic(() => import('./TourCard'), {
-  ssr: true, // Оставляем true, чтобы SEO-роботы видели карточки
-  loading: () => (
-    <div className="h-[450px] w-full bg-slate-800/30 animate-pulse rounded-2xl border border-white/5" />
-  ),
-});
 
 // ✅ 1. ИНТЕЛЛЕКТУАЛЬНЫЙ МАППЕР ИКОНОК
 const getIconComponent = (iconName: string, size = 14) => {
@@ -173,16 +168,16 @@ export default function ToursBrowser({
                <CalendarIcon size={14} className="text-teal-400" />
                <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
             </div>
-            <h2 className="text-3xl md:text-5xl uppercase tracking-tighter leading-[0.9] text-white font-black">
+            <h1 className="text-3xl md:text-5xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                 {title}
-            </h2>
+            </h1>
         </div>
 
         {/* =======================================================
            MOBILE CONTROLS (КОМПАКТНАЯ ПАНЕЛЬ)
            ======================================================= */}
         <div className="lg:hidden mb-8 sticky top-4 z-40">
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
+            <div className="grid grid-cols-3 gap-2 p-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
                 
                 {/* 1. СЕТКА */}
                 <button 
@@ -357,7 +352,6 @@ export default function ToursBrowser({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {displayHot.map((tour, index) => (
-                            // @ts-ignore - игнорируем ошибку пропов priority для dynamic компонентов, если она есть
                             <TourCard key={tour.id} tour={tour} isHot priority={index === 0} />
                         ))}
                     </div>
@@ -376,7 +370,6 @@ export default function ToursBrowser({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-90 hover:opacity-100 transition-opacity">
                         {displaySoon.map((tour, index) => (
-                         // @ts-ignore
                          <TourCard  
                             key={tour.id} 
                             tour={tour} 
