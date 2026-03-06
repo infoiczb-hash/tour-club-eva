@@ -25,7 +25,7 @@ export default function FullProfileModal({ isOpen, onClose }: { isOpen: boolean;
       <motion.div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <motion.div className="relative w-full max-w-3xl bg-slate-900/50 border border-indigo-500/20 rounded-[3rem] p-8 md:p-12 shadow-[0_0_50px_rgba(99,102,241,0.1)] overflow-y-auto max-h-[90vh]">
           
-          <button onClick={onClose} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
 
           {!result && !loading && (
             <div className="text-center py-12">

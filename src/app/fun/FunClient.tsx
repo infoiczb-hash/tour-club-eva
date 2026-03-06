@@ -133,7 +133,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         
       </section>
       {/* --- ДИНАМИЧЕСКИЕ РАЗДЕЛЫ --- */}
-      <div className="container mx-auto px-4 pb-24 relative z-10 space-y-24">
+      <div className="container mx-auto px-4 pb-24 relative z-10 space-y-16">
          {/* ✅ ДОБАВИЛИ categoryIndex */}
          {Object.entries(groupedContent).map(([categoryName, tests], categoryIndex) => {
             const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };

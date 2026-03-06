@@ -61,7 +61,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
                 {isSoldOut ? "0" : left}
               </div>
               {isLowSpots && !isSoldOut && (
-                <span className="text-[12px] font-bold text-amber-500 uppercase animate-pulse">Заканчиваются!</span>
+                <span className="text-[12px] font-bold text-amber-500 uppercase ">Заканчиваются!</span>
               )}
           </div>
         </div>

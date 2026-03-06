@@ -167,7 +167,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
             exit={{ scale: 0.95, opacity: 0 }}
             className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
           >
-            <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full">
+            <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
                <X size={20} />
             </button>
 
@@ -344,7 +344,7 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
                         <Icon size={24} />
                     </div>
                     <div>
-                        <h4 className="font-black text-white text-xl uppercase tracking-tight leading-none mb-1.5">{direction.title}</h4>
+                        <h4 className="font-black text-white text-xl tracking-tight leading-none mb-1.5">{direction.title}</h4>
                         <p className="text-xs text-slate-400 font-medium">{direction.description}</p>
                     </div>
                 </div>

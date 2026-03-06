@@ -50,7 +50,7 @@ export default function OrgFormats() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="mb-16 md:mb-24"
+                    className="mb-10 md:mb-12"
                 >
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
                         Что мы можем предложить <span className="text-indigo-500">Вам</span>

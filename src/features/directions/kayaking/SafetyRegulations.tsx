@@ -122,7 +122,7 @@ export default function SafetyRegulations() {
                         {section.alert && (
                           <div className="mt-6 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex gap-3 items-start">
                             <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
-                            <p className="text-xs md:text-sm text-rose-200/80 font-medium leading-relaxed">{section.alert}</p>
+                            <p className="text-sm text-rose-200/80 font-medium leading-relaxed">{section.alert}</p>
                           </div>
                         )}
                       </div>

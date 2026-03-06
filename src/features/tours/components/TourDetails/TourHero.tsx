@@ -102,7 +102,7 @@ export default function TourHero({ tour }: TourHeroProps) {
             
             {/* ПОДЗАГОЛОВОК */}
             {tour.subtitle && (
-              <p className="text-sm md:text-lg text-slate-200 font-light max-w-2xl leading-relaxed opacity-90">
+              <p className="text-sm md:text-lg text-slate-200 font-normal max-w-2xl leading-relaxed opacity-90">
                 {tour.subtitle}
               </p>
             )}

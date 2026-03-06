@@ -44,6 +44,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
                 src={guideImage} 
                 alt={guideName} 
                 fill 
+                priority
                 className="object-cover"
                 sizes="40px"
               />

@@ -45,7 +45,7 @@ export default function OfferPage() {
               Публичная <span className="text-teal-500">Оферта</span>
             </h1>
             
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-slate-400 text-xs md:text-sm font-medium bg-slate-900/50 p-4 md:p-5 rounded-xl border border-white/5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-slate-400 text-sm md:text-sm font-medium bg-slate-900/50 p-4 md:p-5 rounded-xl border border-white/5">
                 <div className="flex items-center gap-2">
                     <FileText size={18} className="text-teal-500 shrink-0" />
                     <span>Редакция от 14.02.2026</span>
@@ -132,7 +132,7 @@ export default function OfferPage() {
                     <div className="space-y-1.5">
                         <p className="!m-0">ИНН: <span className="text-white font-mono">9000075596</span></p>
                         <p className="!m-0">Патент (ПСН): <span className="text-white font-mono">№1210008706</span></p>
-                        <p className="!mt-4 text-xs opacity-60 leading-snug">Договор вступает в силу с момента совершения Участником действий по бронированию или оплаты тура.</p>
+                        <p className="!mt-4 text-sm opacity-60 leading-snug">Договор вступает в силу с момента совершения Участником действий по бронированию или оплаты тура.</p>
                     </div>
                 </div>
             </div>
@@ -143,7 +143,7 @@ export default function OfferPage() {
         <div className="mt-8 md:mt-12 p-5 md:p-6 bg-slate-900/80 border border-white/5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
             <div>
                 <h3 className="text-white font-black text-lg md:text-xl uppercase tracking-tight mb-1.5">Остались вопросы?</h3>
-                <p className="text-slate-400 text-xs md:text-sm max-w-md">Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!</p>
+                <p className="text-slate-400 text-sm md:text-sm max-w-md">Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!</p>
             </div>
             
             {/* 👇 НАШ НОВЫЙ КЛИЕНТСКИЙ ОСТРОВОК */}

@@ -62,7 +62,7 @@ export default function LocalPhilosophy() {
                     
                     {/* Журнальная цитата с боковой линией */}
                     <div className="border-l-4 border-emerald-500 pl-5 md:pl-8 py-2">
-                        <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-relaxed tracking-tight">
+                        <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-snug tracking-tight">
                             Мы привыкли искать красоту за <span className="text-white font-bold">сотни километров</span>. Но настоящая красота не требует билета на самолет. Нужно лишь <span className="text-white font-bold">правильное настроение</span>.
                         </p>
                     </div>

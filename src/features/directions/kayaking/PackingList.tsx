@@ -93,7 +93,7 @@ export default function PackingList() {
                 <div className="bg-teal-500/10 border border-teal-500/20 rounded-[2rem] p-5 md:p-6 flex items-start gap-4">
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-teal-500/20 rounded-2xl flex items-center justify-center shrink-0 text-teal-400"><Coffee size={20} className="md:w-6 md:h-6"/></div>
                     <div>
-                        <h4 className="font-black uppercase tracking-tight text-white mb-1.5 md:mb-2">Эко-правило</h4>
+                        <h3 className="font-black uppercase tracking-tight text-white mb-1.5 md:mb-2">Эко-правило</h3>
                         {/* 🔥 2. Текст 14px */}
                         <p className="text-[14px] text-slate-300 leading-relaxed">Мы не используем одноразовую посуду на сплавах. Пожалуйста, возьмите свои многоразовые приборы, чтобы сохранить природу чистой.</p>
                     </div>

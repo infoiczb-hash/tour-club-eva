@@ -17,7 +17,7 @@ export default function MainLayoutWrapper({ children, header, footer, promo }: P
 
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-100 text-slate-900 font-sans">
+      <div className="min-h-screen bg-gray-100 dark:bg-slate-950 text-slate-900 dark:text-white font-sans">
         {children}
       </div>
     );

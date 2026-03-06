@@ -284,7 +284,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                       {isLoading ? <Loader2 className="animate-spin" size={20} /> : `Записаться за ${totalPrice.toLocaleString()} ${tour.currency}`}
                     </button>
                     
-                    <p className="text-[12px] text-slate-500 text-center leading-tight">
+                    <p className="text-sm text-slate-500 text-center leading-tight">
                       Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
                     </p>
 

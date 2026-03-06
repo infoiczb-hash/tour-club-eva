@@ -178,7 +178,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                 <button onClick={() => current > 0 && setCurrent(c => c - 1)} disabled={current === 0} className="flex items-center gap-1.5 text-white/20 hover:text-white/50 disabled:opacity-0 transition-colors text-sm">
                   <ChevronLeft className="w-4 h-4" /> Назад
                 </button>
-                <span className="font-mono text-xs text-white/20 tracking-[0.2em]">{current + 1} / {TOTAL}</span>
+                <span className="font-mono text-xs text-white/40 tracking-[0.2em]">{current + 1} / {TOTAL}</span>
               </div>
               <motion.p className="text-white/90 text-xl sm:text-2xl md:text-3xl font-light leading-relaxed mb-14 font-spectral" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
                 {currentStatement.text}
@@ -205,18 +205,18 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                 <div className={`inline-flex items-center gap-2 mb-3 ${primaryType.color}`}>{primaryType.icon}
                   <h2 className="font-spectral text-4xl sm:text-5xl font-light">{primaryType.name}</h2>
                 </div>
-                <p className={`text-sm sm:text-base font-light italic ${primaryType.color} opacity-70 mb-3 font-spectral`}>«{primaryType.tagline}»</p>
+                <p className={`text-sm sm:text-base font-normal italic ${primaryType.color} opacity-70 mb-3 font-spectral`}>«{primaryType.tagline}»</p>
               </div>
               
-              <div className="mb-10"><p className="text-white/55 text-sm sm:text-base leading-relaxed whitespace-pre-line font-spectral font-light">{primaryType.desc}</p></div>
+              <div className="mb-10"><p className="text-white/55 text-sm sm:text-base leading-relaxed whitespace-pre-line font-spectral font-normal">{primaryType.desc}</p></div>
               
               <div className="border-l-2 pl-5 mb-8" style={{ borderColor: primaryType.accent + "40" }}>
                 <p className={`font-mono text-xs uppercase tracking-widest mb-2 ${primaryType.color} opacity-50`}>Слепое пятно</p>
-                <p className="text-white/40 text-sm leading-relaxed font-spectral font-light">{primaryType.blind}</p>
+                <p className="text-white/60 text-sm leading-relaxed font-spectral font-normal">{primaryType.blind}</p>
               </div>
 
               <div className="mb-10 mt-10">
-                <p className="font-mono text-xs text-white/20 uppercase tracking-widest mb-5">Все типы</p>
+                <p className="font-mono text-xs text-white/40 uppercase tracking-widest mb-5">Все типы</p>
                 <div className="space-y-4">
                   {(Object.entries(scores) as [TypeKey, number][]).sort((a, b) => b[1] - a[1]).map(([key, score]) => (
                     <ScoreBar key={key} typeKey={key} score={score} />

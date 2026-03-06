@@ -88,13 +88,13 @@ export default function TourDescription({ description, highlights, tags }: TourD
                           <div className="w-8 h-8 rounded-lg bg-slate-800 text-teal-500 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
                               <IconComponent size={16} strokeWidth={2} />
                           </div>
-                          <h4 className="font-bold text-white text-[13px] md:text-sm leading-tight group-hover:text-teal-400 transition-colors line-clamp-2">
+                          <h4 className="font-bold text-white text-[14px] md:text-sm leading-tight group-hover:text-teal-400 transition-colors line-clamp-2">
                             {item.title}
                           </h4>
                       </div>
                       
                       {/* Описание */}
-                     <p className="text-slate-400 text-[11px] md:text-xs leading-snug text-left">
+                     <p className="text-slate-400 text-sm md:text-sm leading-snug text-left">
                         {item.desc || item.description}
                       </p>
                     </div>
