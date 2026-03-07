@@ -96,10 +96,10 @@ export default function FunSectorWidget() {
               <Gamepad2 size={14} className="text-violet-400" />
               <span className="text-[16px] font-bold uppercase tracking-widest text-violet-400">Тесты и квизы</span>
             </div>
-            <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Фан-Сектор</h2>
+            <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Тесты и квизы</h2>
           </div>
           <Link href="/fun" className="hidden md:flex group items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            <span>Все игры</span>
+            <span>Все тесты и квизы</span>
             <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-violet-500 group-hover:border-violet-500 group-hover:text-white transition-all">
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </div>
@@ -131,7 +131,7 @@ export default function FunSectorWidget() {
           className="mt-5 md:hidden"
         >
           <Link href="/fun" className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest text-white hover:bg-violet-500 hover:border-violet-500 transition-colors active:scale-[0.98]">
-            <span>Все игры и квизы</span>
+            <span>Все тесты и квизы</span>
             <ArrowRight size={16} />
           </Link>
         </div>

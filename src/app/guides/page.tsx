@@ -1,14 +1,13 @@
+// src/app/guides/page.tsx
 import React from 'react';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { Users } from 'lucide-react';
-// Импортируем твой готовый компонент со списком
-import GuidesList from '@/features/guides/components/GuidesList';
+// ✅ ИМПОРТИРУЕМ НАШ НОВЫЙ КОМПОНЕНТ
+import GuidesEditorialList from '@/features/guides/components/GuidesEditorialList';
 
-// Базовый URL
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-// 1. SEO МЕТАТЕГИ ДЛЯ ОБЩЕЙ СТРАНИЦЫ КОМАНДЫ
 export const metadata: Metadata = {
   title: 'Команда гидов и инструкторов | Турклуб Эва',
   description: 'Познакомьтесь с профессиональными гидами и инструкторами турклуба «Эва». Опытные лидеры, которые делают каждое ваше приключение безопасным и незабываемым.',
@@ -26,15 +25,12 @@ export const metadata: Metadata = {
   }
 };
 
-// 2. СЕРВЕРНАЯ СТРАНИЦА (Быстрая загрузка, отличный LCP)
 export default async function AllGuidesPage() {
-  // Получаем всех активных гидов из базы, сортируем по полю order
   const rawGuides = await prisma.guide.findMany({
     where: { isActive: true },
     orderBy: { order: 'asc' }
   });
 
-  // Парсим данные точно так же, как ты делал на главной странице
   const guides = rawGuides.map((guide) => ({
     id: String(guide.id),
     slug: guide.slug || "",
@@ -62,7 +58,6 @@ export default async function AllGuidesPage() {
       
       {/* --- PREMIUM HERO SECTION --- */}
       <section className="relative pt-32 pb-12 md:pt-40 md:pb-20 px-4">
-        {/* Фоновые свечения */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none" />
         
         <div className="container mx-auto max-w-5xl relative z-10 text-center flex flex-col items-center">
@@ -87,8 +82,8 @@ export default async function AllGuidesPage() {
       {/* --- СПИСОК ГИДОВ --- */}
       <section className="relative z-10 pb-24">
         {guides.length > 0 ? (
-          // Переиспользуем твой компонент списка гидов!
-          <GuidesList guides={guides} />
+          // ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ
+          <GuidesEditorialList guides={guides} />
         ) : (
           <div className="text-center text-slate-500 py-20">
             Информация о команде обновляется...

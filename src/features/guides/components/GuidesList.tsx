@@ -115,7 +115,7 @@ const openContactModal = useModalStore((state) => state.openContactModal);
             </div>
         </div>
 
-      {/* --- GRID / SCROLL --- */}
+      {/* --- GRID / SCROLL --- */} 
 <div 
   // ✅ ДОБАВЛЕНО ДЛЯ a11y:
   tabIndex={0}
@@ -293,7 +293,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                     
                     <div className="hidden md:block mb-8 shrink-0">
                          <div className="text-[12px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">
-                             {guide.experience ? `Опыт: ${guide.experience}` : 'Instructor Profile'}
+                             {guide.experience ? `Опыт: ${guide.experience}` : 'Профиль инструктора'}
                          </div>
                          <h2 className="text-5xl lg:text-6xl font-black text-white leading-[0.85] tracking-tight">{guide.name}</h2>
                     </div>

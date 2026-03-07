@@ -1,3 +1,4 @@
+// src/app/page.tsx
 import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
 import { Metadata } from 'next';
@@ -6,6 +7,8 @@ import { Metadata } from 'next';
 import { getBlogPosts } from '@/features/blog/api';
 import { getTours } from '@/features/tours/api'; 
 import { getReviews } from '@/features/reviews/actions';
+// ✅ ДОБАВИЛИ ИМПОРТ КАТЕГОРИЙ БЛОГА
+import { getTourCategoriesAction, getBlogCategoriesAction } from '@/features/admin/actions/categories';
 
 import Hero from '@/features/landing/components/Hero';
 import Philosophy from '@/features/landing/components/Philosophy';
@@ -56,7 +59,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [rawGuides, posts, tours, allReviews] = await Promise.all([
+  // ✅ ДОБАВИЛИ ЗАПРОС КАТЕГОРИЙ БЛОГА В PROMISE.ALL
+  const [rawGuides, posts, tours, allReviews, tCatRes, bCatRes] = await Promise.all([
     prisma.guide.findMany({ 
       where: { isActive: true },
       orderBy: { order: 'asc' } 
@@ -64,7 +68,13 @@ export default async function Home() {
     getBlogPosts(),
     getTours(),
     getReviews(),
+    getTourCategoriesAction(), 
+    getBlogCategoriesAction(),
   ]);
+
+  const categories = tCatRes.success ? tCatRes.data : [];
+  // ✅ ИЗВЛЕКАЕМ КАТЕГОРИИ БЛОГА
+  const blogCategories = bCatRes.success ? bCatRes.data : [];
 
   const activeReviews = allReviews.filter(r => r.isActive).map(r => ({
     id: r.id,
@@ -103,19 +113,19 @@ export default async function Home() {
       <Hero />
       
       <Suspense fallback={<TourSkeleton />}>
-        <ToursBrowserWrapper tours={tours} limit={8} title="Афиша Приключений" />
+        <ToursBrowserWrapper tours={tours} categories={categories} limit={8} title="Афиша Приключений" />
       </Suspense>
       
       <Philosophy />
       <LazyGuidesList guides={guides} /> 
       
-      {/* Ленивая загрузка видео-сетки */}
       <LazySocialGrid />
 
-    <LazyReviewsMarquee reviews={activeReviews} />
-      <BlogList posts={posts} />
+      <LazyReviewsMarquee reviews={activeReviews} />
       
-      {/* Ленивая загрузка виджетов Фан-сектора */}
+      {/* ✅ ПЕРЕДАЕМ КАТЕГОРИИ В БЛОГ */}
+      <BlogList posts={posts} categories={blogCategories} />
+      
       <LazyFunSector />
     </>
   );

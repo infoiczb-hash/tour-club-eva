@@ -1,7 +1,9 @@
+// src/features/reviews/components/ReviewsMarquee.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags } from 'lucide-react';
+// ✅ Добавили ChevronRight для подсказки
+import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +19,7 @@ export interface Review {
   name: string;
   text: string;
   source: string; 
-  category?: string; // 🔥 Добавили категорию
+  category?: string;
   createdAt: string | Date;
   avatar?: string | null;
 }
@@ -30,7 +32,6 @@ const SOURCE_CONFIG: Record<string, any> = {
   default: { label: 'Отзыв', icon: <MessageCircle size={12} strokeWidth={3} />, borderClass: "group-hover:border-teal-500/50", glowClass: "group-hover:shadow-[0_0_30px_rgba(20,184,166,0.2)]", iconColor: "text-teal-400", checkActiveColor: "text-teal-400" }
 };
 
-// 🔥 Конфиг для бейджей категорий на фронте (темная тема)
 const CATEGORY_MAP: Record<string, { label: string, colorClass: string }> = {
     general: { label: 'Местное', colorClass: 'text-slate-400 bg-slate-800/50 border-slate-700/50' },
     kayak: { label: 'Сплавы', colorClass: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
@@ -59,7 +60,8 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
   return (
     <div className={cn(
-      "group relative flex flex-col flex-shrink-0 w-[85vw] md:w-[380px] p-6 rounded-[2rem] snap-center",
+      // ✅ ДОБАВЛЕН класс h-fit, чтобы карточки не растягивались по высоте соседей
+      "group relative flex flex-col flex-shrink-0 w-[85vw] md:w-[380px] p-6 rounded-[2rem] snap-center h-fit",
       "bg-slate-900/80 backdrop-blur-xl border border-white/5 shadow-xl", 
       "transition-all duration-500 ease-out cursor-default md:hover:-translate-y-1",
       config.borderClass, config.glowClass
@@ -70,13 +72,13 @@ const ReviewCard = ({ review }: { review: Review }) => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden shrink-0">
              {review.avatar ? (
-             <Image
-  src={review.avatar}
-  alt={review.name}
-  width={40}
-  height={40}
-  className="w-full h-full object-cover"
-/>
+               <Image
+                  src={review.avatar}
+                  alt={review.name}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+               />
              ) : (
                review.name[0]
              )}
@@ -84,14 +86,15 @@ const ReviewCard = ({ review }: { review: Review }) => {
           
           <div className="flex flex-col">
             <span className="text-sm font-bold text-white leading-none">{review.name}</span>
-            <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300 opacity-60 group-hover:opacity-100", config.iconColor)}>
+            {/* ✅ ИСПРАВЛЕНА ДОСТУПНОСТЬ: Убрана opacity-60 */}
+            <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300", config.iconColor)}>
                {config.icon}
                <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
             </div>
           </div>
         </div>
 
-        {/* 🔥 CATEGORY BADGE */}
+        {/* CATEGORY BADGE */}
         <div className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-widest", catConfig.colorClass)}>
             <Tags size={10} strokeWidth={2.5} />
             {catConfig.label}
@@ -105,7 +108,8 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
       {/* FOOTER */}
       <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-        <span className="text-[11px] font-mono text-slate-500 group-hover:text-slate-400 transition-colors">
+        {/* ✅ ИСПРАВЛЕНА ДОСТУПНОСТЬ: Изменен цвет на text-slate-400 (был text-slate-500) */}
+        <span className="text-[11px] font-mono text-slate-400 transition-colors">
             {time}
         </span>
         
@@ -124,20 +128,18 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  // 🔥 1. Вычисляем уникальные категории, которые РЕАЛЬНО ЕСТЬ в переданных отзывах
   const availableCategories = useMemo(() => {
     const categories = displayReviews.map(r => r.category || 'general');
     return Array.from(new Set(categories));
   }, [displayReviews]);
 
-  // 🔥 2. Фильтруем отзывы по выбранной вкладке
   const filteredReviews = useMemo(() => {
     if (activeCategory === 'all') return displayReviews;
     return displayReviews.filter(r => (r.category || 'general') === activeCategory);
   }, [activeCategory, displayReviews]);
 
-  // Умножаем массив, чтобы бегущая строка не прерывалась (даже если отзыв всего 1)
-  const marqueeList = [...filteredReviews, ...filteredReviews, ...filteredReviews, ...filteredReviews];
+  // ✅ БОЛЬШЕ НЕ ДУБЛИРУЕМ МАССИВ
+  const displayList = filteredReviews;
 
   return (
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
@@ -166,7 +168,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
             </div>
         </div>
 
-        {/* 🔥 ФИЛЬТРЫ КАТЕГОРИЙ (Показываем только если категорий больше 1) */}
+        {/* ФИЛЬТРЫ КАТЕГОРИЙ */}
         {availableCategories.length > 1 && (
             <div className="flex gap-2 md:gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <button
@@ -208,26 +210,32 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
          <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
          <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
-         {/* Анимация смены списка при фильтрации */}
-       <AnimatePresence mode="wait">
-  <motion.div 
-    key={activeCategory}
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    transition={{ duration: 0.3 }}
-    // ✅ ДОБАВЛЯЕМ АТРИБУТЫ ДОСТУПНОСТИ
-    tabIndex={0} 
-    role="region" 
-    aria-label={`Отзывы в категории ${activeCategory}`} 
-    // ✅ ДОБАВЛЯЕМ КЛАССЫ ФОКУСА
-    className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar md:animate-marquee md:hover:[animation-play-state:paused] md:focus:[animation-play-state:paused] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full md:w-max md:[animation-duration:100s] pb-8 md:pb-0"
-  >
-    {marqueeList.map((review, i) => (
-      <ReviewCard key={`${review.id}-${i}`} review={review} />
-    ))}
-  </motion.div>
-</AnimatePresence>
+         <div className="relative">
+           <AnimatePresence mode="wait">
+             <motion.div 
+                key={activeCategory}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                tabIndex={0} 
+                role="region" 
+                aria-label={`Отзывы в категории ${activeCategory}`} 
+                // ✅ УБРАНЫ классы md:animate-marquee и добавлены классы обычного скролла
+                className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8"
+              >
+                {displayList.map((review, i) => (
+                  <ReviewCard key={`${review.id}-${i}`} review={review} />
+                ))}
+              </motion.div>
+           </AnimatePresence>
+
+           {/* ✅ ДОБАВЛЕНА ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
+           <div className="absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
+              <ChevronRight size={14} />
+           </div>
+         </div>
       </div>
 
     </section>

@@ -1,3 +1,4 @@
+// src/features/tours/components/CalendarView.tsx
 "use client";
 
 import React, { useMemo } from 'react';
@@ -21,6 +22,11 @@ interface CalendarViewProps { events: Tour[]; }
 
 export default function CalendarView({ events }: CalendarViewProps) {
   const { groupedTours, tbaTours } = useMemo(() => {
+    
+    // 🔥 ОПРЕДЕЛЯЕМ НАЧАЛО СЕГОДНЯШНЕГО ДНЯ (чтобы отсечь то, что было вчера)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const explodedEvents: CalendarTour[] = events.flatMap((tour): CalendarTour[] => {
       let datesArray: any[] = [];
       try {
@@ -28,13 +34,31 @@ export default function CalendarView({ events }: CalendarViewProps) {
         else if (Array.isArray(tour.dates)) datesArray = tour.dates;
       } catch (e) { console.error("Ошибка парсинга дат для тура", tour.id); }
 
+      // Если у тура есть даты
       if (datesArray && datesArray.length > 0) {
-        return datesArray.map((dateObj, idx) => ({
+        
+        // 🔥 ОСТАВЛЯЕМ ТОЛЬКО БУДУЩИЕ ИЛИ СЕГОДНЯШНИЕ ДАТЫ
+        const futureDates = datesArray.filter(dateObj => {
+            if (!dateObj.start) return false;
+            const eventDate = new Date(dateObj.start);
+            eventDate.setHours(0, 0, 0, 0); // Сравниваем только дни
+            return eventDate.getTime() >= today.getTime();
+        });
+
+        // Если все даты тура остались в прошлом — мы его вообще не выводим
+        if (futureDates.length === 0) {
+            return [];
+        }
+
+        // Разворачиваем оставшиеся актуальные даты в отдельные карточки
+        return futureDates.map((dateObj, idx) => ({
           ...tour, date: dateObj.start || null, endDate: dateObj.end || null,
           guideId: dateObj.guide_id || null, originalId: tour.id,
           uniqueId: `${tour.id}-${dateObj.start}-${idx}`
         }));
       }
+
+      // Если дат изначально не было (это тур-анонс), оставляем его
       return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null } as CalendarTour];
     });
 
@@ -46,6 +70,7 @@ export default function CalendarView({ events }: CalendarViewProps) {
 
     const groups: Record<string, CalendarTour[]> = {};
     const tba: CalendarTour[] = [];
+    
     sorted.forEach(tour => {
       if (!tour.date) { tba.push(tour); return; }
       const date = new Date(tour.date);
@@ -54,19 +79,21 @@ export default function CalendarView({ events }: CalendarViewProps) {
       if (!groups[formattedKey]) groups[formattedKey] = [];
       groups[formattedKey].push(tour);
     });
+
     return { groupedTours: groups, tbaTours: tba };
   }, [events]);
 
   const monthKeys = Object.keys(groupedTours);
 
-  if (events.length === 0) {
+  // 🔥 ОБНОВЛЕННАЯ ПРОВЕРКА НА ПУСТОТУ (если все туры отсеялись)
+  if (events.length === 0 || (monthKeys.length === 0 && tbaTours.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-white/5 rounded-[3rem] bg-gradient-to-b from-white/[0.02] to-transparent">
         <div className="w-20 h-20 bg-slate-900 border border-white/5 rounded-3xl flex items-center justify-center mb-6 shadow-xl">
           <CalendarIcon size={32} className="text-teal-500/50" />
         </div>
-        <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Туров не найдено</h3>
-        <p className="text-slate-400 font-medium max-w-sm mx-auto">Попробуйте изменить фильтры или выберите другой тип приключений.</p>
+        <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Актуальных туров пока нет</h3>
+        <p className="text-slate-400 font-medium max-w-sm mx-auto">Но мы уже готовим новое расписание. Следите за анонсами!</p>
       </div>
     );
   }
@@ -117,7 +144,6 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
 
   return (
     <Link href={`/tour/${tour.slug}`} className="group block outline-none">
-      {/* whileInView и whileHover убраны — заменены на CSS */}
       <div className={cn(
         "relative flex items-stretch gap-3 sm:gap-5 p-3 sm:p-4 rounded-[1.5rem] transition-all duration-300",
         "bg-[#0d131a] border-2 border-white/5 hover:border-teal-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:scale-[0.995]",
@@ -153,7 +179,12 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
               <span className="flex items-center text-slate-500 before:content-['•'] before:mx-1.5 before:text-slate-700">до {endDateObj.getDate()} числа</span>
             )}
           </div>
-          <h4 className="text-base sm:text-xl font-black text-white leading-tight line-clamp-2 pr-2 group-hover:text-teal-300 transition-colors mb-2">{tour.title}</h4>
+          
+          {/* 🔥 ИСПРАВЛЕНИЕ: Убрали line-clamp-2, чтобы название выводилось полностью */}
+          <h4 className="text-base sm:text-xl font-black text-white leading-tight pr-2 group-hover:text-teal-300 transition-colors mb-2">
+            {tour.title}
+          </h4>
+          
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-400 font-medium">
             <MapPin size={14} className="shrink-0 text-teal-500/60" strokeWidth={2.5} />
             <span className="truncate">{tour.location}</span>
