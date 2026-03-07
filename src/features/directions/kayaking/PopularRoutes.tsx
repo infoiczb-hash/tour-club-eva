@@ -110,7 +110,7 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-        {/* OTHER FORMATS */}
+      {/* OTHER FORMATS */}
         <div
           ref={formatsView.ref}
           style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
@@ -122,30 +122,33 @@ export default function PopularRoutes() {
             </h3>
             <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
           </div>
+          
           <div className="relative">
-            <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:auto-cols-auto md:grid-rows-none md:grid-cols-3 gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {/* 🔥 ИСПРАВЛЕНО: Добавлено md:grid-flow-row и жесткие рамки колонок md:grid-cols-3 lg:grid-cols-6 */}
+            <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {otherFormats.map((format, idx) => {
                 const Icon = format.icon;
                 return (
-                  <div key={idx} className="snap-center bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 md:p-5 flex items-center gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
+                  <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center gap-3 md:gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
                       <Icon size={22} strokeWidth={1.5} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-white text-sm md:text-base leading-tight mb-1 group-hover:text-amber-400 transition-colors">{format.title}</h4>
-                      <p className="text-xs text-slate-400 font-medium line-clamp-1">{format.desc}</p>
+                      <h4 className="font-bold text-white text-sm leading-tight mb-1 group-hover:text-amber-400 transition-colors">{format.title}</h4>
+                      {/* line-clamp страхует текст от вылезания, если карточка сожмется */}
+                      <p className="text-[11px] md:text-xs text-slate-400 font-medium line-clamp-2 md:line-clamp-1">{format.desc}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
+             </div>
             <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
               <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} className="text-teal-400" />
             </div>
           </div>
         </div>
-      </div>
 
       {/* MODAL — layoutId и AnimatePresence оставляем, это UI */}
       <AnimatePresence>

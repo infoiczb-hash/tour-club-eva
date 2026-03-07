@@ -28,14 +28,14 @@ const fleet = [
 export default function Fleet() {
   const cardsView = useInView();
 
-  return (
+ return (
     <section className="pt-12 md:pt-20 pb-10 bg-[#020617] relative overflow-hidden text-slate-200 border-t border-white/5">
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
 
         {/* HEADER — статичный, не нужна анимация */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-4 md:mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
               <ShieldCheck size={14} className="text-teal-400" />
@@ -52,43 +52,57 @@ export default function Fleet() {
 
         {/* CARDS */}
         <div ref={cardsView.ref} className="relative mt-6 md:mt-8">
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-10 pt-8 md:pt-10 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-6 pt-4 md:pt-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {fleet.map((boat, i) => (
               <div
                 key={i}
-                style={{ opacity: cardsView.inView ? 1 : 0, transform: cardsView.inView ? 'translateY(0)' : 'translateY(30px)', transition: `opacity 0.6s ease ${i * 0.15}s, transform 0.6s ease ${i * 0.15}s` }}
-                className="group relative flex-shrink-0 snap-center w-[82vw] md:w-auto mt-8 md:mt-0"
+                style={{ 
+                  opacity: cardsView.inView ? 1 : 0, 
+                  transform: cardsView.inView ? 'translateY(0)' : 'translateY(30px)', 
+                  transition: `opacity 0.6s ease ${i * 0.15}s, transform 0.6s ease ${i * 0.15}s` 
+                }}
+                className="group relative flex-shrink-0 snap-center w-[85vw] md:w-auto bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 flex flex-col items-center text-center overflow-hidden transition-all duration-500 hover:border-teal-500/30 hover:bg-slate-900/60 shadow-xl hover:shadow-2xl h-full"
               >
-                {/* Лодка выходит за края карточки */}
-                <div className="absolute -top-20 md:-top-28 left-1/2 -translate-x-1/2 w-[110%] md:w-[125%] aspect-[2/1] z-20 pointer-events-none transition-transform duration-700 ease-out group-hover:-translate-y-6 group-hover:scale-110">
+                {/* Неоновый блюр на фоне карточки */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-teal-500/0 blur-[80px] rounded-full transition-all duration-500 group-hover:bg-teal-500/20 pointer-events-none" />
+
+                {/* 1. Аквариум для лодки: картинка больше не выпрыгивает за пределы карточки */}
+                <div className="relative w-full h-32 md:h-40 mb-6 flex items-center justify-center z-10 transition-transform duration-500 group-hover:-translate-y-2 group-hover:scale-105">
                   <Image
                     src={boat.image}
                     alt={boat.title}
                     fill
-                    className="object-contain drop-shadow-[0_25px_25px_rgba(0,0,0,0.85)]"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                    className="object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]"
+                    sizes="(max-width: 640px) 100vw, 33vw"
                     priority
                   />
                 </div>
-                <div className="relative bg-slate-900/40 border border-white/5 rounded-3xl p-4 pt-12 md:pt-16 pb-6 flex flex-col items-center text-center overflow-hidden transition-all duration-500 group-hover:border-teal-500/30 group-hover:bg-slate-900/60 shadow-xl group-hover:shadow-2xl h-full">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-teal-500/0 blur-[80px] rounded-full transition-all duration-500 group-hover:bg-teal-500/20 pointer-events-none" />
-                  <span className="inline-block mb-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[14px] font-black uppercase text-teal-500 tracking-widest relative z-10">
-                    {boat.tag}
-                  </span>
-                  <h3 className="font-black text-2xl text-white uppercase tracking-tight mb-3 relative z-10 group-hover:text-teal-300 transition-colors">
-                    {boat.title}
-                  </h3>
-                  <p className="text-sm text-slate-400 font-medium leading-relaxed relative z-10">{boat.desc}</p>
-                </div>
+
+                {/* 2. Бейдж вместимости: в общем потоке под лодкой */}
+                <span className="inline-block mb-4 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] md:text-xs font-black uppercase text-teal-400 tracking-widest relative z-10">
+                  {boat.tag}
+                </span>
+
+                {/* 3. Заголовок */}
+                <h3 className="font-black text-2xl md:text-3xl text-white uppercase tracking-tight mb-3 relative z-10 transition-colors">
+                  {boat.title}
+                </h3>
+
+                {/* 4. Описание: с отступами, чтобы не липло к краям */}
+                <p className="text-[13px] md:text-sm text-slate-400 font-medium leading-relaxed relative z-10 px-2 mt-auto">
+                  {boat.desc}
+                </p>
               </div>
             ))}
           </div>
-          <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
+          
+          {/* Подсказка для скролла на мобильных */}
+          <div className="md:hidden flex items-center justify-end gap-1.5 mt-2 pr-4 text-slate-500 pointer-events-none">
+            <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
+            <ChevronRight size={14} className="text-teal-500 animate-pulse" />
           </div>
         </div>
       </div>
     </section>
   );
-}
+  }

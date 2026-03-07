@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Coffee, Heart, Users, Briefcase, Dog, Baby } from 'lucide-react';
+import { Coffee, Heart, Users, Briefcase, Dog, Baby,ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
@@ -32,14 +32,16 @@ export default function SupFormats() {
             viewport={{ once: true }}
             className="text-center mb-10 md:mb-14"
         >
-            <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-widest text-slate-300">
-                Идеально подходит <span className="text-teal-500">для...</span>
-            </h3>
+           {/* Выровняли по левому краю (text-left) */}
+<h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6 md:mb-10 text-left">
+    Идеально подходит <br className="md:hidden" />
+    <span className="text-teal-500">для...</span>
+</h2>
         </motion.div>
 
         {/* ИНТЕРАКТИВНАЯ ЛЕНТА (Glassmorphism) */}
         {/* На мобилке: горизонтальный свайп. На десктопе: сетка в 1 ряд (6 колонок) */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-5 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-5 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {FORMATS.map((format, i) => {
             const Icon = format.icon;
             return (
@@ -67,6 +69,11 @@ export default function SupFormats() {
               </motion.div>
             );
           })}
+        </div>
+      {/* 🔥 ПОДСКАЗКА СНИЗУ (только для мобильных) */}
+        <div className="md:hidden flex items-center justify-end gap-1.5 mt-4 pr-4 text-slate-500 pointer-events-none">
+            <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
+            <ArrowRight size={14} className="text-teal-500 animate-pulse" />
         </div>
       </div>
     </section>
