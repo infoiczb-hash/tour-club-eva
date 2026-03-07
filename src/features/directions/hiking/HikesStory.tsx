@@ -36,42 +36,28 @@ export default function HikesStory() {
 
                 <div className="w-full h-px bg-gradient-to-r from-stone-800 to-transparent mb-8 md:mb-10" />
 
-                {/* 2. Рациональная часть (Список ценностей из HikesMeaning) */}
-                <ul className="space-y-4 mb-8 md:mb-10">
-                    <li className="flex items-start gap-3 group">
-                        <Check className="w-5 h-5 text-teal-500 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-                        <span className="text-[14px] md:text-base font-medium text-stone-300">
-                            Масштаб гор, захватывающий дух
-                        </span>
-                    </li>
-                    <li className="flex items-start gap-3 group">
-                        <Check className="w-5 h-5 text-teal-500 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-                        <span className="text-[14px] md:text-base font-medium text-stone-300">
-                            Погружение в другую культуру и быт
-                        </span>
-                    </li>
-                    <li className="flex items-start gap-3 group">
-                        <Check className="w-5 h-5 text-teal-500 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-                        <span className="text-[14px] md:text-base font-medium text-stone-300">
-                            Настоящий детокс: полное отключение от забот
-                        </span>
-                    </li>
-                </ul>
-
-                {/* 3. Кластер стильных тегов */}
-                <div className="flex flex-wrap gap-2 md:gap-3">
-                    {['Другой климат', 'Новые знакомства', 'Ментальная перезагрузка'].map((item, i) => (
-                        <div 
-                            key={i} 
-                            className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-stone-900/80 backdrop-blur-sm rounded-full border border-stone-800 hover:border-teal-500/30 transition-colors"
-                        >
-                            <Sparkles className="w-3.5 h-3.5 text-teal-500" />
-                            <span className="text-stone-400 font-bold text-[11px] md:text-xs uppercase tracking-wider">
-                                {item}
-                            </span>
-                        </div>
-                    ))}
-                </div>
+           {/* Единый блок впечатлений (Облако тегов) */}
+<div className="flex flex-wrap gap-3 mt-8">
+  {[
+    "Масштаб гор, захватывающий дух",
+    "Погружение в другую культуру и быт",
+    "Настоящий детокс: отключение от забот",
+    "Другой климат",
+    "Новые знакомства",
+    "Ментальная перезагрузка"
+  ].map((feature, idx) => (
+    <span 
+      key={idx} 
+      className="px-4 py-2.5 bg-white/5 border border-white/10 hover:border-teal-500/40 text-slate-300 hover:text-teal-400 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-xl flex items-center gap-2.5 transition-all shadow-sm cursor-default group"
+    >
+      <Sparkles 
+        size={16} 
+        className="text-teal-500/70 group-hover:text-teal-400 transition-colors" 
+      /> 
+      {feature}
+    </span>
+  ))}
+</div>
             </motion.div>
 
             {/* ВИЗУАЛЬНАЯ ЧАСТЬ (Атмосферное фото) */}

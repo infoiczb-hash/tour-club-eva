@@ -46,9 +46,9 @@ export default function HikesFAQ() {
                             className="text-left"
                         >
                             {/* 🔥 Исправленный заголовок: text-white, крупный шрифт, левое выравнивание */}
-                            <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-6 md:mb-10">
-                                ВАЖНО <br className="hidden md:block"/><span className="text-teal-500">ЗНАТЬ</span>
-                            </h2>
+                           <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white mb-8 md:mb-12">
+  FAQ<span className="text-teal-500">.</span>
+</h2>
                             
                             <div className="space-y-3 md:space-y-4">
                                 {FAQ_DATA.map((item, index) => (

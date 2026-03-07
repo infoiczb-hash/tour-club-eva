@@ -165,10 +165,22 @@ export default function SupCatalog() {
 
                 {/* 🔥 3. МАРШРУТЫ И ЛОКАЦИИ (Свайп на мобилке) */}
                 <div className="bg-slate-950/50 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 border border-white/5 relative">
-                    <p className="text-[12px] md:text-sm font-bold text-teal-500 uppercase tracking-widest mb-4 md:mb-6 flex items-center gap-2">
-                        <MapPin size={16} /> 
-                        {activeTab === 'lessons' ? "Доступные акватории:" : "Популярные маршруты:"}
-                    </p>
+                    
+                    {/* Шапка: Заголовок + "Мотай" во flex-wrap, чтобы не наезжать */}
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4 md:mb-6">
+                        <p className="text-[12px] md:text-sm font-bold text-teal-500 uppercase tracking-widest flex items-center gap-2 m-0">
+                            <MapPin size={16} /> 
+                            {activeTab === 'lessons' ? "Доступные акватории:" : "Популярные маршруты:"}
+                        </p>
+                        
+                        {/* Подсказка "Мотай" теперь в потоке, а не абсолютная */}
+                        {activeTab === 'tours' && (
+                            <div className="md:hidden flex items-center gap-1 text-slate-500 pointer-events-none">
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
+                                <ChevronRight size={12} className="text-teal-400 animate-pulse" />
+                            </div>
+                        )}
+                    </div>
                     
                     {/* Контейнер со скроллом */}
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 md:pb-0 -mx-5 px-5 md:mx-0 md:px-0 md:flex-wrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -188,14 +200,6 @@ export default function SupCatalog() {
                               ))
                         }
                     </div>
-
-                    {/* Подсказка "Мотай" для длинных маршрутов */}
-                    {activeTab === 'tours' && (
-                        <div className="md:hidden absolute top-5 right-5 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
-                            <ChevronRight size={12} />
-                        </div>
-                    )}
                 </div>
 
             </motion.div>
