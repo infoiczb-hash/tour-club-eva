@@ -45,7 +45,7 @@ export const routesData: RouteData[] = [
   {
     id: "tiraspol-slobodzea",
     title: "Тирасполь — Слободзея",
-    path: "Уход в дикую природу",
+    path: "Пляжи и зеленные берега",
     images: [
         "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771574860/kayaking3_wgvuux.jpg",
         "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771582857/photo_5357450194402269114_y_dq4n2c.jpg"

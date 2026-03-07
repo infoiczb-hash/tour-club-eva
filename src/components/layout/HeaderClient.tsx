@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Phone, ArrowRight, Instagram, Send } from "lucide-react";
 import { usePathname } from 'next/navigation';
+// ✅ Импортируем глобальный стор модалок
+import { useModalStore } from '@/shared/store/useModalStore';
+
 interface NavLink {
   name: string;
   href: string;
@@ -13,11 +16,14 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // ✅ Достаем функцию открытия из стора
+  const openContactModal = useModalStore((state) => state.openContactModal);
   const pathname = usePathname();
+
   // Нативный, не блокирующий TBT слушатель скролла
   useEffect(() => {
     let lastScrollY = window.scrollY;
-    
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY > 50 && currentScrollY > lastScrollY) {
@@ -35,9 +41,9 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
   // Блокируем скролл фона при открытом мобильном меню
   useEffect(() => {
     if (isMobileMenuOpen) {
-        document.body.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
     } else {
-        document.body.style.overflow = '';
+      document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
   }, [isMobileMenuOpen]);
@@ -46,16 +52,16 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled 
-            ? "py-4 bg-slate-950/80 backdrop-blur-md border-b border-white/10" 
+          isScrolled
+            ? "py-4 bg-slate-950/80 backdrop-blur-md border-b border-white/10"
             : "py-6 bg-transparent"
         }`}
       >
         <div className="container mx-auto px-4 flex items-center justify-between">
-          
+
           {/* ЛОГОТИП */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="relative z-50 group"
             onClick={() => setIsMobileMenuOpen(false)}
           >
@@ -73,11 +79,11 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           <nav className="hidden md:flex items-center gap-10">
             {navLinks.map((link) => (
               <Link
-  key={link.name}
-  href={link.href}
-  aria-current={pathname === link.href ? 'page' : undefined}
-  className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
->
+                key={link.name}
+                href={link.href}
+                aria-current={pathname === link.href ? 'page' : undefined}
+                className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+              >
                 {link.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-500 transition-all duration-300 group-hover:w-full" />
               </Link>
@@ -95,13 +101,14 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
         </div>
       </header>
 
-      {/* МОБИЛЬНОЕ МЕНЮ (Анимация на чистом CSS) */}
+      {/* МОБИЛЬНОЕ МЕНЮ */}
       <div
-        className={`fixed inset-0 z-40 bg-slate-950/95 flex flex-col justify-between px-6 pb-10 pt-28 h-[100dvh] transition-all duration-300 ease-in-out ${
+        className={`fixed inset-0 z-40 bg-slate-950 flex flex-col px-6 pt-20 pb-6 h-[100dvh] transition-all duration-300 ease-in-out ${
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         }`}
       >
-        <div className="flex flex-col gap-6 mt-4">
+        {/* Навигационные ссылки */}
+        <div className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 py-4">
           {navLinks.map((link, i) => (
             <Link
               key={link.name}
@@ -120,21 +127,25 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           ))}
         </div>
 
+        {/* Нижняя часть */}
         <div
-          className={`mt-auto flex flex-col gap-6 transition-all duration-500 delay-300 ${
+          className={`flex-shrink-0 flex flex-col gap-4 transition-all duration-500 delay-300 ${
             isMobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           }`}
         >
-          <Link
-            href="/#contacts" 
-            onClick={() => setIsMobileMenuOpen(false)}
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              openContactModal(undefined, 'TOUR'); // ✅ Вызываем глобальную модалку
+            }}
             className="w-full py-4 bg-teal-500 text-slate-950 font-bold uppercase tracking-widest text-sm text-center rounded-xl hover:bg-teal-400 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             Связаться с нами
             <ArrowRight size={18} />
-          </Link>
+          </button>
 
-          <div className="flex items-end justify-between border-t border-white/10 pt-6 pb-2">
+          <div className="flex items-center justify-between border-t border-white/10 pt-4">
             <div className="flex flex-col gap-2">
               <a href="tel:+37377770141" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2">
                 <Phone size={14} /> +373 777 70141
@@ -143,12 +154,22 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
                 info@evatur.club
               </a>
             </div>
-            
+
             <div className="flex gap-3">
-              <a href="https://t.me/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
+              <a
+                href="https://t.me/evaturclub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all"
+              >
                 <Send size={16} className="-ml-0.5" />
               </a>
-              <a href="https://instagram.com/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
+              <a
+                href="https://instagram.com/evaturclub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all"
+              >
                 <Instagram size={16} />
               </a>
             </div>

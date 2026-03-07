@@ -15,8 +15,8 @@ export default function Header() {
   // Теперь этот компонент 100% статичный!
 
   return (
-    <Suspense fallback={<div className="h-20" />}>
-     <HeaderClient navLinks={baseNavLinks} />
-    </Suspense>
+        <HeaderClient navLinks={baseNavLinks} />
+  
   );
 };
+

@@ -56,7 +56,7 @@ export default function ToursBrowser({
     categories = [], // Принимаем категории с сервера
     title = "Афиша Приключений", 
     subtitle = "ТУРЫ КЛУБА",
-    limit = 16
+    limit = 16 
 }: ToursBrowserProps) {
   
   // ✅ ПЕРЕНЕСЛИ ВЫЗОВ ХУКА СЮДА, ВНУТРЬ КОМПОНЕНТА!
@@ -166,9 +166,9 @@ export default function ToursBrowser({
         <div className="mb-8 md:mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                <CalendarIcon size={14} className="text-teal-400" />
-               <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
+              <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
             </div>
-            <h1 className="text-3xl md:text-5xl uppercase tracking-tighter leading-[0.9] text-white font-black">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                 {title}
             </h1>
         </div>
@@ -264,15 +264,14 @@ export default function ToursBrowser({
             </AnimatePresence>
         </div>
 
-
-        {/* =======================================================
+{/* =======================================================
             DESKTOP CONTROLS (Классическая панель)
            ======================================================= */}
         <div className="hidden lg:block sticky top-4 z-40 mb-12">
             <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl flex flex-row items-center justify-between gap-4">
                 
                 {/* View Switcher */}
-                <div className="bg-white/5 p-1 rounded-xl flex items-center">
+                <div className="bg-white/5 p-1 rounded-xl flex items-center shrink-0">
                     <button 
                         onClick={() => setViewMode('grid')}
                         className={cn(
@@ -293,17 +292,16 @@ export default function ToursBrowser({
                     </button>
                 </div>
 
-                <div className="w-px h-8 bg-white/10" />
+                <div className="w-px h-8 bg-white/10 shrink-0" />
 
-                {/* Categories */}
-                <div className="flex-1 flex flex-wrap items-center justify-center gap-1">
-                    {/* ✅ ИСПОЛЬЗУЕМ ДИНАМИЧЕСКИЕ КАТЕГОРИИ */}
+                {/* Categories (✅ ИСПРАВЛЕНО: Убран flex-wrap, добавлен скролл и выравнивание влево) */}
+                <div className="flex-1 flex overflow-x-auto hide-scrollbar items-center justify-start gap-1.5 px-2 mask-edges">
                     {displayCategories.map(cat => (
                         <button
                             key={cat.id}
                             onClick={() => handleCategoryClick(cat.slug)}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border border-transparent",
+                                "shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border border-transparent",
                                 activeCategory === cat.slug
                                     ? "text-teal-400 bg-teal-500/10 border-teal-500/20" 
                                     : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -314,7 +312,7 @@ export default function ToursBrowser({
                     ))}
                 </div>
 
-                <div className="w-px h-8 bg-white/10" />
+                <div className="w-px h-8 bg-white/10 shrink-0" />
 
                 {/* All Tours Link */}
                 <Link 
@@ -346,7 +344,7 @@ export default function ToursBrowser({
                     <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                         <Flame size={18} className="text-amber-500 animate-pulse" />
                         <h3 id="hot-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
-                            Ближайшие туры на 2 недели
+                            Ближайшие туры
                         </h3>
                     </div>
 

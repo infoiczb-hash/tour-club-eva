@@ -1,3 +1,4 @@
+// src/features/blog/components/BlogSection.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -7,25 +8,82 @@ import { ArrowRight, BookOpen, PenLine, Filter, User } from "lucide-react";
 import { Blog } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
 
-interface BlogSectionProps {
-  posts: Blog[];
+// ✅ ДОБАВИЛИ ТИПЫ ДЛЯ НОВОЙ СТРУКТУРЫ
+interface BlogCategory {
+  id: string;
+  slug: string;
+  title: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
-export default function BlogSection({ posts }: BlogSectionProps) {
+// ✅ ИСПРАВЛЕННЫЙ ИНТЕРФЕЙС: Точное совпадение с тем, что возвращает Prisma
+interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags'> {
+  tags?: string[];
+  categoryId?: string | null;
+  blogCategory?: { 
+    id: string; 
+    slug: string; 
+    title: string; 
+    isActive: boolean; 
+    sortOrder: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+  guide?: {
+    id: string;
+    name: string;
+    role: string;
+    image: string | null;
+  } | null;
+}
+
+interface BlogSectionProps {
+  posts: ExtendedBlog[];
+  categories?: BlogCategory[];
+}
+
+export default function BlogSection({ posts, categories = [] }: BlogSectionProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedAuthor, setSelectedAuthor] = useState("all");
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  const categories = ["all", ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))];
+  const displayCategories = useMemo(() => {
+    const allBtn = { id: 'all', slug: 'all', label: 'Все темы' };
+    const dbCats = categories
+      .filter(c => c.isActive !== false)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map(c => ({ id: c.id, slug: c.slug, label: c.title }));
+    return [allBtn, ...dbCats];
+  }, [categories]);
+
   const authors = ["all", ...Array.from(new Set(posts.map(p => p.author_name).filter(Boolean)))];
+
+  const getLabel = (post: ExtendedBlog): string => {
+    if (post.categoryId) {
+      const cat = categories.find(c => c.id === post.categoryId);
+      if (cat) return cat.title;
+    }
+    return post.blogCategory?.title || post.category || 'Статья';
+  };
 
   const filteredPosts = useMemo(() => {
     return posts.filter(post => {
-      const matchCat = activeCategory === "all" || post.category === activeCategory;
+      // Проверка категории
+      let matchCat = false;
+      if (activeCategory === "all") {
+         matchCat = true;
+      } else {
+         const cat = categories.find(c => c.id === post.categoryId);
+         const postSlug = cat?.slug || post.blogCategory?.slug || post.category?.toLowerCase();
+         matchCat = postSlug === activeCategory.toLowerCase();
+      }
+
+      // Проверка автора
       const matchAuth = selectedAuthor === "all" || post.author_name === selectedAuthor;
       return matchCat && matchAuth;
     });
-  }, [posts, activeCategory, selectedAuthor]);
+  }, [posts, activeCategory, selectedAuthor, categories]);
 
   const LIMITED_POSTS = filteredPosts.slice(0, 7);
   const featuredPost = LIMITED_POSTS[0];
@@ -61,17 +119,17 @@ export default function BlogSection({ posts }: BlogSectionProps) {
 
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
             <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-              {categories.map(cat => (
+              {displayCategories.map(cat => (
                 <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.slug)}
                   className={`px-4 py-2 rounded-xl text-[14px] md:text-xs font-bold uppercase whitespace-nowrap transition-all border ${
-                    activeCategory === cat
+                    activeCategory === cat.slug
                       ? 'bg-teal-400 text-slate-900 border-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.3)]'
                       : 'bg-slate-900 border-white/10 text-slate-400 hover:border-teal-500/50 hover:text-white'
                   }`}
                 >
-                  {cat === 'all' ? 'Все темы' : cat}
+                  {cat.label}
                 </button>
               ))}
             </div>
@@ -109,8 +167,6 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                   src={featuredPost.image || '/placeholder.jpg'}
                   alt={featuredPost.title}
                   fill
-                  // FIX #7: sizes помогает браузеру выбрать правильный размер
-                  // quality передаётся в cloudinaryLoader → supabaseLoader
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   quality={75}
                   priority
@@ -119,7 +175,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
                 <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end items-start">
                   <span className="px-3 py-1.5 bg-teal-400 text-slate-900 text-[14px] font-black uppercase tracking-widest rounded-lg mb-4 shadow-lg shadow-teal-500/20">
-                    {featuredPost.category}
+                    {getLabel(featuredPost)}
                   </span>
                   <h3 className="text-2xl md:text-5xl font-black text-white leading-[1.1] mb-6 group-hover:text-teal-400 transition-colors line-clamp-3 drop-shadow-lg">
                     {featuredPost.title}
@@ -142,7 +198,7 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                     <div className="flex flex-col">
                       <span className="text-[12px] font-black text-white uppercase tracking-wider mb-0.5">{featuredPost.author_name}</span>
                       <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium">
-                        <span>{formatDate(featuredPost.date)}</span>
+                        <span>{formatDate(featuredPost.date || featuredPost.createdAt)}</span>
                         <span className="w-1 h-1 bg-slate-600 rounded-full" />
                         <span>{featuredPost.read_time} мин</span>
                       </div>
@@ -167,7 +223,6 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                       src={post.image || '/placeholder.jpg'}
                       alt={post.title}
                       fill
-                      // FIX #7: маленькие карточки — небольшой размер
                       sizes="96px"
                       quality={75}
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -176,9 +231,9 @@ export default function BlogSection({ posts }: BlogSectionProps) {
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="px-1.5 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-[10px] font-bold text-teal-400 uppercase tracking-widest">
-                        {post.category}
+                        {getLabel(post)}
                       </span>
-                      <span className="text-[10px] text-slate-300 font-mono">{formatDate(post.date)}</span>
+                      <span className="text-[10px] text-slate-300 font-mono">{formatDate(post.date || post.createdAt)}</span>
                     </div>
                     <h4 className="font-bold text-slate-200 text-sm md:text-base leading-snug group-hover:text-teal-400 transition-colors line-clamp-2">
                       {post.title}

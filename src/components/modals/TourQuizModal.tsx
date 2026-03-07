@@ -447,7 +447,7 @@ function getRecommendations(answers: Answers): DirectionResult[] {
         if (reasons.length === 0) {
             if (type === "sup") reasons.push("Самый популярный и эстетичный вид отдыха на воде.");
             if (type === "kayaking") reasons.push("Классика туризма: вода, природа и отличная компания.");
-            if (type === "hiking") reasons.push("Глубокое погружение в дикую природу вдали от цивилизации.");
+            if (type === "hiking") reasons.push("Глубокое погружение в природу вдали от цивилизации.");
             if (type === "local") reasons.push("Отличный способ сбежать от городской суеты на один день.");
         }
 

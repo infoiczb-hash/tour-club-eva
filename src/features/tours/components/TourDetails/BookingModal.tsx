@@ -75,10 +75,10 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
   }, [tickets, tour]);
 
   const getSmartPlaceholder = () => {
-    if (tour.type === 'water') return 'Укажите рост/вес участников для подбора жилетов...';
-    if (tour.type === 'abroad' || tour.location?.toLowerCase().includes('румыния')) return 'Наличие виз / гражданства, особые пожелания...';
-    if (tour.type === 'kids') return 'Укажите возраст детей и наличие аллергии...';
-    return 'Есть ли аллергии? Нужен ли прокат снаряжения?';
+    if (tour.type === 'water') return 'Укажите для каждого участника, какой размер жилета взять у нас есть детские и от XS до 5XL. Сообщите если будут с вами дети до 10 лет.';
+    if (tour.type === 'abroad' || tour.location?.toLowerCase().includes('румыния')) return 'Какое снаряжение вам надо? Если у Вас действующий биометрический паспорт?';
+    if (tour.type === 'kids') return 'Укажите возраст детей ...';
+    return 'Задайте вопрос и мы постараемся ответить на него в короткие сроки?';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

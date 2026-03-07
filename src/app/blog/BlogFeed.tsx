@@ -268,10 +268,10 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
               </div>
               <div>
                 <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
-                  У вас есть крутая история?
+                  У вас есть тематическая статья?
                 </h3>
                 <p className="text-sm md:text-base text-slate-400 font-medium">
-                  Станьте автором полевого журнала и поделитесь опытом с тысячами единомышленников.
+                  Станьте автором полевого журнала и поделитесь опытом с нашим клубом.
                 </p>
               </div>
             </div>

@@ -23,8 +23,8 @@ const config: Config = {
         sans: ['var(--font-inter)'], // Для основного текста
         display: ['var(--font-montserrat)'], // Для заголовков
       },
-      // ✅ ДОБАВЛЕНО: Анимация для главного заголовка (LCP)
-    keyframes: {
+      // Анимация для главного заголовка (LCP)
+      keyframes: {
         'hero-title': {
           '0%': { opacity: '0', transform: 'scale(0.9)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
@@ -33,14 +33,17 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         }
-        },
+      },
       animation: {
         'hero-title': 'hero-title 0.8s ease-out forwards',
         'fade-in-up': 'fade-in-up 0.8s ease-out forwards',
       }
     }
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography") // ✅ ВКЛЮЧИЛИ ПЛАГИН ЗДЕСЬ
+  ],
 };
 
 export default config;

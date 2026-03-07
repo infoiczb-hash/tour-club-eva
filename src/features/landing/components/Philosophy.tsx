@@ -124,7 +124,7 @@ export default function Philosophy() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 backdrop-blur-md mb-6">
                 <Compass size={16} className="text-teal-400" />
-                <span className="text-l font-black uppercase tracking-[0.15em] text-teal-300">Ценности</span>
+                <span className="text-sm font-black uppercase tracking-[0.15em] text-teal-300">Ценности</span>
               </div>
 
               <h2 className="text-4xl sm:text-5xl md:text-6xl uppercase tracking-tighter leading-[1.1] mb-6">

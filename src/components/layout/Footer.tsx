@@ -77,7 +77,7 @@ export const Footer = () => {
                         Направления Клуба
                     </Link>
                     <Link href="/fun" className={linkStyles}>
-                        Фан-сектор 🎲
+                        Тесты и квизы
                     </Link>
                     <Link href="/blog" className={linkStyles}>
                         Блог клуба

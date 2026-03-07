@@ -1,3 +1,4 @@
+// src/components/modals/ContactHubModal.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -85,9 +86,9 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            // 🔥 РАСШИРИЛИ ДО max-w-2xl, ДОБАВИЛИ h-[90vh] ДЛЯ МОБИЛКИ
-            role="dialog" aria-modal="true" aria-labelledby="modal-contact-title" className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-t-[2rem] md:rounded-3xl shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative"
-                    >
+            role="dialog" aria-modal="true" aria-labelledby="modal-contact-title" 
+            className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-t-[2rem] md:rounded-3xl shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative"
+          >
             {/* Язычок для мобилки (декор) */}
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-1 md:hidden" />
 
@@ -100,7 +101,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                   </button>
                </div>
                
-               {/* 🔥 TABS (FLEX-WRAP: Облако тегов) */}
+               {/* TABS (Оставили wrap как договаривались) */}
                <div className="flex flex-wrap gap-2.5">
                   {TABS.map(tab => {
                       const isActive = activeTab === tab.id;
@@ -134,9 +135,9 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                        <p className="text-slate-400 text-base md:text-lg">Сообщение отправлено, мы скоро с вами свяжемся.</p>
                    </div>
                ) : (
-                   <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+                   <form onSubmit={handleSubmit} className="flex flex-col h-full">
                        
-                       <div className="space-y-6 md:space-y-8">
+                       <div className="space-y-6 md:space-y-8 flex-1">
                            {/* Context Banner */}
                            {activeTab === 'TOUR' && tourContext && (
                                <div className="bg-teal-900/20 border border-teal-500/30 p-4 rounded-2xl flex items-center gap-3">
@@ -147,23 +148,26 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
 
                            {/* --- COMMON FIELDS --- */}
                            <div className="space-y-4">
-                               <div className="relative">
-                                   <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                   <input required placeholder="Ваше имя" className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:border-teal-500 outline-none transition-colors" 
+                               <div className="relative group">
+                                   <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <input required placeholder="Ваше имя" 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.name || ''} onChange={e => updateField('name', e.target.value)}
                                    />
                                </div>
                                
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                   <div className="relative">
-                                       <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input placeholder="+373..." className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:border-teal-500 outline-none transition-colors" 
+                                   <div className="relative group">
+                                       <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                       <input placeholder="+373..." 
+                                           className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                            value={formData.phone || ''} onChange={e => updateField('phone', e.target.value)}
                                        />
                                    </div>
-                                   <div className="relative">
-                                       <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input placeholder="Telegram / Insta" className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:border-teal-500 outline-none transition-colors" 
+                                   <div className="relative group">
+                                       <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                       <input placeholder="Telegram / Insta" 
+                                           className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                            value={formData.social || ''} onChange={e => updateField('social', e.target.value)}
                                        />
                                    </div>
@@ -176,7 +180,8 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                            {/* HR */}
                            {activeTab === 'HR' && (
                                <div className="space-y-4 animate-in fade-in">
-                                   <select required className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base focus:border-teal-500 outline-none appearance-none cursor-pointer"
+                                   <select required 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none appearance-none cursor-pointer transition-all"
                                        value={formData.role || ''} onChange={e => updateField('role', e.target.value)}
                                    >
                                       <option value="" disabled>Кем вы хотите быть?</option>
@@ -187,10 +192,12 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                        <option value="photo">Фотограф / Контент</option>
                                        <option value="other">Другое</option>
                                    </select>
-                                   <textarea required placeholder="Ваш опыт (где работали, навыки, хобби)" className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base h-24 md:h-32 resize-none focus:border-teal-500 outline-none transition-colors"
+                                   <textarea required placeholder="Ваш опыт (где работали, навыки, хобби)" 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[120px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.experience || ''} onChange={e => updateField('experience', e.target.value)}
                                    />
-                                   <textarea required placeholder="Почему хотите именно к нам?" className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base h-24 md:h-32 resize-none focus:border-teal-500 outline-none transition-colors"
+                                   <textarea required placeholder="Почему хотите именно к нам?" 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[120px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.motivation || ''} onChange={e => updateField('motivation', e.target.value)}
                                    />
                                </div>
@@ -198,17 +205,18 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
 
                            {/* BLOG */}
                            {activeTab === 'BLOG' && (
-                               <div className="space-y-4 animate-in fade-in flex flex-col h-full">
+                               <div className="space-y-4 animate-in fade-in">
                                    <div className="flex gap-2 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
                                        {['idea', 'text'].map(type => (
                                            <button key={type} type="button" onClick={() => updateField('format', type)} 
-                                               className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider rounded-xl transition-colors ${formData.format === type ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                                               className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider rounded-xl transition-colors ${formData.format === type ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
                                            >
                                                {type === 'idea' ? 'Есть идея' : 'Готовый текст'}
                                            </button>
                                        ))}
                                    </div>
-                                   <textarea required placeholder="Опишите тему или дайте ссылку на Google Docs..." className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base flex-1 min-h-[150px] md:min-h-[200px] resize-none focus:border-teal-500 outline-none transition-colors"
+                                   <textarea required placeholder="Опишите тему или дайте ссылку на Google Docs..." 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
                                    />
                                </div>
@@ -216,14 +224,16 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
 
                            {/* B2B */}
                            {activeTab === 'B2B' && (
-                               <div className="space-y-4 animate-in fade-in flex flex-col h-full">
-                                   <div className="relative">
-                                       <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input placeholder="Название компании (необязательно)" className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:border-teal-500 outline-none transition-colors"
+                               <div className="space-y-4 animate-in fade-in">
+                                   <div className="relative group">
+                                       <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                       <input placeholder="Название компании (необязательно)" 
+                                           className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                            value={formData.company || ''} onChange={e => updateField('company', e.target.value)}
                                        />
                                    </div>
-                                   <textarea required placeholder="Опишите масштаб выезда: количество человек, пожелания, примерные даты..." className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base flex-1 min-h-[150px] md:min-h-[200px] resize-none focus:border-teal-500 outline-none transition-colors"
+                                   <textarea required placeholder="Опишите масштаб выезда: количество человек, пожелания, примерные даты..." 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
                                    />
                                </div>
@@ -231,7 +241,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
 
                            {/* REVIEW */}
                            {activeTab === 'REVIEW' && (
-                               <div className="space-y-4 animate-in fade-in flex flex-col h-full">
+                               <div className="space-y-4 animate-in fade-in">
                                    <div className="flex justify-center gap-3 bg-slate-950 py-4 rounded-2xl border border-slate-800">
                                        {[1, 2, 3, 4, 5].map(star => (
                                            <button key={star} type="button" onClick={() => updateField('rating', star)} className="transition-transform hover:scale-110 p-1">
@@ -239,7 +249,8 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                            </button>
                                        ))}
                                    </div>
-                                   <textarea required placeholder="Ваши честные впечатления о туре..." className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base flex-1 min-h-[150px] md:min-h-[200px] resize-none focus:border-teal-500 outline-none transition-colors"
+                                   <textarea required placeholder="Ваши честные впечатления о туре..." 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
                                    />
                                </div>
@@ -247,9 +258,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
 
                            {/* TOUR / HELP */}
                            {(activeTab === 'TOUR' || activeTab === 'HELP') && (
-                               <div className="animate-in fade-in flex flex-col h-full flex-1">
-                                   <textarea required placeholder={activeTab === 'TOUR' ? "Напишите ваш вопрос (например: можно ли взять собаку?)..." : "Опишите ситуацию, с которой нужна помощь..."} 
-                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base flex-1 min-h-[120px] md:min-h-[160px] resize-none focus:border-teal-500 outline-none transition-colors"
+                               <div className="animate-in fade-in">
+                                   <textarea required 
+                                       placeholder={activeTab === 'TOUR' ? "Напишите ваш вопрос (например: можно ли взять собаку?)..." : "Опишите ситуацию, с которой нужна помощь..."} 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
                                    />
                                </div>
@@ -259,24 +271,27 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                        {/* Honeypot (Hidden) */}
                        <input ref={honeypotRef} type="text" name="website" className="hidden" autoComplete="off" tabIndex={-1} />
 
-                       {/* 🔥 КНОПКА ОТПРАВКИ (Прижата к низу) */}
-                       <div className="mt-auto pt-6 md:pt-8">
+                       {/* 🔥 КНОПКА ОТПРАВКИ И ТЕЛЕГРАМ (Жестко отделены от контента) */}
+                       <div className="mt-8 pt-6 border-t border-white/5 shrink-0 flex flex-col gap-4">
                            <button 
                                disabled={status === 'loading'}
                                className="w-full py-4 md:py-5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black text-base md:text-lg uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] flex items-center justify-center gap-3 active:scale-[0.98]"
                            >
                                {status === 'loading' ? <Loader2 className="animate-spin" size={24} /> : <><Send size={20}/> Отправить</>}
                            </button>
+                           
+                           <a 
+                             href="https://t.me/romansvtirase" 
+                             target="_blank" 
+                             rel="noopener noreferrer" 
+                             className="text-xs md:text-sm font-bold text-slate-500 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mb-2" 
+                             aria-label="Наш Telegram"
+                           >
+                              <MessageSquare size={16}/> Срочно? Написать в Telegram
+                           </a>
                        </div>
                    </form>
                )}
-            </div>
-
-            {/* FOOTER */}
-            <div className="p-5 border-t border-white/5 bg-slate-950/80 backdrop-blur-md text-center shrink-0">
-               <a href="https://t.me/romansvtirase" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm font-bold text-slate-500 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2" aria-label="Наш Telegram">
-                  <MessageSquare size={16}/> Срочно? Написать в Telegram
-               </a>
             </div>
 
           </motion.div>

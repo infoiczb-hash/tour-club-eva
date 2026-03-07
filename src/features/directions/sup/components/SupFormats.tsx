@@ -11,12 +11,13 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 // Наши форматы
 const FORMATS = [
-  { icon: Heart, label: "Романтика" },
-  { icon: Briefcase, label: "Бизнес-встречи" },
-  { icon: Users, label: "Компании друзей" },
-  { icon: Coffee, label: "Тимбилдинг" },
-  { icon: Dog, label: "С собакой" },
-  { icon: Baby, label: "Семья" }
+  { icon: Heart, label: "Романтики/Свиданий" },
+  { icon: Briefcase, label: "Бизнес-встреч" },
+  { icon: Users, label: "Для компании друзей" },
+  { icon: Coffee, label: "Тимбилдинга" },
+  { icon: Dog, label: "Прогулок собакой на воде" },
+  { icon: Baby, label: "Для семьи" },
+  { icon: Baby, label: "Для развития уверенности" }
 ];
 
 export default function SupFormats() {
