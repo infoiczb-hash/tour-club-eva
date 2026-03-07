@@ -157,12 +157,12 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-2xl pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
-            >
+              role="dialog" aria-modal="true" aria-labelledby="modal-booking-title" className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-2xl pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
+                        >
               
               <div className="flex items-center justify-between p-5 border-b border-white/5 bg-white/5 shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-white uppercase tracking-wide leading-none mb-1">
+                  <h3 id="modal-booking-title" className="text-lg font-bold text-white uppercase tracking-wide leading-none mb-1">
                     {step === 'form' ? 'Бронирование' : 'Успешно!'}
                   </h3>
                   <p className="text-xs text-teal-400 font-bold truncate max-w-[250px]">

@@ -53,10 +53,11 @@ export default function HikesFAQ() {
                             <div className="space-y-3 md:space-y-4">
                                 {FAQ_DATA.map((item, index) => (
                                     <div key={index} className="bg-stone-900/50 backdrop-blur-sm border border-stone-800 rounded-2xl overflow-hidden hover:border-teal-900/50 transition-colors shadow-lg">
-                                        <button 
-                                            onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                                            className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
-                                        >
+                                        <button
+  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+  aria-expanded={openIndex === index}
+  className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
+>
                                             <span className="font-bold pr-4 text-[14px] md:text-base text-stone-200 group-hover:text-white transition-colors">
                                                 {item.q}
                                             </span>

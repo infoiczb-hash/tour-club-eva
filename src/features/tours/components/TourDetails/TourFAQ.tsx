@@ -73,9 +73,10 @@ export default function TourFAQ({ tour }: TourFAQProps) {
               )}
             >
               <button
-                onClick={() => toggleItem(index)}
-                className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
-              >
+  onClick={() => toggleItem(index)}
+  aria-expanded={openIndex === index}
+  className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
+>
                 <span className={clsx(
                   "text-base md:text-lg font-bold pr-8 transition-colors print:text-black",
                   isOpen && !isPrinting ? "text-teal-400" : "text-white group-hover:text-teal-200"

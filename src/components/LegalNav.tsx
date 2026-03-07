@@ -52,11 +52,12 @@ export default function LegalNav({ currentPage }: LegalNavProps) {
           const Icon = link.icon;
           
           return (
-            <Link 
-              key={link.id} 
-              href={link.href}
-              className="group flex items-center justify-between p-4 md:p-5 rounded-2xl bg-slate-900/50 backdrop-blur-sm border border-white/5 hover:border-white/20 hover:bg-slate-800/80 transition-all duration-300"
-            >
+           <Link
+  key={link.id}
+  href={link.href}
+  aria-current={link.id === currentPage ? 'page' : undefined}
+  className="group flex items-center justify-between p-4 md:p-5 rounded-2xl bg-slate-900/50 ..."
+>
               <div className="flex items-center gap-4">
                 {/* Иконка */}
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${link.bgLight} ${link.iconColor} group-hover:scale-110 transition-transform duration-300`}>

@@ -84,10 +84,11 @@ export default function KidsFAQ() {
                                     isOpen ? "border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.05)]" : "border-white/5 hover:border-amber-500/20 hover:bg-slate-900"
                                 )}
                             >
-                                <button 
-                                    onClick={() => toggleAccordion(item.id)}
-                                    className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
-                                >
+                               <button
+  onClick={() => toggleAccordion(item.id)}
+  aria-expanded={openId === item.id}
+  className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
+>
                                     <h3 className={cn(
                                         "text-[15px] md:text-lg font-bold pr-6 transition-colors duration-300",
                                         isOpen ? "text-amber-400" : "text-white group-hover:text-amber-200"

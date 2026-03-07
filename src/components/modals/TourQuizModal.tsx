@@ -165,8 +165,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
-          >
+            role="dialog" aria-modal="true" aria-labelledby="modal-quiz-title" className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"         >
             <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
                <X size={20} />
             </button>
@@ -197,7 +196,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
                      exit={{ x: -20, opacity: 0 }}
                      className="flex-1"
                   >
-                     <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
+                     <h3 id="modal-quiz-title" className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
                         {currentQ.question}
                      </h3>
                      <p className="text-slate-400 text-sm md:text-base mb-8 font-medium">

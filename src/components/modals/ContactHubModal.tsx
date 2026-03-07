@@ -86,15 +86,15 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
             exit={{ opacity: 0, y: 100, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             // 🔥 РАСШИРИЛИ ДО max-w-2xl, ДОБАВИЛИ h-[90vh] ДЛЯ МОБИЛКИ
-            className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-t-[2rem] md:rounded-3xl shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative"
-          >
+            role="dialog" aria-modal="true" aria-labelledby="modal-contact-title" className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-t-[2rem] md:rounded-3xl shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative"
+                    >
             {/* Язычок для мобилки (декор) */}
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-1 md:hidden" />
 
             {/* HEADER */}
             <div className="p-5 md:p-8 pb-4 md:pb-6 border-b border-white/5 bg-slate-900 z-10 shrink-0">
                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-white font-black text-2xl md:text-3xl tracking-tight">Центр связи</h3>
+                  <h3 id="modal-contact-title" className="text-white font-black text-2xl md:text-3xl tracking-tight">Центр связи</h3>
                   <button onClick={onClose} aria-label="Закрыть" className="p-2.5 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
                       <X size={20}/>
                   </button>
