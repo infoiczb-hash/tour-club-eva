@@ -83,10 +83,11 @@ export default function SafetyRegulations() {
                   isOpen ? "bg-slate-900 border-rose-500/30 shadow-[0_0_20px_rgba(225,29,72,0.05)]" : "bg-slate-900/40 border-white/5 hover:border-white/10"
                 )}
               >
-                <button
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="w-full p-5 md:p-6 flex justify-between items-center text-left group"
-                >
+              <button
+  onClick={() => setOpenIndex(isOpen ? null : idx)}
+  aria-expanded={isOpen}
+  className="w-full p-5 md:p-6 flex justify-between items-center text-left group"
+>
                   <div className="flex items-center gap-4 pr-4">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-400 group-hover:text-slate-300")}>
                       <Icon size={20} strokeWidth={1.5} />

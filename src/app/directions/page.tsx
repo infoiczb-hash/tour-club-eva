@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { 
   Mountain, Waves, Tent, Briefcase, 
   ArrowUpRight, Compass, Anchor, ArrowLeft, ArrowRight
@@ -121,12 +120,8 @@ const openContactModal = useModalStore((state) => state.openContactModal);
                 const Icon = dir.icon;
                 
                 return (
-                    <motion.div
+                    <div
                         key={dir.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: idx * 0.1 }}
                         className={clsx(
                             "group relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900 flex flex-col",
                             dir.isLarge ? "md:col-span-2 md:row-span-2" : "col-span-1 row-span-1"
@@ -197,7 +192,7 @@ const openContactModal = useModalStore((state) => state.openContactModal);
                             )}
 
                         </div>
-                    </motion.div>
+                    </div>
                 );
             })}
 

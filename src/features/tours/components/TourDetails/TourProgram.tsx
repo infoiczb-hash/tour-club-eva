@@ -57,6 +57,7 @@ export default function TourProgram({ program }: TourProgramProps) {
               <div key={index} className="relative pl-14 md:pl-20 print:pl-12 print:break-inside-avoid print:mb-4">
                 <button
                   onClick={() => toggleDay(index)}
+  aria-expanded={isOpen}
                   className={clsx(
                     "absolute left-0 top-0 w-10 h-10 rounded-full border-4 flex items-center justify-center z-10 transition-all duration-300 print:border-slate-300 print:bg-white print:text-black",
                     isOpen && !isPrinting

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Phone, ArrowRight, Instagram, Send } from "lucide-react";
-
+import { usePathname } from 'next/navigation';
 interface NavLink {
   name: string;
   href: string;
@@ -13,6 +13,7 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const pathname = usePathname();
   // Нативный, не блокирующий TBT слушатель скролла
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -72,10 +73,11 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           <nav className="hidden md:flex items-center gap-10">
             {navLinks.map((link) => (
               <Link
-                key={link.name}
-                href={link.href}
-                className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
-              >
+  key={link.name}
+  href={link.href}
+  aria-current={pathname === link.href ? 'page' : undefined}
+  className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+>
                 {link.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-500 transition-all duration-300 group-hover:w-full" />
               </Link>

@@ -45,10 +45,11 @@ export default function FAQ() {
   const actionCardsContent = (
     <div className="flex flex-col gap-4 mt-2">
       {/* Кнопка "Подготовка к сплаву" */}
-      <button
-        onClick={() => setActiveTab('participant')}
-        className="group block w-full text-left outline-none"
-      >
+  <button
+  onClick={() => setActiveTab('participant')}
+  aria-label="Перейти к подготовке участника"
+  className="group block w-full text-left outline-none"
+>
         <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
           <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
           <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">

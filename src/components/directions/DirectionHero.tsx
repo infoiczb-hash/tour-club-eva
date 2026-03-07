@@ -83,9 +83,7 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
                 background: `radial-gradient(circle at center, transparent 0%, ${theme.glow} 100%)` 
             }}
         />
-        
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" /> {/* Пленочное зерно */}
-      </motion.div>
+                </motion.div>
 
       {/* ==========================================
           2. КОНТЕНТ (Типографика)
