@@ -71,7 +71,7 @@ const DIRECTIONS = [
   { 
     id: 'organizers', 
     title: "Организаторам", 
-    desc: "Корпоративы, тимбилдинги и авторские туры под ключ. Ваш сценарий — наша реализация.",
+    desc: "Корпоративы, тимбилдинги и туры под ключ. Ваш сценарий — наша реализация.",
     image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674641/organ_zrvvfc.webp",
     icon: Briefcase, 
     href: "/directions/organizers",
