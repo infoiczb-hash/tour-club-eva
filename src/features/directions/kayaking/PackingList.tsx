@@ -13,7 +13,7 @@ export default function PackingList() {
   const [activeDuration, setActiveDuration] = useState<TripDuration>("one-day");
 
   return (
-    <section className="py-12 md:py-20 bg-[#020617] text-slate-200 overflow-hidden font-sans border-t border-white/5 relative">
+    <section id="packing-list" className="py-12 md:py-20 bg-[#020617] text-slate-200 overflow-hidden font-sans border-t border-white/5 relative">
       
       {/* Background Ambience */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />

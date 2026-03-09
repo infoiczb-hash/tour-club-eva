@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import { MessageCircle, Map, Sparkles } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
+import Link from 'next/link';
 
 function useInView(options = { threshold: 0.15, rootMargin: '-30px' }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -48,13 +49,13 @@ export default function PreparationCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto relative z-10">
-            <button
-              onClick={() => setActiveTab('newbie')}
-              className="w-full sm:w-auto px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-xl hover:bg-teal-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
-            >
-              <Map size={18} />
-              <span>Выбрать другой маршрут</span>
-            </button>
+           <Link
+  href="/tour?category=kayaking"
+  className="w-full sm:w-auto px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-xl hover:bg-teal-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
+>
+  <Map size={18} />
+  <span>Выбрать другой маршрут</span>
+</Link>
             <button
               onClick={() => openContactModal('Сплавы на байдарках', 'TOUR')}
               className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2"

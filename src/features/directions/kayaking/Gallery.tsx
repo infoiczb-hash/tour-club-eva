@@ -1,28 +1,14 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import Image from "next/image";
-import { Camera, ChevronRight } from "lucide-react";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const galleryImages = [
@@ -33,20 +19,52 @@ const galleryImages = [
 ];
 
 export default function Gallery() {
-  const headerView = useInView();
-  const gridView = useInView();
+  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+
+  // Блокировка скролла страницы при открытом лайтбоксе
+  useEffect(() => {
+    if (selectedImage !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [selectedImage]);
+
+  // Навигация с клавиатуры
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedImage === null) return;
+      if (e.key === 'Escape') setSelectedImage(null);
+      if (e.key === 'ArrowLeft') showPrev();
+      if (e.key === 'ArrowRight') showNext();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage]);
+
+  const showNext = () => {
+    setSelectedImage((prev) => (prev === null || prev === galleryImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const showPrev = () => {
+    setSelectedImage((prev) => (prev === null || prev === 0 ? galleryImages.length - 1 : prev - 1));
+  };
 
   return (
-    <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">
+    <section className="py-12 md:py-24 bg-[#020617] relative overflow-hidden border-t border-white/5 font-sans">
+      {/* Декоративный фон */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="container mx-auto px-4 relative z-10 max-w-7xl">
-
+      <div className="container mx-auto px-4 max-w-7xl relative z-10">
+        
         {/* HEADER */}
-        <div className="max-w-3xl mb-8 md:mb-12 text-left">
-          <div
-            ref={headerView.ref}
-            style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+        <div className="max-w-3xl mb-10 md:mb-16 text-left">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
               <Camera size={14} className="text-teal-400" />
@@ -58,36 +76,90 @@ export default function Gallery() {
             <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl leading-relaxed">
               Лучше один раз увидеть, чем сто раз прочитать. Наши походы — это тысячи счастливых улыбок и гигабайты контента.
             </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* GRID */}
-        <div ref={gridView.ref} className="relative">
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 md:auto-rows-[500px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {galleryImages.map((img, idx) => (
-              <div
-                key={img.id}
-                style={{ opacity: gridView.inView ? 1 : 0, transform: gridView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
-                className="group relative flex-shrink-0 snap-center h-[400px] md:h-full w-[85vw] md:w-auto rounded-[2.5rem] overflow-hidden border border-white/5 bg-slate-900 transition-all duration-500 hover:border-teal-500/30 hover:shadow-2xl"
-              >
-                <Image
-                  src={img.src}
-                  alt={img.alt}
-                  fill
-                  className={cn("object-cover transition-transform duration-1000 group-hover:scale-105", img.focus)}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-500" />
-                <div className="absolute inset-0 bg-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 mix-blend-overlay pointer-events-none" />
+        {/* GRID: 2 колонки на мобильных, 4 на десктопе */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+          {galleryImages.map((img, idx) => (
+            <motion.div
+              key={img.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: idx * 0.1, duration: 0.5 }}
+              onClick={() => setSelectedImage(idx)}
+              className="group relative aspect-square md:aspect-[4/5] rounded-[2rem] overflow-hidden cursor-pointer bg-slate-900 border border-white/5 shadow-lg"
+            >
+              <Image
+                src={img.src}
+                alt={img.alt}
+                fill
+                className={cn("object-cover transition-transform duration-700 group-hover:scale-110", img.focus)}
+                sizes="(max-width: 768px) 50vw, 25vw"
+              />
+              
+              {/* Оверлей при наведении с иконкой "Увеличить" */}
+              <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors duration-500 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                  <Maximize2 className="text-white w-5 h-5" />
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
-          </div>
+            </motion.div>
+          ))}
         </div>
       </div>
+
+      {/* ЛАЙТБОКС (Полноэкранный просмотр) */}
+      <AnimatePresence>
+        {selectedImage !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl"
+          >
+            {/* Кнопка закрытия */}
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50"
+            >
+              <X size={24} />
+            </button>
+
+            {/* Контролы перелистывания (Десктоп) */}
+            <button
+              onClick={(e) => { e.stopPropagation(); showPrev(); }}
+              className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50"
+            >
+              <ChevronLeft size={32} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); showNext(); }}
+              className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50"
+            >
+              <ChevronRight size={32} />
+            </button>
+
+            {/* Сама картинка в лайтбоксе */}
+            <div className="relative w-full max-w-6xl aspect-[4/3] md:aspect-[16/9] px-4 md:px-0" onClick={(e) => e.stopPropagation()}>
+              <Image
+                src={galleryImages[selectedImage].src}
+                alt={galleryImages[selectedImage].alt}
+                fill
+                className="object-contain"
+                sizes="100vw"
+                quality={90}
+                priority
+              />
+            </div>
+
+            {/* Невидимые зоны для клика на мобилках (листание тапами по краям экрана) */}
+            <div className="absolute inset-y-0 left-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); showPrev(); }} />
+            <div className="absolute inset-y-0 right-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); showNext(); }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

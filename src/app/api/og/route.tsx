@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     
     // Получаем название тура из ссылки, либо ставим текст по умолчанию
-    const title = searchParams.get('title') || 'Авторские туры и сплавы';
+    const title = searchParams.get('title') || 'Туры и сплавы';
     const subtitle = searchParams.get('subtitle') || 'Турклуб ЭВА';
 
     return new ImageResponse(
