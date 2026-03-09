@@ -61,7 +61,7 @@ export default function TourHero({ tour }: TourHeroProps) {
   const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.teal;
 
   // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
-  const typeLabel = tour.category?.title || tour.type || 'Путешествие';
+  const typeLabel = tour.category?.title || 'Путешествие';
 
   return (
     <section className="relative h-[80vh] min-h-[550px] w-full flex items-end overflow-hidden">

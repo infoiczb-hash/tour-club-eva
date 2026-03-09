@@ -21,17 +21,9 @@ export default function TourStats({ tour }: TourStatsProps) {
     ? (difficultyMap[tour.difficulty.toLowerCase()] || tour.difficulty) 
     : '—';
 
-  // 2. ТИП ТУРА
-  const typeMap: Record<string, string> = {
-    hiking: 'Поход',
-    water: 'Сплав',
-    auto: 'Автотур',
-    excursion: 'Экскурсия',
-  };
-  
-  const typeLabel = tour.type 
-    ? (typeMap[tour.type.toLowerCase()] || tour.type)
-    : 'Активный';
+ // 2. ТИП ТУРА
+  // Теперь название берется напрямую из базы данных (category.title)
+  const typeLabel = tour.category?.title || 'Активный';
 
   return (
     <div className="flex flex-wrap gap-2.5 md:gap-3 w-full">
