@@ -1,14 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
-
-// Используем supabase-js напрямую, минуя @supabase/ssr
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -22,6 +16,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
 
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -34,6 +29,8 @@ export default function AdminLoginPage() {
       return;
     }
 
+    // ✅ Ждём пока cookies сессии точно установятся, потом делаем hard redirect
+    // (router.push не гарантирует что middleware увидит свежую сессию)
     window.location.href = '/admin';
   }
 
@@ -57,7 +54,6 @@ export default function AdminLoginPage() {
                 <input
                   type="email"
                   required
-                  autoComplete="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-white/10
@@ -76,7 +72,6 @@ export default function AdminLoginPage() {
                 <input
                   type={showPass ? 'text' : 'password'}
                   required
-                  autoComplete="current-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 bg-slate-800 border border-white/10
