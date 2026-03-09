@@ -13,13 +13,18 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// 🔥 ИСПРАВЛЕНИЕ: Словарь стилей для бейджей. Тексты теперь берем динамически.
-const TYPE_COLORS: Record<string, string> = {
-  weekend: "bg-violet-500/10 border-violet-500/20 text-violet-400",
-  water: "bg-sky-500/10 border-sky-500/20 text-sky-400",
-  hiking: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-  kids: "bg-pink-500/10 border-pink-500/20 text-pink-400",
-  default: "bg-slate-500/10 border-slate-500/20 text-slate-400"
+// ✅ СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
+const COLOR_THEMES: Record<string, string> = {
+  slate:   "bg-slate-500/10 border-slate-500/20 text-slate-400",
+  teal:    "bg-teal-500/10 border-teal-500/20 text-teal-400",
+  emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+  sky:     "bg-sky-500/10 border-sky-500/20 text-sky-400",
+  blue:    "bg-blue-500/10 border-blue-500/20 text-blue-400",
+  violet:  "bg-violet-500/10 border-violet-500/20 text-violet-400",
+  pink:    "bg-pink-500/10 border-pink-500/20 text-pink-400",
+  rose:    "bg-rose-500/10 border-rose-500/20 text-rose-400",
+  orange:  "bg-orange-500/10 border-orange-500/20 text-orange-400",
+  amber:   "bg-amber-500/10 border-amber-500/20 text-amber-400",
 };
 
 type CalendarTour = Omit<Tour, 'date'> & {
@@ -140,10 +145,12 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
   const endDateObj = tour.endDate ? new Date(tour.endDate) : null;
   const isMultiDay = endDateObj && dateObj && endDateObj.getTime() !== dateObj.getTime();
 
-  // 🔥 ИСПРАВЛЕНИЕ: Вычисляем стиль и название бейджа
-  const typeKey = tour.type ? tour.type.toLowerCase() : 'default';
-  const badgeStyle = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
-  const badgeLabel = tour.type || 'Тур';
+  // 👇 ИСПРАВЛЕНИЕ: Берем цвет из категории, с фолбэком на slate
+  const themeColor = tour.category?.color || 'slate';
+  const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
+
+  // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
+  const badgeLabel = tour.category?.title || tour.type || 'Тур';
 
   return (
     <Link href={`/tour/${tour.slug}`} className="group block outline-none">
@@ -169,8 +176,8 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
 
         <div className="flex flex-col justify-center flex-1 min-w-0 py-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-            {/* 🔥 ИСПРАВЛЕНИЕ: Выводим динамический бейдж */}
-            {tour.type && (
+            {/* 👇 ИСПРАВЛЕНИЕ: Выводим динамический бейдж с правильным цветом */}
+            {badgeLabel && (
               <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px]", badgeStyle)}>
                 {badgeLabel}
               </span>

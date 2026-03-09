@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { X, Save, Tent, Mountain, Waves, Compass, Map, Sun, Snowflake, TreePine, Bike, Footprints, Loader2, MapPin, Anchor, Flame, Star } from 'lucide-react';
 
-// Визуальный словарь иконок для селектора (только для туров)
 const AVAILABLE_ICONS = [
   { name: 'Compass', icon: Compass, label: 'Компас (универсально)' },
   { name: 'Tent', icon: Tent, label: 'Палатка (походы)' },
@@ -21,9 +20,23 @@ const AVAILABLE_ICONS = [
   { name: 'Star', icon: Star, label: 'Звезда (хит, особенное)' },
 ];
 
+// ✅ ПАЛИТРА ДИЗАЙН-СИСТЕМЫ 
+const AVAILABLE_COLORS = [
+  { key: 'slate', bgClass: 'bg-slate-500' },
+  { key: 'teal', bgClass: 'bg-teal-500' },
+  { key: 'emerald', bgClass: 'bg-emerald-500' },
+  { key: 'sky', bgClass: 'bg-sky-500' },
+  { key: 'blue', bgClass: 'bg-blue-500' },
+  { key: 'violet', bgClass: 'bg-violet-500' },
+  { key: 'pink', bgClass: 'bg-pink-500' },
+  { key: 'rose', bgClass: 'bg-rose-500' },
+  { key: 'orange', bgClass: 'bg-orange-500' },
+  { key: 'amber', bgClass: 'bg-amber-500' },
+];
+
 interface Props {
   initialData?: any;
-  type: 'tour' | 'blog'; // Определяет, какие поля показывать
+  type: 'tour' | 'blog';
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
 }
@@ -35,6 +48,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
     title: initialData?.title || '',
     slug: initialData?.slug || '',
     icon: initialData?.icon || 'Compass',
+    color: initialData?.color || 'teal', // ✅ Стейт для цвета
     sort_order: initialData?.sortOrder || initialData?.sort_order || 0,
     is_active: initialData?.isActive ?? initialData?.is_active ?? true,
   });
@@ -49,10 +63,8 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
-    // Автоматически генерируем slug из title, если это новая категория
     if (!initialData?.id) {
       const slug = title.toLowerCase().replace(/[^a-z0-9а-яё]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-      // Примечание: для реального транслита нужна функция посложнее, но для старта пойдет и так, или ты введешь slug руками
       setFormData(prev => ({ ...prev, title, slug }));
     } else {
       setFormData(prev => ({ ...prev, title }));
@@ -75,7 +87,6 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
       <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
         
-        {/* Хедер */}
         <div className="flex justify-between items-center p-6 border-b border-slate-800">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? 'Редактировать' : 'Новая'}{' '}
@@ -86,7 +97,6 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
           </button>
         </div>
 
-        {/* Форма */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
           <form id="category-form" onSubmit={handleSubmit} className="space-y-5">
             
@@ -144,7 +154,30 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* ✅ НОВОЕ: ВЫБОР ЦВЕТА КАТЕГОРИИ */}
+            {type === 'tour' && (
+              <div className="space-y-3 border-t border-slate-800 pt-4">
+                <label className="text-sm font-medium text-slate-300">Фирменный цвет категории</label>
+                <div className="flex flex-wrap gap-3">
+                  {AVAILABLE_COLORS.map((color) => {
+                    const isSelected = formData.color === color.key;
+                    return (
+                      <button
+                        key={color.key}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, color: color.key }))}
+                        className={`w-10 h-10 rounded-full transition-all flex items-center justify-center ${color.bgClass} ${
+                          isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-110 shadow-lg' : 'opacity-50 hover:opacity-100 hover:scale-105'
+                        }`}
+                        title={color.key}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 border-t border-slate-800 pt-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-300">Порядок сортировки</label>
                 <input
@@ -181,7 +214,6 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
           </form>
         </div>
 
-        {/* Футер */}
         <div className="p-6 border-t border-slate-800 bg-slate-900/50">
           <button
             type="submit"

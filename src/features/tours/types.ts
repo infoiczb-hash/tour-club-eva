@@ -15,7 +15,7 @@ export interface TourDateItem {
 }
 
 // ==========================================
-// 2. СТРОГИЙ ТИП ГИДА (Чтобы не было ошибок с .name и .image)
+// 2. СТРОГИЙ ТИП ГИДА
 // ==========================================
 export interface GuideInfo {
   id: string;
@@ -28,7 +28,7 @@ export interface GuideInfo {
 }
 
 // ==========================================
-// 3. ОСНОВНОЙ ТИП ТУРА (View Model)
+// 3. ОСНОВНОЙ ТИП ТУРА
 // ==========================================
 export interface Tour {
   id: string;
@@ -45,10 +45,8 @@ export interface Tour {
   priceFamily?: number | null;
   priceMember?: number | null;
 
-  // 🔥 НОВОЕ ПОЛЕ: Реляционные даты (строго типизированные)
   tourDates?: TourDateItem[];
 
-  // === ДАТЫ (Старые, оставлены для обратной совместимости) ===
   date: string | Date;            
   endDate?: string | Date | null; 
   dates?: {
@@ -64,14 +62,14 @@ export interface Tour {
   gallery?: string[];      
 
   // === МАРКЕТИНГ И ТЕГИ ===
-  label?: string | null;   
-  type: string;            
+  label?: string | null;            
   categoryId?: string | null; 
   category?: {
     id: string;
     title: string;
     slug: string;
     icon: string;
+    color?: string; // ✅ ДОБАВИЛИ ЦВЕТ В ТИПЫ
   } | null;
 
   tags?: string[];         
@@ -92,11 +90,8 @@ export interface Tour {
   spotsLeft: number; 
   groupSize?: number; 
 
-  // === СВЯЗЬ С ГИДОМ ===
-  // 🔥 ИСПРАВЛЕНО: Убрали `string |`, теперь это только строгий объект `GuideInfo`
   guide?: GuideInfo | null;
 
-  // === КОНТЕНТ И СПИСКИ ===
   program: any;                 
   faq: any;                     
   checklist?: any;              
@@ -105,19 +100,13 @@ export interface Tour {
   included: string[];           
   additionalExpenses: string[];  
 
-  // === SEO ===
   metaTitle?: string | null;
   metaDesc?: string | null;
 
-  // === СТАТУС ===
   isActive: boolean;
   createdAt?: Date | string | null;
   updatedAt?: Date | string | null;
 }
-
-// ==========================================
-// 4. ВСПОМОГАТЕЛЬНЫЕ ТИПЫ (Оставлены без изменений)
-// ==========================================
 
 export type TourPrice = Tour['price'];
 

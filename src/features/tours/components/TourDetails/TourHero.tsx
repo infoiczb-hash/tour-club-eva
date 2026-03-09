@@ -2,14 +2,25 @@ import React from 'react';
 import Image from 'next/image';
 import { MapPin, Clock, Calendar } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-const TYPE_MAP: Record<string, string> = {
-  hiking: 'Поход',
-  water: 'Сплав',
-  auto: 'Автотур',
-  excursion: 'Экскурсия',
-  kids: 'Детский',
-  weekend: 'Выходного дня'
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// ✅ СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
+const COLOR_THEMES: Record<string, string> = {
+  slate:   "bg-slate-500 text-white",
+  teal:    "bg-teal-500 text-slate-900",
+  emerald: "bg-emerald-500 text-slate-900",
+  sky:     "bg-sky-500 text-slate-900",
+  blue:    "bg-blue-500 text-white",
+  violet:  "bg-violet-500 text-white",
+  pink:    "bg-pink-500 text-white",
+  rose:    "bg-rose-500 text-white",
+  orange:  "bg-orange-500 text-slate-900",
+  amber:   "bg-amber-500 text-slate-900",
 };
 
 interface TourHeroProps {
@@ -45,9 +56,12 @@ export default function TourHero({ tour }: TourHeroProps) {
     return '1 день';
   };
 
-  // 👇 ИСПРАВЛЕНИЕ: Берем реальное название категории (fallback на старые данные)
-  const normalizedType = tour.type ? tour.type.toLowerCase().trim() : '';
-  const typeLabel = tour.category?.title || TYPE_MAP[normalizedType] || tour.type || 'Путешествие';
+  // 👇 ИСПРАВЛЕНИЕ: Берем цвет из категории, с фолбэком на teal (как было в оригинале)
+  const themeColor = tour.category?.color || 'teal';
+  const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.teal;
+
+  // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
+  const typeLabel = tour.category?.title || tour.type || 'Путешествие';
 
   return (
     <section className="relative h-[80vh] min-h-[550px] w-full flex items-end overflow-hidden">
@@ -72,7 +86,10 @@ export default function TourHero({ tour }: TourHeroProps) {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl mt-10">
             <div className="flex flex-wrap gap-2 md:gap-3">
               
-              <span className="px-3 py-1 rounded-md bg-teal-500 text-slate-900 text-[14px] md:text-xs font-black uppercase tracking-widest backdrop-blur-md">
+              <span className={cn(
+                "px-3 py-1 rounded-md text-[14px] md:text-xs font-black uppercase tracking-widest backdrop-blur-md",
+                badgeStyle
+              )}>
                   {typeLabel}
               </span>
 
