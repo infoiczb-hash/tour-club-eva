@@ -192,11 +192,7 @@ export async function analyzeDebriefAction(answersText: string) {
 // ==========================================
 export async function analyzeFullProfileAction(profile: any) {
   try {
-    const { generateObject } = await import('ai');
-    const { google } = await import('@ai-sdk/google');
-    const { z } = await import('zod');
-
-    const { object } = await generateObject({
+       const { object } = await generateObject({
       model: google('gemini-1.5-flash'),
       schema: z.object({
         summaryTitle: z.string(),
@@ -216,6 +212,7 @@ export async function analyzeFullProfileAction(profile: any) {
 
     return { success: true, ...object };
   } catch (e) {
+    console.error("AI Full Profile Error:", e);
     return { success: false };
   }
 }
