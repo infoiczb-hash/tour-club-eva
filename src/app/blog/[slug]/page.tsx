@@ -9,10 +9,8 @@ import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 
-// Базовый URL для SEO (канонические ссылки и микроразметка)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-// 🔥 ГЕНЕРАЦИЯ СТАТИКИ И КЭШИРОВАНИЕ (ISR)
 export const revalidate = 60;
 
 export async function generateStaticParams() {
@@ -53,7 +51,6 @@ async function getPost(slug: string) {
   return { post, relatedPosts };
 }
 
-// --- SEO И OPEN GRAPH ---
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPost(slug);
@@ -186,22 +183,27 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* --- 1. HERO HEADER --- */}
-      <div className="relative h-[55vh] md:h-[65vh] w-full overflow-hidden">
-        <Image 
-            src={post.image || '/placeholder.jpg'} 
-            alt={post.title} 
-            fill 
-            className="object-cover"
-            priority
-            sizes="100vw" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/60 to-transparent" />
+      {/* --- 1. HERO HEADER (🔥 РЕЗИНОВЫЙ И С БЕЗОПАСНОЙ ЗОНОЙ) --- */}
+      <div className="relative min-h-[75svh] md:min-h-[65vh] w-full overflow-hidden flex flex-col justify-end">
+        
+        {/* ФОН */}
+        <div className="absolute inset-0 z-0">
+            <Image 
+                src={post.image || '/placeholder.jpg'} 
+                alt={post.title} 
+                fill 
+                className="object-cover"
+                priority
+                sizes="100vw" 
+            />
+            {/* Затемняем чуть сильнее сверху, чтобы белая шапка читалась лучше */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/80 to-slate-900/40" />
+        </div>
 
-        {/* 🔥 ИСПРАВЛЕНИЕ: pt-36 для мобилок, чтобы отодвинуть контент от хедера */}
-        <div className="absolute inset-0 container mx-auto px-4 flex flex-col justify-end pt-36 pb-8 md:pb-16 max-w-7xl">
+        {/* КОНТЕНТ (С жестким отступом pt-32) */}
+        <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
             
-            <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-auto sm:mb-8 group w-fit shadow-lg mt-2 sm:mt-0">
+            <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-6 md:mb-8 group w-fit shadow-lg">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
             </Link>
@@ -252,7 +254,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             
            <div className="lg:col-span-8">
                 
-                <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="mb-8 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div className="flex items-center gap-3 mb-5">
                         <span className="w-8 h-[2px] bg-teal-500 rounded-full"></span>
                         <h2 className="text-xs md:text-sm font-black text-teal-400 uppercase tracking-widest">
@@ -273,26 +275,26 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
-                {/* 🔥 ИСПРАВЛЕНИЕ: Компактные отступы (mb-5 для абзацев, my-4 для списков, leading-relaxed) */}
+                {/* 🔥 ИСПРАВЛЕНИЕ: ЖЕСТКАЯ КОМПАКТИЗАЦИЯ ТЕКСТА */}
                 <div 
-                    className="prose prose-base md:prose-lg prose-invert max-w-none 
+                    className="prose prose-base prose-invert max-w-none 
                     
                     [&_p:empty]:hidden 
                     [&_br]:hidden
 
                     prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-white
-                    prose-h2:mt-10 prose-h2:mb-5 prose-h2:text-2xl md:prose-h2:text-3xl
+                    prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl md:prose-h2:text-3xl
                     prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
                     
-                    prose-p:text-slate-300 prose-p:text-[16px] md:prose-p:text-[18px] prose-p:leading-relaxed prose-p:mb-5 prose-p:mt-0
+                    prose-p:text-slate-300 prose-p:text-[15px] md:prose-p:text-[16px] prose-p:leading-snug prose-p:mb-4 prose-p:mt-0
                     
                     prose-strong:text-white prose-strong:font-bold
                     
-                    prose-ul:my-4 prose-li:my-1 prose-li:text-slate-300 prose-li:text-[16px] md:prose-li:text-[18px] prose-li:leading-snug prose-li:marker:text-teal-500
+                    prose-ul:my-3 prose-li:my-0.5 prose-li:text-slate-300 prose-li:text-[15px] md:prose-li:text-[16px] prose-li:leading-snug prose-li:marker:text-teal-500
                     
                     prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
                     
-                    prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-4 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium"
+                    prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6 prose-blockquote:font-medium"
                     dangerouslySetInnerHTML={{ __html: post.content }} 
                 />
 

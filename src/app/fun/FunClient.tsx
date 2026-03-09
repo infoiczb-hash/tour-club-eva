@@ -121,14 +121,14 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         <h1 
           className="animate-hero-title opacity-0 [animation-delay:100ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]"
         >
-           Твой <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
+           Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
         </h1>
 
         {/* 3. Описание: плавно выезжает с задержкой 200мс */}
         <p 
           className="animate-fade-in-up opacity-0 [animation-delay:200ms] text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium"
         >
-           Узнай себя, проработай страхи с AI-психологом и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
+           Узнай какой ты турист, проработай страхи, кто ты в туристисеской группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
         </p>
         
       </section>
