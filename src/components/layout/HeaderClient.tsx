@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Phone, ArrowRight, Instagram, Send } from "lucide-react";
 import { usePathname } from 'next/navigation';
-// ✅ Импортируем глобальный стор модалок
 import { useModalStore } from '@/shared/store/useModalStore';
 
 interface NavLink {
@@ -13,34 +12,54 @@ interface NavLink {
 }
 
 export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
-  const [isScrolled, setIsScrolled] = useState(false);
+  // Новые стейты для умного хедера
+  const [isVisible, setIsVisible] = useState(true); // Виден ли хедер сейчас
+  const [isAtTop, setIsAtTop] = useState(true);     // Находится ли юзер в самом верху (для прозрачности)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // ✅ Достаем функцию открытия из стора
   const openContactModal = useModalStore((state) => state.openContactModal);
   const pathname = usePathname();
 
-  // Нативный, не блокирующий TBT слушатель скролла
+  // Оптимизированный слушатель скролла
   useEffect(() => {
     let lastScrollY = window.scrollY;
+    let ticking = false;
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > 50 && currentScrollY > lastScrollY) {
-        setIsScrolled(true);
-      } else if (currentScrollY < 50) {
-        setIsScrolled(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+
+          // 1. Проверяем, на самом ли мы верху (первые 50px)
+          setIsAtTop(currentScrollY < 50);
+
+          // 2. Логика умного скрытия/появления
+          if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Скроллим вниз — прячем хедер
+            setIsVisible(false);
+          } else if (currentScrollY < lastScrollY) {
+            // Скроллим вверх — показываем хедер
+            setIsVisible(true);
+          }
+
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
       }
-      lastScrollY = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    // Проверка при монтировании (если юзер обновил страницу где-то в середине)
+    handleScroll();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Блокируем скролл фона при открытом мобильном меню
+  // Блокировка скролла при открытом меню
   useEffect(() => {
     if (isMobileMenuOpen) {
+      setIsVisible(true); // Принудительно показываем хедер, если открыли меню
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -51,11 +70,12 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "py-4 bg-slate-950/80 backdrop-blur-md border-b border-white/10"
-            : "py-6 bg-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out
+          ${!isVisible ? "-translate-y-full" : "translate-y-0"} 
+          ${isAtTop
+            ? "py-3 md:py-6 bg-gradient-to-b from-slate-950/80 to-transparent border-transparent" // Прозрачный на самом верху (с легким градиентом сверху для читаемости лого)
+            : "py-2 md:py-4 bg-slate-950/90 backdrop-blur-md border-b border-white/10 shadow-lg" // Максимально компактный при скролле
+          }`}
       >
         <div className="container mx-auto px-4 flex items-center justify-between">
 
@@ -66,10 +86,11 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <div className="flex flex-col leading-none">
-              <span className="font-black text-2xl tracking-tighter text-white group-hover:text-teal-400 transition-colors">
+              {/* Уменьшили размер шрифта на мобилках: text-xl вместо text-2xl */}
+              <span className="font-black text-xl md:text-2xl tracking-tighter text-white group-hover:text-teal-400 transition-colors">
                 ЭВА
               </span>
-              <span className="text-[10px] font-bold tracking-[0.3em] text-white/50 uppercase group-hover:text-white/80 transition-colors">
+              <span className="text-[9px] md:text-[10px] font-bold tracking-[0.3em] text-white/50 uppercase group-hover:text-white/80 transition-colors">
                 Турклуб
               </span>
             </div>
@@ -93,17 +114,18 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           {/* БУРГЕР */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden relative z-50 text-white p-2 outline-none"
+            // Убрали лишние p-2, уменьшили иконку до 26
+            className="md:hidden relative z-50 text-white p-1 outline-none"
             aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
           >
-            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
       </header>
 
       {/* МОБИЛЬНОЕ МЕНЮ */}
       <div
-        className={`fixed inset-0 z-40 bg-slate-950 flex flex-col px-6 pt-20 pb-6 h-[100dvh] transition-all duration-300 ease-in-out ${
+        className={`fixed inset-0 z-40 bg-slate-950 flex flex-col px-6 pt-16 pb-6 h-[100dvh] transition-all duration-300 ease-in-out ${
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         }`}
       >
@@ -137,7 +159,7 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
             type="button"
             onClick={() => {
               setIsMobileMenuOpen(false);
-              openContactModal(undefined, 'TOUR'); // ✅ Вызываем глобальную модалку
+              openContactModal(undefined, 'TOUR'); 
             }}
             className="w-full py-4 bg-teal-500 text-slate-950 font-bold uppercase tracking-widest text-sm text-center rounded-xl hover:bg-teal-400 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >

@@ -198,10 +198,9 @@ export default async function BlogPostPage({ params }: PageProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/60 to-transparent" />
 
-        {/* ✅ ИСПРАВЛЕНИЕ 1: pt-28 защищает от наезда хедера */}
-        <div className="absolute inset-0 container mx-auto px-4 flex flex-col justify-end pt-28 pb-8 md:pb-16 max-w-7xl">
+        {/* 🔥 ИСПРАВЛЕНИЕ: pt-36 для мобилок, чтобы отодвинуть контент от хедера */}
+        <div className="absolute inset-0 container mx-auto px-4 flex flex-col justify-end pt-36 pb-8 md:pb-16 max-w-7xl">
             
-            {/* ✅ ИСПРАВЛЕНИЕ 1: Кнопка "Назад" стала выразительной */}
             <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-auto sm:mb-8 group w-fit shadow-lg mt-2 sm:mt-0">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
@@ -253,7 +252,6 @@ export default async function BlogPostPage({ params }: PageProps) {
             
            <div className="lg:col-span-8">
                 
-                {/* ✅ ИСПРАВЛЕНИЕ 3: Переходный блок "О материале" с тегами */}
                 <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div className="flex items-center gap-3 mb-5">
                         <span className="w-8 h-[2px] bg-teal-500 rounded-full"></span>
@@ -275,7 +273,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
-                {/* ✅ ИСПРАВЛЕНИЕ 2: Улучшенная типографика (читаемость) */}
+                {/* 🔥 ИСПРАВЛЕНИЕ: Компактные отступы (mb-5 для абзацев, my-4 для списков, leading-relaxed) */}
                 <div 
                     className="prose prose-base md:prose-lg prose-invert max-w-none 
                     
@@ -283,18 +281,18 @@ export default async function BlogPostPage({ params }: PageProps) {
                     [&_br]:hidden
 
                     prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-white
-                    prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-2xl md:prose-h2:text-3xl
-                    prose-h3:mt-8 prose-h3:mb-4 prose-h3:text-teal-400 prose-h3:text-xl
+                    prose-h2:mt-10 prose-h2:mb-5 prose-h2:text-2xl md:prose-h2:text-3xl
+                    prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
                     
-                    prose-p:text-slate-300 prose-p:text-[16px] md:prose-p:text-[18px] prose-p:leading-[1.8] prose-p:mb-8 prose-p:mt-0
+                    prose-p:text-slate-300 prose-p:text-[16px] md:prose-p:text-[18px] prose-p:leading-relaxed prose-p:mb-5 prose-p:mt-0
                     
                     prose-strong:text-white prose-strong:font-bold
                     
-                    prose-ul:my-8 prose-li:mb-3 prose-li:text-slate-300 prose-li:text-[16px] md:prose-li:text-[18px] prose-li:leading-[1.8] prose-li:marker:text-teal-500
+                    prose-ul:my-4 prose-li:my-1 prose-li:text-slate-300 prose-li:text-[16px] md:prose-li:text-[18px] prose-li:leading-snug prose-li:marker:text-teal-500
                     
                     prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
                     
-                    prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-5 prose-blockquote:px-6 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-10 prose-blockquote:font-medium"
+                    prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-4 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium"
                     dangerouslySetInnerHTML={{ __html: post.content }} 
                 />
 
@@ -304,7 +302,6 @@ export default async function BlogPostPage({ params }: PageProps) {
 
             {/* SIDEBAR */}
             <aside className="lg:col-span-4 relative mt-12 lg:mt-0">
-                {/* ✅ ИСПРАВЛЕНИЕ 4: Общий sticky-контейнер для всего сайдбара */}
                 <div className="lg:sticky lg:top-28 space-y-6 md:space-y-8 pb-10">
                     
                     {/* Блок "Читайте также" */}

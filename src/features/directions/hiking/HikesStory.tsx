@@ -6,13 +6,12 @@ import Image from 'next/image';
 
 export default function HikesStory() {
   return (
-    // Уплотнили внешние отступы для бесшовного скролла
     <section className="py-8 md:py-16 bg-stone-950 text-stone-100 relative overflow-hidden border-t border-white/5">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         
         <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
             
-            {/* ТЕКСТОВАЯ ЧАСТЬ (Эмоции + Факты) */}
+            {/* ТЕКСТОВАЯ ЧАСТЬ */}
             <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -20,7 +19,7 @@ export default function HikesStory() {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col text-left"
             >
-                {/* 1. Эмоциональный хук */}
+                {/* Эмоциональный хук */}
                 <div className="text-[12px] font-bold tracking-[0.2em] text-teal-500 uppercase mb-4 md:mb-6">
                     Из дневника гида
                 </div>
@@ -30,37 +29,39 @@ export default function HikesStory() {
                     появляется <span className="text-teal-500">коннект с собой</span>"
                 </h2>
 
-                <p className="text-[14px] md:text-lg font-medium leading-relaxed text-stone-400 mb-8 md:mb-10 max-w-lg">
+                {/* 🔥 ИСПРАВЛЕНИЕ: Уменьшен отступ под абзацем (mb-6 md:mb-8 вместо mb-8 md:mb-10) */}
+                <p className="text-[14px] md:text-lg font-medium leading-relaxed text-stone-400 mb-6 md:mb-8 max-w-lg">
                     Горячий чай, звенящая тишина и осознание того, что все городские дедлайны остались где-то далеко внизу.
                 </p>
 
-                <div className="w-full h-px bg-gradient-to-r from-stone-800 to-transparent mb-8 md:mb-10" />
+                {/* 🔥 ИСПРАВЛЕНИЕ: Уменьшен отступ под линией (mb-5 вместо mb-8 md:mb-10) */}
+                <div className="w-full h-px bg-gradient-to-r from-stone-800 to-transparent mb-5" />
 
-           {/* Единый блок впечатлений (Облако тегов) */}
-<div className="flex flex-wrap gap-3 mt-8">
-  {[
-    "Масштаб гор, захватывающий дух",
-    "Погружение в другую культуру и быт",
-    "Настоящий детокс: отключение от забот",
-    "Другой климат",
-    "Новые знакомства",
-    "Ментальная перезагрузка"
-  ].map((feature, idx) => (
-    <span 
-      key={idx} 
-      className="px-4 py-2.5 bg-white/5 border border-white/10 hover:border-teal-500/40 text-slate-300 hover:text-teal-400 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-xl flex items-center gap-2.5 transition-all shadow-sm cursor-default group"
-    >
-      <Sparkles 
-        size={16} 
-        className="text-teal-500/70 group-hover:text-teal-400 transition-colors" 
-      /> 
-      {feature}
-    </span>
-  ))}
-</div>
+                {/* 🔥 ИСПРАВЛЕНИЕ: Убран лишний mt-8, чтобы карточки подтянулись к линии */}
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    "Масштаб гор, захватывающий дух",
+                    "Погружение в другую культуру и быт",
+                    "Настоящий детокс: отключение от забот",
+                    "Другой климат",
+                    "Новые знакомства",
+                    "Ментальная перезагрузка"
+                  ].map((feature, idx) => (
+                    <span 
+                      key={idx} 
+                      className="px-4 py-2.5 bg-white/5 border border-white/10 hover:border-teal-500/40 text-slate-300 hover:text-teal-400 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-xl flex items-center gap-2.5 transition-all shadow-sm cursor-default group"
+                    >
+                      <Sparkles 
+                        size={16} 
+                        className="text-teal-500/70 group-hover:text-teal-400 transition-colors" 
+                      /> 
+                      {feature}
+                    </span>
+                  ))}
+                </div>
             </motion.div>
 
-            {/* ВИЗУАЛЬНАЯ ЧАСТЬ (Атмосферное фото) */}
+            {/* ВИЗУАЛЬНАЯ ЧАСТЬ */}
             <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -77,7 +78,6 @@ export default function HikesStory() {
                     priority
                 />
                 
-                {/* Легкое затемнение поверх фото для премиального вида */}
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/40 via-transparent to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-50" />
             </motion.div>
 

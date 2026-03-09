@@ -13,6 +13,15 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
+// 🔥 ИСПРАВЛЕНИЕ: Словарь стилей для бейджей. Тексты теперь берем динамически.
+const TYPE_COLORS: Record<string, string> = {
+  weekend: "bg-violet-500/10 border-violet-500/20 text-violet-400",
+  water: "bg-sky-500/10 border-sky-500/20 text-sky-400",
+  hiking: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+  kids: "bg-pink-500/10 border-pink-500/20 text-pink-400",
+  default: "bg-slate-500/10 border-slate-500/20 text-slate-400"
+};
+
 type CalendarTour = Omit<Tour, 'date'> & {
   uniqueId: string; originalId: string;
   date: string | null; endDate: string | null; guideId: string | null;
@@ -22,8 +31,6 @@ interface CalendarViewProps { events: Tour[]; }
 
 export default function CalendarView({ events }: CalendarViewProps) {
   const { groupedTours, tbaTours } = useMemo(() => {
-    
-    // 🔥 ОПРЕДЕЛЯЕМ НАЧАЛО СЕГОДНЯШНЕГО ДНЯ (чтобы отсечь то, что было вчера)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -34,23 +41,16 @@ export default function CalendarView({ events }: CalendarViewProps) {
         else if (Array.isArray(tour.dates)) datesArray = tour.dates;
       } catch (e) { console.error("Ошибка парсинга дат для тура", tour.id); }
 
-      // Если у тура есть даты
       if (datesArray && datesArray.length > 0) {
-        
-        // 🔥 ОСТАВЛЯЕМ ТОЛЬКО БУДУЩИЕ ИЛИ СЕГОДНЯШНИЕ ДАТЫ
         const futureDates = datesArray.filter(dateObj => {
             if (!dateObj.start) return false;
             const eventDate = new Date(dateObj.start);
-            eventDate.setHours(0, 0, 0, 0); // Сравниваем только дни
+            eventDate.setHours(0, 0, 0, 0); 
             return eventDate.getTime() >= today.getTime();
         });
 
-        // Если все даты тура остались в прошлом — мы его вообще не выводим
-        if (futureDates.length === 0) {
-            return [];
-        }
+        if (futureDates.length === 0) return [];
 
-        // Разворачиваем оставшиеся актуальные даты в отдельные карточки
         return futureDates.map((dateObj, idx) => ({
           ...tour, date: dateObj.start || null, endDate: dateObj.end || null,
           guideId: dateObj.guide_id || null, originalId: tour.id,
@@ -58,7 +58,6 @@ export default function CalendarView({ events }: CalendarViewProps) {
         }));
       }
 
-      // Если дат изначально не было (это тур-анонс), оставляем его
       return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null } as CalendarTour];
     });
 
@@ -85,7 +84,6 @@ export default function CalendarView({ events }: CalendarViewProps) {
 
   const monthKeys = Object.keys(groupedTours);
 
-  // 🔥 ОБНОВЛЕННАЯ ПРОВЕРКА НА ПУСТОТУ (если все туры отсеялись)
   if (events.length === 0 || (monthKeys.length === 0 && tbaTours.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-white/5 rounded-[3rem] bg-gradient-to-b from-white/[0.02] to-transparent">
@@ -142,6 +140,11 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
   const endDateObj = tour.endDate ? new Date(tour.endDate) : null;
   const isMultiDay = endDateObj && dateObj && endDateObj.getTime() !== dateObj.getTime();
 
+  // 🔥 ИСПРАВЛЕНИЕ: Вычисляем стиль и название бейджа
+  const typeKey = tour.type ? tour.type.toLowerCase() : 'default';
+  const badgeStyle = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
+  const badgeLabel = tour.type || 'Тур';
+
   return (
     <Link href={`/tour/${tour.slug}`} className="group block outline-none">
       <div className={cn(
@@ -166,13 +169,11 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
 
         <div className="flex flex-col justify-center flex-1 min-w-0 py-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            {/* 🔥 ИСПРАВЛЕНИЕ: Выводим динамический бейдж */}
             {tour.type && (
-              <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px]",
-                tour.type === 'weekend' ? "bg-violet-500/10 border-violet-500/20 text-violet-400" :
-                tour.type === 'hiking' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                tour.type === 'kids' ? "bg-pink-500/10 border-pink-500/20 text-pink-400" :
-                "bg-sky-500/10 border-sky-500/20 text-sky-400"
-              )}>{tour.type === 'hiking' ? 'Поход' : tour.type}</span>
+              <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px]", badgeStyle)}>
+                {badgeLabel}
+              </span>
             )}
             {tour.duration && <span className="flex items-center text-slate-400">{tour.duration}</span>}
             {isMultiDay && endDateObj && (
@@ -180,7 +181,6 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
             )}
           </div>
           
-          {/* 🔥 ИСПРАВЛЕНИЕ: Убрали line-clamp-2, чтобы название выводилось полностью */}
           <h4 className="text-base sm:text-xl font-black text-white leading-tight pr-2 group-hover:text-teal-300 transition-colors mb-2">
             {tour.title}
           </h4>

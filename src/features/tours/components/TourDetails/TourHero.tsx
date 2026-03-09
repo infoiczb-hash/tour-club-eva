@@ -4,14 +4,14 @@ import { MapPin, Clock, Calendar } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 
 // 1. СЛОВАРЬ ТИПОВ
-// Если ключ есть - берем перевод. Если нет - берем значение из базы.
+// Ключи должны быть в нижнем регистре.
 const TYPE_MAP: Record<string, string> = {
   hiking: 'Поход',
   water: 'Сплав',
   auto: 'Автотур',
   excursion: 'Экскурсия',
   kids: 'Детский',
-  // 'weekend', 'выходной день' и прочее выведутся как есть
+  weekend: 'Выходного дня'
 };
 
 interface TourHeroProps {
@@ -20,7 +20,7 @@ interface TourHeroProps {
 
 export default function TourHero({ tour }: TourHeroProps) {
   
-  // --- ЛОГИКА ДАТ (Без изменений, ваш код) ---
+  // --- ЛОГИКА ДАТ ---
   const renderDateRange = () => {
     if (!tour.date) return 'Дата уточняется';
     
@@ -48,19 +48,19 @@ export default function TourHero({ tour }: TourHeroProps) {
     return '1 день';
   };
 
-  // --- ЛОГИКА МЕТКИ (TYPE) ---
-  // Пробуем словарь, иначе база
-  const typeLabel = tour.type 
-    ? (TYPE_MAP[tour.type.toLowerCase()] || tour.type) 
-    : 'Путешествие';
+  // --- 🔥 ЛОГИКА МЕТКИ (TYPE) - БЕЗОПАСНАЯ ВЕРСИЯ ---
+  // 1. Приводим к нижнему регистру безопасно (если есть)
+  const normalizedType = tour.type ? tour.type.toLowerCase().trim() : '';
+  // 2. Ищем в словаре, если нет - берем оригинал. Если и оригинала нет - пишем дефолт.
+  const typeLabel = TYPE_MAP[normalizedType] || tour.type || 'Путешествие';
 
   return (
     <section className="relative h-[80vh] min-h-[550px] w-full flex items-end overflow-hidden">
       
-      {/* 1. ФОН (Ваш код) */}
+      {/* 1. ФОН */}
       <div className="absolute inset-0 z-0">
         <Image
-          src={tour.image || '/placeholder-tour.jpg'} // Берем фото из БД (Supabase)
+          src={tour.image || '/placeholder-tour.jpg'}
           alt={tour.title || "Тур"}
           fill
           className="object-cover opacity-60"
@@ -77,17 +77,15 @@ export default function TourHero({ tour }: TourHeroProps) {
       <div className="container mx-auto px-4 relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">
         
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl mt-10">
-            {/* --- БЕЙДЖИ (ИСПРАВЛЕНО) --- */}
+            {/* --- БЕЙДЖИ --- */}
             <div className="flex flex-wrap gap-2 md:gap-3">
               
-              {/* 1. ТИП ТУРА (Всегда первый) */}
-              {/* Стиль: Бирюзовый фон, темный текст (как на скрине) */}
+              {/* ТИП ТУРА */}
               <span className="px-3 py-1 rounded-md bg-teal-500 text-slate-900 text-[14px] md:text-xs font-black uppercase tracking-widest backdrop-blur-md">
                   {typeLabel}
               </span>
 
-              {/* 2. МАРКЕТИНГОВАЯ МЕТКА (LABEL) - Только если есть */}
-              {/* Стиль: Прозрачный/Серый фон, белый текст (как "Средний" на скрине, но теперь тут Label) */}
+              {/* МАРКЕТИНГОВАЯ МЕТКА (LABEL) */}
               {tour.label && (
                 <span className="px-3 py-1 rounded-md bg-white/20 text-white border border-white/20 text-[14px] md:text-xs font-bold uppercase tracking-widest backdrop-blur-md">
                     {tour.label}
@@ -107,8 +105,7 @@ export default function TourHero({ tour }: TourHeroProps) {
               </p>
             )}
 
-            {/* --- НИЖНИЙ БЛОК ИНФОРМАЦИИ (КАК БЫЛО) --- */}
-            {/* Линия сверху, 3 элемента в ряд */}
+            {/* НИЖНИЙ БЛОК ИНФОРМАЦИИ */}
             <div className="pt-6 md:pt-8 mt-4 border-t border-white/10">
                 <div className="grid grid-cols-2 md:flex md:items-center gap-y-6 gap-x-8 md:gap-12 text-white">
                     

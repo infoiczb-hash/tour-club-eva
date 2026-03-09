@@ -23,13 +23,15 @@ const LABEL_CONFIG: Record<string, { bg: string, text: string, icon: LucideIcon,
   exclusive: { bg: "bg-violet-500", text: "text-white", icon: Star, label: "Эксклюзив" },
 };
 
-const TYPE_CONFIG: Record<string, { bg: string, border: string, text: string, label: string }> = {
-  weekend: { bg: "bg-violet-500/80", border: "border-violet-400", text: "text-white", label: "Weekend" },
-  water: { bg: "bg-sky-500/80", border: "border-sky-400", text: "text-white", label: "На воде" },
-  hiking: { bg: "bg-emerald-500/80", border: "border-emerald-400", text: "text-white", label: "Поход" },
-  kids: { bg: "bg-pink-500/80", border: "border-pink-400", text: "text-white", label: "Детям" },
-  default: { bg: "bg-slate-800/80", border: "border-slate-500", text: "text-white", label: "Тур" },
+// 🔥 ИСПРАВЛЕНИЕ: Теперь здесь только цвета. Мы убрали жестко заданные label.
+const TYPE_COLORS: Record<string, { bg: string, border: string, text: string }> = {
+  weekend: { bg: "bg-violet-500/80", border: "border-violet-400", text: "text-white" },
+  water: { bg: "bg-sky-500/80", border: "border-sky-400", text: "text-white" },
+  hiking: { bg: "bg-emerald-500/80", border: "border-emerald-400", text: "text-white" },
+  kids: { bg: "bg-pink-500/80", border: "border-pink-400", text: "text-white" },
+  default: { bg: "bg-slate-800/80", border: "border-slate-500", text: "text-white" },
 };
+
 export interface TourCardProps {
   tour: Tour;
   isHot?: boolean;
@@ -51,14 +53,17 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     : 'Скоро';
 
   const hasMoreDates = id ? String(id).length % 2 === 0 : false;
-  const typeStyle = type && TYPE_CONFIG[type.toLowerCase()] ? TYPE_CONFIG[type.toLowerCase()] : TYPE_CONFIG.default;
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
+
+  // 🔥 ИСПРАВЛЕНИЕ: Логика динамических категорий
+  // Ищем цвет по ключу. Если ключа нет (новая категория) — берем default.
+  const typeKey = type ? type.toLowerCase() : 'default';
+  const typeStyle = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
+  // Ярлык берем напрямую из базы. Если пусто — пишем "Тур".
+  const displayLabel = type || "Тур";
 
   return (
     <Link href={`/tour/${slug}`} className="group block h-full outline-none">
-      {/* FIX: убран whileInView — TourCard рендерится в списке, 
-          motion.article создавал IntersectionObserver на каждую карточку.
-          whileHover оставлен через CSS group-hover */}
       <article
         className={cn(
           "relative flex flex-col h-full rounded-[2rem] overflow-hidden transition-all duration-300",
@@ -66,7 +71,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           isHighlighted
             ? "border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.1)] hover:border-amber-400"
             : "border-white/5 hover:border-teal-500/40 hover:shadow-2xl hover:shadow-teal-900/20",
-          // CSS hover вместо whileHover={{ y: -6 }}
           "hover:-translate-y-1.5 transition-transform"
         )}
       >
@@ -77,19 +81,20 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             alt={title}
             fill
             priority={priority}
-            // FIX #7: sizes указан корректно для сетки туров
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             quality={75}
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90" />
 
+          {/* БЕЙДЖ КАТЕГОРИИ */}
           <div className={cn(
             "absolute top-4 left-4 flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm",
             typeStyle.bg, typeStyle.border
           )}>
             <span className={cn("text-xs font-black uppercase tracking-wider", typeStyle.text)}>
-              {typeStyle.label}
+              {/* Выводим живое название из БД */}
+              {displayLabel}
             </span>
           </div>
 
