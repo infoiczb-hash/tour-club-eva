@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight, ArrowLeft, Activity,
-  CheckCircle, AlertCircle, Sparkles, Loader2, X, Compass, Dumbbell
+  CheckCircle, AlertCircle, Sparkles, Loader2, X, Compass, Dumbbell, AlertTriangle
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -88,7 +88,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
     }
     const interval = setInterval(() => {
       setLoadingStep((prev) => (prev < 2 ? prev + 1 : prev));
-    }, 2000); // Тайминг: каждые 2 секунды
+    }, 2000); 
     return () => clearInterval(interval);
   }, [isAiLoading]);
 
@@ -105,7 +105,6 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
   const progress = (current / QUESTIONS.length) * 100;
 
   const handleGetAiMagic = async () => {
-    // 🛡️ Защита: от двойного клика и отсутствия результатов
     if (isAiLoading || !result) return;
     
     setStep("ai_result");
@@ -113,7 +112,6 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
     setAiAnalysis("");
 
     try {
-      // 🧠 Сборка детального контекста
       const answersText = QUESTIONS.map(q => {
         const selectedLabel = q.options.find(o => o.value === answers[q.id])?.label;
         return `Вопрос: ${q.text}\nОтвет: ${selectedLabel}`;
@@ -121,24 +119,20 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
       const res = await analyzePhysicalAction(answersText, result.title, result.summary);
       
-          if (res.success) {
-    setAiAnalysis(res.analysis || "");
-    if (res.tour) setRecommendedTour(res.tour);
-    
-    // 3. Сохраняем страхи пользователя в его локальный профиль!
-       updateProfile({ physicalLevel: result?.level || "prepare" });
-incrementFunTestPassAction('physical-readiness').catch(console.error);
+      if (res.success) {
+        setAiAnalysis(res.analysis || "");
+        if (res.tour) setRecommendedTour(res.tour);
+        updateProfile({ physicalLevel: result?.level || "prepare" });
+        incrementFunTestPassAction('physical-readiness').catch(console.error);
       } else {
         setAiAnalysis("Извините, сейчас спортивный ИИ-врач недоступен. Но вы можете посмотреть расписание в каталоге.");
       }
     } catch (error) {
-      // 🛡️ Защита: обработка падения сети/сервера
       console.error("Network error:", error);
       setAiAnalysis("Произошла ошибка при соединении с сервером. Пожалуйста, попробуйте позже.");
     } finally {
       setIsAiLoading(false);
     }
-
   };
 
   const getLoadingText = () => {
@@ -162,34 +156,53 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           onClick={e => e.stopPropagation()}
         >
+          {/* Абсолютный крестик оставляем, но контент защитим отступами */}
           <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
           {/* === 1. INTRO === */}
           {step === "intro" && (
-            <motion.div key="intro" className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-3 mb-8">
-                <Dumbbell className="w-5 h-5 text-emerald-500" />
-                <span className="text-xs font-bold text-emerald-500 tracking-[0.2em] uppercase">Физическая готовность</span>
+            <motion.div key="intro" className="p-6 md:p-10 flex flex-col h-full overflow-hidden">
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 flex flex-col">
+                  {/* Safe Area для крестика */}
+                  <div className="flex items-center gap-3 mb-8 pr-12">
+                    <Dumbbell className="w-5 h-5 text-emerald-500" />
+                    <span className="text-xs font-bold text-emerald-500 tracking-[0.2em] uppercase">Физическая готовность</span>
+                  </div>
+                  
+                  <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-8 tracking-tight pr-8">
+                    Готов ли я<br />
+                    <span className="text-emerald-400">физически?</span>
+                  </h2>
+
+                  {/* UX 2026: Инъекция честности */}
+                  <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 p-4 md:p-5 rounded-2xl mb-8 shrink-0">
+                      <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+                      <p className="text-sm font-medium text-amber-200/80 leading-relaxed">
+                          Отвечай максимально честно. Горы не прощают вранья, а правильно подобранный маршрут — залог того, что ты полюбишь туризм, а не возненавидишь его.
+                      </p>
+                  </div>
+
+                  <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium mb-4">
+                    Это не медицинская диагностика, а ориентир для понимания твоей точки старта на основе реального образа жизни.
+                  </p>
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
-                Готов ли я<br />
-                <span className="text-emerald-400">физически?</span>
-              </h2>
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-10 font-medium">
-                Честная самооценка на основе твоего реального образа жизни. Не медицинская диагностика — ориентир для понимания своей точки старта.
-              </p>
-              <button onClick={() => setStep("test")} className="mt-auto w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95">
-                Начать оценку <ChevronRight size={18} />
-              </button>
+
+              {/* Кнопка жестко внизу */}
+              <div className="shrink-0 pt-4 mt-2 border-t border-white/5">
+                  <button onClick={() => setStep("test")} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95">
+                    Начать оценку <ChevronRight size={18} />
+                  </button>
+              </div>
             </motion.div>
           )}
 
           {/* === 2. TEST === */}
           {step === "test" && q && (
-            <motion.div key={`q-${current}`} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="mb-8">
+            <motion.div key={`q-${current}`} className="p-6 md:p-10 flex flex-col h-full overflow-hidden">
+              {/* Прогресс с Safe Area */}
+              <div className="mb-8 shrink-0 pr-12">
                  <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                     <span>Вопрос {current + 1} / {QUESTIONS.length}</span>
                     <span>{Math.round(progress)}%</span>
@@ -199,77 +212,122 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
                  </div>
               </div>
               
-              <h2 className="text-2xl md:text-3xl font-black text-white leading-tight mb-8 tracking-tight">
-                {q.text}
-              </h2>
+              {/* Скроллируемая область вопросов */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
+                  <h2 className="text-2xl md:text-3xl font-black text-white leading-tight mb-8 tracking-tight">
+                    {q.text}
+                  </h2>
 
-              <div className="space-y-3">
-                {q.options.map((opt, idx) => {
-                  const isSel = answers[q.id] === opt.value;
-                  return (
-                    <button key={opt.value} onClick={() => handleSelect(opt.value)}
-                      className={cn(
-                        "w-full text-left px-5 py-4 rounded-2xl border transition-all duration-200 flex items-center gap-4",
-                        isSel ? "border-emerald-500 bg-emerald-500/10 text-white" : "border-white/5 bg-slate-800/50 hover:bg-slate-800 text-slate-300"
-                      )}
-                    >
-                      <div className={cn("w-6 h-6 rounded-full border flex items-center justify-center shrink-0 text-xs font-bold", isSel ? "bg-emerald-500 border-emerald-500 text-slate-950" : "border-slate-600 text-slate-500")}>
-                        {String.fromCharCode(65 + idx)}
-                      </div>
-                      <span className="text-sm font-medium">{opt.label}</span>
-                    </button>
-                  );
-                })}
+                  <div className="space-y-3">
+                    {q.options.map((opt, idx) => {
+                      const isSel = answers[q.id] === opt.value;
+                      return (
+                        <button key={opt.value} onClick={() => handleSelect(opt.value)}
+                          className={cn(
+                            "w-full text-left px-5 py-4 rounded-2xl border transition-all duration-200 flex items-center gap-4",
+                            isSel ? "border-emerald-500 bg-emerald-500/10 text-white" : "border-white/5 bg-slate-800/50 hover:bg-slate-800 text-slate-300"
+                          )}
+                        >
+                          <div className={cn("w-6 h-6 rounded-full border flex items-center justify-center shrink-0 text-xs font-bold", isSel ? "bg-emerald-500 border-emerald-500 text-slate-950" : "border-slate-600 text-slate-500")}>
+                            {String.fromCharCode(65 + idx)}
+                          </div>
+                          <span className="text-sm font-medium">{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
               </div>
 
-              {current > 0 && (
-                <button aria-label="Закрыть" onClick={() => setCurrent(c => c - 1)} className="mt-8 flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest w-fit">
-                  <ArrowLeft size={14} /> Назад
-                </button>
-              )}
+              {/* Кнопка назад (подвал) */}
+              <div className="shrink-0 pt-4 border-t border-transparent h-12">
+                  {current > 0 && (
+                    <button aria-label="Назад" onClick={() => setCurrent(c => c - 1)} className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest w-fit">
+                      <ArrowLeft size={14} /> Назад
+                    </button>
+                  )}
+              </div>
             </motion.div>
           )}
 
           {/* === 3. BASE RESULT === */}
           {step === "result" && result && (
-            <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className={cn(
-                "inline-flex items-center gap-3 px-4 py-1.5 rounded-full border mb-6 w-fit",
-                result.level === "ready" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
-                result.level === "almost" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-              )}>
-                {result.level === "ready" ? <CheckCircle size={14} /> : result.level === "almost" ? <AlertCircle size={14} /> : <Activity size={14} />}
-                <span className="text-xs font-bold uppercase tracking-widest">{result.title}</span>
+            <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 md:p-10 flex flex-col h-full overflow-hidden">
+              
+              {/* Шапка с Safe Area */}
+              <div className="shrink-0 mb-6 pr-12">
+                  <div className={cn(
+                    "inline-flex items-center gap-3 px-4 py-1.5 rounded-full border w-fit",
+                    result.level === "ready" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                    result.level === "almost" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                  )}>
+                    {result.level === "ready" ? <CheckCircle size={14} /> : result.level === "almost" ? <AlertCircle size={14} /> : <Activity size={14} />}
+                    <span className="text-xs font-bold uppercase tracking-widest">{result.title}</span>
+                  </div>
               </div>
 
-              <h2 className="text-3xl font-black text-white mb-4 tracking-tight">Резюме формы</h2>
-              <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">{result.summary}</p>
+              {/* Скроллируемое резюме */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 space-y-6">
+                  <h2 className="text-3xl font-black text-white tracking-tight">Резюме формы</h2>
+                  <p className="text-slate-300 text-sm leading-relaxed font-medium">{result.summary}</p>
 
-              <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-5 mb-8">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Подходящий формат</div>
-                <p className="text-white text-sm font-bold">{result.format}</p>
+                  {/* UX 2026: Визуальная шкала заряда/формы */}
+                  <div className="flex gap-2 w-full mt-2 mb-6">
+                      {[1, 2, 3].map(bar => {
+                          const levelScore = result.level === "ready" ? 3 : result.level === "almost" ? 2 : 1;
+                          const isActive = bar <= levelScore;
+                          
+                          let color = "bg-slate-800";
+                          if (isActive) {
+                              if (result.level === "ready") color = "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
+                              else if (result.level === "almost") color = "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]";
+                              else color = "bg-rose-500 shadow-[0_0_10px_rgba(225,29,72,0.5)]";
+                          }
+
+                          return (
+                              <motion.div
+                                  key={bar}
+                                  initial={{ opacity: 0, scaleX: 0 }}
+                                  animate={{ opacity: 1, scaleX: 1 }}
+                                  transition={{ delay: bar * 0.15, duration: 0.4 }}
+                                  className={cn("h-2.5 flex-1 rounded-full origin-left", color)}
+                              />
+                          );
+                      })}
+                  </div>
+
+                  <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-5">
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Подходящий формат</div>
+                    <p className="text-white text-sm font-bold leading-relaxed">{result.format}</p>
+                  </div>
               </div>
 
-              {/* AI UPSELL */}
-              <div className="border border-emerald-500/30 bg-emerald-500/10 rounded-3xl p-6 md:p-8 mt-auto text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.15)_0%,transparent_70%)] pointer-events-none" />
-                <Sparkles className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
-                <h3 className="text-xl font-black text-white mb-2">Глубокий разбор от AI</h3>
-                <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                  ИИ проанализирует ответы как спортивный врач и <strong className="text-white">подберет 1 идеальный тур</strong> из нашего расписания.
-                </p>
-                <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
-                  <Sparkles size={16} /> Получить разбор
-                </button>
+              {/* AI UPSELL (Жестко зафиксирован внизу) */}
+              <div className="shrink-0 pt-4 mt-2 border-t border-white/5">
+                  <div className="border border-emerald-500/30 bg-emerald-500/10 rounded-3xl p-6 text-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.15)_0%,transparent_70%)] pointer-events-none" />
+                    <Sparkles className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-black text-white mb-2">Глубокий разбор от AI</h3>
+                    
+                    {/* Персонализированный текст призыва */}
+                    <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                      {result.level === "ready" && "ИИ подберет тебе маршрут, где ты сможешь по-настоящему бросить вызов своей выносливости."}
+                      {result.level === "almost" && "ИИ выберет оптимальный тур для старта, чтобы ты закрепил форму и насладился процессом."}
+                      {result.level === "prepare" && "ИИ составит для тебя мягкий план вкатывания в туризм и подберет самый безопасный тур."}
+                    </p>
+                    
+                    <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
+                      <Sparkles size={16} /> Получить разбор
+                    </button>
+                  </div>
               </div>
             </motion.div>
           )}
 
           {/* === 4. AI RESULT === */}
           {step === "ai_result" && (
-            <motion.div key="ai_result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10">
+            <motion.div key="ai_result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full overflow-hidden">
                 {isAiLoading ? (
-                    <div className="flex flex-col items-center justify-center h-[400px]">
+                    <div className="flex flex-col items-center justify-center h-full min-h-[400px] p-6 md:p-10">
                         <div className="relative mb-6">
                             <div className="absolute inset-0 bg-emerald-500/30 blur-2xl rounded-full animate-pulse" />
                             <Loader2 className="w-16 h-16 text-emerald-400 animate-spin relative z-10" />
@@ -278,14 +336,14 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
                             key={loadingStep}
                             initial={{ opacity: 0, y: 5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-lg font-bold text-white text-center tracking-wide"
+                            className="text-lg font-bold text-white text-center tracking-wide px-4"
                         >
                             {getLoadingText()}
                         </motion.h3>
                     </div>
                 ) : (
-                    <div className="flex flex-col">
-                        <div className="text-center mb-8 border-b border-white/10 pb-6 pt-4">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
+                        <div className="text-center mb-8 border-b border-white/10 pb-6 pr-12">
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 mb-4 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
                                 <Activity className="w-8 h-8 text-emerald-400" />
                             </div>
@@ -306,12 +364,12 @@ incrementFunTestPassAction('physical-readiness').catch(console.error);
                                     <Compass className="text-emerald-400" size={20} />
                                     <h3 className="text-lg font-black text-white uppercase tracking-wide">Тур для твоего уровня:</h3>
                                 </div>
-                                <div className="w-full">
+                                <div className="w-full pb-4">
                                     <TourCard tour={recommendedTour} />
                                 </div>
                             </div>
                         ) : (
-                            <div className="mt-8 p-6 bg-slate-800/50 rounded-2xl text-center border border-white/5">
+                            <div className="mt-8 p-6 bg-slate-800/50 rounded-2xl text-center border border-white/5 pb-6">
                                 <p className="text-slate-400 text-sm mb-4">Для твоего уровня сейчас нет идеального совпадения в расписании, но мы поможем подобрать альтернативу.</p>
                                 <button onClick={onClose} className="text-emerald-400 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors">
                                     Закрыть

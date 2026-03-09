@@ -23,7 +23,6 @@ const LABEL_CONFIG: Record<string, { bg: string, text: string, icon: LucideIcon,
   exclusive: { bg: "bg-violet-500", text: "text-white", icon: Star, label: "Эксклюзив" },
 };
 
-// 🔥 ИСПРАВЛЕНИЕ: Теперь здесь только цвета. Мы убрали жестко заданные label.
 const TYPE_COLORS: Record<string, { bg: string, border: string, text: string }> = {
   weekend: { bg: "bg-violet-500/80", border: "border-violet-400", text: "text-white" },
   water: { bg: "bg-sky-500/80", border: "border-sky-400", text: "text-white" },
@@ -44,7 +43,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     price, priceOld, currency,
     priceMember, priceChild,
     image, location, duration,
-    tags, label, type
+    tags, label, type, category // 👇 Берем категорию
   } = tour;
 
   const dateObj = date ? new Date(date) : null;
@@ -55,12 +54,11 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
   const hasMoreDates = id ? String(id).length % 2 === 0 : false;
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
 
-  // 🔥 ИСПРАВЛЕНИЕ: Логика динамических категорий
-  // Ищем цвет по ключу. Если ключа нет (новая категория) — берем default.
-  const typeKey = type ? type.toLowerCase() : 'default';
+  // 👇 ИСПРАВЛЕНИЕ: Читаем slug категории, с фолбэком на type, затем на default
+  const typeKey = category?.slug || type?.toLowerCase() || 'default';
   const typeStyle = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
-  // Ярлык берем напрямую из базы. Если пусто — пишем "Тур".
-  const displayLabel = type || "Тур";
+  // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
+  const displayLabel = category?.title || type || "Тур";
 
   return (
     <Link href={`/tour/${slug}`} className="group block h-full outline-none">
@@ -74,7 +72,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           "hover:-translate-y-1.5 transition-transform"
         )}
       >
-        {/* ИЗОБРАЖЕНИЕ */}
         <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-800">
           <Image
             src={image || '/placeholder-tour.jpg'}
@@ -87,13 +84,11 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90" />
 
-          {/* БЕЙДЖ КАТЕГОРИИ */}
           <div className={cn(
             "absolute top-4 left-4 flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm",
             typeStyle.bg, typeStyle.border
           )}>
             <span className={cn("text-xs font-black uppercase tracking-wider", typeStyle.text)}>
-              {/* Выводим живое название из БД */}
               {displayLabel}
             </span>
           </div>
@@ -123,7 +118,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           </div>
         </div>
 
-        {/* КОНТЕНТ */}
         <div className="p-5 sm:p-6 flex flex-col flex-grow bg-gradient-to-b from-slate-950/90 to-[#0d131a]">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
             <div className="flex items-center gap-1.5">

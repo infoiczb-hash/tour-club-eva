@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, Wind, Brain, Thermometer, Moon, Utensils,
-  ChevronRight, Sparkles, Loader2, ArrowLeft, Activity, X, ShieldAlert, Compass
+  Sparkles, Loader2, ArrowLeft, Activity, X, ShieldAlert, Compass, HelpCircle, Check
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -71,6 +71,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
       document.body.style.overflow = "hidden";
       setStep("select");
       setSelected([]);
+      setViewing(null);
       setAiAnalysis("");
       setRecommendedTour(null);
     } else {
@@ -91,7 +92,6 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
   };
 
   const handleGetAiMagic = async () => {
-    // 🛡️ Защита: от двойного клика и отсутствия данных
     if (isAiLoading || selected.length === 0) return;
     
     setStep("ai_result");
@@ -99,7 +99,6 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
     setAiAnalysis("");
 
     try {
-      // 🧠 RAG: Передаем ИИ медицинскую причину симптома
       const symptomsDetailed = selected.map(key => {
         const s = SYMPTOMS.find(x => x.key === key);
         const info = SYMPTOM_INFO[key];
@@ -107,24 +106,21 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
       });
 
       const res = await analyzeBodySignalsAction(symptomsDetailed);
-            if (res.success) {
-    setAiAnalysis(res.analysis || "");
-    if (res.tour) setRecommendedTour(res.tour);
-    
-    // 3. Сохраняем страхи пользователя в его локальный профиль!
-       updateProfile({ fears: selected }); // Для BodySignals: { bodySymptoms: selected }
-incrementFunTestPassAction('fear-debrief').catch(console.error);
+      if (res.success) {
+        setAiAnalysis(res.analysis || "");
+        if (res.tour) setRecommendedTour(res.tour);
+        
+        updateProfile({ bodySymptoms: selected });
+        incrementFunTestPassAction('body-signals').catch(console.error);
       } else {
         setAiAnalysis("ИИ-врач сейчас отдыхает, но вы можете выбрать щадящий тур в нашем каталоге.");
       }
     } catch (error) {
-      // 🛡️ Защита: обработка падения сети/сервера
       console.error("Network error:", error);
       setAiAnalysis("Произошла ошибка сети. Не удалось связаться с сервером.");
     } finally {
       setIsAiLoading(false);
     }
-    
   };
 
   const getLoadingText = () => {
@@ -161,86 +157,146 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
 
           {/* === 1. ВЫБОР СИМПТОМОВ === */}
           {step === "select" && (
-            <motion.div key="select" className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-3 mb-6">
-                <Heart className="w-4 h-4 text-rose-500" />
-                <span className="text-rose-500 text-xs font-bold tracking-widest uppercase">Что говорит тело</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">Что происходит<br /><span className="text-rose-400">с тобой в туре?</span></h2>
-              <p className="text-slate-400 text-sm leading-relaxed mb-8 font-medium">Выбери симптомы, которые ты замечаешь — и получи объяснение, почему это происходит и что делать.</p>
-
-              {(Object.entries(grouped) as [string, typeof SYMPTOMS][]).map(([cat, symptoms]) => (
-                <div key={cat} className="mb-6">
-                  <div className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-3">{categoryLabel[cat]}</div>
-                  <div className="space-y-2">
-                    {symptoms.map((s) => {
-                      const isSel = selected.includes(s.key);
-                      const hasWarning = SYMPTOM_INFO[s.key].warning;
-                      return (
-                        <div key={s.key} className="flex gap-3">
-                          <button onClick={() => toggleSymptom(s.key)}
-                            className={cn("flex-1 text-left px-4 py-3.5 rounded-xl border transition-all duration-200 flex items-center gap-3", isSel ? "border-rose-500/50 bg-rose-500/10 text-white shadow-[0_0_15px_rgba(225,29,72,0.15)]" : "border-white/5 bg-slate-800/30 text-slate-300 hover:bg-slate-800")}>
-                            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors", isSel ? "text-rose-400" : "text-slate-500")}>
-                              {s.icon}
-                            </div>
-                            <span className="text-sm font-bold">{s.label}</span>
-                            {hasWarning && <ShieldAlert size={14} className="ml-auto text-amber-500" />}
-                          </button>
-                          <button onClick={() => { setViewing(s.key); setStep("detail"); }} className="w-12 rounded-xl border border-white/5 text-slate-400 hover:text-white hover:bg-white/5 flex items-center justify-center transition-all shrink-0">
-                            <ChevronRight size={20} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+            <motion.div key="select" className="flex flex-col h-full overflow-hidden p-6 md:p-10 pb-6">
+              
+              <div className="shrink-0 mb-6 pr-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <Heart className="w-4 h-4 text-rose-500" />
+                  <span className="text-rose-500 text-xs font-bold tracking-widest uppercase">Что говорит тело</span>
                 </div>
-              ))}
+                <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">Что происходит<br /><span className="text-rose-400">с тобой в туре?</span></h2>
+                <p className="text-slate-400 text-sm leading-relaxed font-medium">Выбери симптомы, которые ты замечаешь — и получи объяснение, почему это происходит и что делать.</p>
+              </div>
 
-              {selected.length > 0 && (
-                <button onClick={() => setStep("summary")} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider transition-all mt-4 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(225,29,72,0.3)] active:scale-[0.98]">
-                  Разобрать симптомы ({selected.length}) <ChevronRight size={18} />
-                </button>
-              )}
+              {/* Скроллируемый список */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
+                {(Object.entries(grouped) as [string, typeof SYMPTOMS][]).map(([cat, symptoms]) => (
+                  <div key={cat} className="mb-6 last:mb-0">
+                    <div className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-3">{categoryLabel[cat]}</div>
+                    <div className="space-y-3">
+                      {symptoms.map((s) => {
+                        const isSel = selected.includes(s.key);
+                        const hasWarning = SYMPTOM_INFO[s.key].warning;
+                        return (
+                          <div key={s.key} className="flex gap-3 items-stretch">
+                             
+                             {/* Левая колонка: Кнопка Инфо */}
+                             <button 
+                                onClick={() => { setViewing(s.key); setStep("detail"); }}
+                                className={cn(
+                                  "w-14 rounded-2xl border flex flex-col items-center justify-center transition-all shrink-0 group",
+                                  "bg-slate-800/50 border-white/5 hover:border-rose-500/30 text-slate-400 hover:bg-slate-800 hover:text-rose-400"
+                                )}
+                                title="Узнать подробнее"
+                             >
+                                <HelpCircle size={22} className="transition-colors" />
+                             </button>
+
+                             {/* Правая колонка: Выбор и Текст */}
+                             <button 
+                                onClick={() => toggleSymptom(s.key)} 
+                                className={cn(
+                                  "flex-1 text-left px-5 py-4 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 group",
+                                  isSel 
+                                    ? "border-rose-500/50 bg-rose-500/10 shadow-[0_0_15px_rgba(225,29,72,0.15)]" 
+                                    : "border-white/5 bg-slate-800/50 hover:bg-slate-800"
+                                )}
+                             >
+                                <div className="flex items-center gap-3">
+                                   <div className={cn("text-rose-400 shrink-0", isSel ? "" : "opacity-70 group-hover:opacity-100 transition-opacity")}>
+                                      {s.icon}
+                                   </div>
+                                   <div className={cn("text-[15px] md:text-base font-bold transition-colors leading-snug", isSel ? "text-white" : "text-slate-300 group-hover:text-white")}>
+                                       {s.label}
+                                   </div>
+                                   {hasWarning && <ShieldAlert size={14} className="text-amber-500 shrink-0 ml-1" />}
+                                </div>
+                                
+                                <div className={cn(
+                                  "w-6 h-6 rounded-full border flex items-center justify-center shrink-0 transition-all",
+                                  isSel 
+                                    ? "bg-rose-500 border-rose-500" 
+                                    : "border-slate-600 group-hover:border-rose-500/50"
+                                )}>
+                                  {isSel && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                                </div>
+                             </button>
+
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Подвал с кнопкой */}
+              <div className="shrink-0 pt-4 border-t border-white/5 mt-2">
+                 {selected.length > 0 ? (
+                    <button onClick={() => setStep("summary")} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(225,29,72,0.3)] active:scale-[0.98]">
+                      Разобрать симптомы ({selected.length})
+                    </button>
+                 ) : (
+                    <div className="w-full bg-slate-800 text-slate-500 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
+                       Выбери хотя бы один симптом
+                    </div>
+                 )}
+              </div>
             </motion.div>
           )}
 
           {/* === 2. ДЕТАЛИ СИМПТОМА === */}
           {step === "detail" && viewingInfo && viewingSymptom && (
-            <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors">
-                <ArrowLeft size={16} /> Назад
-              </button>
-
-              {viewingInfo.warning && (
-                <div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 mb-6 flex gap-3 items-start">
-                  <ShieldAlert className="text-amber-500 shrink-0" size={18}/>
-                  <div>
-                    <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">Обрати внимание</p>
-                    <p className="text-amber-200/80 text-sm font-medium">Этот симптом требует контроля. При нарастании — сообщи гиду.</p>
+            <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full overflow-hidden p-6 md:p-10 pb-6">
+              <div className="shrink-0 mb-6">
+                 <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors">
+                    <ArrowLeft size={16} /> Назад
+                 </button>
+                 <h2 className="text-2xl md:text-3xl font-black text-white leading-tight flex items-center gap-3">
+                    <span className="text-rose-400">{viewingSymptom.icon}</span>
+                    {viewingSymptom.label}
+                 </h2>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
+                {viewingInfo.warning && (
+                  <div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 flex gap-3 items-start">
+                    <ShieldAlert className="text-amber-500 shrink-0" size={18}/>
+                    <div>
+                      <p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest mb-1">Обрати внимание</p>
+                      <p className="text-amber-200/80 text-sm font-medium">Этот симптом требует контроля. При нарастании — обязательно сообщи гиду.</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-8 leading-tight">{viewingSymptom.label}</h2>
-
-              <div className="space-y-6 flex-1">
-                <div className="border-l-2 border-slate-700 pl-4">
-                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Почему это происходит</p>
+                <div className="border-l-2 border-slate-700 pl-5">
+                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Почему это происходит</p>
                   <p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.why}</p>
                 </div>
-                <div className="border-l-2 border-rose-500/50 bg-rose-500/5 py-3 rounded-r-xl pl-4">
-                  <p className="text-rose-400 text-[10px] font-bold uppercase tracking-widest mb-1">Что делать сейчас</p>
+                <div className="border-l-2 border-rose-500/50 pl-5 bg-rose-500/5 py-4 rounded-r-xl">
+                  <p className="text-rose-400 text-[10px] font-bold uppercase tracking-widest mb-2">Что делать сейчас</p>
                   <p className="text-white text-sm font-bold leading-relaxed">{viewingInfo.now}</p>
                 </div>
-                <div className="border-l-2 border-teal-500/50 pl-4">
-                  <p className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-1">Что изменить завтра</p>
+                <div className="border-l-2 border-teal-500/50 pl-5">
+                  <p className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-2">Что изменить завтра</p>
                   <p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.tomorrow}</p>
                 </div>
               </div>
-
-              <div className="mt-8 flex gap-3 pt-4 border-t border-white/10 shrink-0">
-                <button onClick={() => { if (!selected.includes(viewingSymptom.key)) toggleSymptom(viewingSymptom.key); setStep("select"); }} className="flex-1 bg-rose-600/20 border border-rose-500/30 text-rose-400 rounded-xl py-4 text-xs font-bold uppercase tracking-wider hover:bg-rose-600/30 transition-colors">
-                  Добавить в список
+              
+              <div className="shrink-0 mt-6 pt-4 border-t border-white/10">
+                <button 
+                  onClick={() => { 
+                     if (!selected.includes(viewingSymptom.key)) toggleSymptom(viewingSymptom.key); 
+                     setStep("select"); 
+                  }} 
+                  className={cn(
+                    "w-full rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all",
+                    selected.includes(viewingSymptom.key)
+                       ? "bg-slate-800 text-white hover:bg-slate-700"
+                       : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20"
+                  )}
+                >
+                  {selected.includes(viewingSymptom.key) ? "Вернуться к списку" : "Добавить в мой список"}
                 </button>
               </div>
             </motion.div>
@@ -248,14 +304,16 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
 
           {/* === 3. БАЗОВОЕ САММАРИ (Upsell AI) === */}
           {step === "summary" && (
-            <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors">
-                <ArrowLeft size={16} /> Назад
-              </button>
+            <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full overflow-hidden p-6 md:p-10 pb-6">
+              
+              <div className="shrink-0 mb-6">
+                 <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors">
+                    <ArrowLeft size={16} /> Назад
+                 </button>
+                 <h2 className="text-3xl font-black text-white tracking-tight">Твои симптомы</h2>
+              </div>
 
-              <h2 className="text-3xl font-black text-white mb-6 tracking-tight">Твои симптомы</h2>
-
-              <div className="space-y-4 mb-8">
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2 space-y-4">
                 {selected.map((key) => {
                   const s = SYMPTOMS.find((x) => x.key === key)!;
                   const info = SYMPTOM_INFO[key];
@@ -268,15 +326,14 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
                       </div>
                       <div className="bg-slate-900 rounded-xl p-4">
                         <span className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Решение:</span>
-                        <p className="text-slate-300 text-sm font-medium">{info.now}</p>
+                        <p className="text-slate-300 text-sm font-medium leading-relaxed">{info.now}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* AI UPSELL */}
-              <div className="border border-rose-500/30 bg-rose-500/10 rounded-3xl p-6 md:p-8 mt-auto text-center relative overflow-hidden group">
+              <div className="shrink-0 mt-4 border border-rose-500/30 bg-rose-500/10 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden group">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(225,29,72,0.15)_0%,transparent_70%)] pointer-events-none" />
                 <Sparkles className="w-10 h-10 text-rose-400 mx-auto mb-4" />
                 <h3 className="text-xl font-black text-white mb-2">Глубокий разбор от AI-врача</h3>
@@ -292,19 +349,18 @@ incrementFunTestPassAction('fear-debrief').catch(console.error);
 
           {/* === 4. МАГИЯ AI === */}
           {step === "ai_result" && (
-            <motion.div key="ai_result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
+            <motion.div key="ai_result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10">
                 {isAiLoading ? (
                     <div className="flex flex-col items-center justify-center h-[400px]">
-                        <div className="relative mb-8">
+                        <div className="relative mb-6">
                             <div className="absolute inset-0 bg-rose-500/30 blur-2xl rounded-full animate-pulse" />
                             <Loader2 className="w-16 h-16 text-rose-400 animate-spin relative z-10" />
                         </div>
-                        {/* 🌟 OPTIMISTIC UX LOADER 🌟 */}
                         <motion.h3 
                             key={loadingStep}
                             initial={{ opacity: 0, y: 5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-lg font-bold text-white text-center tracking-wide"
+                            className="text-lg font-bold text-white text-center tracking-wide px-4"
                         >
                             {getLoadingText()}
                         </motion.h3>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
+import Link from "next/link";
 import { 
   X, ArrowRight, Sparkles, Moon, Sun, Cloud, Wind, Crown,
   Trees, Mountain, Waves, MoonStar, Zap, Footprints, 
@@ -10,6 +11,8 @@ import {
   LucideIcon
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useProfile } from "@/hooks/useProfile";
+import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 
 /* =======================
    ТИПЫ
@@ -26,15 +29,17 @@ type Result = {
   icon: LucideIcon;
   colorClass: string;
   glowClass: string;
+  buttonClass: string;
   animal: string;
   title: string;
   description: string;
   power: string;
-  recommendedTours: Array<{ name: string }>;
+  directionSlug: string;
+  directionName: string;
 };
 
 /* =======================
-   ВОПРОСЫ (С Lucide иконками)
+   ВОПРОСЫ
 ======================= */
 const questions = [
   {
@@ -88,44 +93,52 @@ const results: Record<string, Result> = {
     icon: Moon,
     colorClass: "text-indigo-400",
     glowClass: "bg-indigo-500/20",
+    buttonClass: "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/30",
     animal: "ВОЛК",
     title: "ВОЖАК СТАИ",
-    description: "Ты вынослив, верен своим и невероятно силен духом. Горы для тебя — это территория, которую нужно покорить вместе с командой.",
+    description: "Ты вынослив, верен своим и невероятно силен духом. Твоя стихия — командная работа и совместное преодоление препятствий.",
     power: "Неиссякаемая энергия",
-    recommendedTours: [{ name: "Кругосветка: Путь героев" }, { name: "Экспедиция в Карпаты" }],
+    directionSlug: "kayaking",
+    directionName: "Сплавы на байдарках",
   },
   bear: {
     id: "bear",
     icon: ShieldCheck,
     colorClass: "text-amber-500",
     glowClass: "bg-amber-500/20",
+    buttonClass: "bg-amber-600 hover:bg-amber-500 shadow-amber-900/30",
     animal: "МЕДВЕДЬ",
     title: "ХРАНИТЕЛЬ ЛЕСА",
     description: "Ты ценишь комфорт, вкусную еду и неспешность. Твоя сила в спокойствии. Ты не бежишь на вершину, ты наслаждаешься каждым шагом.",
     power: "Монументальное спокойствие",
-    recommendedTours: [{ name: "Один день в лесу" }, { name: "Пикник на природе" }],
+    directionSlug: "local",
+    directionName: "Локальные туры",
   },
   eagle: {
     id: "eagle",
-    icon: Compass,
+    icon: Mountain,
     colorClass: "text-sky-400",
     glowClass: "bg-sky-500/20",
+    buttonClass: "bg-sky-600 hover:bg-sky-500 shadow-sky-900/30",
     animal: "ОРЕЛ",
     title: "ВЛАСТЕЛИН ВЫСОТЫ",
     description: "Тебе нужен масштаб. Ты задыхаешься внизу. Твоя цель — самые высокие пики, откуда мир кажется игрушечным.",
     power: "Острое зрение и свобода",
-    recommendedTours: [{ name: "Горный треккинг" }, { name: "Восхождение" }],
+    directionSlug: "hiking",
+    directionName: "Горы и Походы",
   },
   fox: {
     id: "fox",
     icon: Sparkles,
     colorClass: "text-orange-500",
     glowClass: "bg-orange-500/20",
+    buttonClass: "bg-orange-600 hover:bg-orange-500 shadow-orange-900/30",
     animal: "ЛИС",
     title: "ДУХ ПРИКЛЮЧЕНИЙ",
-    description: "Ты хитер, ловок и любопытен. Ты найдешь приключение там, где другие пройдут мимо. Скука — твой главный враг.",
+    description: "Ты хитер, ловок и любопытен. Ты найдешь приключение там, где другие пройдут мимо. Эстетика и легкость — твой выбор.",
     power: "Изобретательность и драйв",
-    recommendedTours: [{ name: "Сплав на байдарках" }, { name: "SUP-прогулка" }],
+    directionSlug: "sup",
+    directionName: "SUP-прогулки",
   },
 };
 
@@ -134,21 +147,12 @@ const results: Record<string, Result> = {
 ======================= */
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
-  }
+  show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
 };
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20, scale: 0.95, filter: "blur(4px)" },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    filter: "blur(0px)",
-    transition: { type: "spring", stiffness: 260, damping: 20 } 
-  }
+  show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", transition: { type: "spring", stiffness: 260, damping: 20 } }
 };
 
 /* =======================
@@ -157,14 +161,14 @@ const itemVariants: Variants = {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onComplete: (result: string) => void;
 }
 
-export default function QuizTotem({ open, onClose, onComplete }: Props) {
+export default function QuizTotem({ open, onClose }: Props) {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState({ wolf: 0, bear: 0, eagle: 0, fox: 0 });
   const [view, setView] = useState<'question' | 'summoning' | 'result'>('question');
   const [finalResult, setFinalResult] = useState<Result | null>(null);
+  const { updateProfile } = useProfile();
 
   useEffect(() => {
     if (open) {
@@ -179,28 +183,32 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
   }, [open]);
 
   const handleAnswer = (optionScore: any) => {
-    setScores(prev => ({
-      wolf: prev.wolf + optionScore.wolf,
-      bear: prev.bear + optionScore.bear,
-      eagle: prev.eagle + optionScore.eagle,
-      fox: prev.fox + optionScore.fox,
-    }));
+    const newScores = {
+      wolf: scores.wolf + optionScore.wolf,
+      bear: scores.bear + optionScore.bear,
+      eagle: scores.eagle + optionScore.eagle,
+      fox: scores.fox + optionScore.fox,
+    };
+    setScores(newScores);
 
     if (step < questions.length - 1) {
       setTimeout(() => setStep(s => s + 1), 250);
     } else {
-      calculateTotem();
+      calculateTotem(newScores);
     }
   };
 
-  const calculateTotem = () => {
+  const calculateTotem = (finalScores: typeof scores) => {
     setView('summoning');
-    // Имитация магии призыва (задержка 2.5 секунды)
     setTimeout(() => {
-      // Ищем животное с максимальным баллом
-      const entries = Object.entries(scores);
+      const entries = Object.entries(finalScores);
       const winnerKey = entries.reduce((a, b) => a[1] > b[1] ? a : b)[0];
-      setFinalResult(results[winnerKey]);
+      const res = results[winnerKey];
+      setFinalResult(res);
+      
+      updateProfile({ touristType: `Тотем: ${res.animal}` });
+      incrementFunTestPassAction('totem').catch(console.error);
+      
       setView('result');
     }, 2500);
   };
@@ -216,7 +224,6 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
         className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]/95 backdrop-blur-2xl px-4"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       >
-        {/* Анимация звезд и стихий на заднем фоне модалки */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-10 left-10 text-indigo-500/10 animate-pulse"><Sparkles size={60}/></div>
             <div className="absolute bottom-20 right-20 text-purple-500/10 animate-pulse delay-700"><Moon size={80}/></div>
@@ -239,27 +246,26 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                     initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                     className="flex flex-col h-full z-10"
                   >
-                      <div className="text-center mb-8">
+                      <div className="text-center mb-8 pr-12 shrink-0">
                           <span className="text-[12px] font-black uppercase text-indigo-400 tracking-[0.3em] mb-3 block">Вопрос {step + 1}/{questions.length}</span>
                           <h3 className="text-2xl md:text-3xl font-black text-white leading-tight">{currentQ.question}</h3>
                       </div>
 
                       <motion.div 
                         variants={containerVariants} initial="hidden" animate="show"
-                        className="grid grid-cols-2 gap-4 mb-8"
+                        className="grid grid-cols-2 gap-4 mb-8 flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2"
                       >
                           {currentQ.options.map((opt) => {
                             const OptionIcon = opt.icon;
                             return (
                              <motion.button
-   key={opt.id}
-   variants={itemVariants}
-   whileHover={{ scale: 1.05 }} 
-   whileTap={{ scale: 0.95 }}
-   onClick={() => handleAnswer(opt.score)}
-   className="aspect-square rounded-3xl bg-indigo-900/30 hover:bg-indigo-600/20 border border-indigo-500/20 flex flex-col items-center justify-center gap-4 transition-all duration-300 group relative overflow-hidden"
->
-                                  {/* Легкое свечение при наведении */}
+                               key={opt.id}
+                               variants={itemVariants}
+                               whileHover={{ scale: 1.05 }} 
+                               whileTap={{ scale: 0.95 }}
+                               onClick={() => handleAnswer(opt.score)}
+                               className="aspect-square rounded-3xl bg-indigo-900/30 hover:bg-indigo-600/20 border border-indigo-500/20 flex flex-col items-center justify-center gap-4 transition-all duration-300 group relative overflow-hidden"
+                             >
                                   <div className="absolute inset-0 bg-gradient-to-t from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                   <OptionIcon className="w-10 h-10 text-indigo-300 group-hover:text-white transition-colors group-hover:scale-110 duration-300" strokeWidth={1.5} />
                                   <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider relative z-10">{opt.label}</span>
@@ -268,7 +274,7 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                           })}
                       </motion.div>
 
-                      <div className="mt-auto h-1.5 bg-indigo-950 rounded-full overflow-hidden border border-indigo-500/10">
+                      <div className="shrink-0 mt-auto h-1.5 bg-indigo-950 rounded-full overflow-hidden border border-indigo-500/10">
                           <motion.div className="h-full bg-gradient-to-r from-indigo-600 to-purple-500 shadow-[0_0_15px_#6366f1]" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
                       </div>
                   </motion.div>
@@ -282,16 +288,8 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                     className="flex flex-col items-center justify-center min-h-[400px] text-center z-10"
                   >
                       <div className="relative mb-8 w-32 h-32 flex items-center justify-center">
-                           <motion.div 
-                              animate={{ rotate: 360 }} 
-                              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                              className="w-full h-full rounded-full border-t-2 border-l-2 border-indigo-500 opacity-50 absolute inset-0"
-                           />
-                           <motion.div 
-                              animate={{ rotate: -360 }} 
-                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                              className="w-24 h-24 rounded-full border-b-2 border-r-2 border-purple-400 opacity-50 absolute"
-                           />
+                           <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} className="w-full h-full rounded-full border-t-2 border-l-2 border-indigo-500 opacity-50 absolute inset-0" />
+                           <motion.div animate={{ rotate: -360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="w-24 h-24 rounded-full border-b-2 border-r-2 border-purple-400 opacity-50 absolute" />
                            <Sparkles className="w-10 h-10 text-white animate-pulse" />
                       </div>
                       <h3 className="text-xl font-black text-indigo-200 uppercase tracking-[0.2em] animate-pulse">Призываем духа...</h3>
@@ -303,8 +301,9 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                   <motion.div 
                     key="result"
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col h-full overflow-y-auto custom-scrollbar text-center z-10"
+                    className="flex flex-col h-full overflow-hidden text-center z-10"
                   >
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
                       <div className="mb-8 relative flex flex-col items-center pt-4">
                           <div className={clsx("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 blur-[60px] rounded-full pointer-events-none", finalResult.glowClass)} />
                           
@@ -333,21 +332,31 @@ export default function QuizTotem({ open, onClose, onComplete }: Props) {
                               Сила: {finalResult.power}
                           </div>
                       </div>
+                    </div>
 
-                      <div className="mt-auto space-y-3">
-                          <p className="text-[12px] font-bold text-indigo-500 uppercase tracking-widest mb-1">Твоя стихия ждет</p>
-                          {finalResult.recommendedTours.map((tour, i) => (
-                               <button
-                                  key={i}
-                                  onClick={() => onComplete(`Тотем: ${finalResult.animal} (${finalResult.title}). Хочу: ${tour.name}`)}
-                                  className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-900/30 flex items-center justify-center gap-3 group"
-                               >
-                                   <Sparkles size={16} className="text-indigo-200 group-hover:text-white transition-colors" /> 
-                                   Выбрать путь ({tour.name}) 
-                                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/>
-                               </button>
-                          ))}
+                    {/* SMART CTA */}
+                    <div className="shrink-0 pt-4 mt-2 border-t border-white/10">
+                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Твоя стихия ждет</p>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Link
+                          href={`/directions/${finalResult.directionSlug}`}
+                          onClick={onClose}
+                          className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+                        >
+                          <Compass size={16} /> О направлении
+                        </Link>
+                        <Link
+                          href={`/tour?category=${finalResult.directionSlug}`}
+                          onClick={onClose}
+                          className={clsx(
+                            "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-lg",
+                            finalResult.buttonClass
+                          )}
+                        >
+                          Выбрать маршрут <ArrowRight size={16} />
+                        </Link>
                       </div>
+                    </div>
                   </motion.div>
               )}
             </AnimatePresence>
