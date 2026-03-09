@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://www.evatur.club';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.evatur.club';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,20 +8,20 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/_next/'],
+        disallow: ['/admin/', '/api/', '/_next/', '/test'],
       },
       {
         userAgent: 'Yandexbot',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/_next/'],
+        disallow: ['/admin/', '/api/', '/_next/', '/test'],
       },
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/_next/', '/offer', '/privacy'],
+        disallow: ['/admin/', '/api/', '/_next/', '/test'],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,
-    host: BASE_URL, 
+    host: BASE_URL,
   };
 }
