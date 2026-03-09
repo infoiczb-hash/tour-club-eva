@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+
 import { Tour } from './types';
 
 // ==========================================
@@ -21,8 +22,9 @@ export async function createTour(data: Partial<Tour>) {
       subtitle:     data.subtitle     ?? null,
       description:  data.description  ?? null,
       isActive:     data.isActive     ?? false,
-
-      type:         data.type         ?? 'hiking',
+     category: data.categoryId 
+  ? { connect: { id: data.categoryId } } 
+  : undefined,
       difficulty:   data.difficulty   ?? 'medium',
       label:        data.label        ?? '',
       tags:         data.tags         ?? [],
@@ -89,8 +91,11 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.subtitle    !== undefined) payload.subtitle    = data.subtitle;
     if (data.description !== undefined) payload.description = data.description;
     if (data.isActive    !== undefined) payload.isActive    = data.isActive;
-
-    if (data.type        !== undefined) payload.type        = data.type;
+    if (data.categoryId !== undefined) {
+  payload.category = data.categoryId 
+    ? { connect: { id: data.categoryId } } 
+    : { disconnect: true }; // Или undefined, если это только для создания (Create)
+}
     if (data.difficulty  !== undefined) payload.difficulty  = data.difficulty ?? 'medium';
     if (data.label       !== undefined) payload.label       = data.label ?? '';
     if (data.tags        !== undefined) payload.tags        = data.tags;
