@@ -3,15 +3,9 @@
 import { prisma } from '@/lib/prisma';
 import { Tour } from './types'; 
 
-// ==========================================
-// 1. АДАПТЕР (Prisma DB -> Frontend Type)
-// ==========================================
 function mapPrismaTourToFrontend(item: any): Tour {
-  // 1. Работаем с датами (защита от null)
   const dates = Array.isArray(item.dates) ? item.dates : [];
   const firstDate = dates[0] || {};
-
-  // 2. Хелпер для JSON полей (гарантирует массив)
   const ensureArray = (val: any) => Array.isArray(val) ? val : [];
 
   return {
@@ -19,57 +13,43 @@ function mapPrismaTourToFrontend(item: any): Tour {
     slug: item.slug,
     title: item.title,
     subtitle: item.subtitle || null,
-    
-    // 👇 ВОЗВРАЩАЕМ СЫРОЕ ОПИСАНИЕ
     description: item.description || "",
     
+    // 👇 ИСПРАВЛЕНИЕ: Маппинг объекта категории для фронтенда
     type: item.type,
+    categoryId: item.categoryId || null,
+    category: item.category ? {
+      id: item.category.id,
+      title: item.category.title,
+      slug: item.category.slug,
+      icon: item.category.icon
+    } : null,
+    
     difficulty: item.difficulty || 'medium',
     label: item.label || null,
-    tags: item.tags || [], // Prisma возвращает массив строк, всё ок
-    
+    tags: item.tags || [],
     location: item.location,
-    // Формируем строковые даты для карточки
     date: firstDate.start ? new Date(firstDate.start).toISOString() : '', 
-    // 👇 БЕРЕМ ДАТУ КОНЦА ИЗ ПЕРВОЙ ДАТЫ МАССИВА
     endDate: firstDate.end ? new Date(firstDate.end).toISOString() : null,
-    
-    // 👇 ВОЗВРАЩАЕМ ПОЛНЫЙ МАССИВ ДАТ
     dates: dates,
-
     duration: item.duration || null,
     distance: item.distance || null,
     meetingPoint: item.meetingPoint || null,
-    
-    // 👇 ДОБАВЛЕНО: Маршрут
     route: item.route || null,
 
-    // === ФИНАНСЫ (Исправлено: везде используем item) ===
-   // ...
-    // === ФИНАНСЫ ===
     price: Number(item.price) || 0,
     currency: item.currency || 'RUB',
-    
-    // 🔥 ФИКС: Проверяем оба варианта написания (camelCase и snake_case)
-    // Prisma после 'db pull' может вернуть как item.price_old, так и item.priceOld
     priceOld: item.priceOld ? Number(item.priceOld) : (item.price_old ? Number(item.price_old) : null),
-    
     priceChild: item.priceChild ? Number(item.priceChild) : (item.price_child ? Number(item.price_child) : null),
-    
     priceFamily: item.priceFamily ? Number(item.priceFamily) : (item.price_family ? Number(item.price_family) : null),
-    
     priceMember: item.priceMember ? Number(item.priceMember) : (item.price_member ? Number(item.price_member) : null),
-    // ...
 
-    // === СТАТИСТИКА ===
     spots: item.spots || 15,
     spotsLeft: item.spotsLeft ?? item.spots ?? 15,
     
-    // Медиа
-    image: item.coverImage || null, // UI ждет image
+    image: item.coverImage || null,
     gallery: item.gallery || [],
     
-    // 👇 БЕЗОПАСНЫЙ МАППИНГ JSON ПОЛЕЙ
     program: item.program, 
     faq: ensureArray(item.faq),
     highlights: ensureArray(item.highlights),
@@ -79,7 +59,6 @@ function mapPrismaTourToFrontend(item: any): Tour {
     included: item.included || [],
     additionalExpenses: item.additionalExpenses || [],
     
-    // Гид (привязанный к туру)
     guide: item.guide ? {
       id: item.guide.id,
       name: item.guide.name,
@@ -87,7 +66,7 @@ function mapPrismaTourToFrontend(item: any): Tour {
       role: item.guide.role,
       instagram: item.guide.instagram,
       bio: item.guide.bio,
-      telegram: item.guide.telegram // Добавили телеграм, если есть
+      telegram: item.guide.telegram
     } : null,
     
     isActive: item.isActive,
@@ -96,17 +75,14 @@ function mapPrismaTourToFrontend(item: any): Tour {
   };
 }
 
-// ==========================================
-// 2. ПОЛУЧИТЬ АКТИВНЫЕ ТУРЫ (Для сайта)
-// ==========================================
 export async function getTours() {
   try {
     const tours = await prisma.tour.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' },
-      include: { guide: true } // 🔥 ВАЖНО: Подгружаем гида
+      // 👇 ИСПРАВЛЕНИЕ: Добавили category: true
+      include: { guide: true, category: true } 
     });
-    
     return tours.map(mapPrismaTourToFrontend);
   } catch (error) {
     console.error("Ошибка получения туров:", error);
@@ -114,14 +90,12 @@ export async function getTours() {
   }
 }
 
-// ==========================================
-// 3. ПОЛУЧИТЬ ОДИН ТУР (По Slug)
-// ==========================================
 export async function getTourBySlug(slug: string) {
   try {
     const tour = await prisma.tour.findUnique({
       where: { slug: slug },
-      include: { guide: true } // 🔥 ВАЖНО: Подгружаем гида
+      // 👇 ИСПРАВЛЕНИЕ: Добавили category: true
+      include: { guide: true, category: true } 
     });
 
     if (!tour) return null;
@@ -132,9 +106,6 @@ export async function getTourBySlug(slug: string) {
   }
 }
 
-// ==========================================
-// 4. СОЗДАТЬ БРОНЬ (Booking Action)
-// ==========================================
 export async function createBookingAction(params: {
     eventId: string;
     name: string;
@@ -155,7 +126,6 @@ export async function createBookingAction(params: {
         bookedDate: params.bookedDate, 
       }
     });
-    
     return { success: true, data: booking };
   } catch (error: any) {
     console.error("❌ Ошибка бронирования:", error.message);
@@ -165,9 +135,6 @@ export async function createBookingAction(params: {
 
 export const bookEvent = createBookingAction;
 
-// ==========================================
-// 5. ПОЛУЧИТЬ СПИСОК ГИДОВ
-// ==========================================
 export async function getGuides() {
   try {
     const guides = await prisma.guide.findMany({
@@ -182,16 +149,13 @@ export async function getGuides() {
   }
 }
 
-// ==========================================
-// 6. ВСЕ ТУРЫ (Для Админки)
-// ==========================================
 export async function getAllTours() {
   try {
     const tours = await prisma.tour.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { guide: true } 
+      // 👇 ИСПРАВЛЕНИЕ: Добавили category: true
+      include: { guide: true, category: true } 
     });
-    
     return tours.map(mapPrismaTourToFrontend);
   } catch (error) {
     console.error("Ошибка получения всех туров для админки:", error);

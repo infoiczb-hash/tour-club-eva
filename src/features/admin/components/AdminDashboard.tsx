@@ -30,7 +30,6 @@ import AiAssistant from './AiAssistant';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-
 // ACTIONS & API
 import { saveTour, updateTourStatus } from '@/features/admin/actions/tour'; 
 import { deleteTour } from '@/features/tours/actions';
@@ -42,9 +41,9 @@ import { getGuides } from '@/features/guides/api';
 import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
 
-// 👇 ВОССТАНОВЛЕННЫЕ ИМПОРТЫ ДЛЯ СТАРЫХ ФУНКЦИЙ
+// 👇 ИСПРАВЛЕНИЕ 1: Импортируем правильный экшен для гидов
+import { upsertGuideAction } from '@/features/admin/actions/guides';
 import { 
-  saveGuideAction, 
   deleteGuideAction, 
   savePostAction, 
   deletePostAction, 
@@ -52,7 +51,7 @@ import {
   getRegistrationsAction, 
   updateRegistrationStatus 
 } from '@/features/admin/actions';
-// 👇 ЖЕЛЕЗОБЕТОННЫЙ ИМПОРТ НАПРЯМУЮ ИЗ ФАЙЛА КАТЕГОРИЙ
+
 import {  
   getTourCategoriesAction, getBlogCategoriesAction,
   upsertTourCategoryAction, upsertBlogCategoryAction,
@@ -71,10 +70,10 @@ interface BookingItem {
   created_at: Date | string;
   tickets_adult: number;
   tickets_child: number;
-  tickets_member?: number; // 👈 добавлено
-  total_price: number;     // 👈 добавлено
-  comment?: string;        // 👈 добавлено
-  social?: string;         // 👈 добавлено
+  tickets_member?: number;
+  total_price: number;
+  comment?: string;
+  social?: string;
   event_id: string;
   tour?: { title: string; date: Date | string };
 }
@@ -105,7 +104,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [categoryType, setCategoryType] = useState<'tour' | 'blog'>('tour');
 
-  // Modals (👇 ИСПРАВЛЕНА СИНТАКСИЧЕСКАЯ ОШИБКА)
+  // Modals
   const [modalState, setModalState] = useState({
     tour: false, 
     guide: false, 
@@ -121,7 +120,6 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
 
    // --- INIT ---
   useEffect(() => {
-    // 🔥 Убрали костыль с localStorage. Если юзер здесь, значит middleware его уже пропустил!
     setIsAuth(true);
     loadAllData();
   }, []);
@@ -158,15 +156,14 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     }
   };
 
-const router = useRouter();
+  const router = useRouter();
 
-async function handleLogout() {
-  const supabase = createClient();
-  await supabase.auth.signOut();
-  router.push('/admin/login');
-  router.refresh();
-}
-
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/admin/login');
+    router.refresh();
+  }
 
   // ==========================================
   // ОБРАБОТЧИКИ КАТЕГОРИЙ
@@ -291,7 +288,6 @@ async function handleLogout() {
       if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
   };
 
-  // --- POSTS & REVIEWS ---
   const togglePostStatus = async (post: any, field: 'isActive' | 'is_trending') => {
       const newVal = !post[field];
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, [field]: newVal } : p));
@@ -304,7 +300,6 @@ async function handleLogout() {
       await upsertReview({ ...review, isActive: newVal });
   };
 
- 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] flex font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
       
@@ -318,7 +313,6 @@ async function handleLogout() {
             
       <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto w-full transition-all duration-300">
         
-        {/* VIEW ROUTER */}
         {activeTab === 'dashboard' && (
             <DashboardTab 
                 stats={stats}
@@ -331,7 +325,7 @@ async function handleLogout() {
             <ToursTab 
                 tours={tours}
                 bookings={bookings as any} 
-                categories={tourCategories} // 👈 НОВОЕ
+                categories={tourCategories}
                 onAdd={() => { setEditingItem(null); setModalState(p => ({...p, tour: true})); }}
                 onEdit={(tour) => { setEditingItem(tour); setModalState(p => ({...p, tour: true})); }}
                 onDuplicate={(tour) => { 
@@ -342,24 +336,18 @@ async function handleLogout() {
                 onDelete={(id) => handleDelete('tour', id)}
                 onToggleStatus={toggleTourStatus}
                 onSendTg={handleSendTg}
-                // 👇 НОВЫЕ ХЕНДЛЕРЫ
                 onAddCategory={() => openCategoryModal('tour')}
                 onEditCategory={(cat) => openCategoryModal('tour', cat)}
                 onDeleteCategory={handleDeleteCategory}
                 onToggleCategoryStatus={handleToggleCategory}
             />
- )}
-        {activeTab === 'bookings' && (
-            <BookingsTab 
-                bookings={bookings}
-                onStatusChange={handleStatusChange}
-            />
         )}
-
+        {activeTab === 'bookings' && (
+            <BookingsTab bookings={bookings} onStatusChange={handleStatusChange} />
+        )}
         {activeTab === 'inquiries' && (
             <InquiriesTab inquiries={inquiries} />
         )}
-
         {activeTab === 'reviews' && (
             <ReviewsTab 
                 reviews={reviews}
@@ -369,7 +357,6 @@ async function handleLogout() {
                 onToggleStatus={toggleReviewStatus}
             />
         )}
-
         {activeTab === 'guides' && (
             <GuidesTab 
                 guides={guides}
@@ -378,11 +365,10 @@ async function handleLogout() {
                 onDelete={(id) => handleDelete('guide', id)}
             />
         )}
-
        {activeTab === 'blog' && (
             <BlogTab
                 posts={posts}
-                categories={blogCategories} // 👈 НОВОЕ
+                categories={blogCategories}
                 onAdd={() => { setEditingItem(null); setModalState(p => ({...p, post: true})); }}
                 onEdit={(post) => { setEditingItem(post); setModalState(p => ({...p, post: true})); }}
                 onDuplicate={(post) => { 
@@ -392,21 +378,18 @@ async function handleLogout() {
                 }}
                 onDelete={(id) => handleDelete('post', id)}
                 onToggleStatus={togglePostStatus}
-                // 👇 НОВЫЕ ХЕНДЛЕРЫ
                 onAddCategory={() => openCategoryModal('blog')}
                 onEditCategory={(cat) => openCategoryModal('blog', cat)}
                 onDeleteCategory={handleDeleteCategory}
                 onToggleCategoryStatus={handleToggleCategory}
             />
         )}
-
         {activeTab === 'content' && (
             <ContentTab onEdit={(slug) => { 
                 setEditingSlug(slug); 
                 setModalState(p => ({...p, content: true})); 
             }} />
         )}
-        
        {activeTab === 'fun' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -430,16 +413,14 @@ async function handleLogout() {
             />
           </div>
         )}
-
       </main>
 
       {/* МОДАЛКИ */}
-     {/* МОДАЛКИ */}
       {modalState.tour && (
         <TourForm 
             initialData={editingItem} 
             guides={guidesForForm}
-            categories={tourCategories} // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
+            categories={tourCategories}
             onClose={() => setModalState(p => ({ ...p, tour: false }))}
             onSuccess={async () => {
                 setModalState(p => ({ ...p, tour: false }));
@@ -453,19 +434,19 @@ async function handleLogout() {
           <GuideForm 
             initialData={editingItem}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
-            onSubmit={async (data: Record<string, any>) => { await saveGuideAction(data); loadAllData(); }}
+            // 👇 ИСПРАВЛЕНИЕ 2: Используем новый экшен
+            onSubmit={async (data: Record<string, any>) => { await upsertGuideAction(data); loadAllData(); }}
           />
       )}
       
       {modalState.post && (
          <PostForm
-  initialData={editingItem}
-  categories={blogCategories} // 👈 ВОТ ЭТА НОВАЯ СТРОКА
-  onClose={() => setModalState(p => ({ ...p, post: false }))}
-  onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
-
-/>
-)}
+            initialData={editingItem}
+            categories={blogCategories}
+            onClose={() => setModalState(p => ({ ...p, post: false }))}
+            onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
+        />
+      )}
 
       {modalState.review && (
           <ReviewForm
@@ -498,7 +479,6 @@ async function handleLogout() {
         </div>
       )}
 
-      {/* НОВАЯ МОДАЛКА КАТЕГОРИЙ */}
       {modalState.category && (
         <CategoryForm
           initialData={editingCategory}

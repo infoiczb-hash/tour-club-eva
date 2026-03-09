@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link"; // Добавили для перехода в каталог
 import {
   BookOpen, ChevronRight, ArrowLeft,
   Sparkles, Loader2, X, Compass, CheckCircle2
@@ -105,19 +106,18 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
       }).filter(Boolean).join("\n\n");
 
       const res = await analyzeDebriefAction(answersText);
-           if (res.success) {
-    setAiAnalysis(res.analysis || "");
-    if (res.tour) setRecommendedTour(res.tour);
-    
-    // 3. Сохраняем страхи пользователя в его локальный профиль!
-  updateProfile({ touristType: "Reflective" }); // Отмечаем факт прохождения
-incrementFunTestPassAction('tour-debrief').catch(console.error);
-    
-       } else {
+      if (res.success) {
+        setAiAnalysis(res.analysis || "");
+        if (res.tour) setRecommendedTour(res.tour);
+        
+        // Сохраняем факт прохождения в профиль
+        updateProfile({ touristType: "Reflective" }); 
+        incrementFunTestPassAction('tour-debrief').catch(console.error);
+        
+      } else {
         setAiAnalysis("ИИ-психолог сейчас недоступен. Но мы будем рады видеть тебя в новых турах.");
       }
     } catch (error) {
-      // 🛡️ Защита сети
       console.error("Network error:", error);
       setAiAnalysis("Произошла ошибка при соединении с сервером. Пожалуйста, проверьте интернет.");
     } finally {
@@ -134,7 +134,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
   if (!isOpen) return null;
   const blockMeta = BLOCK_META[q?.block];
 
-  // Парсинг Markdown от Gemini (чтобы жирный текст красиво рендерился)
+  // Парсинг Markdown от Gemini
   const parseGeminiText = (text: string) => {
     return text.split(/\*\*(.+?)\*\*/g).map((part, i) => {
       if (i % 2 === 1) return <span key={i} className="font-bold text-white">{part}</span>;
@@ -148,6 +148,7 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}
         >
+          {/* Абсолютный крестик */}
           <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
@@ -155,11 +156,12 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
           {/* === 1. INTRO === */}
           {step === "intro" && (
             <motion.div key="intro" className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-3 mb-8">
+              {/* Safe Area (pr-12) для защиты от крестика */}
+              <div className="flex items-center gap-3 mb-8 pr-12">
                 <BookOpen className="w-4 h-4 text-violet-400" />
                 <span className="text-xs font-bold text-violet-400 tracking-[0.2em] uppercase">Разбор тура</span>
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
+              <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight pr-8">
                 Что открыл<br />
                 <span className="text-violet-400">этот поход?</span>
               </h2>
@@ -188,7 +190,8 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
           {/* === 2. TEST === */}
           {step === "test" && q && (
             <motion.div key={`q-${current}`} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="mb-8">
+              {/* Safe Area (pr-12) */}
+              <div className="mb-8 pr-12">
                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest mb-3">
                     <span className={cn("px-3 py-1 rounded-full border", blockMeta.bg, blockMeta.border, blockMeta.color)}>
                         {blockMeta.label}
@@ -227,16 +230,21 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
           {/* === 3. BASE RESULT === */}
           {step === "result" && (
             <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 w-fit mb-6">
+              
+              {/* Safe Area (pr-12) */}
+              <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 w-fit mb-6 pr-6">
                 <CheckCircle2 size={14} />
                 <span className="text-xs font-bold uppercase tracking-widest">Рефлексия собрана</span>
               </div>
 
-              <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight pr-8">
                 Отвечено на {answeredCount} из {QUESTIONS.length}
               </h2>
+              
               <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                Твои ответы зафиксированы. Прочитай их еще раз или отправь ИИ-психологу для глубокого анализа.
+                {answeredCount > 0 
+                  ? "Твои ответы зафиксированы. Прочитай их еще раз или отправь ИИ-психологу для глубокого анализа." 
+                  : "Ты пропустил все вопросы. Рефлексия требует ресурса, возможно, сейчас хочется просто отдохнуть."}
               </p>
 
               <div className="space-y-4 mb-8">
@@ -253,18 +261,43 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
                 ))}
               </div>
 
-              {/* AI UPSELL */}
-              <div className="border border-violet-500/30 bg-violet-500/10 rounded-3xl p-6 md:p-8 mt-auto text-center relative overflow-hidden group">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.15)_0%,transparent_70%)] pointer-events-none" />
-                <Sparkles className="w-10 h-10 text-violet-400 mx-auto mb-4" />
-                <h3 className="text-xl font-black text-white mb-2">Разбор и Следующий Шаг</h3>
-                <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                  ИИ проанализирует твои ответы, выделит скрытые смыслы и <strong className="text-white">подберет идеальный тур</strong> для следующего приключения на основе твоих инсайтов.
-                </p>
-                <button onClick={handleGetAiMagic} disabled={isAiLoading || answeredCount === 0} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
-                  <Sparkles size={16} /> Синтезировать опыт
-                </button>
-              </div>
+              {/* УМНОЕ ПУСТОЕ СОСТОЯНИЕ (Если нет ответов) */}
+              {answeredCount === 0 ? (
+                 <div className="border border-slate-700 bg-slate-800/30 rounded-3xl p-6 md:p-8 mt-auto text-center relative overflow-hidden">
+                   <h3 className="text-xl font-black text-white mb-2">Тишина — тоже ответ</h3>
+                   <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                     Похоже, тебе пока не хочется делиться мыслями. И это абсолютно нормально! Иногда лучший инсайт — это просто побыть в тишине после похода.
+                   </p>
+                   <div className="flex flex-col gap-3 relative z-10">
+                     <Link 
+                       href="/tour" 
+                       onClick={onClose} 
+                       className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-600/20"
+                     >
+                       <Compass size={16} /> Выбрать новый тур
+                     </Link>
+                     <button 
+                       onClick={() => { setStep("intro"); setCurrent(0); setAnswers({}); }} 
+                       className="w-full bg-white/5 hover:bg-white/10 text-white rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-colors"
+                     >
+                       Начать заново
+                     </button>
+                   </div>
+                 </div>
+              ) : (
+                /* СТАНДАРТНЫЙ AI UPSELL (Если есть ответы) */
+                <div className="border border-violet-500/30 bg-violet-500/10 rounded-3xl p-6 md:p-8 mt-auto text-center relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.15)_0%,transparent_70%)] pointer-events-none" />
+                  <Sparkles className="w-10 h-10 text-violet-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-black text-white mb-2">Разбор и Следующий Шаг</h3>
+                  <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                    ИИ проанализирует твои ответы, выделит скрытые смыслы и <strong className="text-white">подберет идеальный тур</strong> для следующего приключения на основе твоих инсайтов.
+                  </p>
+                  <button onClick={handleGetAiMagic} disabled={isAiLoading} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
+                    <Sparkles size={16} /> Синтезировать опыт
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -277,7 +310,6 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
                             <div className="absolute inset-0 bg-violet-500/30 blur-2xl rounded-full animate-pulse" />
                             <Loader2 className="w-16 h-16 text-violet-400 animate-spin relative z-10" />
                         </div>
-                        {/* 🌟 OPTIMISTIC UX LOADER 🌟 */}
                         <motion.h3 
                             key={loadingStep}
                             initial={{ opacity: 0, y: 5 }}
@@ -289,7 +321,8 @@ incrementFunTestPassAction('tour-debrief').catch(console.error);
                     </div>
                 ) : (
                     <div className="flex flex-col">
-                        <div className="text-center mb-8 border-b border-white/10 pb-6 pt-4">
+                        {/* Safe Area */}
+                        <div className="text-center mb-8 border-b border-white/10 pb-6 pt-4 pr-8">
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/20 border border-violet-500/30 mb-4 shadow-[0_0_30px_rgba(124,58,237,0.2)]">
                                 <BookOpen className="w-8 h-8 text-violet-400" />
                             </div>

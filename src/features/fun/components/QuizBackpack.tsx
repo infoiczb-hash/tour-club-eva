@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
+import Link from "next/link";
 import { 
   X, Check, Luggage, AlertTriangle, ArrowRight, 
   Milestone, BrickWall, BriefcaseMedical, Wind, 
@@ -10,6 +11,8 @@ import {
   LucideIcon
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useProfile } from "@/hooks/useProfile";
+import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 
 /* =======================
    ТИПЫ
@@ -28,7 +31,8 @@ type Result = {
   title: string;
   description: string;
   score: string;
-  recommendedTours: Array<{ name: string }>;
+  directionSlug: string;
+  directionName: string;
   advice?: string;
 };
 
@@ -51,7 +55,7 @@ const items: Item[] = [
 ];
 
 /* =======================
-   РЕЗУЛЬТАТЫ
+   РЕЗУЛЬТАТЫ (МАТРИЦА НАПРАВЛЕНИЙ)
 ======================= */
 const results: Result[] = [
   {
@@ -61,7 +65,8 @@ const results: Result[] = [
     title: "МАСТЕР УПАКОВКИ",
     description: "Ты точно знаешь, что нужно в горах. Твой рюкзак — пример для других. С тобой хоть на край света!",
     score: "6-7 правильных",
-    recommendedTours: [{ name: "Экспедиция в Карпаты" }, { name: "Сплав на байдарках" }],
+    directionSlug: "hiking",
+    directionName: "Горы и Походы",
   },
   {
     id: "potential",
@@ -70,17 +75,19 @@ const results: Result[] = [
     title: "ЕСТЬ ПОТЕНЦИАЛ",
     description: "Неплохо! Ты понимаешь суть, но пара лишних вещей (или забытых важных) могут усложнить путь.",
     score: "4-5 правильных",
-    recommendedTours: [{ name: "Один день в лесу" }, { name: "Сплав на байдарках" }],
-    advice: "Совет: в походе главное — вода, защита от дождя и свет.",
+    directionSlug: "kayaking",
+    directionName: "Сплавы на байдарках",
+    advice: "Совет: на сплаве рюкзак едет в лодке, это прощает мелкие ошибки в сборах.",
   },
   {
     id: "blogger",
     icon: Camera,
     iconColor: "text-purple-400",
     title: "ТУРИСТ-БЛОГЕР",
-    description: "Фен в лесу? Серьёзно? Но зато фотки будут красивые! Не переживай, мы научим собираться.",
+    description: "Фен в лесу? Серьёзно? Но зато фотки будут красивые! Наш формат — эстетика без тяжелых рюкзаков.",
     score: "2-3 правильных",
-    recommendedTours: [{ name: "SUP-прогулка (без рюкзака!)" }, { name: "Пикник на природе" }],
+    directionSlug: "sup",
+    directionName: "SUP-прогулки",
     advice: "База: палки, аптечка, вода, дождевик, фонарик.",
   },
   {
@@ -88,10 +95,11 @@ const results: Result[] = [
     icon: ShieldAlert,
     iconColor: "text-rose-500",
     title: "НУЖЕН ИНСТРУКТАЖ",
-    description: "Кирпич и гантеля? Ты решил устроить кроссфит? Давай начнем с чего-то простого.",
+    description: "Кирпич и гантеля? Ты решил устроить кроссфит? Давай начнем с формата, где всё уже продумано за тебя.",
     score: "0-1 правильных",
-    recommendedTours: [{ name: "Пикник (всё включено)" }],
-    advice: "Начни с формата, где рюкзак не нужен.",
+    directionSlug: "local",
+    directionName: "Локальные туры",
+    advice: "Начни с формата выходного дня налегке.",
   },
 ];
 
@@ -101,12 +109,13 @@ const results: Result[] = [
 interface Props {
   open: boolean;
   onClose: () => void;
-  onComplete: (result: string) => void;
+  onComplete?: (result: string) => void;
 }
 
 export default function QuizBackpack({ open, onClose, onComplete }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
+  const { updateProfile } = useProfile();
 
   useEffect(() => {
     if (open) {
@@ -135,19 +144,21 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
 
   const result = calculateResult(selected);
 
-  // Варианты анимации для Stagger-эффекта сетки
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 }
-  }
-};
+  const handleCheck = () => {
+    updateProfile({ touristType: `Сборка рюкзака: ${result.title}` });
+    incrementFunTestPassAction('backpack').catch(console.error);
+    setShowResult(true);
+  };
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
-};
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
 
   if (!open) return null;
 
@@ -161,20 +172,19 @@ const itemVariants: Variants = {
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-2xl bg-slate-900/80 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl shadow-blue-900/20 overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           onClick={(e) => e.stopPropagation()}
         >
           <button 
             onClick={handleReset} 
             className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full"
-            aria-label="Закрыть"
           >
             <X size={20} />
           </button>
 
           {!showResult ? (
-            <div className="flex flex-col h-full">
-              <div className="mb-6 text-center">
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="shrink-0 mb-6 text-center pr-8">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full mb-3">
                    <Luggage size={14} className="text-blue-400"/>
                    <span className="text-[12px] font-black uppercase text-blue-400 tracking-widest">Инвентарь</span>
@@ -183,8 +193,8 @@ const itemVariants: Variants = {
                 <p className="text-slate-400 text-sm">В рюкзак влезает ровно 7 предметов. Выбирай с умом!</p>
               </div>
 
-              {/* Progress Bar 2.0 */}
-              <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-2xl border border-white/5 mb-6">
+              {/* Progress Bar */}
+              <div className="shrink-0 flex justify-between items-center bg-slate-950/50 p-3 rounded-2xl border border-white/5 mb-6">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">Места занято:</span>
                   <div className="flex gap-1.5 pr-1">
                     {[...Array(7)].map((_, i) => (
@@ -230,7 +240,6 @@ const itemVariants: Variants = {
                       <span className={clsx("text-[12px] font-bold uppercase text-center", isSelected ? "text-blue-200" : "text-slate-300")}>
                         {item.name}
                       </span>
-                      
                       <AnimatePresence>
                         {isSelected && (
                           <motion.div 
@@ -246,16 +255,18 @@ const itemVariants: Variants = {
                 })}
               </motion.div>
 
-              <button
-                onClick={() => setShowResult(true)}
-                disabled={selected.length !== 7}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-blue-900/20"
-              >
-                {selected.length === 7 ? "Проверить сборку" : `Выбери ещё ${7 - selected.length}`}
-              </button>
+              <div className="shrink-0">
+                <button
+                  onClick={handleCheck}
+                  disabled={selected.length !== 7}
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-blue-900/20"
+                >
+                  {selected.length === 7 ? "Проверить рюкзак" : `Выбери ещё ${7 - selected.length}`}
+                </button>
+              </div>
             </div>
           ) : (
-            <ResultScreen result={result} selected={selected} onComplete={onComplete} />
+            <ResultScreen result={result} selected={selected} onClose={onClose} />
           )}
         </motion.div>
       </motion.div>
@@ -266,7 +277,7 @@ const itemVariants: Variants = {
 /* =======================
    ЭКРАН РЕЗУЛЬТАТА
 ======================= */
-function ResultScreen({ result, selected, onComplete }: { result: Result; selected: string[]; onComplete: (res: string) => void }) {
+function ResultScreen({ result, selected, onClose }: { result: Result; selected: string[]; onClose: () => void }) {
   const selectedItems = items.filter(item => selected.includes(item.id));
   const wrongItems = selectedItems.filter(item => !item.correct);
   const ResultIcon = result.icon;
@@ -274,60 +285,67 @@ function ResultScreen({ result, selected, onComplete }: { result: Result; select
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} 
-      className="flex flex-col h-full overflow-y-auto custom-scrollbar"
+      className="flex flex-col h-full overflow-hidden"
     >
-      <div className="text-center mb-6 pt-4">
-        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-slate-800/50 border border-white/10 mb-6 shadow-xl relative">
-            <div className={`absolute inset-0 blur-xl opacity-20 rounded-full ${result.iconColor.replace('text-', 'bg-')}`} />
-            <ResultIcon className={clsx("w-12 h-12", result.iconColor)} strokeWidth={1.5} />
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
+        <div className="text-center mb-6 pt-4">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-slate-800/50 border border-white/10 mb-6 shadow-xl relative">
+              <div className={`absolute inset-0 blur-xl opacity-20 rounded-full ${result.iconColor.replace('text-', 'bg-')}`} />
+              <ResultIcon className={clsx("w-12 h-12", result.iconColor)} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tight">{result.title}</h3>
+          <p className={clsx("text-sm font-bold uppercase tracking-widest", result.iconColor)}>{result.score}</p>
         </div>
-        <h3 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tight">{result.title}</h3>
-        <p className={clsx("text-sm font-bold uppercase tracking-widest", result.iconColor)}>{result.score}</p>
-      </div>
 
-      <div className="bg-slate-950/50 rounded-2xl p-5 border border-white/5 mb-6 shadow-inner">
-        <p className="text-slate-300 text-center leading-relaxed font-medium">
-          {result.description}
-        </p>
-      </div>
+        <div className="bg-slate-950/50 rounded-2xl p-5 border border-white/5 mb-6 shadow-inner">
+          <p className="text-slate-300 text-center leading-relaxed font-medium">
+            {result.description}
+          </p>
+        </div>
 
-      {wrongItems.length > 0 ? (
-         <div className="bg-rose-950/30 border border-rose-500/20 rounded-2xl p-5 mb-6">
-            <h4 className="text-rose-400 font-bold uppercase text-xs mb-3 flex items-center gap-2">
-                <AlertTriangle size={16} strokeWidth={2}/> Лишний груз:
-            </h4>
-            <div className="flex flex-wrap gap-2">
-                {wrongItems.map(item => {
-                    const WrongIcon = item.icon;
-                    return (
-                        <span key={item.id} className="px-3 py-1.5 bg-rose-500/10 text-rose-300 text-xs font-medium rounded-lg border border-rose-500/20 flex items-center gap-2">
-                            <WrongIcon size={14} /> {item.name}
-                        </span>
-                    )
-                })}
-            </div>
-         </div>
-      ) : (
-         <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-5 mb-6 text-center flex items-center justify-center gap-2">
-             <Check size={18} className="text-emerald-500" strokeWidth={3} />
-             <span className="text-emerald-400 font-bold text-sm">Идеально! Ничего лишнего.</span>
-         </div>
-      )}
-
-      <div className="space-y-3 mt-auto">
-        <p className="text-center text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Рекомендуем для старта</p>
-        {result.recommendedTours.map((tour, i) => (
-            <button
-              key={i}
-              onClick={() => onComplete(`Квиз Рюкзак: ${result.title}. Интересует: ${tour.name}`)}
-              className="w-full p-4 bg-slate-800/50 hover:bg-blue-600/20 group rounded-xl border border-white/5 hover:border-blue-500/50 transition-all flex justify-between items-center text-left"
-            >
-              <span className="font-bold text-slate-200 group-hover:text-white text-sm transition-colors">{tour.name}</span>
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-500 transition-colors shadow-sm">
-                  <ArrowRight size={16} className="text-slate-400 group-hover:text-white transition-colors"/>
+        {wrongItems.length > 0 ? (
+           <div className="bg-rose-950/30 border border-rose-500/20 rounded-2xl p-5 mb-6">
+              <h4 className="text-rose-400 font-bold uppercase text-xs mb-3 flex items-center gap-2">
+                  <AlertTriangle size={16} strokeWidth={2}/> Лишний груз:
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                  {wrongItems.map(item => {
+                      const WrongIcon = item.icon;
+                      return (
+                          <span key={item.id} className="px-3 py-1.5 bg-rose-500/10 text-rose-300 text-xs font-medium rounded-lg border border-rose-500/20 flex items-center gap-2">
+                              <WrongIcon size={14} /> {item.name}
+                          </span>
+                      )
+                  })}
               </div>
-            </button>
-        ))}
+           </div>
+        ) : (
+           <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-5 mb-6 text-center flex items-center justify-center gap-2">
+               <Check size={18} className="text-emerald-500" strokeWidth={3} />
+               <span className="text-emerald-400 font-bold text-sm">Идеально! Ничего лишнего.</span>
+           </div>
+        )}
+      </div>
+
+      {/* SMART CTA */}
+      <div className="shrink-0 pt-4 mt-2 border-t border-white/10">
+        <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Твоя стихия ждет</p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href={`/directions/${result.directionSlug}`}
+            onClick={onClose}
+            className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+          >
+            <Compass size={16} /> О направлении
+          </Link>
+          <Link
+            href={`/tour?category=${result.directionSlug}`}
+            onClick={onClose}
+            className="flex-1 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+          >
+            Выбрать маршрут <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
     </motion.div>
   );

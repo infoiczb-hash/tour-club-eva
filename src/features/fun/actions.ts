@@ -17,7 +17,8 @@ export async function analyzeFearsAction(fearsDetailed: string[]) {
     const toursContext = allTours.map(t => ({
       id: t.id,
       title: t.title,
-      type: t.type,
+      // 👇 ИСПРАВЛЕНИЕ: Передаем ИИ красивое название категории на русском
+      category: t.category?.title || t.type,
       difficulty: t.difficulty,
       location: t.location,
       duration: t.duration
@@ -59,7 +60,12 @@ export async function analyzePhysicalAction(answersText: string, levelTitle: str
   try {
     const allTours = await getTours();
     const toursContext = allTours.map(t => ({
-      id: t.id, title: t.title, type: t.type, difficulty: t.difficulty, location: t.location, duration: t.duration
+      id: t.id, 
+      title: t.title, 
+      category: t.category?.title || t.type, // 👇 Обновлено
+      difficulty: t.difficulty, 
+      location: t.location, 
+      duration: t.duration
     }));
 
     const { object } = await generateObject({
@@ -101,7 +107,12 @@ export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
   try {
     const allTours = await getTours();
     const toursContext = allTours.map(t => ({
-      id: t.id, title: t.title, type: t.type, difficulty: t.difficulty, location: t.location, duration: t.duration
+      id: t.id, 
+      title: t.title, 
+      category: t.category?.title || t.type, // 👇 Обновлено
+      difficulty: t.difficulty, 
+      location: t.location, 
+      duration: t.duration
     }));
 
     const { object } = await generateObject({
@@ -140,7 +151,12 @@ export async function analyzeDebriefAction(answersText: string) {
   try {
     const allTours = await getTours();
     const toursContext = allTours.map(t => ({
-      id: t.id, title: t.title, type: t.type, difficulty: t.difficulty, location: t.location, duration: t.duration
+      id: t.id, 
+      title: t.title, 
+      category: t.category?.title || t.type, // 👇 Обновлено
+      difficulty: t.difficulty, 
+      location: t.location, 
+      duration: t.duration
     }));
 
     const { object } = await generateObject({
@@ -170,6 +186,10 @@ export async function analyzeDebriefAction(answersText: string) {
     return { success: false, error: "Не удалось провести рефлексию" };
   }
 }
+
+// ==========================================
+// 5. ПОЛНЫЙ СИНТЕЗ ПРОФИЛЯ (Full Profile)
+// ==========================================
 export async function analyzeFullProfileAction(profile: any) {
   try {
     const { generateObject } = await import('ai');
@@ -184,11 +204,14 @@ export async function analyzeFullProfileAction(profile: any) {
         mainInsight: z.string(),
         advice: z.string()
       }),
+      // 👇 ИСПРАВЛЕНИЕ: Добавили защиту от пустых данных и внедрили touristType
       prompt: `Проведи глубокий психологический синтез профиля туриста:
-        - Страхи: ${profile.fears?.join(', ')}
-        - Физика: ${profile.physicalLevel}
-        - Тело: ${profile.bodySymptoms?.join(', ')}
-        Дай портрет личности, один мощный инсайт и совет по росту. Туры не предлагай.`
+        - Страхи: ${profile.fears?.length ? profile.fears.join(', ') : 'Не указаны'}
+        - Физика: ${profile.physicalLevel || 'Не указана'}
+        - Тело: ${profile.bodySymptoms?.length ? profile.bodySymptoms.join(', ') : 'Жалоб нет'}
+        - Игровой архетип (Тотем/Психотип/Навыки): ${profile.touristType || 'Не определен'}
+        
+        Дай портрет личности, один мощный инсайт и совет по росту. Учитывай его игровой архетип (если он есть) как метафору его характера. Туры не предлагай.`
     });
 
     return { success: true, ...object };
