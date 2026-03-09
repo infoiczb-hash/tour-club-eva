@@ -130,7 +130,6 @@ export const TourSchema = RawTourSchema.transform((data) => {
     subtitle: data.subtitle,
     description: data.description,
     
-    type: data.type,
     categoryId: data.category_id, // ✅ НОВОЕ ПОЛЕ ПРОКИНУТО НА ФРОНТ
     
     label: data.label,

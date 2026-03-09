@@ -58,8 +58,8 @@ export default async function LocalPage() {
 
   // 2. Фильтруем: Ищем тег "local", "moldova" или категорию
   // Логику фильтрации можно адаптировать под вашу базу данных
-  const localTours = allTours.filter(tour => 
-    tour.type === 'hiking' || // Часто локальные - это хайкинг
+const localTours = allTours.filter(tour => 
+    tour.category?.slug === 'local' || // ✅ Проверяем по slug новой категории локальных туров
     tour.title.toLowerCase().includes('молдова') ||
     tour.title.toLowerCase().includes('днестр') ||
     tour.title.toLowerCase().includes('строенцы')

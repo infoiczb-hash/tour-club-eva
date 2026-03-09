@@ -23,12 +23,18 @@ const LABEL_CONFIG: Record<string, { bg: string, text: string, icon: LucideIcon,
   exclusive: { bg: "bg-violet-500", text: "text-white", icon: Star, label: "Эксклюзив" },
 };
 
-const TYPE_COLORS: Record<string, { bg: string, border: string, text: string }> = {
-  weekend: { bg: "bg-violet-500/80", border: "border-violet-400", text: "text-white" },
-  water: { bg: "bg-sky-500/80", border: "border-sky-400", text: "text-white" },
-  hiking: { bg: "bg-emerald-500/80", border: "border-emerald-400", text: "text-white" },
-  kids: { bg: "bg-pink-500/80", border: "border-pink-400", text: "text-white" },
-  default: { bg: "bg-slate-800/80", border: "border-slate-500", text: "text-white" },
+// ✅ СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД)
+const COLOR_THEMES: Record<string, { bg: string, border: string, text: string }> = {
+  slate:   { bg: "bg-slate-800/80",   border: "border-slate-500",   text: "text-white" },
+  teal:    { bg: "bg-teal-500/80",    border: "border-teal-400",    text: "text-white" },
+  emerald: { bg: "bg-emerald-500/80", border: "border-emerald-400", text: "text-white" },
+  sky:     { bg: "bg-sky-500/80",     border: "border-sky-400",     text: "text-white" },
+  blue:    { bg: "bg-blue-500/80",    border: "border-blue-400",    text: "text-white" },
+  violet:  { bg: "bg-violet-500/80",  border: "border-violet-400",  text: "text-white" },
+  pink:    { bg: "bg-pink-500/80",    border: "border-pink-400",    text: "text-white" },
+  rose:    { bg: "bg-rose-500/80",    border: "border-rose-400",    text: "text-white" },
+  orange:  { bg: "bg-orange-500/80",  border: "border-orange-400",  text: "text-white" },
+  amber:   { bg: "bg-amber-500/80",   border: "border-amber-400",   text: "text-white" },
 };
 
 export interface TourCardProps {
@@ -43,7 +49,8 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     price, priceOld, currency,
     priceMember, priceChild,
     image, location, duration,
-    tags, label, type, category // 👇 Берем категорию
+    tags, label, category,
+    dates // 👇 Обязательно достаем массив дат из объекта тура
   } = tour;
 
   const dateObj = date ? new Date(date) : null;
@@ -51,14 +58,14 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
     : 'Скоро';
 
-  const hasMoreDates = id ? String(id).length % 2 === 0 : false;
+  // 👇 ИСПРАВЛЕНИЕ: Реальная проверка количества дат вместо фейковой математики с ID
+  const hasMoreDates = Array.isArray(dates) && dates.length > 1;
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
 
-  // 👇 ИСПРАВЛЕНИЕ: Читаем slug категории, с фолбэком на type, затем на default
-  const typeKey = category?.slug || type?.toLowerCase() || 'default';
-  const typeStyle = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
-  // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
-  const displayLabel = category?.title || type || "Тур";
+  const themeColor = category?.color || 'slate';
+  const typeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
+  
+  const displayLabel = category?.title || "Тур";
 
   return (
     <Link href={`/tour/${slug}`} className="group block h-full outline-none">
@@ -111,8 +118,9 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             )}>
               <Calendar size={16} strokeWidth={2.5} />
               <span className="text-sm font-black uppercase tracking-wider">{dateStr}</span>
+              {/* 👇 ИСПРАВЛЕНИЕ: Новый текст для бейджика дополнительных дат */}
               {hasMoreDates && (
-                <span className="text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ ещё</span>
+                <span className="text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
               )}
             </div>
           </div>

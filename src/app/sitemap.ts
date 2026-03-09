@@ -3,7 +3,7 @@ import { getTours } from '@/features/tours/api';
 import { getBlogPosts } from '@/features/blog/api';
 import { getGuides } from '@/features/guides/api';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.evatur.club';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://evatur.club';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

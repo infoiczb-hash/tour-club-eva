@@ -18,7 +18,7 @@ export async function analyzeFearsAction(fearsDetailed: string[]) {
       id: t.id,
       title: t.title,
       // 👇 ИСПРАВЛЕНИЕ: Передаем ИИ красивое название категории на русском
-      category: t.category?.title || t.type,
+      category: t.category?.title || 'Активный отдых',
       difficulty: t.difficulty,
       location: t.location,
       duration: t.duration
@@ -62,7 +62,7 @@ export async function analyzePhysicalAction(answersText: string, levelTitle: str
     const toursContext = allTours.map(t => ({
       id: t.id, 
       title: t.title, 
-      category: t.category?.title || t.type, // 👇 Обновлено
+     category: t.category?.title || 'Активный отдых',
       difficulty: t.difficulty, 
       location: t.location, 
       duration: t.duration
@@ -109,7 +109,7 @@ export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
     const toursContext = allTours.map(t => ({
       id: t.id, 
       title: t.title, 
-      category: t.category?.title || t.type, // 👇 Обновлено
+      category: t.category?.title || 'Активный отдых',
       difficulty: t.difficulty, 
       location: t.location, 
       duration: t.duration
@@ -153,7 +153,7 @@ export async function analyzeDebriefAction(answersText: string) {
     const toursContext = allTours.map(t => ({
       id: t.id, 
       title: t.title, 
-      category: t.category?.title || t.type, // 👇 Обновлено
+      category: t.category?.title || 'Активный отдых',
       difficulty: t.difficulty, 
       location: t.location, 
       duration: t.duration

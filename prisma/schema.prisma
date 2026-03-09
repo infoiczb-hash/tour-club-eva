@@ -44,8 +44,6 @@ model Tour {
   title              String
   subtitle           String?
   description        String?
-  
-  type               String         @default("hiking") // ⚠️ Старое поле (пока оставляем)
   categoryId         String?        @map("category_id") @db.Uuid // ✅ НОВОЕ: Связь с категорией
   
   label              String         @default("")
@@ -89,12 +87,12 @@ model Tour {
   @@map("tours")
 }
 
-// ✅ НОВАЯ МОДЕЛЬ: КАТЕГОРИИ ТУРОВ
 model TourCategory {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug        String   @unique
   title       String
-  icon        String   @default("Compass") // Название иконки для фронта (Lucide)
+  icon        String   @default("Compass") 
+  color       String   @default("teal")    
   sortOrder   Int      @default(0) @map("sort_order")
   isActive    Boolean  @default(true) @map("is_active")
   

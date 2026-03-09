@@ -15,19 +15,18 @@ function mapPrismaTourToFrontend(item: any): Tour {
     subtitle: item.subtitle || null,
     description: item.description || "",
     
-    // 👇 ИСПРАВЛЕНИЕ: Маппинг объекта категории для фронтенда
-    type: item.type,
     categoryId: item.categoryId || null,
     category: item.category ? {
       id: item.category.id,
       title: item.category.title,
       slug: item.category.slug,
-      icon: item.category.icon
+      icon: item.category.icon,
+      color: item.category.color || 'slate', // ✅ ДОБАВИЛИ ЦВЕТ ИЗ БАЗЫ
     } : null,
     
     difficulty: item.difficulty || 'medium',
     label: item.label || null,
-    tags: item.tags || [],
+    tags: item.tags || [], 
     location: item.location,
     date: firstDate.start ? new Date(firstDate.start).toISOString() : '', 
     endDate: firstDate.end ? new Date(firstDate.end).toISOString() : null,
@@ -66,7 +65,7 @@ function mapPrismaTourToFrontend(item: any): Tour {
       role: item.guide.role,
       instagram: item.guide.instagram,
       bio: item.guide.bio,
-      telegram: item.guide.telegram
+      telegram: item.guide.telegram 
     } : null,
     
     isActive: item.isActive,
@@ -80,8 +79,7 @@ export async function getTours() {
     const tours = await prisma.tour.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' },
-      // 👇 ИСПРАВЛЕНИЕ: Добавили category: true
-      include: { guide: true, category: true } 
+      include: { guide: true, category: true } // ✅ Подгружаем категории
     });
     return tours.map(mapPrismaTourToFrontend);
   } catch (error) {
@@ -94,8 +92,7 @@ export async function getTourBySlug(slug: string) {
   try {
     const tour = await prisma.tour.findUnique({
       where: { slug: slug },
-      // 👇 ИСПРАВЛЕНИЕ: Добавили category: true
-      include: { guide: true, category: true } 
+      include: { guide: true, category: true } // ✅ Подгружаем категории
     });
 
     if (!tour) return null;
@@ -153,8 +150,7 @@ export async function getAllTours() {
   try {
     const tours = await prisma.tour.findMany({
       orderBy: { createdAt: 'desc' },
-      // 👇 ИСПРАВЛЕНИЕ: Добавили category: true
-      include: { guide: true, category: true } 
+      include: { guide: true, category: true } // ✅ Подгружаем категории
     });
     return tours.map(mapPrismaTourToFrontend);
   } catch (error) {

@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client'; // ✅ Добавили импорт типов Prisma
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
 
@@ -17,7 +18,7 @@ const tourSchema = z.object({
   subtitle: z.string().optional().nullable(),
   slug: z.string().min(3),
 
-  type: z.string().default('hiking'),
+  categoryId: z.string().optional().nullable(), // ✅ Заменили type на categoryId
   difficulty: z.string().default('medium'),
   label: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
@@ -116,14 +117,14 @@ export async function saveTour(formData: any) {
     const data: TourPayload = result.data;
     const mainGuideId = data.dates?.[0]?.guide_id ?? null;
 
-    // ✅ Типизированный payload — без as any
-    const prismaPayload = {
+    // ✅ Строгая типизация: Prisma точно знает, что мы передаем плоские данные
+    const prismaPayload: Prisma.TourUncheckedCreateInput = {
       slug: data.slug,
       title: data.title,
       subtitle: data.subtitle ?? null,
       isActive: data.isActive,
 
-      type: data.type,
+      categoryId: data.categoryId ?? null, // ✅ Подключили новую связь
       difficulty: data.difficulty,
       label: data.label ?? '',
       tags: data.tags,
@@ -134,11 +135,11 @@ export async function saveTour(formData: any) {
       duration: data.duration ?? null,
       meetingPoint: data.meetingPoint ?? null,
 
-      dates: data.dates,
-      // ✅ connect/disconnect вместо guideId напрямую — иначе конфликт типов Prisma
-      guide: mainGuideId
-        ? { connect: { id: mainGuideId } }
-        : { disconnect: true },
+      // ✅ Приводим массивы объектов из Zod к типу Prisma JSON
+      dates: data.dates as Prisma.InputJsonValue,
+      
+      // ✅ Убрали вложенный объект `guide`, пишем напрямую в скалярное поле `guideId`
+      guideId: mainGuideId ?? null,
 
       currency: data.currency,
       price: data.price,
@@ -154,11 +155,13 @@ export async function saveTour(formData: any) {
       gallery: data.gallery,
 
       description: data.description ?? null,
-      highlights: data.highlights,
-      program: data.program,
-      faq: data.faq,
-      checklist: data.checklist,
-      documents: data.documents,
+      
+      // ✅ Приводим остальные сложные объекты к Prisma.InputJsonValue
+      highlights: data.highlights as Prisma.InputJsonValue,
+      program: data.program as Prisma.InputJsonValue,
+      faq: data.faq as Prisma.InputJsonValue,
+      checklist: data.checklist as Prisma.InputJsonValue,
+      documents: data.documents as Prisma.InputJsonValue,
 
       included: data.included,
       additionalExpenses: data.additionalExpenses,
@@ -173,7 +176,7 @@ export async function saveTour(formData: any) {
       // === UPDATE ===
       await prisma.tour.update({
         where: { id: formData.id },
-        data: prismaPayload,
+        data: prismaPayload, // ✅ Никаких `as any`, идеальная проверка типов
       });
     } else {
       // === CREATE — проверка slug, инкремент вместо рандома ===
@@ -189,7 +192,7 @@ export async function saveTour(formData: any) {
         prismaPayload.slug = slug;
       }
 
-      await prisma.tour.create({ data: prismaPayload });
+      await prisma.tour.create({ data: prismaPayload }); // ✅ Никаких `as any`
     }
 
     // ✅ revalidatePath со slug

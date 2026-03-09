@@ -74,10 +74,26 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     return sum;
   }, [tickets, tour]);
 
-  const getSmartPlaceholder = () => {
-    if (tour.type === 'water') return 'Укажите для каждого участника, какой размер жилета взять у нас есть детские и от XS до 5XL. Сообщите если будут с вами дети до 10 лет.';
-    if (tour.type === 'abroad' || tour.location?.toLowerCase().includes('румыния')) return 'Какое снаряжение вам надо? Если у Вас действующий биометрический паспорт?';
-    if (tour.type === 'kids') return 'Укажите возраст детей ...';
+ const getSmartPlaceholder = () => {
+    // 1. Извлекаем слаг категории для удобства
+    const categorySlug = tour.category?.slug;
+
+    // 2. Проверка на водные походы (жилеты)
+    if (categorySlug === 'water') {
+      return 'Укажите для каждого участника, какой размер жилета взять у нас есть детские и от XS до 5XL. Сообщите если будут с вами дети до 10 лет.';
+    }
+
+    // 3. Проверка на заграницу (паспорта)
+    if (categorySlug === 'abroad' || tour.location?.toLowerCase().includes('румыния')) {
+      return 'Какое снаряжение вам надо? Есть ли у Вас действующий биометрический паспорт?';
+    }
+
+    // 4. Проверка на детские туры
+    if (categorySlug === 'kids') {
+      return 'Укажите возраст детей ...';
+    }
+
+    // 5. Стандартный ответ
     return 'Задайте вопрос и мы постараемся ответить на него в короткие сроки?';
   };
 

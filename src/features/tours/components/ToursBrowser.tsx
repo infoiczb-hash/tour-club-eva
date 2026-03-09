@@ -109,7 +109,7 @@ export default function ToursBrowser({
       if (activeCategory === 'all') return true;
       
       // Ищем либо по новому слагу категории (если связи подгружены), либо по старому текстовому type
-      const tourCategorySlug = (tour as any).category?.slug || tour.type?.toLowerCase();
+      const tourCategorySlug = tour.category?.slug;
       return tourCategorySlug === activeCategory.toLowerCase();
     });
 

@@ -25,6 +25,7 @@ export async function upsertTourCategoryAction(data: any) {
       title: data.title,
       slug: data.slug,
       icon: data.icon || 'Compass',
+      color: data.color || 'teal', // ✅ ДОБАВЛЕНО СОХРАНЕНИЕ ЦВЕТА
       sortOrder: Number(data.sort_order) || 0,
       isActive: data.is_active ?? true,
     };
@@ -53,7 +54,6 @@ export async function upsertTourCategoryAction(data: any) {
 
 export async function deleteTourCategoryAction(id: string) {
   try {
-    // ВАЖНО: Проверяем, есть ли туры с этой категорией
     const linkedTours = await prisma.tour.count({ where: { categoryId: id } });
     if (linkedTours > 0) {
       return { success: false, error: `Нельзя удалить! К этой категории привязано ${linkedTours} туров.` };
@@ -81,7 +81,6 @@ export async function toggleTourCategoryStatusAction(id: string, currentStatus: 
     return { success: false, error: "Ошибка обновления статуса" };
   }
 }
-
 
 // ==========================================
 // КАТЕГОРИИ БЛОГА (BLOG CATEGORIES)
@@ -131,7 +130,6 @@ export async function upsertBlogCategoryAction(data: any) {
 
 export async function deleteBlogCategoryAction(id: string) {
   try {
-    // Проверяем, есть ли посты с этой категорией
     const linkedPosts = await prisma.blog.count({ where: { categoryId: id } });
     if (linkedPosts > 0) {
       return { success: false, error: `Нельзя удалить! Привязано ${linkedPosts} статей.` };
