@@ -150,7 +150,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
   const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
 
   // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
-  const badgeLabel = tour.category?.title || tour.type || 'Тур';
+const badgeLabel = tour.category?.title || 'Тур';
 
   return (
     <Link href={`/tour/${tour.slug}`} className="group block outline-none">
