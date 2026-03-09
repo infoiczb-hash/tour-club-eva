@@ -11,12 +11,15 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden px-4">
+    // 🔥 ИСПРАВЛЕНИЕ: Добавлены pt-28 md:pt-32 (безопасная зона для хедера) 
+    // и min-h-[100svh] для корректной работы на мобильных.
+    <main className="min-h-[100svh] pt-28 pb-12 md:pt-32 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden px-4">
       
       {/* Мягкое фоновое свечение */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 text-center max-w-2xl mx-auto flex flex-col items-center mt-12 md:mt-0">
+      {/* 🔥 ИСПРАВЛЕНИЕ: Убран лишний mt-12, так как теперь есть padding у main */}
+      <div className="relative z-10 text-center max-w-2xl mx-auto flex flex-col items-center">
         
         {/* Бейдж статуса */}
         <div className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-slate-900/80 border border-white/10 backdrop-blur-md rounded-full mb-8 shadow-xl">

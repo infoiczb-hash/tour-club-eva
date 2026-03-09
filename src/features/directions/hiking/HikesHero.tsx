@@ -1,31 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
 import { Compass, Coffee, ShieldCheck } from 'lucide-react';
 
 export default function HikesHero() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scrolled, setScrolled] = useState(false);
-
-  // Заменяет useScroll + useTransform — только показываем/скрываем через opacity
-  // scale-эффект при скролле убираем — он дёргает layout на мобиле
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > window.innerHeight * 0.15);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   return (
     <section className="relative min-h-[100svh] flex flex-col justify-center overflow-hidden bg-stone-950 pt-28 pb-16 md:pt-0 md:pb-0">
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-800/20 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div
-        ref={containerRef}
         className="relative z-10 container mx-auto px-4 text-center flex flex-col items-center justify-center transition-opacity duration-500"
-        style={{ opacity: scrolled ? 0 : 1 }}
       >
         <div className="opacity-0 animate-fade-in-up inline-block px-4 md:px-5 py-2 mb-8 text-[10px] md:text-sm font-bold tracking-widest text-teal-200 border border-teal-800/50 rounded-full backdrop-blur-md uppercase bg-teal-950/30">
           Туры по горам Румынии и не только.
