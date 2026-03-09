@@ -60,7 +60,6 @@ export default async function LocalPage() {
   // Логику фильтрации можно адаптировать под вашу базу данных
 const localTours = allTours.filter(tour => 
     tour.category?.slug === 'local' || // ✅ Проверяем по slug новой категории локальных туров
-    tour.category?.slug === 'hiking' || // (оставил на всякий случай, если они пересекаются)
     tour.title.toLowerCase().includes('молдова') ||
     tour.title.toLowerCase().includes('днестр') ||
     tour.title.toLowerCase().includes('строенцы')

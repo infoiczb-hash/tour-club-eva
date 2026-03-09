@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
 
   // ✅ ДОБАВЛЕНО: Динамические ключевые слова (Keywords)
-  const typeKeyword = tour.type ? tour.type : 'приключения';
+  const typeKeyword = tour.category?.title || 'приключения'; // ✅ Берем название категории
   const keywords = [
     `тур ${tour.title}`,
     `${typeKeyword} Приднестровье`,
