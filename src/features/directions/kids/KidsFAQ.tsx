@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircleQuestion, MessageCircle, Quote, CheckCircle2 } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';

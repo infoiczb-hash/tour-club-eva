@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Gamepad2, Backpack, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";

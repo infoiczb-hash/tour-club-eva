@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Tent, Droplets, Mountain, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import Image from 'next/image';
 

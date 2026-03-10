@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import Image from 'next/image';
-import { motion, useInView } from 'framer-motion';
+import { m as motion, useInView } from 'framer-motion';
 import { DirectionData, THEMES } from '@/data/directionsData';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";

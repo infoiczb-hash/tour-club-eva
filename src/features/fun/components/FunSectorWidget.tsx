@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activity, BookOpen, Brain, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";

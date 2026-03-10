@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { ShieldCheck, Tent, Utensils } from 'lucide-react';
 
 function FadeText({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) {

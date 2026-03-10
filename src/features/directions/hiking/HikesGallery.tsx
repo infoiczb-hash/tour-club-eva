@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Camera, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { clsx } from 'clsx';

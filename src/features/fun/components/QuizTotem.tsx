@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { m as motion, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
 import { 
   X, ArrowRight, Sparkles, Moon, Sun, Cloud, Wind, Crown,

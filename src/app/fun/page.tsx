@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import FunClient from './FunClient';
+import { Suspense } from 'react';
 
 // Опционально: кэшируем страницу на 60 секунд для скорости
 export const revalidate = 60; 
@@ -43,14 +44,16 @@ export const metadata: Metadata = {
     images: ['/og-default.jpg'],
   }
 };
-
 export default async function FunSectorPage() {
-  // Достаем из базы ВСЕ активные тесты
   const tests = await prisma.funTest.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'desc' }
   });
 
-  // Передаем их в клиентский компонент
-  return <FunClient activeTests={tests} />;
+  return (
+    // 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
+      <FunClient activeTests={tests} />
+    </Suspense>
+  );
 }

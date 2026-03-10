@@ -26,16 +26,31 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
   useEffect(() => {
     let rafId: number;
     let lastScrollY = 0;
+    let isVisible = true; // Hero виден изначально
 
     const onScroll = () => { lastScrollY = window.scrollY; };
 
     const update = () => {
+      if (!isVisible) return; // 👈 Не обновляем, если секция ушла за экран
+
       if (bgRef.current)
         bgRef.current.style.transform = `translateY(${lastScrollY * 0.25}px)`;
       if (textRef.current)
         textRef.current.style.transform = `translateY(${lastScrollY * 0.35}px)`;
+      
       rafId = requestAnimationFrame(update);
     };
+
+    // Останавливаем RAF, когда Hero ушёл за экран
+    const sectionEl = bgRef.current?.closest('section');
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+      if (isVisible) {
+        rafId = requestAnimationFrame(update);
+      }
+    }, { rootMargin: '200px' }); // Начинаем анимировать чуть заранее до появления
+
+    if (sectionEl) observer.observe(sectionEl);
 
     window.addEventListener('scroll', onScroll, { passive: true });
     rafId = requestAnimationFrame(update);
@@ -43,6 +58,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
     return () => {
       window.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(rafId);
+      observer.disconnect();
     };
   }, []);
 

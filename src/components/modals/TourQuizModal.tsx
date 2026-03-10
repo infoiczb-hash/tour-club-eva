@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { 
   X, ArrowLeft, ArrowRight, Check, Sparkles, Info, Loader2, Trophy,
   Compass, Anchor, Waves, Mountain, Baby, Backpack, Zap, ShieldCheck, 

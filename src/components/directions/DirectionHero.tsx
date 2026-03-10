@@ -1,37 +1,55 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { DirectionData, THEMES } from '@/data/directionsData';
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface DirectionHeroProps {
   data: DirectionData;
 }
 
 export default function DirectionHero({ data }: DirectionHeroProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
+  const txtRef = useRef<HTMLDivElement>(null);
   
-  // Достаем цвета текущей темы (например, неоновый синий для SUP)
   const theme = THEMES[data.theme];
 
-  // 1. Плавный параллакс при скролле
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
+  useEffect(() => {
+    let rafId: number;
+    let lastY = 0;
 
-  const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const opacityBg = useTransform(scrollYProgress, [0, 0.8], [1, 0.3]);
-  const yText = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const opacityText = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+    const onScroll = () => { lastY = window.scrollY; };
+    
+    const update = () => {
+      // 1. Параллакс и прозрачность фона
+      if (bgRef.current) {
+        bgRef.current.style.transform = `translateY(${lastY * 0.4}px)`;
+        const viewportH = window.innerHeight || 800;
+        const bgOp = Math.max(0.3, 1 - (lastY / (viewportH * 0.8)) * 0.7);
+        bgRef.current.style.opacity = String(bgOp);
+      }
+      
+      // 2. Параллакс и исчезновение текста
+      if (txtRef.current) {
+        txtRef.current.style.transform = `translateY(${lastY * 0.5}px)`; 
+        const viewportH = window.innerHeight || 800;
+        const txtOp = Math.max(0, 1 - lastY / (viewportH * 0.5));
+        txtRef.current.style.opacity = String(txtOp);
+      }
+      
+      rafId = requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    rafId = requestAnimationFrame(update);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const handleScrollDown = () => {
     window.scrollTo({
@@ -41,19 +59,15 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
   };
 
   return (
-    <section 
-        ref={containerRef} 
-        className="relative h-[100svh] min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-slate-950"
-    >
+    <section className="relative h-[100svh] min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-slate-950">
       
       {/* ==========================================
-          1. МЕДИАСЛОЙ (Фон + Параллакс)
+          1. МЕДИАСЛОЙ (Фон + Параллакс через RAF)
       ========================================== */}
-      <motion.div 
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{ y: yBg, opacity: opacityBg }}
+      <div 
+        ref={bgRef}
+        className="absolute inset-0 z-0 pointer-events-none will-change-transform"
       >
-        {/* Будущий задел под видео: если есть videoUrl, рендерим <video>, иначе <Image> */}
         {data.hero.videoUrl ? (
              <video 
                 autoPlay loop muted playsInline 
@@ -73,8 +87,8 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
         )}
         
         {/* Сложная оптика (Senior UI) */}
-        <div className="absolute inset-0 bg-slate-950/30 mix-blend-multiply" /> {/* Базовое затемнение */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/10" /> {/* Плавный низ */}
+        <div className="absolute inset-0 bg-slate-950/30 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/10" />
         
         {/* Динамическое цветное свечение из темы */}
         <div 
@@ -83,20 +97,20 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
                 background: `radial-gradient(circle at center, transparent 0%, ${theme.glow} 100%)` 
             }}
         />
-                </motion.div>
+      </div>
 
       {/* ==========================================
           2. КОНТЕНТ (Типографика)
-          ========================================== */}
-      {/* ВАЖНО: Внешний контейнер оставляем motion.div ради эффекта при скролле */}
-      <motion.div 
-        className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center mt-20"
-        style={{ y: yText, opacity: opacityText }}
+      ========================================== */}
+      <div 
+        ref={txtRef}
+        className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center mt-20 will-change-transform"
+        style={{ transition: 'none' }}
       >
         
-        {/* Динамический бейдж: появляется первым (без задержки) */}
+        {/* Динамический бейдж */}
         <div 
-            className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-6 sm:mb-8 shadow-2xl"
+            className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-6 sm:mb-8 shadow-2xl"
             style={{ 
                 backgroundColor: `${theme.glow.replace('0.4', '0.1')}`, 
                 borderColor: `${theme.glow.replace('0.4', '0.3')}` 
@@ -110,32 +124,29 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
             </span>
         </div>
 
-        {/* Гигантский заголовок (LCP): появляется через 100мс */}
+        {/* Гигантский заголовок (LCP) */}
         <h1 
-            className="animate-fade-in-up opacity-0 [animation-delay:100ms] text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.95] mb-6 drop-shadow-2xl max-w-5xl"
+            className="opacity-0 animate-fade-in-up [animation-delay:100ms] text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.95] mb-6 drop-shadow-2xl max-w-5xl"
         >
             {data.hero.title}
         </h1>
 
-        {/* Подзаголовок: появляется через 200мс */}
+        {/* Подзаголовок */}
         <p 
-            className="animate-fade-in-up opacity-0 [animation-delay:200ms] text-sm sm:text-lg md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed drop-shadow-md"
+            className="opacity-0 animate-fade-in-up [animation-delay:200ms] text-sm sm:text-lg md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed drop-shadow-md"
         >
             {data.hero.subtitle}
         </p>
         
-      </motion.div>
+      </div>
 
       {/* ==========================================
           3. КНОПКА СКРОЛЛА
       ========================================== */}
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 1 }}
+          <button
             onClick={handleScrollDown}
-            className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto"
+            className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto opacity-0 animate-fade-in-up [animation-delay:800ms]"
           >
               <div 
                   className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border flex items-center justify-center transition-all duration-500 shadow-lg backdrop-blur-sm"
@@ -156,7 +167,7 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
               >
                   <ArrowDown className="text-white group-hover:text-slate-900 animate-bounce w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
               </div>
-          </motion.button>
+          </button>
       </div>
 
     </section>

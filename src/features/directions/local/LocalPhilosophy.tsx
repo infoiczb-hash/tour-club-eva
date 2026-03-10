@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Leaf, Coffee, Wind } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";

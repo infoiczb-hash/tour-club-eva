@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Flame, Compass, Users, ArrowRight, Smartphone, Frown, User, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";

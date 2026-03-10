@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 
 // Типы уведомлений
 type ToastType = 'success' | 'error' | 'info';

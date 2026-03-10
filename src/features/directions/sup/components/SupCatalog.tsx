@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { type ElementType } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, Users, Star, Compass, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
@@ -85,7 +85,7 @@ export default function SupCatalog() {
                     )}
                 >
                     {activeTab === 'lessons' && (
-                        <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl shadow-md" />
+                        <m.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl shadow-md" />
                     )}
                     <span className="relative z-10">ПРОГУЛКИ</span>
                 </button>
@@ -97,7 +97,7 @@ export default function SupCatalog() {
                     )}
                 >
                     {activeTab === 'tours' && (
-                        <motion.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl shadow-md" />
+                        <m.div layoutId="catalogTab" className="absolute inset-0 bg-teal-500 rounded-xl shadow-md" />
                     )}
                     <span className="relative z-10">СПЛАВЫ</span>
                 </button>
@@ -106,7 +106,7 @@ export default function SupCatalog() {
 
         {/* CONTENT CARD */}
         <AnimatePresence mode="wait">
-            <motion.div
+            <m.div
                 key={activeTab}
                 initial={{ opacity: 0, scale: 0.98, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -202,7 +202,7 @@ export default function SupCatalog() {
                     </div>
                 </div>
 
-            </motion.div>
+            </m.div>
         </AnimatePresence>
 
       </div>

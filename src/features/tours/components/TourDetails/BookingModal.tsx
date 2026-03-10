@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, Loader2, Phone, User, MessageSquare, Calendar, AtSign, Minus, Plus, AlertCircle } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
@@ -160,7 +160,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -169,7 +169,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
           />
 
           <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -326,7 +326,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                 )}
               </div>
 
-            </motion.div>
+            </m.div>
           </div>
         </>
       )}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Camera, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 
 interface TourGalleryProps {

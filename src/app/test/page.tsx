@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Bed, Shirt, Coffee, Tent, BriefcaseMedical, Droplet, ArrowUp } from 'lucide-react';
 
 interface Step {

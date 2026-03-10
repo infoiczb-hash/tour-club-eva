@@ -12,7 +12,7 @@ import {
   ShieldCheck, 
   ChevronDown 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'isomorphic-dompurify';
 
 interface TourEssentialsProps {

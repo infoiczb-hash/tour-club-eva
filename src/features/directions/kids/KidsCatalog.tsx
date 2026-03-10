@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
   Flame, Sparkles, ArrowRight, Bell, Map 

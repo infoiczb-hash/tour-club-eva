@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight, ArrowLeft, Activity,
   CheckCircle, AlertCircle, Sparkles, Loader2, X, Compass, Dumbbell, AlertTriangle

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Bot, X, Send, Sparkles, Trash2, MessageSquare } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { performAiTask } from "@/features/admin/actions/ai";
 
 // Тип сообщения для локального стейта

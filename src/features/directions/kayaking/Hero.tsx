@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import Image from "next/image";
 import { Waves, Compass, CheckCircle2 } from "lucide-react";
 import { useKayakTab } from "./KayakingTabProvider";
