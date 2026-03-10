@@ -54,13 +54,25 @@ export const TourSkeletonCard = () => (
     </div>
 );
 
-// Сетка (адаптирована под ToursBrowser)
 export const TourSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-5">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-full">
-                <TourSkeletonCard />
+    // ✅ ДОБАВИЛИ ТЕМНУЮ СЕКЦИЮ С ОТСТУПАМИ, КАК В TOURS BROWSER
+    <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden">
+        <div className="container mx-auto px-4 max-w-7xl relative z-10">
+            
+            {/* Имитация заголовка (чтобы страница не прыгала) */}
+            <div className="mb-8 md:mb-14">
+                <div className="h-6 w-32 bg-slate-800/50 rounded-full mb-4 animate-pulse" />
+                <div className="h-12 md:h-20 w-3/4 md:w-1/2 bg-slate-800/50 rounded-xl animate-pulse" />
             </div>
-        ))}
-    </div>
+
+            {/* Сама сетка карточек */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-5">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="h-[450px]">
+                        <TourSkeletonCard />
+                    </div>
+                ))}
+            </div>
+        </div>
+    </section>
 );

@@ -46,12 +46,10 @@ export default async function AllToursPage() {
     // pt-20 нужен, чтобы контент не залез под фиксированный Header
     <main className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
       {/* 👇 2. ИСПОЛЬЗУЕМ ОБЁРТКУ */}
-      <ToursBrowserWrapper 
-         tours={tours} 
-         categories={categories} 
-         title="Все Приключения" 
-         subtitle="Полный каталог 2026"
-      />
+     <ToursBrowserWrapper
+          title="Все Приключения"
+          subtitle="Полный каталог 2026"
+       />
     </main>
   );
 }

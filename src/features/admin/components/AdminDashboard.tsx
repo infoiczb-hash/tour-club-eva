@@ -430,12 +430,21 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
         />
       )}
       
-      {modalState.guide && (
+  {modalState.guide && (
           <GuideForm 
             initialData={editingItem}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
-            // 👇 ИСПРАВЛЕНИЕ 2: Используем новый экшен
-            onSubmit={async (data: Record<string, any>) => { await upsertGuideAction(data); loadAllData(); }}
+            onSubmit={async (data: Record<string, any>) => { 
+                // ✅ Сохраняем результат вызова экшена
+                const res = await upsertGuideAction(data); 
+                
+                if (res.success) {
+                    showToast('Досье гида сохранено!', 'success'); // ✅ Показываем зеленый тостер
+                    await loadAllData(); // Обновляем данные в таблице
+                } else {
+                    showToast(res.error || 'Ошибка при сохранении гида', 'error'); // ❌ Показываем красный тостер
+                }
+            }}
           />
       )}
       

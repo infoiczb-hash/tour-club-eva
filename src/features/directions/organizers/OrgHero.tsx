@@ -18,12 +18,11 @@ export default function OrgHero() {
 
           <h1 className="opacity-0 animate-fade-in-up [animation-delay:150ms] text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
             МЫ СОЗДАЕМ <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">СОБЫТИЯ</span>,<br />
-            КОТОРЫЕ МЕНЯЮТ КОМАНДЫ
+            КОТОРЫЕ МЕНЯЮТ ЛЮДЕЙ И КОМАНДЫ
           </h1>
 
           <p className="opacity-0 animate-fade-in-up [animation-delay:300ms] text-lg md:text-xl text-slate-300 font-medium mb-10 max-w-3xl mx-auto leading-relaxed">
-            Организация сплавов, тимбилдингов и ретритов на природе под ключ. От 10 до 100+ человек. Забираем на себя всю логистику, кухню и безопасность.
-          </p>
+            Организация сплавов, тимбилдингов и ретритов на природе. От 10 до 100+ человек. </p>
 
           <div className="opacity-0 animate-fade-in-up [animation-delay:450ms] flex flex-col sm:flex-row justify-center gap-4">
              {/* ✅ Превратили кнопку в якорную ссылку */}
