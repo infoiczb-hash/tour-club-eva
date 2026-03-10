@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { MapPin, ChevronDown, Flag, Navigation, CircleDot, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -91,7 +91,7 @@ export default function TourProgram({ program }: TourProgramProps) {
                   {/* AnimatePresence оставляем — это анимация высоты по клику, не scroll */}
                   <AnimatePresence>
                     {isOpen && (
-                      <motion.div
+                      <m.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -120,7 +120,7 @@ export default function TourProgram({ program }: TourProgramProps) {
                             </div>
                           )}
                         </div>
-                      </motion.div>
+                      </m.div>
                     )}
                   </AnimatePresence>
                 </div>

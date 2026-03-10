@@ -3,6 +3,8 @@ import BlogFeed from "./BlogFeed";
 import { Metadata } from "next";
 import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
+import { Suspense } from 'react';
+
 export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
 
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
@@ -45,14 +47,12 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  // 1. Получаем все посты, сортируем от новых к старым
   const posts = await prisma.blog.findMany({
     orderBy: {
       date: 'desc',
     },
   });
 
-  // 2. Получаем категории
   const catRes = await getBlogCategoriesAction();
   const categories = catRes.success ? catRes.data : [];
 
@@ -63,10 +63,13 @@ return (
       { name: "Блог", url: "https://evatur.club/blog" },
     ]} />
     <main className="min-h-screen bg-slate-950">
-      <BlogFeed 
-        initialPosts={posts} 
-        categories={categories}
-      />
+      {/* 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE */}
+      <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
+        <BlogFeed 
+          initialPosts={posts} 
+          categories={categories}
+        />
+      </Suspense>
     </main>
   </>
 );

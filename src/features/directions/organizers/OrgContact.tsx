@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Briefcase, Send, ArrowRight, MessageSquareText } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 

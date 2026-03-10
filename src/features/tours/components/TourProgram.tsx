@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Calendar, Clock } from "lucide-react";
 import { TourProgramData, TourProgramDay, TourActivity } from "../types"; // Убедитесь, что импорты верны
 

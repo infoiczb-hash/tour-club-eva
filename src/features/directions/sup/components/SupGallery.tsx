@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, Variants } from 'framer-motion';
+import { m as motion, Variants } from 'framer-motion';
 import Image from 'next/image';
 import { Heart, Camera, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import { clsx } from 'clsx';

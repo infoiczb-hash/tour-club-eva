@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
@@ -229,7 +229,7 @@ export default function ToursBrowser({
 
             <AnimatePresence>
                 {isMobileFiltersOpen && (
-                    <motion.div 
+                    <m.div 
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -256,7 +256,7 @@ export default function ToursBrowser({
                                 ))}
                             </div>
                         </div>
-                    </motion.div>
+                    </m.div>
                 )}
             </AnimatePresence>
         </div>

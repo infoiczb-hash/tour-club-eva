@@ -6,7 +6,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image' 
 
 function cn(...inputs: ClassValue[]) {

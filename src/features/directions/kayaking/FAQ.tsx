@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m} from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
@@ -159,7 +159,7 @@ export default function FAQ() {
                   {/* Аккордеон — оставляем AnimatePresence, это UI анимация высоты */}
                   <AnimatePresence>
                     {isOpen && (
-                      <motion.div
+                      <m.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -169,7 +169,7 @@ export default function FAQ() {
                         <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
                           {faq.a}
                         </p>
-                      </motion.div>
+                      </m.div>
                     )}
                   </AnimatePresence>
                 </div>

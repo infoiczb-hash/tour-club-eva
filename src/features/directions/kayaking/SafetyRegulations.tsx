@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { 
   ShieldCheck, Anchor, Waves, Navigation, 
   Tent, LifeBuoy, UserCheck, Scale, ChevronDown, AlertCircle
@@ -104,7 +104,7 @@ export default function SafetyRegulations() {
                 {/* Аккордеон — AnimatePresence для высоты оставляем */}
                 <AnimatePresence>
                   {isOpen && (
-                    <motion.div
+                    <m.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
@@ -127,7 +127,7 @@ export default function SafetyRegulations() {
                           </div>
                         )}
                       </div>
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>

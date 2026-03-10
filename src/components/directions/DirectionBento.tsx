@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { motion, Variants } from 'framer-motion';
+import { m as motion, Variants } from 'framer-motion';
 import { DirectionData, THEMES } from '@/data/directionsData';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";

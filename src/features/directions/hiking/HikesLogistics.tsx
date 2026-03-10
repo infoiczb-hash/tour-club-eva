@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Bus, Tent, Utensils, SignalHigh, ArrowRight } from 'lucide-react';
 
 const logisticsData = [

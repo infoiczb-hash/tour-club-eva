@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, useScroll, AnimatePresence } from 'framer-motion';
+import { m as motion, useScroll, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 
 export default function FloatingContactBtn() {

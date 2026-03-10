@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Bus, Utensils, Users, HeartHandshake, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Send, BellRing, Sparkles, CheckCircle2 } from 'lucide-react';
 import { DirectionData, THEMES } from '@/data/directionsData';
 import { clsx, type ClassValue } from "clsx";

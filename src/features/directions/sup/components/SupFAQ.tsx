@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircleQuestion, MessageCircle, Sparkles, Map } from 'lucide-react';
 import Link from 'next/link';
 import { useModalStore } from '@/shared/store/useModalStore';

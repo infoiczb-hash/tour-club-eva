@@ -3,6 +3,8 @@ import { getTours } from '@/features/tours/api';
 import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
 import { Metadata } from 'next';
 import { getTourCategoriesAction } from '@/features/admin/actions/categories';
+import { Suspense } from 'react'; // 👈 ДОБАВЛЕНО
+import { TourSkeleton } from '@/features/tours/components/TourSkeleton'; // 👈 ДОБАВЛЕНО
 
 export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
 
@@ -37,19 +39,19 @@ export const metadata: Metadata = {
 
 // 2. СТРАНИЦА (Async Server Component)
 export default async function AllToursPage() {
-  // Получаем ВСЕ активные туры
   const tours = await getTours();
   const catRes = await getTourCategoriesAction();
   const categories = catRes.success ? catRes.data : [];
 
  return (
-    // pt-20 нужен, чтобы контент не залез под фиксированный Header
     <main className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
-      {/* 👇 2. ИСПОЛЬЗУЕМ ОБЁРТКУ */}
-     <ToursBrowserWrapper
+      {/* 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE */}
+      <Suspense fallback={<TourSkeleton />}>
+        <ToursBrowserWrapper
           title="Все Приключения"
           subtitle="Полный каталог 2026"
-       />
+        />
+      </Suspense>
     </main>
   );
 }

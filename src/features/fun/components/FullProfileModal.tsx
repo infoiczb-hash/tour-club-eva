@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Loader2, Zap, Brain, ShieldCheck } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { analyzeFullProfileAction } from "@/features/fun/actions";
