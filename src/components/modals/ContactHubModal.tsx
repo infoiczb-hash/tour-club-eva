@@ -146,29 +146,42 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                </div>
                            )}
 
-                           {/* --- COMMON FIELDS --- */}
+                         {/* --- COMMON FIELDS --- */}
                            <div className="space-y-4">
                                <div className="relative group">
+                                   <label htmlFor="contact-name" className="sr-only">Ваше имя</label>
                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
-                                   <input required placeholder="Ваше имя" 
+                                   <input 
+                                       id="contact-name"
+                                       required 
+                                       placeholder="Ваше имя" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
-                                       value={formData.name || ''} onChange={e => updateField('name', e.target.value)}
+                                       value={formData.name || ''} 
+                                       onChange={e => updateField('name', e.target.value)}
                                    />
                                </div>
                                
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                    <div className="relative group">
+                                       <label htmlFor="contact-phone" className="sr-only">Телефон</label>
                                        <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
-                                       <input placeholder="+373..." 
+                                       <input 
+                                           id="contact-phone"
+                                           placeholder="+373..." 
                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
-                                           value={formData.phone || ''} onChange={e => updateField('phone', e.target.value)}
+                                           value={formData.phone || ''} 
+                                           onChange={e => updateField('phone', e.target.value)}
                                        />
                                    </div>
                                    <div className="relative group">
+                                       <label htmlFor="contact-social" className="sr-only">Telegram или Instagram</label>
                                        <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
-                                       <input placeholder="Telegram / Insta" 
+                                       <input 
+                                           id="contact-social"
+                                           placeholder="Telegram / Insta" 
                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
-                                           value={formData.social || ''} onChange={e => updateField('social', e.target.value)}
+                                           value={formData.social || ''} 
+                                           onChange={e => updateField('social', e.target.value)}
                                        />
                                    </div>
                                </div>
@@ -222,14 +235,18 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                </div>
                            )}
 
-                           {/* B2B */}
+     {/* B2B */}
                            {activeTab === 'B2B' && (
                                <div className="space-y-4 animate-in fade-in">
                                    <div className="relative group">
+                                       <label htmlFor="contact-company" className="sr-only">Название компании</label>
                                        <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
-                                       <input placeholder="Название компании (необязательно)" 
+                                       <input 
+                                           id="contact-company"
+                                           placeholder="Название компании (необязательно)" 
                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                           value={formData.company || ''} onChange={e => updateField('company', e.target.value)}
+                                           value={formData.company || ''} 
+                                           onChange={e => updateField('company', e.target.value)}
                                        />
                                    </div>
                                    <textarea required placeholder="Опишите масштаб выезда: количество человек, пожелания, примерные даты..." 

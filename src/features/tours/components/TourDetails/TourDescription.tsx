@@ -1,6 +1,7 @@
 import React from 'react';
 import { Star, Zap, Shield, Heart, Camera, Coffee, Mountain, Map, Sun, Compass, Hash } from 'lucide-react';
 import { clsx } from 'clsx';
+import DOMPurify from 'isomorphic-dompurify';
 
 const ICON_MAP: Record<string, any> = {
   star: Star, zap: Zap, shield: Shield, 
@@ -36,7 +37,7 @@ export default function TourDescription({ description, highlights, tags }: TourD
           <div 
           // ИСПРАВЛЕНИЕ: text-left вместо text-justify для идеальной читабельности
           className="text-slate-300 text-sm md:text-base leading-relaxed font-normal text-left"
-          dangerouslySetInnerHTML={{ __html: formattedHtml }}
+         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formattedHtml) }}
         />
       </div>
       );

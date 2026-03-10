@@ -9,9 +9,10 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // Логируем ошибку в консоль браузера, чтобы ты мог её увидеть
-    console.error("Global Error caught:", error);
+ useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error("Global Error caught:", error);
+    }
   }, [error]);
 
   return (
@@ -25,10 +26,13 @@ export default function Error({
         </p>
       </div>
       
-      <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-left max-w-lg w-full overflow-auto">
-         <p className="text-xs font-mono text-red-600 break-words">
-            {error.message || "Unknown error"}
+      <div className="p-4 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-center max-w-lg w-full">
+         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            Произошла внутренняя ошибка. Попробуйте обновить страницу или обратитесь в поддержку.
          </p>
+         {error.digest && (
+           <p className="text-xs text-slate-400 mt-2 font-mono">ID: {error.digest}</p>
+         )}
       </div>
 
       <button

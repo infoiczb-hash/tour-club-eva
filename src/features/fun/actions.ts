@@ -5,19 +5,53 @@ import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 import { getTours } from '@/features/tours/api'; 
 import { Tour } from '@/features/tours/types';
+import { headers } from 'next/headers';
+
+// ==========================================
+// IN-MEMORY RATE LIMITER (Защита от спама ИИ)
+// ==========================================
+const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
+const LIMIT = 5; // Максимум 10 запросов к ИИ с одного IP
+const WINDOW_MS = 60 * 60 * 1000; // В течение 1 часа
+
+async function checkRateLimit() {
+  try {
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || 'unknown-ip';
+    const now = Date.now();
+    const userLimit = rateLimitMap.get(ip);
+
+    if (!userLimit || now > userLimit.resetTime) {
+      rateLimitMap.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+      return true;
+    }
+
+    if (userLimit.count >= LIMIT) {
+      return false; // Лимит исчерпан
+    }
+
+    userLimit.count += 1;
+    return true;
+  } catch (e) {
+    return true; // Если не удалось получить IP, пропускаем, чтобы не блокировать честных юзеров
+  }
+}
 
 // ==========================================
 // 1. АНАЛИЗ СТРАХОВ (Fear Debrief)
 // ==========================================
 export async function analyzeFearsAction(fearsDetailed: string[]) {
   try {
+    if (!(await checkRateLimit())) {
+      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
+    }
+
     const allTours = await getTours();
     
     // Делаем компактную выжимку туров для ИИ, чтобы экономить токены
     const toursContext = allTours.map(t => ({
       id: t.id,
       title: t.title,
-      // 👇 ИСПРАВЛЕНИЕ: Передаем ИИ красивое название категории на русском
       category: t.category?.title || 'Активный отдых',
       difficulty: t.difficulty,
       location: t.location,
@@ -52,17 +86,20 @@ export async function analyzeFearsAction(fearsDetailed: string[]) {
   }
 }
 
-
 // ==========================================
 // 2. АНАЛИЗ ФИЗИЧЕСКОЙ ФОРМЫ (Physical Readiness)
 // ==========================================
 export async function analyzePhysicalAction(answersText: string, levelTitle: string, levelSummary: string) {
   try {
+    if (!(await checkRateLimit())) {
+      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
+    }
+
     const allTours = await getTours();
     const toursContext = allTours.map(t => ({
       id: t.id, 
       title: t.title, 
-     category: t.category?.title || 'Активный отдых',
+      category: t.category?.title || 'Активный отдых',
       difficulty: t.difficulty, 
       location: t.location, 
       duration: t.duration
@@ -99,12 +136,15 @@ export async function analyzePhysicalAction(answersText: string, levelTitle: str
   }
 }
 
-
 // ==========================================
 // 3. АНАЛИЗ СИМПТОМОВ ТЕЛА (Body Signals)
 // ==========================================
 export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
   try {
+    if (!(await checkRateLimit())) {
+      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
+    }
+
     const allTours = await getTours();
     const toursContext = allTours.map(t => ({
       id: t.id, 
@@ -143,12 +183,15 @@ export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
   }
 }
 
-
 // ==========================================
 // 4. РЕФЛЕКСИЯ ПОСЛЕ ТУРА (Tour Debrief)
 // ==========================================
 export async function analyzeDebriefAction(answersText: string) {
   try {
+    if (!(await checkRateLimit())) {
+      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
+    }
+
     const allTours = await getTours();
     const toursContext = allTours.map(t => ({
       id: t.id, 
@@ -192,7 +235,11 @@ export async function analyzeDebriefAction(answersText: string) {
 // ==========================================
 export async function analyzeFullProfileAction(profile: any) {
   try {
-       const { object } = await generateObject({
+    if (!(await checkRateLimit())) {
+      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
+    }
+
+    const { object } = await generateObject({
       model: google('gemini-1.5-flash'),
       schema: z.object({
         summaryTitle: z.string(),
@@ -200,7 +247,6 @@ export async function analyzeFullProfileAction(profile: any) {
         mainInsight: z.string(),
         advice: z.string()
       }),
-      // 👇 ИСПРАВЛЕНИЕ: Добавили защиту от пустых данных и внедрили touristType
       prompt: `Проведи глубокий психологический синтез профиля туриста:
         - Страхи: ${profile.fears?.length ? profile.fears.join(', ') : 'Не указаны'}
         - Физика: ${profile.physicalLevel || 'Не указана'}
@@ -213,6 +259,6 @@ export async function analyzeFullProfileAction(profile: any) {
     return { success: true, ...object };
   } catch (e) {
     console.error("AI Full Profile Error:", e);
-    return { success: false };
+    return { success: false, error: "Ошибка синтеза профиля" };
   }
 }

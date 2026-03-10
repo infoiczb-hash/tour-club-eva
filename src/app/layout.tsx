@@ -15,7 +15,9 @@ import GlobalModals from "@/components/modals/GlobalModals";
 import dynamic from "next/dynamic";
 
 // Убрали { ssr: false }, так как это вызывает ошибку в Server Components
-const AxeReporter = dynamic(() => import('@/components/AxeReporter'));
+const AxeReporter = process.env.NODE_ENV !== 'production' 
+  ? dynamic(() => import('@/components/AxeReporter')) 
+  : () => null;
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],

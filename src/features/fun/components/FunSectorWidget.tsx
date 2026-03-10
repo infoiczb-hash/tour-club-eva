@@ -150,7 +150,7 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
       "flex-row lg:flex-col items-center lg:items-start rounded-2xl md:rounded-[2rem]", "p-4 lg:p-6"
     )}>
       {quiz.image && (
-        <Image src={quiz.image} alt="" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        <Image src={quiz.image} alt={quiz.image} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover opacity-40 grayscale-[50%] group-hover:grayscale-0 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />

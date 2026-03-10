@@ -26,10 +26,10 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
 
     // Если браузер поддерживает нативный шеринг (мобилки)
     if (navigator.share) {
-      try {
+   try {
         await navigator.share(shareData);
       } catch (err) {
-        console.log('Error sharing:', err);
+        console.error('Error sharing:', err);
       }
     } else {
       // Иначе просто копируем ссылку

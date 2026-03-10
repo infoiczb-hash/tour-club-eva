@@ -13,6 +13,7 @@ import {
   ChevronDown 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface TourEssentialsProps {
   included: string[];
@@ -154,7 +155,7 @@ export default function TourEssentials({
             {checklist ? (
               <div 
                 className="text-slate-300 text-sm prose prose-invert prose-p:leading-relaxed max-w-none" 
-                dangerouslySetInnerHTML={{ __html: checklist }} 
+               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(checklist || 'Список вещей уточняется...') }}
               />
             ) : (
               <p className="text-slate-500 text-sm italic">

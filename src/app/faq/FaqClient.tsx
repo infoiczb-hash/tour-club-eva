@@ -124,6 +124,8 @@ function AccordionItem({ item, isOpen, onClick }: { item: any, isOpen: boolean, 
     >
       <button 
         onClick={onClick}
+        aria-expanded={isOpen}
+        aria-controls={`faq-answer-${item.id}`}
         className="flex items-center justify-between w-full p-4 md:p-5 text-left"
       >
         <div className="flex items-center gap-3 md:gap-4 pr-4">
@@ -143,14 +145,10 @@ function AccordionItem({ item, isOpen, onClick }: { item: any, isOpen: boolean, 
       <AnimatePresence initial={false}>
         {isOpen && (
         <motion.div
+            id={`faq-answer-${item.id}`}
+            role="region"
             key="content"
             initial="collapsed"
-            animate="open"
-            exit="collapsed"
-            variants={{
-              open: { opacity: 1, height: "auto" },
-              collapsed: { opacity: 0, height: 0 }
-            }}
             transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
           >
             {/* 👇 Поменяли text-xs md:text-s на text-base md:text-lg (16px / 18px) */}

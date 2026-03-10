@@ -38,6 +38,9 @@ export async function upsertGuideAction(data: any) {
 
     revalidatePath('/');
     revalidatePath('/admin');
+    revalidatePath('/guides'); // 👈 ДОБАВЛЕНО
+    if (guide.slug) revalidatePath(`/guides/${guide.slug}`); // 👈 ДОБАВЛЕНО
+    
     return { success: true, data: guide };
   } catch (error: any) {
     if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };

@@ -136,10 +136,8 @@ export default function TourForm({ initialData, onClose, guides, categories = []
   // =========================================================
   // 3. ОТПРАВКА ДАННЫХ
   // =========================================================
-  const onSubmit = async (data: TourFormValues) => {
+const onSubmit = async (data: TourFormValues) => {
     try {
-      console.log("📤 Отправка данных...", data);
-      
       const payload = { ...data };
       
       // ✅ ДОБАВЛЕНО: Защита от пустой строки в UUID
