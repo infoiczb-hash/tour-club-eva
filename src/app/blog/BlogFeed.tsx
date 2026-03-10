@@ -197,6 +197,8 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
               <button
                 key={cat.id}
                 onClick={() => handleCategoryClick(cat.slug)}
+                aria-pressed={activeCategory === cat.slug}
+                aria-label={`Фильтр: ${cat.label}`}
                 className={cn(
                   'px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border shrink-0',
                   activeCategory === cat.slug
@@ -245,12 +247,13 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
             <div className="text-center py-20 md:py-32 border border-dashed border-white/10 rounded-[3rem] bg-white/[0.02] mt-8">
               <BookOpen size={40} className="mx-auto text-slate-700 mb-4" />
               <p className="text-slate-500 font-medium">В этой категории пока нет статей.</p>
-              <button
+             <button
                 onClick={() => handleCategoryClick('all')}
+                aria-label="Смотреть все материалы"
                 className="mt-6 text-teal-500 text-sm font-bold uppercase tracking-widest hover:text-white transition-colors"
               >
                 Смотреть все материалы
-              </button>
+                            </button>
             </div>
           )}
         </div>

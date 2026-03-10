@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAuth } from '@/lib/auth'; // 👈 Добавлен импорт авторизации
 
 // ==========================================
 // КАТЕГОРИИ ТУРОВ (TOUR CATEGORIES)
@@ -21,11 +22,13 @@ export async function getTourCategoriesAction() {
 
 export async function upsertTourCategoryAction(data: any) {
   try {
+    await requireAuth(); // 👈 Защита эндпоинта
+
     const payload = {
       title: data.title,
       slug: data.slug,
       icon: data.icon || 'Compass',
-      color: data.color || 'teal', // ✅ ДОБАВЛЕНО СОХРАНЕНИЕ ЦВЕТА
+      color: data.color || 'teal',
       sortOrder: Number(data.sort_order) || 0,
       isActive: data.is_active ?? true,
     };
@@ -46,7 +49,8 @@ export async function upsertTourCategoryAction(data: any) {
     revalidatePath('/tour');
     revalidatePath('/');
     return { success: true, data: category };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' }; // 👈 Обработка ошибки
     console.error("Ошибка сохранения категории тура:", error);
     return { success: false, error: "Не удалось сохранить категорию" };
   }
@@ -54,6 +58,8 @@ export async function upsertTourCategoryAction(data: any) {
 
 export async function deleteTourCategoryAction(id: string) {
   try {
+    await requireAuth(); // 👈 Защита эндпоинта
+
     const linkedTours = await prisma.tour.count({ where: { categoryId: id } });
     if (linkedTours > 0) {
       return { success: false, error: `Нельзя удалить! К этой категории привязано ${linkedTours} туров.` };
@@ -63,13 +69,16 @@ export async function deleteTourCategoryAction(id: string) {
     revalidatePath('/admin');
     revalidatePath('/tour');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' }; // 👈 Обработка ошибки
     return { success: false, error: "Ошибка при удалении категории" };
   }
 }
 
 export async function toggleTourCategoryStatusAction(id: string, currentStatus: boolean) {
   try {
+    await requireAuth(); // 👈 Защита эндпоинта
+
     await prisma.tourCategory.update({
       where: { id },
       data: { isActive: !currentStatus },
@@ -77,7 +86,8 @@ export async function toggleTourCategoryStatusAction(id: string, currentStatus: 
     revalidatePath('/admin');
     revalidatePath('/tour');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' }; // 👈 Обработка ошибки
     return { success: false, error: "Ошибка обновления статуса" };
   }
 }
@@ -100,6 +110,8 @@ export async function getBlogCategoriesAction() {
 
 export async function upsertBlogCategoryAction(data: any) {
   try {
+    await requireAuth(); // 👈 Защита эндпоинта
+
     const payload = {
       title: data.title,
       slug: data.slug,
@@ -122,7 +134,8 @@ export async function upsertBlogCategoryAction(data: any) {
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true, data: category };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' }; // 👈 Обработка ошибки
     console.error("Ошибка сохранения категории блога:", error);
     return { success: false, error: "Не удалось сохранить категорию" };
   }
@@ -130,6 +143,8 @@ export async function upsertBlogCategoryAction(data: any) {
 
 export async function deleteBlogCategoryAction(id: string) {
   try {
+    await requireAuth(); // 👈 Защита эндпоинта
+
     const linkedPosts = await prisma.blog.count({ where: { categoryId: id } });
     if (linkedPosts > 0) {
       return { success: false, error: `Нельзя удалить! Привязано ${linkedPosts} статей.` };
@@ -139,13 +154,16 @@ export async function deleteBlogCategoryAction(id: string) {
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' }; // 👈 Обработка ошибки
     return { success: false, error: "Ошибка при удалении категории" };
   }
 }
 
 export async function toggleBlogCategoryStatusAction(id: string, currentStatus: boolean) {
   try {
+    await requireAuth(); // 👈 Защита эндпоинта
+
     await prisma.blogCategory.update({
       where: { id },
       data: { isActive: !currentStatus },
@@ -153,7 +171,8 @@ export async function toggleBlogCategoryStatusAction(id: string, currentStatus: 
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' }; // 👈 Обработка ошибки
     return { success: false, error: "Ошибка обновления статуса" };
   }
 }

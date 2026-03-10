@@ -1,14 +1,15 @@
-'use server'
-
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { PostFormat } from '@prisma/client'
 // 👇 Импорт нашей утилиты для Телеграма
 import { sendToTelegram } from '@/features/admin/actions/telegram';
+import { requireAuth } from '@/lib/auth'; // 👈 ДОБАВЛЕНО: импорт проверки авторизации
 
 // === 1. СОЗДАНИЕ ПОСТА (ТВОЙ ОРИГИНАЛЬНЫЙ КОД) ===
 export async function createBlogPost(formData: FormData) {
+  await requireAuth(); // 👈 ДОБАВЛЕНО: блокируем доступ неавторизованным пользователям
+
   const title = formData.get('title') as string
   const content = formData.get('content') as string
   const category = formData.get('category') as string || 'Разное'
@@ -61,11 +62,14 @@ export async function createBlogPost(formData: FormData) {
         author_image: authorImage,
       },
     })
-
-    revalidatePath('/blog')
+revalidatePath('/blog')
     revalidatePath('/') 
+    revalidatePath(`/blog/${slug}`)
+    // redirect должен быть в try, но Next.js требует, чтобы он вызывался вне блока try-catch,
+    // если мы ловим все ошибки. Поэтому делаем return в catch.
   } catch (error) {
     console.error("Ошибка при создании поста:", error)
+    return { success: false, error: 'Не удалось создать пост' }
   }
 
   redirect('/admin')

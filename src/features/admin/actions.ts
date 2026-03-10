@@ -118,6 +118,12 @@ export async function saveGuideAction(data: any) {
 
     revalidatePath('/admin');
     revalidatePath('/');
+    // 👇 ДОБАВЛЕНО: Инвалидация кэша хаба и страницы гида
+    revalidatePath('/guides');
+    if (data.slug) {
+      revalidatePath(`/guides/${data.slug}`);
+    }
+
     return { success: true };
   } catch (error: any) {
     if (error.message === 'Unauthorized') return { error: 'Unauthorized' };
@@ -131,8 +137,12 @@ export async function deleteGuideAction(id: string | number) {
     await requireAuth(); // ✅ AUTH CHECK
 
     await prisma.guide.delete({ where: { id: String(id) } });
+    
     revalidatePath('/admin');
     revalidatePath('/');
+    // 👇 ДОБАВЛЕНО: Инвалидация кэша хаба при удалении
+    revalidatePath('/guides'); 
+    
     return { success: true };
   } catch (error: any) {
     if (error.message === 'Unauthorized') return { error: 'Unauthorized' };
@@ -239,29 +249,26 @@ export async function deleteTourAction(id: string) {
 // 5. КОНТЕНТ-БЛОКИ
 // ==========================================
 
+// ==========================================
+// 5. КОНТЕНТ-БЛОКИ
+// ==========================================
+
 export async function saveContentBlockAction(slug: string, content: any) {
   try {
     await requireAuth(); // ✅ AUTH CHECK
 
-    // TODO: реализовать модель ContentBlock в prisma schema
-    console.log(`[Mock Save] Content Block ${slug}:`, content);
+    // Реальная запись в базу вместо Mock-заглушки
+    await prisma.contentBlock.upsert({
+      where: { slug },
+      update: { content },
+      create: { slug, content }
+    });
+
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: any) {
     if (error.message === 'Unauthorized') return { error: 'Unauthorized' };
     console.error('Content Save Error:', error);
     return { error: 'Ошибка сохранения блока' };
-  }
-}
-
-export async function sendJoinTeamAction(data: any) {
-  try {
-    // Публичный action — без auth check
-    console.log('Join Team Request:', data);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return { success: true };
-  } catch (error) {
-    console.error('Join Team Error:', error);
-    return { success: false, error: 'Ошибка отправки заявки' };
   }
 }

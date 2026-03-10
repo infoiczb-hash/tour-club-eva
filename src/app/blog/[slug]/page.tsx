@@ -8,6 +8,7 @@ import { ArrowLeft, Calendar, Clock, User, ArrowRight, BookOpen } from "lucide-r
 import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
+import DOMPurify from 'isomorphic-dompurify';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -180,7 +181,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
       />
 
       {/* --- 1. HERO HEADER (🔥 РЕЗИНОВЫЙ И С БЕЗОПАСНОЙ ЗОНОЙ) --- */}
