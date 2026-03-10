@@ -46,7 +46,7 @@ export default function TourDetailsWrapper({ tour }: TourDetailsWrapperProps) {
           </div>
 
           <div className="hidden lg:block lg:col-span-4 relative">
-             <div className="sticky top-24">
+            <div className="sticky top-24 self-start h-max">
                 {/* Передаем только тур. Внутри TourSidebar кнопка сама вызовет Zustand */}
                 <TourSidebar tour={tour} />
              </div>
