@@ -147,7 +147,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
           <button onClick={onClose} className="hover:bg-slate-800 p-2 rounded-xl transition text-slate-400"><X size={24}/></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-8 flex-1 scrollbar-thin scrollbar-thumb-slate-800">
+        <form id="guide-form" onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-8 flex-1 scrollbar-thin scrollbar-thumb-slate-800">
           
           {/* ФОТОГРАФИИ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -271,7 +271,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
        <div className="p-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex justify-end gap-3 shrink-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isUploading}>Отмена</Button>
             {/* ✅ Оставили только type="submit" */}
-            <Button type="submit" variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white">
+           <Button type="submit" form="guide-form" variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white">
               {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} Сохранить досье
             </Button>
         </div>
