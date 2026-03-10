@@ -25,7 +25,7 @@ export default function OrgEmpathy() {
         <div className="max-w-4xl mx-auto text-center mb-10 md:mb-12">
            <FadeText>
                <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-6">
-                  Когда вы везете группу в лес, <br className="hidden md:block"/>
+                  Когда вы везете группу в наших турах, <br className="hidden md:block"/>
                   вы должны быть <span className="text-indigo-500">Лидером</span>, а не завхозом.
                </h2>
                <p className="text-lg md:text-xl text-slate-400 leading-relaxed font-medium">
@@ -41,7 +41,7 @@ export default function OrgEmpathy() {
                     <ShieldCheck className="w-12 h-12 text-indigo-400 mb-6" strokeWidth={1.5} />
                     <h3 className="text-xl font-bold text-white mb-4">Безопасность и Тыл</h3>
                     <p className="text-slate-400 leading-relaxed text-sm md:text-base">
-                        Проверенные маршруты, гиды-инструкторы. Решаем любые форс-мажоры незаметно для группы.
+                        Проверенные маршруты, гиды-инструкторы. Решаем любые (ну почти) форс-мажоры незаметно для группы.
                     </p>
                 </div>
             </FadeText>
@@ -51,7 +51,7 @@ export default function OrgEmpathy() {
                     <Tent className="w-12 h-12 text-emerald-400 mb-6" strokeWidth={1.5} />
                     <h3 className="text-xl font-bold text-white mb-4">Снаряжение под ключ</h3>
                     <p className="text-slate-400 leading-relaxed text-sm md:text-base">
-                        Вам не нужно искать снаряжение. Мы предоставляем  снаряжение для сплавов, туров и для кемпинга.
+                        Вам не нужно искать снаряжение. Мы предоставляем  снаряжение для сплавов, туров и для кемпинга. В рамкх имеющегося стока.
                     </p>
                 </div>
             </FadeText>

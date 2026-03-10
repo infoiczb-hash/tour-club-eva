@@ -268,9 +268,10 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
 
         </form>
 
-        <div className="p-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex justify-end gap-3 shrink-0">
+       <div className="p-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex justify-end gap-3 shrink-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isUploading}>Отмена</Button>
-            <Button type="submit" onClick={handleSubmit} variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white">
+            {/* ✅ Оставили только type="submit" */}
+            <Button type="submit" variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white">
               {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} Сохранить досье
             </Button>
         </div>

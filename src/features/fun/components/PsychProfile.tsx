@@ -13,7 +13,7 @@ import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 
 // ─── Types & Data ────────────────────────────────────────────────────────────
 type TypeKey = "leader" | "keeper" | "analyst" | "explorer" | "soloist" | "adapter";
-type Step = "intro" | "test" | "result";
+type Step = "intro" | "instruction" | "test" | "result";
 
 interface Statement { id: number; text: string; type: TypeKey; }
 interface ProfileType { 
@@ -250,7 +250,7 @@ useEffect(() => {
               </motion.div>
 
               <motion.button
-                onClick={() => setStep("test")}
+              onClick={() => setStep("instruction")}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 }}
@@ -262,7 +262,63 @@ useEffect(() => {
               </motion.button>
             </motion.div>
           )}
+{/* ══════════════════════════════ INSTRUCTION ══════════════════════════════ */}
+          {step === "instruction" && (
+            <motion.div
+              key="instruction"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="flex-1 flex flex-col justify-center px-6 py-12 max-w-xl mx-auto w-full"
+            >
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 text-teal-400 mb-4">
+                  <BookOpen size={24} />
+                </div>
+                <h2 className="font-spectral text-3xl sm:text-4xl font-light text-white mb-3">Как отвечать?</h2>
+                <p className="text-white/40 text-sm sm:text-base">Оценивай утверждения по своим первым ощущениям, используя эту шкалу:</p>
+              </div>
 
+              <div className="space-y-3 mb-12">
+                {[
+                  { val: 1, title: "Совсем не про меня", desc: "Вообще не моя история, я так никогда не делаю" },
+                  { val: 2, title: "Скорее нет", desc: "Редко, но иногда бывает" },
+                  { val: 3, title: "Нейтрально", desc: "50/50, всё зависит от конкретной ситуации" },
+                  { val: 4, title: "Скорее да", desc: "Часто так делаю, это похоже на меня" },
+                  { val: 5, title: "Полностью про меня", desc: "Абсолютно в точку, это мой стиль!" },
+                ].map((item, i) => (
+                  <motion.div 
+                    key={item.val}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * i }}
+                    className="flex items-center gap-4 bg-white/[0.03] border border-white/5 rounded-2xl p-4"
+                  >
+                    <div className="w-10 h-10 shrink-0 rounded-xl bg-white/10 text-white font-mono text-lg flex items-center justify-center font-light">
+                      {item.val}
+                    </div>
+                    <div>
+                      <p className="text-white/90 text-sm font-bold uppercase tracking-wider mb-0.5">{item.title}</p>
+                      <p className="text-white/40 text-xs">{item.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.button
+                onClick={() => setStep("test")}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm uppercase tracking-widest py-4 rounded-xl transition-colors shadow-[0_0_20px_rgba(13,148,136,0.3)]"
+              >
+                Всё понятно, погнали!
+              </motion.button>
+            </motion.div>
+          )}
           {/* ══════════════════════════════ TEST ═══════════════════════════════ */}
           {step === "test" && currentStatement && (
             <motion.div

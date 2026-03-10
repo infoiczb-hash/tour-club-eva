@@ -1,30 +1,38 @@
-"use client";
+import { getTours } from '@/features/tours/api'; 
+import { getTourCategoriesAction } from '@/features/admin/actions/categories';
+import ToursBrowser from '@/features/tours/components/ToursBrowser';
 
-import dynamic from 'next/dynamic';
-import { Tour } from '@/features/tours/types';
-
-// 1. Описываем все возможные пропсы, которые нужны оригинальному ToursBrowser
+// 1. Описываем только те пропсы, которые передаются ИЗ главной страницы (page.tsx)
 interface ToursBrowserWrapperProps {
-  tours: Tour[];
-  categories?: any[];
   title?: string;
   subtitle?: string;
   limit?: number;
 }
 
-// 2. Динамический импорт с отключенным SSR
-const ToursBrowser = dynamic(
-  () => import('@/features/tours/components/ToursBrowser'),
-  { 
-    // Рекомендую добавить лоадер, чтобы при загрузке на клиенте 
-    // страница не прыгала (улучшает метрику CLS)
-    loading: () => (
-      <div className="h-96 w-full max-w-7xl mx-auto bg-slate-100 dark:bg-slate-900/50 animate-pulse rounded-[2rem] mt-8" />
-    )
-  }
-);
+// 2. Убрали "use client" и next/dynamic. 
+// Теперь это полноценный асинхронный СЕРВЕРНЫЙ компонент!
+export default async function ToursBrowserWrapper({ 
+  limit = 8, 
+  title, 
+  subtitle 
+}: ToursBrowserWrapperProps) {
+  
+  // 3. Запрашиваем данные напрямую из базы параллельно
+  const [tours, tCatRes] = await Promise.all([
+    getTours(),
+    getTourCategoriesAction(),
+  ]);
 
-// 3. Принимаем все пропсы и прокидываем их дальше через {...props}
-export default function ToursBrowserWrapper(props: ToursBrowserWrapperProps) {
-  return <ToursBrowser {...props} />;
+  const categories = tCatRes.success ? tCatRes.data : [];
+
+  // 4. Передаем данные в клиентский компонент ToursBrowser
+  return (
+    <ToursBrowser 
+      tours={tours} 
+      categories={categories} 
+      limit={limit} 
+      title={title}
+      subtitle={subtitle}
+    />
+  );
 }

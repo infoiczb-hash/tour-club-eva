@@ -54,9 +54,9 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
   } = tour;
 
   const dateObj = date ? new Date(date) : null;
-  const dateStr = dateObj
-    ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
-    : 'Скоро';
+const dateStr = dateObj
+  ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) // ✅ Выдаст "20 февраля"
+  : 'Скоро';
 
   // 👇 ИСПРАВЛЕНИЕ: Реальная проверка количества дат вместо фейковой математики с ID
   const hasMoreDates = Array.isArray(dates) && dates.length > 1;

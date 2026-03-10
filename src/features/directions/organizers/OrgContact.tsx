@@ -52,7 +52,7 @@ export default function OrgContact() {
                                 <Briefcase size={28} className="text-indigo-400" />
                             </div>
                             <h3 className="text-2xl font-black text-white mb-3 tracking-tight">
-                                Оставить заявку на расчет
+                                Оставить заявку
                             </h3>
                             <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium mb-8">
                                 Опишите кратко вашу идею, количество человек и примерные даты. Мы свяжемся с вами и подготовим коммерческое предложение.

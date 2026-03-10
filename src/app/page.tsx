@@ -60,19 +60,18 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // ✅ ДОБАВИЛИ ЗАПРОС КАТЕГОРИЙ БЛОГА В PROMISE.ALL
-  const [rawGuides, posts, tours, allReviews, tCatRes, bCatRes] = await Promise.all([
+const [rawGuides, posts, allReviews, bCatRes] = await Promise.all([
     prisma.guide.findMany({ 
       where: { isActive: true },
       orderBy: { order: 'asc' } 
     }),
     getBlogPosts(),
-    getTours(),
+    // ❌ getTours() удален отсюда
     getReviews(),
-    getTourCategoriesAction(), 
+    // ❌ getTourCategoriesAction() удален отсюда
     getBlogCategoriesAction(),
   ]);
 
-  const categories = tCatRes.success ? tCatRes.data : [];
   // ✅ ИЗВЛЕКАЕМ КАТЕГОРИИ БЛОГА
   const blogCategories = bCatRes.success ? bCatRes.data : [];
 
@@ -111,9 +110,8 @@ export default async function Home() {
   return (
     <>
       <Hero />
-      
-      <Suspense fallback={<TourSkeleton />}>
-        <ToursBrowserWrapper tours={tours} categories={categories} limit={8} title="Афиша Приключений" />
+       <Suspense fallback={<TourSkeleton />}>
+        <ToursBrowserWrapper limit={8} title="Афиша Приключений" />
       </Suspense>
       
       <Philosophy />
