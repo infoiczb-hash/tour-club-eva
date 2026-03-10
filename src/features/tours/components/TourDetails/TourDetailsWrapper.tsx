@@ -13,14 +13,15 @@ import TourFAQ from './TourFAQ';
 import TourSidebar from './TourSidebar';
 import TourActionButtons from './TourActionButtons';
 import TourBottomActions from './TourBottomActions';
-// Импортируем программу стандартно (если внутри есть "use client", Next.js сам разберется)
 import TourProgram from './TourProgram';
+import SimilarTours from './SimilarTours'; 
 
 interface TourDetailsWrapperProps {
   tour: Tour;
+  similarTours?: Tour[]; 
 }
 
-export default function TourDetailsWrapper({ tour }: TourDetailsWrapperProps) {
+export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWrapperProps) {
   return (
     <div className="bg-slate-950 min-h-screen pb-0 selection:bg-teal-500/30 selection:text-teal-200">
       
@@ -45,14 +46,15 @@ export default function TourDetailsWrapper({ tour }: TourDetailsWrapperProps) {
              <TourActionButtons tour={tour} />
           </div>
 
-          <div className="hidden lg:block lg:col-span-4 relative">
-            <div className="sticky top-24 self-start h-max">
-                {/* Передаем только тур. Внутри TourSidebar кнопка сама вызовет Zustand */}
-                <TourSidebar tour={tour} />
-             </div>
+        <div className="hidden lg:block lg:col-span-4 relative">
+   {/* Вот сюда добавляем self-start */}
+   <div className="sticky top-24 self-start">
+      <TourSidebar tour={tour} />
+   </div>
           </div>
 
         </div>
+         <SimilarTours tours={similarTours || []} />
       </main>
 
       {/* Передаем только тур. Внутри TourBottomActions кнопка сама вызовет Zustand */}
