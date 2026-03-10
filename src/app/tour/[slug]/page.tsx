@@ -96,11 +96,21 @@ export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   
   const decodedSlug = decodeURIComponent(slug);
-  const tour = await getTourBySlug(decodedSlug);
+  
+  // Загружаем одновременно текущий тур и список всех туров
+  const [tour, allTours] = await Promise.all([
+    getTourBySlug(decodedSlug),
+    getTours()
+  ]);
 
   if (!tour) {
     notFound(); 
   }
+
+  // Ищем похожие туры: та же категория, исключаем текущий тур, берем максимум 3
+  const similarTours = allTours
+    .filter(t => t.categoryId === tour.categoryId && t.id !== tour.id)
+    .slice(0, 3);
 
   // Собираем картинки для микроразметки
   const schemaImages = [
@@ -160,8 +170,8 @@ export default async function TourPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* Передаем тур в интерактивный клиентский компонент */}
-      <TourDetailsWrapper tour={tour} />
+      {/* Передаем тур и похожие туры в интерактивный клиентский компонент */}
+      <TourDetailsWrapper tour={tour} similarTours={similarTours} />
     </main>
   );
 }
