@@ -50,21 +50,19 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // 🔥 УБРАН margin-bottom
   return (
     <section className="scroll-mt-24" id="gallery">
       
       <div className="flex items-center gap-4 mb-6 md:mb-8">
         <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20">
-           <Camera size={20} />
+          <Camera size={20} aria-hidden="true" />
         </div>
         <h2 className="text-2xl md:text-3xl font-black text-white uppercase">
-           Галерея
+          Галерея
         </h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 h-[500px] md:h-[600px] rounded-3xl overflow-hidden bg-slate-900 border border-white/5">
-        
         {displayedImages.map((img, index) => {
           const isMain = index === 0;
           const isLastVisible = index === 4;
@@ -73,6 +71,15 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
             <div 
               key={index}
               onClick={() => openLightbox(index)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Открыть фото ${index + 1} из ${images.length}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openLightbox(index);
+                }
+              }}
               className={`relative group cursor-pointer overflow-hidden bg-slate-800 ${
                 isMain 
                   ? "col-span-2 md:col-span-2 md:row-span-2" 
@@ -81,7 +88,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
             >
               <Image 
                 src={img} 
-                alt={`Gallery ${index}`} 
+                alt={`Фото тура ${index + 1}`}
                 fill 
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority={isMain} 
@@ -89,70 +96,79 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
               />
               
               {isLastVisible && remainingCount > 0 ? (
-                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center border border-white/10 transition-colors group-hover:bg-slate-900/80">
-                     <span className="text-xl md:text-2xl font-black text-white">+{remainingCount}</span>
-                 </div>
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center border border-white/10 transition-colors group-hover:bg-slate-900/80">
+                  <span className="text-xl md:text-2xl font-black text-white">+{remainingCount}</span>
+                </div>
               ) : (
-                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <Maximize2 className="text-white drop-shadow-md" size={isMain ? 48 : 24} />
-                 </div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <Maximize2 className="text-white drop-shadow-md" size={isMain ? 48 : 24} aria-hidden="true" />
+                </div>
               )}
             </div>
           );
         })}
       </div>
 
+      {/* Лайтбокс — Framer Motion оправдан: scale+opacity анимация модального оверлея */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Галерея тура, фото ${currentIndex + 1} из ${images.length}`}
             className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center touch-none"
             onClick={closeLightbox}
           >
             <button 
               className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
-              aria-label="Закрыть галерею" onClick={closeLightbox}
+              aria-label="Закрыть галерею"
+              onClick={closeLightbox}
             >
-               <X size={32} />
+              <X size={32} aria-hidden="true" />
             </button>
 
             <motion.div 
-               key={currentIndex}
-               initial={{ scale: 0.9, opacity: 0 }}
-               animate={{ scale: 1, opacity: 1 }}
-               exit={{ scale: 0.9, opacity: 0 }}
-               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-               className="relative w-full h-full max-w-7xl max-h-[85vh] mx-4 flex items-center justify-center"
-               onClick={(e) => e.stopPropagation()}
+              key={currentIndex}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative w-full h-full max-w-7xl max-h-[85vh] mx-4 flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
             >
-               <Image 
-                 src={images[currentIndex]} 
-                 alt="Fullscreen view" 
-                 fill 
-                 className="object-contain"
-                 priority
-                 sizes="100vw"
-                 quality={90}
-               />
+              <Image 
+                src={images[currentIndex]} 
+                alt={`Фото тура ${currentIndex + 1} из ${images.length}`}
+                fill 
+                className="object-contain"
+                priority
+                sizes="100vw"
+                quality={90}
+              />
             </motion.div>
 
+            {/* aria-label с латинской A — в оригинале стояла кириллическая А, браузер игнорировал */}
             <button 
               className="absolute left-2 md:left-4 p-4 text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95"
-             aria-label="Предыдущее фото" onClick={prevImage}
+              aria-label="Предыдущее фото"
+              onClick={prevImage}
             >
-               <ChevronLeft size={40} />
+              <ChevronLeft size={40} aria-hidden="true" />
             </button>
+            
             <button 
               className="absolute right-2 md:right-4 p-4 text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95"
-              Аria-label="Следующее фото" onClick={nextImage}
+              aria-label="Следующее фото"
+              onClick={nextImage}
             >
-               <ChevronRight size={40} />
+              <ChevronRight size={40} aria-hidden="true" />
             </button>
 
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 rounded-full text-white/70 font-medium text-sm backdrop-blur-md border border-white/5">
-               {currentIndex + 1} / {images.length}
+              <span aria-live="polite">{currentIndex + 1} / {images.length}</span>
             </div>
 
           </motion.div>

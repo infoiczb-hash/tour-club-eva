@@ -11,7 +11,7 @@ interface BookingModalProps {
   onClose: () => void;
   tour: Tour;
   initialDate?: string;
-  initialDateId?: string; // <--- ДОБАВЬ ЭТУ СТРОКУ СЮДА
+  initialDateId?: string;
 }
 
 export default function BookingModal({ isOpen, onClose, tour, initialDate, initialDateId }: BookingModalProps) {
@@ -50,7 +50,6 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     member: 0,
   });
 
-  // Блокировка скролла
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -74,26 +73,17 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     return sum;
   }, [tickets, tour]);
 
- const getSmartPlaceholder = () => {
-    // 1. Извлекаем слаг категории для удобства
+  const getSmartPlaceholder = () => {
     const categorySlug = tour.category?.slug;
-
-    // 2. Проверка на водные походы (жилеты)
     if (categorySlug === 'water') {
       return 'Укажите для каждого участника, какой размер жилета взять у нас есть детские и от XS до 5XL. Сообщите если будут с вами дети до 10 лет.';
     }
-
-    // 3. Проверка на заграницу (паспорта)
     if (categorySlug === 'abroad' || tour.location?.toLowerCase().includes('румыния')) {
       return 'Какое снаряжение вам надо? Есть ли у Вас действующий биометрический паспорт?';
     }
-
-    // 4. Проверка на детские туры
     if (categorySlug === 'kids') {
       return 'Укажите возраст детей ...';
     }
-
-    // 5. Стандартный ответ
     return 'Задайте вопрос и мы постараемся ответить на него в короткие сроки?';
   };
 
@@ -139,18 +129,20 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
       <div className="flex items-center gap-3 bg-slate-950 rounded-lg p-1 border border-white/10">
         <button 
           type="button"
-          aria-label="Уменьшить количество билетов" onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(0, prev[type] - 1) }))}
+          aria-label={`Уменьшить количество: ${label}`}
+          onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(0, prev[type] - 1) }))}
           className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"
         >
-          <Minus size={16} />
+          <Minus size={16} aria-hidden="true" />
         </button>
-        <span className="text-sm font-bold text-white w-4 text-center">{value}</span>
+        <span className="text-sm font-bold text-white w-4 text-center" aria-live="polite">{value}</span>
         <button 
           type="button"
-          aria-label="Увеличить количество билетов" onClick={() => setTickets(prev => ({ ...prev, [type]: prev[type] + 1 }))}
+          aria-label={`Увеличить количество: ${label}`}
+          onClick={() => setTickets(prev => ({ ...prev, [type]: prev[type] + 1 }))}
           className="w-8 h-8 flex items-center justify-center text-teal-500 hover:bg-teal-500/20 rounded-md transition-colors"
         >
-          <Plus size={16} />
+          <Plus size={16} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -166,6 +158,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md"
+            aria-hidden="true"
           />
 
           <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 pointer-events-none">
@@ -173,8 +166,11 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              role="dialog" aria-modal="true" aria-labelledby="modal-booking-title" className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-2xl pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
-                        >
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-booking-title"
+              className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-2xl pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
+            >
               
               <div className="flex items-center justify-between p-5 border-b border-white/5 bg-white/5 shrink-0">
                 <div>
@@ -185,11 +181,13 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                     {tour.title}
                   </p>
                 </div>
+                {/* aria-label обязателен — иконка X без текста */}
                 <button 
                   onClick={onClose}
+                  aria-label="Закрыть окно бронирования"
                   className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                 >
-                  <X size={18} />
+                  <X size={18} aria-hidden="true" />
                 </button>
               </div>
 
@@ -197,98 +195,103 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                 {step === 'form' ? (
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                       <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
-                          <Calendar size={12} /> Дата и время
-                       </label>
-                       {initialDate ? (
-                          <div className="w-full bg-slate-950/50 border border-teal-500/30 rounded-xl px-4 py-3 text-teal-400 font-bold">
-                             {initialDate}
+                      <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
+                        <Calendar size={12} aria-hidden="true" /> Дата и время
+                      </label>
+                      {initialDate ? (
+                        <div className="w-full bg-slate-950/50 border border-teal-500/30 rounded-xl px-4 py-3 text-teal-400 font-bold">
+                          {initialDate}
+                        </div>
+                      ) : (
+                        tour.dates && tour.dates.length > 0 ? (
+                          <div className="relative">
+                            <select 
+                              value={selectedDateStr}
+                              onChange={(e) => setSelectedDateStr(e.target.value)}
+                              aria-label="Выберите дату тура"
+                              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 focus:outline-none cursor-pointer"
+                            >
+                              {tour.dates.map((d, i) => {
+                                const val = `${d.start}${d.time ? ` в ${d.time}` : ''}`;
+                                return <option key={i} value={val}>{val}</option>;
+                              })}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" aria-hidden="true">▼</div>
                           </div>
-                       ) : (
-                          tour.dates && tour.dates.length > 0 ? (
-                            <div className="relative">
-                              <select 
-                                value={selectedDateStr}
-                                onChange={(e) => setSelectedDateStr(e.target.value)}
-                                className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 focus:outline-none cursor-pointer"
-                              >
-                                {tour.dates.map((d, i) => {
-                                  const val = `${d.start}${d.time ? ` в ${d.time}` : ''}`;
-                                  return <option key={i} value={val}>{val}</option>;
-                                })}
-                              </select>
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
-                            </div>
-                          ) : (
-                             <div className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-300">
-                                {new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
-                             </div>
-                          )
-                       )}
+                        ) : (
+                          <div className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-300">
+                            {new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+                          </div>
+                        )
+                      )}
                     </div>
 
                     <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                        <Counter label="Взрослый" price={tour.price} value={tickets.adult} type="adult" />
-                        {tour.priceChild && tour.priceChild > 0 ? (
-                           <Counter label="Детский" price={tour.priceChild} value={tickets.child} type="child" />
-                        ) : null}
-                        {tour.priceMember && tour.priceMember > 0 ? (
-                           <Counter label="Клубная карта" price={tour.priceMember} value={tickets.member} type="member" />
-                        ) : null}
-                        <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
-                           <span className="text-xs font-bold text-slate-400 uppercase">Итого:</span>
-                           <span className="text-xl font-black text-teal-400">
-                              {totalPrice.toLocaleString()} {tour.currency}
-                           </span>
-                        </div>
+                      <Counter label="Взрослый" price={tour.price} value={tickets.adult} type="adult" />
+                      {tour.priceChild && tour.priceChild > 0 ? (
+                        <Counter label="Детский" price={tour.priceChild} value={tickets.child} type="child" />
+                      ) : null}
+                      {tour.priceMember && tour.priceMember > 0 ? (
+                        <Counter label="Клубная карта" price={tour.priceMember} value={tickets.member} type="member" />
+                      ) : null}
+                      <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
+                        <span className="text-xs font-bold text-slate-400 uppercase">Итого:</span>
+                        <span className="text-xl font-black text-teal-400" aria-live="polite">
+                          {totalPrice.toLocaleString()} {tour.currency}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="space-y-4 pt-2">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
-                            <User size={12} /> Ваше имя и фамилия
-                          </label>
-                          <input 
-                            type="text" required placeholder="Иван Иванов" value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
-                            <Phone size={12} /> Телефон
-                          </label>
-                          <input 
-                            type="tel" required value={formData.phone}
-                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
-                            <AtSign size={12} /> Ник в Telegram / Instagram <span className="text-[12px] normal-case opacity-50">(необязательно)</span>
-                          </label>
-                          <input 
-                            type="text" placeholder="@username" value={formData.social}
-                            onChange={(e) => setFormData({...formData, social: e.target.value})}
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
-                            <MessageSquare size={12} /> Дополнительная информация
-                          </label>
-                          <textarea 
-                            rows={2} placeholder={getSmartPlaceholder()} value={formData.comment}
-                            onChange={(e) => setFormData({...formData, comment: e.target.value})}
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all resize-none"
-                          />
-                        </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="booking-name" className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
+                          <User size={12} aria-hidden="true" /> Ваше имя и фамилия
+                        </label>
+                        <input 
+                          id="booking-name"
+                          type="text" required placeholder="Иван Иванов" value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="booking-phone" className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
+                          <Phone size={12} aria-hidden="true" /> Телефон
+                        </label>
+                        <input 
+                          id="booking-phone"
+                          type="tel" required value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="booking-social" className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
+                          <AtSign size={12} aria-hidden="true" /> Ник в Telegram / Instagram <span className="text-[12px] normal-case opacity-50">(необязательно)</span>
+                        </label>
+                        <input 
+                          id="booking-social"
+                          type="text" placeholder="@username" value={formData.social}
+                          onChange={(e) => setFormData({...formData, social: e.target.value})}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="booking-comment" className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
+                          <MessageSquare size={12} aria-hidden="true" /> Дополнительная информация
+                        </label>
+                        <textarea 
+                          id="booking-comment"
+                          rows={2} placeholder={getSmartPlaceholder()} value={formData.comment}
+                          onChange={(e) => setFormData({...formData, comment: e.target.value})}
+                          className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all resize-none"
+                        />
+                      </div>
                     </div>
 
                     {errorMsg && (
-                      <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
-                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                      <div role="alert" className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
                         <span>{errorMsg}</span>
                       </div>
                     )}
@@ -297,7 +300,10 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                       type="submit" disabled={isLoading}
                       className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_30px_rgba(20,184,166,0.4)]"
                     >
-                      {isLoading ? <Loader2 className="animate-spin" size={20} /> : `Записаться за ${totalPrice.toLocaleString()} ${tour.currency}`}
+                      {isLoading
+                        ? <><Loader2 className="animate-spin" size={20} aria-hidden="true" /><span>Отправляем...</span></>
+                        : `Записаться за ${totalPrice.toLocaleString()} ${tour.currency}`
+                      }
                     </button>
                     
                     <p className="text-sm text-slate-500 text-center leading-tight">
@@ -308,7 +314,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                 ) : (
                   <div className="flex flex-col items-center text-center py-8">
                     <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-6 border border-emerald-500/20 animate-in zoom-in duration-300">
-                      <CheckCircle size={40} />
+                      <CheckCircle size={40} aria-hidden="true" />
                     </div>
                     <h3 className="text-2xl font-black text-white uppercase mb-2">
                       Заявка принята!

@@ -39,7 +39,7 @@ export default function TourProgram({ program }: TourProgramProps) {
     <section className="scroll-mt-24" id="program">
       <div className="flex items-center gap-4 mb-6 md:mb-8">
         <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20">
-          <MapPin size={20} />
+          <MapPin size={20} aria-hidden="true" />
         </div>
         <div>
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase">Программа тура</h2>
@@ -53,11 +53,16 @@ export default function TourProgram({ program }: TourProgramProps) {
           {days.map((day: any, index: number) => {
             const isOpen = isPrinting || openDayIndex === index;
             const isLast = index === days.length - 1;
+            const dayTitle = day.title || `День ${index + 1}`;
+
             return (
               <div key={index} className="relative pl-14 md:pl-20 print:pl-12 print:break-inside-avoid print:mb-4">
+                {/* aria-label описывает действие + название дня */}
                 <button
                   onClick={() => toggleDay(index)}
-  aria-expanded={isOpen}
+                  aria-expanded={isOpen}
+                  aria-label={isOpen ? `Свернуть: ${dayTitle}` : `Развернуть: ${dayTitle}`}
+                  aria-controls={`day-content-${index}`}
                   className={clsx(
                     "absolute left-0 top-0 w-10 h-10 rounded-full border-4 flex items-center justify-center z-10 transition-all duration-300 print:border-slate-300 print:bg-white print:text-black",
                     isOpen && !isPrinting
@@ -65,7 +70,10 @@ export default function TourProgram({ program }: TourProgramProps) {
                       : "bg-slate-800 text-slate-400 border-slate-950 hover:bg-teal-500 hover:text-slate-900"
                   )}
                 >
-                  {isLast ? <Flag size={14} strokeWidth={3} className="print:text-black" /> : <span className="text-xs font-black">{index + 1}</span>}
+                  {isLast
+                    ? <Flag size={14} strokeWidth={3} className="print:text-black" aria-hidden="true" />
+                    : <span className="text-xs font-black" aria-hidden="true">{index + 1}</span>
+                  }
                 </button>
 
                 <div className={clsx(
@@ -74,24 +82,37 @@ export default function TourProgram({ program }: TourProgramProps) {
                     ? "bg-slate-900 border-teal-500/30 shadow-2xl shadow-black/50"
                     : "bg-slate-900/40 border-white/5 hover:border-white/10 cursor-pointer"
                 )}>
-                  <div onClick={() => toggleDay(index)} className="p-4 md:p-5 flex items-center justify-between cursor-pointer group">
+                  <div
+                    onClick={() => toggleDay(index)}
+                    className="p-4 md:p-5 flex items-center justify-between cursor-pointer group"
+                  >
                     <div>
-                      <h3 className={clsx("text-base md:text-lg font-black uppercase tracking-tight transition-colors mb-0.5 print:text-black", isOpen && !isPrinting ? "text-teal-400" : "text-white group-hover:text-teal-200")}>
-                        {day.title || `День ${index + 1}`}
+                      <h3 className={clsx(
+                        "text-base md:text-lg font-black uppercase tracking-tight transition-colors mb-0.5 print:text-black",
+                        isOpen && !isPrinting ? "text-teal-400" : "text-white group-hover:text-teal-200"
+                      )}>
+                        {dayTitle}
                       </h3>
                       {day.location && (
                         <div className="flex items-center gap-2 text-[14px] font-bold text-slate-400 uppercase print:text-slate-600">
-                          <Navigation size={10} /> {day.location}
+                          <Navigation size={10} aria-hidden="true" /> {day.location}
                         </div>
                       )}
                     </div>
-                    <ChevronDown size={18} className={clsx("text-slate-400 transition-transform duration-300 print:hidden", isOpen && "rotate-180 text-teal-500")} />
+                    <ChevronDown
+                      size={18}
+                      aria-hidden="true"
+                      className={clsx(
+                        "text-slate-400 transition-transform duration-300 print:hidden",
+                        isOpen && "rotate-180 text-teal-500"
+                      )}
+                    />
                   </div>
 
-                  {/* AnimatePresence оставляем — это анимация высоты по клику, не scroll */}
                   <AnimatePresence>
                     {isOpen && (
                       <m.div
+                        id={`day-content-${index}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -106,7 +127,7 @@ export default function TourProgram({ program }: TourProgramProps) {
                             <div className="mt-4 space-y-2 bg-black/20 p-3 rounded-xl border border-white/5 print:bg-slate-50 print:border-slate-200">
                               {day.activities.map((act: any, i: number) => (
                                 <div key={i} className="flex items-start gap-2 text-xs md:text-sm print:text-black">
-                                  <CircleDot size={12} className="text-teal-500 mt-1 shrink-0 print:text-slate-400" />
+                                  <CircleDot size={12} className="text-teal-500 mt-1 shrink-0 print:text-slate-400" aria-hidden="true" />
                                   <span className="text-slate-200 print:text-black">
                                     {typeof act === 'string' ? act : (
                                       <>
@@ -132,7 +153,7 @@ export default function TourProgram({ program }: TourProgramProps) {
         <div className="mt-6 pl-14 md:pl-0 print:break-inside-avoid">
           <div className="bg-amber-900/10 border border-amber-500/20 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-3 md:gap-4 items-start print:bg-white print:border-slate-300">
             <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 print:bg-transparent print:text-slate-800">
-              <AlertTriangle size={16} />
+              <AlertTriangle size={16} aria-hidden="true" />
             </div>
             <div>
               <h4 className="text-amber-500 font-bold uppercase text-xs md:text-sm mb-1 tracking-wide print:text-slate-900">Внимание!</h4>

@@ -4,14 +4,20 @@
 #
 # Аудитория: Молдова/Приднестровье — Chrome Android доминирует
 # Источник: caniuse.com + типичная аудитория туристических сайтов СНГ
+#
+# ИЗМЕНЕНИЯ: подняли минимальные версии до уровня поддержки ES2022 Baseline
+# Array.prototype.at    → Chrome 92+, Safari 15.4+, Firefox 90+
+# Object.hasOwn         → Chrome 93+, Safari 15.4+, Firefox 92+
+# Array.prototype.flat  → Chrome 69+ (уже покрыто)
+# После этого Next.js/SWC перестанет включать полифилы для этих методов.
 
 [production]
-Chrome >= 80
-Firefox >= 78
-Safari >= 14
-Edge >= 80
-Opera >= 67
-Samsung >= 12
+Chrome >= 94
+Firefox >= 93
+Safari >= 15.4
+Edge >= 94
+Opera >= 80
+Samsung >= 17
 > 0.5%
 not dead
 not IE 11

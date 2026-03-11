@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma"; // Проверь правильность пути к твоей Prisma
+import { prisma } from "@/lib/prisma";
 import BlogFeed from "./BlogFeed";
 import { Metadata } from "next";
 import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import { Suspense } from 'react';
 
-export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 60;
 
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "как подготовиться к сплаву и походу"
   ],
   alternates: {
-    canonical: "/blog", // Защита от появления дублей в индексе Google
+    canonical: "/blog",
   },
   openGraph: {
     title: "Блог о Походах и Активном Отдыхе в Приднестровье",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: "Турклуб «Эва»",
     images: [
       {
-        url: "/og-default.jpg", // 💡 Совет: в будущем можешь сделать отдельную картинку для блога (например, /og-blog.jpg)
+        url: "/og-default.jpg",
         width: 1200,
         height: 630,
         alt: "Полевой журнал Турклуба Эва",
@@ -56,21 +56,30 @@ export default async function BlogPage() {
   const catRes = await getBlogCategoriesAction();
   const categories = catRes.success ? catRes.data : [];
 
-return (
-  <>
-    <BreadcrumbJsonLd items={[
-      { name: "Главная", url: "https://evatur.club" },
-      { name: "Блог", url: "https://evatur.club/blog" },
-    ]} />
-    <main className="min-h-screen bg-slate-950">
-      {/* 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE */}
-      <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
-        <BlogFeed 
-          initialPosts={posts} 
-          categories={categories}
-        />
-      </Suspense>
-    </main>
-  </>
-);
+  return (
+    <>
+      <BreadcrumbJsonLd items={[
+        { name: "Главная", url: "https://evatur.club" },
+        { name: "Блог", url: "https://evatur.club/blog" },
+      ]} />
+
+      {/*
+        ✅ PRECONNECT: экономит ~300мс LCP.
+        Браузер заранее устанавливает TCP+TLS соединение с Supabase Storage
+        ещё до того, как Next.js Image запросит первое изображение.
+        dns-prefetch — фолбэк для браузеров без поддержки preconnect.
+      */}
+      <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+      <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+
+      <main className="min-h-screen bg-slate-950">
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
+          <BlogFeed
+            initialPosts={posts}
+            categories={categories}
+          />
+        </Suspense>
+      </main>
+    </>
+  );
 }
