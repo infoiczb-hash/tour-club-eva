@@ -1,10 +1,10 @@
 'use client';
 
-import { m as motion, Variants } from 'framer-motion';
 import Image from 'next/image';
-import { Heart, Camera, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
+import { Heart, Camera, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -40,21 +40,10 @@ const PHOTOS = [
     }
 ];
 
-// Анимация каскадного появления сетки
-const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: { staggerChildren: 0.15 }
-    }
-};
-
-const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-};
-
 export default function SupGallery() {
+    const { ref: refHeader, inView: headerInView } = useInView({ rootMargin: "-50px" });
+    const { ref: refGrid,   inView: gridInView   } = useInView({ rootMargin: "-100px" });
+
     return (
         // 🔥 Уменьшили внешние отступы (py-8 md:py-16)
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
@@ -65,11 +54,12 @@ export default function SupGallery() {
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
                 {/* 🔥 ЗАГОЛОВОК: Строгое выравнивание по левому краю */}
-                <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    className="text-left mb-8 md:mb-12 max-w-3xl"
+                <div 
+                    ref={refHeader}
+                    className={cn(
+                      "text-left mb-8 md:mb-12 max-w-3xl transition-all duration-500 ease-out",
+                      headerInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"
+                    )}
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 md:mb-6 backdrop-blur-md">
                         <Camera className="w-4 h-4 text-slate-400" />
@@ -83,26 +73,24 @@ export default function SupGallery() {
                     <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
                         Посмотрите, как проходят наши маршруты. Улыбки гостей — наша главная гордость.
                     </p>
-                </motion.div>
+                </div>
                 
                 {/* 🔥 ОБЕРТКА ДЛЯ СКРОЛЛА */}
                 <div className="relative">
-                    <motion.div 
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="show"
-                        viewport={{ once: true, margin: "-100px" }}
+                    <div
+                        ref={refGrid}
                         // 🔥 Магия адаптива: flex и snap для мобилок, grid для десктопа
                         className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-4 md:mx-0 md:px-0 md:auto-rows-[300px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                     >
                         {PHOTOS.map((photo, idx) => (
-                            <motion.div 
+                            <div
                                 key={idx}
-                                variants={itemVariants}
+                                style={{ transitionDelay: gridInView ? `${idx * 150}ms` : '0ms' }}
                                 className={cn(
                                     // 🔥 Добавили ширину и высоту для скролла на мобилке (w-[85vw] h-[400px])
-                                    "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 cursor-pointer shadow-2xl",
-                                    photo.className
+                                    "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 cursor-pointer shadow-2xl transition-all duration-600 ease-out",
+                                    photo.className,
+                                    gridInView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-[0.97]"
                                 )}
                             >
                                 {/* Сама фотография */}
@@ -124,9 +112,9 @@ export default function SupGallery() {
                                         <Heart size={24} className="fill-white/20" />
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
-                    </motion.div>
+                    </div>
 
                     {/* 🔥 Подсказка "Мотай" */}
                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
