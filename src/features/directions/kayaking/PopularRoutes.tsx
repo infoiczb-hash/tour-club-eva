@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { AnimatePresence, m} from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { 
   Navigation, Clock, X, Users, Wind, MapPin, Map, 
@@ -10,21 +10,6 @@ import {
   ArrowUpRight
 } from "lucide-react";
 import { routesData, RouteData } from "@/data/routes";
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
 
 const otherFormats = [
   { title: "Прогулки на 2-3 часа", desc: "В районе Тирасполя", icon: Timer },
@@ -38,7 +23,6 @@ const otherFormats = [
 export default function PopularRoutes() {
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
-  const formatsView = useInView();
 
   useEffect(() => {
     if (selectedRoute) setCurrentImgIdx(0);
@@ -60,7 +44,7 @@ export default function PopularRoutes() {
 
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
-          <div>
+          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
               <Map size={14} className="text-teal-400" />
               <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Локации</span>
@@ -71,15 +55,16 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-        {/* CARDS — whileHover оставляем, это hover UI а не scroll */}
+        {/* CARDS */}
         <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {routesData.map((route) => (
-              <m.div
+            {routesData.map((route, index) => (
+              <motion.div
                 key={route.id}
                 whileHover={{ y: -8 }}
                 onClick={() => setSelectedRoute(route)}
-                className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 transition-all duration-500 shadow-xl"
+                className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 transition-all duration-500 shadow-xl animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="absolute top-4 right-4 z-20 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="flex items-center gap-1.5 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-xl">
@@ -101,7 +86,7 @@ export default function PopularRoutes() {
                   <h3 className="font-black text-2xl md:text-3xl text-white uppercase leading-[1.1] mb-2 group-hover:text-teal-400 transition-colors drop-shadow-lg">{route.title}</h3>
                   <p className="text-xs md:text-sm text-slate-300 font-medium line-clamp-2 drop-shadow-md">{route.path}</p>
                 </div>
-              </m.div>
+              </motion.div>
             ))}
           </div>
           <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
@@ -110,12 +95,8 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-      {/* OTHER FORMATS */}
-        <div
-          ref={formatsView.ref}
-          style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          className="mt-12 md:mt-14 border-t border-white/10 pt-10"
-        >
+        {/* OTHER FORMATS */}
+        <div className="mt-12 md:mt-14 border-t border-white/10 pt-10 animate-in fade-in duration-700">
           <div className="mb-6 md:mb-8 text-left">
             <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
               Другие <span className="text-amber-500">Форматы</span>
@@ -124,25 +105,26 @@ export default function PopularRoutes() {
           </div>
           
           <div className="relative">
-            {/* 🔥 ИСПРАВЛЕНО: Добавлено md:grid-flow-row и жесткие рамки колонок md:grid-cols-3 lg:grid-cols-6 */}
             <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {otherFormats.map((format, idx) => {
                 const Icon = format.icon;
                 return (
-                  <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center gap-3 md:gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
+                  <div 
+                    key={idx} 
+                    className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center gap-3 md:gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full animate-in slide-in-from-bottom-8 fill-mode-both"
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                  >
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
                       <Icon size={22} strokeWidth={1.5} />
                     </div>
                     <div>
                       <h4 className="font-bold text-white text-sm leading-tight mb-1 group-hover:text-amber-400 transition-colors">{format.title}</h4>
-                      {/* line-clamp страхует текст от вылезания, если карточка сожмется */}
                       <p className="text-[11px] md:text-xs text-slate-400 font-medium line-clamp-2 md:line-clamp-1">{format.desc}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
-             </div>
             <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
               <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} className="text-teal-400" />
@@ -150,11 +132,11 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-      {/* MODAL — layoutId и AnimatePresence оставляем, это UI */}
+      {/* MODAL (Интерактивная часть) */}
       <AnimatePresence>
         {selectedRoute && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-slate-950/90 backdrop-blur-xl">
-            <m.div
+            <motion.div
               layoutId={selectedRoute.id}
               className="relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row"
             >
@@ -165,9 +147,9 @@ export default function PopularRoutes() {
               {/* Карусель */}
               <div className="w-full md:w-5/12 h-[35vh] md:h-auto relative group">
                 <AnimatePresence mode="wait">
-                  <m.div key={currentImgIdx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0">
+                  <motion.div key={currentImgIdx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0">
                     <Image src={selectedRoute.images[currentImgIdx]} alt={`${selectedRoute.title} - фото ${currentImgIdx + 1}`} fill className="object-cover" sizes="(max-width: 768px) 100vw, 60vw" />
-                  </m.div>
+                  </motion.div>
                 </AnimatePresence>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-900 md:to-transparent" />
                 {selectedRoute.images.length > 1 && (
@@ -210,10 +192,11 @@ export default function PopularRoutes() {
                   </div>
                 </div>
               </div>
-            </m.div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>
+      </div>
     </section>
   );
 }

@@ -28,7 +28,7 @@ export const ImageUploader = ({
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
-  // === ЛОГИКА ЗАГРУЗКИ ===
+// === ЛОГИКА ЗАГРУЗКИ ===
   const handleUpload = async (file: File) => {
     // Проверка типа
     if (!file.type.startsWith('image/')) {
@@ -44,11 +44,14 @@ export const ImageUploader = ({
     try {
       setIsUploading(true);
       // Загружаем в Supabase
-      const url = await uploadFile(file, folder);
+      const response = await uploadFile(file, folder); // Изменили имя переменной для ясности
       
-      if (url) {
-        // Записываем полученную ссылку в форму
-        setValue(name, url, { shouldDirty: true, shouldValidate: true });
+      // Достаем url из объекта response
+      if (response.url) {
+        // Записываем полученную СТРОКУ в форму
+        setValue(name, response.url, { shouldDirty: true, shouldValidate: true });
+      } else if (response.error) {
+        alert("Ошибка от Supabase: " + response.error);
       }
     } catch (e) {
       console.error("Upload error:", e);

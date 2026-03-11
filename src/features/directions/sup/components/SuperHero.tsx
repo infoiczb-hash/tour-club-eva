@@ -1,57 +1,105 @@
-import { Waves, ArrowDown } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link'; // ✅ Добавили нативный линк Next.js
+"use client";
 
-// ✅ Убрали "use client" и пропс onScrollDown
-export default function SuperHero() {
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Waves, Map, ArrowRight } from "lucide-react";
+
+export default function SupHero() {
+  const bgRef = useRef<HTMLDivElement>(null);
+  const [contentOpacity, setContentOpacity] = useState(1);
+
+  // Оставляем клиентский JS только ради легкого параллакса (не вредит SEO)
+  useEffect(() => {
+    let rafId: number;
+    let lastScrollY = 0;
+
+    const onScroll = () => {
+      lastScrollY = window.scrollY;
+    };
+
+    const update = () => {
+      if (bgRef.current) {
+        bgRef.current.style.transform = `translateY(${lastScrollY * 0.3}px)`;
+      }
+      // Плавно растворяем текст при скролле вниз
+      const op = Math.max(0, 1 - lastScrollY / 400);
+      setContentOpacity(op);
+      rafId = requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    rafId = requestAnimationFrame(update);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   return (
-    <section className="relative flex items-center justify-center overflow-hidden border-b border-white/5 min-h-[70vh]">
-      
-      <div className="absolute inset-0 z-0">
-        <Image 
-           src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771613780/SUP-bg_hmisrk.webp" 
-           alt="SUP Background"
-           fill
-           className="object-cover opacity-60"
-           priority
-           fetchPriority="high" 
-           sizes="100vw"        
-           quality={85}         
+    <section className="relative min-h-[100svh] w-full overflow-hidden bg-slate-950 flex flex-col items-center justify-center">
+
+      {/* ФОН С ПАРАЛЛАКСОМ */}
+      <div ref={bgRef} className="absolute inset-0 z-0" style={{ willChange: 'transform' }}>
+        <Image
+          // Подставь свою самую красивую фотку сапборда
+          src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg"
+          alt="Прогулки на SUP бордах"
+          fill
+          className="object-cover opacity-60"
+          priority
+          fetchPriority="high"
+          quality={85}
+          sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/50 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/40" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 w-full pt-20">
-        <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
-            
-            <div className="flex flex-col items-center opacity-0 animate-fade-in-up">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 backdrop-blur-md rounded-full mb-6 shadow-[0_0_20px_rgba(20,184,166,0.15)]">
-                    <Waves className="w-4 h-4 text-teal-400" />
-                    <span className="text-xs font-bold tracking-[0.2em] text-teal-300 uppercase">SUP-прогулки</span>
-                </div>
-                
-                <h1 className="text-5xl md:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tight">
-                    СКОЛЬЗИ<br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-300">ПО ВОДЕ</span>
-                </h1>
-                
-                <p className="text-lg md:text-xl text-slate-300 mb-10 font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-md">
-                   Ваше идеальное мини-путешествие. Никакого шума и спешки — только вы, доска и природа. Открываем знакомые места с совершенно нового ракурса.
-                </p>
-            </div>
+      {/* КОНТЕНТ (Появляется через CSS, чтобы Googlebot видел текст сразу) */}
+      <div
+        className="relative z-10 container mx-auto px-4 text-center mt-12 md:mt-0 flex flex-col items-center"
+        style={{ opacity: contentOpacity, transition: 'opacity 0.1s linear' }}
+      >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+          <Waves size={14} className="text-teal-400 animate-pulse" />
+          <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
+            Водные маршруты
+          </span>
+        </div>
 
-            <div className="opacity-0 animate-fade-in-up [animation-delay:200ms]">
-                {/* ✅ Превратили кнопку в якорную ссылку */}
-                <Link 
-                    href="#catalog"
-                    className="group relative inline-flex items-center justify-center gap-3 px-8 py-5 bg-teal-500 text-slate-950 font-black uppercase tracking-widest rounded-2xl overflow-hidden hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(20,184,166,0.3)]"
-                >
-                    <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                    <span className="relative z-10">Выбрать программу</span>
-                    <ArrowDown className="relative z-10 w-5 h-5 group-hover:translate-y-1 transition-transform" strokeWidth={2.5} />
-                </Link>
-            </div>
+        {/* SEO: H1 больше не прячется под opacity-0 ! */}
+        <h1 className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl animate-in fade-in zoom-in-95 duration-1000 delay-150 fill-mode-both">
+          Прогулки на <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">САПБОРДАХ</span>
+        </h1>
 
+        <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+          Идеальный баланс между релаксом и спортом. Встречай рассветы на воде, исследуй скрытые заливы и получай удовольствие с первых минут на доске.
+        </p>
+
+        {/* КНОПКИ ДЕЙСТВИЯ */}
+        <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 fill-mode-both">
+          <Link
+            href="#routes" // Замени на нужный якорь или ссылку
+            className="px-8 py-4 rounded-xl bg-teal-500 text-slate-950 font-black uppercase tracking-widest text-sm hover:bg-teal-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
+          >
+            <Map size={18} /> Выбрать маршрут
+          </Link>
+          <Link
+            href="#faq"
+            className="px-8 py-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all backdrop-blur-md flex items-center justify-center gap-2"
+          >
+            Частые вопросы <ArrowRight size={18} />
+          </Link>
+        </div>
+      </div>
+
+      {/* АНИМАЦИЯ ПОДСКАЗКИ СКРОЛЛА */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none animate-in fade-in duration-1000 delay-1000 fill-mode-both">
+        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.2em]">Вниз</span>
+        <div className="w-6 h-10 border-2 border-slate-500 rounded-full flex justify-center p-1">
+          <div className="w-1 h-2 bg-teal-500 rounded-full animate-bounce" />
         </div>
       </div>
     </section>

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence, m } from 'framer-motion';
 import { MapPin, ChevronDown, Flag, Navigation, CircleDot, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -57,7 +56,6 @@ export default function TourProgram({ program }: TourProgramProps) {
 
             return (
               <div key={index} className="relative pl-14 md:pl-20 print:pl-12 print:break-inside-avoid print:mb-4">
-                {/* aria-label описывает действие + название дня */}
                 <button
                   onClick={() => toggleDay(index)}
                   aria-expanded={isOpen}
@@ -109,41 +107,41 @@ export default function TourProgram({ program }: TourProgramProps) {
                     />
                   </div>
 
-                  <AnimatePresence>
-                    {isOpen && (
-                      <m.div
-                        id={`day-content-${index}`}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: isPrinting ? 0 : 0.3 }}
-                        className="print:block print:h-auto print:opacity-100"
-                      >
-                        <div className="px-4 md:px-6 pb-6 pt-0 border-t border-white/5 print:border-slate-200">
-                          <div className="prose prose-invert prose-sm max-w-none text-slate-300 font-light whitespace-pre-line leading-relaxed pt-4 print:prose-p:text-black print:text-black">
-                            {day.description}
-                          </div>
-                          {day.activities && Array.isArray(day.activities) && day.activities.length > 0 && (
-                            <div className="mt-4 space-y-2 bg-black/20 p-3 rounded-xl border border-white/5 print:bg-slate-50 print:border-slate-200">
-                              {day.activities.map((act: any, i: number) => (
-                                <div key={i} className="flex items-start gap-2 text-xs md:text-sm print:text-black">
-                                  <CircleDot size={12} className="text-teal-500 mt-1 shrink-0 print:text-slate-400" aria-hidden="true" />
-                                  <span className="text-slate-200 print:text-black">
-                                    {typeof act === 'string' ? act : (
-                                      <>
-                                        {act.time && <span className="font-bold text-teal-400 mr-2 print:text-black">{act.time}</span>}
-                                        {act.title}
-                                      </>
-                                    )}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </m.div>
+                  {/* CSS grid-rows trick: заменяет AnimatePresence + m.div из framer-motion.
+                      grid-rows-[0fr] → grid-rows-[1fr] анимирует высоту без JS-библиотек. */}
+                  <div
+                    id={`day-content-${index}`}
+                    className={clsx(
+                      "grid transition-[grid-template-rows] duration-300 ease-in-out print:block",
+                      isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                     )}
-                  </AnimatePresence>
+                  >
+                    <div className="overflow-hidden">
+                      <div className="px-4 md:px-6 pb-6 pt-0 border-t border-white/5 print:border-slate-200">
+                        <div className="prose prose-invert prose-sm max-w-none text-slate-300 font-light whitespace-pre-line leading-relaxed pt-4 print:prose-p:text-black print:text-black">
+                          {day.description}
+                        </div>
+                        {day.activities && Array.isArray(day.activities) && day.activities.length > 0 && (
+                          <div className="mt-4 space-y-2 bg-black/20 p-3 rounded-xl border border-white/5 print:bg-slate-50 print:border-slate-200">
+                            {day.activities.map((act: any, i: number) => (
+                              <div key={i} className="flex items-start gap-2 text-xs md:text-sm print:text-black">
+                                <CircleDot size={12} className="text-teal-500 mt-1 shrink-0 print:text-slate-400" aria-hidden="true" />
+                                <span className="text-slate-200 print:text-black">
+                                  {typeof act === 'string' ? act : (
+                                    <>
+                                      {act.time && <span className="font-bold text-teal-400 mr-2 print:text-black">{act.time}</span>}
+                                      {act.title}
+                                    </>
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             );

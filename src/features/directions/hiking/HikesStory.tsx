@@ -1,7 +1,4 @@
-'use client';
-
-import { m as motion } from 'framer-motion';
-import { Check, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 export default function HikesStory() {
@@ -12,14 +9,7 @@ export default function HikesStory() {
         <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
             
             {/* ТЕКСТОВАЯ ЧАСТЬ */}
-            <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="flex flex-col text-left"
-            >
-                {/* Эмоциональный хук */}
+            <div className="flex flex-col text-left animate-in fade-in slide-in-from-left-8 duration-1000 fill-mode-both">
                 <div className="text-[12px] font-bold tracking-[0.2em] text-teal-500 uppercase mb-4 md:mb-6">
                     Из дневника гида
                 </div>
@@ -29,15 +19,12 @@ export default function HikesStory() {
                     появляется <span className="text-teal-500">коннект с собой</span>"
                 </h2>
 
-                {/* 🔥 ИСПРАВЛЕНИЕ: Уменьшен отступ под абзацем (mb-6 md:mb-8 вместо mb-8 md:mb-10) */}
                 <p className="text-[14px] md:text-lg font-medium leading-relaxed text-stone-400 mb-6 md:mb-8 max-w-lg">
                     Горячий чай, звенящая тишина и осознание того, что все городские дедлайны остались где-то далеко внизу.
                 </p>
 
-                {/* 🔥 ИСПРАВЛЕНИЕ: Уменьшен отступ под линией (mb-5 вместо mb-8 md:mb-10) */}
                 <div className="w-full h-px bg-gradient-to-r from-stone-800 to-transparent mb-5" />
 
-                {/* 🔥 ИСПРАВЛЕНИЕ: Убран лишний mt-8, чтобы карточки подтянулись к линии */}
                 <div className="flex flex-wrap gap-3">
                   {[
                     "Масштаб гор, захватывающий дух",
@@ -59,16 +46,10 @@ export default function HikesStory() {
                     </span>
                   ))}
                 </div>
-            </motion.div>
+            </div>
 
             {/* ВИЗУАЛЬНАЯ ЧАСТЬ */}
-            <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="relative aspect-square md:aspect-[4/5] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl group border border-white/5"
-            >
+            <div className="relative aspect-square md:aspect-[4/5] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl group border border-white/5 animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 fill-mode-both">
                 <Image 
                     src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838659/4_tvn5t8.jpg" 
                     alt="Атмосфера экспедиций" 
@@ -79,7 +60,7 @@ export default function HikesStory() {
                 />
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/40 via-transparent to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-50" />
-            </motion.div>
+            </div>
 
         </div>
       </div>

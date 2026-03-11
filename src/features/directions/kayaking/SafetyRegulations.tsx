@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, m } from "framer-motion";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { 
   ShieldCheck, Anchor, Waves, Navigation, 
   Tent, LifeBuoy, UserCheck, Scale, ChevronDown, AlertCircle
@@ -11,21 +11,6 @@ import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const regulations = [
@@ -41,8 +26,6 @@ const regulations = [
 
 export default function SafetyRegulations() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const headerView = useInView();
-  const listView = useInView();
 
   return (
     <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">
@@ -52,10 +35,7 @@ export default function SafetyRegulations() {
 
         {/* HEADER */}
         <div className="text-center mb-12 md:mb-16">
-          <div
-            ref={headerView.ref}
-            style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          >
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-950/30 backdrop-blur-md mb-4 md:mb-6">
               <AlertCircle size={14} className="text-rose-400" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400">Техника безопасности</span>
@@ -70,24 +50,24 @@ export default function SafetyRegulations() {
         </div>
 
         {/* ACCORDION */}
-        <div ref={listView.ref} className="space-y-3 md:space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {regulations.map((section, idx) => {
             const isOpen = openIndex === idx;
             const Icon = section.icon;
             return (
               <div
                 key={section.id}
-                style={{ opacity: listView.inView ? 1 : 0, transform: listView.inView ? 'translateY(0)' : 'translateY(10px)', transition: `opacity 0.4s ease ${idx * 0.04}s, transform 0.4s ease ${idx * 0.04}s` }}
+                style={{ animationDelay: `${idx * 100}ms` }}
                 className={cn(
-                  "border rounded-[1.5rem] overflow-hidden transition-all duration-300",
+                  "border rounded-[1.5rem] overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 fill-mode-both",
                   isOpen ? "bg-slate-900 border-rose-500/30 shadow-[0_0_20px_rgba(225,29,72,0.05)]" : "bg-slate-900/40 border-white/5 hover:border-white/10"
                 )}
               >
-              <button
-  onClick={() => setOpenIndex(isOpen ? null : idx)}
-  aria-expanded={isOpen}
-  className="w-full p-5 md:p-6 flex justify-between items-center text-left group"
->
+                <button
+                  onClick={() => setOpenIndex(isOpen ? null : idx)}
+                  aria-expanded={isOpen}
+                  className="w-full p-5 md:p-6 flex justify-between items-center text-left group outline-none"
+                >
                   <div className="flex items-center gap-4 pr-4">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-400 group-hover:text-slate-300")}>
                       <Icon size={20} strokeWidth={1.5} />
@@ -101,10 +81,10 @@ export default function SafetyRegulations() {
                   </div>
                 </button>
 
-                {/* Аккордеон — AnimatePresence для высоты оставляем */}
+                {/* Аккордеон — AnimatePresence для высоты оставляем (не влияет на SEO) */}
                 <AnimatePresence>
                   {isOpen && (
-                    <m.div
+                    <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
@@ -127,7 +107,7 @@ export default function SafetyRegulations() {
                           </div>
                         )}
                       </div>
-                    </m.div>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </div>

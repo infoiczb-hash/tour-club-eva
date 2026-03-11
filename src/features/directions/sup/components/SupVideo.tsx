@@ -5,7 +5,6 @@ import { Play, Video } from 'lucide-react';
 import Image from 'next/image';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -19,9 +18,6 @@ export default function SupVideo() {
     const videoId = "Ki5m2YG_ALU";
     const startTime = 27; // Таймкод из вашей ссылки
 
-    const { ref: refHeader, inView: headerInView } = useInView({ rootMargin: "-50px" });
-    const { ref: refPlayer, inView: playerInView } = useInView();
-
     return (
         <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
@@ -31,13 +27,7 @@ export default function SupVideo() {
             <div className="container mx-auto px-4 max-w-5xl relative z-10">
                 
                 {/* 1. ЗАГОЛОВОК */}
-                <div
-                    ref={refHeader}
-                    className={cn(
-                      "text-center mb-10 md:mb-14 transition-all duration-500 ease-out",
-                      headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
-                    )}
-                >
+                <div className="text-center mb-10 md:mb-14 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-6 backdrop-blur-md">
                         <Video className="w-4 h-4 text-teal-400" />
                         <span className="text-[10px] font-bold tracking-widest text-teal-300 uppercase">
@@ -45,18 +35,14 @@ export default function SupVideo() {
                         </span>
                     </div>
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
-                       Видео инструтаж <span className="text-teal-500"> для новичков</span>
+                       Видео инструктаж <span className="text-teal-500"> для новичков</span>
                     </h2>
                 </div>
 
                 {/* 2. КИНЕМАТОГРАФИЧНЫЙ ПЛЕЕР (Фасад) */}
                 <div
-                    ref={refPlayer}
                     onClick={() => setIsPlaying(true)}
-                    className={cn(
-                      "relative w-full aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden group border border-white/10 shadow-2xl shadow-teal-900/20 bg-slate-900 isolate cursor-pointer transition-all duration-700 ease-out",
-                      playerInView ? "opacity-100 scale-100" : "opacity-0 scale-[0.97]"
-                    )}
+                    className="relative w-full aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden group border border-white/10 shadow-2xl shadow-teal-900/20 bg-slate-900 isolate cursor-pointer animate-in fade-in zoom-in-95 duration-700 delay-150 fill-mode-both"
                 >
                     {!isPlaying ? (
                         /* СОСТОЯНИЕ 1: КРАСИВАЯ ОБЛОЖКА */
@@ -68,6 +54,7 @@ export default function SupVideo() {
                                 fill 
                                 className="object-cover opacity-60 group-hover:opacity-80 transition-all duration-700 group-hover:scale-105" 
                                 sizes="(max-width: 1024px) 100vw, 1024px"
+                                unoptimized
                             />
                             
                             {/* Затенения для глубины */}

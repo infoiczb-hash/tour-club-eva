@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Shirt, Footprints, Briefcase, 
-  Lightbulb, Dog, Coffee, Thermometer, CheckSquare, ChevronRight
-} from "lucide-react"; // 🔥 Добавили ChevronRight
+  Lightbulb, Coffee, Thermometer, CheckSquare, ChevronRight, Dog
+} from "lucide-react";
 
 type TripDuration = "one-day" | "two-days";
 
@@ -20,8 +20,8 @@ export default function PackingList() {
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         
-        {/* HEADER */}
-        <div className="flex flex-col items-center text-center mb-8 md:mb-12">
+        {/* HEADER (Оптимизировано: появление через CSS) */}
+        <div className="flex flex-col items-center text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                 <Briefcase size={14} className="text-teal-400" />
                 <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">Экипировка</span>
@@ -30,7 +30,7 @@ export default function PackingList() {
                 Что взять <span className="text-teal-500">с собой</span>
             </h2>
 
-            {/* 🔥 1. Switcher for Duration (Строго в один ряд без переносов) */}
+            {/* Switcher for Duration */}
             <div className="inline-flex max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
                 <button 
                     onClick={() => setActiveDuration("one-day")}
@@ -47,14 +47,15 @@ export default function PackingList() {
             </div>
         </div>
 
-        {/* CONTENT AREA */}
+        {/* CONTENT AREA (Оставляем motion.div только для табов) */}
         <motion.div
             key={activeDuration}
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.3 }}
+            className="animate-in fade-in duration-700 delay-150 fill-mode-both"
         >
-            {/* 🔥 3 и 4. Обертка для скролла с подсказкой */}
+            {/* Обертка для скролла с подсказкой */}
             <div className="relative">
                 <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {/* Одежда */}
@@ -81,20 +82,19 @@ export default function PackingList() {
                     />
                 </div>
 
-                {/* 🔥 Подсказка "Мотай" */}
+                {/* Подсказка "Мотай" */}
                 <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                     <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                     <ChevronRight size={14} />
                 </div>
             </div>
 
-            {/* Подсказки и Лайфхаки (Уплотнили отступы) */}
+            {/* Подсказки и Лайфхаки */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mt-4 md:mt-8">
                 <div className="bg-teal-500/10 border border-teal-500/20 rounded-[2rem] p-5 md:p-6 flex items-start gap-4">
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-teal-500/20 rounded-2xl flex items-center justify-center shrink-0 text-teal-400"><Coffee size={20} className="md:w-6 md:h-6"/></div>
                     <div>
                         <h3 className="font-black uppercase tracking-tight text-white mb-1.5 md:mb-2">Эко-правило</h3>
-                        {/* 🔥 2. Текст 14px */}
                         <p className="text-[14px] text-slate-300 leading-relaxed">Мы не используем одноразовую посуду на сплавах. Пожалуйста, возьмите свои многоразовые приборы, чтобы сохранить природу чистой.</p>
                     </div>
                 </div>
@@ -102,13 +102,12 @@ export default function PackingList() {
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center shrink-0 text-amber-500"><Lightbulb size={20} className="md:w-6 md:h-6"/></div>
                     <div>
                         <h4 className="font-black uppercase tracking-tight text-white mb-1.5 md:mb-2">Лайфхак #1</h4>
-                        {/* 🔥 2. Текст 14px */}
                         <p className="text-[14px] text-slate-300 leading-relaxed">Возьмите кусок х/б ткани (простыни). Ей можно закрыть ноги от обгорания в лодке, а на стоянке — накрыть сиденье, чтобы оно не пекло.</p>
                     </div>
                 </div>
             </div>
 
-            {/* Теги внизу (Чуть увеличили шрифт для читабельности) */}
+            {/* Теги внизу */}
             <div className="mt-6 flex flex-wrap gap-2 md:gap-3 justify-center">
                 <span className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-400"><Thermometer size={14} className="text-teal-500"/> Учитывайте прогноз погоды</span>
                 <span className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-400"><Dog size={14} className="text-teal-500"/> Собаки по согласованию с гидом</span>
@@ -123,7 +122,6 @@ export default function PackingList() {
 // --- SUB-COMPONENT ---
 function CategoryCard({ title, icon: Icon, items }: { title: string, icon: any, items: string[] }) {
   return (
-    // 🔥 5. Уплотнили карточку: скругления rounded-[2rem], паддинг p-5
     <div className="snap-center shrink-0 w-[85vw] md:w-auto bg-slate-900/40 border border-white/5 rounded-[2rem] p-5 md:p-6 hover:border-teal-500/30 transition-all group flex flex-col h-full">
       <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-4 md:mb-5 text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all shrink-0">
         <Icon size={20} className="md:w-6 md:h-6" strokeWidth={1.5} />

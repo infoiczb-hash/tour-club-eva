@@ -1,23 +1,5 @@
-"use client";
-
-import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Anchor, XCircle, ShieldAlert, ChevronRight } from "lucide-react";
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
 
 const rules = [
   { id: 1, image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522497/1_fnmpfs.jpg", title: "Берег — не место для отдыха", desc: "Не садитесь в байдарку на берегу. Это ломает каркас." },
@@ -29,10 +11,6 @@ const rules = [
 ];
 
 export default function KayakRules() {
-  const headerView = useInView();
-  const gridView = useInView();
-  const bannerView = useInView();
-
   return (
     <section className="py-8 md:py-16 bg-[#020617] text-slate-200 overflow-hidden font-sans border-t border-white/5 relative">
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-amber-900/5 md:blur-[120px] rounded-full pointer-events-none" />
@@ -41,10 +19,7 @@ export default function KayakRules() {
 
         {/* HEADER */}
         <div className="flex flex-col text-left mb-6 md:mb-10 max-w-3xl">
-          <div
-            ref={headerView.ref}
-            style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          >
+          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/20 bg-amber-950/30 backdrop-blur-md mb-4 md:mb-6">
               <ShieldAlert size={14} className="text-amber-400" />
               <span className="text-[14px] font-bold uppercase tracking-widest text-amber-400">Сохрани лодку</span>
@@ -60,16 +35,16 @@ export default function KayakRules() {
         </div>
 
         {/* RULES GRID */}
-        <div ref={gridView.ref} className="relative">
+        <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {rules.map((rule, idx) => (
               <div
                 key={rule.id}
-                style={{ opacity: gridView.inView ? 1 : 0, transform: gridView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.08}s, transform 0.5s ease ${idx * 0.08}s` }}
-                className="flex-shrink-0 snap-center w-[80vw] md:w-auto group bg-slate-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-amber-500/40 transition-all duration-500 flex flex-col"
+                className="flex-shrink-0 snap-center w-[80vw] md:w-auto group bg-slate-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-amber-500/40 transition-all duration-500 flex flex-col animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <div className="relative h-48 w-full grayscale-[50%] group-hover:grayscale-0 transition-all duration-700">
-                  <Image src={rule.image} alt={rule.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 40vw" />
+                  <Image src={rule.image} alt={rule.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 400px" />
                   <div className="absolute top-4 left-4 w-8 h-8 bg-red-500/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.5)]">
                     <XCircle size={18} className="text-white" />
                   </div>
@@ -90,11 +65,7 @@ export default function KayakRules() {
         </div>
 
         {/* GOLDEN RULE BANNER */}
-        <div
-          ref={bannerView.ref}
-          style={{ opacity: bannerView.inView ? 1 : 0, transform: bannerView.inView ? 'scale(1)' : 'scale(0.95)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          className="mt-6 md:mt-8 p-6 md:p-8 rounded-[2.5rem] bg-gradient-to-r from-teal-900/40 to-slate-900 border border-teal-500/20 flex flex-col md:flex-row items-center gap-6 md:gap-8"
-        >
+        <div className="mt-6 md:mt-8 p-6 md:p-8 rounded-[2.5rem] bg-gradient-to-r from-teal-900/40 to-slate-900 border border-teal-500/20 flex flex-col md:flex-row items-center gap-6 md:gap-8 animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
           <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center text-slate-950 shrink-0 shadow-[0_0_20px_rgba(20,184,166,0.4)]">
             <Anchor size={32} />
           </div>

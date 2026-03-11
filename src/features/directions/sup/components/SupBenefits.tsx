@@ -1,15 +1,6 @@
-'use client';
-
 import { 
   Leaf, Briefcase, ShieldCheck, Camera, ChevronRight 
 } from 'lucide-react';
-import { useInView } from '@/hooks/useInView';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 const BENEFITS = [
   { 
@@ -35,26 +26,14 @@ const BENEFITS = [
 ];
 
 export default function SupBenefits() {
-  const { ref: refHeader, inView: headerInView } = useInView();
-  const { ref: refGrid,   inView: gridInView   } = useInView();
-
   return (
-    // 🔥 1. Срезали отступы (было py-10 md:py-12, стало py-8 md:py-16)
     <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden">
       
-      {/* Легкое свечение на фоне */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">
         
-        {/* 🔥 Бонус: Строгое выравнивание по левому краю (убрали text-center и mx-auto) */}
-        <div 
-            ref={refHeader}
-            className={cn(
-              "text-left mb-8 md:mb-10 max-w-3xl transition-all duration-500 ease-out",
-              headerInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"
-            )}
-        >
+        <div className="text-left mb-8 md:mb-10 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
                 Почему стоит выбрать <span className="text-teal-500">SUP</span>
             </h2>
@@ -63,22 +42,13 @@ export default function SupBenefits() {
             </p>
         </div>
 
-        {/* 🔥 3. Обертка для горизонтального скролла */}
         <div className="relative">
-            <div
-              ref={refGrid}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-            >
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {BENEFITS.map((b, i) => (
-                <div
+                <div 
                   key={i}
-                  style={{ transitionDelay: gridInView ? `${i * 100}ms` : '0ms' }}
-                  // 🔥 2. Схлопнули карточку: flex-row вместо flex-col на мобилках. Ширина 85vw для скролла.
-                  className={cn(
-                    "group shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/50 border border-white/5 rounded-[2rem]",
-                    "hover:border-teal-500/30 hover:bg-slate-900 transition-all duration-500 ease-out flex flex-row gap-4 md:gap-6 items-start",
-                    gridInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
-                  )}
+                  className="group shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/50 border border-white/5 rounded-[2rem] hover:border-teal-500/30 hover:bg-slate-900 transition-all duration-300 flex flex-row gap-4 md:gap-6 items-start animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                  style={{ animationDelay: `${i * 150}ms` }}
                 >
                   <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors duration-300">
                       <b.icon className="text-teal-400 group-hover:text-slate-900 transition-colors" size={24} strokeWidth={1.5} />
@@ -87,7 +57,6 @@ export default function SupBenefits() {
                       <h3 className="text-lg md:text-xl font-black text-white mb-2 uppercase tracking-tight group-hover:text-teal-400 transition-colors leading-tight">
                         {b.title}
                       </h3>
-                      {/* 🔥 Текст 14px (вместо мелкого) */}
                       <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
                         {b.text}
                       </p>
@@ -96,7 +65,6 @@ export default function SupBenefits() {
               ))}
             </div>
 
-            {/* 🔥 4. Подсказка "Мотай" */}
             <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                 <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                 <ChevronRight size={14} />
