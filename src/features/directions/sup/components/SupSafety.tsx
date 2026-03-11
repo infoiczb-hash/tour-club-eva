@@ -1,7 +1,13 @@
 'use client';
 
-import { m as motion } from 'framer-motion';
 import { Shield, LifeBuoy, Navigation, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { useInView } from '@/hooks/useInView';
+
+function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
+}
 
 const SAFETY_GUARANTEES = [
     {
@@ -22,6 +28,9 @@ const SAFETY_GUARANTEES = [
 ];
 
 export default function SupSafety() {
+    const { ref: refHeader, inView: headerInView } = useInView();
+    const { ref: refGrid,   inView: gridInView   } = useInView();
+
     return (
         // 🔥 1. Уменьшили отступы (было py-12 md:py-20, стало py-8 md:py-16)
         <section className="py-8 md:py-14 bg-[#020617] relative overflow-hidden border-t border-white/5">
@@ -33,11 +42,12 @@ export default function SupSafety() {
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                  
                  {/* 🔥 ЗАГОЛОВОК: Строгое выравнивание по левому краю */}
-                 <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="text-left mb-8 md:mb-12 max-w-3xl"
+                 <div
+                    ref={refHeader}
+                    className={cn(
+                      "text-left mb-8 md:mb-12 max-w-3xl transition-all duration-500 ease-out",
+                      headerInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"
+                    )}
                  >
                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-950/30 backdrop-blur-md mb-4 md:mb-6">
                          <Shield className="text-blue-400" size={14} strokeWidth={2} />
@@ -53,22 +63,26 @@ export default function SupSafety() {
                      <p className="text-slate-400 mt-2 text-[14px] md:text-base font-medium leading-relaxed">
                         Ваша единственная задача — расслабиться и получать удовольствие. Все риски, организацию и контроль мы берем на себя.
                      </p>
-                 </motion.div>
+                 </div>
 
                  {/* 🔥 3. ОБЕРТКА ДЛЯ ГОРИЗОНТАЛЬНОГО СКРОЛЛА */}
                  <div className="relative">
-                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                     <div
+                       ref={refGrid}
+                       className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                     >
                          {SAFETY_GUARANTEES.map((item, idx) => {
                              const Icon = item.icon;
                              return (
-                                 <motion.div 
+                                 <div
                                     key={idx}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.1, duration: 0.5 }}
+                                    style={{ transitionDelay: gridInView ? `${idx * 100}ms` : '0ms' }}
                                     // 🔥 2. Схлопнули карточку: flex-row, выравнивание влево, ширина 85vw
-                                    className="group shrink-0 snap-center w-[85vw] md:w-auto bg-slate-900/40 backdrop-blur-md p-6 md:p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all duration-500 text-left flex flex-row items-start relative overflow-hidden"
+                                    className={cn(
+                                      "group shrink-0 snap-center w-[85vw] md:w-auto bg-slate-900/40 backdrop-blur-md p-6 md:p-8 rounded-[2rem] border border-white/5",
+                                      "hover:border-blue-500/30 transition-all duration-500 ease-out text-left flex flex-row items-start relative overflow-hidden",
+                                      gridInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+                                    )}
                                  >
                                      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
@@ -89,7 +103,7 @@ export default function SupSafety() {
                                              {item.desc}
                                          </p>
                                      </div>
-                                 </motion.div>
+                                 </div>
                              );
                          })}
                      </div>

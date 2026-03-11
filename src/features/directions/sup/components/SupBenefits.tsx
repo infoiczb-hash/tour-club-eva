@@ -1,9 +1,15 @@
 'use client';
 
-import { m as motion } from 'framer-motion';
 import { 
   Leaf, Briefcase, ShieldCheck, Camera, ChevronRight 
-} from 'lucide-react'; // 🔥 Добавили ChevronRight
+} from 'lucide-react';
+import { useInView } from '@/hooks/useInView';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 const BENEFITS = [
   { 
@@ -29,6 +35,9 @@ const BENEFITS = [
 ];
 
 export default function SupBenefits() {
+  const { ref: refHeader, inView: headerInView } = useInView();
+  const { ref: refGrid,   inView: gridInView   } = useInView();
+
   return (
     // 🔥 1. Срезали отступы (было py-10 md:py-12, стало py-8 md:py-16)
     <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden">
@@ -39,11 +48,12 @@ export default function SupBenefits() {
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">
         
         {/* 🔥 Бонус: Строгое выравнивание по левому краю (убрали text-center и mx-auto) */}
-        <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="text-left mb-8 md:mb-10 max-w-3xl"
+        <div 
+            ref={refHeader}
+            className={cn(
+              "text-left mb-8 md:mb-10 max-w-3xl transition-all duration-500 ease-out",
+              headerInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"
+            )}
         >
             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
                 Почему стоит выбрать <span className="text-teal-500">SUP</span>
@@ -51,20 +61,24 @@ export default function SupBenefits() {
             <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
                 Продуманный до мелочей сервис, где ваша единственная задача — наслаждаться моментом.
             </p>
-        </motion.div>
+        </div>
 
         {/* 🔥 3. Обертка для горизонтального скролла */}
         <div className="relative">
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div
+              ref={refGrid}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
               {BENEFITS.map((b, i) => (
-                <motion.div 
+                <div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  style={{ transitionDelay: gridInView ? `${i * 100}ms` : '0ms' }}
                   // 🔥 2. Схлопнули карточку: flex-row вместо flex-col на мобилках. Ширина 85vw для скролла.
-                  className="group shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/50 border border-white/5 rounded-[2rem] hover:border-teal-500/30 hover:bg-slate-900 transition-all duration-300 flex flex-row gap-4 md:gap-6 items-start"
+                  className={cn(
+                    "group shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/50 border border-white/5 rounded-[2rem]",
+                    "hover:border-teal-500/30 hover:bg-slate-900 transition-all duration-500 ease-out flex flex-row gap-4 md:gap-6 items-start",
+                    gridInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+                  )}
                 >
                   <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors duration-300">
                       <b.icon className="text-teal-400 group-hover:text-slate-900 transition-colors" size={24} strokeWidth={1.5} />
@@ -78,7 +92,7 @@ export default function SupBenefits() {
                         {b.text}
                       </p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 

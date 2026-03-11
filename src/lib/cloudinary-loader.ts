@@ -2,7 +2,7 @@
 //
 // Кастомный loader для next/image.
 // Cloudinary:  f_auto,q_{quality},w_{width} — AVIF/WebP + точный размер
-// Supabase:    ?width={width}&quality={quality} — resize через встроенный Image Transform
+// Supabase:    /render/image/public/... + ?width=&quality= — реальный Image Transform
 // Остальное:   возвращает src без изменений
 
 type LoaderParams = {
@@ -20,13 +20,30 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
   }
 
   // --- Supabase Storage ---
-  // FIX #7: Supabase поддерживает Image Transformation через query-параметры
+  // ✅ FIX: Supabase Image Transformation работает ТОЛЬКО через /render/image/ path.
+  // Путь /object/public/ отдаёт оригинал без трансформации — параметры width/quality игнорируются.
   // Docs: https://supabase.com/docs/guides/storage/serving/image-transformations
+  //
+  // Трансформация:
+  //   /storage/v1/object/public/{bucket}/{path}
+  //   → /storage/v1/render/image/public/{bucket}/{path}?width=N&quality=N&format=origin
+  //
+  // format=origin — Supabase сам выберет AVIF или WebP в зависимости от Accept заголовка браузера.
   if (src.includes('supabase.co')) {
     const q = quality ?? 75;
     const url = new URL(src);
+
+    // Заменяем /object/public/ → /render/image/public/
+    // Если URL уже содержит /render/image/ — не трогаем (идемпотентность)
+    if (url.pathname.includes('/object/public/')) {
+      url.pathname = url.pathname.replace('/object/public/', '/render/image/public/');
+    }
+
     url.searchParams.set('width', String(width));
     url.searchParams.set('quality', String(q));
+    // format=origin: Supabase выберет AVIF/WebP по Accept-заголовку
+    url.searchParams.set('format', 'origin');
+
     return url.toString();
   }
 
