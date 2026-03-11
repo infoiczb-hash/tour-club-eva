@@ -1,11 +1,11 @@
 "use client";
 
-import { LazyMotion, domAnimation } from 'framer-motion';
+import { LazyMotion, domMax } from 'framer-motion';
 import { ToastProvider } from "@/shared/context/ToastContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domMax} strict>
       <ToastProvider>
         {children}
       </ToastProvider>

@@ -1,12 +1,12 @@
 // src/features/reviews/components/ReviewsMarquee.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 // ✅ Добавили ChevronRight для подсказки
 import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image' 
 
 function cn(...inputs: ClassValue[]) {
@@ -138,8 +138,17 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
     return displayReviews.filter(r => (r.category || 'general') === activeCategory);
   }, [activeCategory, displayReviews]);
 
-  // ✅ БОЛЬШЕ НЕ ДУБЛИРУЕМ МАССИВ
-  const displayList = filteredReviews;
+const displayList = filteredReviews;
+
+  // 👇 ДОБАВЛЕНО: Реф и стейт для границ скролла
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [dragWidth, setDragWidth] = useState(0);
+
+  useEffect(() => {
+    if (carouselRef.current) {
+      setDragWidth(carouselRef.current.scrollWidth - carouselRef.current.offsetWidth);
+    }
+  }, [displayList, activeCategory]);
 
   return (
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
@@ -210,7 +219,8 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
          <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
          <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
-         <div className="relative">
+       {/* 👇 ДОБАВЛЕН ref и overflow-hidden */}
+         <div className="relative overflow-hidden cursor-grab active:cursor-grabbing" ref={carouselRef}>
            <AnimatePresence mode="wait">
              <motion.div 
                 key={activeCategory}
@@ -218,11 +228,15 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                // 👇 МАГИЯ FRAMER MOTION
+                drag="x"
+                dragConstraints={{ right: 0, left: -dragWidth }}
+                dragElastic={0.1}
                 tabIndex={0} 
                 role="region" 
                 aria-label={`Отзывы в категории ${activeCategory}`} 
-                // ✅ УБРАНЫ классы md:animate-marquee и добавлены классы обычного скролла
-                className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8"
+                // 👇 Убрали overflow-x-auto, добавили w-max
+                className="flex gap-4 md:gap-6 px-4 md:px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-max pb-8"
               >
                 {displayList.map((review, i) => (
                   <ReviewCard key={`${review.id}-${i}`} review={review} />
