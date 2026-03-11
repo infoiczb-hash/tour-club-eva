@@ -18,7 +18,7 @@ const TourEssentials   = dynamic(() => import('./TourEssentials'));
 const TourDates        = dynamic(() => import('./TourDates'));
 const TourFAQ          = dynamic(() => import('./TourFAQ'));
 const TourActionButtons = dynamic(() => import('./TourActionButtons'));
-const SimilarTours     = dynamic(() => import('./SimilarTours'), { ssr: false });
+const SimilarTours     = dynamic(() => import('./SimilarTours'));
 
 interface TourDetailsWrapperProps {
   tour: Tour;
