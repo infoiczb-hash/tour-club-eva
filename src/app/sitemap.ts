@@ -1,27 +1,35 @@
 import { MetadataRoute } from 'next';
-import { getTours } from '@/features/tours/api';
-import { getBlogPosts } from '@/features/blog/api';
-import { getGuides } from '@/features/guides/api';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://evatur.club';
+import { prisma } from '@/lib/prisma'; // 👈 Добавили Prisma
+import { BASE_URL } from '@/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // 1. ТУРЫ (динамические)
-  const tours = await getTours();
-  const tourUrls = tours.map((tour) => ({
-    url: `${BASE_URL}/tour/${tour.slug}`,
-    lastModified: tour.updatedAt ? new Date(tour.updatedAt) : now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.9,
-  }));
+  // 1. ТУРЫ (динамические) - ЛЕГКОВЕСНЫЙ ЗАПРОС
+  let tourUrls: MetadataRoute.Sitemap = [];
+  try {
+    const tours = await prisma.tour.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true }, // 🔥 Берем только 2 поля!
+    });
+    tourUrls = tours.map((tour) => ({
+      url: `${BASE_URL}/tour/${tour.slug}`,
+      lastModified: tour.updatedAt ? new Date(tour.updatedAt) : now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    }));
+  } catch (e) {
+    console.error('Sitemap Tours Error:', e);
+  }
 
-  // 2. БЛОГ (динамический)
+  // 2. БЛОГ (динамический) - ЛЕГКОВЕСНЫЙ ЗАПРОС
   let blogUrls: MetadataRoute.Sitemap = [];
   try {
-    const blogs = await getBlogPosts();
-    blogUrls = blogs.map((post: { slug: string; updatedAt: Date | string | null }) => ({
+    const blogs = await prisma.blog.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true }, // 🔥 Берем только 2 поля!
+    });
+    blogUrls = blogs.map((post) => ({
       url: `${BASE_URL}/blog/${post.slug}`,
       lastModified: post.updatedAt ? new Date(post.updatedAt) : now,
       changeFrequency: 'monthly' as const,
@@ -31,12 +39,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Sitemap Blog Error:', e);
   }
 
-  // 3. ГИДЫ (динамические)
-  // getGuides() уже фильтрует по isActive: true — дополнительный filter не нужен
+  // 3. ГИДЫ (динамические) - ЛЕГКОВЕСНЫЙ ЗАПРОС
   let guideUrls: MetadataRoute.Sitemap = [];
   try {
-    const guides = await getGuides();
-    guideUrls = guides.map((guide: { slug?: string | null; updatedAt?: Date | string | null }) => ({
+    const guides = await prisma.guide.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true }, // 🔥 Берем только 2 поля!
+    });
+    guideUrls = guides.map((guide) => ({
       url: `${BASE_URL}/guides/${guide.slug}`,
       lastModified: guide.updatedAt ? new Date(guide.updatedAt) : now,
       changeFrequency: 'monthly' as const,

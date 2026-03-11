@@ -101,10 +101,10 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                             <Zap size={36} strokeWidth={1.5} />
                         </div>
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 leading-none">
-                            Хочешь носить <br className="hidden md:block"/><span className="text-teal-500">такой же бейдж?</span>
+                            Хочешь к нам <br className="hidden md:block"/><span className="text-teal-500">в команду?</span>
                         </h2>
                         <p className="text-slate-400 font-medium text-base md:text-lg max-w-2xl leading-relaxed mb-10">
-                            Мы всегда в поиске людей, влюбленных в природу: гидов, фотографов, поваров и организаторов. Если ты готов делиться эмоциями — нам по пути.
+                            Мы всегда в поиске людей, влюбленных в природу: гидов, фотографов, поваров, помощников, водителей и организаторов. Если ты готов делиться эмоциями — нам по пути.
                         </p>
                         <button
                             onClick={() => openContactModal(undefined, 'HR')}
@@ -182,21 +182,15 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                     {guide.name}
                 </h2>
 
-                {/* Цитата (если есть) */}
-                {guide.quotes && guide.quotes.length > 0 && (
-                    <div className="border-l-4 border-teal-500 pl-6 py-2 mb-8">
-                        <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
-                            «{guide.quotes[0]}»
-                        </p>
-                    </div>
-                )}
-
-                {/* Биография */}
-                <div className="text-base md:text-lg text-slate-400 leading-relaxed mb-10 font-medium whitespace-pre-wrap">
-                    {guide.fullBio || guide.bio}
+              {/* Теги */}
+                <div className="flex flex-wrap gap-2 mb-10">
+                    {guide.tags && guide.tags.map((tag, idx) => (
+                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
+                            #{tag}
+                        </span>
+                    ))}
                 </div>
-
-                {/* RPG Статистика */}
+             {/* RPG Статистика */}
                 {parsedStats.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10 p-6 md:p-8 bg-slate-900/50 rounded-3xl border border-white/5 shadow-inner">
                         {parsedStats.map((stat, i) => {
@@ -213,15 +207,20 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                         })}
                     </div>
                 )}
-
-                {/* Теги */}
-                <div className="flex flex-wrap gap-2 mb-10">
-                    {guide.tags && guide.tags.map((tag, idx) => (
-                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
-                            #{tag}
-                        </span>
-                    ))}
+                {/* Биография */}
+                <div className="text-base md:text-lg text-slate-400 leading-relaxed mb-10 font-medium whitespace-pre-wrap">
+                    {guide.fullBio || guide.bio}
                 </div>
+
+                              
+                  {/* Цитата (если есть) */}
+                {guide.quotes && guide.quotes.length > 0 && (
+                    <div className="border-l-4 border-teal-500 pl-6 py-2 mb-8">
+                        <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
+                            «{guide.quotes[0]}»
+                        </p>
+                    </div>
+                )}
 
                 {/* Кнопки действий */}
                 <div className="flex flex-wrap items-center gap-4 mt-auto pt-8 border-t border-white/10">

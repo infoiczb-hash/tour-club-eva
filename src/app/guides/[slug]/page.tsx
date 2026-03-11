@@ -148,8 +148,8 @@ export default async function GuidePage({ params }: Props) {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500 text-slate-950 mb-4 font-black uppercase tracking-widest text-xs shadow-[0_0_15px_rgba(20,184,166,0.4)]">
                 {guide.role}
               </div>
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-2 drop-shadow-lg">
-                {guide.name}
+              <h1  className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-lg">
+                {guide.name} 
               </h1>
               {guide.experience && (
                 <p className="text-teal-400 font-mono text-sm md:text-base uppercase tracking-widest drop-shadow-md">

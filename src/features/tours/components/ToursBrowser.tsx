@@ -84,67 +84,86 @@ export default function ToursBrowser({
   };
 
   // --- SMART FEED LOGIC ---
-  const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
+const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
     const safeTours = tours || [];
     
     // Получаем начало сегодняшнего дня для корректного сравнения
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // ✅ ИСПРАВЛЕНИЕ 1: ФИЛЬТРАЦИЯ КАТЕГОРИЙ И ПРОШЕДШИХ ТУРОВ
-    const filtered = safeTours.filter(tour => {
-      // 1. Фильтр по категории
-      if (activeCategory !== 'all') {
-        const tourCategorySlug = tour.category?.slug;
-        if (tourCategorySlug !== activeCategory.toLowerCase()) return false;
-      }
+    // Вспомогательная функция: находит ближайшую актуальную дату тура
+    const getNearestFutureDate = (tour: any) => {
+        if (tour.dates && tour.dates.length > 0) {
+            // Оставляем только те даты, которые еще не закончились
+            const validDates = tour.dates.filter((d: any) => {
+                const dateToCompare = d.end ? new Date(d.end) : new Date(d.start);
+                dateToCompare.setHours(0, 0, 0, 0);
+                return dateToCompare >= today;
+            });
+            
+            if (validDates.length > 0) {
+                // Сортируем их по времени начала и берем самую раннюю
+                validDates.sort((a: any, b: any) => new Date(a.start).getTime() - new Date(b.start).getTime());
+                return new Date(validDates[0].start);
+            }
+        }
+        
+        // Фолбэк на старое поле, если нового массива нет
+        if (tour.date) {
+            const singleDate = new Date(tour.date);
+            singleDate.setHours(0, 0, 0, 0);
+            if (singleDate >= today) return singleDate;
+        }
+        return null;
+    };
 
-      // 2. Фильтр по времени (отсекаем полностью прошедшие туры)
-      if (tour.dates && tour.dates.length > 0) {
-        // Оставляем тур, если есть хотя бы одна дата в будущем (или сегодня)
-        const hasFutureDate = tour.dates.some((d: any) => {
-           const dateToCompare = d.end ? new Date(d.end) : new Date(d.start);
-           dateToCompare.setHours(0, 0, 0, 0);
-           return dateToCompare >= today;
-        });
-        if (!hasFutureDate) return false; // Исключаем тур из выдачи
-      } else if (tour.date) {
-        // Фолбэк на одиночную дату
-        const singleDate = new Date(tour.date);
-        singleDate.setHours(0, 0, 0, 0);
-        if (singleDate < today) return false;
+    // 1. ФИЛЬТРАЦИЯ
+    const filtered = safeTours.filter(tour => {
+      if (activeCategory !== 'all') {
+        if (tour.category?.slug !== activeCategory.toLowerCase()) return false;
       }
       
-      // Туры без дат (анонсы) и туры с будущими датами проходят дальше
-      return true;
+      const nearestDate = getNearestFutureDate(tour);
+      // Если даты нет вообще (это анонс) или она в будущем — оставляем
+      if (!tour.dates?.length && !tour.date) return true; 
+      
+      return nearestDate !== null;
     });
 
+    // 2. СОРТИРОВКА (теперь по правильной ближайшей дате)
     const sorted = filtered.sort((a, b) => {
-        const dateA = a.date ? new Date(a.date).getTime() : Infinity;
-        const dateB = b.date ? new Date(b.date).getTime() : Infinity;
+        const dateA = getNearestFutureDate(a)?.getTime() || Infinity;
+        const dateB = getNearestFutureDate(b)?.getTime() || Infinity;
         return dateA - dateB;
     });
 
+    // 3. РАСПРЕДЕЛЕНИЕ (Ближайшие / Анонсы)
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     const twoWeeksLater = new Date();
     twoWeeksLater.setDate(now.getDate() + 14);
+    twoWeeksLater.setHours(23, 59, 59, 999);
 
     const hot: Tour[] = [];
     const soon: Tour[] = [];
 
     sorted.forEach(t => {
-        if (!t.date) {
+        const nearestDate = getNearestFutureDate(t);
+        
+        if (!nearestDate) {
             soon.push(t);
             return;
         }
-        const tDate = new Date(t.date);
-        if (tDate <= twoWeeksLater && tDate >= now) {
+
+        // Если тур попадает в ближайшие 2 недели
+        if (nearestDate <= twoWeeksLater && nearestDate >= now) {
             hot.push(t);
         } else {
             soon.push(t);
         }
     });
 
+    // Если горячих туров мало, добиваем их из списка "скоро"
     if (hot.length < 3 && soon.length > 0) {
         const needed = 3 - hot.length;
         const toMove = soon.splice(0, needed);

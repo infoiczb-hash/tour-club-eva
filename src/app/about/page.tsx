@@ -5,8 +5,8 @@ import { ArrowLeft, Hammer, PawPrint } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'О клубе | Турклуб «Эва»',
-  description: 'История создания нашего клуба. Страница в разработке.',
-  robots: { index: false, follow: false },
+  description: 'Узнайте больше о турклубе «Эва»: наша история, философия активного отдыха, безопасность на маршрутах и команда профессиональных гидов.',
+  robots: { index: true, follow: true },
 };
 
 export default function AboutPage() {

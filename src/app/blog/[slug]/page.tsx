@@ -202,18 +202,25 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
 
         {/* КОНТЕНТ (С жестким отступом pt-32) */}
-        <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
-            
-            <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-6 md:mb-8 group w-fit shadow-lg">
+      <div className="relative z-10 container mx-auto px-4 pt-20 md:pt-24 pb-8 md:pb-16 max-w-7xl mt-auto">
+           {/* 1. УРОВЕНЬ: Навигация */}
+            <Link href="/blog" className="inline-flex items-center gap-3 px-4 py-2 md:px-5 md:py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-8 group w-fit shadow-lg">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
+                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">В журнал</span>
             </Link>
 
-            <span className="inline-block px-3 py-1.5 bg-teal-500 text-slate-900 text-[12px] md:text-[14px] font-black uppercase tracking-widest rounded md:rounded-xl mb-3 md:mb-5 w-fit shadow-[0_0_20px_rgba(20,184,166,0.4)]">
-                {(post as any).blogCategory?.title || post.category}
-            </span>
+            {/* 2. УРОВЕНЬ: Категория */}
+            <div className="flex items-center gap-3 mb-4">
+                <span className="text-slate-300 text-[11px] md:text-[13px] font-bold uppercase tracking-widest opacity-80">
+                    Категория:
+                </span>
+                <span className="inline-block px-3 py-1 bg-teal-500 text-slate-900 text-[10px] md:text-[12px] font-black uppercase tracking-widest rounded shadow-[0_0_20px_rgba(20,184,166,0.3)]">
+                    {(post as any).blogCategory?.title || post.category}
+                </span>
+            </div>
 
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 max-w-4xl drop-shadow-2xl">
+            {/* 3. УРОВЕНЬ: Заголовок */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 max-w-4xl drop-shadow-2xl">
                 {post.title}
             </h1>
 

@@ -130,8 +130,6 @@ export async function createBookingAction(params: {
   }
 }
 
-export const bookEvent = createBookingAction;
-
 export async function getGuides() {
   try {
     const guides = await prisma.guide.findMany({
