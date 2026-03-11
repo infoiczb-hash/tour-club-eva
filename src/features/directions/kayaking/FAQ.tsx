@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, m} from "framer-motion";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
@@ -10,21 +10,6 @@ import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const faqs = [
@@ -39,47 +24,40 @@ export default function FAQ() {
   const openContactModal = useModalStore((state) => state.openContactModal);
   const { setActiveTab } = useKayakTab();
 
-  const headerView = useInView();
-  const faqsView = useInView();
-
   const actionCardsContent = (
     <div className="flex flex-col gap-4 mt-2">
       {/* Кнопка "Подготовка к сплаву" */}
-  <button
-  onClick={() => {
-    // 1. Переключаем вкладку
-    setActiveTab('participant');
-    
-    // 2. Ждем 100мс пока отрендерится контент и плавно скроллим к списку
-    setTimeout(() => {
-      const element = document.getElementById('packing-list');
-      if (element) {
-        // Высчитываем позицию и делаем отступ 100px сверху
-        const y = element.getBoundingClientRect().top + window.scrollY - 100;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
-    }, 100);
-  }}
-  aria-label="Перейти к подготовке участника"
-  className="group block w-full text-left outline-none"
->
-  <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
-    <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
-    <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">
-      <BookOpen size={24} strokeWidth={1.5} />
-    </div>
-    <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
-      Подготовка к сплаву
-    </h3>
-    <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
-      Полный гайд: что надеть, что взять с собой и как вести себя на воде.
-    </p>
-    <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
-      <span>Перейти в раздел</span>
-      <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
-    </div>
-  </div>
-</button>
+      <button
+        onClick={() => {
+          setActiveTab('participant');
+          setTimeout(() => {
+            const element = document.getElementById('packing-list');
+            if (element) {
+              const y = element.getBoundingClientRect().top + window.scrollY - 100;
+              window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+          }, 100);
+        }}
+        aria-label="Перейти к подготовке участника"
+        className="group block w-full text-left outline-none"
+      >
+        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-slate-900/80 hover:border-teal-500/30 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-xl">
+          <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-teal-500/10 blur-[50px] rounded-full group-hover:bg-teal-500/20 transition-all duration-500" />
+          <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 border border-teal-500/20">
+            <BookOpen size={24} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
+            Подготовка к сплаву
+          </h3>
+          <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
+            Полный гайд: что надеть, что взять с собой и как вести себя на воде.
+          </p>
+          <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
+            <span>Перейти в раздел</span>
+            <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform duration-300" />
+          </div>
+        </div>
+      </button>
 
       {/* Карточка "Остались вопросы?" */}
       <div className="p-6 md:p-8 bg-slate-900/40 border border-white/5 rounded-[2rem] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-xl">
@@ -91,7 +69,7 @@ export default function FAQ() {
         </div>
         <button
           onClick={() => openContactModal('Сплавы на байдарках', 'TOUR')}
-          className="w-full xl:w-auto shrink-0 px-6 py-3.5 bg-white text-slate-950 font-black uppercase tracking-wider text-s rounded-xl hover:bg-teal-50 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
+          className="w-full xl:w-auto shrink-0 px-6 py-3.5 bg-white text-slate-950 font-black uppercase tracking-wider text-sm rounded-xl hover:bg-teal-50 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
         >
           <MessageCircle size={20} />
           <span>Спросить</span>
@@ -109,10 +87,7 @@ export default function FAQ() {
 
           {/* ЛЕВАЯ КОЛОНКА */}
           <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-32">
-            <div
-              ref={headerView.ref}
-              style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-            >
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                 <HelpCircle size={14} className="text-teal-400" />
                 <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">ВОПРОСЫ/ОТВЕТЫ</span>
@@ -125,22 +100,19 @@ export default function FAQ() {
                 Собрали самое важное для тех, кто идет на воду впервые. Узнайте всё о безопасности, экипировке и правилах.
               </p>
             </div>
-            <div className="hidden lg:block">{actionCardsContent}</div>
+            <div className="hidden lg:block animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150 fill-mode-both">{actionCardsContent}</div>
           </div>
 
           {/* ПРАВАЯ КОЛОНКА — аккордеон */}
-          <div
-            ref={faqsView.ref}
-            className="lg:col-span-7 space-y-3 md:space-y-4"
-          >
+          <div className="lg:col-span-7 space-y-3 md:space-y-4">
             {faqs.map((faq, idx) => {
               const isOpen = openIndex === idx;
               return (
                 <div
                   key={idx}
-                  style={{ opacity: faqsView.inView ? 1 : 0, transform: faqsView.inView ? 'translateX(0)' : 'translateX(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
+                  style={{ animationDelay: `${idx * 100}ms` }}
                   className={cn(
-                    "border rounded-2xl overflow-hidden transition-all duration-300",
+                    "border rounded-2xl overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 fill-mode-both",
                     isOpen ? "bg-slate-900 border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]" : "bg-slate-900/40 border-white/5 hover:border-white/10"
                   )}
                 >
@@ -156,10 +128,10 @@ export default function FAQ() {
                     </div>
                   </button>
 
-                  {/* Аккордеон — оставляем AnimatePresence, это UI анимация высоты */}
+                  {/* Аккордеон — оставляем AnimatePresence, это UI анимация высоты по клику */}
                   <AnimatePresence>
                     {isOpen && (
-                      <m.div
+                      <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -169,7 +141,7 @@ export default function FAQ() {
                         <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
                           {faq.a}
                         </p>
-                      </m.div>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
@@ -177,7 +149,7 @@ export default function FAQ() {
             })}
           </div>
 
-          <div className="lg:hidden lg:col-span-12 border-t border-white/5 pt-8 mt-4">
+          <div className="lg:hidden lg:col-span-12 border-t border-white/5 pt-8 mt-4 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
             {actionCardsContent}
           </div>
         </div>

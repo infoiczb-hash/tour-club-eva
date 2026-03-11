@@ -1,5 +1,3 @@
-"use client";
-
 import { Compass, Coffee, ShieldCheck } from 'lucide-react';
 
 export default function HikesHero() {
@@ -8,15 +6,14 @@ export default function HikesHero() {
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-800/20 md:blur-[120px] rounded-full pointer-events-none" />
 
-      <div
-        className="relative z-10 container mx-auto px-4 text-center flex flex-col items-center justify-center transition-opacity duration-500"
-      >
-        <div className="opacity-0 animate-fade-in-up inline-block px-4 md:px-5 py-2 mb-8 text-[10px] md:text-sm font-bold tracking-widest text-teal-200 border border-teal-800/50 rounded-full backdrop-blur-md uppercase bg-teal-950/30">
+      <div className="relative z-10 container mx-auto px-4 text-center flex flex-col items-center justify-center">
+        
+        <div className="inline-block px-4 md:px-5 py-2 mb-8 text-[10px] md:text-sm font-bold tracking-widest text-teal-200 border border-teal-800/50 rounded-full backdrop-blur-md uppercase bg-teal-950/30 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
           Туры по горам Румынии и не только.
         </div>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] mb-6 md:mb-8 w-full">
-          <h1 className="text-[11vw] sm:text-5xl md:text-7xl lg:text-8xl font-black text-stone-100 leading-[1.1] md:leading-tight mb-2 md:mb-4 tracking-tighter mx-auto">
+        <div className="mb-6 md:mb-8 w-full animate-in fade-in zoom-in-95 duration-1000 delay-150 fill-mode-both">
+          <h1 className="text-[11vw] sm:text-5xl md:text-7xl lg:text-8xl font-black text-stone-100 leading-[1.1] md:leading-tight mb-2 md:mb-4 tracking-tighter mx-auto drop-shadow-xl">
             ВДОХНОВЛЯЙСЯ <br /> ГОРАМИ.
           </h1>
           <div className="text-[7.5vw] sm:text-4xl md:text-6xl lg:text-7xl font-black text-teal-500 leading-tight tracking-tighter">
@@ -24,11 +21,11 @@ export default function HikesHero() {
           </div>
         </div>
 
-        <p className="opacity-0 animate-fade-in-up [animation-delay:400ms] text-[14px] md:text-xl text-stone-400 mb-10 md:mb-12 max-w-2xl mx-auto font-medium leading-relaxed px-2">
+        <p className="text-[14px] md:text-xl text-stone-400 mb-10 md:mb-12 max-w-2xl mx-auto font-medium leading-relaxed px-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
           Оставь городскую суету позади. Открой для себя настоящую Румынию: неспешный треккинг налегке, горячий чай с видом на долины и люди, с которыми всегда по пути.
         </p>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:600ms] w-full">
+        <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500 fill-mode-both">
           <div className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-3 md:gap-12 text-stone-300">
             <div className="flex items-center gap-3 bg-stone-900/50 md:bg-transparent px-5 py-3 md:p-0 rounded-2xl border border-stone-800 md:border-none w-full max-w-[280px] md:w-auto justify-center">
               <Compass className="w-5 h-5 md:w-6 md:h-6 text-teal-500 shrink-0" />

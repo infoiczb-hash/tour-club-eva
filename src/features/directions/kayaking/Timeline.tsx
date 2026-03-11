@@ -1,21 +1,9 @@
-"use client";
-
-import { useRef, useEffect, useState } from "react";
 import { Clock, Coffee, Waves, Tent, Flag, Sparkles, ChevronRight } from "lucide-react";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
+function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
 }
 
 const timeline = [
@@ -26,9 +14,6 @@ const timeline = [
 ];
 
 export default function Timeline() {
-  const headerView = useInView();
-  const cardsView = useInView();
-
   return (
     <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">
       <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
@@ -38,10 +23,7 @@ export default function Timeline() {
 
         {/* HEADER */}
         <div className="mb-10 md:mb-16 text-left max-w-3xl">
-          <div
-            ref={headerView.ref}
-            style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          >
+          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
               <Clock size={14} className="text-teal-400" />
               <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Тайминг сплава на 1 день</span>
@@ -57,7 +39,7 @@ export default function Timeline() {
         </div>
 
         {/* CARDS */}
-        <div ref={cardsView.ref} className="relative">
+        <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-12 pt-2 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {timeline.map((item, idx) => {
               const Icon = item.icon;
@@ -65,8 +47,8 @@ export default function Timeline() {
               return (
                 <div
                   key={idx}
-                  style={{ opacity: cardsView.inView ? 1 : 0, transform: cardsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
-                  className="relative shrink-0 md:shrink snap-center w-[85vw] sm:w-[320px] md:w-auto md:flex-1 group"
+                  className="relative shrink-0 md:shrink snap-center w-[85vw] sm:w-[320px] md:w-auto md:flex-1 group animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                  style={{ animationDelay: `${idx * 150}ms` }}
                 >
                   <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 hover:bg-slate-900/60 hover:border-teal-500/30 transition-all duration-300 h-full flex flex-col justify-start relative z-10">
                     <div className="flex items-center gap-4 mb-5">

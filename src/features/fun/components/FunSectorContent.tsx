@@ -3,48 +3,58 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Gamepad2, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Gamepad2, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost, Backpack } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 import type { FunTest } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
-import FearDebriefModal from "@/features/fun/components/FearDebrief";
-import PhysicalReadinessModal from "@/features/fun/components/PhysicalReadiness";
-import BodySignalsModal from "@/features/fun/components/BodySignals";
-import TourDebriefModal from "@/features/fun/components/TourDebrief";
-import QuizBackpack from "@/features/fun/components/QuizBackpack";
-import QuizSurvival from "@/features/fun/components/QuizSurvival";
-import QuizTotem from "@/features/fun/components/QuizTotem";
-import QuizTouristType from "@/features/fun/components/QuizTouristType";
-import PsychProfile from "@/features/fun/components/PsychProfile";
 
-const MODAL_REGISTRY: Record<string, React.FC<any>> = {
-  'fear-debrief': FearDebriefModal, 'physical-readiness': PhysicalReadinessModal,
-  'body-signals': BodySignalsModal, 'tour-debrief': TourDebriefModal,
-  'psych-profile': PsychProfile, 'quiz-backpack': QuizBackpack,
-  'quiz-survival': QuizSurvival, 'quiz-totem': QuizTotem, 'quiz-tourist-type': QuizTouristType,
+function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
+}
+
+// 1. РЕЕСТР МОДАЛОК (Ленивая загрузка - Code Splitting)
+// ssr: false гарантирует, что тяжелый код квизов не попадет в стартовый HTML
+const MODAL_REGISTRY: Record<string, React.ComponentType<any>> = {
+  'fears': dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
+  'physical': dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),
+  'signals': dynamic(() => import("@/features/fun/components/BodySignals"), { ssr: false }),
+  'debrief': dynamic(() => import("@/features/fun/components/TourDebrief"), { ssr: false }),
+  'backpack': dynamic(() => import("@/features/fun/components/QuizBackpack"), { ssr: false }),
+  'survival': dynamic(() => import("@/features/fun/components/QuizSurvival"), { ssr: false }),
+  'totem': dynamic(() => import("@/features/fun/components/QuizTotem"), { ssr: false }),
+  'tourist-type': dynamic(() => import("@/features/fun/components/QuizTouristType"), { ssr: false }),
+  'psych-profile': dynamic(() => import("@/features/fun/components/PsychProfile"), { ssr: false }),
 };
 
+// 2. РЕЕСТР КАТЕГОРИЙ (Для красивых заголовков разделов)
 const CATEGORY_UI_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   "Психологические тесты": { label: "Психологические тесты", icon: <Brain size={24} />, color: "teal" },
   "Поддержка в туре": { label: "Поддержка в туре", icon: <Heart size={24} />, color: "rose" },
   "Подбор тура": { label: "Подбор тура", icon: <Search size={24} />, color: "blue" },
   "Какой ты турист?": { label: "Какой ты турист?", icon: <Users size={24} />, color: "emerald" },
   "Юмористические": { label: "Юмористические", icon: <Ghost size={24} />, color: "amber" },
+  "Другое": { label: "Интерактивы", icon: <Gamepad2 size={24} />, color: "teal" }
 };
 
-const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode }> = {
-  'fear-debrief': { color: "blue", icon: <Shield size={24} strokeWidth={2.5} /> },
-  'physical-readiness': { color: "emerald", icon: <Dumbbell size={24} strokeWidth={2.5} /> },
-  'body-signals': { color: "rose", icon: <Activity size={24} strokeWidth={2.5} /> },
-  'tour-debrief': { color: "purple", icon: <BookOpen size={24} strokeWidth={2.5} /> },
-  'default': { color: "amber", icon: <Compass size={24} strokeWidth={2.5} /> },
+// 3. РЕЕСТР ВИЗУАЛА КАРТОЧЕК (Цвета и иконки по slug)
+const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; badge?: string }> = {
+  'fears': { color: "blue", icon: <Shield size={24} strokeWidth={2.5} />, badge: "AI Powered" },
+  'physical': { color: "emerald", icon: <Dumbbell size={24} strokeWidth={2.5} />, badge: "AI Powered" },
+  'signals': { color: "rose", icon: <Activity size={24} strokeWidth={2.5} />, badge: "AI Powered" },
+  'debrief': { color: "purple", icon: <BookOpen size={24} strokeWidth={2.5} />, badge: "AI Powered" },
+  'tourist-type': { color: "amber", icon: <Compass size={24} strokeWidth={2.5} /> },
+  'backpack': { color: "orange", icon: <Backpack size={24} strokeWidth={2.5} /> },
+  'default': { color: "teal", icon: <Sparkles size={24} strokeWidth={2.5} /> }
 };
 
 interface Props { activeTests: FunTest[]; }
 
 export default function FunSectorContent({ activeTests }: Props) {
   const [activeQuizSlug, setActiveQuizSlug] = useState<string | null>(null);
+  
   const searchParams = useSearchParams();
   const openContactModal = useModalStore((state) => state.openContactModal);
 
@@ -52,6 +62,13 @@ export default function FunSectorContent({ activeTests }: Props) {
     const quizParam = searchParams.get('quiz');
     if (quizParam) setActiveQuizSlug(quizParam);
   }, [searchParams]);
+
+  const handleOldQuizResult = (resultText: string) => {
+    setActiveQuizSlug(null);
+    setTimeout(() => {
+      openContactModal(resultText, 'TOUR');
+    }, 400);
+  };
 
   const groupedContent = useMemo(() => {
     const groups: Record<string, FunTest[]> = {};
@@ -63,117 +80,168 @@ export default function FunSectorContent({ activeTests }: Props) {
     return groups;
   }, [activeTests]);
 
-  const handleQuizComplete = (resultText: string) => {
-    setActiveQuizSlug(null);
-    setTimeout(() => { openContactModal('TOUR', resultText); }, 400);
-  };
-
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
+      
+      {/* ФОН (ОПТИМИЗИРОВАНО: Убран animate-pulse с гигантских блюров для разгрузки GPU) */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40 animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 md:blur-[150px] rounded-full opacity-30" />
+          <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 md:blur-[150px] rounded-full opacity-30" />
       </div>
 
+      {/* ШАПКА */}
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
         <div className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
-          <Sparkles size={16} className="text-teal-400" />
-          <span className="text-xs font-black uppercase tracking-widest text-teal-300">Интерактивы и квизы</span>
+           <Sparkles size={16} className="text-teal-400" />
+           <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
         </div>
-        <h1 className="animate-hero-title opacity-0 [animation-delay:150ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-4 leading-[0.9]">
-          Твой <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Фан-Сектор</span>
+
+        <h1 className="animate-hero-title opacity-0 [animation-delay:100ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
+           Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
         </h1>
-        <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base font-medium">
-          Выбирай раздел, проходи тесты и получай персональные рекомендации от нашего ИИ-гида.
+
+        <p className="animate-fade-in-up opacity-0 [animation-delay:200ms] text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+           Узнай какой ты турист, проработай страхи, кто ты в туристисеской группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
         </p>
       </section>
 
+      {/* --- ДИНАМИЧЕСКИЕ РАЗДЕЛЫ --- */}
       <div className="container mx-auto px-4 pb-24 relative z-10 space-y-16">
-        {Object.entries(groupedContent).map(([categoryName, tests]) => {
-          const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
-          return (
-            <section key={categoryName} className="space-y-8">
-              <div className="flex items-center gap-4 max-w-6xl mx-auto">
-                <div className={clsx("p-3 rounded-2xl bg-white/5 border border-white/10", `text-${config.color}-400`)}>{config.icon}</div>
-                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">{config.label}</h2>
-                <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
-              </div>
-              {/* whileInView убран — grid появляется сразу, карточки через CSS stagger */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {tests.map((test, idx) => {
-                  const visual = VISUAL_REGISTRY[test.slug] || VISUAL_REGISTRY['default'];
-                  return (
-                    <QuizCard
-                      key={test.id} idx={idx}
-                      onClick={() => setActiveQuizSlug(test.slug)}
-                      image={test.image || ""} color={visual.color} icon={visual.icon}
-                      title={test.title} desc={test.description} category={test.category}
-                    />
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+         {Object.entries(groupedContent).map(([categoryName, tests], categoryIndex) => {
+            const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
+            
+            return (
+              <section key={categoryName} className="space-y-8">
+                {/* ЗАГОЛОВОК КАТЕГОРИИ */}
+                <div className="flex items-center gap-4 max-w-6xl mx-auto">
+                   <div className={clsx("p-3 rounded-2xl bg-white/5 border border-white/10", `text-${config.color}-400`)}>
+                      {config.icon}
+                   </div>
+                   <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">
+                      {config.label}
+                   </h2>
+                   <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                </div>
 
-        {/* CTA Banner — статичный div, motion.div убран */}
-        <div className="max-w-6xl mx-auto bg-gradient-to-r from-teal-900/40 to-slate-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-            <div>
-              <h3 className="text-3xl font-black text-white uppercase mb-2 flex flex-col md:flex-row items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center"><Trophy size={20} /></span>
-                <span>Готов к практике?</span>
-              </h3>
-              <p className="text-slate-400 max-w-lg text-lg">Настоящие ответы ждут тебя на маршруте.</p>
+                {/* СЕТКА КАРТОЧЕК (ОПТИМИЗИРОВАНО: Замена Framer Motion на чистый CSS для LCP) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    {tests.map((test, index) => {
+                       const visual = VISUAL_REGISTRY[test.slug] || VISUAL_REGISTRY['default'];
+                       return (
+                         <QuizCard 
+                            key={test.id}
+                            onClick={() => setActiveQuizSlug(test.slug)}
+                            image={test.image || ""}
+                            color={visual.color}
+                            icon={visual.icon}
+                            badge={visual.badge}
+                            title={test.title}
+                            desc={test.description}
+                            category={test.category}
+                            idx={index}
+                            priority={categoryIndex === 0 && index === 0} 
+                         />
+                       );
+                    })}
+                </div>
+              </section>
+            );
+         })}
+
+         {/* ФИНАЛЬНЫЙ БАННЕР CTA (Без Framer Motion) */}
+         <div className="max-w-6xl mx-auto bg-gradient-to-r from-teal-900/40 to-slate-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+               <div>
+                  <h3 className="text-3xl font-black text-white uppercase mb-2 flex flex-col md:flex-row items-center gap-3">
+                     <span className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center"><Trophy size={20} /></span>
+                     <span>Готов к практике?</span>
+                  </h3>
+                  <p className="text-slate-400 max-w-lg text-lg">Теория — это отлично. Но настоящие ответы ждут тебя на маршруте.</p>
+               </div>
+               <Link href="/tour" className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] whitespace-nowrap">
+                  Смотреть все туры
+               </Link>
             </div>
-            <Link href="/tour" className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)]">
-              Смотреть все туры
-            </Link>
-          </div>
-        </div>
+         </div>
       </div>
 
-      {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
+      {/* --- ДИНАМИЧЕСКИЙ РЕНДЕР МОДАЛОК --- */}
+     {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
         if (!ModalComponent) return null;
+        
         const isActive = activeQuizSlug === slug;
-        return <ModalComponent key={slug} isOpen={isActive} open={isActive} onComplete={handleQuizComplete} onClose={() => setActiveQuizSlug(null)} />;
+
+        return (
+          <ModalComponent 
+            key={slug} 
+            isOpen={isActive} 
+            open={isActive}   
+            onComplete={['backpack', 'survival', 'tourist-type', 'totem'].includes(slug) ? handleOldQuizResult : undefined}
+            onClose={() => setActiveQuizSlug(null)} 
+          />
+        );
       })}
+
     </main>
   );
 }
 
-function QuizCard({ onClick, image, color, icon, title, desc, category, idx }: any) {
-  const colors: Record<string, string> = {
-    orange: "bg-orange-500 shadow-orange-500/20 text-orange-400",
-    blue: "bg-blue-500 shadow-blue-500/20 text-blue-400",
-    emerald: "bg-emerald-500 shadow-emerald-500/20 text-emerald-400",
-    purple: "bg-purple-600 shadow-purple-500/30 text-purple-400",
-    amber: "bg-amber-500 shadow-amber-500/20 text-amber-400",
-    rose: "bg-rose-500 shadow-rose-500/20 text-rose-400",
-  };
+// --- КОМПОНЕНТ КАРТОЧКИ (ОПТИМИЗИРОВАН) ---
+function QuizCard({ onClick, image, color, icon, badge, title, desc, category, priority, idx }: any) {
+    const colors: Record<string, string> = {
+        orange: "bg-orange-500 shadow-orange-500/20 text-orange-400 group-hover:border-orange-500/50",
+        blue: "bg-blue-500 shadow-blue-500/20 text-blue-400 group-hover:border-blue-500/50",
+        emerald: "bg-emerald-500 shadow-emerald-500/20 text-emerald-400 group-hover:border-emerald-500/50",
+        purple: "bg-purple-600 shadow-purple-500/30 text-purple-400 group-hover:border-purple-500/50",
+        amber: "bg-amber-500 shadow-amber-500/20 text-amber-400 group-hover:border-amber-500/50",
+        rose: "bg-rose-500 shadow-rose-500/20 text-rose-400 group-hover:border-rose-500/50",
+        teal: "bg-teal-500 shadow-teal-500/20 text-teal-400 group-hover:border-teal-500/50",
+    };
 
-  return (
-    // whileHover y:-8 → CSS hover:-translate-y-2, variants убраны
-    <div
-      onClick={onClick}
-      style={{ animationDelay: `${idx * 80}ms` }}
-      className="group relative min-h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all shadow-2xl hover:-translate-y-2"
-    >
-      {image && <Image src={image} alt={title} fill className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-      <div className="absolute top-6 right-6 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-1.5 z-20">
-        <Sparkles size={12} className={colors[color]?.split(" ")[2]} />
-        <span className="text-[10px] font-bold text-white uppercase tracking-widest">{category}</span>
-      </div>
-      <div className="absolute inset-0 p-8 flex flex-col justify-end">
-        <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg", colors[color]?.split(" ").slice(0, 2).join(" "))}>{icon}</div>
-        <h3 className="text-3xl font-black text-white uppercase mb-3 leading-[0.95]">{title}</h3>
-        <p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed">{desc}</p>
-        <div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all group-hover:gap-4", colors[color]?.split(" ")[2])}>
-          Пройти <ArrowRight size={14} strokeWidth={3} />
+    const activeColor = colors[color] || colors.teal;
+
+    return (
+       <div 
+         onClick={onClick} 
+         style={{ animationDelay: `${idx * 100}ms` }}
+         className={cn(
+            "group relative min-h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer transition-all duration-500 shadow-2xl",
+            "hover:shadow-3xl hover:-translate-y-2",
+            "animate-in fade-in slide-in-from-bottom-4 fill-mode-both"
+         )}
+       >
+           {/* ОПТИМИЗИРОВАНО: sizes ужат до фактического размера карточки в DOM */}
+           {image && (
+             <Image 
+               src={image} 
+               alt={title} 
+               fill 
+               priority={priority} 
+               sizes="(max-width: 768px) 90vw, (max-width: 1200px) 400px, 350px"
+               className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700" 
+             />
+           )}
+           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
+           
+           {badge && (
+              <div className="absolute top-6 right-6 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-1.5 shadow-lg z-20">
+                 <Sparkles size={12} className={activeColor.split(" ")[2]} />
+                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">{badge}</span>
+              </div>
+           )}
+           
+           <div className="absolute inset-0 p-8 flex flex-col justify-end z-10 pointer-events-none">
+              <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg", activeColor.split(" ").slice(0, 2).join(" "))}>
+                 {icon}
+              </div>
+              <h3 className="text-3xl font-black text-white uppercase mb-3 leading-[0.95] drop-shadow-md" dangerouslySetInnerHTML={{ __html: title.replace('\n', '<br/>') }} />
+              <p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed drop-shadow-md">{desc}</p>
+              
+              <div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all group-hover:gap-4", activeColor.split(" ")[2])}>
+                 Начать <ArrowRight size={14} strokeWidth={3} />
+              </div>
+           </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

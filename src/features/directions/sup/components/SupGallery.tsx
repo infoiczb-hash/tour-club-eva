@@ -1,10 +1,7 @@
-'use client';
-
 import Image from 'next/image';
 import { Heart, Camera, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
-import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -41,11 +38,7 @@ const PHOTOS = [
 ];
 
 export default function SupGallery() {
-    const { ref: refHeader, inView: headerInView } = useInView({ rootMargin: "-50px" });
-    const { ref: refGrid,   inView: gridInView   } = useInView({ rootMargin: "-100px" });
-
     return (
-        // 🔥 Уменьшили внешние отступы (py-8 md:py-16)
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
             {/* Легкие фоновые акценты */}
@@ -53,14 +46,8 @@ export default function SupGallery() {
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
-                {/* 🔥 ЗАГОЛОВОК: Строгое выравнивание по левому краю */}
-                <div 
-                    ref={refHeader}
-                    className={cn(
-                      "text-left mb-8 md:mb-12 max-w-3xl transition-all duration-500 ease-out",
-                      headerInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"
-                    )}
-                >
+                {/* ЗАГОЛОВОК */}
+                <div className="text-left mb-8 md:mb-12 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 md:mb-6 backdrop-blur-md">
                         <Camera className="w-4 h-4 text-slate-400" />
                         <span className="text-[12px] md:text-[14px] font-bold tracking-widest text-slate-300 uppercase">
@@ -75,22 +62,17 @@ export default function SupGallery() {
                     </p>
                 </div>
                 
-                {/* 🔥 ОБЕРТКА ДЛЯ СКРОЛЛА */}
+                {/* ОБЕРТКА ДЛЯ СКРОЛЛА */}
                 <div className="relative">
-                    <div
-                        ref={refGrid}
-                        // 🔥 Магия адаптива: flex и snap для мобилок, grid для десктопа
-                        className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-4 md:mx-0 md:px-0 md:auto-rows-[300px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                    >
+                    <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-4 md:mx-0 md:px-0 md:auto-rows-[300px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {PHOTOS.map((photo, idx) => (
                             <div
                                 key={idx}
-                                style={{ transitionDelay: gridInView ? `${idx * 150}ms` : '0ms' }}
+                                style={{ animationDelay: `${idx * 150}ms` }}
                                 className={cn(
-                                    // 🔥 Добавили ширину и высоту для скролла на мобилке (w-[85vw] h-[400px])
-                                    "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 cursor-pointer shadow-2xl transition-all duration-600 ease-out",
-                                    photo.className,
-                                    gridInView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-[0.97]"
+                                    "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 shadow-2xl transition-all duration-500 hover:shadow-teal-900/30",
+                                    "animate-in fade-in slide-in-from-bottom-8 zoom-in-[0.98] fill-mode-both duration-700",
+                                    photo.className
                                 )}
                             >
                                 {/* Сама фотография */}
@@ -116,7 +98,6 @@ export default function SupGallery() {
                         ))}
                     </div>
 
-                    {/* 🔥 Подсказка "Мотай" */}
                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                         <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                         <ChevronRight size={14} />

@@ -1,6 +1,4 @@
-"use client";
-
-import { useRef, useEffect, useState } from "react";
+// src/features/directions/kayaking/Benefits.tsx
 import { 
   Users, CheckCircle2, Waves, Heart, 
   LifeBuoy, Zap, Sparkles, 
@@ -14,41 +12,22 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// Хук заменяет whileInView из Framer Motion
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
-
 const mainBenefits = [
   { id: 1, title: "Сплавы по Днестру с ТК «Эва»", desc: "Это не только физическая активность, но и идеальный способ провести время с семьёй или друзьями на природе, наслаждаясь её красотами.", icon: Waves, tag: "Турклуб Эва", desktopClass: "md:col-span-2 lg:col-span-6 bg-gradient-to-br from-teal-900/40 to-slate-900 border-teal-500/30", isCompactOnMobile: false },
-  { id: 2, title: "Всё продумано до мелочей", desc: "Комфорт в деталях — от посадки до хранения ваших вещей в лодке.", icon: CheckCircle2, features: ["Продуманная логистика", "Удобные мягкие сидушки", "Места для багажа", "Гермомешки для гаджетов (опционально по запросу)"], desktopClass: "md:col-span-2 lg:col-span-6", isCompactOnMobile: false },
+  { id: 2, title: "Всё продумано до мелочей", desc: "Комфорт в деталях — от посадки до хранения ваших вещей в лодке.", icon: CheckCircle2, features: ["Продуманная логистика", "Удобные мягкие сидушки", "Места для багажа", "Гермомешки для гаджетов"], desktopClass: "md:col-span-2 lg:col-span-6", isCompactOnMobile: false },
   { id: 3, title: "Можно с детьми", desc: "Спокойные воды и надежные байдарки делают сплав доступным для самых маленьких. От двух лет", icon: Users, desktopClass: "md:col-span-1 lg:col-span-3", isCompactOnMobile: true },
-  { id: 4, title: "Никогда не гребли?", desc: "60 % наших гостей — новички. Обучим азам за 15 минут до старта. Подскажем на воде", icon: Zap, desktopClass: "md:col-span-1 lg:col-span-3 border-orange-500/20 bg-orange-500/5", isCompactOnMobile: true },
+  { id: 4, title: "Никогда не гребли?", desc: "60 % наших гостей — новички. Обучим азам за 15 минут до старта.", icon: Zap, desktopClass: "md:col-span-1 lg:col-span-3 border-orange-500/20 bg-orange-500/5", isCompactOnMobile: true },
   { id: 5, title: "Нужна перезагрузка?", desc: "Тишина реки и мерный плеск весла — лучший детокс от суеты.", icon: Heart, desktopClass: "md:col-span-1 lg:col-span-3 border-pink-500/20 bg-pink-500/5", isCompactOnMobile: true },
-  { id: 6, title: "Не умеете плавать?", desc: "Наши жилеты держат надежно. У нас есть детские жилеты, размемы от XS до 5 XL и универальные жилеты. Безопасность — приоритет №1.", icon: LifeBuoy, desktopClass: "md:col-span-1 lg:col-span-3", isCompactOnMobile: true },
+  { id: 6, title: "Не умеете плавать?", desc: "Наши жилеты держат надежно. Безопасность — приоритет №1.", icon: LifeBuoy, desktopClass: "md:col-span-1 lg:col-span-3", isCompactOnMobile: true },
 ];
 
 const instructorRoles = [
   { title: "Детальный инструктаж", desc: "Перед выходом на воду ставим правильную технику гребли и объясняем правила поведения. Никаких «разберетесь по ходу».", icon: Megaphone },
-  { title: "Помощь на воде", desc: "Гид всегда рядом (если от него не уходить). Покажет лучшую траекторию, поможет причалить, а если силы покинут — возьмет на буксир (но это не точно).", icon: Anchor },
+  { title: "Помощь на воде", desc: "Гид всегда рядом. Покажет лучшую траекторию, поможет причалить, а если силы покинут — возьмет на буксир.", icon: Anchor },
   { title: "Безопасность и аптечка", desc: "У инструктора всегда под рукой стандартная групповая аптечка первой помощи и ремкомплект для непредвиденных ситуаций.", icon: BriefcaseMedical },
 ];
 
 export default function Benefits() {
-  const headerView = useInView();
-  const instructorView = useInView();
-
   return (
     <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans">
       <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-teal-500/10 md:blur-[150px] rounded-full pointer-events-none" />
@@ -57,23 +36,18 @@ export default function Benefits() {
       <div className="container mx-auto px-4 relative z-10 max-w-7xl">
         
         {/* HEADER */}
-        <div className="max-w-3xl mb-12 md:mb-16">
-          <div
-            ref={headerView.ref}
-            style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
-              <Sparkles size={14} className="text-teal-400" />
-              <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Почему мы</span>
-            </div>
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-4 leading-[0.9]">
-              Идеальный отдых <br className="hidden md:block" />
-              <span className="text-teal-500">на воде</span>
-            </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl">
-              Мы берем на себя всю рутину, логистику и безопасность. Вам остается только грести, загорать и наслаждаться видами.
-            </p>
+        <div className="max-w-3xl mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
+            <Sparkles size={14} className="text-teal-400" />
+            <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Почему мы</span>
           </div>
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-4 leading-[0.9]">
+            Идеальный отдых <br className="hidden md:block" />
+            <span className="text-teal-500">на воде</span>
+          </h2>
+          <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl">
+            Мы берем на себя всю рутину, логистику и безопасность. Вам остается только грести, загорать и наслаждаться видами.
+          </p>
         </div>
 
         {/* Bento Grid Desktop */}
@@ -101,17 +75,13 @@ export default function Benefits() {
         </div>
 
         {/* INSTRUCTOR SECTION */}
-        <div
-          ref={instructorView.ref}
-          style={{ opacity: instructorView.inView ? 1 : 0, transform: instructorView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          className="pt-12 md:pt-16 border-t border-white/10"
-        >
+        <div className="pt-12 md:pt-16 border-t border-white/10 animate-in fade-in duration-700">
           <div className="text-left mb-10">
             <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">
               Надежный тыл: <br className="md:hidden" /><span className="text-amber-500">Профи на борту</span>
             </h3>
             <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl">
-              Ваш поход сопровождает инструктор. Он берет на себя все технические вопросы, чтобы вы могли просто расслабиться (если получится).
+              Ваш поход сопровождает инструктор. Он берет на себя все технические вопросы, чтобы вы могли просто расслабиться.
             </p>
           </div>
 
@@ -122,8 +92,8 @@ export default function Benefits() {
                 return (
                   <div
                     key={idx}
-                    className="w-[85vw] md:w-auto flex-shrink-0 snap-center bg-slate-900/60 border border-white/5 rounded-[2rem] p-5 md:p-8 hover:border-amber-500/30 transition-all duration-300 group flex flex-row items-center md:flex-col md:items-start text-left"
-                    style={{ opacity: instructorView.inView ? 1 : 0, transform: instructorView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
+                    className="w-[85vw] md:w-auto flex-shrink-0 snap-center bg-slate-900/60 border border-white/5 rounded-[2rem] p-5 md:p-8 hover:border-amber-500/30 transition-all duration-300 group flex flex-row items-center md:flex-col md:items-start text-left animate-in slide-in-from-bottom-8 fill-mode-both"
+                    style={{ animationDelay: `${idx * 150}ms` }}
                   >
                     <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 mr-4 md:mr-0 md:mb-6 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all duration-500">
                       <Icon size={24} strokeWidth={1.5} />
@@ -153,14 +123,12 @@ export default function Benefits() {
 
 function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any) {
   const Icon = item.icon;
-  const { ref, inView } = useInView();
 
   if (!isDesktop && item.isCompactOnMobile) {
     return (
       <div
-        ref={ref}
-        style={{ opacity: inView ? 1 : 0, transform: inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.05}s, transform 0.5s ease ${idx * 0.05}s` }}
-        className="group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left flex flex-row items-center p-5 w-[85vw] md:w-auto flex-shrink-0 snap-center"
+        className="group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left flex flex-row items-center p-5 w-[85vw] md:w-auto flex-shrink-0 snap-center animate-in slide-in-from-bottom-8 fill-mode-both"
+        style={{ animationDelay: `${idx * 100}ms` }}
       >
         <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 shrink-0 mr-4">
           <Icon size={24} strokeWidth={1.5} />
@@ -175,12 +143,11 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
 
   return (
     <div
-      ref={ref}
-      style={{ opacity: inView ? 1 : 0, transform: inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.05}s, transform 0.5s ease ${idx * 0.05}s` }}
       className={cn(
-        "group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left w-full flex flex-col p-6 md:p-8",
+        "group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-lg transition-all duration-500 hover:border-teal-500/40 hover:bg-slate-900/60 text-left w-full flex flex-col p-6 md:p-8 animate-in slide-in-from-bottom-8 fill-mode-both",
         isDesktop ? item.desktopClass : ""
       )}
+      style={{ animationDelay: `${idx * 100}ms` }}
     >
       <div className="flex flex-row items-center md:items-start md:flex-col gap-4 mb-4 md:mb-6">
         <div className="w-12 h-12 md:w-14 md:h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 shrink-0">

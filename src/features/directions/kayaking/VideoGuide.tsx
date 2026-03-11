@@ -1,41 +1,20 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Play, Video } from "lucide-react";
 import Image from "next/image";
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
 
 export default function VideoGuide() {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoId = "WmzHFlL0jrg";
   const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-  const headerView = useInView();
-  const playerView = useInView();
 
   return (
     <section className="py-8 md:py-16 bg-[#020617] relative overflow-hidden border-t border-white/5">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
 
         {/* HEADER */}
-        <div
-          ref={headerView.ref}
-          style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          className="text-left mb-8 md:mb-12 max-w-3xl"
-        >
+        <div className="text-left mb-8 md:mb-12 max-w-3xl animate-in fade-in slide-in-from-left-4 duration-700 fill-mode-both">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
             <Video size={14} className="text-teal-400" />
             <span className="text-[12px] md:text-[14px] font-bold uppercase tracking-widest text-teal-400">Видео-гид</span>
@@ -50,9 +29,7 @@ export default function VideoGuide() {
 
         {/* PLAYER */}
         <div
-          ref={playerView.ref}
-          style={{ opacity: playerView.inView ? 1 : 0, transform: playerView.inView ? 'scale(1)' : 'scale(0.95)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          className="relative w-full aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden group border border-white/10 shadow-2xl shadow-teal-900/20 bg-slate-900 isolate cursor-pointer"
+          className="relative w-full aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden group border border-white/10 shadow-2xl shadow-teal-900/20 bg-slate-900 isolate cursor-pointer animate-in fade-in zoom-in-95 duration-700 delay-150 fill-mode-both"
           onClick={() => setIsPlaying(true)}
         >
           {!isPlaying ? (
