@@ -333,6 +333,14 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                             </div>
                         )}
 
+                                                {/* БИОГРАФИЯ (Full Bio приоритетнее в модалке) */}
+                        <div className="mb-8">
+                            <h3 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Досье</h3>
+                            <p className="text-sm text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
+                                {guide.fullBio || guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию."}
+                            </p>
+                        </div>
+
                         {/* ЦИТАТА */}
                         {guide.quotes && guide.quotes.length > 0 && (
                             <div className="mb-8 border-l-2 border-teal-500 pl-4 py-1">
@@ -341,14 +349,6 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                                 </p>
                             </div>
                         )}
-
-                        {/* БИОГРАФИЯ (Full Bio приоритетнее в модалке) */}
-                        <div className="mb-8">
-                            <h3 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Досье</h3>
-                            <p className="text-sm text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
-                                {guide.fullBio || guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию."}
-                            </p>
-                        </div>
 
                         {/* СОЦСЕТИ */}
                         <div className="flex gap-3 mb-4">

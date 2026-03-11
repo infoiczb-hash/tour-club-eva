@@ -69,8 +69,10 @@ export default async function AllGuidesPage() {
              </span>
           </div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-6 animate-in fade-in zoom-in-95 duration-700 delay-150 fill-mode-both drop-shadow-xl">
-            Команда <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-300">Приключений</span>
+          <h1 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
+                <span className="font-light text-slate-400 block md:inline">Команда </span>
+                <span className="font-black text-white">Клуба</span>
+                <span className="text-teal-500">.</span>
           </h1>
           
           <p className="text-base md:text-xl text-slate-400 font-medium max-w-2xl leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">

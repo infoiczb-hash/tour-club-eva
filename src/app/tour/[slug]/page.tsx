@@ -59,10 +59,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `SUP и сплавы на байдарках на Днестре`
   ];
 
-  return {
+ return {
     title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
     keywords: keywords,
+    robots: { index: true, follow: true },
     alternates: {
       canonical: url, 
     },

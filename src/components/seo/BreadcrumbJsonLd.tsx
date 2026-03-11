@@ -1,5 +1,4 @@
-// components/seo/BreadcrumbJsonLd.tsx
-const BASE_URL = "https://evatur.club";
+import { BASE_URL } from '@/lib/constants';
 
 export function BreadcrumbJsonLd({
   items,
