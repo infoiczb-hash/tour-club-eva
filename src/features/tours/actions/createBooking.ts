@@ -41,7 +41,6 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
   if (!parsed.success) {
     const fields: Record<string, string> = {};
     
-    // 👇 ИСПРАВЛЕНО: используем .issues и явно указываем тип z.ZodIssue
     parsed.error.issues.forEach((e: z.ZodIssue) => {
       const key = e.path[0]?.toString() ?? 'unknown';
       fields[key] = e.message;
@@ -50,12 +49,14 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     return { success: false, error: 'Ошибка валидации формы. Проверьте данные.', fields };
   }
   const data = parsed.data;
+  const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember;
 
   try {
-    // 3.2 Проверяем что тур существует и есть свободные места
+    // 3.2 Быстрая проверка тура (и получение SLUG для кэша)
     const tour = await prisma.tour.findUnique({
       where: { id: data.tourId },
-      select: { id: true, title: true, spotsLeft: true, isActive: true, coverImage: true },
+      // 🔥 ИСПРАВЛЕНИЕ: Добавили slug в выборку
+      select: { id: true, title: true, slug: true, spotsLeft: true, isActive: true, coverImage: true },
     });
 
     if (!tour) {
@@ -66,8 +67,7 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
       return { success: false, error: 'Этот тур больше не доступен для записи' };
     }
 
-    const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember;
-
+    // Предварительная (быстрая) проверка мест, чтобы отсеять явные ошибки
     if (tour.spotsLeft < totalTickets) {
       return {
         success: false,
@@ -75,9 +75,25 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
       };
     }
 
-    // 3.3 Транзакция: создаём бронь + уменьшаем spotsLeft атомарно
+    // 3.3 Транзакция: АТОМАРНОЕ уменьшение мест + создание брони
     const booking = await prisma.$transaction(async (tx) => {
-      // Создаём запись брони
+      
+      // 🔥 ИСПРАВЛЕНИЕ: Пессимистичная блокировка (Защита от гонки данных)
+      // Пытаемся отнять места, ТОЛЬКО если их >= totalTickets в данную миллисекунду
+      const updatedTour = await tx.tour.updateMany({
+        where: { 
+            id: data.tourId,
+            spotsLeft: { gte: totalTickets } // Условие прямо в запросе
+        },
+        data:  { spotsLeft: { decrement: totalTickets } },
+      });
+
+      // Если count === 0, значит пока юзер заполнял форму, места уже кто-то выкупил
+      if (updatedTour.count === 0) {
+        throw new Error('SPOTS_GONE');
+      }
+
+      // Если места списались успешно, создаём саму запись брони
       const newBooking = await tx.booking.create({
         data: {
           tourId:     data.tourId,
@@ -98,20 +114,16 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         },
       });
 
-      // Уменьшаем spotsLeft
-      await tx.tour.update({
-        where: { id: data.tourId },
-        data:  { spotsLeft: { decrement: totalTickets } },
-      });
-
       return newBooking;
     });
 
     // 3.4 Telegram-уведомление (не блокирует ответ пользователю)
     notifyTelegram(data, booking.id, tour.coverImage).catch(console.error);
 
-    // 3.5 Инвалидируем кэш, чтобы счетчик мест на сайте сразу обновился
-    revalidatePath(`/tour/${data.tourId}`);
+    // 3.5 🔥 ИСПРАВЛЕНИЕ: Инвалидируем кэш по правильному SLUG
+    if (tour.slug) {
+        revalidatePath(`/tour/${tour.slug}`);
+    }
     revalidatePath('/tour');
     revalidatePath('/admin');
 
@@ -119,6 +131,15 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
 
   } catch (error: any) {
     console.error('createBooking error:', error);
+    
+    // Перехватываем нашу специфичную ошибку овербукинга
+    if (error.message === 'SPOTS_GONE') {
+        return {
+            success: false,
+            error: 'Извините, пока вы оформляли заявку, последние места были выкуплены.',
+        };
+    }
+
     return {
       success: false,
       error: 'Произошла ошибка при сохранении. Попробуйте ещё раз или свяжитесь с нами напрямую.',
@@ -135,7 +156,6 @@ async function notifyTelegram(
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
   
-
   if (!token || !chatId) {
     console.warn("Telegram tokens not found in environment variables.");
     return;
@@ -174,11 +194,10 @@ async function notifyTelegram(
     }),
   };
 
-  // Если есть обложка — отправляем фото с подписью
   if (coverImage) {
     body.method  = 'sendPhoto';
     body.photo   = coverImage;
-    body.caption = lines.slice(0, 1024);  // лимит Telegram
+    body.caption = lines.slice(0, 1024);
   } else {
     body.method = 'sendMessage';
     body.text   = lines;

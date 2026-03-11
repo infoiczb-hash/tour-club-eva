@@ -254,9 +254,9 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       const list = bookings.filter(b => b.event_id === tourId && b.status !== 'cancelled');
       if (list.length === 0) return showToast('Список пуст', 'error');
       
-      let msg = `📋 *Список группы: ${title}*\n\n`;
-      list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
-      msg += `\n👥 Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)}`;
+      let msg = `📋 <b>Список группы: ${title}</b>\n\n`;
+list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
+msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
       
       const res = await sendToTelegram(msg);
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');

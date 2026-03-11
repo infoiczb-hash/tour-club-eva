@@ -41,9 +41,9 @@ export default function AiAssistant() {
     // Отправляем запрос к AI
     // ВАЖНО: Мы передаем всю историю, чтобы AI помнил контекст
     const res = await performAiTask({ 
-      mode: 'chat', 
-      messages: newHistory 
-    });
+  mode: 'chat', 
+  messages: newHistory.slice(1) // убрать начальное приветствие из контекста
+});
 
     setIsLoading(false);
 
