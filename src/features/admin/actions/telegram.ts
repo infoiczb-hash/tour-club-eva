@@ -1,4 +1,5 @@
 "use server";
+import { env } from '@/lib/env';
 
 /**
  * Продвинутая отправка в Telegram с поддержкой фото и кнопок.
@@ -10,10 +11,10 @@ export async function publishToTelegram(
   link?: string,
   isPublic: boolean = false
 ) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token  = env.TELEGRAM_BOT_TOKEN;
   const chatId = isPublic
-    ? process.env.TELEGRAM_CHANNEL_ID
-    : process.env.TELEGRAM_ADMIN_CHAT_ID;
+    ? env.TELEGRAM_CHANNEL_ID    // string | undefined
+    : env.TELEGRAM_ADMIN_CHAT_ID;
 
   if (!token || !chatId) {
     return { success: false, error: 'Не настроен .env' };

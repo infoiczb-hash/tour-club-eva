@@ -2,16 +2,22 @@
 import { prisma } from '@/lib/prisma';
 
 export async function getGuides() {
-  try {
-    const guides = await prisma.guide.findMany();
-
-    // Обязательная нормализация BigInt в строку для Client Components
-    return guides.map(guide => ({
-      ...guide,
-      id: guide.id.toString(),
-    }));
-  } catch (error) {
-    console.error("Ошибка при получении гидов через Prisma:", error);
-    return [];
-  }
+  const guides = await prisma.guide.findMany({
+    where: { isActive: true }, 
+    select: {
+      id: true, 
+      slug: true, 
+      name: true, 
+      role: true,
+      image: true, 
+      superpower: true, 
+      experience: true,
+      instagram: true, 
+      telegram: true, 
+      order: true,
+    },
+    orderBy: { order: 'asc' },
+  });
+  
+  return guides.map(g => ({ ...g, id: g.id.toString() }));
 }

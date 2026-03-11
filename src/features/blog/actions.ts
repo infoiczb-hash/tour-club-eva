@@ -5,6 +5,8 @@ import { PostFormat } from '@prisma/client'
 // 👇 Импорт нашей утилиты для Телеграма
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { requireAuth } from '@/lib/auth'; // 👈 ДОБАВЛЕНО: импорт проверки авторизации
+import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { env } from '@/lib/env';
 
 // === 1. СОЗДАНИЕ ПОСТА (ТВОЙ ОРИГИНАЛЬНЫЙ КОД) ===
 export async function createBlogPost(formData: FormData) {
@@ -65,8 +67,14 @@ export async function createBlogPost(formData: FormData) {
 revalidatePath('/blog')
     revalidatePath('/') 
     revalidatePath(`/blog/${slug}`)
-    // redirect должен быть в try, но Next.js требует, чтобы он вызывался вне блока try-catch,
-    // если мы ловим все ошибки. Поэтому делаем return в catch.
+     if (image) {
+      publishToTelegram(
+        `📝 <b>${title}</b>\n\n${excerpt}`,
+        image,
+        `${env.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
+        true  // → публичный канал
+      ).catch(console.error); // не блокируем redirect
+    }
   } catch (error) {
     console.error("Ошибка при создании поста:", error)
     return { success: false, error: 'Не удалось создать пост' }

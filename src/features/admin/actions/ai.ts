@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 // === 1. КОНФИГУРАЦИЯ (ИСПРАВЛЕНО ИМЯ МОДЕЛИ) ===
 // ⚠️ Было: 'models/gemini-1.5-pro-latest' -> Стало: 'gemini-1.5-pro'
-const model = google('gemini-1.5-pro');
+const model = google('gemini-2.0-flash');
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
 const TourAiSchema = z.object({
@@ -63,8 +63,8 @@ type AiTaskType =
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' } 
   | { mode: 'smm_post'; context: any; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
-  | { mode: 'chat'; messages: any[] };
-
+  | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] }
+  
 // === 4. ГЛАВНЫЙ ЭКШЕН ===
 export async function performAiTask(task: AiTaskType) {
   try {
@@ -172,8 +172,11 @@ export async function performAiTask(task: AiTaskType) {
       const { text } = await generateText({
         model,
         system: 'Ты — EVA, стратегический AI-партнер.',
-        messages: task.messages, // Здесь массив сообщений (history)
-      });
+       messages: task.messages.map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content as string,
+    })),
+  });
       return { success: true, data: text };
     }
 

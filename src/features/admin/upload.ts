@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '@/lib/env';
 
-// Инициализация клиента Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
+const supabase = createClient(
+  env.NEXT_PUBLIC_SUPABASE_URL,
+  env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 /**
  * Универсальная функция загрузки файлов в Supabase Storage
  * @param file - Объект файла (из input type="file")

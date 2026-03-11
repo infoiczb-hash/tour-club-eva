@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client'; // ✅ Добавили импорт типов Prisma
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
+import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { env } from '@/lib/env';
 
 // ==========================================
 // ZOD SCHEMA
@@ -200,6 +202,23 @@ export async function saveTour(formData: any) {
     revalidatePath('/tour');
     revalidatePath(`/tour/${slug}`);
     revalidatePath('/');
+if (!formData.id && data.isActive) {
+      const caption = [
+        `🏕 <b>${data.title}</b>`,
+        data.subtitle ? `<i>${data.subtitle}</i>` : null,
+        ``,
+        `📍 ${data.location}`,
+        data.duration ? `⏱ ${data.duration}` : null,
+        `💰 от ${data.price} ${data.currency}`,
+      ].filter(Boolean).join('\n');
+
+      publishToTelegram(
+        caption,
+        data.coverImage ?? undefined,
+        `${env.NEXT_PUBLIC_SITE_URL}/tour/${slug}`,
+        true  // → публичный канал
+      ).catch(console.error);
+    }
 
     return { success: true };
   } catch (error: any) {
