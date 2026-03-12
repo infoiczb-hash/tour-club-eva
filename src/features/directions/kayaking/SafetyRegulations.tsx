@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { 
   ShieldCheck, Anchor, Waves, Navigation, 
   Tent, LifeBuoy, UserCheck, Scale, ChevronDown, AlertCircle
@@ -33,7 +32,6 @@ export default function SafetyRegulations() {
 
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
 
-        {/* HEADER */}
         <div className="text-center mb-12 md:mb-16">
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-950/30 backdrop-blur-md mb-4 md:mb-6">
@@ -49,7 +47,6 @@ export default function SafetyRegulations() {
           </div>
         </div>
 
-        {/* ACCORDION */}
         <div className="space-y-3 md:space-y-4">
           {regulations.map((section, idx) => {
             const isOpen = openIndex === idx;
@@ -81,35 +78,27 @@ export default function SafetyRegulations() {
                   </div>
                 </button>
 
-                {/* Аккордеон — AnimatePresence для высоты оставляем (не влияет на SEO) */}
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-5 md:px-6 pb-6 pt-2 ml-0 md:ml-14">
-                        <ul className="space-y-3">
-                          {section.items.map((item, i) => (
-                            <li key={i} className="flex items-start gap-3 text-sm md:text-base text-slate-400 font-medium leading-relaxed">
-                              <span className="text-rose-500/50 font-bold mt-0.5">{idx + 1}.{i + 1}</span>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        {section.alert && (
-                          <div className="mt-6 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex gap-3 items-start">
-                            <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
-                            <p className="text-sm text-rose-200/80 font-medium leading-relaxed">{section.alert}</p>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* CSS grid trick: анимация height: 0 → auto */}
+                <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-5 md:px-6 pb-6 pt-2 ml-0 md:ml-14">
+                      <ul className="space-y-3">
+                        {section.items.map((item, i) => (
+                          <li key={i} className="flex items-start gap-3 text-sm md:text-base text-slate-400 font-medium leading-relaxed">
+                            <span className="text-rose-500/50 font-bold mt-0.5">{idx + 1}.{i + 1}</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {section.alert && (
+                        <div className="mt-6 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex gap-3 items-start">
+                          <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                          <p className="text-sm text-rose-200/80 font-medium leading-relaxed">{section.alert}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircleQuestion, MessageCircle, Quote, CheckCircle2 } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';
@@ -50,11 +49,8 @@ export default function KidsFAQ() {
                 
                 {/* === БЛОК 1: ВОПРОСЫ (FAQ) === */}
                 {/* 🔥 2. ВЫРАВНИВАНИЕ ВЛЕВО: Изменили items-center text-center на items-start text-left */}
-                <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="flex flex-col items-start text-left mb-8 md:mb-12 max-w-2xl"
+                <div 
+                    className="flex flex-col items-start text-left mb-8 md:mb-12 max-w-2xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both"
                 >
                     <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-900 rounded-2xl flex items-center justify-center border border-white/5 mb-4 md:mb-6 shadow-xl">
                         <MessageCircleQuestion className="text-amber-500" size={24} strokeWidth={1.5} />
@@ -65,7 +61,7 @@ export default function KidsFAQ() {
                     <p className="text-slate-400 text-[14px] md:text-base font-medium leading-tight md:leading-tight">
                         Отвечаем на то, что больше всего волнует родителей перед первой поездкой.
                     </p>
-                </motion.div>
+                </div>
 
                 {/* АККОРДЕОН */}
                 {/* 🔥 3. Сократили отступ до нижнего блока (было mb-24, стало mb-12 md:mb-16) */}
@@ -73,66 +69,56 @@ export default function KidsFAQ() {
                     {FAQ_DATA.map((item, index) => {
                         const isOpen = openId === item.id;
                         return (
-                            <motion.div 
+                            <div 
                                 key={item.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-20px" }}
-                                transition={{ delay: index * 0.1, duration: 0.4 }}
                                 className={cn(
-                                    "bg-slate-900/60 border rounded-2xl overflow-hidden transition-colors duration-300",
+                                    "bg-slate-900/60 border rounded-2xl overflow-hidden transition-colors duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-both",
                                     isOpen ? "border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.05)]" : "border-white/5 hover:border-amber-500/20 hover:bg-slate-900"
                                 )}
+                                style={{ animationDelay: `${index * 100}ms` }}
                             >
                                <button
-  onClick={() => toggleAccordion(item.id)}
-  aria-expanded={openId === item.id}
-  className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
->
+                                  onClick={() => toggleAccordion(item.id)}
+                                  aria-expanded={openId === item.id}
+                                  className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
+                                >
                                     <h3 className={cn(
                                         "text-[15px] md:text-lg font-bold pr-6 transition-colors duration-300",
                                         isOpen ? "text-amber-400" : "text-white group-hover:text-amber-200"
                                     )}>
                                         {item.q}
                                     </h3>
-                                    <motion.div
-                                        animate={{ rotate: isOpen ? 180 : 0 }}
-                                        transition={{ duration: 0.3 }}
+                                    <div
                                         className={cn(
-                                            "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition-colors",
+                                            "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition-all duration-300",
                                             isOpen ? "bg-amber-500/10 border-amber-500/30" : "bg-slate-800 border-transparent group-hover:bg-slate-700"
                                         )}
                                     >
-                                        <ChevronDown size={18} className={isOpen ? "text-amber-400" : "text-slate-400"} />
-                                    </motion.div>
+                                        <ChevronDown size={18} className={cn("transition-transform duration-300", isOpen ? "text-amber-400 rotate-180" : "text-slate-400")} />
+                                    </div>
                                 </button>
 
-                                <AnimatePresence initial={false}>
-                                    {isOpen && (
-                                        <motion.div
-                                            key="content"
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                        >
-                                            <div className="p-5 md:p-6 pt-0 text-slate-400 text-[14px] md:text-base leading-tight md:leading-tight font-medium border-t border-white/5 mt-2">
-                                                {item.a}
-                                            </div>
-                                        </motion.div>
+                                {/* CSS Grid анимация (замена AnimatePresence и framer-motion) */}
+                                <div 
+                                    className={cn(
+                                        "grid transition-all duration-300 ease-in-out",
+                                        isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                                     )}
-                                </AnimatePresence>
-                            </motion.div>
+                                >
+                                    <div className="overflow-hidden">
+                                        <div className="p-5 md:p-6 pt-0 text-slate-400 text-[14px] md:text-base leading-tight md:leading-tight font-medium border-t border-white/5 mt-2">
+                                            {item.a}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         );
                     })}
                 </div>
 
                 {/* === БЛОК 2: ФИНАЛЬНЫЙ CTA + ЦИТАТА РОМАНА === */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="relative p-6 md:p-12 lg:p-16 rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-900 to-[#020617] border border-amber-500/20 overflow-hidden text-center shadow-2xl isolate"
+                <div 
+                    className="relative p-6 md:p-12 lg:p-16 rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-900 to-[#020617] border border-amber-500/20 overflow-hidden text-center shadow-2xl isolate animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
                 >
                     <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/5 md:blur-[120px] rounded-full pointer-events-none" />
 
@@ -203,13 +189,9 @@ export default function KidsFAQ() {
                             <span>Связаться с нами</span>
                         </button>
                     </div>
-                </motion.div>
+                </div>
 
             </div>
-
-            {/* Модалка Связи */}
-                 
-           
         </section>
     );
 }

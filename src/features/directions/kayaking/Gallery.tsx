@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -14,26 +13,36 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 const galleryImages = [
   { id: 1, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584114/196866761_4343080962371184_6042688601785630843_n_w7jdqu.jpg", alt: "Счастливая группа на воде", focus: "object-center" },
   { id: 2, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584132/104_vapoxq.jpg", alt: "Эмоции на байдарке", focus: "object-top" },
-  { id: 3, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584228/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%B1%D0%B8%D0%B5_viber_2025-06-21_11-50-14-080_a7uba5.jpg", alt: "Привал на диком пляже", focus: "object-center" },
-  { id: 4, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584255/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%B1%D0%B8%D0%B5_viber_2023-09-23_21-20-27-585_cqucfh.jpg", alt: "Командный дух", focus: "object-center" },
+  { id: 3, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584148/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5_viber_2021-06-07_15-38-48_kd4s3e.jpg", alt: "Привал на диком пляже", focus: "object-center" },
+  { id: 4, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584228/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5_viber_2025-06-21_11-50-14-080_a7uba5.jpg", alt: "Командный дух", focus: "object-center" },
 ];
 
 export default function Gallery() {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [lightboxVisible, setLightboxVisible] = useState(false);
+
+  const openLightbox = (idx: number) => {
+    setSelectedImage(idx);
+    requestAnimationFrame(() => setLightboxVisible(true));
+  };
+
+  const closeLightbox = () => {
+    setLightboxVisible(false);
+    setTimeout(() => setSelectedImage(null), 300);
+  };
+
+  const showNext = () => setSelectedImage((prev) => (prev === null || prev === galleryImages.length - 1 ? 0 : prev + 1));
+  const showPrev = () => setSelectedImage((prev) => (prev === null || prev === 0 ? galleryImages.length - 1 : prev - 1));
 
   useEffect(() => {
-    if (selectedImage !== null) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+    document.body.style.overflow = selectedImage !== null ? 'hidden' : 'auto';
     return () => { document.body.style.overflow = 'auto'; };
   }, [selectedImage]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedImage === null) return;
-      if (e.key === 'Escape') setSelectedImage(null);
+      if (e.key === 'Escape') closeLightbox();
       if (e.key === 'ArrowLeft') showPrev();
       if (e.key === 'ArrowRight') showNext();
     };
@@ -41,15 +50,12 @@ export default function Gallery() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedImage]);
 
-  const showNext = () => setSelectedImage((prev) => (prev === null || prev === galleryImages.length - 1 ? 0 : prev + 1));
-  const showPrev = () => setSelectedImage((prev) => (prev === null || prev === 0 ? galleryImages.length - 1 : prev - 1));
-
   return (
     <section className="py-12 md:py-24 bg-[#020617] relative overflow-hidden border-t border-white/5 font-sans">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
-        
+
         {/* HEADER */}
         <div className="max-w-3xl mb-10 md:mb-16 text-left">
           <div className="animate-in fade-in slide-in-from-left-4 duration-700 fill-mode-both">
@@ -71,7 +77,7 @@ export default function Gallery() {
           {galleryImages.map((img, idx) => (
             <div
               key={img.id}
-              onClick={() => setSelectedImage(idx)}
+              onClick={() => openLightbox(idx)}
               className="group relative aspect-square md:aspect-[4/5] rounded-[2rem] overflow-hidden cursor-pointer bg-slate-900 border border-white/5 shadow-lg animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
               style={{ animationDelay: `${idx * 150}ms` }}
             >
@@ -82,10 +88,8 @@ export default function Gallery() {
                 className={cn("object-cover transition-transform duration-700 group-hover:scale-105", img.focus)}
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
-              
-              {/* Оверлей при наведении */}
               <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors duration-500 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                   <Maximize2 className="text-white w-5 h-5" />
                 </div>
               </div>
@@ -94,33 +98,39 @@ export default function Gallery() {
         </div>
       </div>
 
-      {/* ЛАЙТБОКС (Остается на Framer Motion, т.к. это модалка) */}
-      <AnimatePresence>
-        {selectedImage !== null && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl"
+      {/* ЛАЙТБОКС */}
+      {selectedImage !== null && (
+        <div
+          onClick={closeLightbox}
+          className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl transition-opacity duration-300 ${lightboxVisible ? 'opacity-100' : 'opacity-0'}`}
+        >
+          <button onClick={closeLightbox} className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50">
+            <X size={24} />
+          </button>
+
+          <button onClick={(e) => { e.stopPropagation(); showPrev(); }} className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50">
+            <ChevronLeft size={32} />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); showNext(); }} className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50">
+            <ChevronRight size={32} />
+          </button>
+
+          <div
+            className="relative w-full max-w-6xl aspect-[4/3] md:aspect-[16/9] px-4 md:px-0"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Кнопка закрытия */}
-            <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50">
-              <X size={24} />
-            </button>
-
-            {/* Контролы */}
-            <button onClick={(e) => { e.stopPropagation(); showPrev(); }} className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50">
-              <ChevronLeft size={32} />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); showNext(); }} className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50">
-              <ChevronRight size={32} />
-            </button>
-
-            {/* Картинка */}
-            <div className="relative w-full max-w-6xl aspect-[4/3] md:aspect-[16/9] px-4 md:px-0" onClick={(e) => e.stopPropagation()}>
-              <Image src={galleryImages[selectedImage].src} alt={galleryImages[selectedImage].alt} fill className="object-contain" sizes="100vw" quality={90} priority />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Image
+              src={galleryImages[selectedImage].src}
+              alt={galleryImages[selectedImage].alt}
+              fill
+              className="object-contain"
+              sizes="100vw"
+              quality={90}
+              priority
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

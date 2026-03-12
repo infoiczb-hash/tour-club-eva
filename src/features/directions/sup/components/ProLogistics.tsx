@@ -55,7 +55,7 @@ export default function ProLogistics() {
                         </div>
                         
                         <p className="text-slate-400 text-[14px] mb-6 leading-relaxed font-medium">
-                            Присоединяйтесь к нашим маршрутам на своем сапборде. Оплачивается только оргвзнос (50% от стоимости) и логистика доставки.
+                            Присоединяйтесь к нашим маршрутам на своем сапборде. Оплачивается 50% от стоимости сплава/тура .
                         </p>
                         
                         <ul className="space-y-4 text-[14px] text-slate-300 mb-8 flex-grow font-medium">

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { 
   Navigation, Clock, X, Users, Wind, MapPin, Map, 
@@ -23,10 +22,21 @@ const otherFormats = [
 export default function PopularRoutes() {
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    if (selectedRoute) setCurrentImgIdx(0);
+    if (selectedRoute) {
+      setCurrentImgIdx(0);
+      requestAnimationFrame(() => setModalVisible(true));
+    } else {
+      setModalVisible(false);
+    }
   }, [selectedRoute]);
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setTimeout(() => setSelectedRoute(null), 300);
+  };
 
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,11 +69,10 @@ export default function PopularRoutes() {
         <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {routesData.map((route, index) => (
-              <motion.div
+              <div
                 key={route.id}
-                whileHover={{ y: -8 }}
                 onClick={() => setSelectedRoute(route)}
-                className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 transition-all duration-500 shadow-xl animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 hover:-translate-y-2 transition-all duration-500 shadow-xl animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="absolute top-4 right-4 z-20 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -86,7 +95,7 @@ export default function PopularRoutes() {
                   <h3 className="font-black text-2xl md:text-3xl text-white uppercase leading-[1.1] mb-2 group-hover:text-teal-400 transition-colors drop-shadow-lg">{route.title}</h3>
                   <p className="text-xs md:text-sm text-slate-300 font-medium line-clamp-2 drop-shadow-md">{route.path}</p>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
           <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
@@ -132,32 +141,38 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-      {/* MODAL (Интерактивная часть) */}
-      <AnimatePresence>
+        {/* MODAL */}
         {selectedRoute && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-slate-950/90 backdrop-blur-xl">
-            <motion.div
-              layoutId={selectedRoute.id}
-              className="relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row"
+          <div
+            onClick={closeModal}
+            className={`fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-slate-950/90 backdrop-blur-xl transition-opacity duration-300 ${modalVisible ? 'opacity-100' : 'opacity-0'}`}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row transition-all duration-300 ${modalVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
             >
-              <button aria-label="Закрыть" onClick={() => setSelectedRoute(null)} className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-3 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10 shadow-lg">
+              <button aria-label="Закрыть" onClick={closeModal} className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-3 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10 shadow-lg">
                 <X size={20} />
               </button>
 
               {/* Карусель */}
               <div className="w-full md:w-5/12 h-[35vh] md:h-auto relative group">
-                <AnimatePresence mode="wait">
-                  <motion.div key={currentImgIdx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0">
-                    <Image src={selectedRoute.images[currentImgIdx]} alt={`${selectedRoute.title} - фото ${currentImgIdx + 1}`} fill className="object-cover" sizes="(max-width: 768px) 100vw, 60vw" />
-                  </motion.div>
-                </AnimatePresence>
+                <div className="absolute inset-0">
+                  <Image
+                    src={selectedRoute.images[currentImgIdx]}
+                    alt={`${selectedRoute.title} - фото ${currentImgIdx + 1}`}
+                    fill
+                    className="object-cover transition-opacity duration-300"
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-900 md:to-transparent" />
                 {selectedRoute.images.length > 1 && (
                   <>
-                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
                       <ChevronLeft size={20} />
                     </button>
-                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
                       <ChevronRight size={20} />
                     </button>
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
@@ -192,10 +207,9 @@ export default function PopularRoutes() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
       </div>
     </section>
   );

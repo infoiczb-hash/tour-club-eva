@@ -1,6 +1,3 @@
-'use client';
-
-import { m as motion } from 'framer-motion';
 import { Flame, Compass, Users, ArrowRight, Smartphone, Frown, User, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
@@ -49,16 +46,13 @@ export default function KidsTransformation() {
              <div className="container mx-auto px-4 max-w-6xl relative z-10">
                  
                  {/* 🔥 2. Заголовок: выровняли по левому краю для консистентности */}
-                 <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="text-left mb-8 md:mb-12"
+                 <div 
+                    className="text-left mb-8 md:mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
                  >
                      <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter">
                         Что <span className="text-amber-500">Меняется?</span>
                      </h2>
-                 </motion.div>
+                 </div>
 
                  {/* 🔥 3. ОБЕРТКА ДЛЯ СКРОЛЛА */}
                  <div className="relative">
@@ -68,14 +62,11 @@ export default function KidsTransformation() {
                              const OldIcon = item.oldIcon;
                              
                              return (
-                                 <motion.div 
+                                 <div 
                                     key={idx}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.1, duration: 0.5 }}
                                     // 🔥 Карточка: ширина 85vw для свайпа, уплотненный паддинг
-                                    className="shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm rounded-[2.5rem] border border-white/5 hover:bg-slate-900 transition-colors group flex flex-col items-center text-center relative isolate overflow-hidden shadow-xl"
+                                    className="shrink-0 snap-center w-[85vw] md:w-auto p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm rounded-[2.5rem] border border-white/5 hover:bg-slate-900 transition-colors group flex flex-col items-center text-center relative isolate overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
+                                    style={{ animationDelay: `${idx * 150}ms` }}
                                  >
                                      {/* Легкий блик при наведении */}
                                      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none", item.bg)} />
@@ -106,7 +97,7 @@ export default function KidsTransformation() {
                                      <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
                                          {item.desc}
                                      </p>
-                                 </motion.div>
+                                 </div>
                              );
                          })}
                      </div>

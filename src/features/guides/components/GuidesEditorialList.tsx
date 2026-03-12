@@ -4,7 +4,6 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { 
   Instagram, Send, ArrowRight, Zap, Flame, 
   Sparkles, Utensils, Activity, Heart, Compass, User 
@@ -48,7 +47,7 @@ interface Guide {
   order: number;
 }
 
-// --- КОМПОНЕНТ ШКАЛЫ НАВЫКА (Оставляем motion для красоты) ---
+// --- КОМПОНЕНТ ШКАЛЫ НАВЫКА ---
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     <div className="mb-2">
        <div className="flex justify-between items-end mb-2">
@@ -59,12 +58,9 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
           <span className="text-xs font-mono font-bold text-white">{value}%</span>
        </div>
        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-          <motion.div 
-             initial={{ width: 0 }} 
-             whileInView={{ width: `${value}%` }} 
-             viewport={{ once: true }}
-             transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-             className={cn("h-full rounded-full shadow-[0_0_10px_currentColor]", colorClass.replace('text-', 'bg-'))}
+          <div 
+             style={{ width: `${value}%` }} 
+             className={cn("h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out", colorClass.replace('text-', 'bg-'))}
           />
        </div>
     </div>
@@ -87,7 +83,7 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                     <EditorialGuideBlock key={guide.id} guide={guide} index={index} />
                 ))}
 
-                {/* 2. Блок HR (Призыв в команду) - Оставляем CSS анимацию */}
+                {/* 2. Блок HR (Призыв в команду) */}
                 <div
                     className="relative mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
                 >
@@ -130,10 +126,9 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
     }
 
     return (
-        // ОПТИМИЗАЦИЯ: Убран motion.div для избежания скрытия контента до гидратации
         <div
             className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center relative animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-            style={{ animationDelay: `${index * 100}ms` }}
+            style={{ animationDelay: `${Math.min(index * 150, 600)}ms` }}
         >
             {/* КОЛОНКА 1: ФОТО */}
             <div className={cn(
@@ -145,11 +140,8 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                         src={guide.actionImage || guide.image || ''}
                         alt={guide.name}
                         fill
-                        // ОПТИМИЗАЦИЯ LCP: Первый гид загружается с наивысшим приоритетом
-                        priority={index === 0}
                         className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                        // ОПТИМИЗАЦИЯ NETWORK: Размеры ужаты до ширины колонки
-                        sizes="(max-width: 1024px) 100vw, 600px"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">

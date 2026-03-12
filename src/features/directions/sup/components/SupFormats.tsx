@@ -2,7 +2,6 @@ import { Coffee, Heart, Users, Briefcase, Dog, Baby, ArrowRight } from 'lucide-r
 
 const FORMATS = [
   { icon: Heart, label: "Романтики/Свиданий" },
-  { icon: Briefcase, label: "Бизнес-встреч" },
   { icon: Users, label: "Для компании друзей" },
   { icon: Coffee, label: "Тимбилдинга" },
   { icon: Dog, label: "Прогулок собакой на воде" },

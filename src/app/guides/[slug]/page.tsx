@@ -1,5 +1,4 @@
 // src/app/guides/[slug]/page.tsx
-import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -10,8 +9,8 @@ import {
   Instagram, Send, MapPin, Sparkles, 
   Zap, Flame, Utensils, Activity, Heart, Compass, ArrowLeft 
 } from 'lucide-react';
+import type { ElementType } from 'react';
 
-// ✅ ИМПОРТИРУЕМ НАШУ НОВУЮ КНОПКУ
 import GuideContactButton from '@/features/guides/components/GuideContactButton';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -31,7 +30,7 @@ export async function generateStaticParams() {
     }));
 }
 
-const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
+const ICON_MAP: Record<string, { icon: ElementType, color: string }> = {
   Zap: { icon: Zap, color: "text-amber-400" },
   Utensils: { icon: Utensils, color: "text-rose-400" },
   Sparkles: { icon: Sparkles, color: "text-purple-400" },
@@ -132,6 +131,8 @@ export default async function GuidePage({ params }: Props) {
             fill 
             className="object-cover opacity-60"
             priority
+            fetchPriority="high"
+            sizes="100vw"
           />
         ) : (
           <div className="absolute inset-0 bg-slate-900" />
@@ -148,7 +149,7 @@ export default async function GuidePage({ params }: Props) {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500 text-slate-950 mb-4 font-black uppercase tracking-widest text-xs shadow-[0_0_15px_rgba(20,184,166,0.4)]">
                 {guide.role}
               </div>
-              <h1  className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-lg">
+              <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-lg">
                 {guide.name} 
               </h1>
               {guide.experience && (
@@ -176,7 +177,6 @@ export default async function GuidePage({ params }: Props) {
               </div>
             )}
 
-            {/* ✅ ИСПРАВЛЕНО: Журнальная типографика (читаемость) */}
             <div className="prose prose-base md:prose-lg prose-invert max-w-none 
                 prose-p:text-slate-300 prose-p:text-[16px] md:prose-p:text-[18px] prose-p:leading-[1.8] prose-p:mb-8 prose-p:mt-0
                 prose-strong:text-white prose-strong:font-bold">
@@ -241,7 +241,6 @@ export default async function GuidePage({ params }: Props) {
               </div>
             )}
 
-            {/* ✅ ИСПРАВЛЕНО: Карточка бронирования с новой логикой */}
             <div className="bg-gradient-to-br from-teal-900/40 to-slate-900 border border-teal-500/20 p-8 rounded-[2rem] text-center shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-[50px] rounded-full pointer-events-none" />
               
@@ -255,7 +254,6 @@ export default async function GuidePage({ params }: Props) {
                   </p>
                   
                   <div className="flex flex-col gap-3">
-                    {/* Новая клиентская кнопка открытия модалки */}
                     <GuideContactButton guideName={guide.name} />
                     
                     <Link 

@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 export default function HikesStory() {
@@ -9,7 +9,10 @@ export default function HikesStory() {
         <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
             
             {/* ТЕКСТОВАЯ ЧАСТЬ */}
-            <div className="flex flex-col text-left animate-in fade-in slide-in-from-left-8 duration-1000 fill-mode-both">
+            <div 
+                className="flex flex-col text-left animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both"
+            >
+                {/* Эмоциональный хук */}
                 <div className="text-[12px] font-bold tracking-[0.2em] text-teal-500 uppercase mb-4 md:mb-6">
                     Из дневника гида
                 </div>
@@ -49,7 +52,9 @@ export default function HikesStory() {
             </div>
 
             {/* ВИЗУАЛЬНАЯ ЧАСТЬ */}
-            <div className="relative aspect-square md:aspect-[4/5] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl group border border-white/5 animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 fill-mode-both">
+            <div 
+                className="relative aspect-square md:aspect-[4/5] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl group border border-white/5 animate-in fade-in slide-in-from-right-8 duration-700 fill-mode-both [animation-delay:200ms]"
+            >
                 <Image 
                     src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838659/4_tvn5t8.jpg" 
                     alt="Атмосфера экспедиций" 
