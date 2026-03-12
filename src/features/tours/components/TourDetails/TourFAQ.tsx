@@ -5,10 +5,6 @@ import { Plus, Minus, HelpCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Tour } from '@/features/tours/types';
 
-// Framer Motion убран — аккордеон на CSS grid-rows trick.
-// AnimatePresence/motion.div заменены на transition-[grid-template-rows].
-// При печати (isPrinting) принудительно раскрываем все через grid-rows-[1fr].
-
 interface TourFAQProps {
   tour: Tour;
 }
@@ -27,8 +23,10 @@ export default function TourFAQ({ tour }: TourFAQProps) {
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true);
     const handleAfterPrint = () => setIsPrinting(false);
+
     window.addEventListener('beforeprint', handleBeforePrint);
     window.addEventListener('afterprint', handleAfterPrint);
+
     return () => {
       window.removeEventListener('beforeprint', handleBeforePrint);
       window.removeEventListener('afterprint', handleAfterPrint);
@@ -42,22 +40,22 @@ export default function TourFAQ({ tour }: TourFAQProps) {
   if (faqItems.length === 0) return null;
 
   return (
-    <section className="scroll-mt-24 mb-12" id="faq">
+    <section className="scroll-mt-24 mb-12 animate-in fade-in duration-500" id="faq">
       
       <div className="flex items-center gap-4 mb-8">
         <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20">
-          <HelpCircle size={20} aria-hidden="true" />
+           <HelpCircle size={20} />
         </div>
         <h2 className="text-2xl md:text-3xl font-black text-white uppercase">
-          Частые вопросы
+           Частые вопросы
         </h2>
       </div>
 
       <div className="space-y-3">
         {faqItems.map((item: any, index: number) => {
           const isOpen = isPrinting || openIndex === index;
-          const question = item.question || item.q || 'Вопрос без заголовка';
-          const answer   = item.answer   || item.a || 'Ответ уточняется...';
+          const question = item.question || item.q || "Вопрос без заголовка";
+          const answer = item.answer || item.a || "Ответ уточняется...";
 
           return (
             <div 
@@ -70,10 +68,9 @@ export default function TourFAQ({ tour }: TourFAQProps) {
               )}
             >
               <button
-                onClick={() => toggleItem(index)}
-                aria-expanded={openIndex === index}
-                aria-controls={`faq-answer-${index}`}
-                className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
+                  onClick={() => toggleItem(index)}
+                  aria-expanded={openIndex === index}
+                  className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
               >
                 <span className={clsx(
                   "text-base md:text-lg font-bold pr-8 transition-colors print:text-black",
@@ -84,38 +81,29 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                 
                 <div className={clsx(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 print:hidden",
-                  isOpen && !isPrinting
-                    ? "bg-teal-500 text-slate-900 rotate-180"
-                    : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
+                  isOpen && !isPrinting ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
                 )}>
-                  {isOpen ? <Minus size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
+                  {isOpen ? <Minus size={18} /> : <Plus size={18} />}
                 </div>
               </button>
 
-              {/* CSS grid-rows trick — заменяет AnimatePresence + motion.div */}
-              <div
-                id={`faq-answer-${index}`}
-                role="region"
-                aria-label={question}
-                className={clsx(
-                  "grid transition-[grid-template-rows] ease-in-out print:grid-rows-[1fr]",
-                  isPrinting ? "duration-0" : "duration-300",
-                  isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                )}
-              >
-                <div className="overflow-hidden">
-                  <div className="px-5 md:px-6 pb-6 pt-0">
-                    <div className="pt-4 border-t border-white/5 print:border-slate-200 prose prose-invert prose-sm max-w-none text-slate-300 print:text-black font-light leading-relaxed whitespace-pre-line">
-                      {answer}
+              {/* Нативный CSS Grid Аккордеон */}
+              <div className={clsx(
+                  "grid transition-all duration-300 ease-in-out print:block",
+                  isOpen ? "grid-rows-[1fr] opacity-100 print:h-auto print:opacity-100" : "grid-rows-[0fr] opacity-0"
+              )}>
+                  <div className="overflow-hidden">
+                    <div className="px-5 md:px-6 pb-6 pt-0">
+                      <div className="pt-4 border-t border-white/5 print:border-slate-200 prose prose-invert prose-sm max-w-none text-slate-300 print:text-black font-light leading-relaxed whitespace-pre-line">
+                        {answer}
+                      </div>
                     </div>
                   </div>
-                </div>
               </div>
             </div>
           );
         })}
       </div>
-
     </section>
   );
 }

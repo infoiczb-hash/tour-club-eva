@@ -4,9 +4,9 @@ import { generateObject, generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/auth';
 
-// === 1. КОНФИГУРАЦИЯ (ИСПРАВЛЕНО ИМЯ МОДЕЛИ) ===
-// ⚠️ Было: 'models/gemini-1.5-pro-latest' -> Стало: 'gemini-1.5-pro'
+// === 1. КОНФИГУРАЦИЯ ===
 const model = google('gemini-2.0-flash');
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
@@ -54,26 +54,34 @@ const BlogAiSchema = z.object({
   read_time: z.string()
 });
 
-// === 3. ТИПЫ ЗАДАЧ (ИСПРАВЛЕНЫ) ===
-type AiTaskType = 
+// === 3. ТИПЫ ЗАДАЧ ===
+type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
   | { mode: 'generate_blog'; topic: string }
   | { mode: 'generate_image'; prompt: string }
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
-  | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' } 
+  | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
   | { mode: 'smm_post'; context: any; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
   | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] }
-  
+
 // === 4. ГЛАВНЫЙ ЭКШЕН ===
 export async function performAiTask(task: AiTaskType) {
+  // 🔐 Только авторизованные пользователи могут вызывать AI
+  // Защищает Gemini и OpenAI API ключи от несанкционированного использования
   try {
-    
+    await requireAuth();
+  } catch {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+
     // --- ГЕНЕРАЦИЯ КАРТИНКИ (DALL-E) ---
     if (task.mode === 'generate_image') {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) return { success: false, error: "Нет API ключа OpenAI (.env)" };
-      
+
       const openai = new OpenAI({ apiKey });
       const { data } = await openai.images.generate({
         model: "dall-e-3",
@@ -117,14 +125,13 @@ export async function performAiTask(task: AiTaskType) {
       return { success: true, data: object };
     }
 
-    // ✅ УЛУЧШЕНИЕ ТЕКСТА (REWRITE)
     if (task.mode === 'improve_text') {
       const prompts: Record<string, string> = {
         selling: 'Твоя цель: продать. Сделай текст эмоциональным, ярким, с призывом.',
         fix: 'Твоя цель: корректор. Исправь ошибки, убери воду.',
         casual: 'Твоя цель: друг. Сделай текст простым и понятным.'
       };
-      
+
       const { text } = await generateText({
         model,
         system: prompts[task.tone || 'selling'],
@@ -133,9 +140,7 @@ export async function performAiTask(task: AiTaskType) {
       return { success: true, data: text };
     }
 
-    // ✅ SMM ПОСТЫ (С ТОНАЛЬНОСТЬЮ)
     if (task.mode === 'smm_post') {
-      // 1. Платформы
       const platformPrompts = {
         instagram: 'Instagram. Визуал, эмодзи, абзацы, хештеги.',
         telegram: 'Telegram. Информативно, Markdown разметка, без воды.',
@@ -143,7 +148,6 @@ export async function performAiTask(task: AiTaskType) {
         threads: 'Threads. Коротко, дерзко, хук в начале.'
       };
 
-      // 2. Настроение
       const tonePrompts = {
         fun: "Стиль: Веселый, хайповый, на 'ты', много эмодзи.",
         epic: "Стиль: Эпичный, вдохновляющий, 'зов природы', кинематографично.",
@@ -154,14 +158,14 @@ export async function performAiTask(task: AiTaskType) {
 
       const { text } = await generateText({
         model,
-        system: `Ты SMM-менеджер турклуба. Твоя задача — написать пост.`,
+        system: `Ты — SMM-менеджер турклуба. Твоя задача — написать пост.`,
         prompt: `
           ПЛАТФОРМА: ${platformPrompts[task.platform]}
           НАСТРОЕНИЕ: ${selectedTone}
 
           ДАННЫЕ ТУРА (Контекст):
           ${JSON.stringify(task.context)}
-          
+
           ЗАДАЧА: Напиши готовый к публикации пост. В конце призыв к действию.
         `,
       });
@@ -172,11 +176,11 @@ export async function performAiTask(task: AiTaskType) {
       const { text } = await generateText({
         model,
         system: 'Ты — EVA, стратегический AI-партнер.',
-       messages: task.messages.map((m: any) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content as string,
-    })),
-  });
+        messages: task.messages.map((m: any) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content as string,
+        })),
+      });
       return { success: true, data: text };
     }
 

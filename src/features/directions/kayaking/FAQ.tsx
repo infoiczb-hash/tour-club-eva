@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
@@ -9,6 +9,21 @@ import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
+}
+
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
 }
 
 const faqs = [
@@ -23,8 +38,12 @@ export default function FAQ() {
   const openContactModal = useModalStore((state) => state.openContactModal);
   const { setActiveTab } = useKayakTab();
 
+  const headerView = useInView();
+  const faqsView = useInView();
+
   const actionCardsContent = (
     <div className="flex flex-col gap-4 mt-2">
+      {/* Кнопка "Подготовка к сплаву" */}
       <button
         onClick={() => {
           setActiveTab('participant');
@@ -57,6 +76,7 @@ export default function FAQ() {
         </div>
       </button>
 
+      {/* Карточка "Остались вопросы?" */}
       <div className="p-6 md:p-8 bg-slate-900/40 border border-white/5 rounded-[2rem] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-xl">
         <div>
           <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">Остались вопросы?</h3>
@@ -82,8 +102,12 @@ export default function FAQ() {
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
+          {/* ЛЕВАЯ КОЛОНКА */}
           <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-32">
-            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+            <div
+              ref={headerView.ref}
+              style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+            >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                 <HelpCircle size={14} className="text-teal-400" />
                 <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">ВОПРОСЫ/ОТВЕТЫ</span>
@@ -96,18 +120,22 @@ export default function FAQ() {
                 Собрали самое важное для тех, кто идет на воду впервые. Узнайте всё о безопасности, экипировке и правилах.
               </p>
             </div>
-            <div className="hidden lg:block animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150 fill-mode-both">{actionCardsContent}</div>
+            <div className="hidden lg:block">{actionCardsContent}</div>
           </div>
 
-          <div className="lg:col-span-7 space-y-3 md:space-y-4">
+          {/* ПРАВАЯ КОЛОНКА — аккордеон (Чистый CSS Grid) */}
+          <div
+            ref={faqsView.ref}
+            className="lg:col-span-7 space-y-3 md:space-y-4"
+          >
             {faqs.map((faq, idx) => {
               const isOpen = openIndex === idx;
               return (
                 <div
                   key={idx}
-                  style={{ animationDelay: `${idx * 100}ms` }}
+                  style={{ opacity: faqsView.inView ? 1 : 0, transform: faqsView.inView ? 'translateX(0)' : 'translateX(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
                   className={cn(
-                    "border rounded-2xl overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 fill-mode-both",
+                    "border rounded-2xl overflow-hidden transition-all duration-300",
                     isOpen ? "bg-slate-900 border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]" : "bg-slate-900/40 border-white/5 hover:border-white/10"
                   )}
                 >
@@ -119,24 +147,27 @@ export default function FAQ() {
                       {faq.q}
                     </span>
                     <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-teal-500/10 text-teal-400" : "bg-white/5 text-slate-500 group-hover:text-white")}>
-                      <ChevronDown className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={18} />
+                      <ChevronDown className={cn("transition-transform duration-300", isOpen && "rotate-180")} size={18} />
                     </div>
                   </button>
 
-                  {/* CSS grid trick: анимация height: 0 → auto без JS */}
-                  <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                    <div className="overflow-hidden">
-                      <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
-                        {faq.a}
-                      </p>
-                    </div>
+                  {/* Нативная CSS анимация аккордеона через Grid */}
+                  <div className={cn(
+                      "grid transition-all duration-300 ease-in-out",
+                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                  )}>
+                      <div className="overflow-hidden">
+                        <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
+                          {faq.a}
+                        </p>
+                      </div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="lg:hidden lg:col-span-12 border-t border-white/5 pt-8 mt-4 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+          <div className="lg:hidden lg:col-span-12 border-t border-white/5 pt-8 mt-4">
             {actionCardsContent}
           </div>
         </div>

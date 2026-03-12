@@ -1,7 +1,28 @@
-import { Check, Sparkles } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
+
 export default function HikesStory() {
+  const textView = useInView();
+  const imgView = useInView();
+
   return (
     <section className="py-8 md:py-16 bg-stone-950 text-stone-100 relative overflow-hidden border-t border-white/5">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
@@ -9,8 +30,14 @@ export default function HikesStory() {
         <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
             
             {/* ТЕКСТОВАЯ ЧАСТЬ */}
-            <div 
-                className="flex flex-col text-left animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both"
+            <div
+                ref={textView.ref}
+                style={{ 
+                    opacity: textView.inView ? 1 : 0, 
+                    transform: textView.inView ? 'translateX(0)' : 'translateX(-30px)', 
+                    transition: 'opacity 0.8s ease, transform 0.8s ease' 
+                }}
+                className="flex flex-col text-left"
             >
                 {/* Эмоциональный хук */}
                 <div className="text-[12px] font-bold tracking-[0.2em] text-teal-500 uppercase mb-4 md:mb-6">
@@ -52,8 +79,14 @@ export default function HikesStory() {
             </div>
 
             {/* ВИЗУАЛЬНАЯ ЧАСТЬ */}
-            <div 
-                className="relative aspect-square md:aspect-[4/5] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl group border border-white/5 animate-in fade-in slide-in-from-right-8 duration-700 fill-mode-both [animation-delay:200ms]"
+            <div
+                ref={imgView.ref}
+                style={{ 
+                    opacity: imgView.inView ? 1 : 0, 
+                    transform: imgView.inView ? 'translateX(0)' : 'translateX(30px)', 
+                    transition: 'opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s' 
+                }}
+                className="relative aspect-square md:aspect-[4/5] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl group border border-white/5"
             >
                 <Image 
                     src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771838659/4_tvn5t8.jpg" 

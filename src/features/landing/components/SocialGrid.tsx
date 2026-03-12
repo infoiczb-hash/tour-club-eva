@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Heart, Instagram, Send, Play, X, Zap, Volume2, VolumeX, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Heart, Instagram, Send, Play, X, Volume2, VolumeX, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 // --- ТИПЫ ---
 interface SocialPost {
@@ -55,31 +61,28 @@ const VerticalPlayer = ({
     onClose: () => void 
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [visible, setVisible] = useState(false);
 
+    // Скроллим к выбранному видео при открытии
     useEffect(() => {
         if (containerRef.current) {
             const height = containerRef.current.clientHeight;
             containerRef.current.scrollTo({ top: initialIndex * height, behavior: 'instant' });
         }
-        // Trigger fade-in after mount
-        requestAnimationFrame(() => setVisible(true));
     }, [initialIndex]);
 
-    const handleClose = () => {
-        setVisible(false);
-        setTimeout(onClose, 200);
-    };
-
     return (
-        <div className={`fixed inset-0 z-[100] bg-black flex flex-col transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+        <div 
+            className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300"
+        >
+            {/* Close Button */}
             <button 
-                onClick={handleClose}
+                onClick={onClose}
                 className="absolute top-4 right-4 z-50 p-2 bg-black/20 backdrop-blur-lg rounded-full text-white/80 hover:text-white border border-white/10"
             >
                 <X size={24} />
             </button>
 
+            {/* Vertical Scroll Container */}
             <div 
                 ref={containerRef}
                 className="flex-1 overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar"
@@ -90,6 +93,7 @@ const VerticalPlayer = ({
                 ))}
             </div>
 
+            {/* Navigation Hints (Desktop) */}
             <div className="hidden md:flex flex-col gap-2 absolute right-8 top-1/2 -translate-y-1/2 z-40">
                  <div className="p-2 bg-white/5 rounded-full animate-bounce"><ChevronUp size={20} className="text-white/50"/></div>
                  <div className="p-2 bg-white/5 rounded-full animate-bounce"><ChevronDown size={20} className="text-white/50"/></div>
@@ -98,12 +102,13 @@ const VerticalPlayer = ({
     );
 };
 
-// Отдельный слайд
+// Отдельный слайд для логики IntersectionObserver (Play/Pause при скролле)
 const SingleSlide = ({ post }: { post: SocialPost }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [isMuted, setIsMuted] = useState(true);
+    const [isMuted, setIsMuted] = useState(true); // По умолчанию звук выключен (политика браузеров)
     const [isPlaying, setIsPlaying] = useState(false);
 
+    // Intersection Observer: Запускает видео только когда оно в центре экрана
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -116,7 +121,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                     setIsPlaying(false);
                 }
             },
-            { threshold: 0.6 }
+            { threshold: 0.6 } // 60% видео должно быть видно
         );
 
         if (videoRef.current) observer.observe(videoRef.current);
@@ -127,6 +132,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
 
     return (
         <div className="w-full h-full snap-center relative flex items-center justify-center bg-black">
+            {/* Video */}
             <video 
                 ref={videoRef}
                 src={post.url}
@@ -134,9 +140,10 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                 loop
                 playsInline
                 muted={isMuted}
-                onClick={toggleMute}
+                onClick={toggleMute} // Клик по видео включает звук
             />
             
+            {/* Sound Overlay Hint */}
             {isMuted && isPlaying && (
                 <div 
                     className="absolute inset-0 flex items-center justify-center z-20 cursor-pointer bg-black/10 hover:bg-black/20 transition-colors"
@@ -149,6 +156,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                 </div>
             )}
 
+            {/* Controls / Info */}
             <div className="absolute bottom-0 inset-x-0 p-6 md:p-10 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none md:max-w-[500px] mx-auto">
                  <div className="flex items-center justify-between items-end">
                      <div>
@@ -163,6 +171,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                         </p>
                      </div>
                      
+                     {/* Side Actions */}
                      <div className="flex flex-col gap-4 items-center pointer-events-auto">
                          <div className="flex flex-col items-center gap-1">
                              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
@@ -201,12 +210,14 @@ export default function SocialGrid() {
   return (
     <section className="py-12 md:py-24 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
       
+      {/* GLOW */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-teal-900/10 md:blur-[150px] opacity-50" />
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-teal-900/10 md:md:blur-[150px] pacity-50" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         
+       {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
@@ -216,6 +227,7 @@ export default function SocialGrid() {
                 </span>
                <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Live Feed</span>
             </div>
+            {/* Title */}
             <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
                 <span className="font-light text-slate-400 block md:inline">Ловим </span>
                 <span className="font-black text-white">Моменты</span>
@@ -230,7 +242,11 @@ export default function SocialGrid() {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md flex items-center justify-center gap-2 transition-all duration-300 text-slate-400 text-xs font-bold uppercase tracking-wider ${social.color}`}
+                className={cn(
+                  "w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md flex items-center justify-center gap-2 transition-all duration-300",
+                  "text-slate-400 text-xs font-bold uppercase tracking-wider",
+                  social.color
+                )}
               >
                 {social.icon}
                 <span className="hidden md:inline">{social.name}</span>
@@ -238,39 +254,43 @@ export default function SocialGrid() {
             ))}
           </div>
         </div>
-
-        {/* GRID / CAROUSEL */}
-        <div className="relative group/carousel">
-          <div 
-            tabIndex={0}
-            role="region"
-            aria-label="Лента моментов из туров"
-            className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-4 md:gap-6 pb-8 px-4 -mx-4 md:px-0 md:mx-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl"
-          >
-            {posts.map((post, index) => (
-              <ReelCard 
-                key={post.id} 
-                post={post} 
-                onClick={() => setActivePostIndex(index)} 
-              />
-            ))}
-          </div>
-              
-          <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
-          </div>
+{/* --- GRID / CAROUSEL --- */}
+<div className="relative group/carousel">
+    <div 
+      // ✅ ДОБАВЛЕНО ДЛЯ a11y:
+      tabIndex={0}
+      role="region"
+      aria-label="Лента моментов из туров"
+      className="
+        flex overflow-x-auto snap-x snap-mandatory hide-scrollbar
+        gap-4 md:gap-6 pb-8 px-4 -mx-4 md:px-0 md:mx-0
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
+    ">
+    {posts.map((post, index) => (
+        <ReelCard 
+            key={post.id} 
+            post={post} 
+            onClick={() => setActivePostIndex(index)} 
+        />
+    ))}
+    </div>
+            
+            {/* SWIPE HINT (Mobile only, bottom right) */}
+            <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
+                <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
+                <ChevronRight size={14} />
+            </div>
         </div>
 
       </div>
 
-      {/* TIKTOK MODAL */}
+      {/* --- TIKTOK MODAL --- */}
       {activePostIndex !== null && (
-        <VerticalPlayer 
-          posts={posts} 
-          initialIndex={activePostIndex} 
-          onClose={() => setActivePostIndex(null)} 
-        />
+          <VerticalPlayer 
+              posts={posts} 
+              initialIndex={activePostIndex} 
+              onClose={() => setActivePostIndex(null)} 
+          />
       )}
     </section>
   );
@@ -288,7 +308,13 @@ function ReelCard({ post, onClick }: { post: SocialPost; onClick: () => void }) 
 
     return (
       <div 
-        className="relative group flex-shrink-0 cursor-pointer snap-center w-[200px] aspect-[9/16] md:w-[240px] md:aspect-[9/16] rounded-2xl overflow-hidden bg-slate-900 border border-white/5 transition-all duration-300 ease-out hover:border-teal-500/30 hover:shadow-[0_0_30px_rgba(20,184,166,0.1)] hover:-translate-y-2"
+        className="
+            relative group flex-shrink-0 cursor-pointer snap-center
+            w-[200px] aspect-[9/16] md:w-[240px] md:aspect-[9/16]
+            rounded-2xl overflow-hidden bg-slate-900 border border-white/5
+            transition-all duration-500 ease-out
+            hover:border-teal-500/30 hover:shadow-[0_0_30px_rgba(20,184,166,0.1)] hover:-translate-y-2
+        "
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={onClick}
@@ -319,6 +345,7 @@ function ReelCard({ post, onClick }: { post: SocialPost; onClick: () => void }) 
 
         {/* HUD */}
         <div className="absolute inset-0 p-4 flex flex-col justify-between z-20 pointer-events-none">
+            {/* Mute Icon in Grid */}
             <div className="self-end w-6 h-6 rounded-full bg-black/20 flex items-center justify-center text-white/50">
                 <VolumeX size={12} />
             </div>

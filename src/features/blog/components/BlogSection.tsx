@@ -4,9 +4,10 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpen, PenLine, Filter, User } from "lucide-react";
+import { ArrowRight, BookOpen, PenLine, Filter, User, Sparkles } from "lucide-react";
 import { Blog } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
+import { cn } from '@/lib/utils';
 
 // ✅ ДОБАВИЛИ ТИПЫ ДЛЯ НОВОЙ СТРУКТУРЫ
 interface BlogCategory {

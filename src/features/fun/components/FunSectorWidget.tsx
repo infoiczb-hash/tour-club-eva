@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activity, BookOpen, Brain, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
@@ -96,7 +95,7 @@ export default function FunSectorWidget() {
               <Gamepad2 size={14} className="text-violet-400" />
               <span className="text-[16px] font-bold uppercase tracking-widest text-violet-400">Тесты и квизы</span>
             </div>
-            <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Психология & Игры</h2>
+            <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Тесты и квизы</h2>
           </div>
           <Link href="/fun" className="hidden md:flex group items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             <span>Все тесты и квизы</span>
@@ -106,25 +105,19 @@ export default function FunSectorWidget() {
           </Link>
         </div>
 
-        {/* AnimatePresence оставляем — это UI анимация смены fallback → реальные данные */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 min-h-[100px] lg:min-h-[200px]">
-          <AnimatePresence mode="popLayout">
             {quizzes.map((quiz, idx) => (
-              <motion.div
+              <div
                 key={`${quiz.id}-${isLoaded ? 'loaded' : 'initial'}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className="h-full"
+                className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+                style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <QuizCard quiz={quiz} />
-              </motion.div>
+              </div>
             ))}
-          </AnimatePresence>
         </div>
 
-        {/* whileInView убран → CSS анимация через ref */}
+        {/* Скрыто на десктопе, показываем на мобилке, анимируем через css/inView */}
         <div
           ref={ctaView.ref}
           style={{ opacity: ctaView.inView ? 1 : 0, transform: ctaView.inView ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s' }}
@@ -146,11 +139,11 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
   return (
     <Link href={`/fun?quiz=${quiz.slug}`} className={cn(
       "group relative flex w-full h-full overflow-hidden border border-white/10 transition-all duration-500 bg-slate-900",
-      visual.borderColor, "hover:shadow-2xl md:hover:-translate-y-1",
+      visual.borderColor, "hover:shadow-2xl md:hover:-translate-y-2",
       "flex-row lg:flex-col items-center lg:items-start rounded-2xl md:rounded-[2rem]", "p-4 lg:p-6"
     )}>
       {quiz.image && (
-        <Image src={quiz.image} alt={quiz.image} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        <Image src={quiz.image} alt="" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover opacity-40 grayscale-[50%] group-hover:grayscale-0 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />

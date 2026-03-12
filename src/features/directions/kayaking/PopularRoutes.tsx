@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { 
   Navigation, Clock, X, Users, Wind, MapPin, Map, 
@@ -9,6 +9,27 @@ import {
   ArrowUpRight
 } from "lucide-react";
 import { routesData, RouteData } from "@/data/routes";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
 
 const otherFormats = [
   { title: "Прогулки на 2-3 часа", desc: "В районе Тирасполя", icon: Timer },
@@ -22,21 +43,17 @@ const otherFormats = [
 export default function PopularRoutes() {
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
-  const [modalVisible, setModalVisible] = useState(false);
+  const formatsView = useInView();
 
   useEffect(() => {
     if (selectedRoute) {
-      setCurrentImgIdx(0);
-      requestAnimationFrame(() => setModalVisible(true));
+        setCurrentImgIdx(0);
+        document.body.style.overflow = 'hidden';
     } else {
-      setModalVisible(false);
+        document.body.style.overflow = '';
     }
+    return () => { document.body.style.overflow = ''; };
   }, [selectedRoute]);
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setTimeout(() => setSelectedRoute(null), 300);
-  };
 
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,12 +66,12 @@ export default function PopularRoutes() {
   };
 
   return (
-    <section className="py-10 md:py-20 bg-[#020617] relative overflow-hidden text-slate-200">
+    <section className="py-10 md:py-20 bg-[#020617] relative overflow-hidden text-slate-200 border-t border-white/5">
       <div className="container mx-auto px-4 relative z-10">
 
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
-          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
+          <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
               <Map size={14} className="text-teal-400" />
               <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">Локации</span>
@@ -65,15 +82,14 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-        {/* CARDS */}
+        {/* CARDS — Нативный hover вместо whileHover */}
         <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {routesData.map((route, index) => (
+            {routesData.map((route) => (
               <div
                 key={route.id}
                 onClick={() => setSelectedRoute(route)}
-                className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 hover:-translate-y-2 transition-all duration-500 shadow-xl animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group relative cursor-pointer flex-shrink-0 snap-center w-[85vw] md:w-auto h-[400px] md:h-[450px] bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-teal-500/50 hover:-translate-y-2 transition-all duration-500 shadow-xl"
               >
                 <div className="absolute top-4 right-4 z-20 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="flex items-center gap-1.5 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-xl">
@@ -105,7 +121,11 @@ export default function PopularRoutes() {
         </div>
 
         {/* OTHER FORMATS */}
-        <div className="mt-12 md:mt-14 border-t border-white/10 pt-10 animate-in fade-in duration-700">
+        <div
+          ref={formatsView.ref}
+          style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+          className="mt-12 md:mt-14 border-t border-white/10 pt-10"
+        >
           <div className="mb-6 md:mb-8 text-left">
             <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
               Другие <span className="text-amber-500">Форматы</span>
@@ -118,11 +138,7 @@ export default function PopularRoutes() {
               {otherFormats.map((format, idx) => {
                 const Icon = format.icon;
                 return (
-                  <div 
-                    key={idx} 
-                    className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center gap-3 md:gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full animate-in slide-in-from-bottom-8 fill-mode-both"
-                    style={{ animationDelay: `${idx * 100}ms` }}
-                  >
+                  <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center gap-3 md:gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
                       <Icon size={22} strokeWidth={1.5} />
                     </div>
@@ -141,76 +157,77 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-        {/* MODAL */}
-        {selectedRoute && (
-          <div
-            onClick={closeModal}
-            className={`fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-slate-950/90 backdrop-blur-xl transition-opacity duration-300 ${modalVisible ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className={`relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row transition-all duration-300 ${modalVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-            >
-              <button aria-label="Закрыть" onClick={closeModal} className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-3 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10 shadow-lg">
-                <X size={20} />
-              </button>
+      </div>
 
-              {/* Карусель */}
-              <div className="w-full md:w-5/12 h-[35vh] md:h-auto relative group">
-                <div className="absolute inset-0">
-                  <Image
-                    src={selectedRoute.images[currentImgIdx]}
-                    alt={`${selectedRoute.title} - фото ${currentImgIdx + 1}`}
-                    fill
-                    className="object-cover transition-opacity duration-300"
-                    sizes="(max-width: 768px) 100vw, 60vw"
+      {/* MODAL — Без Framer Motion, анимация через Tailwind */}
+      {selectedRoute && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row animate-in zoom-in-95 duration-300">
+            <button aria-label="Закрыть" onClick={() => setSelectedRoute(null)} className="absolute top-4 right-4 md:top-6 md:right-6 z-50 p-3 bg-black/50 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10 shadow-lg">
+              <X size={20} />
+            </button>
+
+            {/* Карусель — CSS Transition Opacity */}
+            <div className="w-full md:w-5/12 h-[35vh] md:h-auto relative group bg-black">
+              <div className="absolute inset-0">
+                {selectedRoute.images.map((src, idx) => (
+                  <Image 
+                    key={idx}
+                    src={src} 
+                    alt={`${selectedRoute.title} - фото ${idx + 1}`} 
+                    fill 
+                    className={cn(
+                        "object-cover transition-opacity duration-500 ease-in-out",
+                        idx === currentImgIdx ? "opacity-100" : "opacity-0"
+                    )} 
+                    sizes="(max-width: 768px) 100vw, 60vw" 
                   />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-900 md:to-transparent" />
-                {selectedRoute.images.length > 1 && (
-                  <>
-                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
-                      <ChevronLeft size={20} />
-                    </button>
-                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
-                      <ChevronRight size={20} />
-                    </button>
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                      {selectedRoute.images.map((_, idx) => (
-                        <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIdx ? 'w-4 bg-teal-400' : 'w-1.5 bg-white/50'}`} />
-                      ))}
-                    </div>
-                  </>
-                )}
+                ))}
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-900 md:to-transparent" />
+              {selectedRoute.images.length > 1 && (
+                <>
+                  <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                    <ChevronRight size={20} />
+                  </button>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                    {selectedRoute.images.map((_, idx) => (
+                      <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIdx ? 'w-4 bg-teal-400' : 'w-1.5 bg-white/50'}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
-              {/* Детали */}
-              <div className="w-full md:w-7/12 flex flex-col h-[65vh] md:h-auto overflow-y-auto bg-slate-900 [&::-webkit-scrollbar]:hidden">
-                <div className="p-6 md:p-10 flex-1">
-                  <div className="text-[10px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Паспорт маршрута</div>
-                  <h3 className="text-3xl md:text-4xl font-black text-white uppercase mb-4 leading-tight">{selectedRoute.title}</h3>
-                  <p className="text-sm text-slate-400 mb-8 leading-relaxed font-medium">{selectedRoute.desc}</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 md:p-6 rounded-3xl bg-white/5 border border-white/5">
-                    <PassportItem icon={Navigation} label="Сложность" value={selectedRoute.details.level} />
-                    <PassportItem icon={Ruler} label="Километраж" value={selectedRoute.details.distance} />
-                    <PassportItem icon={Clock} label="Длительность" value={selectedRoute.details.duration} />
-                    <PassportItem icon={Users} label="Для кого" value={selectedRoute.details.forWhom} />
-                    <PassportItem icon={MapPin} label="Старт" value={selectedRoute.details.start} />
-                    <PassportItem icon={Flag} label="Финиш" value={selectedRoute.details.finish} />
-                    <PassportItem icon={Wind} label="Атмосфера" value={selectedRoute.details.atmosphere} />
-                    <div className="col-span-2 pt-4 mt-2 border-t border-white/10">
-                      <PassportItem icon={RouteIcon} label="Нить маршрута" value={selectedRoute.details.pathPoints} />
-                    </div>
-                    <div className="col-span-2">
-                      <PassportItem icon={Sparkles} label="Доп. Опции" value={selectedRoute.details.options} />
-                    </div>
+            {/* Детали */}
+            <div className="w-full md:w-7/12 flex flex-col h-[65vh] md:h-auto overflow-y-auto bg-slate-900 [&::-webkit-scrollbar]:hidden">
+              <div className="p-6 md:p-10 flex-1">
+                <div className="text-[10px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Паспорт маршрута</div>
+                <h3 className="text-3xl md:text-4xl font-black text-white uppercase mb-4 leading-tight">{selectedRoute.title}</h3>
+                <p className="text-sm text-slate-400 mb-8 leading-relaxed font-medium">{selectedRoute.desc}</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 md:p-6 rounded-3xl bg-white/5 border border-white/5">
+                  <PassportItem icon={Navigation} label="Сложность" value={selectedRoute.details.level} />
+                  <PassportItem icon={Ruler} label="Километраж" value={selectedRoute.details.distance} />
+                  <PassportItem icon={Clock} label="Длительность" value={selectedRoute.details.duration} />
+                  <PassportItem icon={Users} label="Для кого" value={selectedRoute.details.forWhom} />
+                  <PassportItem icon={MapPin} label="Старт" value={selectedRoute.details.start} />
+                  <PassportItem icon={Flag} label="Финиш" value={selectedRoute.details.finish} />
+                  <PassportItem icon={Wind} label="Атмосфера" value={selectedRoute.details.atmosphere} />
+                  <div className="col-span-2 pt-4 mt-2 border-t border-white/10">
+                    <PassportItem icon={RouteIcon} label="Нить маршрута" value={selectedRoute.details.pathPoints} />
+                  </div>
+                  <div className="col-span-2">
+                    <PassportItem icon={Sparkles} label="Доп. Опции" value={selectedRoute.details.options} />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
