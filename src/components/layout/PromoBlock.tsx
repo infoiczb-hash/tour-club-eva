@@ -44,7 +44,7 @@ export default function PromoBlock() {
         </div>
 
        {/* СЕТКА */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 auto-rows-[180px] sm:auto-rows-[200px] md:auto-rows-[280px]">
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 md:auto-rows-[280px]">
           
           {/* 1. QUIZ */}
           <div 

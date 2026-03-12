@@ -50,7 +50,7 @@ export default function SupHero() {
           className="object-cover opacity-60"
           priority
           fetchPriority="high"
-          quality={85}
+          quality={75}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/40" />
@@ -64,35 +64,27 @@ export default function SupHero() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
           <Waves size={14} className="text-teal-400 animate-pulse" />
           <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
-            Водные маршруты
+            SUP-прогулки
           </span>
         </div>
 
         {/* SEO: H1 больше не прячется под opacity-0 ! */}
         <h1 className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl animate-in fade-in zoom-in-95 duration-1000 delay-150 fill-mode-both">
-          Прогулки на <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">САПБОРДАХ</span>
+         СКОЛЬЗИ <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">ПО ВОДЕ</span>
         </h1>
 
         <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
-          Идеальный баланс между релаксом и спортом. Встречай рассветы на воде, исследуй скрытые заливы и получай удовольствие с первых минут на доске.
-        </p>
-
+          Ваше идеальное мини-путешествие. Никакого шума и спешки — только вы, доска и природа. Открываем знакомые места с совершенно нового ракурса." </p>
         {/* КНОПКИ ДЕЙСТВИЯ */}
         <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 fill-mode-both">
           <Link
-            href="#routes" // Замени на нужный якорь или ссылку
+            href="#catalog" // Замени на нужный якорь или ссылку
             className="px-8 py-4 rounded-xl bg-teal-500 text-slate-950 font-black uppercase tracking-widest text-sm hover:bg-teal-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
           >
-            <Map size={18} /> Выбрать маршрут
+            <Map size={18} /> Выбрать программу
           </Link>
-          <Link
-            href="#faq"
-            className="px-8 py-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition-all backdrop-blur-md flex items-center justify-center gap-2"
-          >
-            Частые вопросы <ArrowRight size={18} />
-          </Link>
-        </div>
+         </div>
       </div>
 
       {/* АНИМАЦИЯ ПОДСКАЗКИ СКРОЛЛА */}

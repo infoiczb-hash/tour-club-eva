@@ -262,7 +262,10 @@ const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
                                 {displayCategories.map(cat => (
                                     <button
                                         key={cat.id}
-                                        onClick={() => handleCategoryClick(cat.slug)}
+                                        onClick={() => {
+  handleCategoryClick(cat.slug);
+  setIsMobileFiltersOpen(false);
+}}
                                         className={cn(
                                             "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border",
                                             activeCategory === cat.slug

@@ -96,7 +96,7 @@ export default function FunSectorWidget() {
               <Gamepad2 size={14} className="text-violet-400" />
               <span className="text-[16px] font-bold uppercase tracking-widest text-violet-400">Тесты и квизы</span>
             </div>
-            <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Тесты и квизы</h2>
+            <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Психология & Игры</h2>
           </div>
           <Link href="/fun" className="hidden md:flex group items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             <span>Все тесты и квизы</span>

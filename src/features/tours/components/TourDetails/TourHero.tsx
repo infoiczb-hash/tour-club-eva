@@ -74,7 +74,7 @@ export default function TourHero({ tour }: TourHeroProps) {
           className="object-cover opacity-60"
           priority
           fetchPriority="high"
-          quality={85}
+          quality={75}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />

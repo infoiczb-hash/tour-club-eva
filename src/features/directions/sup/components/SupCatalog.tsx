@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { type ElementType } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion'
 import { Clock, MapPin, Users, Star, Compass, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";

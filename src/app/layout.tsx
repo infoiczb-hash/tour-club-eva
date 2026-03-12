@@ -114,16 +114,14 @@ export default function RootLayout({
       </head>
    <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
         <Providers>
-          <ToastProvider>
-            <MainLayoutWrapper header={<Header />} footer={<Footer />} promo={<PromoBlock />}>
+                     <MainLayoutWrapper header={<Header />} footer={<Footer />} promo={<PromoBlock />}>
               {children}
             </MainLayoutWrapper>
             
             {/* ✅ ПЕРЕНЕСЛИ МОДАЛКИ ВНУТРЬ ПРОВАЙДЕРА */}
             <GlobalModals />
             
-          </ToastProvider>
-        </Providers>
+          </Providers>
         
         <AxeReporter />
         <Analytics />
