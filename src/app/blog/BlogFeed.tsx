@@ -167,7 +167,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         <div className="flex items-center gap-3 pt-5 border-t border-white/5 mt-auto">
           <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/10">
             {post.author_image ? (
-              <Image src={post.author_image} alt={post.author_name || 'Автор'} fill className="object-cover" />
+              <Image src={post.author_image} alt={post.author_name || 'Автор'} fill className="object-cover" sizes="32px" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={14} /></div>
             )}
