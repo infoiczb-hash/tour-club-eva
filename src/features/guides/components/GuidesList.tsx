@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -14,6 +14,22 @@ import { useModalStore } from '@/shared/store/useModalStore';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// ХУК ДЛЯ НАБЛЮДЕНИЯ ЗА СКРОЛЛОМ (замена whileInView)
+function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
 }
 
 // --- СЛОВАРЬ ИКОНОК ДЛЯ RPG-СТАТОВ ---
@@ -53,8 +69,6 @@ interface Guide {
 // --- КОМПОНЕНТ ШКАЛЫ НАВЫКА (RPG) ---
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => {
     const [width, setWidth] = useState(0);
-
-    // Запускаем анимацию заполнения шкалы после монтирования модалки
     useEffect(() => {
         const timer = setTimeout(() => setWidth(value), 100);
         return () => clearTimeout(timer);
@@ -82,28 +96,20 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => {
 export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null); 
   const openContactModal = useModalStore((state) => state.openContactModal);
+  const headerView = useInView();
+  const ctaView = useInView();
 
   // Сортируем гидов по полю order (чтобы основатели были первыми)
   const displayGuides = Array.isArray(guides) 
     ? [...guides].sort((a, b) => (a.order || 0) - (b.order || 0)) 
     : [];
 
-  // Блокировка скролла при открытой модалке
-  useEffect(() => {
-      if (selectedGuide) {
-          document.body.style.overflow = 'hidden';
-      } else {
-          document.body.style.overflow = '';
-      }
-      return () => { document.body.style.overflow = ''; };
-  }, [selectedGuide]);
-
   return (
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden" id="team">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 pointer-events-none">
-         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-teal-900/5 md:md:blur-[150px] rounded-full" />
+         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-teal-900/5 md:blur-[150px] rounded-full" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -111,7 +117,13 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
         {/* --- HEADER --- */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-8">
             <div className="max-w-2xl">
-                <div className="animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
+                <div 
+                    ref={headerView.ref}
+                    className={cn(
+                        "transition-all duration-700 ease-out",
+                        headerView.inView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"
+                    )}
+                >
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
                         <ShieldCheck size={14} className="text-teal-400" />
                         <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Наша команда</span>
@@ -123,7 +135,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                         <span className="text-teal-500">.</span>
                     </h2>
                     
-                    <p className="text-slate-400 text-s md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
+                    <p className="text-slate-400 text-sm md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
                         Профессионалы, с которыми безопасно и интересно в любой точке мира.
                         Знают каждый камень на маршруте.
                     </p>
@@ -131,19 +143,18 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
             </div>
         </div>
 
-        {/* --- GRID / SCROLL --- */} 
-        <div 
-          // ✅ ДОБАВЛЕНО ДЛЯ a11y:
-          tabIndex={0}
-          role="region"
-          aria-label="Список команды гидов"
-          className="
-            flex overflow-x-auto snap-x snap-mandatory hide-scrollbar 
-            gap-4 -mx-4 px-4 pb-8 
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
-            md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:mx-0 md:px-0 md:pb-0
-          "
-        >
+      {/* --- GRID / SCROLL --- */} 
+      <div 
+        tabIndex={0}
+        role="region"
+        aria-label="Список команды гидов"
+        className="
+          flex overflow-x-auto snap-x snap-mandatory hide-scrollbar 
+          gap-4 -mx-4 px-4 pb-8 
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
+          md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:mx-0 md:px-0 md:pb-0
+        "
+      >
             {displayGuides.map((guide, idx) => (
                 <GuideCard 
                     key={guide.id} 
@@ -155,16 +166,18 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 
             {/* JOIN TEAM CARD (Recruiting) */}
             <div
-               onClick={() => openContactModal(undefined, 'HR')}
-               className="
-                    relative group flex-shrink-0 cursor-pointer snap-center
-                    w-[85vw] sm:w-[300px] aspect-[3/4] md:w-auto md:aspect-auto md:h-[450px]
-                    rounded-[2rem] border-2 border-dashed border-white/10 hover:border-teal-500/50
-                    bg-white/[0.02] hover:bg-teal-900/10 transition-all duration-300
-                    flex flex-col items-center justify-center text-center p-6
-                    md:mt-0 lg:mt-8 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both
-               "
-               style={{ animationDelay: `${displayGuides.length * 150}ms` }}
+                ref={ctaView.ref}
+                onClick={() => openContactModal(undefined, 'HR')}
+                style={{ transitionDelay: '200ms' }}
+                className={cn(
+                    "relative group flex-shrink-0 cursor-pointer snap-center",
+                    "w-[85vw] sm:w-[300px] aspect-[3/4] md:w-auto md:aspect-auto md:h-[450px]",
+                    "rounded-[2rem] border-2 border-dashed border-white/10 hover:border-teal-500/50",
+                    "bg-white/[0.02] hover:bg-teal-900/10 transition-all duration-700 ease-out",
+                    "flex flex-col items-center justify-center text-center p-6",
+                    "md:mt-0 lg:mt-8",
+                    ctaView.inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+                )}
             >
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                     <Zap size={28} className="text-slate-400 group-hover:text-teal-400 transition-colors" />
@@ -193,17 +206,20 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 // --- GUIDE CARD ---
 function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onClick: () => void }) {
     const rhythmClass = index % 2 !== 0 ? 'lg:mt-12' : '';
+    const { ref, inView } = useInView();
 
     return (
         <div
+            ref={ref}
             className={cn(
                 "group relative flex-shrink-0 cursor-pointer snap-center",
                 "w-[85vw] sm:w-[300px] aspect-[3/4] md:w-auto md:aspect-auto md:h-[450px]",
                 "rounded-[2rem] overflow-hidden bg-slate-900 border border-white/5",
-                "animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both",
-                rhythmClass
+                rhythmClass,
+                "transition-all duration-700 ease-out",
+                inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
             )}
-            style={{ animationDelay: `${index * 150}ms` }}
+            style={{ transitionDelay: `${index * 100}ms` }}
             onClick={onClick}
         >
             {guide.image ? (
@@ -260,6 +276,12 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
             console.error("Ошибка парсинга статов", e);
         }
     }
+
+    // Блокируем скролл на body при открытии модалки
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
 
     return (
         <div 
@@ -377,14 +399,14 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
 
                 </div>
             </div>
-            </div>
+             </div>
         );
-}
+    }
 
-function SocialBtn({ href, icon: Icon }: any) {
-   return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 transition-all hover:text-white hover:border-white/30">
-         <Icon size={18} />
-      </a>
-   )
-}
+    function SocialBtn({ href, icon: Icon }: any) {
+       return (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 transition-all hover:text-white hover:border-white/30">
+             <Icon size={18} />
+          </a>
+       )
+    }

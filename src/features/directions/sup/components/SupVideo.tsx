@@ -1,22 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Play, Video } from 'lucide-react';
 import Image from 'next/image';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs));
+function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
 }
 
 export default function SupVideo() {
     // Состояние, которое переключает обложку на реальный плеер
     const [isPlaying, setIsPlaying] = useState(false);
     
-    // Данные вашего видео
+    const headerView = useInView();
+    const playerView = useInView();
+
+    // Данные видео
     const videoId = "Ki5m2YG_ALU";
-    const startTime = 27; // Таймкод из вашей ссылки
+    const startTime = 27; // Таймкод
 
     return (
         <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
@@ -27,7 +39,11 @@ export default function SupVideo() {
             <div className="container mx-auto px-4 max-w-5xl relative z-10">
                 
                 {/* 1. ЗАГОЛОВОК */}
-                <div className="text-center mb-10 md:mb-14 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+                <div 
+                    ref={headerView.ref}
+                    style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+                    className="text-center mb-10 md:mb-14"
+                >
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-6 backdrop-blur-md">
                         <Video className="w-4 h-4 text-teal-400" />
                         <span className="text-[10px] font-bold tracking-widest text-teal-300 uppercase">
@@ -35,14 +51,16 @@ export default function SupVideo() {
                         </span>
                     </div>
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
-                       Видео инструктаж <span className="text-teal-500"> для новичков</span>
+                       Видео инструтаж <span className="text-teal-500"> для новичков</span>
                     </h2>
                 </div>
 
                 {/* 2. КИНЕМАТОГРАФИЧНЫЙ ПЛЕЕР (Фасад) */}
-                <div
+                <div 
+                    ref={playerView.ref}
+                    style={{ opacity: playerView.inView ? 1 : 0, transform: playerView.inView ? 'scale(1)' : 'scale(0.95)', transition: 'opacity 0.6s ease-out, transform 0.6s ease-out' }}
+                    className="relative w-full aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden group border border-white/10 shadow-2xl shadow-teal-900/20 bg-slate-900 isolate cursor-pointer"
                     onClick={() => setIsPlaying(true)}
-                    className="relative w-full aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden group border border-white/10 shadow-2xl shadow-teal-900/20 bg-slate-900 isolate cursor-pointer animate-in fade-in zoom-in-95 duration-700 delay-150 fill-mode-both"
                 >
                     {!isPlaying ? (
                         /* СОСТОЯНИЕ 1: КРАСИВАЯ ОБЛОЖКА */
@@ -54,7 +72,6 @@ export default function SupVideo() {
                                 fill 
                                 className="object-cover opacity-60 group-hover:opacity-80 transition-all duration-700 group-hover:scale-105" 
                                 sizes="(max-width: 1024px) 100vw, 1024px"
-                                unoptimized
                             />
                             
                             {/* Затенения для глубины */}
@@ -78,7 +95,6 @@ export default function SupVideo() {
                         /* СОСТОЯНИЕ 2: РЕАЛЬНЫЙ ПЛЕЕР YOUTUBE */
                         <iframe
                             className="absolute inset-0 w-full h-full"
-                            // Добавили autoplay=1 и start=27, чтобы видео началось сразу с нужного момента
                             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&start=${startTime}&rel=0`}
                             title="YouTube video player"
                             frameBorder="0"

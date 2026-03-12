@@ -1,5 +1,23 @@
-import { Tent, Droplets, Mountain, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Tent, Droplets, Mountain, ChevronRight } from 'lucide-react'; 
 import Image from 'next/image';
+
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
 
 const DESTINATIONS = [
   {
@@ -29,6 +47,9 @@ const DESTINATIONS = [
 ];
 
 export default function HikesDestinations() {
+  const headerView = useInView();
+  const cardsView = useInView();
+
   return (
     <section className="py-8 md:py-16 bg-stone-900 border-t border-white/5 relative overflow-hidden">
       
@@ -37,9 +58,10 @@ export default function HikesDestinations() {
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         
-        {/* 🔥 Выровняли заголовок по левому краю в едином стиле */}
         <div
-          className="text-left mb-10 md:mb-16 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both"
+          ref={headerView.ref}
+          style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+          className="text-left mb-10 md:mb-16 max-w-3xl"
         >
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
             ВЫБЕРИ СВОЮ <br className="hidden md:block"/><span className="text-teal-500">ИСТОРИЮ</span>
@@ -49,17 +71,16 @@ export default function HikesDestinations() {
           </p>
         </div>
 
-        {/* 🔥 Обертка для мобильного свайпа */}
-        <div className="relative">
+        {/* Обертка для мобильного свайпа */}
+        <div className="relative" ref={cardsView.ref}>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 lg:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {DESTINATIONS.map((dest, i) => {
               const Icon = dest.icon;
               return (
                 <div
                   key={i}
-                  // 🔥 Добавили shrink-0, snap-center и w-[85vw] для мобилки
-                  className="shrink-0 snap-center w-[85vw] md:w-auto bg-stone-800/40 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-700 hover:border-teal-500/50 hover:shadow-[0_0_30px_rgba(20,184,166,0.1)] transition-all duration-300 group flex flex-col backdrop-blur-sm animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-                  style={{ animationDelay: `${i * 150}ms` }}
+                  style={{ opacity: cardsView.inView ? 1 : 0, transform: cardsView.inView ? 'translateY(0)' : 'translateY(30px)', transition: `opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s` }}
+                  className="shrink-0 snap-center w-[85vw] md:w-auto bg-stone-800/40 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-700 hover:border-teal-500/50 hover:shadow-[0_0_30px_rgba(20,184,166,0.1)] transition-all duration-300 group flex flex-col backdrop-blur-sm"
                 >
                   {/* Фотография маршрута */}
                   <div className="relative h-56 md:h-64 w-full overflow-hidden border-b border-stone-700/50 shrink-0">
@@ -104,7 +125,7 @@ export default function HikesDestinations() {
             })}
           </div>
 
-          {/* 🔥 Подсказка "Мотай" */}
+          {/* Подсказка "Мотай" */}
           <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
               <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} />

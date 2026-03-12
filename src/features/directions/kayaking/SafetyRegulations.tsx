@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { 
   ShieldCheck, Anchor, Waves, Navigation, 
   Tent, LifeBuoy, UserCheck, Scale, ChevronDown, AlertCircle
@@ -10,6 +10,21 @@ import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
+}
+
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
 }
 
 const regulations = [
@@ -25,6 +40,8 @@ const regulations = [
 
 export default function SafetyRegulations() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const headerView = useInView();
+  const listView = useInView();
 
   return (
     <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">
@@ -32,8 +49,12 @@ export default function SafetyRegulations() {
 
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
 
+        {/* HEADER */}
         <div className="text-center mb-12 md:mb-16">
-          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+          <div
+            ref={headerView.ref}
+            style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+          >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-950/30 backdrop-blur-md mb-4 md:mb-6">
               <AlertCircle size={14} className="text-rose-400" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400">Техника безопасности</span>
@@ -47,23 +68,24 @@ export default function SafetyRegulations() {
           </div>
         </div>
 
-        <div className="space-y-3 md:space-y-4">
+        {/* ACCORDION (Чистый CSS Grid) */}
+        <div ref={listView.ref} className="space-y-3 md:space-y-4">
           {regulations.map((section, idx) => {
             const isOpen = openIndex === idx;
             const Icon = section.icon;
             return (
               <div
                 key={section.id}
-                style={{ animationDelay: `${idx * 100}ms` }}
+                style={{ opacity: listView.inView ? 1 : 0, transform: listView.inView ? 'translateY(0)' : 'translateY(10px)', transition: `opacity 0.4s ease ${idx * 0.04}s, transform 0.4s ease ${idx * 0.04}s` }}
                 className={cn(
-                  "border rounded-[1.5rem] overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom-8 fill-mode-both",
+                  "border rounded-[1.5rem] overflow-hidden transition-all duration-300",
                   isOpen ? "bg-slate-900 border-rose-500/30 shadow-[0_0_20px_rgba(225,29,72,0.05)]" : "bg-slate-900/40 border-white/5 hover:border-white/10"
                 )}
               >
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
                   aria-expanded={isOpen}
-                  className="w-full p-5 md:p-6 flex justify-between items-center text-left group outline-none"
+                  className="w-full p-5 md:p-6 flex justify-between items-center text-left group"
                 >
                   <div className="flex items-center gap-4 pr-4">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-400 group-hover:text-slate-300")}>
@@ -74,30 +96,33 @@ export default function SafetyRegulations() {
                     </span>
                   </div>
                   <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white")}>
-                    <ChevronDown className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={18} />
+                    <ChevronDown className={cn("transition-transform duration-300", isOpen && "rotate-180")} size={18} />
                   </div>
                 </button>
 
-                {/* CSS grid trick: анимация height: 0 → auto */}
-                <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-5 md:px-6 pb-6 pt-2 ml-0 md:ml-14">
-                      <ul className="space-y-3">
-                        {section.items.map((item, i) => (
-                          <li key={i} className="flex items-start gap-3 text-sm md:text-base text-slate-400 font-medium leading-relaxed">
-                            <span className="text-rose-500/50 font-bold mt-0.5">{idx + 1}.{i + 1}</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {section.alert && (
-                        <div className="mt-6 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex gap-3 items-start">
-                          <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
-                          <p className="text-sm text-rose-200/80 font-medium leading-relaxed">{section.alert}</p>
+                {/* Нативная CSS анимация аккордеона через Grid */}
+                <div className={cn(
+                    "grid transition-all duration-300 ease-in-out",
+                    isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                )}>
+                    <div className="overflow-hidden">
+                        <div className="px-5 md:px-6 pb-6 pt-2 ml-0 md:ml-14">
+                          <ul className="space-y-3">
+                            {section.items.map((item, i) => (
+                              <li key={i} className="flex items-start gap-3 text-sm md:text-base text-slate-400 font-medium leading-relaxed">
+                                <span className="text-rose-500/50 font-bold mt-0.5">{idx + 1}.{i + 1}</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {section.alert && (
+                            <div className="mt-6 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex gap-3 items-start">
+                              <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                              <p className="text-sm text-rose-200/80 font-medium leading-relaxed">{section.alert}</p>
+                            </div>
+                          )}
                         </div>
-                      )}
                     </div>
-                  </div>
                 </div>
               </div>
             );

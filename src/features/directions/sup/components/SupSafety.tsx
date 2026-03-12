@@ -1,4 +1,22 @@
-import { Shield, LifeBuoy, Navigation, ChevronRight } from 'lucide-react';
+"use client";
+
+import { useRef, useEffect, useState } from "react";
+import { Shield, LifeBuoy, Navigation, ChevronRight } from 'lucide-react'; 
+
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
 
 const SAFETY_GUARANTEES = [
     {
@@ -19,15 +37,28 @@ const SAFETY_GUARANTEES = [
 ];
 
 export default function SupSafety() {
+    const headerView = useInView();
+    const cardsView = useInView();
+
     return (
         <section className="py-8 md:py-14 bg-[#020617] relative overflow-hidden border-t border-white/5">
             
+            {/* Фоновые декорации для глубины */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/10 md:blur-[150px] rounded-full pointer-events-none" />
             
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                  
-                 <div className="text-left mb-8 md:mb-12 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
+                 {/* ЗАГОЛОВОК */}
+                 <div 
+                    ref={headerView.ref}
+                    style={{ 
+                      opacity: headerView.inView ? 1 : 0, 
+                      transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', 
+                      transition: 'opacity 0.6s ease, transform 0.6s ease' 
+                    }}
+                    className="text-left mb-8 md:mb-12 max-w-3xl"
+                 >
                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-950/30 backdrop-blur-md mb-4 md:mb-6">
                          <Shield className="text-blue-400" size={14} strokeWidth={2} />
                          <span className="text-[14px] font-bold uppercase tracking-widest text-blue-400">
@@ -42,18 +73,24 @@ export default function SupSafety() {
                      </p>
                  </div>
 
-                 <div className="relative">
+                 {/* ОБЕРТКА ДЛЯ ГОРИЗОНТАЛЬНОГО СКРОЛЛА */}
+                 <div className="relative" ref={cardsView.ref}>
                      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                          {SAFETY_GUARANTEES.map((item, idx) => {
                              const Icon = item.icon;
                              return (
                                  <div 
                                     key={idx}
-                                    className="group shrink-0 snap-center w-[85vw] md:w-auto bg-slate-900/40 backdrop-blur-md p-6 md:p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all duration-500 text-left flex flex-row items-start relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
-                                    style={{ animationDelay: `${idx * 150}ms` }}
+                                    style={{ 
+                                      opacity: cardsView.inView ? 1 : 0, 
+                                      transform: cardsView.inView ? 'translateY(0)' : 'translateY(20px)', 
+                                      transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` 
+                                    }}
+                                    className="group shrink-0 snap-center w-[85vw] md:w-auto bg-slate-900/40 backdrop-blur-md p-6 md:p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all duration-500 text-left flex flex-row items-start relative overflow-hidden"
                                  >
                                      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
+                                     {/* Квадратная иконка слева */}
                                      <div className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 mr-4 md:mr-5">
                                          <div className="absolute inset-0 bg-blue-500/20 rounded-2xl blur-md group-hover:blur-xl transition-all duration-500 opacity-0 group-hover:opacity-100" />
                                          <div className="relative w-full h-full bg-slate-900 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-blue-500/50 group-hover:bg-blue-500 transition-colors duration-500 z-10 shadow-lg text-slate-400 group-hover:text-slate-900">

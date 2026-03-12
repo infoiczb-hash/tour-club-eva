@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Heart, Camera, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -7,11 +10,24 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// Ваши реальные фотографии
+function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
+
 const PHOTOS = [
     { 
         src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg", 
-        // Первая картинка будет огромной (2х2) на десктопе
         className: "md:col-span-2 md:row-span-2",
         priority: true
     },
@@ -38,6 +54,9 @@ const PHOTOS = [
 ];
 
 export default function SupGallery() {
+    const headerView = useInView();
+    const galleryView = useInView();
+
     return (
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
@@ -47,7 +66,11 @@ export default function SupGallery() {
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
                 {/* ЗАГОЛОВОК */}
-                <div className="text-left mb-8 md:mb-12 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
+                <div 
+                    ref={headerView.ref}
+                    style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+                    className="text-left mb-8 md:mb-12 max-w-3xl"
+                >
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 md:mb-6 backdrop-blur-md">
                         <Camera className="w-4 h-4 text-slate-400" />
                         <span className="text-[12px] md:text-[14px] font-bold tracking-widest text-slate-300 uppercase">
@@ -62,20 +85,22 @@ export default function SupGallery() {
                     </p>
                 </div>
                 
-                {/* ОБЕРТКА ДЛЯ СКРОЛЛА */}
-                <div className="relative">
+                {/* ОБЕРТКА ДЛЯ СКРОЛЛА (Каскадная анимация через CSS transition-delay) */}
+                <div className="relative" ref={galleryView.ref}>
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-4 md:mx-0 md:px-0 md:auto-rows-[300px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {PHOTOS.map((photo, idx) => (
-                            <div
+                            <div 
                                 key={idx}
-                                style={{ animationDelay: `${idx * 150}ms` }}
+                                style={{ 
+                                    opacity: galleryView.inView ? 1 : 0, 
+                                    transform: galleryView.inView ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)', 
+                                    transition: `opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 0.15}s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 0.15}s` 
+                                }}
                                 className={cn(
-                                    "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 shadow-2xl transition-all duration-500 hover:shadow-teal-900/30",
-                                    "animate-in fade-in slide-in-from-bottom-8 zoom-in-[0.98] fill-mode-both duration-700",
+                                    "relative shrink-0 snap-center w-[85vw] h-[400px] md:w-auto md:h-full rounded-[2rem] overflow-hidden group border border-white/10 isolate bg-slate-900 cursor-pointer shadow-2xl",
                                     photo.className
                                 )}
                             >
-                                {/* Сама фотография */}
                                 <Image 
                                     src={photo.src} 
                                     alt={`SUP Emotion ${idx + 1}`} 

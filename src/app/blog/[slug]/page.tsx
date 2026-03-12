@@ -1,5 +1,5 @@
 // src/app/blog/[slug]/page.tsx
-import React, { cache } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,7 +28,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-const getPost = cache(async function getPost(slug: string) {
+async function getPost(slug: string) {
   if (!slug) return null;
   const decodedSlug = decodeURIComponent(slug);
 
@@ -42,24 +42,14 @@ const getPost = cache(async function getPost(slug: string) {
   const relatedPosts = await prisma.blog.findMany({
     where: { 
         id: { not: post.id },
-        isActive: true,
     },
     take: 3,
     orderBy: { date: 'desc' },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      excerpt: true,
-      image: true,
-      date: true,
-      category: true,
-      blogCategory: { select: { title: true, slug: true } },
-    },
+    include: { blogCategory: true } 
   });
 
   return { post, relatedPosts };
-});
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -120,8 +110,6 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const formatDate = (date: Date) => new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
   const isoDate = new Date(post.date).toISOString();
-  // SEO: Правильная дата обновления
-  const modDate = post.updatedAt ? new Date(post.updatedAt).toISOString() : isoDate;
 
   let absoluteImageUrl = post.image || '/og-default.jpg'; 
   if (absoluteImageUrl.startsWith('/')) {
@@ -140,7 +128,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       description: post.excerpt || '',
       image: [absoluteImageUrl],
       datePublished: isoDate,
-      dateModified: modDate, // Обновлено для SEO
+      dateModified: isoDate, 
       author: {
         '@type': 'Person',
         name: post.author_name || 'Турклуб Эва',
@@ -195,7 +183,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* --- 1. HERO HEADER --- */}
+      {/* --- 1. HERO HEADER (🔥 РЕЗИНОВЫЙ И С БЕЗОПАСНОЙ ЗОНОЙ) --- */}
       <div className="relative min-h-[75svh] md:min-h-[65vh] w-full overflow-hidden flex flex-col justify-end">
         
         {/* ФОН */}
@@ -212,7 +200,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/80 to-slate-900/40" />
         </div>
 
-        {/* КОНТЕНТ */}
+        {/* КОНТЕНТ (С жестким отступом pt-32) */}
         <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
             
             <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-6 md:mb-8 group w-fit shadow-lg">
@@ -224,20 +212,21 @@ export default async function BlogPostPage({ params }: PageProps) {
                 {(post as any).blogCategory?.title || post.category}
             </span>
 
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 max-w-4xl drop-shadow-2xl">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 max-w-4xl drop-shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {post.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm">
+            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
                 <div className="flex items-center gap-3">
-                    <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md">
+                    {/* 🔥 ИСПРАВЛЕНИЕ 1: ДОБАВИЛИ shrink-0 ЧТОБЫ ФОТО АВТОРА НЕ ПЛЮЩИЛО В ОВАЛ */}
+                    <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
                          {post.author_image ? (
                              <Image 
-                               src={post.author_image} 
-                               alt={post.author_name || "Автор статьи"} 
-                               fill 
-                               className="object-cover" 
-                               sizes="48px" // ОПТИМИЗИРОВАНО: Идеальный размер для аватара
+                                src={post.author_image} 
+                                alt={post.author_name || "Автор статьи"} 
+                                fill 
+                                className="object-cover" 
+                                sizes="(max-width: 768px) 40px, 48px" // 🔥 ИСПРАВЛЕНИЕ 2: Оптимизировали размер загрузки
                              />
                          ) : (
                              <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={20}/></div>
@@ -293,6 +282,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
+                {/* ЖЕСТКАЯ КОМПАКТИЗАЦИЯ ТЕКСТА */}
                 <div 
                     className="prose prose-base prose-invert max-w-none 
                     
@@ -335,13 +325,8 @@ export default async function BlogPostPage({ params }: PageProps) {
                                 {relatedPosts.map(relPost => (
                                     <Link key={relPost.id} href={`/blog/${relPost.slug}`} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
                                         <div className="relative w-full sm:w-24 lg:w-full xl:w-24 aspect-[4/3] sm:aspect-square lg:aspect-[4/3] xl:aspect-square shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-white/5 shadow-md">
-                                            <Image 
-                                                src={relPost.image || '/placeholder.jpg'} 
-                                                alt={relPost.title} 
-                                                fill 
-                                                className="object-cover group-hover:scale-110 transition-transform duration-500" 
-                                                sizes="(max-width: 640px) 100vw, 250px" // ОПТИМИЗИРОВАНО
-                                            />
+                                            {/* 🔥 ИСПРАВЛЕНИЕ 3: Добавили sizes для мелких карточек сайдбара */}
+                                            <Image src={relPost.image || '/placeholder.jpg'} alt={relPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, 100px" />
                                         </div>
                                         <div className="py-1">
                                             <span className="text-[10px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">
@@ -370,7 +355,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                     {/* Блок "Хотите с нами?" */}
                     <div className="p-8 rounded-3xl bg-gradient-to-br from-teal-900/40 to-slate-900 border border-teal-500/20 text-center shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-2xl rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
                         
                         <h2 className="text-xl font-black text-white mb-3 uppercase tracking-tight relative z-10">   
                             Хотите с нами? 

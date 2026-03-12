@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, MessageCircleQuestion, MessageCircle, Quote, CheckCircle2 } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';
@@ -10,7 +10,37 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// РЕАЛЬНЫЕ ВОПРОСЫ РОДИТЕЛЕЙ
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setInView(true); observer.disconnect(); }
+    }, options);
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
+
+function FadeBlock({ children, delay = 0, startX = 0, startY = 20, className = '' }: any) {
+  const { ref, inView } = useInView();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translate(0, 0)' : `translate(${startX}px, ${startY}px)`,
+        transition: `opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 const FAQ_DATA = [
     { 
         id: 1,
@@ -43,15 +73,11 @@ export default function KidsFAQ() {
     };
 
     return (
-        // 🔥 1. Убрали лишние отступы секции (было py-12 md:py-20)
         <section className="py-8 md:py-12 bg-slate-950 relative overflow-hidden border-t border-white/5">
             <div className="container mx-auto px-4 max-w-4xl relative z-10">
                 
-                {/* === БЛОК 1: ВОПРОСЫ (FAQ) === */}
-                {/* 🔥 2. ВЫРАВНИВАНИЕ ВЛЕВО: Изменили items-center text-center на items-start text-left */}
-                <div 
-                    className="flex flex-col items-start text-left mb-8 md:mb-12 max-w-2xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both"
-                >
+                {/* ВОПРОСЫ (FAQ) */}
+                <FadeBlock startX={-20} startY={0} className="flex flex-col items-start text-left mb-8 md:mb-12 max-w-2xl">
                     <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-900 rounded-2xl flex items-center justify-center border border-white/5 mb-4 md:mb-6 shadow-xl">
                         <MessageCircleQuestion className="text-amber-500" size={24} strokeWidth={1.5} />
                     </div>
@@ -61,21 +87,21 @@ export default function KidsFAQ() {
                     <p className="text-slate-400 text-[14px] md:text-base font-medium leading-tight md:leading-tight">
                         Отвечаем на то, что больше всего волнует родителей перед первой поездкой.
                     </p>
-                </div>
+                </FadeBlock>
 
-                {/* АККОРДЕОН */}
-                {/* 🔥 3. Сократили отступ до нижнего блока (было mb-24, стало mb-12 md:mb-16) */}
+                {/* АККОРДЕОН (CSS Grid) */}
                 <div className="space-y-3 md:space-y-4 mb-12 md:mb-16">
                     {FAQ_DATA.map((item, index) => {
                         const isOpen = openId === item.id;
                         return (
-                            <div 
+                            <FadeBlock 
                                 key={item.id}
+                                delay={index * 0.1}
+                                startY={20}
                                 className={cn(
-                                    "bg-slate-900/60 border rounded-2xl overflow-hidden transition-colors duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-both",
+                                    "bg-slate-900/60 border rounded-2xl overflow-hidden transition-colors duration-300",
                                     isOpen ? "border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.05)]" : "border-white/5 hover:border-amber-500/20 hover:bg-slate-900"
                                 )}
-                                style={{ animationDelay: `${index * 100}ms` }}
                             >
                                <button
                                   onClick={() => toggleAccordion(item.id)}
@@ -94,42 +120,36 @@ export default function KidsFAQ() {
                                             isOpen ? "bg-amber-500/10 border-amber-500/30" : "bg-slate-800 border-transparent group-hover:bg-slate-700"
                                         )}
                                     >
-                                        <ChevronDown size={18} className={cn("transition-transform duration-300", isOpen ? "text-amber-400 rotate-180" : "text-slate-400")} />
+                                        <ChevronDown size={18} className={cn("transition-transform duration-300", isOpen ? "rotate-180 text-amber-400" : "text-slate-400")} />
                                     </div>
                                 </button>
 
-                                {/* CSS Grid анимация (замена AnimatePresence и framer-motion) */}
-                                <div 
-                                    className={cn(
-                                        "grid transition-all duration-300 ease-in-out",
-                                        isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                                    )}
-                                >
+                                <div className={cn(
+                                    "grid transition-all duration-300 ease-in-out",
+                                    isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                                )}>
                                     <div className="overflow-hidden">
                                         <div className="p-5 md:p-6 pt-0 text-slate-400 text-[14px] md:text-base leading-tight md:leading-tight font-medium border-t border-white/5 mt-2">
                                             {item.a}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </FadeBlock>
                         );
                     })}
                 </div>
 
-                {/* === БЛОК 2: ФИНАЛЬНЫЙ CTA + ЦИТАТА РОМАНА === */}
-                <div 
-                    className="relative p-6 md:p-12 lg:p-16 rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-900 to-[#020617] border border-amber-500/20 overflow-hidden text-center shadow-2xl isolate animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-                >
+                {/* ФИНАЛЬНЫЙ CTA + ЦИТАТА */}
+                <FadeBlock startY={30} className="relative p-6 md:p-12 lg:p-16 rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-900 to-[#020617] border border-amber-500/20 overflow-hidden text-center shadow-2xl isolate">
                     <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/5 md:blur-[120px] rounded-full pointer-events-none" />
 
-                    {/* Цитата Романа */}
                     <div className="mb-10 md:mb-16 relative">
                         <Quote className="w-10 h-10 md:w-12 md:h-12 text-amber-500/20 mx-auto mb-4 md:mb-6" />
                         <h3 className="text-lg md:text-3xl font-bold text-white mb-6 md:mb-8 max-w-3xl mx-auto leading-tight md:leading-tight md:leading-normal">
                             "Дети раскрываются не в кабинетах, а у костра. Я вижу, как подросток, который вчера боялся лягушек, сегодня ведёт за собой других. <span className="text-amber-500">Это и есть настоящая работа</span>."
                         </h3>
                         <div className="flex items-center justify-center gap-4">
-                            <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full flex items-center justify-center border border-amber-500/30 overflow-hidden relative shrink-0">
+                            <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full flex items-center justify-center border border-amber-500/30 overflow-hidden relative shrink-0 shadow-lg">
                                 <span className="text-slate-400 font-bold text-lg">Р</span>
                             </div>
                             <div className="text-left">
@@ -141,7 +161,6 @@ export default function KidsFAQ() {
 
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-10 md:mb-16" />
 
-                    {/* ПРИЗЫВ К ДЕЙСТВИЮ */}
                     <h2 className="text-2xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4 md:mb-6">
                         Готовы к <span className="text-emerald-500">Приключению?</span>
                     </h2>
@@ -178,18 +197,16 @@ export default function KidsFAQ() {
                         </div>
                     </div>
 
-                    {/* 🔥 4. ОДНА КНОПКА CTA (Убрали "Посмотреть расписание") */}
                     <div className="flex justify-center w-full relative z-10 max-w-xl mx-auto">
                         <button 
                             onClick={() => openContactModal('Заявка: Junior Академия', 'TOUR')}
-                            // Сделали кнопку главной (emerald), чтобы она притягивала внимание
                             className="w-full sm:w-auto px-8 py-4 bg-emerald-500 text-slate-950 font-black uppercase tracking-wider text-[14px] rounded-xl hover:bg-emerald-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
                         >
                             <MessageCircle size={18} />
                             <span>Связаться с нами</span>
                         </button>
                     </div>
-                </div>
+                </FadeBlock>
 
             </div>
         </section>

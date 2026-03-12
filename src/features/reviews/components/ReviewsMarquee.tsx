@@ -1,9 +1,16 @@
 // src/features/reviews/components/ReviewsMarquee.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+// ✅ Добавили ChevronRight для подсказки
 import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import Image from 'next/image' 
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 // --- TYPES ---
 export interface Review {
@@ -18,65 +25,78 @@ export interface Review {
 
 // --- CONFIG ---
 const SOURCE_CONFIG: Record<string, any> = {
-  tg:        { label: 'Telegram',   icon: <Send size={12} strokeWidth={3} />,         borderClass: "group-hover:border-sky-500/50",    glowClass: "group-hover:shadow-[0_0_30px_rgba(14,165,233,0.2)]",  iconColor: "text-sky-400",    checkActiveColor: "text-sky-400" },
-  viber:     { label: 'Viber',      icon: <Phone size={12} strokeWidth={3} />,        borderClass: "group-hover:border-purple-500/50", glowClass: "group-hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]", iconColor: "text-purple-400", checkActiveColor: "text-purple-400" },
-  instagram: { label: 'Instagram',  icon: <Instagram size={12} strokeWidth={3} />,    borderClass: "group-hover:border-pink-500/50",   glowClass: "group-hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]",  iconColor: "text-pink-400",   checkActiveColor: "text-pink-400" },
-  default:   { label: 'Отзыв',      icon: <MessageCircle size={12} strokeWidth={3} />, borderClass: "group-hover:border-teal-500/50",  glowClass: "group-hover:shadow-[0_0_30px_rgba(20,184,166,0.2)]",  iconColor: "text-teal-400",   checkActiveColor: "text-teal-400" }
+  tg: { label: 'Telegram', icon: <Send size={12} strokeWidth={3} />, borderClass: "group-hover:border-sky-500/50", glowClass: "group-hover:shadow-[0_0_30px_rgba(14,165,233,0.2)]", iconColor: "text-sky-400", checkActiveColor: "text-sky-400" },
+  viber: { label: 'Viber', icon: <Phone size={12} strokeWidth={3} />, borderClass: "group-hover:border-purple-500/50", glowClass: "group-hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]", iconColor: "text-purple-400", checkActiveColor: "text-purple-400" },
+  instagram: { label: 'Instagram', icon: <Instagram size={12} strokeWidth={3} />, borderClass: "group-hover:border-pink-500/50", glowClass: "group-hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]", iconColor: "text-pink-400", checkActiveColor: "text-pink-400" },
+  default: { label: 'Отзыв', icon: <MessageCircle size={12} strokeWidth={3} />, borderClass: "group-hover:border-teal-500/50", glowClass: "group-hover:shadow-[0_0_30px_rgba(20,184,166,0.2)]", iconColor: "text-teal-400", checkActiveColor: "text-teal-400" }
 };
 
-const CATEGORY_MAP: Record<string, { label: string; colorClass: string }> = {
-  general:   { label: 'Местное',     colorClass: 'text-slate-400 bg-slate-800/50 border-slate-700/50' },
-  kayak:     { label: 'Сплавы',      colorClass: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-  sup:       { label: 'SUP-туры',    colorClass: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
-  mountains: { label: 'Туры в горы', colorClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  kids:      { label: 'Детские',     colorClass: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+const CATEGORY_MAP: Record<string, { label: string, colorClass: string }> = {
+    general: { label: 'Местное', colorClass: 'text-slate-400 bg-slate-800/50 border-slate-700/50' },
+    kayak: { label: 'Сплавы', colorClass: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    sup: { label: 'SUP-туры', colorClass: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+    mountains: { label: 'Туры в горы', colorClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    kids: { label: 'Детские', colorClass: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
 };
 
 const FALLBACK_REVIEWS: Review[] = [
-  { id: '1', name: "Ольга М.",    text: "Это был лучший сплав в моей жизни! Организация на высоте 🔥",          source: 'viber',     category: 'kayak',     createdAt: new Date().toISOString() },
-  { id: '2', name: "Дмитрий К.", text: "Маршруты, которых нет на картах — это правда. Безопасность на 100% 🛶", source: 'tg',        category: 'sup',       createdAt: new Date().toISOString() },
-  { id: '3', name: "Анна С.",    text: "Дети в восторге от лагеря, спасибо ЭВА! ❤️",                           source: 'instagram', category: 'kids',      createdAt: new Date().toISOString() },
-  { id: '4', name: "Максим",     text: "Гиды — просто космос. Знают каждую тропинку и историю.",               source: 'tg',        category: 'mountains', createdAt: new Date().toISOString() },
-  { id: '5', name: "Елена В.",   text: "Вкусная еда на костре, гитара и полная перезагрузка. Вернусь!",        source: 'instagram', category: 'general',   createdAt: new Date().toISOString() },
+  { id: '1', name: "Ольга М.", text: "Это был лучший сплав в моей жизни! Организация на высоте 🔥", source: 'viber', category: 'kayak', createdAt: new Date().toISOString() },
+  { id: '2', name: "Дмитрий К.", text: "Маршруты, которых нет на картах — это правда. Безопасность на 100% 🛶", source: 'tg', category: 'sup', createdAt: new Date().toISOString() },
+  { id: '3', name: "Анна С.", text: "Дети в восторге от лагеря, спасибо ЭВА! ❤️", source: 'instagram', category: 'kids', createdAt: new Date().toISOString() },
+  { id: '4', name: "Максим", text: "Гиды — просто космос. Знают каждую тропинку и историю.", source: 'tg', category: 'mountains', createdAt: new Date().toISOString() },
+  { id: '5', name: "Елена В.", text: "Вкусная еда на костре, гитара и полная перезагрузка. Вернусь!", source: 'instagram', category: 'general', createdAt: new Date().toISOString() },
 ];
 
-// --- CARD ---
+// --- CARD COMPONENT ---
 const ReviewCard = ({ review }: { review: Review }) => {
   const config = SOURCE_CONFIG[review.source] || SOURCE_CONFIG.default;
   const catConfig = CATEGORY_MAP[review.category || 'general'] || CATEGORY_MAP.general;
-
+  
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-
-  const time = mounted
-    ? new Date(review.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-    : "--:--";
+  
+  const time = mounted ? new Date(review.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : "--:--";
 
   return (
-    <div className={`group relative flex flex-col flex-shrink-0 w-[85vw] md:w-[380px] p-6 rounded-[2rem] snap-center h-fit bg-slate-900/80 backdrop-blur-xl border border-white/5 shadow-xl transition-all duration-500 ease-out cursor-default md:hover:-translate-y-1 ${config.borderClass} ${config.glowClass}`}>
+    <div className={cn(
+      // ✅ ДОБАВЛЕН класс h-fit, чтобы карточки не растягивались по высоте соседей
+      "group relative flex flex-col flex-shrink-0 w-[85vw] md:w-[380px] p-6 rounded-[2rem] snap-center h-fit",
+      "bg-slate-900/80 backdrop-blur-xl border border-white/5 shadow-xl", 
+      "transition-all duration-500 ease-out cursor-default md:hover:-translate-y-2",
+      config.borderClass, config.glowClass
+    )}>
       
       {/* HEADER */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden shrink-0">
-            {review.avatar ? (
-              <Image src={review.avatar} alt={review.name} width={40} height={40} className="w-full h-full object-cover" />
-            ) : (
-              review.name[0]
-            )}
+             {review.avatar ? (
+               <Image
+                  src={review.avatar}
+                  alt={review.name}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+               />
+             ) : (
+               review.name[0]
+             )}
           </div>
+          
           <div className="flex flex-col">
             <span className="text-sm font-bold text-white leading-none">{review.name}</span>
-            <div className={`flex items-center gap-1.5 mt-1.5 transition-colors duration-300 ${config.iconColor}`}>
-              {config.icon}
-              <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
+            {/* ✅ ИСПРАВЛЕНА ДОСТУПНОСТЬ: Убрана opacity-60 */}
+            <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300", config.iconColor)}>
+               {config.icon}
+               <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
             </div>
           </div>
         </div>
 
-        <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-widest ${catConfig.colorClass}`}>
-          <Tags size={10} strokeWidth={2.5} />
-          {catConfig.label}
+        {/* CATEGORY BADGE */}
+        <div className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-widest", catConfig.colorClass)}>
+            <Tags size={10} strokeWidth={2.5} />
+            {catConfig.label}
         </div>
       </div>
 
@@ -87,19 +107,25 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
       {/* FOOTER */}
       <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-        <span className="text-[11px] font-mono text-slate-400 transition-colors">{time}</span>
-        <CheckCheck size={16} className={`transition-colors duration-500 text-slate-600 group-hover:${config.checkActiveColor}`} />
+        {/* ✅ ИСПРАВЛЕНА ДОСТУПНОСТЬ: Изменен цвет на text-slate-400 (был text-slate-500) */}
+        <span className="text-[11px] font-mono text-slate-400 transition-colors">
+            {time}
+        </span>
+        
+        <CheckCheck 
+            size={16} 
+            className={cn("transition-colors duration-500", "text-slate-600", `group-hover:${config.checkActiveColor}`)} 
+        />
       </div>
     </div>
   );
 };
 
-// --- MAIN ---
+// --- MAIN COMPONENT ---
 export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] }) {
   const displayReviews = reviews.length > 0 ? reviews : FALLBACK_REVIEWS;
-
+  
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [visible, setVisible] = useState(true);
 
   const availableCategories = useMemo(() => {
     const categories = displayReviews.map(r => r.category || 'general');
@@ -111,121 +137,100 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
     return displayReviews.filter(r => (r.category || 'general') === activeCategory);
   }, [activeCategory, displayReviews]);
 
-  // Fade при смене категории
-  const handleCategoryChange = (cat: string) => {
-    setVisible(false);
-    setTimeout(() => {
-      setActiveCategory(cat);
-      requestAnimationFrame(() => setVisible(true));
-    }, 150);
-  };
-
-  // Нативный drag-to-scroll
-  const trackRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    isDragging.current = true;
-    startX.current = e.pageX - (trackRef.current?.offsetLeft ?? 0);
-    scrollLeft.current = trackRef.current?.scrollLeft ?? 0;
-    if (trackRef.current) trackRef.current.style.cursor = 'grabbing';
-  };
-
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current || !trackRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - trackRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.2;
-    trackRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const onMouseUp = () => {
-    isDragging.current = false;
-    if (trackRef.current) trackRef.current.style.cursor = 'grab';
-  };
+  // ✅ БОЛЬШЕ НЕ ДУБЛИРУЕМ МАССИВ
+  const displayList = filteredReviews;
 
   return (
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
       
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none opacity-50" />
+      {/* Background Ambience */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:md:blur-[150px]  rounded-full pointer-events-none opacity-50" />
 
       <div className="container mx-auto px-4 mb-8 md:mb-12 relative z-10">
         
         {/* HEADER */}
         <div className="text-left mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
-            <MessageCircle size={14} className="text-teal-400" />
-            <span className="text-[12px] md:text-[14px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
-          </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
+                <MessageCircle size={14} className="text-teal-400" />
+                <span className="text-[12px] md:text-[14px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
+            </div>
 
-          <h2 className="text-4xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
-            <span className="font-light text-slate-400 block md:inline">Отзывы </span>
-            <span className="font-black text-white">Участников</span>
-            <span className="text-teal-500">.</span>
-          </h2>
-
-          <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
-            <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
-            <span>Создано из отзывов и оценочных форм туров</span>
-          </div>
+            <h2 className="text-4xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
+                <span className="font-light text-slate-400 block md:inline">Отзывы </span>
+                <span className="font-black text-white">Участников</span>
+                <span className="text-teal-500">.</span>
+            </h2>
+            
+            <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
+                <span>Создано из отзывов и оценочных форм туров</span>
+            </div>
         </div>
 
-        {/* ФИЛЬТРЫ */}
+        {/* ФИЛЬТРЫ КАТЕГОРИЙ */}
         {availableCategories.length > 1 && (
-          <div className="flex gap-2 md:gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <button
-              onClick={() => handleCategoryChange('all')}
-              className={`shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border ${activeCategory === 'all' ? 'bg-teal-700 text-white border-teal-600 shadow-lg shadow-teal-900/20' : 'bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white'}`}
-            >
-              Все отзывы
-            </button>
-            {availableCategories.map(catId => {
-              const catInfo = CATEGORY_MAP[catId] || CATEGORY_MAP.general;
-              return (
+            <div className="flex gap-2 md:gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <button
-                  key={catId}
-                  onClick={() => handleCategoryChange(catId)}
-                  className={`shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border ${activeCategory === catId ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-900/20' : 'bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white'}`}
+                    onClick={() => setActiveCategory('all')}
+                    className={cn(
+                        "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border",
+                        activeCategory === 'all' 
+                            ? "bg-teal-700 text-white border-teal-600 shadow-lg shadow-teal-900/20" 
+                            : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
+                    )}
                 >
-                  {catInfo.label}
+                    Все отзывы
                 </button>
-              );
-            })}
-          </div>
+                {availableCategories.map(catId => {
+                    const catInfo = CATEGORY_MAP[catId] || CATEGORY_MAP.general;
+                    return (
+                        <button
+                            key={catId}
+                            onClick={() => setActiveCategory(catId)}
+                            className={cn(
+                                "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border",
+                                activeCategory === catId 
+                                    ? "bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-900/20" 
+                                    : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
+                            )}
+                        >
+                            {catInfo.label}
+                        </button>
+                    )
+                })}
+            </div>
         )}
+
       </div>
 
-      {/* CARDS */}
+      {/* --- CARDS CONTAINER --- */}
       <div className="relative flex flex-col gap-8">
-        <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
-        <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
+         {/* Fade Edges (Desktop only) */}
+         <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
+         <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
-        <div className="relative overflow-hidden">
-          <div
-            ref={trackRef}
-            onMouseDown={onMouseDown}
-            onMouseMove={onMouseMove}
-            onMouseUp={onMouseUp}
-            onMouseLeave={onMouseUp}
-            tabIndex={0}
-            role="region"
-            aria-label={`Отзывы в категории ${activeCategory}`}
-            className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full pb-8 cursor-grab focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl transition-opacity duration-150"
-            style={{ opacity: visible ? 1 : 0 }}
-          >
-            {filteredReviews.map((review, i) => (
-              <ReviewCard key={`${review.id}-${i}`} review={review} />
-            ))}
-          </div>
+         <div className="relative">
+             <div 
+                key={activeCategory}
+                tabIndex={0} 
+                role="region" 
+                aria-label={`Отзывы в категории ${activeCategory}`} 
+                // ✅ УБРАНЫ классы md:animate-marquee и добавлены классы обычного скролла
+                className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
+              >
+                {displayList.map((review, i) => (
+                  <ReviewCard key={`${review.id}-${i}`} review={review} />
+                ))}
+              </div>
 
-          <div className="absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
-          </div>
-        </div>
+           {/* ✅ ДОБАВЛЕНА ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
+           <div className="absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
+              <ChevronRight size={14} />
+           </div>
+         </div>
       </div>
+
     </section>
   );
 }

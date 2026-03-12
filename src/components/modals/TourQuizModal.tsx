@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { m as motion, AnimatePresence } from "framer-motion";
 import { 
   X, ArrowLeft, ArrowRight, Check, Sparkles, Info, Loader2, Trophy,
   Compass, Anchor, Waves, Mountain, Baby, Backpack, Zap, ShieldCheck, 
@@ -156,157 +155,147 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
   const progress = ((step + 1) / questions.length) * 100;
   const currentQ = questions[step];
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
-          
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            role="dialog" aria-modal="true" aria-labelledby="modal-quiz-title" className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"         >
-            <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
-               <X size={20} />
-            </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-200">
+      
+      <div
+        role="dialog" aria-modal="true" aria-labelledby="modal-quiz-title" 
+        className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300"         
+      >
+        <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
+           <X size={20} />
+        </button>
 
-            {/* === VIEW 1: ВОПРОСЫ === */}
-            {view === 'question' && (
-               <div className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
-                  
-                  <div className="mb-8">
-                     <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                        <span>Шаг {step + 1} / {questions.length}</span>
-                        <span>{Math.round(progress)}%</span>
-                     </div>
-                     <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5">
-                        <motion.div 
-                           className="h-full bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]"
-                           initial={{ width: 0 }}
-                           animate={{ width: `${progress}%` }}
-                           transition={{ duration: 0.5, ease: "easeOut" }}
-                        />
-                     </div>
-                  </div>
+        {/* === VIEW 1: ВОПРОСЫ === */}
+        {view === 'question' && (
+           <div className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
+              
+              <div className="mb-8">
+                 <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    <span>Шаг {step + 1} / {questions.length}</span>
+                    <span>{Math.round(progress)}%</span>
+                 </div>
+                 <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                    <div 
+                       className="h-full bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)] transition-all duration-500 ease-out"
+                       style={{ width: `${progress}%` }}
+                    />
+                 </div>
+              </div>
 
-                  <motion.div
-                     key={step}
-                     initial={{ x: 20, opacity: 0 }}
-                     animate={{ x: 0, opacity: 1 }}
-                     exit={{ x: -20, opacity: 0 }}
-                     className="flex-1"
-                  >
-                     <h3 id="modal-quiz-title" className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-                        {currentQ.question}
-                     </h3>
-                     <p className="text-slate-400 text-sm md:text-base mb-8 font-medium">
-                        {currentQ.hint}
-                     </p>
+              <div
+                 key={step}
+                 className="flex-1 animate-in fade-in slide-in-from-right-4 duration-300"
+              >
+                 <h3 id="modal-quiz-title" className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
+                    {currentQ.question}
+                 </h3>
+                 <p className="text-slate-400 text-sm md:text-base mb-8 font-medium">
+                    {currentQ.hint}
+                 </p>
 
-                     <div className="grid gap-3">
-                        {currentQ.options.map((opt) => {
-                           const isSelected = currentQ.multiple ? selectedMultiple.includes(opt.value) : false;
-                           const Icon = opt.icon;
+                 <div className="grid gap-3">
+                    {currentQ.options.map((opt) => {
+                       const isSelected = currentQ.multiple ? selectedMultiple.includes(opt.value) : false;
+                       const Icon = opt.icon;
 
-                           return (
-                             <button
-                               key={opt.value}
-                               onClick={() => handleAnswer(opt.value)}
-                               className={clsx(
-                                  "w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group text-left",
-                                  isSelected 
-                                    ? "bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]" 
-                                    : "bg-slate-900/50 border-slate-800 hover:border-teal-500/50 hover:bg-slate-900"
-                               )}
-                             >
-                                <div className={clsx(
-                                    "w-12 h-12 shrink-0 rounded-xl flex items-center justify-center transition-colors duration-300",
-                                    isSelected ? "bg-teal-500 text-slate-950" : "bg-slate-800 text-teal-500 group-hover:bg-teal-500/20"
-                                )}>
-                                    <Icon size={24} />
-                                </div>
-                                
-                                <div className="flex-1">
-                                   <div className={clsx("font-bold text-base mb-0.5 transition-colors", isSelected ? "text-teal-400" : "text-white")}>
-                                       {opt.label}
-                                   </div>
-                                   <div className="text-xs text-slate-400 font-medium">{opt.hint}</div>
-                                </div>
-                                
-                                {isSelected && <Check className="text-teal-500 shrink-0" />}
-                             </button>
-                           )
-                        })}
-                     </div>
-                  </motion.div>
+                       return (
+                         <button
+                           key={opt.value}
+                           onClick={() => handleAnswer(opt.value)}
+                           className={clsx(
+                              "w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group text-left",
+                              isSelected 
+                                ? "bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]" 
+                                : "bg-slate-900/50 border-slate-800 hover:border-teal-500/50 hover:bg-slate-900"
+                           )}
+                         >
+                            <div className={clsx(
+                                "w-12 h-12 shrink-0 rounded-xl flex items-center justify-center transition-colors duration-300",
+                                isSelected ? "bg-teal-500 text-slate-950" : "bg-slate-800 text-teal-500 group-hover:bg-teal-500/20"
+                            )}>
+                                <Icon size={24} />
+                            </div>
+                            
+                            <div className="flex-1">
+                               <div className={clsx("font-bold text-base mb-0.5 transition-colors", isSelected ? "text-teal-400" : "text-white")}>
+                                   {opt.label}
+                               </div>
+                               <div className="text-xs text-slate-400 font-medium">{opt.hint}</div>
+                            </div>
+                            
+                            {isSelected && <Check className="text-teal-500 shrink-0" />}
+                         </button>
+                       )
+                    })}
+                 </div>
+              </div>
 
-                  <div className="mt-8 flex items-center justify-between">
-                     {step > 0 ? (
-                        <button onClick={handleBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
-                           <ArrowLeft size={14}/> Назад
-                        </button>
-                     ) : <div/>}
+              <div className="mt-8 flex items-center justify-between">
+                 {step > 0 ? (
+                    <button onClick={handleBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
+                       <ArrowLeft size={14}/> Назад
+                    </button>
+                 ) : <div/>}
 
-                     {currentQ.multiple && (
-                        <button 
-                           onClick={handleNextMultiple}
-                           disabled={selectedMultiple.length === 0}
-                           className="bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 px-8 py-3 rounded-xl font-bold uppercase tracking-widest transition-all text-xs"
-                        >
-                           Далее <ArrowRight size={14} className="inline ml-1 mb-0.5" />
-                        </button>
-                     )}
-                  </div>
-               </div>
-            )}
-
-            {/* === VIEW 2: АНАЛИЗ === */}
-            {view === 'analyzing' && (
-                <div className="flex flex-col items-center justify-center h-[400px] md:h-[500px] p-10 text-center">
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full animate-pulse" />
-                        <Loader2 className="w-16 h-16 text-teal-400 animate-spin relative z-10" />
-                    </div>
-                    <motion.h3 
-                       key={analysisText}
-                       initial={{ opacity: 0, y: 10 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       className="text-xl md:text-2xl font-black text-white uppercase tracking-tight"
+                 {currentQ.multiple && (
+                    <button 
+                       onClick={handleNextMultiple}
+                       disabled={selectedMultiple.length === 0}
+                       className="bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 px-8 py-3 rounded-xl font-bold uppercase tracking-widest transition-all text-xs"
                     >
-                       {analysisText}
-                    </motion.h3>
+                       Далее <ArrowRight size={14} className="inline ml-1 mb-0.5" />
+                    </button>
+                 )}
+              </div>
+           </div>
+        )}
+
+        {/* === VIEW 2: АНАЛИЗ === */}
+        {view === 'analyzing' && (
+            <div className="flex flex-col items-center justify-center h-[400px] md:h-[500px] p-10 text-center animate-in fade-in duration-300">
+                <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full animate-pulse" />
+                    <Loader2 className="w-16 h-16 text-teal-400 animate-spin relative z-10" />
                 </div>
-            )}
+                <h3 
+                   key={analysisText}
+                   className="text-xl md:text-2xl font-black text-white uppercase tracking-tight animate-in fade-in slide-in-from-bottom-2 duration-300"
+                >
+                   {analysisText}
+                </h3>
+            </div>
+        )}
 
-            {/* === VIEW 3: РЕЗУЛЬТАТЫ === */}
-            {view === 'results' && (
-               <div className="flex flex-col h-full overflow-hidden bg-slate-950">
-                  <div className="p-6 md:p-8 pb-4 text-center shrink-0 border-b border-white/5">
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-4">
-                         <Sparkles size={14} className="text-teal-400" />
-                         <span className="text-[14px] font-black uppercase text-teal-400 tracking-widest">AI подбор завершен</span>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Идеально для вас</h3>
-                      <p className="text-slate-400 text-sm font-medium">Мы подобрали направления с наивысшим процентом совпадения.</p>
+        {/* === VIEW 3: РЕЗУЛЬТАТЫ === */}
+        {view === 'results' && (
+           <div className="flex flex-col h-full overflow-hidden bg-slate-950 animate-in fade-in duration-300">
+              <div className="p-6 md:p-8 pb-4 text-center shrink-0 border-b border-white/5">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-4">
+                     <Sparkles size={14} className="text-teal-400" />
+                     <span className="text-[14px] font-black uppercase text-teal-400 tracking-widest">AI подбор завершен</span>
                   </div>
-                  
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
-                      {recommendations.slice(0, 2).map((direction, idx) => (
-                          <ResultCard 
-                             key={direction.id} 
-                             direction={direction} 
-                             rank={idx + 1} 
-                             onClose={onClose}
-                          />
-                      ))}
-                  </div>
-               </div>
-            )}
+                  <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Идеально для вас</h3>
+                  <p className="text-slate-400 text-sm font-medium">Мы подобрали направления с наивысшим процентом совпадения.</p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+                  {recommendations.slice(0, 2).map((direction, idx) => (
+                      <ResultCard 
+                         key={direction.id} 
+                         direction={direction} 
+                         rank={idx + 1} 
+                         onClose={onClose}
+                      />
+                  ))}
+              </div>
+           </div>
+        )}
 
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 }
 
@@ -316,16 +305,14 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
     const Icon = direction.icon;
     
     return (
-        <motion.div 
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ delay: rank * 0.1 }}
+        <div 
            className={clsx(
-               "relative p-5 md:p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-5",
+               "relative p-5 md:p-6 rounded-[2rem] border transition-all duration-300 flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 fill-mode-both",
                isBest 
                  ? "bg-slate-900 border-teal-500/40 shadow-[0_10px_30px_rgba(20,184,166,0.1)]" 
                  : "bg-slate-900/50 border-white/5"
            )}
+           style={{ animationDelay: `${rank * 100}ms` }}
         >
             {isBest && (
                 <div className="absolute -top-3 left-6 bg-teal-500 text-slate-950 text-[14px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
@@ -392,7 +379,7 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
                     Смотреть туры <ArrowRight size={14}/>
                 </Link>
             </div>
-        </motion.div>
+        </div>
     )
 }
 

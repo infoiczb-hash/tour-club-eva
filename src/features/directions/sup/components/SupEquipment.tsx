@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef, useEffect, useState } from "react";
 import Image from 'next/image';
 import { 
     Gauge, MoveHorizontal, Timer, ShieldCheck, 
@@ -11,13 +14,31 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
+// Легкий нативный хук
+function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      options
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
+
+// 1. Технические характеристики доски
 const STATS = [
-  { label: "Давление", value: "12-15 PSI", desc: "Жесткая как пол", icon: Gauge },
-  { label: "Ширина", value: "78+ см", desc: "Макс. устойчивость", icon: MoveHorizontal },
+  { label: "Давление", value: "20 PSI", desc: "Жесткая как пол", icon: Gauge },
+  { label: "Ширина", value: "80+ см", desc: "Макс. устойчивость", icon: MoveHorizontal },
   { label: "Обучение", value: "15 мин", desc: "И вы в деле", icon: Timer },
   { label: "Риск падения", value: "< 10%", desc: "Слушая гида", icon: ShieldCheck }
 ];
 
+// 2. Базовый комплект экипировки
 const GEAR = [
     {
         title: "Весло для SUP",
@@ -47,44 +68,62 @@ const GEAR = [
 ];
 
 export default function SupEquipment() {
+    const headerView = useInView();
+    const boardView = useInView();
+    const statsView = useInView();
+    const gearHeaderView = useInView();
+    const gearListView = useInView();
+
     return (
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
-            {/* 🔥 CSS-анимация левитации доски вместо Framer Motion */}
-            <style>{`
-              @keyframes float-board {
-                0%, 100% { transform: translateY(-10px); }
-                50% { transform: translateY(10px); }
-              }
-              .animate-float {
-                animation: float-board 6s ease-in-out infinite;
-              }
-            `}</style>
+            
+            {/* CSS для плавной парящей доски (замена Framer Motion animate={{y: ...}}) */}
+            <style dangerouslySetInnerHTML={{__html: `
+                @keyframes float-sup {
+                    0%, 100% { transform: translateY(-10px); }
+                    50% { transform: translateY(10px); }
+                }
+                .animate-float-sup {
+                    animation: float-sup 6s ease-in-out infinite;
+                }
+            `}} />
 
+            {/* Фоновые свечения для кинематографичности */}
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 md:blur-[120px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
                 {/* ЗАГОЛОВОК */}
-                <div className="text-left mb-6 md:mb-10 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
-                        <ShieldCheck className="text-teal-400" size={14} strokeWidth={2} />
-                        <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
-                            Снаряжение и экипировка
-                        </span>
+                <div className="text-left mb-6 md:mb-10 max-w-3xl">
+                    <div 
+                        ref={headerView.ref}
+                        style={{ opacity: headerView.inView ? 1 : 0, transform: headerView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+                    >
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
+                            <ShieldCheck className="text-teal-400" size={14} strokeWidth={2} />
+                            <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
+                                Премиальное снаряжение
+                            </span>
+                        </div>
+                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
+                            Ваш <span className="text-teal-500">Арсенал</span>
+                        </h2>
+                        <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
+                            Мы продумали каждую деталь, чтобы на воде вы чувствовали себя так же уверенно, как на суше.
+                        </p>
                     </div>
-                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
-                       Наш <span className="text-teal-500">Арсенал</span>
-                    </h2>
-                    <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
-                        Мы продумали каждую деталь, чтобы на воде вы чувствовали себя так же уверенно, как на суше.
-                    </p>
                 </div>
 
                 {/* ЧАСТЬ 1: ДОСКА И ХАРАКТЕРИСТИКИ */}
                 <div className="relative flex flex-col items-center mb-12 md:mb-16">
                     
-                    <div className="relative w-full max-w-5xl h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px] z-0 mb-4 md:mb-8 flex justify-center animate-in fade-in zoom-in-95 duration-1000 fill-mode-both">
-                        <div className="w-[120%] md:w-full h-full relative md:scale-[1.2] lg:scale-[1.3] animate-float">
+                    {/* ДОСКА */}
+                    <div 
+                        ref={boardView.ref}
+                        style={{ opacity: boardView.inView ? 1 : 0, transform: boardView.inView ? 'scale(1)' : 'scale(0.95)', transition: 'opacity 0.8s ease-out, transform 0.8s ease-out' }}
+                        className="relative w-full max-w-5xl h-[160px] sm:h-[200px] md:h-[240px] lg:h-[280px] z-0 mb-4 md:mb-8 flex justify-center"
+                    >
+                        <div className="animate-float-sup w-[120%] md:w-full h-full relative md:scale-[1.2] lg:scale-[1.3]">
                             <Image 
                                 src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771609412/sup_fl75zk.webp" 
                                 alt="SUP Board Touring" 
@@ -96,7 +135,12 @@ export default function SupEquipment() {
                         </div>
                     </div>
 
-                    <div className="w-full bg-white/10 border border-white/10 rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both">
+                    {/* Плашка с характеристиками */}
+                    <div 
+                        ref={statsView.ref}
+                        style={{ opacity: statsView.inView ? 1 : 0, transform: statsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s' }}
+                        className="w-full bg-white/10 border border-white/10 rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10"
+                    >
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10">
                             {STATS.map((stat, i) => (
                                 <div key={i} className="bg-slate-900/90 backdrop-blur-md p-5 flex flex-col items-center text-center group hover:bg-slate-800/90 transition-colors duration-300">
@@ -119,26 +163,31 @@ export default function SupEquipment() {
                 </div>
 
                 {/* ЗАГОЛОВОК "ДРУГОЕ ОБОРУДОВАНИЕ" */}
-                <div className="text-left mb-6 md:mb-8 animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
+                <div 
+                    ref={gearHeaderView.ref}
+                    style={{ opacity: gearHeaderView.inView ? 1 : 0, transform: gearHeaderView.inView ? 'translateX(0)' : 'translateX(-20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+                    className="text-left mb-6 md:mb-8"
+                >
                     <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
                         Другое <span className="text-teal-500">Оборудование</span>
                     </h3>
                 </div>
 
                 {/* СКРОЛЛ ЭКИПИРОВКИ */}
-                <div className="relative">
+                <div className="relative" ref={gearListView.ref}>
                     <div className="grid grid-rows-2 md:grid-rows-none grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-3 gap-3 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {GEAR.map((item, idx) => {
                             const Icon = item.icon;
                             return (
                                 <div 
                                     key={idx} 
-                                    className="snap-center bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-[1.5rem] p-5 hover:border-teal-500/30 hover:bg-slate-900/80 transition-all duration-300 group flex flex-row items-center gap-4 h-full animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
-                                    style={{ animationDelay: `${idx * 100}ms` }}
+                                    style={{ opacity: gearListView.inView ? 1 : 0, transform: gearListView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
+                                    className="snap-center bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-[1.5rem] p-5 hover:border-teal-500/30 hover:bg-slate-900/80 transition-all duration-300 group flex flex-row items-center gap-4 h-full"
                                 >
                                     <div className="w-12 h-12 shrink-0 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-400 transition-colors duration-300">
                                         <Icon className="text-teal-400 group-hover:text-slate-950 transition-colors" size={22} strokeWidth={1.5} />
                                     </div>
+                                    
                                     <div>
                                         <h4 className="text-[15px] sm:text-base font-black text-white mb-1 tracking-tight group-hover:text-teal-300 transition-colors leading-tight">
                                             {item.title}
