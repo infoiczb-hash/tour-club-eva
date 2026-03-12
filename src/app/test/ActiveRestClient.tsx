@@ -648,13 +648,20 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
           />
           <div className="flex items-end gap-2 mb-8 h-24">
             {SEASONS.map((s, i) => (
-              <motion.div key={i} className="flex-1 flex flex-col items-center gap-2"
-                initial={{ opacity: 0, scaleY: 0 }} whileInView={{ opacity: 1, scaleY: 1 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.07, transformOrigin: 'bottom' }}>
-                <div className="w-full rounded-t-xl origin-bottom" style={{
-                  height: `${(s.score / 5) * 80}px`,
-                  background: s.score === 5 ? 'linear-gradient(to top, #14b8a6, #06b6d4)' : s.score === 4 ? '#0f766e' : '#1e3a38'
-                }} />
+           <motion.div 
+  key={i} 
+  // 👇 Добавили origin-bottom сюда
+  className="flex-1 flex flex-col items-center gap-2 origin-bottom"
+  initial={{ opacity: 0, scaleY: 0 }} 
+  whileInView={{ opacity: 1, scaleY: 1 }}
+  viewport={{ once: true }} 
+  // 👇 Убрали transformOrigin отсюда
+  transition={{ delay: i * 0.07 }} 
+>
+  <div className="w-full rounded-t-xl origin-bottom" style={{
+    height: `${(s.score / 5) * 80}px`,
+    background: s.score === 5 ? 'linear-gradient(to top, #14b8a6, #06b6d4)' : s.score === 4 ? '#0f766e' : '#1e3a38'
+  }}></div>
                 <span className="text-xs font-bold text-slate-500">{s.month}</span>
               </motion.div>
             ))}

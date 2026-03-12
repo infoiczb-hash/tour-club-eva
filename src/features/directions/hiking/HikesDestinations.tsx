@@ -89,14 +89,13 @@ export default function HikesDestinations() {
                       alt={dest.subtitle} 
                       fill 
                       className="object-cover transition-transform duration-1000 group-hover:scale-105" 
-                    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-800/90 via-transparent to-transparent opacity-100" />
                   </div>
 
                   {/* Информация */}
                   <div className="p-6 md:p-8 flex flex-col flex-1 relative bg-stone-800/20">
-                    {/* Иконка настроения */}
                     <div className="absolute -top-6 right-6 w-12 h-12 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6 group-hover:rotate-0 transition-transform">
                       <Icon size={24} strokeWidth={1.5} />
                     </div>
@@ -125,7 +124,6 @@ export default function HikesDestinations() {
             })}
           </div>
 
-          {/* Подсказка "Мотай" */}
           <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
               <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} />
