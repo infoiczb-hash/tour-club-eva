@@ -1,5 +1,5 @@
 // src/app/blog/[slug]/page.tsx
-import React from "react";
+import React, { cache } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,7 +28,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getPost(slug: string) {
+const getPost = cache(async function getPost(slug: string) {
   if (!slug) return null;
   const decodedSlug = decodeURIComponent(slug);
 
@@ -42,15 +42,24 @@ async function getPost(slug: string) {
   const relatedPosts = await prisma.blog.findMany({
     where: { 
         id: { not: post.id },
-        isActive: true, // Защита: показываем только активные статьи
+        isActive: true,
     },
     take: 3,
     orderBy: { date: 'desc' },
-    include: { blogCategory: true } 
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      excerpt: true,
+      image: true,
+      date: true,
+      category: true,
+      blogCategory: { select: { title: true, slug: true } },
+    },
   });
 
   return { post, relatedPosts };
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

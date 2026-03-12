@@ -29,12 +29,13 @@ export default function HikesLogistics() {
         <section className="py-12 md:py-24 relative overflow-hidden">
             <div className="container mx-auto px-4 max-w-7xl">
                 
-                {/* --- 1. БЛОК С ЦИТАТОЙ --- */}
+                {/* --- 1. БЛОК С ЦИТАТОЙ (Исправлен выход за экран) --- */}
                 <div className="w-full bg-slate-900 border border-white/5 rounded-[2rem] p-6 md:p-12 mb-16 relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+                    {/* Декоративный фон */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 blur-[80px] rounded-full pointer-events-none" />
                     
                     <div className="relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-16 items-start lg:items-center">
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0"> {/* min-w-0 предотвращает вылезание текста во flex-контейнере */}
                             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[1.1] mb-6">
                                 В горах нет <br className="hidden md:block"/>
                                 <span className="text-teal-500">случайных людей</span>
@@ -43,6 +44,7 @@ export default function HikesLogistics() {
                                 «Тур в горы — это ваш личный отдых, а не испытание на прочность. Моя задача как гида — взять на себя всю логистику, чтобы вы могли просто идти, дышать и впитывать красоту вокруг. Мы всегда идем в темпе самого медленного участника. Никто никого не бросает».
                             </p>
                             
+                            {/* Автор цитаты */}
                             <div className="flex items-center gap-4 pt-6 border-t border-white/10 w-full md:w-max">
                                 <div className="w-12 h-12 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center shrink-0">
                                     <span className="text-lg font-black text-slate-400">Р</span>
@@ -56,20 +58,28 @@ export default function HikesLogistics() {
                     </div>
                 </div>
 
-                {/* --- 2. КАРТОЧКИ ЛОГИСТИКИ --- */}
+                {/* --- 2. КАРТОЧКИ ЛОГИСТИКИ (С каруселью для мобильных) --- */}
                 <div>
-                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1 animate-in fade-in duration-1000">
+                    {/* Подсказка для свайпа (Показывается только на смартфонах) */}
+                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
                         <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">Листайте карточки вбок</span>
+                        <span className="text-[11px] font-bold uppercase tracking-widest">Листайте</span>
                     </div>
 
+                    {/* Контейнер карточек:
+                        На смартфонах: flex + горизонтальный скролл + прилипание (snap-x).
+                        На десктопе: сетка (grid) в 2 или 4 колонки.
+                        Скрываем стандартный скроллбар браузера для красоты.
+                    */}
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        
                         {logisticsData.map((item, idx) => {
                             const Icon = item.icon;
                             return (
                                 <div 
                                     key={idx}
-                                    className="w-[85vw] sm:w-[300px] md:w-auto shrink-0 snap-start bg-slate-900/50 backdrop-blur-sm border border-white/5 rounded-3xl p-6 md:p-8 hover:bg-slate-900 hover:border-teal-500/30 transition-all group flex flex-col animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                                    // w-[85vw] заставляет следующую карточку выглядывать на 15%
+                                    className="w-[85vw] sm:w-[300px] md:w-auto shrink-0 snap-start bg-slate-900/50 backdrop-blur-sm border border-white/5 rounded-3xl p-6 md:p-8 hover:bg-slate-900 hover:border-teal-500/30 transition-all group flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
                                     style={{ animationDelay: `${idx * 150}ms` }}
                                 >
                                     <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
@@ -82,6 +92,7 @@ export default function HikesLogistics() {
                                 </div>
                             );
                         })}
+
                     </div>
                 </div>
 

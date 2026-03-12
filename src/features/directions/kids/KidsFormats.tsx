@@ -1,6 +1,3 @@
-'use client';
-
-import { m as motion } from 'framer-motion';
 import Image from 'next/image';
 import { Waves, Users, TreePine, Backpack, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import { clsx } from 'clsx';
@@ -81,11 +78,8 @@ export default function KidsFormats() {
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
                 {/* 🔥 2. ЗАГОЛОВОК ГЛАВНЫХ ТУРОВ: Выравнивание по левому краю */}
-                <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="text-left mb-8 md:mb-12 max-w-3xl"
+                <div 
+                    className="text-left mb-8 md:mb-12 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
                 >
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 uppercase tracking-tighter">
                         Наши <span className="text-amber-500">Форматы</span>
@@ -93,20 +87,17 @@ export default function KidsFormats() {
                     <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
                         Мы не просто продаем даты, мы создаем опыт. Выберите формат, который идеально подойдет вашему ребенку по возрасту и уровню подготовки.
                     </p>
-                </motion.div>
+                </div>
 
                 {/* 🔥 3. УМНАЯ СЕТКА ГЛАВНЫХ ТУРОВ (СВАЙП НА МОБИЛКЕ) */}
                 <div className="relative mb-12 md:mb-20">
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {FORMATS.map((format, idx) => (
-                            <motion.div 
+                            <div 
                                 key={idx}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: idx * 0.1, duration: 0.5 }}
                                 // Ширина 85vw для свайпа на мобилке, авто для десктопа
-                                className="shrink-0 snap-center w-[85vw] md:w-auto group bg-slate-900/60 backdrop-blur-md rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-500 flex flex-col shadow-xl"
+                                className="shrink-0 snap-center w-[85vw] md:w-auto group bg-slate-900/60 backdrop-blur-md rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-500 flex flex-col shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
+                                style={{ animationDelay: `${idx * 150}ms` }}
                             >
                                 <div className="relative h-56 md:h-64 overflow-hidden isolate shrink-0">
                                     <Image 
@@ -137,7 +128,7 @@ export default function KidsFormats() {
                                         {format.desc}
                                     </p>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
 
@@ -149,11 +140,8 @@ export default function KidsFormats() {
                 </div>
 
                 {/* 5. КОМПАКТНЫЙ БЛОК: ДРУГИЕ ФОРМАТЫ */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="pt-8 border-t border-white/5"
+                <div 
+                    className="pt-8 border-t border-white/5 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
                 >
                     {/* 🔥 Выравнивание заголовка "Другие форматы" налево */}
                     <div className="text-left mb-6 md:mb-10 max-w-3xl">
@@ -199,7 +187,7 @@ export default function KidsFormats() {
                             <ChevronRight size={14} />
                         </div>
                     </div>
-                </motion.div>
+                </div>
                 
             </div>
         </section>

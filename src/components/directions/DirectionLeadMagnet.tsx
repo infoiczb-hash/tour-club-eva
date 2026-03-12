@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { m as motion } from 'framer-motion';
 import { Send, BellRing, Sparkles, CheckCircle2 } from 'lucide-react';
 import { DirectionData, THEMES } from '@/data/directionsData';
 import { clsx, type ClassValue } from "clsx";
@@ -40,12 +39,8 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
 
       <div className="container mx-auto px-4 relative z-10 flex justify-center">
         
-        <motion.div 
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="w-full max-w-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden"
+        <div 
+            className="w-full max-w-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 zoom-in-95 duration-1000 fill-mode-both"
         >
             {/* Тонкая цветная линия сверху карточки */}
             <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: theme.hex }} />
@@ -103,10 +98,8 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
             ) : (
                 
                 /* Контент: После успешной отправки (Успех) */
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center text-center py-8"
+                <div 
+                    className="flex flex-col items-center text-center py-8 animate-in fade-in zoom-in duration-500"
                 >
                     <div 
                         className="w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-2xl"
@@ -120,10 +113,10 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
                     <p className="text-slate-400 font-medium max-w-sm">
                         Вы в секретном списке. Как только мы утвердим даты, вы узнаете об этом первыми.
                     </p>
-                </motion.div>
+                </div>
             )}
 
-        </motion.div>
+        </div>
       </div>
     </section>
   );

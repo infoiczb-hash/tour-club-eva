@@ -1,4 +1,4 @@
-import { Tent, Droplets, Mountain, ChevronRight } from 'lucide-react';
+import { Tent, Droplets, Mountain, ChevronRight } from 'lucide-react'; // 🔥 Добавили ChevronRight
 import Image from 'next/image';
 
 const DESTINATIONS = [
@@ -32,11 +32,15 @@ export default function HikesDestinations() {
   return (
     <section className="py-8 md:py-16 bg-stone-900 border-t border-white/5 relative overflow-hidden">
       
+      {/* Мягкое атмосферное свечение на фоне */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         
-        <div className="text-left mb-10 md:mb-16 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
+        {/* 🔥 Выровняли заголовок по левому краю в едином стиле */}
+        <div
+          className="text-left mb-10 md:mb-16 max-w-3xl animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both"
+        >
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
             ВЫБЕРИ СВОЮ <br className="hidden md:block"/><span className="text-teal-500">ИСТОРИЮ</span>
           </h2>
@@ -45,6 +49,7 @@ export default function HikesDestinations() {
           </p>
         </div>
 
+        {/* 🔥 Обертка для мобильного свайпа */}
         <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 lg:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {DESTINATIONS.map((dest, i) => {
@@ -52,21 +57,25 @@ export default function HikesDestinations() {
               return (
                 <div
                   key={i}
-                  className="shrink-0 snap-center w-[85vw] md:w-auto bg-stone-800/40 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-700 hover:border-teal-500/50 hover:shadow-[0_0_30px_rgba(20,184,166,0.1)] transition-all duration-300 group flex flex-col backdrop-blur-sm animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
+                  // 🔥 Добавили shrink-0, snap-center и w-[85vw] для мобилки
+                  className="shrink-0 snap-center w-[85vw] md:w-auto bg-stone-800/40 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-700 hover:border-teal-500/50 hover:shadow-[0_0_30px_rgba(20,184,166,0.1)] transition-all duration-300 group flex flex-col backdrop-blur-sm animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
                   style={{ animationDelay: `${i * 150}ms` }}
                 >
+                  {/* Фотография маршрута */}
                   <div className="relative h-56 md:h-64 w-full overflow-hidden border-b border-stone-700/50 shrink-0">
                     <Image 
                       src={dest.img} 
                       alt={dest.subtitle} 
                       fill 
                       className="object-cover transition-transform duration-1000 group-hover:scale-105" 
-                      sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
+                    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-800/90 via-transparent to-transparent opacity-100" />
                   </div>
 
+                  {/* Информация */}
                   <div className="p-6 md:p-8 flex flex-col flex-1 relative bg-stone-800/20">
+                    {/* Иконка настроения */}
                     <div className="absolute -top-6 right-6 w-12 h-12 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6 group-hover:rotate-0 transition-transform">
                       <Icon size={24} strokeWidth={1.5} />
                     </div>
@@ -95,6 +104,7 @@ export default function HikesDestinations() {
             })}
           </div>
 
+          {/* 🔥 Подсказка "Мотай" */}
           <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
               <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} />

@@ -29,7 +29,7 @@ const instructorRoles = [
 
 export default function Benefits() {
   return (
-    <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans">
+    <section className="py-10 md:py-12 bg-[#020617] relative overflow-hidden font-sans">
       <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-teal-500/10 md:blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-indigo-500/10 md:blur-[150px] rounded-full pointer-events-none" />
       
@@ -75,7 +75,7 @@ export default function Benefits() {
         </div>
 
         {/* INSTRUCTOR SECTION */}
-        <div className="pt-12 md:pt-16 border-t border-white/10 animate-in fade-in duration-700">
+        <div className="pt-10 md:pt-12 border-t border-white/10 animate-in fade-in duration-700">
           <div className="text-left mb-10">
             <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">
               Надежный тыл: <br className="md:hidden" /><span className="text-amber-500">Профи на борту</span>

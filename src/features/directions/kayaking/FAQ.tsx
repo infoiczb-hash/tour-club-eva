@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
@@ -26,7 +25,6 @@ export default function FAQ() {
 
   const actionCardsContent = (
     <div className="flex flex-col gap-4 mt-2">
-      {/* Кнопка "Подготовка к сплаву" */}
       <button
         onClick={() => {
           setActiveTab('participant');
@@ -59,7 +57,6 @@ export default function FAQ() {
         </div>
       </button>
 
-      {/* Карточка "Остались вопросы?" */}
       <div className="p-6 md:p-8 bg-slate-900/40 border border-white/5 rounded-[2rem] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-xl">
         <div>
           <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">Остались вопросы?</h3>
@@ -85,7 +82,6 @@ export default function FAQ() {
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
-          {/* ЛЕВАЯ КОЛОНКА */}
           <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-32">
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
@@ -103,7 +99,6 @@ export default function FAQ() {
             <div className="hidden lg:block animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150 fill-mode-both">{actionCardsContent}</div>
           </div>
 
-          {/* ПРАВАЯ КОЛОНКА — аккордеон */}
           <div className="lg:col-span-7 space-y-3 md:space-y-4">
             {faqs.map((faq, idx) => {
               const isOpen = openIndex === idx;
@@ -128,22 +123,14 @@ export default function FAQ() {
                     </div>
                   </button>
 
-                  {/* Аккордеон — оставляем AnimatePresence, это UI анимация высоты по клику */}
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
-                          {faq.a}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* CSS grid trick: анимация height: 0 → auto без JS */}
+                  <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden">
+                      <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
+                        {faq.a}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               );
             })}

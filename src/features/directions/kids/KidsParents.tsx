@@ -1,6 +1,3 @@
-'use client';
-
-import { m as motion } from 'framer-motion';
 import { ShieldCheck, Users, HeartHandshake, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
@@ -56,11 +53,8 @@ export default function KidsParents() {
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 
                 {/* 🔥 2. ВВОДНЫЙ ТЕКСТ (МАНИФЕСТ) - Уровень Senior GOLD */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="mb-16 md:mb-24 max-w-4xl text-left"
+                <div 
+                    className="mb-16 md:mb-24 max-w-4xl text-left animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
                 >
                     <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 md:mb-8 leading-none">
                         Детство должно быть с <br className="hidden md:block"/><span className="text-amber-500"> приключениями</span>
@@ -71,17 +65,14 @@ export default function KidsParents() {
                             Детский и подростковый туризм — это возможность расти <span className="text-white font-bold">сильнее и счастливее</span>. Природа учит смелости, любознательности и <span className="text-white font-bold">уважению к другим</span>. Каждый маршрут — маленькое приключение, которое <span className="text-white font-bold">остаётся в памяти навсегда</span>.
                         </p>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* 3 и 4. ДВУХКОЛОНОЧНАЯ СЕТКА (Цитата + Страхи) */}
                 <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-stretch mb-16 md:mb-20">
                     
                     {/* Цитата Инструктора */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        className="p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm border-l-4 border-emerald-500 rounded-r-[2rem] relative flex flex-col justify-center shadow-xl border-y border-r border-white/5"
+                    <div 
+                        className="p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm border-l-4 border-emerald-500 rounded-r-[2rem] relative flex flex-col justify-center shadow-xl border-y border-r border-white/5 animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both [animation-delay:150ms]"
                     >
                         <div className="absolute top-4 right-6 text-6xl text-slate-800 font-serif leading-none opacity-50">"</div>
                         
@@ -100,14 +91,11 @@ export default function KidsParents() {
                                 </div>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Блок со страхами */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        className="flex flex-col justify-center"
+                    <div 
+                        className="flex flex-col justify-center animate-in fade-in slide-in-from-right-8 duration-700 fill-mode-both [animation-delay:300ms]"
                     >
                         <h3 className="text-3xl md:text-4xl font-black text-white mb-6 uppercase tracking-tighter">
                             Мы знаем ваши <br className="hidden md:block"/><span className="text-emerald-500">Вопросы</span>
@@ -124,21 +112,18 @@ export default function KidsParents() {
                                 </div>
                             ))}
                         </div>
-                    </motion.div>
+                    </div>
 
                 </div>
 
                 {/* 5. ЗАГОЛОВОК "ДЛЯ НАС ВАЖНО" */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="text-left mb-6 md:mb-8"
+                <div 
+                    className="text-left mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
                 >
                     <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">
                         Для нас <span className="text-amber-500">важно</span>
                     </h3>
-                </motion.div>
+                </div>
 
                 {/* 6. КАРТОЧКИ (Горизонтальный скролл на мобилке, 3 колонки на десктопе) */}
                 <div className="relative">
@@ -146,13 +131,10 @@ export default function KidsParents() {
                         {GUARANTEES.map((item, idx) => {
                             const Icon = item.icon;
                             return (
-                                <motion.div 
+                                <div 
                                     key={idx} 
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.1 }}
-                                    className="shrink-0 snap-center w-[85vw] md:w-auto p-6 bg-slate-900/40 backdrop-blur-sm rounded-[2rem] border border-white/5 transition-colors flex flex-col gap-5 items-start group hover:bg-slate-900/80 shadow-lg"
+                                    className="shrink-0 snap-center w-[85vw] md:w-auto p-6 bg-slate-900/40 backdrop-blur-sm rounded-[2rem] border border-white/5 transition-colors flex flex-col gap-5 items-start group hover:bg-slate-900/80 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
+                                    style={{ animationDelay: `${idx * 150}ms` }}
                                 >
                                     <div className={cn("shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center border transition-all duration-300", item.bg, item.border, item.hover)}>
                                         <Icon className={item.color} size={24} strokeWidth={1.5} />
@@ -165,7 +147,7 @@ export default function KidsParents() {
                                             {item.desc}
                                         </p>
                                     </div>
-                                </motion.div>
+                                </div>
                             )
                         })}
                     </div>

@@ -15,7 +15,7 @@ export default function LocalHero() {
           className="object-cover opacity-50"
           priority
           fetchPriority="high" 
-          quality={85}         
+          quality={60}
           sizes="100vw"        
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />

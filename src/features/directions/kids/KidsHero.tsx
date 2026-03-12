@@ -1,8 +1,7 @@
 import { Flame, Compass } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link'; // ✅ Добавили нативный линк Next.js
+import Link from 'next/link';
 
-// ✅ Убрали "use client" и пропс onScrollDown
 export default function KidsHero() {
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pb-12">
@@ -46,7 +45,7 @@ export default function KidsHero() {
             Мы возвращаем детям детство, а подросткам даём приключения, которыми гордишься.
           </p>
 
-          {/* ✅ Кнопка превращена в якорную ссылку */}
+          {/* Кнопка превращена в якорную ссылку */}
           <div className="opacity-0 animate-fade-in-up [animation-delay:450ms]">
             <Link 
               href="#formats"

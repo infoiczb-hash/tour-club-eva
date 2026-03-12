@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { m as motion } from 'framer-motion';
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
   Flame, Sparkles, ArrowRight, Bell, Map 
@@ -27,10 +26,8 @@ interface KidsCatalogProps {
 
 export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
-  const [isContactOpen, setIsContactOpen] = useState(false);
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  
   // --- SMART FEED LOGIC (Как в вашем ToursBrowser) ---
   const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
     // Если в компонент не передали туры, используем пустой массив
@@ -83,7 +80,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
         {/* --- HEADER --- */}
-        <div className="mb-8 md:mb-12">
+        <div className="mb-8 md:mb-12 animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 mb-4">
                <CalendarIcon size={14} className="text-amber-400" />
                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Ближайшие даты</span>
@@ -96,7 +93,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
         {/* =======================================================
             ПАНЕЛЬ УПРАВЛЕНИЯ (Сетка / Календарь)
            ======================================================= */}
-        <div className="sticky top-4 z-40 mb-10">
+        <div className="sticky top-4 z-40 mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both [animation-delay:150ms]">
             <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl flex flex-row items-center justify-between gap-4 max-w-fit mx-auto lg:mx-0">
                 
                 {/* View Switcher */}

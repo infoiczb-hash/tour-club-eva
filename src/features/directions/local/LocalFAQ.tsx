@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, MessageCircle, PhoneCall } from 'lucide-react';
-import { useModalStore } from '@/shared/store/useModalStore';	
+import { ChevronDown, MessageCircle } from 'lucide-react';
+import { useModalStore } from '@/shared/store/useModalStore';
 
 
 const FAQ_DATA = [
@@ -27,7 +26,7 @@ const FAQ_DATA = [
 
 export default function LocalFAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
-   const openContactModal = useModalStore((state) => state.openContactModal);		
+    const openContactModal = useModalStore((state) => state.openContactModal);
 
     return (
         <section className="py-12 bg-slate-950 border-t border-white/5 relative overflow-hidden">
@@ -49,18 +48,13 @@ export default function LocalFAQ() {
                                     <ChevronDown size={18} />
                                 </div>
                             </button>
-                            <AnimatePresence>
-                                {openIndex === index && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="px-6 pb-6 text-stone-400 text-sm md:text-base border-t border-white/5 pt-4"
-                                    >
+                            <div className={`grid transition-all duration-300 ease-in-out ${openIndex === index ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                <div className="overflow-hidden">
+                                    <div className="px-6 pb-6 text-stone-400 text-sm md:text-base border-t border-white/5 pt-4">
                                         {item.a}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>

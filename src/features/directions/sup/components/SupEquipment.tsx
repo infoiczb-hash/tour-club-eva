@@ -12,8 +12,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 const STATS = [
-  { label: "Давление", value: "20 PSI", desc: "Жесткая как пол", icon: Gauge },
-  { label: "Ширина", value: "80+ см", desc: "Макс. устойчивость", icon: MoveHorizontal },
+  { label: "Давление", value: "12-15 PSI", desc: "Жесткая как пол", icon: Gauge },
+  { label: "Ширина", value: "78+ см", desc: "Макс. устойчивость", icon: MoveHorizontal },
   { label: "Обучение", value: "15 мин", desc: "И вы в деле", icon: Timer },
   { label: "Риск падения", value: "< 10%", desc: "Слушая гида", icon: ShieldCheck }
 ];
@@ -69,11 +69,11 @@ export default function SupEquipment() {
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
                         <ShieldCheck className="text-teal-400" size={14} strokeWidth={2} />
                         <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
-                            Премиальное снаряжение
+                            Снаряжение и экипировка
                         </span>
                     </div>
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
-                        Ваш <span className="text-teal-500">Арсенал</span>
+                       Наш <span className="text-teal-500">Арсенал</span>
                     </h2>
                     <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
                         Мы продумали каждую деталь, чтобы на воде вы чувствовали себя так же уверенно, как на суше.

@@ -3,34 +3,26 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { Gamepad2, Backpack, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import type { FunTest } from "@prisma/client";
 import { useInView } from '@/hooks/useInView';
-
-import QuizBackpack from "@/features/fun/components/QuizBackpack";
-import QuizSurvival from "@/features/fun/components/QuizSurvival";
-import QuizTouristType from "@/features/fun/components/QuizTouristType";
-import QuizTotem from "@/features/fun/components/QuizTotem";
 import { useModalStore } from '@/shared/store/useModalStore';
 
-import FearDebriefModal from "@/features/fun/components/FearDebrief";
-import PhysicalReadinessModal from "@/features/fun/components/PhysicalReadiness";
-import BodySignalsModal from "@/features/fun/components/BodySignals";
-import TourDebriefModal from "@/features/fun/components/TourDebrief";
-import PsychProfile from "@/features/fun/components/PsychProfile";
-
-const MODAL_REGISTRY: Record<string, React.FC<any>> = {
-  'fears':        FearDebriefModal,
-  'physical':     PhysicalReadinessModal,
-  'signals':      BodySignalsModal,
-  'debrief':      TourDebriefModal,
-  'backpack':     QuizBackpack,
-  'survival':     QuizSurvival,
-  'totem':        QuizTotem,
-  'tourist-type': QuizTouristType,
-  'psych-profile': PsychProfile,
+// 🔥 ГЛАВНАЯ ОПТИМИЗАЦИЯ: ЛЕНИВАЯ ЗАГРУЗКА КВИЗОВ
+// Код этих тестов не попадет в бандл страницы, пока пользователь не кликнет по карточке!
+const MODAL_REGISTRY: Record<string, React.ComponentType<any>> = {
+  'fears':        dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
+  'physical':     dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),
+  'signals':      dynamic(() => import("@/features/fun/components/BodySignals"), { ssr: false }),
+  'debrief':      dynamic(() => import("@/features/fun/components/TourDebrief"), { ssr: false }),
+  'backpack':     dynamic(() => import("@/features/fun/components/QuizBackpack"), { ssr: false }),
+  'survival':     dynamic(() => import("@/features/fun/components/QuizSurvival"), { ssr: false }),
+  'totem':        dynamic(() => import("@/features/fun/components/QuizTotem"), { ssr: false }),
+  'tourist-type': dynamic(() => import("@/features/fun/components/QuizTouristType"), { ssr: false }),
+  'psych-profile': dynamic(() => import("@/features/fun/components/PsychProfile"), { ssr: false }),
 };
 
 const CATEGORY_UI_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -78,7 +70,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   }, [activeTests]);
 
   return (
-    <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
+    <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
 
       {/* ФОН */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -86,7 +78,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 md:blur-[150px] rounded-full opacity-30" />
       </div>
 
-      {/* ШАПКА — CSS-анимации уже были, Framer здесь не использовался */}
+      {/* ШАПКА — CSS-анимации */}
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
         <div className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
           <Sparkles size={16} className="text-teal-400" />
@@ -122,10 +114,14 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         <CtaBanner />
       </div>
 
-      {/* МОДАЛКИ */}
+      {/* МОДАЛКИ (Грузятся только тогда, когда activeQuizSlug совпадает с их ключом) */}
       {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
         if (!ModalComponent) return null;
         const isActive = activeQuizSlug === slug;
+        
+        // Если модалка не активна, мы даже не рендерим компонент, чтобы не выполнять его код
+        if (!isActive) return null;
+
         return (
           <ModalComponent
             key={slug}
@@ -136,7 +132,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
           />
         );
       })}
-    </main>
+    </div>
   );
 }
 
@@ -244,7 +240,6 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
       onClick={onClick}
       style={{ transitionDelay: inView ? `${index * 100}ms` : '0ms' }}
       className={clsx(
-        // whileHover={{ y: -8 }} → hover:-translate-y-2
         'group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer',
         'transition-all duration-500 ease-out shadow-2xl hover:-translate-y-2 hover:border-white/10',
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
@@ -256,10 +251,11 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
           alt={title}
           fill
           priority={priority}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
 
       {badge && (
         <div className="absolute top-6 right-6 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-1.5 shadow-lg z-20">
@@ -268,7 +264,7 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
         </div>
       )}
 
-      <div className="absolute inset-0 p-8 flex flex-col justify-end z-10">
+      <div className="absolute inset-0 p-8 flex flex-col justify-end z-10 pointer-events-none">
         <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg", activeColor.split(" ").slice(0, 2).join(" "))}>
           {icon}
         </div>
