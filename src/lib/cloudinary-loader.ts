@@ -20,14 +20,6 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
   }
 
   // --- Supabase Storage ---
-  // ✅ FIX: Supabase Image Transformation работает ТОЛЬКО через /render/image/ path.
-  // Путь /object/public/ отдаёт оригинал без трансформации — параметры width/quality игнорируются.
-  // Docs: https://supabase.com/docs/guides/storage/serving/image-transformations
-  //
-  // Трансформация:
-  //   /storage/v1/object/public/{bucket}/{path}
-  //   → /storage/v1/render/image/public/{bucket}/{path}?width=N&quality=N&format=webp
-  //
   if (src.includes('supabase.co')) {
     const q = quality ?? 75;
     const url = new URL(src);
@@ -40,8 +32,10 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
 
     url.searchParams.set('width', String(width));
     url.searchParams.set('quality', String(q));
-    // ✅ ИСПРАВЛЕНО: Меняем origin на webp для значительного снижения веса и ускорения LCP
-    url.searchParams.set('format', 'webp');
+    
+    // ✅ ИСПРАВЛЕНИЕ: Вернули 'origin'. Supabase сам решит, как отдать файл, 
+    // не вызывая ошибку 400 Bad Request.
+    url.searchParams.set('format', 'origin');
 
     return url.toString();
   }
