@@ -13,7 +13,8 @@ const DEFAULT_HERO: HeroContent = {
   title: 'ЭВА',
   subtitle: 'Приключения каждые выходные',
   tagline: 'ОПЫТ — КОТОРЫЙ ВДОХНОВЛЯЕТ',
-  bg_image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_auto/v1771673823/hero-bg_cz1j25.webp'
+  // ✅ ИСПРАВЛЕНИЕ: Убрали /f_auto,q_auto/ чтобы не конфликтовать с cloudinary-loader
+  bg_image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771673823/hero-bg_cz1j25.webp'
 };
 
 export default function HeroSection({ content = DEFAULT_HERO }: { content?: HeroContent }) {
@@ -43,8 +44,8 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
       {/* ТЕКСТ (Без JS-параллакса, чистый CSS Tailwind) */}
       <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center mt-[-10vh]">
         
-        {/* Девиз */}
-        <div className="flex items-center gap-4 mb-6 opacity-0 animate-fade-in-up [animation-delay:200ms]">
+        {/* ✅ ИСПРАВЛЕНИЕ: Убрали жесткий opacity-0 и animation-delay */}
+        <div className="flex items-center gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
           <span className="text-base md:text-lg font-bold tracking-[0.2em] text-teal-300 uppercase drop-shadow-md">
             {content.tagline}
@@ -52,28 +53,28 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
           <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
         </div>
 
-        {/* Заголовок — CSS анимации для LCP */}
+        {/* ✅ ИСПРАВЛЕНИЕ: Убрали delay-150 у главного LCP-заголовка */}
         <h1 className="relative flex flex-col items-center leading-none text-center">
           <span className="text-6xl sm:text-7xl md:text-8xl font-black text-white uppercase tracking-tight mb-2 drop-shadow-xl block animate-in fade-in slide-in-from-bottom-8 duration-700">
             Турклуб
           </span>
-          <span className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85] block animate-in fade-in zoom-in-95 duration-1000 delay-150">
+          <span className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85] block animate-in fade-in zoom-in-95 duration-700">
             {content.title}
           </span>
         </h1>
 
-        {/* Подзаголовок */}
-        <p className="text-xl md:text-3xl text-slate-100 font-medium tracking-wide mt-8 md:mt-10 max-w-2xl leading-relaxed drop-shadow-lg opacity-0 animate-fade-in-up [animation-delay:600ms]">
+        {/* ✅ ИСПРАВЛЕНИЕ: Убрали жесткий opacity-0 */}
+        <p className="text-xl md:text-3xl text-slate-100 font-medium tracking-wide mt-8 md:mt-10 max-w-2xl leading-relaxed drop-shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
           {content.subtitle}
         </p>
       </div>
 
-      {/* КНОПКА (Нативная якорная ссылка вместо onClick, сработает global smooth scroll) */}
+      {/* КНОПКА (Оставлена легкая задержка, так как она не влияет на LCP метрику) */}
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
         <a
           href="#tours"
           aria-label="Прокрутить вниз к турам"
-          className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto opacity-0 animate-fade-in-up [animation-delay:1200ms]"
+          className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto animate-in fade-in duration-1000 delay-500 fill-mode-both"
         >
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/20 bg-white/5 backdrop-blur-md flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-500 transition-all duration-300 shadow-lg">
             <ArrowDown className="text-white group-hover:text-slate-900 animate-bounce w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />

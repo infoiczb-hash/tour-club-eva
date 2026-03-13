@@ -1,4 +1,3 @@
-// src/features/guides/components/GuidesEditorialList.tsx
 "use client";
 
 import React from "react";
@@ -80,7 +79,13 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                 
                 {/* 1. Блоки Гидов */}
                 {displayGuides.map((guide, index) => (
-                    <EditorialGuideBlock key={guide.id} guide={guide} index={index} />
+                    <EditorialGuideBlock 
+                        key={guide.id} 
+                        guide={guide} 
+                        index={index} 
+                        // ✅ ИСПРАВЛЕНО: Даем высокий приоритет загрузки первым двум гидам для быстрого LCP
+                        priority={index < 2} 
+                    />
                 ))}
 
                 {/* 2. Блок HR (Призыв в команду) */}
@@ -115,7 +120,8 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
 }
 
 // --- ОТДЕЛЬНЫЙ БЛОК ГИДА (Z-ПАТТЕРН) ---
-function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) {
+// ✅ ИСПРАВЛЕНО: Добавлен пропс priority в интерфейс и деструктуризацию
+function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide, index: number, priority?: boolean }) {
     // Если индекс нечетный — меняем порядок колонок на десктопе
     const isReverse = index % 2 !== 0;
 
@@ -140,6 +146,7 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                         src={guide.actionImage || guide.image || ''}
                         alt={guide.name}
                         fill
+                        priority={priority} // ✅ ИСПРАВЛЕНО: Прокидываем атрибут priority в Next.js Image
                         className="object-cover transition-transform duration-1000 group-hover:scale-105"
                         sizes="(max-width: 1024px) 100vw, 50vw"
                     />
@@ -204,7 +211,16 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                         })}
                     </div>
                 )}
-             
+
+                {/* 6. Цитата (как финальный аккорд перед кнопкой) */}
+                {guide.quotes && guide.quotes.length > 0 && (
+                    <div className="border-l-4 border-teal-500 pl-6 py-2 mb-10">
+                        <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
+                            «{guide.quotes[0]}»
+                        </p>
+                    </div>
+                )}
+
                 {/* 7. Кнопки действий */}
                 <div className="flex flex-wrap items-center gap-4 mt-auto pt-8 border-t border-white/10">
                     <Link

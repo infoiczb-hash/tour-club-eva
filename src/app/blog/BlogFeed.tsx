@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Clock, PenLine, BookOpen, User, ArrowRight, Sparkles } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Clock, PenLine, BookOpen, User, ArrowRight, Sparkles, Filter } from "lucide-react";
 import { Blog } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,21 @@ interface BlogCategory {
 interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags'> {
   tags?: string[];
   categoryId?: string | null;
-  categoryRelation?: { slug: string; title: string };
+  blogCategory?: { 
+    id: string; 
+    slug: string; 
+    title: string; 
+    isActive: boolean; 
+    sortOrder: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+  guide?: {
+    id: string;
+    name: string;
+    role: string;
+    image: string | null;
+  } | null;
 }
 
 interface BlogFeedProps {
@@ -30,15 +44,25 @@ interface BlogFeedProps {
   categories?: BlogCategory[];
 }
 
+// ✅ ДОБАВЛЕНО: Слушатель параметров для обхода деоптимизации SSR
+function ParamsListener({ onChange }: { onChange: (val: string) => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    onChange(searchParams.get('category') || 'all');
+  }, [searchParams, onChange]);
+  return null;
+}
+
 // ─── Компонент ───────────────────────────────────────────────────────────────
 
 export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFeedProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const pathname = usePathname();
-
-  const activeCategory = searchParams.get('category') || 'all';
   const openContactModal = useModalStore((state) => state.openContactModal);
+
+  // ✅ ИСПРАВЛЕНО: Заменили прямое чтение searchParams на локальный стейт
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [selectedAuthor, setSelectedAuthor] = useState("all");
 
   const formatDate = (date: Date | string) =>
     new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
@@ -53,34 +77,41 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   }, [categories]);
 
   const handleCategoryClick = (slug: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    setActiveCategory(slug); // Мгновенный отклик UI
+    
+    // Читаем параметры из window, чтобы не привязывать компонент к хуку Next.js
+    const params = new URLSearchParams(window.location.search);
     if (slug === 'all') params.delete('category');
     else params.set('category', slug);
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Лейбл категории берётся только из БД.
-  // Для старых постов (categoryId отсутствует) — фолбэк на поле post.category как есть.
   const getLabel = (post: ExtendedBlog): string => {
     if (post.categoryId) {
       const cat = categories.find(c => c.id === post.categoryId);
       if (cat) return cat.title;
     }
-    // Старые посты: поле category хранит сырое значение — показываем как есть.
-    // После миграции всех постов на categoryId эту строку можно убрать.
-    return post.category || 'Статья';
+    return post.blogCategory?.title || post.category || 'Статья';
   };
 
-  // Фильтрация: для старых постов без categoryId сравниваем post.category.toLowerCase()
-  // с активным slug — это временный фолбэк до завершения миграции данных.
+  const authors = ["all", ...Array.from(new Set(initialPosts.map(p => p.author_name).filter(Boolean)))];
+
   const filteredPosts = useMemo(() => {
     return initialPosts.filter(post => {
-      if (activeCategory === 'all') return true;
-      const cat = categories.find(c => c.id === post.categoryId);
-      const postSlug = cat?.slug ?? post.category?.toLowerCase();
-      return postSlug === activeCategory.toLowerCase();
+      let matchCat = false;
+      if (activeCategory === 'all') {
+         matchCat = true;
+      } else {
+         const cat = categories.find(c => c.id === post.categoryId);
+         const postSlug = cat?.slug ?? post.category?.toLowerCase();
+         matchCat = postSlug === activeCategory.toLowerCase();
+      }
+
+      const matchAuth = selectedAuthor === "all" || post.author_name === selectedAuthor;
+      return matchCat && matchAuth;
     });
-  }, [initialPosts, activeCategory, categories]);
+  }, [initialPosts, activeCategory, selectedAuthor, categories]);
 
   const sortedPosts = [...filteredPosts].sort(
     (a, b) => new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
@@ -110,22 +141,11 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
 
   // ─── Карточка статьи ─────────────────────────────────────────────────────
 
-  /**
-   * PostCard принимает необязательный `priority`.
-   *
-   * ✅ LCP-FIX: первая карточка "Выбор редакции" (index === 0) получает
-   *   priority={true} — Next.js добавит fetchpriority="high" и уберёт
-   *   loading="lazy", что устраняет главную проблему LCP (5.7 с → ~2 с).
-   *
-   * Все остальные карточки используют lazy loading по умолчанию.
-   */
   const PostCard = ({ post, priority = false }: { post: ExtendedBlog; priority?: boolean }) => (
     <Link
       href={`/blog/${post.slug}`}
       className="group flex flex-col bg-slate-900/40 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-500"
     >
-      {/* ИСПРАВЛЕНИЕ: Заменили aspect-[16/9] на aspect-[4/3] (или aspect-video), 
-          чтобы картинка не была такой сплюснутой и обрезанной */}
       <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden bg-slate-800">
         <Image
           src={post.image || '/placeholder.jpg'}
@@ -165,14 +185,13 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         )}
 
         <div className="flex items-center gap-3 pt-5 border-t border-white/5 mt-auto">
-          {/* Убрали комментарий про object-top и сам костыль из className */}
           <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/10 shadow-sm">
             {post.author_image ? (
               <Image 
                 src={post.author_image} 
                 alt={post.author_name || 'Автор'} 
                 fill 
-                className="object-cover" 
+                className="object-cover object-top md:object-[center_15%]" 
                 sizes="40px" 
               />
             ) : (
@@ -192,6 +211,11 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white pb-24">
+      
+      {/* ✅ ДОБАВЛЕНО: Инъекция параметров URL без деоптимизации SSR */}
+      <Suspense fallback={null}>
+        <ParamsListener onChange={setActiveCategory} />
+      </Suspense>
 
       {/* HEADER */}
       <div className="relative pt-24 pb-8 md:pt-32 md:pb-12 border-b border-white/5 overflow-hidden">
@@ -243,8 +267,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {top3Posts.map((post, index) => (
-                // ✅ LCP-FIX: только первая карточка грузится с высоким приоритетом.
-                // Она — самый вероятный LCP-элемент на странице.
+                // ✅ LCP-FIX: первая карточка грузится с priority
                 <PostCard key={post.id} post={post} priority={index === 0} />
               ))}
             </div>
@@ -260,12 +283,32 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
                 ? (displayCategories.find(c => c.slug === activeCategory)?.label || 'Материалы')
                 : 'Все материалы'}
             </h2>
+            
+            {/* Фильтр по автору */}
+            <div className="relative group shrink-0 hidden md:block">
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-400 hover:border-teal-500/30 transition-colors">
+                <Filter size={12} />
+                <select
+                  aria-label="Выберите автора"
+                  className="bg-transparent outline-none appearance-none w-full cursor-pointer font-bold pr-4 text-slate-300"
+                  value={selectedAuthor}
+                  onChange={(e) => setSelectedAuthor(e.target.value)}
+                >
+                  <option value="all" className="bg-slate-900">Все авторы</option>
+                  {authors.map(auth => (
+                    auth !== 'all' && (
+                      <option key={String(auth)} value={String(auth)} className="bg-slate-900 text-slate-300">
+                        {String(auth)}
+                      </option>
+                    )
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {feedPosts.map((post, index) => (
-              // ✅ LCP-FIX: если нет top3 (фильтр по категории),
-              // первая карточка feedPosts также получает priority.
               <PostCard
                 key={post.id}
                 post={post}
@@ -290,11 +333,6 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         </div>
 
         {/* CTA: Стать автором */}
-        {/*
-          ✅ A11Y-FIX: div с onClick → добавлены role="button", tabIndex=0, onKeyDown.
-          Клавиатурные пользователи и ассистивные технологии теперь видят этот элемент
-          как интерактивный.
-        */}
         <div
           onClick={() => openContactModal('Стать автором блога', 'BLOG')}
           role="button"

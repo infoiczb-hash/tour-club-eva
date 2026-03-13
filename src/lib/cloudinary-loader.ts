@@ -26,9 +26,8 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
   //
   // Трансформация:
   //   /storage/v1/object/public/{bucket}/{path}
-  //   → /storage/v1/render/image/public/{bucket}/{path}?width=N&quality=N&format=origin
+  //   → /storage/v1/render/image/public/{bucket}/{path}?width=N&quality=N&format=webp
   //
-  // format=origin — Supabase сам выберет AVIF или WebP в зависимости от Accept заголовка браузера.
   if (src.includes('supabase.co')) {
     const q = quality ?? 75;
     const url = new URL(src);
@@ -41,8 +40,8 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
 
     url.searchParams.set('width', String(width));
     url.searchParams.set('quality', String(q));
-    // format=origin: Supabase выберет AVIF/WebP по Accept-заголовку
-    url.searchParams.set('format', 'origin');
+    // ✅ ИСПРАВЛЕНО: Меняем origin на webp для значительного снижения веса и ускорения LCP
+    url.searchParams.set('format', 'webp');
 
     return url.toString();
   }
