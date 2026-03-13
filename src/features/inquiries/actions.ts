@@ -4,11 +4,20 @@ import { prisma } from '@/lib/prisma';
 import { InquirySchema, InquiryInput } from './schema';
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 
+// ✅ ДОБАВЛЕНА: Функция экранирования опасных символов
+function escapeHtml(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function submitInquiry(data: InquiryInput) {
   try {
     // 1. Проверка Honeypot (Защита от ботов)
     if (data.honeypot) {
-      // Молчаливый успех для бота
       return { success: true };
     }
 
@@ -61,7 +70,7 @@ export async function submitInquiry(data: InquiryInput) {
         name: validData.name,
         phone: validData.phone || null,
         social: validData.social || null,
-        message: messageText, // Основной текст дублируем в колонку message для удобства
+        message: messageText, 
         payload: payload,
       }
     });
@@ -77,27 +86,34 @@ export async function submitInquiry(data: InquiryInput) {
     };
 
     const contactStr = [
-      validData.phone ? `📱 ${validData.phone}` : null,
-      validData.social ? `✈️ ${validData.social}` : null
+      validData.phone ? `📱 ${escapeHtml(validData.phone)}` : null,
+      validData.social ? `✈️ ${escapeHtml(validData.social)}` : null
     ].filter(Boolean).join('\n');
 
-    let tgMessage = `<b>${hashtags[validData.type]} от ${validData.name}</b>\n\n${contactStr}\n\n`;
+    // ✅ ИСПРАВЛЕНИЕ: Экранируем весь пользовательский ввод
+    let tgMessage = `<b>${hashtags[validData.type]} от ${escapeHtml(validData.name)}</b>\n\n${contactStr}\n\n`;
 
     if (validData.type === 'HR') {
-      tgMessage += `🎯 <b>Роль:</b> ${validData.role}\n📝 <b>Опыт:</b> ${validData.experience}\n💡 <b>Мотивация:</b> ${validData.motivation}`;
+      tgMessage += `🎯 <b>Роль:</b> ${escapeHtml(validData.role)}\n📝 <b>Опыт:</b> ${escapeHtml(validData.experience)}\n💡 <b>Мотивация:</b> ${escapeHtml(validData.motivation)}`;
     } else if (validData.type === 'TOUR' && validData.tourTitle) {
-      tgMessage += `🏔 <b>Тур:</b> ${validData.tourTitle}\n❓ ${validData.message}`;
+      tgMessage += `🏔 <b>Тур:</b> ${escapeHtml(validData.tourTitle)}\n❓ ${escapeHtml(validData.message)}`;
     } else if (validData.type === 'REVIEW') {
-      tgMessage += `⭐️ <b>Оценка:</b> ${validData.rating}/5\n💬 ${validData.message}`;
+      tgMessage += `⭐️ <b>Оценка:</b> ${validData.rating}/5\n💬 ${escapeHtml(validData.message)}`;
     } else {
-      tgMessage += `💬 ${validData.message}`;
+      tgMessage += `💬 ${escapeHtml(validData.message)}`;
     }
     
     if (validData.type === 'B2B' && validData.company) {
-       tgMessage += `\n🏢 Компания: ${validData.company}`;
+       tgMessage += `\n🏢 Компания: ${escapeHtml(validData.company)}`;
     }
 
-    await sendToTelegram(tgMessage);
+    // ✅ ИСПРАВЛЕНИЕ: Проверяем ответ от Telegram и пишем в консоль, если ошибка
+    const tgResult = await sendToTelegram(tgMessage);
+    if (!tgResult.success) {
+        console.error("Ошибка при отправке в Telegram:", tgResult.error);
+        // Не возвращаем false пользователю, так как в БД заявка сохранена успешно, 
+        // но админ теперь увидит ошибку в логах Vercel
+    }
 
     return { success: true };
 

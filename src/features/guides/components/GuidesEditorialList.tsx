@@ -204,16 +204,7 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                         })}
                     </div>
                 )}
-
-                {/* 6. Цитата (как финальный аккорд перед кнопкой) */}
-                {guide.quotes && guide.quotes.length > 0 && (
-                    <div className="border-l-4 border-teal-500 pl-6 py-2 mb-10">
-                        <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
-                            «{guide.quotes[0]}»
-                        </p>
-                    </div>
-                )}
-
+             
                 {/* 7. Кнопки действий */}
                 <div className="flex flex-wrap items-center gap-4 mt-auto pt-8 border-t border-white/10">
                     <Link

@@ -40,7 +40,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       return {
          currency: 'RUB',
          type: 'hiking',
-         category_id: defaultCategoryId, // ✅ ДОБАВЛЕНО: Дефолтная категория
+         categoryId: defaultCategoryId, // ✅ ДОБАВЛЕНО: Дефолтная категория
          isActive: false,
          price: 0, // Важно: для нового тура цена 0
          dates: [],
@@ -64,7 +64,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       // Приводим поля к формату схемы
       isActive: initialData.isActive ?? initialData.is_active ?? false,
       
-      category_id: initialData.categoryId ?? initialData.category_id ?? defaultCategoryId, // ✅ ДОБАВЛЕНО: Маппинг категории
+      categoryId: initialData.categoryId ?? initialData.categoryId ?? defaultCategoryId, // ✅ ДОБАВЛЕНО: Маппинг категории
       
       // ✅ ИСПРАВЛЕНО: Принудительная конвертация в число (Number)
       // Это решает проблему "expected number, received NaN"
@@ -141,8 +141,8 @@ const onSubmit = async (data: TourFormValues) => {
       const payload = { ...data };
       
       // ✅ ДОБАВЛЕНО: Защита от пустой строки в UUID
-      if (payload.category_id === '') {
-          delete payload.category_id;
+      if (payload.categoryId === '') {
+          delete payload.categoryId;
       }
 
       const res = await saveTour(payload); 

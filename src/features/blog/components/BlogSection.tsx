@@ -160,10 +160,11 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
         {/* GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
-          {/* Hero Post */}
+        {/* Hero Post */}
           {featuredPost && (
             <div className="lg:col-span-3">
-              <Link href={`/blog/${featuredPost.slug}`} className="group relative block h-[400px] md:h-[520px] w-full rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900 shadow-2xl hover:border-teal-500/30 transition-all duration-500">
+              {/* ЗАМЕНИЛИ h-[400px] md:h-[520px] на aspect-[4/3] lg:aspect-[16/9] */}
+              <Link href={`/blog/${featuredPost.slug}`} className="group relative block aspect-[4/3] lg:aspect-[16/9] w-full rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900 shadow-2xl hover:border-teal-500/30 transition-all duration-500">
                 <Image
                   src={featuredPost.image || '/placeholder.jpg'}
                   alt={featuredPost.title}
@@ -182,7 +183,8 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                     {featuredPost.title}
                   </h3>
                   <div className="flex items-center gap-4 pt-6 border-t border-white/10 w-full">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800">
+                    {/* ДОБАВИЛИ shrink-0 к обертке аватарки */}
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800 shrink-0">
                       {featuredPost.author_image ? (
                         <Image
                           src={featuredPost.author_image}

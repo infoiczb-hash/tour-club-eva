@@ -225,24 +225,23 @@ export default async function BlogPostPage({ params }: PageProps) {
             </h1>
 
             {/* ИСПРАВЛЕНИЕ: Мобильная структура в виде колонки (flex-col md:flex-row) */}
-            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
+         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">)
                 <div className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
-    {/* ИСПРАВЛЕНИЕ: object-top */}
-    {post.author_image ? (
-        <Image 
-            src={post.author_image} 
-            alt={post.author_name || "Автор статьи"} 
-            fill 
-            className="object-cover object-top md:object-[center_15%]" 
-            sizes="48px" 
-        />
-    ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-400">
-            <User size={20}/>
-        </div>
-    )}
-</div>
+                        {post.author_image ? (
+                            <Image 
+                                src={post.author_image} 
+                                alt={post.author_name || "Автор статьи"} 
+                                fill 
+                                className="object-cover" 
+                                sizes="48px" 
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                <User size={20}/>
+                            </div>
+                        )}
+                    </div>
                     </div>
                     <div>
                         <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">{post.author_name}</div>
