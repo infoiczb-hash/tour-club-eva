@@ -59,7 +59,7 @@ export async function analyzeFearsAction(fearsDetailed: string[]) {
     }));
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-8b'),
+      model: google('gemini-1.5-flash-latest'),
       schema: z.object({
         analysis: z.string().describe('Глубокий психологический разбор страхов пользователя (2-3 абзаца). Тон: эмпатичный, профессиональный, поддерживающий. Прямо обращайся к пользователю на "ты".'),
         recommendedTourId: z.string().nullable().describe('ID идеального тура из предложенного списка, который лучше всего подойдет для старта и мягко снимет эти страхи. Если ничего не подходит, верни null.')
@@ -106,7 +106,7 @@ export async function analyzePhysicalAction(answersText: string, levelTitle: str
     }));
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-8b'),
+      model: google('gemini-1.5-flash-latest'),
       schema: z.object({
         analysis: z.string().describe('Персональный разбор (2-3 абзаца). Тон: профессиональный, как спортивный врач или опытный гид. Обращайся на "ты". Опиши сильные стороны и дай один конкретный совет по подготовке.'),
         recommendedTourId: z.string().nullable().describe('ID идеального тура из списка, который подходит под уровень подготовки человека. Для слабых - легкие (вода/локал), для сильных - горы. Если ничего нет, верни null.')
@@ -156,7 +156,7 @@ export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
     }));
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-8b'),
+      model: google('gemini-1.5-flash-latest'),
       schema: z.object({
         analysis: z.string().describe('Анализ симптомов (2-3 абзаца). Тон: заботливый врач, без паники, информативно. Обращайся на "ты". Объясни возможную общую причину симптомов и дай советы.'),
         recommendedTourId: z.string().nullable().describe('ID идеального тура из списка, который будет безопасен и комфортен при таких симптомах. (Например, при боли в коленях — вода/сплавы). Если ничего нет, верни null.')
@@ -203,7 +203,7 @@ export async function analyzeDebriefAction(answersText: string) {
     }));
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-8b'),
+      model: google('gemini-1.5-flash-latest'),
       schema: z.object({
         analysis: z.string().describe('Глубокий разбор. Структура: "Что я вижу", "Твой инсайт", "Вопрос на потом". Тон: тёплый, честный, как умный друг. Обращайся на "ты". Используй форматирование Markdown (**жирный**).'),
         recommendedTourId: z.string().nullable().describe('ID идеального тура для СЛЕДУЮЩЕГО шага на основе его рефлексии. Например, если он хочет больше тишины - дай спокойный тур, если хочет превзойти себя - дай сложный поход. Если нет подходящего, верни null.')
@@ -240,7 +240,7 @@ export async function analyzeFullProfileAction(profile: any) {
     }
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-8b'),
+      model: google('gemini-1.5-flash-latest'),
       schema: z.object({
         summaryTitle: z.string(),
         psychologicalPortrait: z.string(),
