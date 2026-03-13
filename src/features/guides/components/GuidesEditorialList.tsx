@@ -156,7 +156,7 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                 "lg:col-span-7 flex flex-col",
                 isReverse ? "lg:order-1" : "lg:order-2"
             )}>
-                {/* Бейджи */}
+                {/* 1. Бейджи */}
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                     <span className="px-4 py-1.5 bg-teal-500 text-slate-950 text-sm font-black uppercase tracking-widest rounded-lg shadow-lg">
                         {guide.role}
@@ -168,28 +168,28 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                     )}
                 </div>
 
-                {/* Имя */}
+                {/* 2. Имя */}
                 <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-lg">
                     {guide.name}
                 </h2>
 
-                {/* Цитата (если есть) */}
-                {guide.quotes && guide.quotes.length > 0 && (
-                    <div className="border-l-4 border-teal-500 pl-6 py-2 mb-8">
-                        <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
-                            «{guide.quotes[0]}»
-                        </p>
-                    </div>
-                )}
-
-                {/* Биография */}
-                <div className="text-base md:text-lg text-slate-400 leading-relaxed mb-10 font-medium whitespace-pre-wrap">
-                    {guide.fullBio || guide.bio}
+                {/* 3. Краткая Биография (только bio для превью) */}
+                <div className="text-base md:text-lg text-slate-400 leading-relaxed mb-6 font-medium whitespace-pre-wrap">
+                    {guide.bio || guide.fullBio}
                 </div>
 
-                {/* RPG Статистика */}
+                {/* 4. Теги */}
+                <div className="flex flex-wrap gap-2 mb-8">
+                    {guide.tags && guide.tags.map((tag, idx) => (
+                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+
+                {/* 5. RPG Статистика */}
                 {parsedStats.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10 p-6 md:p-8 bg-slate-900/50 rounded-3xl border border-white/5 shadow-inner">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-8 p-6 md:p-8 bg-slate-900/50 rounded-3xl border border-white/5 shadow-inner">
                         {parsedStats.map((stat, i) => {
                             const mapping = ICON_MAP[stat.icon] || ICON_MAP['Zap'];
                             return (
@@ -205,16 +205,16 @@ function EditorialGuideBlock({ guide, index }: { guide: Guide, index: number }) 
                     </div>
                 )}
 
-                {/* Теги */}
-                <div className="flex flex-wrap gap-2 mb-10">
-                    {guide.tags && guide.tags.map((tag, idx) => (
-                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
-                            #{tag}
-                        </span>
-                    ))}
-                </div>
+                {/* 6. Цитата (как финальный аккорд перед кнопкой) */}
+                {guide.quotes && guide.quotes.length > 0 && (
+                    <div className="border-l-4 border-teal-500 pl-6 py-2 mb-10">
+                        <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
+                            «{guide.quotes[0]}»
+                        </p>
+                    </div>
+                )}
 
-                {/* Кнопки действий */}
+                {/* 7. Кнопки действий */}
                 <div className="flex flex-wrap items-center gap-4 mt-auto pt-8 border-t border-white/10">
                     <Link
                         href={`/guides/${guide.slug}`}

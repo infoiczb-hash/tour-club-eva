@@ -124,13 +124,13 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
       href={`/blog/${post.slug}`}
       className="group flex flex-col bg-slate-900/40 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-500"
     >
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-800">
+      {/* ИСПРАВЛЕНИЕ: Заменили aspect-[16/9] на aspect-[4/3] (или aspect-video), 
+          чтобы картинка не была такой сплюснутой и обрезанной */}
+      <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden bg-slate-800">
         <Image
           src={post.image || '/placeholder.jpg'}
           alt={post.title}
           fill
-          // ✅ LCP: первая карточка загружается с высоким приоритетом.
-          // Остальные — lazy (браузер сам решает, когда загружать).
           priority={priority}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -165,16 +165,23 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         )}
 
         <div className="flex items-center gap-3 pt-5 border-t border-white/5 mt-auto">
-          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/10">
+          {/* ИСПРАВЛЕНИЕ: Увеличили размер кружка (w-10 h-10) и добавили focus (object-top) */}
+          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/10 shadow-sm">
             {post.author_image ? (
-              <Image src={post.author_image} alt={post.author_name || 'Автор'} fill className="object-cover" sizes="32px" />
+              <Image 
+                src={post.author_image} 
+                alt={post.author_name || 'Автор'} 
+                fill 
+                className="object-cover object-top md:object-[center_15%]" 
+                sizes="40px" 
+              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={14} /></div>
+              <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={16} /></div>
             )}
           </div>
           <div>
-            <div className="text-sm font-bold text-white">{post.author_name}</div>
-            <div className="text-[10px] text-teal-500 font-black uppercase tracking-widest mt-0.5">Автор клуба</div>
+            <div className="text-[13px] md:text-sm font-bold text-white leading-none">{post.author_name}</div>
+            <div className="text-[10px] text-teal-500 font-black uppercase tracking-widest mt-1">Автор клуба</div>
           </div>
         </div>
       </div>

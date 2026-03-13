@@ -5,6 +5,7 @@ import { ChevronDown, MessageCircleQuestion, MessageCircle, Quote, CheckCircle2 
 import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
+import Image from 'next/image';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -148,14 +149,22 @@ export default function KidsFAQ() {
                         <h3 className="text-lg md:text-3xl font-bold text-white mb-6 md:mb-8 max-w-3xl mx-auto leading-tight md:leading-tight md:leading-normal">
                             "Дети раскрываются не в кабинетах, а у костра. Я вижу, как подросток, который вчера боялся лягушек, сегодня ведёт за собой других. <span className="text-amber-500">Это и есть настоящая работа</span>."
                         </h3>
-                        <div className="flex items-center justify-center gap-4">
-                            <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full flex items-center justify-center border border-amber-500/30 overflow-hidden relative shrink-0 shadow-lg">
-                                <span className="text-slate-400 font-bold text-lg">Р</span>
-                            </div>
-                            <div className="text-left">
-                                <div className="text-white font-bold text-base md:text-lg">Роман Санду</div>
-                                <div className="text-amber-500 text-[10px] md:text-xs uppercase font-bold tracking-widest mt-0.5">Основатель ТурКлуба</div>
-                            </div>
+                      <div className="flex items-center justify-center gap-4">
+    <div className="relative w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full border border-amber-500/30 overflow-hidden shrink-0 shadow-lg">
+        {/* 🔥 Вставляем фото вместо буквы "Р" */}
+        <Image 
+            src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1773397829/sandu-roman_v0swmg.jpg" /* ЗАМЕНИ НА РЕАЛЬНУЮ ССЫЛКУ ИЗ БАЗЫ */
+            alt="Роман Санду" 
+            fill 
+            className="object-cover" 
+            sizes="(max-width: 768px) 48px, 56px"
+        />
+    </div>
+    <div className="text-left">
+        <div className="text-white font-bold text-base md:text-lg">Роман Санду</div>
+        <div className="text-amber-500 text-[10px] md:text-xs uppercase font-bold tracking-widest mt-0.5">Основатель ТурКлуба</div>
+    </div>
+
                         </div>
                     </div>
 
@@ -166,11 +175,11 @@ export default function KidsFAQ() {
                     </h2>
                     
                     <div className="max-w-2xl mx-auto mb-8 md:mb-10 text-left relative z-10">
-                        <p className="text-slate-300 font-medium leading-tight md:leading-tight text-[14px] md:text-base mb-6 text-center">
-                            Напишите нам — мы ответим на все вопросы, подберём тур и пришлём памятку по сборам.
-                            <br className="hidden md:block" />
-                            <span className="text-amber-500 font-bold">Группы маленькие, поэтому бронируем места заранее.</span> Это нужно, чтобы каждый ребенок получил максимум внимания и заботы.
-                        </p>
+                     <p className="text-slate-300 font-medium leading-[1.15] text-[14px] md:text-base mb-6 text-left">
+    Напишите нам — мы ответим на все вопросы, подберём тур и пришлём памятку по сборам.
+    <br className="hidden md:block" />
+    <span className="text-amber-500 font-bold">Чтобы гарантировать даты туров для вас, просим бронировать их заранее.</span>
+</p>
 
                         <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 md:p-8 border border-white/5 mb-6 md:mb-8 shadow-inner">
                             <p className="text-white font-bold mb-4 md:mb-5 flex items-center gap-2 text-base md:text-lg">

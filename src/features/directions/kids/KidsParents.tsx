@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 import { ShieldCheck, Users, HeartHandshake, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
+import Image from 'next/image';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -59,7 +60,7 @@ const GUARANTEES = [
     },
     {
         icon: Users,
-        title: "Малые группы",
+        title: "Динамика группы",
         desc: "Мы видим настроение каждого. Внимательно следим за динамикой в отряде, чтобы адаптация прошла мягко и без стресса.",
         color: "text-amber-400",
         bg: "bg-amber-500/10",
@@ -87,9 +88,11 @@ export default function KidsParents() {
                 
                 {/* ВВОДНЫЙ ТЕКСТ */}
                 <FadeBlock startY={20} className="mb-16 md:mb-24 max-w-4xl text-left">
-                    <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 md:mb-8 leading-none">
-                        Детство должно быть с <br className="hidden md:block"/><span className="text-amber-500"> приключениями</span>
-                    </h2>
+                  <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-6 md:mb-8 leading-[0.9] md:leading-[0.85]">
+    Детство <br />
+    должно быть с <br />
+    <span className="text-amber-500">приключениями</span>
+</h2>
                     
                     <div className="border-l-4 border-amber-500 pl-5 md:pl-8 py-2">
                         <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-snug tracking-tight">
@@ -101,26 +104,32 @@ export default function KidsParents() {
                 {/* ДВУХКОЛОНОЧНАЯ СЕТКА (Цитата + Страхи) */}
                 <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-stretch mb-16 md:mb-20">
                     
-                    <FadeBlock startX={-20} startY={0} className="p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm border-l-4 border-emerald-500 rounded-r-[2rem] relative flex flex-col justify-center shadow-xl border-y border-r border-white/5">
-                        <div className="absolute top-4 right-6 text-6xl text-slate-800 font-serif leading-none opacity-50">"</div>
-                        
-                        <p className="text-[15px] md:text-base text-slate-300 italic font-medium relative z-10 mb-6 md:mb-8 leading-relaxed">
-                            Моя задача — не просто научить, а включить. Сделать так, чтобы ребёнок сам захотел — идти, делать, открываться. Из леса мы делаем лагерь, а из веревки — приключение.
-                        </p>
-                        
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full flex items-center justify-center border border-emerald-500/30 shrink-0 overflow-hidden relative shadow-lg">
-                                <span className="text-slate-400 font-bold text-lg">А</span>
-                            </div>
-                            <div>
-                                <div className="font-bold text-white text-base md:text-lg">Алексей</div>
-                                <div className="text-emerald-500 text-[11px] md:text-[12px] uppercase font-bold tracking-widest mt-0.5">
-                                    Тренер по командообразованию
-                                </div>
-                            </div>
-                        </div>
-                    </FadeBlock>
-
+                   <FadeBlock startX={-20} startY={0} className="p-6 md:p-8 bg-slate-900/40 backdrop-blur-sm border-l-4 border-emerald-500 rounded-r-[2rem] relative flex flex-col justify-center shadow-xl border-y border-r border-white/5">
+    <div className="absolute top-4 right-6 text-6xl text-slate-800 font-serif leading-none opacity-50">"</div>
+    
+    <p className="text-[15px] md:text-base text-slate-300 italic font-medium relative z-10 mb-6 md:mb-8 leading-relaxed">
+        Моя задача — не просто научить, а включить. Сделать так, чтобы ребёнок сам захотел — идти, делать, открываться. Из леса мы делаем лагерь, а из веревки — приключение.
+    </p>
+    
+    <div className="flex items-center gap-4 relative z-10">
+        {/* 🔥 Обновленный контейнер с фото Алексея */}
+        <div className="relative w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-full border border-emerald-500/30 overflow-hidden shrink-0 shadow-lg">
+            <Image 
+                src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1773397829/alexsei-batrincha_mvuo5c.jpg" /* ЗАМЕНИ НА РЕАЛЬНУЮ ССЫЛКУ НА ФОТО АЛЕКСЕЯ */
+                alt="Алексей" 
+                fill 
+                className="object-cover" 
+                sizes="(max-width: 768px) 48px, 56px"
+            />
+        </div>
+        <div>
+            <div className="font-bold text-white text-base md:text-lg">Алексей</div>
+            <div className="text-emerald-500 text-[11px] md:text-[12px] uppercase font-bold tracking-widest mt-0.5">
+                Гид-инструктор, тренер по командообразованию 
+            </div>
+        </div>
+    </div>
+</FadeBlock>
                     <FadeBlock startX={20} startY={0} className="flex flex-col justify-center">
                         <h3 className="text-3xl md:text-4xl font-black text-white mb-6 uppercase tracking-tighter">
                             Мы знаем ваши <br className="hidden md:block"/><span className="text-emerald-500">Вопросы</span>

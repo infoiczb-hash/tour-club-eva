@@ -13,8 +13,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 const galleryImages = [
   { id: 1, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584114/196866761_4343080962371184_6042688601785630843_n_w7jdqu.jpg", alt: "Счастливая группа на воде", focus: "object-center" },
   { id: 2, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584132/104_vapoxq.jpg", alt: "Эмоции на байдарке", focus: "object-top" },
-  { id: 3, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584228/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%B1%D0%B8%D0%B5_viber_2025-06-21_11-50-14-080_a7uba5.jpg", alt: "Привал на диком пляже", focus: "object-center" },
-  { id: 4, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584255/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%B1%D0%B8%D0%B5_viber_2023-09-23_21-20-27-585_cqucfh.jpg", alt: "Командный дух", focus: "object-center" },
+  { id: 3, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584228/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5_viber_2025-06-21_11-50-14-080_a7uba5.jpg", alt: "Привал на диком пляже", focus: "object-center" },
+  { id: 4, src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584148/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5_viber_2021-06-07_15-38-48_kd4s3e.jpg", alt: "Командный дух", focus: "object-center" },
 ];
 
 export default function Gallery() {

@@ -1,24 +1,24 @@
 'use client';
 
 // src/app/active-rest/ActiveRestClient.tsx
-// 10 секций: Hero → Статистика → Почему → Активности → Места → Маршруты →
-//            Сезонность → Туры → Как добраться → FAQ
+// Путеводитель по Приднестровью — для местных и иностранных туристов
+// Секции: Hero → ЧтоТакоеПМР → ХарактерМеста → Тирасполь →
+//         Природа+Места → Активности → ИсторияСлоями →
+//         Голоса → Практика → КакДобраться → Сезонность → FAQ → CTA
 
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Waves, Mountain, Compass, Baby, MapPin, ChevronDown,
+  Waves, Mountain, Compass, MapPin, ChevronDown,
   ArrowRight, Calendar, Phone, MessageCircle, Anchor,
   Navigation, Tent, ExternalLink, Clock, Footprints,
-  Bike, Map, Users, Star,
+  Bike, Map, Users, Star, CreditCard, Globe, Shield,
+  Wifi, DollarSign, Info, TreePine, Landmark, Camera,
 } from 'lucide-react';
-import TourCard from '@/features/tours/components/TourCard';
 import ContactHubModal from '@/components/modals/ContactHubModal';
-import { Tour } from '@/features/tours/types';
 
-// ─── cn helper ───────────────────────────────────────────────────────────────
 function cn(...cls: (string | undefined | false | null)[]) {
   return cls.filter(Boolean).join(' ');
 }
@@ -27,92 +27,60 @@ function cn(...cls: (string | undefined | false | null)[]) {
 // ДАННЫЕ
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const STATS = [
-  { value: '6', suffix: 'лет', label: 'на Днестре' },
-  { value: '150', suffix: '+', label: 'туров проведено' },
-  { value: '12', unit: 'тыс', suffix: '', label: 'туристов в год в ПМР' },
-  { value: '4', suffix: ' мес', label: 'активный сезон' },
-  { value: '30', suffix: ' мин', label: 'от Тирасполя до старта' },
+const PMR_FACTS = [
+  { value: '1992', label: 'год провозглашения', icon: Landmark },
+  { value: '~4 500', label: 'км² территории', icon: Map },
+  { value: '~400 тыс', label: 'жителей', icon: Users },
+  { value: '1', label: 'единственный флаг с серпом и молотом', icon: Star },
 ];
 
-const WHY_CARDS = [
+const CHARACTER_CARDS = [
   {
-    icon: Waves,
-    title: 'Река Днестр',
-    desc: 'Самая извилистая река Европы. Каньоны, скалы, пещерные монастыри — всё это видно прямо с воды или тропы над обрывом.',
+    icon: Camera,
+    title: 'Живая советская эстетика',
+    desc: 'Не музей и не декорация. Проспекты с Лениным, советские мозаики на стенах, продукты в магазинах без западных брендов — всё это не законсервировано специально, просто так живут.',
   },
   {
-    icon: Tent,
-    title: 'Нетронутая природа',
-    desc: 'Единственный заповедник ПМР — Ягорлык. Дикие пляжи Турунчука. Пойменные леса без туристических толп.',
+    icon: TreePine,
+    title: 'Нетронутая природа Днестра',
+    desc: 'Самая извилистая река Европы прорезала известняковые каньоны, пещерные монастыри и пойменные леса. Без туристических толп — пока.',
   },
   {
-    icon: Navigation,
-    title: 'Рядом с домом',
-    desc: 'Из Тирасполя до старта — 30–90 минут. Полноценный поход без перелётов, виз и дорогих отелей.',
+    icon: Landmark,
+    title: 'История трёх цивилизаций',
+    desc: 'Османская крепость, суворовский форпост Российской империи, советская столица — и всё это в радиусе 50 км. Три слоя на одной земле.',
   },
   {
-    icon: Compass,
-    title: 'История и уникальность',
-    desc: '600-летние сёла, пещерные монастыри, советская эстетика и крепости Османской империи — всё в радиусе 100 км.',
+    icon: DollarSign,
+    title: 'Один из дешёвых регионов Европы',
+    desc: 'Обед в кафе — €3–4. Вход в музей — €1. Местный коньяк КВИНТ — €5 за бутылку. Регион почти не знает туристической наценки.',
   },
 ];
 
-const ACTIVITIES = [
+const TIRASPOL_SPOTS = [
   {
-    icon: Waves,
-    title: 'Сплавы на байдарках',
-    subtitle: 'По реке Днестр',
-    desc: 'Однодневные и многодневные сплавы. Каньоны, дикие пляжи, костёр у воды. Без опыта — с нуля.',
-    href: '/directions/kayaking',
-    linkText: 'Сплавы на байдарках по Днестру',
-    accent: '#14b8a6',
-    hoverBorder: 'hover:border-teal-500/40',
-    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674642/kayak_p2bkyz.webp',
+    name: 'Дом Советов',
+    desc: 'Сталинский ампир 1950-х. 200 комнат, четыре этажа, мозаичный Ленин на фасаде. До сих пор работающее здание администрации.',
+    tag: 'Архитектура',
+    color: '#8b5cf6',
   },
   {
-    icon: Anchor,
-    title: 'SUP-прогулки',
-    subtitle: 'На сапборде',
-    desc: 'Встаньте на доску и плывите. Обучение за 15 минут. Подходит всем — от 6 до 60 лет.',
-    href: '/directions/sup',
-    linkText: 'SUP-прогулки в Приднестровье',
-    accent: '#06b6d4',
-    hoverBorder: 'hover:border-cyan-500/40',
-    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674650/sup_zwz9yw.webp',
+    name: 'Завод КВИНТ',
+    desc: 'С 1897 года производит коньяки и вина, которые экспортируются в 20+ стран. Экскурсии с дегустацией — одна из главных причин приехать в Тирасполь.',
+    tag: 'Гастро',
+    color: '#f59e0b',
   },
   {
-    icon: Mountain,
-    title: 'Пешие маршруты',
-    subtitle: 'Цыпово, Рашков, Строенцы',
-    desc: 'От лёгких прогулок до серьёзных однодневок. Скалы над Днестром, пещерные монастыри, лесные тропы.',
-    href: '/directions/hiking',
-    linkText: 'Пешие маршруты по Приднестровью',
-    accent: '#10b981',
-    hoverBorder: 'hover:border-emerald-500/40',
-    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674641/hiking_modikx.webp',
+    name: 'Мемориал Славы',
+    desc: 'Танк Т-34 на постаменте, вечный огонь, монументы четырёх войн. Место для местных — не для туристов. Именно поэтому стоит зайти.',
+    tag: 'История',
+    color: '#ef4444',
   },
   {
-    icon: Baby,
-    title: 'Детские лагеря',
-    subtitle: 'С 6 лет',
-    desc: 'Природный лагерь с ночёвкой: байдарки, костёр, ориентирование. Дети в безопасности, родители отдыхают.',
-    href: '/directions/kids',
-    linkText: 'Детские лагеря в Приднестровье',
-    accent: '#f59e0b',
-    hoverBorder: 'hover:border-amber-500/40',
-    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674646/kids_e7lr51.webp',
-  },
-  {
-    icon: Compass,
-    title: 'Местные маршруты',
-    subtitle: 'Экскурсии по ПМР',
-    desc: 'Крепости, исторические сёла, заповедник Ягорлык. Для тех кто хочет открыть регион изнутри.',
-    href: '/directions/local',
-    linkText: 'Экскурсии и маршруты по ПМР',
-    accent: '#34d399',
-    hoverBorder: 'hover:border-emerald-400/40',
-    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674647/local_i9ul0e.webp',
+    name: 'Центральный рынок',
+    desc: 'Работает 220+ лет. Бабушки с абрикосами и домашним сыром, советские продукты, запахи детства. Лучшее место, чтобы почувствовать город изнутри.',
+    tag: 'Жизнь города',
+    color: '#10b981',
   },
 ];
 
@@ -121,228 +89,316 @@ const PLACES = [
     name: 'Рашков',
     tag: 'Пешие маршруты',
     tagColor: '#10b981',
-    desc: 'Старейшее село Приднестровья — 600+ лет. Известняковые скалы, карстовые гроты, ущелья. Три религии в одном месте: православная церковь XVIII в., католический костёл и руины синагоги.',
+    desc: 'Старейшее село ПМР — 600+ лет. Известняковые скалы, карстовые гроты. Три религии в одном месте: православная церковь XVIII в., католический костёл, руины синагоги.',
     href: '/directions/hiking',
-    external: false,
     activity: 'Поход + байдарки',
   },
   {
     name: 'Цыпово',
     tag: 'Пешие маршруты',
     tagColor: '#10b981',
-    desc: 'Пещерный монастырь прямо в скале над Днестром. Один из самых живописных маршрутов региона — тропа по кромке обрыва с видом на реку.',
+    desc: 'Пещерный монастырь прямо в скале над Днестром. XII век. Один из самых живописных маршрутов региона — тропа по кромке обрыва.',
     href: '/directions/hiking',
-    external: false,
     activity: 'Поход',
   },
   {
     name: 'Строенцы',
     tag: 'Пешие маршруты',
     tagColor: '#10b981',
-    desc: 'Башня ветров XIX века на вершине скалы, 9 одновременно бьющих источников, водяная мельница и каскадные водопады. Один из самых недооценённых маршрутов ПМР.',
+    desc: 'Башня ветров XIX века на вершине скалы, 9 одновременно бьющих источников, водяная мельница, каскадные водопады. Самый недооценённый маршрут ПМР.',
     href: '/directions/hiking',
-    external: false,
     activity: 'Поход',
   },
   {
     name: 'Заповедник Ягорлык',
     tag: 'Экотуризм',
     tagColor: '#34d399',
-    desc: 'Единственный заповедник Приднестровья. Залив с пойменным лесом, советские скульптуры в кустах, кабаны, ландшафты как в горном Крыму. Смотровая вышка над заливом.',
+    desc: 'Единственный заповедник Приднестровья. Пойменный лес, советские скульптуры в зарослях, дикие кабаны, смотровая вышка над заливом.',
     href: '/directions/local',
-    external: false,
     activity: 'Экскурсия',
   },
   {
     name: 'Турунчук',
     tag: 'Водные маршруты',
     tagColor: '#14b8a6',
-    desc: 'Рукав Днестра с каменным порогом и дикими песчаными пляжами. Мекка для байдарок, SUP и рыбалки. Пойменные ивовые леса, почти полное отсутствие людей в будни.',
+    desc: 'Рукав Днестра с каменным порогом и дикими песчаными пляжами. Мекка для байдарок и SUP. В будни — почти полное отсутствие людей.',
     href: '/directions/kayaking',
-    external: false,
     activity: 'Байдарки + SUP',
   },
   {
     name: 'Каменка',
     tag: 'Местные туры',
     tagColor: '#34d399',
-    desc: 'Виноградники на скалистых террасах над Днестром, санаторий XIX века, приусадебный парк. Курортный городок с историей — первый виноградолечебный курорт юго-западной России.',
+    desc: 'Виноградники на скалистых террасах над Днестром, санаторий XIX века, приусадебный парк. Первый виноградолечебный курорт юго-западной России.',
     href: '/directions/local',
-    external: false,
-    activity: 'Экскурсия',
-  },
-  {
-    name: 'Кицканы',
-    tag: 'Местные туры',
-    tagColor: '#34d399',
-    desc: 'Свято-Вознесенский монастырь XIX века + Кицканский плацдарм с лучшей смотровой точкой региона. Отсюда открывается вид сразу на Тирасполь, Бендеры, Днестр и пойменные леса.',
-    href: '/directions/local',
-    external: false,
     activity: 'Экскурсия',
   },
   {
     name: 'Бендерская крепость',
     tag: 'История',
     tagColor: '#8b5cf6',
-    desc: 'Крепость XVI века постройки по проекту турецкого зодчего Синана. Музей истории, средневековые орудия, панорама Днестра. Один из немногих хорошо сохранившихся османских фортов в регионе.',
+    desc: 'Крепость 1538 года постройки по проекту турецкого зодчего Синана. Один из немногих хорошо сохранившихся османских фортов в регионе.',
     href: '/directions/local',
-    external: false,
+    activity: 'Экскурсия',
+  },
+  {
+    name: 'Кицканы',
+    tag: 'Местные туры',
+    tagColor: '#34d399',
+    desc: 'Свято-Вознесенский монастырь XIX века + Кицканский плацдарм с лучшей смотровой точкой региона. Вид на Тирасполь, Бендеры, Днестр и пойменные леса.',
+    href: '/directions/local',
     activity: 'Экскурсия',
   },
 ];
 
-const ROUTES = [
+const ACTIVITIES = [
   {
-    name: 'Рашков — скалы и гроты',
-    type: 'Пеший',
-    icon: Footprints,
-    distance: '~5 км',
-    duration: '3–4 часа',
-    difficulty: 'Лёгкий',
-    diffColor: '#10b981',
-    source: 'Wikiloc',
-    sourceIcon: '🗺',
-    href: 'https://www.wikiloc.com/trails/hiking/moldova',
-    isExternal: true,
-    desc: 'Тропа над Днестром с видом на 600-летнее село, через известняковые гроты и ущелья.',
-  },
-  {
-    name: 'Строенцы — Башня ветров',
-    type: 'Пеший',
-    icon: Footprints,
-    distance: '~4 км',
-    duration: '2–3 часа',
-    difficulty: 'Лёгкий',
-    diffColor: '#10b981',
-    source: 'Wikiloc',
-    sourceIcon: '🗺',
-    href: 'https://www.wikiloc.com/trails/hiking/moldova',
-    isExternal: true,
-    desc: 'Через виноградники на обзорную площадку к башне, вниз к 9 источникам и мельнице.',
-  },
-  {
-    name: 'Цыпово — пещерный монастырь',
-    type: 'Пеший',
-    icon: Footprints,
-    distance: '~6 км',
-    duration: '4–5 часов',
-    difficulty: 'Средний',
-    diffColor: '#f59e0b',
-    source: 'ЭВА',
-    sourceIcon: '⛵',
-    href: '/directions/hiking',
-    isExternal: false,
-    desc: 'Маршрут по кромке скалы с видом на Днестр, спуск к пещерному монастырю XII века.',
-  },
-  {
-    name: 'Рыбница → Каменка по воде',
-    type: 'Байдарки',
     icon: Waves,
-    distance: '~25 км',
-    duration: '1 день',
-    difficulty: 'Лёгкий',
-    diffColor: '#10b981',
-    source: 'ЭВА',
-    sourceIcon: '⛵',
+    title: 'Байдарки',
+    subtitle: 'По реке Днестр',
+    desc: 'Каньоны, дикие пляжи, ночёвки у костра. Маршруты от 4 часов до 5 дней. Опыт не нужен — научиться можно за 20 минут.',
+    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674642/kayak_p2bkyz.webp',
+    accent: '#14b8a6',
     href: '/directions/kayaking',
-    isExternal: false,
-    desc: 'Однодневный сплав через самые красивые места севера Приднестровья. Ночёвка по запросу.',
   },
   {
-    name: 'Заповедник Ягорлык',
-    type: 'Пеший',
-    icon: Footprints,
-    distance: '~8 км',
-    duration: '4–6 часов',
-    difficulty: 'Средний',
-    diffColor: '#f59e0b',
-    source: 'PMR Tourism',
-    sourceIcon: '🏛',
-    href: 'https://pridnestrovie-tourism.com',
-    isExternal: true,
-    desc: 'Заповедные тропы по пойменному лесу, смотровая вышка, встречи с дикими кабанами.',
-  },
-  {
-    name: 'Турунчук — рукав Днестра',
-    type: 'SUP / Байдарки',
     icon: Anchor,
-    distance: '~15 км',
-    duration: 'Полдня',
-    difficulty: 'Лёгкий',
-    diffColor: '#10b981',
-    source: 'ЭВА',
-    sourceIcon: '⛵',
-    href: '/directions/kayaking',
-    isExternal: false,
-    desc: 'Тихий рукав с каменным порогом, дикими пляжами и почти полным отсутствием людей.',
+    title: 'SUP-бординг',
+    subtitle: 'На сапборде',
+    desc: 'Встать на доску и плыть по Днестру. Подходит всем от 6 до 70. Особенно хорош на Турунчуке — тихий рукав, почти без течения.',
+    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674650/sup_zwz9yw.webp',
+    accent: '#06b6d4',
+    href: '/directions/sup',
+  },
+  {
+    icon: Mountain,
+    title: 'Пешие маршруты',
+    subtitle: 'Цыпово, Рашков, Строенцы',
+    desc: 'От прогулки с детьми до однодневного похода по скалам над рекой. Лучше всего — май, июнь, сентябрь.',
+    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674641/hiking_modikx.webp',
+    accent: '#10b981',
+    href: '/directions/hiking',
+  },
+  {
+    icon: Compass,
+    title: 'Экскурсии по ПМР',
+    subtitle: 'История и природа',
+    desc: 'Крепости, монастыри, заповедник, советские мозаики. Для тех, кто хочет понять регион, а не просто пройти по нему.',
+    image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674647/local_i9ul0e.webp',
+    accent: '#34d399',
+    href: '/directions/local',
   },
 ];
 
-// Комбо-маршруты
-const COMBOS = [
+const HISTORY_LAYERS = [
   {
-    label: 'За день',
-    title: 'Цыпово + сплав обратно',
-    points: ['Тирасполь → Цыпово (машина)', 'Пещерный монастырь (2 ч)', 'Сплав на байдарках вниз по Днестру (4 ч)', 'Возврат в Тирасполь'],
-    tag: 'Байдарки + Поход',
+    year: '1538',
+    era: 'Османская империя',
+    title: 'Бендерская крепость',
+    desc: 'Синан — зодчий, построивший мечеть Сулеймание в Стамбуле — спроектировал эту крепость. Она до сих пор стоит.',
+    color: '#f59e0b',
+  },
+  {
+    year: '1792',
+    era: 'Российская империя',
+    title: 'Основание Тирасполя',
+    desc: 'Суворов поставил форпост на берегу Днестра. «Тирасполь» — от греческого названия реки: Тирас + полис.',
+    color: '#06b6d4',
+  },
+  {
+    year: '1924',
+    era: 'Советский Союз',
+    title: 'Столица МАССР',
+    desc: 'Тирасполь становится столицей Молдавской АССР. Строятся проспекты, заводы, Дом Советов. Этот слой виден лучше всего.',
+    color: '#ef4444',
+  },
+  {
+    year: '1992',
+    era: 'Сегодня',
+    title: 'Приднестровская МР',
+    desc: 'После распада СССР — отдельное государство, не признанное ООН. Своя валюта, флаг с серпом и молотом, армия. И двери открыты для туристов.',
+    color: '#10b981',
+  },
+];
+
+const VOICES = [
+  {
+    quote: 'Я живу в Тирасполе 40 лет. Люди спрашивают — не скучно? Нет. У нас Днестр рядом, лес, рынок. Зачем куда-то ехать?',
+    name: 'Михаил',
+    role: 'Рыбак, Суклея',
+    initial: 'М',
     color: '#14b8a6',
   },
   {
-    label: 'Выходные',
-    title: 'Рашков → Строенцы',
-    points: ['День 1: Рашков — скалы, гроты, ночёвка у реки', 'День 2: Строенцы — Башня ветров, 9 источников', 'Необязательно: сплав между сёлами'],
-    tag: 'Поход + Кемпинг',
+    quote: 'Я приехала из Берлина, ожидала что-то мрачное. А нашла спокойный, зелёный город, где люди здороваются с незнакомыми.',
+    name: 'Anna K.',
+    role: 'Путешественница, Германия',
+    initial: 'A',
+    color: '#8b5cf6',
+  },
+  {
+    quote: 'Сплав по Днестру — это не экстрим, это медитация. Скалы, тишина, и понимаешь, что Приднестровье — это не новости по телевизору.',
+    name: 'Дмитрий',
+    role: 'Местный турист, Кишинёв',
+    initial: 'Д',
+    color: '#f59e0b',
+  },
+];
+
+const PRACTICAL = [
+  {
+    icon: Globe,
+    title: 'Въезд',
+    items: ['Виза не нужна — ни для кого', 'Миграционная карта на границе', 'Стандартно 12 часов (продлевается до 45 дней)', 'Паспорт обязателен'],
     color: '#10b981',
   },
   {
-    label: '5 дней',
-    title: 'Экспедиция по ПМР',
-    points: ['День 1–2: Сплав Рыбница → Каменка', 'День 3: Заповедник Ягорлык', 'День 4: Рашков — скалы и история', 'День 5: Цыпово + Тирасполь'],
-    tag: 'Экспедиция',
+    icon: DollarSign,
+    title: 'Деньги',
+    items: ['Валюта — приднестровский рубль (ПМР)', 'Карты почти не работают — нужна наличка', 'Меняют USD, EUR, MDL повсюду', 'Цены: обед ~€3–4, кофе ~€0.5'],
+    color: '#14b8a6',
+  },
+  {
+    icon: Globe,
+    title: 'Язык',
+    items: ['Основной язык — русский', 'Молдавский и украинский понимают', 'Английский — редко, но молодёжь знает', 'Гугл Переводчик работает нормально'],
+    color: '#06b6d4',
+  },
+  {
+    icon: Shield,
+    title: 'Безопасность',
+    items: ['Низкий уровень уличной преступности', 'Не фотографировать военные объекты и КПП', 'Полиция относится к туристам нейтрально', 'Страховка — стандартная туристическая'],
+    color: '#f59e0b',
+  },
+  {
+    icon: Wifi,
+    title: 'Связь',
+    items: ['Местные SIM — IDC и Интерднестрком', 'Интернет в центре города хороший', 'В природных зонах — слабый сигнал', 'Wi-Fi есть в кафе и отелях'],
     color: '#8b5cf6',
+  },
+  {
+    icon: Navigation,
+    title: 'Жильё',
+    items: ['Отели в Тирасполе от €20/ночь', 'CityClub Hotel — лучший в центре', 'Airbnb не работает, booking.com — да', 'В сёлах — договориться лично'],
+    color: '#ef4444',
+  },
+];
+
+const HOW_TO_GET = [
+  {
+    from: 'Тирасполь',
+    time: 'Вы на месте',
+    detail: 'Все маршруты начинаются отсюда. До природных старт-точек — 30–90 минут на машине или маршрутке.',
+    badge: 'Столица ПМР',
+    highlight: true,
+  },
+  {
+    from: 'Кишинёв',
+    time: '~1.5 часа',
+    detail: 'Маршрутка с центрального автовокзала каждые 20–30 минут. ~57 MDL (~€3). Или такси — ~€15.',
+    badge: 'Самый частый маршрут',
+    highlight: false,
+  },
+  {
+    from: 'Одесса',
+    time: '~3 часа',
+    detail: 'Прямые маршрутки несколько раз в день. Через украинскую границу — стандартный паспортный контроль.',
+    badge: '~2.5 часа пути',
+    highlight: false,
+  },
+  {
+    from: 'Европа / Россия',
+    time: 'через Кишинёв',
+    detail: 'Перелёт в Кишинёв (Chisinau, KIV), затем маршрутка до Тирасполя. Прямых рейсов в ПМР нет — аэропорт только в Молдове.',
+    badge: 'KIV → Тирасполь',
+    highlight: false,
   },
 ];
 
 const SEASONS = [
-  { month: 'Апр', score: 3, best: ['Пешие маршруты', 'Местные туры'] },
+  { month: 'Апр', score: 3, best: ['Пешие маршруты', 'Экскурсии'] },
   { month: 'Май', score: 5, best: ['SUP', 'Байдарки', 'Пешие'] },
   { month: 'Июн', score: 5, best: ['Байдарки', 'Детские лагеря', 'SUP'] },
-  { month: 'Июл', score: 4, best: ['SUP', 'Детские лагеря', 'Байдарки'] },
-  { month: 'Авг', score: 5, best: ['Байдарки', 'SUP', 'Детские лагеря'] },
-  { month: 'Сен', score: 5, best: ['Пешие', 'Байдарки', 'Местные туры'] },
-  { month: 'Окт', score: 3, best: ['Пешие маршруты', 'Местные туры'] },
+  { month: 'Июл', score: 4, best: ['SUP', 'Пляж', 'Байдарки'] },
+  { month: 'Авг', score: 5, best: ['Байдарки', 'SUP', 'Природа'] },
+  { month: 'Сен', score: 5, best: ['Пешие', 'Байдарки', 'Экскурсии'] },
+  { month: 'Окт', score: 3, best: ['Пешие маршруты', 'Экскурсии'] },
 ];
 
 const FAQ_ITEMS = [
-  { q: 'Нужна ли виза для въезда в Приднестровье?', a: 'Виза не нужна. Граждане Молдовы и России — по внутреннему паспорту. Граждане других стран — по загранпаспорту. Пограничный контроль есть, но он формальный и занимает 5–15 минут.' },
-  { q: 'Нужна ли физическая подготовка для сплава?', a: 'Нет. Все наши туры адаптированы для новичков. Инструктор проведёт briefing на старте — через 20 минут вы уверенно гребёте самостоятельно. Главное — желание.' },
-  { q: 'С какого возраста можно участвовать?', a: 'На байдарках и SUP — с 6 лет в сопровождении родителей. Детские лагеря — 6–14 лет. Пешие маршруты — с 8 лет для лёгких, с 12 для сложных. Верхнего предела нет.' },
-  { q: 'Что включено в стоимость тура?', a: 'Инструктор, снаряжение (байдарки, спасжилеты, вёсла), транспорт к старту. В многодневных турах — лагерь, еда, тент. Детально — на странице конкретного тура.' },
-  { q: 'Есть ли в Приднестровье пляжи?', a: 'Да. На участке Бендеры–Чобручи вдоль Днестра несколько хороших речных пляжей с мелким песком. Особенно — в районе Турунчука, Терновки, Суклеи. В сезон там почти безлюдно.' },
-  { q: 'Нужно ли разрешение для посещения заповедника Ягорлык?', a: 'Для самостоятельного посещения нужна договорённость со смотрителями заповедника. Мы организуем это автоматически в составе тура.' },
-  { q: 'Можно ли совместить Приднестровье и Молдову за одну поездку?', a: 'Да, отлично совмещается. Популярный маршрут: Старый Орхей (Молдова) + Цыпово (ПМР) за два дня. Граница простая, переходится за 15 минут.' },
-  { q: 'Как добраться из России в 2025 году?', a: 'Прямых рейсов нет. Через Кишинёв: перелёт Москва–Кишинёв, затем маршрутка или такси до Тирасполя (1 час). Через Одессу — аналогично. Пишите нам — поможем спланировать логистику.' },
-  { q: 'Какой лучший сезон для активного отдыха?', a: 'Май–июнь и август–сентябрь — оптимально. Тепло, не жарко, вода хорошая. Июль подходит для водных активностей, но жарче. Апрель и октябрь — для пеших маршрутов.' },
-  { q: 'Есть ли глэмпинг или комфортная ночёвка у реки?', a: 'У нас есть оборудованные лагеря с тентами, спальниками и кухней. Глэмпинга в европейском смысле пока нет в регионе — но мы делаем ночёвки максимально комфортными для новичков.' },
-  { q: 'Можно ли приехать с собакой?', a: 'На большинство наших туров — да. Уточняйте при бронировании: для собак крупных пород есть ограничения на многодневных сплавах.' },
+  {
+    q: 'Это безопасно — ехать в Приднестровье?',
+    a: 'Да. Уровень уличной преступности низкий, туристов здесь уважают. Главное правило — не фотографировать военные объекты, КПП и пограничников. В остальном — обычная жизнь небольшого города.',
+  },
+  {
+    q: 'Нужна ли виза или специальное разрешение?',
+    a: 'Виза не нужна никому. На границе заполняется миграционная карта (бесплатно, 2 минуты). Стандартный срок пребывания — 12 часов, но при желании продлевается в МВД до 45 дней.',
+  },
+  {
+    q: 'Какая валюта и можно ли платить картой?',
+    a: 'Официальная валюта — приднестровский рубль (ПМР). Карты Visa/Mastercard почти не принимают — берите наличные USD, EUR или MDL, их меняют везде. Цены очень низкие по европейским меркам.',
+  },
+  {
+    q: 'Можно ли совместить Приднестровье и Молдову?',
+    a: 'Отлично совмещается. Популярный маршрут: Старый Орхей (Молдова) + Цыпово (ПМР) — два дня. Граница проходится за 15 минут пешком. Кишинёв — хорошая база для вылазок в ПМР.',
+  },
+  {
+    q: 'Нужна ли физическая подготовка для сплава?',
+    a: 'Нет. Все водные маршруты на Днестре адаптированы для новичков. Инструктаж на старте — 20 минут, и вы гребёте самостоятельно. Главное — желание и базовое умение плавать.',
+  },
+  {
+    q: 'С какого возраста можно на байдарки и SUP?',
+    a: 'С 6 лет в сопровождении родителей. Верхнего предела нет — на воде выходят и в 70. Детские лагеря с ночёвкой — для детей 6–14 лет.',
+  },
+  {
+    q: 'Есть ли пляжи?',
+    a: 'Да. Вдоль Днестра — несколько хороших речных пляжей с мелким песком: Турунчук, Терновка, Суклея. В сезон немноголюдно, вода чистая.',
+  },
+  {
+    q: 'Говорят ли по-английски?',
+    a: 'Редко, но молодёжь и люди в туристической сфере обычно могут объясниться. Основной язык — русский. Google Переводчик + офлайн-пакет спасёт в любой ситуации.',
+  },
+  {
+    q: 'Нужно ли разрешение для посещения заповедника Ягорлык?',
+    a: 'Для самостоятельного посещения — нужно договориться со смотрителями заповедника заранее. В составе организованной группы это решается автоматически.',
+  },
+  {
+    q: 'Что взять с собой?',
+    a: 'Наличные (USD/EUR/MDL), паспорт, страховку, офлайн-карты (Maps.me или OsmAnd — они работают в ПМР). Для маршрутов по природе — солнцезащитный крем и удобная обувь.',
+  },
 ];
 
-// ─── FAQ ACCORDION ────────────────────────────────────────────────────────────
+// ─── КОМПОНЕНТЫ ───────────────────────────────────────────────────────────────
+
 function FaqAccordion() {
   const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="space-y-3">
       {FAQ_ITEMS.map((item, i) => (
         <div key={i} className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden hover:border-teal-900/50 transition-colors">
-          <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left group focus:outline-none">
-            <span className="font-bold text-sm md:text-base text-slate-200 group-hover:text-white transition-colors pr-4">{item.q}</span>
-            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300', open === i ? 'rotate-180 bg-teal-900/30 text-teal-400' : 'bg-slate-800 text-slate-400')}>
+          <button
+            onClick={() => setOpen(open === i ? null : i)}
+            className="w-full flex items-center justify-between p-5 text-left group focus:outline-none"
+          >
+            <span className="font-bold text-sm md:text-base text-slate-200 group-hover:text-white transition-colors pr-4">
+              {item.q}
+            </span>
+            <div className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300',
+              open === i ? 'rotate-180 bg-teal-900/30 text-teal-400' : 'bg-slate-800 text-slate-400'
+            )}>
               <ChevronDown size={18} />
             </div>
           </button>
           <AnimatePresence initial={false}>
             {open === i && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} className="border-t border-slate-800">
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22 }}
+                className="border-t border-slate-800"
+              >
                 <p className="px-5 py-4 text-sm md:text-base text-slate-400 leading-relaxed">{item.a}</p>
               </motion.div>
             )}
@@ -353,10 +409,14 @@ function FaqAccordion() {
   );
 }
 
-// ─── SECTION HEADER ───────────────────────────────────────────────────────────
-function SectionHeader({ eyebrow, title, accent }: { eyebrow: string; title: React.ReactNode; accent?: string }) {
+function SectionHeader({ eyebrow, title }: { eyebrow: string; title: React.ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12 md:mb-16">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="mb-12 md:mb-16"
+    >
       <p className="text-teal-400 text-sm font-bold uppercase tracking-widest mb-3">{eyebrow}</p>
       <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[1.05]">{title}</h2>
     </motion.div>
@@ -364,74 +424,106 @@ function SectionHeader({ eyebrow, title, accent }: { eyebrow: string; title: Rea
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
-export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
+export default function ActiveRestClient() {
   const [isContactOpen, setIsContactOpen] = useState(false);
 
   return (
     <>
       {/* ══════════════════════════════════════════
           1. HERO
+          Фото: вечерний Тирасполь — замените URL на своё фото с Cloudinary
+          Рекомендуем: панорама центрального проспекта с огнями
       ══════════════════════════════════════════ */}
       <section className="relative min-h-[95svh] flex items-end pb-20 overflow-hidden bg-slate-950">
-        {/* Фон */}
         <div className="absolute inset-0 z-0">
+          {/* 
+            TODO: Замените src на фото вечернего Тирасполя.
+            Хорошие варианты на Wikimedia Commons (CC):
+            - Проспект 25 октября с огнями
+            - Вид на Дом Советов вечером
+            - Днестр + Тирасполь с противоположного берега
+            Поиск: commons.wikimedia.org → "Tiraspol night"
+          */}
           <Image
-            src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674642/kayak_p2bkyz.webp"
-            alt="Туризм в Приднестровье — сплав по реке Днестр"
-            fill priority
-            className="object-cover opacity-50"
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Tiraspol_city_center.jpg/1280px-Tiraspol_city_center.jpg"
+            alt="Тирасполь — столица Приднестровья"
+            fill
+            priority
+            fetchPriority="high"
+            className="object-cover opacity-45"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/30 to-transparent" />
         </div>
-        <div className="absolute inset-0 opacity-25 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 20% 70%, rgba(20,184,166,0.5) 0%, transparent 55%)' }} />
+        <div
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at 15% 75%, rgba(20,184,166,0.6) 0%, transparent 55%)' }}
+        />
 
         <div className="container relative z-10 mx-auto px-5 max-w-6xl">
-          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-3xl">
-            {/* Бейджи */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9 }}
+            className="max-w-3xl"
+          >
             <div className="flex flex-wrap gap-2 mb-6">
-              {['🏕 Природа', '🏛 История', '🚣 Река Днестр'].map((b) => (
-                <span key={b} className="px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white text-xs font-bold">{b}</span>
+              {['🏛 История', '🌿 Природа', '🚣 Днестр', '⚒ Советская эстетика'].map((b) => (
+                <span key={b} className="px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white text-xs font-bold">
+                  {b}
+                </span>
               ))}
             </div>
 
-            {/* H1 */}
             <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-black text-white uppercase tracking-tighter leading-[0.88] mb-6">
-              Куда поехать<br />
-              в <span className="text-teal-400">Придне-<br className="hidden sm:block" />стровье</span>
+              Приднестровье —<br />
+              <span className="text-teal-400">место вне времени</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-300 max-w-xl leading-relaxed mb-10">
-              Активный отдых, маршруты по Днестру, исторические сёла и природные заповедники —
-              всё в 30–90 минутах от Тирасполя. С апреля по октябрь.
+            <p className="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed mb-4">
+              Непризнанное государство с серпом и молотом на флаге, советской архитектурой на проспектах
+              и диким Днестром за городом. В 90 минутах от Кишинёва. В другом измерении.
             </p>
+            <p className="text-sm text-slate-500 mb-10">Для местных и иностранных туристов · Без визы · Апрель — октябрь</p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/tour" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.35)]">
-                <Calendar size={18} /> Смотреть туры
-              </Link>
-              <button onClick={() => setIsContactOpen(true)} className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all">
-                <Phone size={18} /> Задать вопрос
-              </button>
+              <a
+                href="#places"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.35)]"
+              >
+                <MapPin size={18} /> Маршруты и места
+              </a>
+              <a
+                href="#practical"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all"
+              >
+                <Info size={18} /> Практическая информация
+              </a>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          2. СТАТИСТИКА (узкая полоса)
+          2. ЧТО ТАКОЕ ПМР — горизонтальная полоса фактов
       ══════════════════════════════════════════ */}
       <div className="bg-slate-900 border-y border-white/5">
-        <div className="container mx-auto px-5 max-w-6xl py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-4">
-            {STATS.map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }} className="flex flex-col items-center text-center">
-                <div className="text-3xl font-black text-white leading-none">
-                  {s.value}<span className="text-teal-400 text-xl">{s.suffix}</span>
-                  {s.unit && <span className="text-teal-400 text-base ml-0.5">{s.unit}</span>}
-                </div>
-                <div className="text-slate-500 text-xs font-medium mt-1">{s.label}</div>
+        <div className="container mx-auto px-5 max-w-6xl py-8">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-6 text-center">Приднестровская Молдавская Республика</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {PMR_FACTS.map((f, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="flex flex-col items-center text-center gap-2"
+              >
+                <f.icon size={20} className="text-teal-400" />
+                <div className="text-2xl font-black text-white leading-none">{f.value}</div>
+                <div className="text-slate-500 text-xs leading-snug">{f.label}</div>
               </motion.div>
             ))}
           </div>
@@ -439,18 +531,24 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
       </div>
 
       {/* ══════════════════════════════════════════
-          3. ПОЧЕМУ ПРИДНЕСТРОВЬЕ
+          3. ХАРАКТЕР МЕСТА
       ══════════════════════════════════════════ */}
       <section className="py-20 md:py-28 bg-slate-950">
         <div className="container mx-auto px-5 max-w-6xl">
           <SectionHeader
-            eyebrow="Почему здесь"
-            title={<>Приднестровье —<br /><span className="text-teal-400">незаезженное</span> место</>}
+            eyebrow="Почему сюда едут"
+            title={<>Четыре причины<br /><span className="text-teal-400">открыть ПМР</span></>}
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {WHY_CARDS.map((c, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="bg-slate-900/50 border border-slate-800 rounded-[1.5rem] p-6 hover:border-teal-900/50 transition-colors">
+            {CHARACTER_CARDS.map((c, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-slate-900/50 border border-slate-800 rounded-[1.5rem] p-6 hover:border-teal-900/50 transition-colors"
+              >
                 <div className="w-11 h-11 rounded-xl bg-teal-900/30 flex items-center justify-center mb-4">
                   <c.icon size={22} className="text-teal-400" />
                 </div>
@@ -463,46 +561,57 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
       </section>
 
       {/* ══════════════════════════════════════════
-          4. 5 АКТИВНОСТЕЙ
+          4. ТИРАСПОЛЬ
       ══════════════════════════════════════════ */}
       <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
         <div className="container mx-auto px-5 max-w-6xl">
-          <SectionHeader
-            eyebrow="Чем заняться"
-            title={<>5 видов<br /><span className="text-teal-400">активного туризма</span></>}
-          />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {ACTIVITIES.map((act, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className={cn('group relative overflow-hidden rounded-[1.5rem] border-2 border-white/5 bg-slate-900 transition-all duration-300', act.hoverBorder)}>
-                <div className="relative h-44 overflow-hidden">
-                  <Image src={act.image} alt={`${act.title} в Приднестровье`} fill
-                    className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15,23,42,1) 0%, transparent 60%)' }} />
-                  <div className="absolute top-4 left-4 w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20" style={{ background: `${act.accent}22` }}>
-                    <act.icon size={18} style={{ color: act.accent }} />
-                  </div>
-                </div>
-                <div className="p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: act.accent }}>{act.subtitle}</p>
-                  <h3 className="text-lg font-black text-white mb-2">{act.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">{act.desc}</p>
-                  <Link href={act.href} className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors group/link" style={{ color: act.accent }}>
-                    {act.linkText} <ArrowRight size={15} className="group-hover/link:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-teal-400 text-sm font-bold uppercase tracking-widest mb-3">Столица</p>
+              <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[1.05] mb-6">
+                Тирасполь —<br /><span className="text-teal-400">как Берлин в 1988,<br />но живой</span>
+              </h2>
+              <p className="text-slate-400 leading-relaxed mb-4">
+                Город основан Суворовым в 1792 году. Сегодня здесь 230 тысяч человек, советские проспекты, работающие заводы и рынок, которому 220 лет.
+              </p>
+              <p className="text-slate-400 leading-relaxed">
+                Это не тематический парк и не музей. Люди живут — ходят на работу, пьют кофе, играют в футбол. Именно это и интересно.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {TIRASPOL_SPOTS.map((s, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 hover:border-slate-700 transition-colors"
+                >
+                  <span
+                    className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-3 inline-block"
+                    style={{ color: s.color, background: `${s.color}18`, border: `1px solid ${s.color}30` }}
+                  >
+                    {s.tag}
+                  </span>
+                  <h3 className="text-sm font-black text-white mb-1.5">{s.name}</h3>
+                  <p className="text-slate-400 text-xs leading-relaxed">{s.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          5. КОНКРЕТНЫЕ МЕСТА
+          5. ПРИРОДА И МЕСТА
       ══════════════════════════════════════════ */}
-      <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
+      <section id="places" className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
         <div className="container mx-auto px-5 max-w-6xl">
           <SectionHeader
             eyebrow="Куда ехать"
@@ -510,19 +619,31 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {PLACES.map((p, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 4) * 0.08 }}
-                className="bg-slate-900/60 border border-slate-800 rounded-[1.5rem] p-5 hover:border-slate-700 transition-colors flex flex-col">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: (i % 4) * 0.08 }}
+                className="bg-slate-900/60 border border-slate-800 rounded-[1.5rem] p-5 hover:border-slate-700 transition-colors flex flex-col"
+              >
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <h3 className="text-base font-black text-white">{p.name}</h3>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full border shrink-0" style={{ color: p.tagColor, borderColor: `${p.tagColor}40`, background: `${p.tagColor}15` }}>
+                  <span
+                    className="text-xs font-bold px-2.5 py-1 rounded-full border shrink-0"
+                    style={{ color: p.tagColor, borderColor: `${p.tagColor}40`, background: `${p.tagColor}15` }}
+                  >
                     {p.tag}
                   </span>
                 </div>
                 <p className="text-slate-400 text-xs leading-relaxed flex-1 mb-4">{p.desc}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-600 font-medium">{p.activity}</span>
-                  <Link href={p.href} className="inline-flex items-center gap-1 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors">
-                    Туры <ArrowRight size={12} />
+                  <Link
+                    href={p.href}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors"
+                  >
+                    Подробнее <ArrowRight size={12} />
                   </Link>
                 </div>
               </motion.div>
@@ -532,105 +653,143 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
       </section>
 
       {/* ══════════════════════════════════════════
-          6. МАРШРУТЫ (своими + внешние ссылки)
+          6. АКТИВНОСТИ
       ══════════════════════════════════════════ */}
       <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
         <div className="container mx-auto px-5 max-w-6xl">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-              <p className="text-teal-400 text-sm font-bold uppercase tracking-widest mb-3">GPS-треки и описания</p>
-              <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">
-                Маршруты<br /><span className="text-teal-400">по Приднестровью</span>
-              </h2>
-            </div>
-            <p className="text-slate-500 text-sm max-w-xs md:text-right leading-relaxed">
-              Собственные треки ЭВА и проверенные маршруты с Wikiloc и официального портала туризма ПМР
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ROUTES.map((r, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 3) * 0.1 }}
-                className="group bg-slate-900/60 border border-slate-800 rounded-[1.5rem] p-5 hover:border-teal-900/50 transition-colors flex flex-col">
-
-                {/* Шапка */}
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-teal-900/30 flex items-center justify-center shrink-0">
-                    <r.icon size={18} className="text-teal-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-black text-white leading-tight">{r.name}</h3>
-                    <span className="text-xs font-bold" style={{ color: r.diffColor }}>{r.difficulty}</span>
+          <SectionHeader
+            eyebrow="Чем заняться"
+            title={<>Активный отдых<br /><span className="text-teal-400">на Днестре</span></>}
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {ACTIVITIES.map((act, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="group relative overflow-hidden rounded-[1.5rem] border border-white/5 bg-slate-900 transition-all duration-300 hover:border-white/10"
+              >
+                <div className="relative h-44 overflow-hidden">
+                  <Image
+                    src={act.image}
+                    alt={`${act.title} в Приднестровье`}
+                    fill
+                    className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
+                    sizes="(max-width: 768px) 100vw, 25vw"
+                  />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15,23,42,1) 0%, transparent 60%)' }} />
+                  <div
+                    className="absolute top-4 left-4 w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20"
+                    style={{ background: `${act.accent}22` }}
+                  >
+                    <act.icon size={18} style={{ color: act.accent }} />
                   </div>
                 </div>
-
-                <p className="text-slate-400 text-xs leading-relaxed flex-1 mb-4">{r.desc}</p>
-
-                {/* Мета */}
-                <div className="flex items-center gap-3 text-xs text-slate-500 mb-4 flex-wrap">
-                  <span className="flex items-center gap-1"><Map size={11} />{r.distance}</span>
-                  <span className="flex items-center gap-1"><Clock size={11} />{r.duration}</span>
-                  <span className="flex items-center gap-1"><r.icon size={11} />{r.type}</span>
-                </div>
-
-                {/* Источник + ссылка */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                  <span className="text-xs text-slate-600 font-bold">{r.sourceIcon} {r.source}</span>
-                  {r.isExternal ? (
-                    <a href={r.href} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-teal-400 transition-colors">
-                      Открыть <ExternalLink size={11} />
-                    </a>
-                  ) : (
-                    <Link href={r.href} className="inline-flex items-center gap-1 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors">
-                      Записаться <ArrowRight size={11} />
-                    </Link>
-                  )}
+                <div className="p-5">
+                  <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: act.accent }}>{act.subtitle}</p>
+                  <h3 className="text-lg font-black text-white mb-2">{act.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed mb-4">{act.desc}</p>
+                  <Link
+                    href={act.href}
+                    className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors group/link"
+                    style={{ color: act.accent }}
+                  >
+                    Узнать больше <ArrowRight size={15} className="group-hover/link:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
               </motion.div>
             ))}
           </div>
-
-          {/* Лейбл */}
-          <p className="mt-6 text-xs text-slate-600 text-center">
-            ⛵ — маршруты ЭВА, с инструктором и снаряжением &nbsp;·&nbsp; 🗺 — треки Wikiloc, для самостоятельного похода &nbsp;·&nbsp; 🏛 — официальный портал туризма ПМР
-          </p>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          7. КОМБО-МАРШРУТЫ
+          7. ИСТОРИЯ СЛОЯМИ — таймлайн
+      ══════════════════════════════════════════ */}
+      <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5 relative overflow-hidden">
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none opacity-5"
+          style={{ background: 'radial-gradient(circle, #14b8a6, transparent)' }}
+        />
+        <div className="container mx-auto px-5 max-w-6xl relative z-10">
+          <SectionHeader
+            eyebrow="500 лет истории"
+            title={<>Три цивилизации<br /><span className="text-teal-400">на одной земле</span></>}
+          />
+          <div className="relative">
+            {/* Вертикальная линия */}
+            <div className="absolute left-5 md:left-1/2 top-0 bottom-0 w-px bg-slate-800 md:-translate-x-1/2" />
+
+            <div className="space-y-10">
+              {HISTORY_LAYERS.map((layer, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15 }}
+                  className={cn(
+                    'relative grid md:grid-cols-2 gap-6 pl-14 md:pl-0',
+                    i % 2 === 0 ? 'md:pr-[calc(50%+2rem)]' : 'md:pl-[calc(50%+2rem)]'
+                  )}
+                >
+                  {/* Точка на линии */}
+                  <div
+                    className="absolute left-3 md:left-1/2 top-1 w-4 h-4 rounded-full border-2 border-slate-950 md:-translate-x-1/2 z-10"
+                    style={{ background: layer.color }}
+                  />
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-colors">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-2xl font-black" style={{ color: layer.color }}>{layer.year}</span>
+                      <span
+                        className="text-xs font-bold px-2.5 py-1 rounded-full"
+                        style={{ color: layer.color, background: `${layer.color}18` }}
+                      >
+                        {layer.era}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-white mb-2">{layer.title}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{layer.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          8. ГОЛОСА
       ══════════════════════════════════════════ */}
       <section className="py-20 md:py-24 bg-slate-950 border-t border-white/5">
         <div className="container mx-auto px-5 max-w-6xl">
           <SectionHeader
-            eyebrow="Готовые сценарии"
-            title={<>На день,<br /><span className="text-teal-400">выходные или неделю</span></>}
+            eyebrow="Люди о регионе"
+            title={<>Что говорят<br /><span className="text-teal-400">те, кто был здесь</span></>}
           />
-          <div className="grid md:grid-cols-3 gap-5">
-            {COMBOS.map((c, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}
-                className="bg-slate-900/60 border border-slate-800 rounded-[1.5rem] p-6 hover:border-slate-700 transition-colors">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full border" style={{ color: c.color, borderColor: `${c.color}50`, background: `${c.color}15` }}>
-                    {c.label}
-                  </span>
-                  <span className="text-xs text-slate-600 font-medium">{c.tag}</span>
+          <div className="grid md:grid-cols-3 gap-6">
+            {VOICES.map((v, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12 }}
+                className="bg-slate-900/60 border border-slate-800 rounded-[1.5rem] p-6 flex flex-col gap-5"
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black"
+                  style={{ background: `${v.color}20`, color: v.color }}
+                >
+                  {v.initial}
                 </div>
-                <h3 className="text-lg font-black text-white mb-4">{c.title}</h3>
-                <ol className="space-y-2">
-                  {c.points.map((pt, j) => (
-                    <li key={j} className="flex items-start gap-2.5 text-slate-400 text-sm">
-                      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black mt-0.5"
-                        style={{ background: `${c.color}25`, color: c.color }}>{j + 1}</span>
-                      {pt}
-                    </li>
-                  ))}
-                </ol>
-                <button onClick={() => setIsContactOpen(true)} className="mt-5 w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all hover:opacity-90 border"
-                  style={{ color: c.color, borderColor: `${c.color}40`, background: `${c.color}12` }}>
-                  Уточнить даты
-                </button>
+                <p className="text-slate-300 text-sm leading-relaxed flex-1 italic">«{v.quote}»</p>
+                <div>
+                  <p className="text-white text-sm font-bold">{v.name}</p>
+                  <p className="text-slate-500 text-xs">{v.role}</p>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -638,7 +797,87 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
       </section>
 
       {/* ══════════════════════════════════════════
-          8. СЕЗОННОСТЬ
+          9. ПРАКТИКА
+      ══════════════════════════════════════════ */}
+      <section id="practical" className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
+        <div className="container mx-auto px-5 max-w-6xl">
+          <SectionHeader
+            eyebrow="Перед поездкой"
+            title={<>Всё что нужно<br /><span className="text-teal-400">знать заранее</span></>}
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {PRACTICAL.map((block, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: (i % 3) * 0.1 }}
+                className="bg-slate-900/60 border border-slate-800 rounded-[1.5rem] p-5"
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: `${block.color}20` }}
+                >
+                  <block.icon size={18} style={{ color: block.color }} />
+                </div>
+                <h3 className="text-sm font-black text-white uppercase tracking-wide mb-3">{block.title}</h3>
+                <ul className="space-y-2">
+                  {block.items.map((item, j) => (
+                    <li key={j} className="flex items-start gap-2 text-slate-400 text-xs leading-relaxed">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+                        style={{ background: block.color }}
+                      />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          10. КАК ДОБРАТЬСЯ
+      ══════════════════════════════════════════ */}
+      <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
+        <div className="container mx-auto px-5 max-w-6xl">
+          <SectionHeader
+            eyebrow="Логистика"
+            title={<>Как добраться<br /><span className="text-teal-400">до Тирасполя</span></>}
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {HOW_TO_GET.map((d, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={cn(
+                  'rounded-[1.5rem] p-6',
+                  d.highlight
+                    ? 'bg-teal-950/40 border border-teal-900/50'
+                    : 'bg-slate-900/50 border border-slate-800'
+                )}
+              >
+                <MapPin size={20} className={cn('mb-4', d.highlight ? 'text-teal-400' : 'text-slate-500')} />
+                <h3 className="text-lg font-black text-white uppercase tracking-tight mb-1">Из {d.from}</h3>
+                <p className="text-xs font-bold text-teal-400 mb-3">{d.time}</p>
+                <p className="text-slate-400 text-sm leading-relaxed mb-4">{d.detail}</p>
+                <span className={cn('text-xs font-bold', d.highlight ? 'text-teal-400' : 'text-slate-600')}>
+                  {d.badge}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          11. СЕЗОННОСТЬ
       ══════════════════════════════════════════ */}
       <section className="py-20 md:py-24 bg-slate-950 border-t border-white/5">
         <div className="container mx-auto px-5 max-w-6xl">
@@ -648,33 +887,44 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
           />
           <div className="flex items-end gap-2 mb-8 h-24">
             {SEASONS.map((s, i) => (
-           <motion.div 
-  key={i} 
-  // 👇 Добавили origin-bottom сюда
-  className="flex-1 flex flex-col items-center gap-2 origin-bottom"
-  initial={{ opacity: 0, scaleY: 0 }} 
-  whileInView={{ opacity: 1, scaleY: 1 }}
-  viewport={{ once: true }} 
-  // 👇 Убрали transformOrigin отсюда
-  transition={{ delay: i * 0.07 }} 
->
-  <div className="w-full rounded-t-xl origin-bottom" style={{
-    height: `${(s.score / 5) * 80}px`,
-    background: s.score === 5 ? 'linear-gradient(to top, #14b8a6, #06b6d4)' : s.score === 4 ? '#0f766e' : '#1e3a38'
-  }}></div>
+              <motion.div
+                key={i}
+                className="flex-1 flex flex-col items-center gap-2 origin-bottom"
+                initial={{ opacity: 0, scaleY: 0 }}
+                whileInView={{ opacity: 1, scaleY: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+              >
+                <div
+                  className="w-full rounded-t-xl origin-bottom"
+                  style={{
+                    height: `${(s.score / 5) * 80}px`,
+                    background: s.score === 5
+                      ? 'linear-gradient(to top, #14b8a6, #06b6d4)'
+                      : s.score === 4 ? '#0f766e' : '#1e3a38',
+                  }}
+                />
                 <span className="text-xs font-bold text-slate-500">{s.month}</span>
               </motion.div>
             ))}
           </div>
           <div className="grid md:grid-cols-2 gap-3">
             {SEASONS.filter(s => s.score >= 4).map((s, i) => (
-              <div key={i} className="flex items-center gap-4 bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
+              <div
+                key={i}
+                className="flex items-center gap-4 bg-slate-900/50 border border-slate-800 rounded-2xl p-4"
+              >
                 <div className="w-14 h-14 rounded-xl bg-teal-900/30 flex items-center justify-center shrink-0">
                   <span className="text-xl font-black text-teal-400">{s.month}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {s.best.map(b => (
-                    <span key={b} className="text-xs font-bold px-2.5 py-1 bg-teal-900/30 text-teal-300 rounded-full border border-teal-800/50">{b}</span>
+                    <span
+                      key={b}
+                      className="text-xs font-bold px-2.5 py-1 bg-teal-900/30 text-teal-300 rounded-full border border-teal-800/50"
+                    >
+                      {b}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -684,100 +934,86 @@ export default function ActiveRestClient({ tours }: { tours: Tour[] }) {
       </section>
 
       {/* ══════════════════════════════════════════
-          9. БЛИЖАЙШИЕ ТУРЫ
-      ══════════════════════════════════════════ */}
-      {tours.length > 0 && (
-        <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
-          <div className="container mx-auto px-5 max-w-6xl">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-              <SectionHeader
-                eyebrow="Записаться"
-                title={<>Ближайшие туры<br /><span className="text-teal-400">в Приднестровье</span></>}
-              />
-              <Link href="/tour" className="inline-flex items-center gap-2 text-sm font-bold text-teal-400 hover:text-teal-300 transition-colors shrink-0 mb-12">
-                Все туры <ArrowRight size={16} />
-              </Link>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {tours.map((tour, i) => (
-                <motion.div key={tour.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-                  <TourCard tour={tour} />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ══════════════════════════════════════════
-          10. КАК ДОБРАТЬСЯ
-      ══════════════════════════════════════════ */}
-      <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5">
-        <div className="container mx-auto px-5 max-w-6xl">
-          <SectionHeader
-            eyebrow="Логистика"
-            title={<>Как добраться<br /><span className="text-teal-400">до старта</span></>}
-          />
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { from: 'Тирасполь', time: '30–90 мин', detail: 'Трансфер организуем мы. Сбор в согласованном месте, выезд в составе группы.', badge: 'Трансфер включён', color: 'teal' },
-              { from: 'Кишинёв', time: '~1.5 часа', detail: 'Маршрутка Кишинёв → Тирасполь каждые 30 минут (~1 час, ~50 MDL). По запросу встречаем в Тирасполе.', badge: '~1 час от Кишинёва', color: 'slate' },
-              { from: 'Одесса', time: '~2.5 часа', detail: 'Прямые маршрутки Одесса → Тирасполь несколько раз в день. Встречаем на вокзале.', badge: '~2 часа от Одессы', color: 'slate' },
-              { from: 'Россия', time: 'через Кишинёв', detail: 'Перелёт Москва → Кишинёв, затем маршрутка до Тирасполя. Пишите — поможем спланировать маршрут.', badge: 'Помогаем с маршрутом', color: 'slate' },
-            ].map((d, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className={cn('rounded-[1.5rem] p-6', i === 0 ? 'bg-teal-950/40 border border-teal-900/50' : 'bg-slate-900/50 border border-slate-800')}>
-                <MapPin size={20} className={i === 0 ? 'text-teal-400 mb-4' : 'text-slate-500 mb-4'} />
-                <h3 className="text-lg font-black text-white uppercase tracking-tight mb-1">Из {d.from}</h3>
-                <p className="text-xs font-bold text-teal-400 mb-3">{d.time}</p>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">{d.detail}</p>
-                <span className={cn('text-xs font-bold', i === 0 ? 'text-teal-400' : 'text-slate-600')}>{d.badge}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          11. FAQ
+          12. FAQ
       ══════════════════════════════════════════ */}
       <section className="py-20 md:py-28 bg-slate-950 border-t border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-teal-900/8 blur-[150px] rounded-full pointer-events-none" />
         <div className="container mx-auto px-5 max-w-6xl relative z-10">
           <div className="grid lg:grid-cols-12 gap-10 md:gap-16 items-start">
             <div className="lg:col-span-7">
-              <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-                <SectionHeader
-                  eyebrow="Ответы"
-                  title={<>Частые<br /><span className="text-teal-400">вопросы</span></>}
-                />
-                <FaqAccordion />
-              </motion.div>
+              <SectionHeader
+                eyebrow="Ответы"
+                title={<>Частые<br /><span className="text-teal-400">вопросы</span></>}
+              />
+              <FaqAccordion />
             </div>
             <div className="lg:col-span-5">
-              <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-                className="bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden lg:sticky lg:top-24">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden lg:sticky lg:top-24"
+              >
                 <div className="absolute top-0 right-0 w-48 h-48 bg-teal-500/8 blur-[50px] rounded-full pointer-events-none" />
-                <Users className="w-8 h-8 text-teal-400 mb-5 relative z-10" />
+                <Globe className="w-8 h-8 text-teal-400 mb-5 relative z-10" />
                 <h3 className="text-2xl font-black uppercase tracking-tighter mb-3 text-white relative z-10">
                   Остались<br /><span className="text-teal-400">вопросы?</span>
                 </h3>
                 <p className="text-slate-400 text-sm leading-relaxed mb-6 relative z-10">
-                  Расскажем о ближайших датах, поможем выбрать тур под ваш уровень и компанию. Отвечаем быстро.
+                  Расскажем о маршрутах, поможем спланировать поездку под ваш запрос — один день или неделя. Отвечаем быстро.
                 </p>
                 <div className="flex flex-col gap-3 relative z-10">
-                  <button onClick={() => setIsContactOpen(true)}
-                    className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(20,184,166,0.25)]">
-                    <MessageCircle size={18} /> Написать гиду
+                  <button
+                    onClick={() => setIsContactOpen(true)}
+                    className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(20,184,166,0.25)]"
+                  >
+                    <MessageCircle size={18} /> Написать нам
                   </button>
-                  <a href="tel:+37377770141"
-                    className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold uppercase tracking-wider text-sm rounded-xl transition-all flex items-center justify-center gap-2">
+                  <a
+                    href="tel:+37377770141"
+                    className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold uppercase tracking-wider text-sm rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
                     <Phone size={18} /> +373 777 70141
                   </a>
                 </div>
               </motion.div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          13. CTA — единственный блок про ЭВА
+      ══════════════════════════════════════════ */}
+      <section className="py-16 md:py-20 bg-slate-900 border-t border-white/5">
+        <div className="container mx-auto px-5 max-w-3xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <p className="text-teal-400 text-sm font-bold uppercase tracking-widest mb-4">Хочешь увидеть это?</p>
+            <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">
+              Турклуб «ЭВА» организует<br /><span className="text-teal-400">маршруты по Приднестровью</span>
+            </h2>
+            <p className="text-slate-400 leading-relaxed mb-8 max-w-xl mx-auto">
+              Сплавы по Днестру, пешие маршруты, детские лагеря и экскурсии по региону — с инструктором, снаряжением и трансфером от Тирасполя.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/tour"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.3)]"
+              >
+                <Calendar size={18} /> Смотреть туры
+              </Link>
+              <button
+                onClick={() => setIsContactOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all"
+              >
+                <Phone size={18} /> Задать вопрос
+              </button>
+            </div>
+          </motion.div>
         </div>
       </section>
 

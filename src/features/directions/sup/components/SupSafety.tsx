@@ -65,9 +65,9 @@ export default function SupSafety() {
                              Гарантия безопасности
                          </span>
                      </div>
-                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4">
-                        На воде <br className="hidden md:block"/><span className="text-blue-500">как дома</span>
-                     </h2>
+                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4">
+    На воде <span className="text-blue-500">как дома</span>
+</h2>
                      <p className="text-slate-400 mt-2 text-[14px] md:text-base font-medium leading-relaxed">
                         Ваша единственная задача — расслабиться и получать удовольствие. Все риски, организацию и контроль мы берем на себя.
                      </p>

@@ -32,14 +32,14 @@ export const routesData: RouteData[] = [
     desc: "Самый популярный маршрут. Вы увидите Бендерскую крепость с воды и пройдете через живописные петли Днестра.",
     details: { 
         level: "Средний", 
-        forWhom: "Семьи, новички", 
+        forWhom: "Семьи, новички, компании", 
         duration: "7-9 часов",
         atmosphere: "Петли Днестра",
-        distance: "18 км",
+        distance: "25 км",
         start: "г. Бендеры (пляж)",
-        finish: "г. Тирасполь (паром)",
-        pathPoints: "Бендеры → Бычок → Тирасполь",
-        options: "Трансфер, Обед"
+        finish: "г. Тирасполь (пляж)",
+        pathPoints: "Бендеры → Меренешты → Терновка→ Тирасполь",
+        options: "Возможно питания на маршруте"
     }
   },
   {
@@ -50,17 +50,17 @@ export const routesData: RouteData[] = [
         "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771574860/kayaking3_wgvuux.jpg",
         "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771582857/photo_5357450194402269114_y_dq4n2c.jpg"
     ], 
-    desc: "Маршрут для тех, кто хочет тишины. Густые леса по берегам и множество мест для купания.",
+    desc: "Маршрут для тех, кто хочет тишины. Густые леса по берегам и пляжи для купания.",
     details: { 
         level: "Средний", 
         forWhom: "Любители природы", 
         duration: "7-9 часов",
         atmosphere: "Релакс",
-        distance: "22 км",
-        start: "г. Тирасполь",
-        finish: "г. Слободзея",
+        distance: "25 км",
+        start: "г. Тирасполь (пляж)",
+        finish: "г. Слободзея (пляж)",
         pathPoints: "Тирасполь → Суклея → Карагаш → Слободзея",
-        options: "Трансфер"
+        options: "Возможно питания на маршруте"
     }
   },
   {
@@ -80,8 +80,8 @@ export const routesData: RouteData[] = [
         distance: "28 км",
         start: "с. Спея",
         finish: "г. Бендеры",
-        pathPoints: "Спея → Телица → Гура-Быкулуй → Бендеры",
-        options: "Пикник на маршруте"
+        pathPoints: "Спея → Тея → Бычок → Бендеры",
+        options: "Возможно питания на маршруте"
     }
   },
   {
@@ -96,9 +96,9 @@ export const routesData: RouteData[] = [
     details: { 
         level: "Легкий", 
         forWhom: "Искатели приключений", 
-        duration: "5 часов",
+        duration: "4-5 часов",
         atmosphere: "Свобода",
-        distance: "12 км",
+        distance: "15 км",
         start: "г. Григориополь",
         finish: "с. Индия",
         pathPoints: "Григориополь → Делакеу → Индия",

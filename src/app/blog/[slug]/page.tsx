@@ -65,7 +65,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     imageUrl = `${BASE_URL}${imageUrl}`;
   }
 
-  const keywordsStr = `${(post as any).blogCategory?.title || post.category}, маршруты Приднестровье, активный отдых, турклуб Эва, советы туристам, мотивация, туризм, сплавы`;
+  // 🔥 SEO: GEO-СИНОНИМЫ И РЕГИОНАЛЬНЫЕ ЗАПРОСЫ
+  const keywordsStr = `${(post as any).blogCategory?.title || post.category}, Приднестровье, ПМР, Молдова, Transnistria, активный отдых, турклуб Эва, советы туристам, мотивация, туризм, сплавы, отдых на природе`;
 
   return {
     title: `${post.title} | Турклуб «Эва»`,
@@ -183,7 +184,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* --- 1. HERO HEADER (🔥 РЕЗИНОВЫЙ И С БЕЗОПАСНОЙ ЗОНОЙ) --- */}
+      {/* --- 1. HERO HEADER --- */}
       <div className="relative min-h-[75svh] md:min-h-[65vh] w-full overflow-hidden flex flex-col justify-end">
         
         {/* ФОН */}
@@ -196,41 +197,52 @@ export default async function BlogPostPage({ params }: PageProps) {
                 priority
                 sizes="100vw" 
             />
-            {/* Затемняем чуть сильнее сверху, чтобы белая шапка читалась лучше */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/80 to-slate-900/40" />
         </div>
 
-        {/* КОНТЕНТ (С жестким отступом pt-32) */}
+        {/* КОНТЕНТ */}
         <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
             
-            <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-6 md:mb-8 group w-fit shadow-lg">
+            {/* ИСПРАВЛЕНИЕ: Кнопка на отдельном этаже */}
+            <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-8 md:mb-10 group w-fit shadow-lg">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
             </Link>
 
-            <span className="inline-block px-3 py-1.5 bg-teal-500 text-slate-900 text-[12px] md:text-[14px] font-black uppercase tracking-widest rounded md:rounded-xl mb-3 md:mb-5 w-fit shadow-[0_0_20px_rgba(20,184,166,0.4)]">
-                {(post as any).blogCategory?.title || post.category}
-            </span>
+            {/* ИСПРАВЛЕНИЕ: Рубрика + Бейдж */}
+            <div className="flex items-center gap-3 mb-4 md:mb-5">
+                <span className="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    Рубрика:
+                </span>
+                <span className="inline-block px-3 py-1 bg-teal-500 text-slate-950 text-[11px] md:text-[13px] font-black uppercase tracking-widest rounded md:rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.4)]">
+                    {(post as any).blogCategory?.title || post.category}
+                </span>
+            </div>
 
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 md:mb-8 max-w-4xl drop-shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* ИСПРАВЛЕНИЕ: Добавлен класс text-balance */}
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-8 md:mb-10 max-w-4xl drop-shadow-2xl text-balance animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {post.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
+            {/* ИСПРАВЛЕНИЕ: Мобильная структура в виде колонки (flex-col md:flex-row) */}
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
                 <div className="flex items-center gap-3">
-                    {/* 🔥 ИСПРАВЛЕНИЕ 1: ДОБАВИЛИ shrink-0 ЧТОБЫ ФОТО АВТОРА НЕ ПЛЮЩИЛО В ОВАЛ */}
-                    <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
-                         {post.author_image ? (
-                             <Image 
-                                src={post.author_image} 
-                                alt={post.author_name || "Автор статьи"} 
-                                fill 
-                                className="object-cover" 
-                                sizes="(max-width: 768px) 40px, 48px" // 🔥 ИСПРАВЛЕНИЕ 2: Оптимизировали размер загрузки
-                             />
-                         ) : (
-                             <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={20}/></div>
-                         )}
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
+    {/* ИСПРАВЛЕНИЕ: object-top */}
+    {post.author_image ? (
+        <Image 
+            src={post.author_image} 
+            alt={post.author_name || "Автор статьи"} 
+            fill 
+            className="object-cover object-top md:object-[center_15%]" 
+            sizes="48px" 
+        />
+    ) : (
+        <div className="w-full h-full flex items-center justify-center text-slate-400">
+            <User size={20}/>
+        </div>
+    )}
+</div>
                     </div>
                     <div>
                         <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">{post.author_name}</div>
@@ -238,23 +250,22 @@ export default async function BlogPostPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                <div className="h-6 w-px bg-white/20 hidden md:block" />
+                <div className="h-8 w-px bg-white/20 hidden md:block" />
 
-                <div className="flex items-center gap-4 text-slate-300 text-[12px] md:text-[13px] font-medium bg-slate-900/50 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/5">
-                    <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-4 text-slate-300 text-[12px] md:text-[13px] font-medium bg-slate-900/50 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/5 w-fit">
+                    <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-teal-500" />
                         <span>{formatDate(post.date)}</span>
                     </div>
                     <div className="w-1 h-1 rounded-full bg-slate-600" />
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                         <Clock size={14} className="text-teal-500" />
                         <span>{post.read_time} мин</span>
                     </div>
                 </div>
             </div>
         </div>
-      </div>
-
+      
       {/* --- 2. CONTENT GRID --- */}
       <div className="container mx-auto px-4 max-w-7xl mt-8 md:mt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
@@ -282,7 +293,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
-                {/* ЖЕСТКАЯ КОМПАКТИЗАЦИЯ ТЕКСТА */}
                 <div 
                     className="prose prose-base prose-invert max-w-none 
                     
@@ -325,7 +335,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                                 {relatedPosts.map(relPost => (
                                     <Link key={relPost.id} href={`/blog/${relPost.slug}`} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
                                         <div className="relative w-full sm:w-24 lg:w-full xl:w-24 aspect-[4/3] sm:aspect-square lg:aspect-[4/3] xl:aspect-square shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-white/5 shadow-md">
-                                            {/* 🔥 ИСПРАВЛЕНИЕ 3: Добавили sizes для мелких карточек сайдбара */}
                                             <Image src={relPost.image || '/placeholder.jpg'} alt={relPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, 100px" />
                                         </div>
                                         <div className="py-1">
@@ -355,7 +364,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                     {/* Блок "Хотите с нами?" */}
                     <div className="p-8 rounded-3xl bg-gradient-to-br from-teal-900/40 to-slate-900 border border-teal-500/20 text-center shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-2xl rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
                         
                         <h2 className="text-xl font-black text-white mb-3 uppercase tracking-tight relative z-10">   
                             Хотите с нами? 

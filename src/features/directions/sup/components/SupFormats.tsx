@@ -20,7 +20,6 @@ function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
 
 const FORMATS = [
   { icon: Heart, label: "Романтики/Свиданий" },
-  { icon: Briefcase, label: "Бизнес-встреч" },
   { icon: Users, label: "Для компании друзей" },
   { icon: Coffee, label: "Тимбилдинга" },
   { icon: Dog, label: "Прогулок собакой на воде" },
