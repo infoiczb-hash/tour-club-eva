@@ -53,37 +53,44 @@ export default function FunSectorWidget() {
 
   useEffect(() => {
     let isMounted = true;
+
     const fetchAndShuffleQuizzes = async () => {
       try {
         const res = await getFunTestsAction();
-        if (!res.success || !res.data || res.data.length === 0) { setIsLoaded(true); return; }
+        
+        // Если тестов нет, просто показываем фолбэк и выходим
+        if (!res.success || !res.data || res.data.length === 0) { 
+          setIsLoaded(true); 
+          return; 
+        }
+
+        // 1. Оставляем только активные
         const activeTests = res.data.filter(t => t.isActive);
-        if (activeTests.length === 0) { setIsLoaded(true); return; }
-
-        const grouped: Record<string, FunTest[]> = {};
-        activeTests.forEach(test => {
-          const cat = test.category || "Другое";
-          if (!grouped[cat]) grouped[cat] = [];
-          grouped[cat].push(test);
-        });
-
-        const shuffledCategories = Object.keys(grouped).sort(() => 0.5 - Math.random());
-        let selectedTests: FunTest[] = [];
-        for (let i = 0; i < Math.min(3, shuffledCategories.length); i++) {
-          const catTests = grouped[shuffledCategories[i]];
-          selectedTests.push(catTests[Math.floor(Math.random() * catTests.length)]);
+        if (activeTests.length === 0) { 
+          setIsLoaded(true); 
+          return; 
         }
-        if (selectedTests.length < 3 && activeTests.length > selectedTests.length) {
-          const remaining = activeTests.filter(t => !selectedTests.find(s => s.id === t.id)).sort(() => 0.5 - Math.random());
-          selectedTests = [...selectedTests, ...remaining.slice(0, 3 - selectedTests.length)];
+
+        // 2. Тотальный рандом: перемешиваем ВСЕ тесты как колоду карт
+        const shuffled = activeTests.sort(() => 0.5 - Math.random());
+
+        // 3. Забираем первые 3 штуки
+        if (isMounted) { 
+          setQuizzes(shuffled.slice(0, 3)); 
+          setIsLoaded(true); 
         }
-        if (isMounted) { setQuizzes(selectedTests); setIsLoaded(true); }
-      } catch { setIsLoaded(true); }
+
+      } catch (error) { 
+        console.error(error);
+        setIsLoaded(true); 
+      }
     };
+
     fetchAndShuffleQuizzes();
+    
     return () => { isMounted = false; };
   }, []);
-
+  
   return (
     <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-violet-900/10 md:blur-[120px] rounded-full pointer-events-none" />

@@ -32,8 +32,8 @@ function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
 
 // 1. Технические характеристики доски
 const STATS = [
-  { label: "Давление", value: "20 PSI", desc: "Жесткая как пол", icon: Gauge },
-  { label: "Ширина", value: "80+ см", desc: "Макс. устойчивость", icon: MoveHorizontal },
+  { label: "Давление", value: "12-15PSI", desc: "Жесткая как пол", icon: Gauge },
+  { label: "Ширина", value: "78 + см", desc: "Макс. устойчивость", icon: MoveHorizontal },
   { label: "Обучение", value: "15 мин", desc: "И вы в деле", icon: Timer },
   { label: "Риск падения", value: "< 10%", desc: "Слушая гида", icon: ShieldCheck }
 ];
@@ -106,7 +106,7 @@ export default function SupEquipment() {
                             </span>
                         </div>
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
-                            Ваш <span className="text-teal-500">Арсенал</span>
+                            Наш <span className="text-teal-500">Арсенал</span>
                         </h2>
                         <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
                             Мы продумали каждую деталь, чтобы на воде вы чувствовали себя так же уверенно, как на суше.
@@ -172,36 +172,35 @@ export default function SupEquipment() {
                         Другое <span className="text-teal-500">Оборудование</span>
                     </h3>
                 </div>
-
-                {/* СКРОЛЛ ЭКИПИРОВКИ */}
-                <div className="relative" ref={gearListView.ref}>
-                    <div className="grid grid-rows-2 md:grid-rows-none grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-3 gap-3 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {GEAR.map((item, idx) => {
-                            const Icon = item.icon;
-                            return (
-                                <div 
-                                    key={idx} 
-                                    style={{ opacity: gearListView.inView ? 1 : 0, transform: gearListView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
-                                    className="snap-center bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-[1.5rem] p-5 hover:border-teal-500/30 hover:bg-slate-900/80 transition-all duration-300 group flex flex-row items-center gap-4 h-full"
-                                >
-                                    <div className="w-12 h-12 shrink-0 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-400 transition-colors duration-300">
-                                        <Icon className="text-teal-400 group-hover:text-slate-950 transition-colors" size={22} strokeWidth={1.5} />
-                                    </div>
-                                    
-                                    <div>
-                                        <h4 className="text-[15px] sm:text-base font-black text-white mb-1 tracking-tight group-hover:text-teal-300 transition-colors leading-tight">
-                                            {item.title}
-                                        </h4>
-                                        <p className="text-[14px] text-slate-400 leading-snug font-medium line-clamp-2">
-                                            {item.desc}
-                                        </p>
-                                    </div>
-                                </div>
-                            );
-                        })}
+{/* СКРОЛЛ ЭКИПИРОВКИ */}
+<div className="relative" ref={gearListView.ref}>
+    <div className="grid grid-rows-2 md:grid-rows-none grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-3 gap-3 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {GEAR.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+                <div 
+                    key={idx} 
+                    style={{ opacity: gearListView.inView ? 1 : 0, transform: gearListView.inView ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.5s ease ${idx * 0.1}s, transform 0.5s ease ${idx * 0.1}s` }}
+                    className="snap-center bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-[1.5rem] p-5 hover:border-teal-500/30 hover:bg-slate-900/80 transition-all duration-300 group flex flex-row items-center gap-4 h-full"
+                >
+                    <div className="w-12 h-12 shrink-0 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-400 transition-colors duration-300">
+                        <Icon className="text-teal-400 group-hover:text-slate-950 transition-colors" size={22} strokeWidth={1.5} />
                     </div>
-
-                    <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
+                    
+                    <div>
+                        <h4 className="text-[15px] sm:text-base font-black text-white mb-1 tracking-tight group-hover:text-teal-300 transition-colors leading-tight">
+                            {item.title}
+                        </h4>
+                        {/* 👇 ИСПРАВЛЕНИЕ: удален класс line-clamp-2 */}
+                        <p className="text-[14px] text-slate-400 leading-snug font-medium">
+                            {item.desc}
+                        </p>
+                    </div>
+                </div>
+            );
+        })}
+    </div>
+                         <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                         <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
                         <ChevronRight size={14} />
                     </div>

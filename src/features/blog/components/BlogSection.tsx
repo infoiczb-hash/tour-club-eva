@@ -253,7 +253,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                 <ArrowRight size={16} strokeWidth={3} />
               </Link>
               <button
-                onClick={() => openContactModal('Хочу стать автором блога', 'HELP')}
+                onClick={() => openContactModal('Хочу стать автором блога', 'BLOG')}
                 className="group flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed border-slate-700 text-slate-300 hover:text-teal-400 hover:border-teal-500/50 hover:bg-teal-500/5 transition-all text-xs font-bold uppercase tracking-wider"
               >
                 <PenLine size={14} className="group-hover:-rotate-12 transition-transform" />

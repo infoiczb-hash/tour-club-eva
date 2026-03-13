@@ -35,17 +35,20 @@ export default function OrgEmpathy() {
       <div className="container mx-auto px-4 max-w-6xl">
 
         {/* Заголовок-Манифест */}
-        <div className="max-w-4xl mx-auto text-center mb-10 md:mb-12">
-          <FadeIn>
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-6">
-              Когда вы везете группу в наших турах, <br className="hidden md:block" />
-              вы должны быть <span className="text-indigo-500">Лидером</span>, а не завхозом.
-            </h2>
-            <p className="text-lg md:text-xl text-slate-400 leading-relaxed font-medium">
-              Мы знаем, как важно выдохнуть. В ТурКлубе «ЭВА» мы становимся вашими невидимыми помощниками. Мы берем на себя всю головную боль, чтобы вы могли посвятить время людям.
-            </p>
-          </FadeIn>
-        </div>
+       <div className="max-w-4xl text-left mb-12 md:mb-16">
+  <FadeIn>
+    <div className="border-l-4 border-indigo-500 pl-5 md:pl-8 py-2">
+      <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 md:mb-6 leading-[1.05] md:leading-[1]">
+        Когда вы везете группу, <br className="hidden md:block" />
+        вы должны быть <span className="text-indigo-500">Лидером</span>, <br className="hidden md:block" />
+        а не завхозом.
+      </h2>
+      <p className="text-[15px] md:text-lg text-slate-400 leading-[1.25] md:leading-[1.3] font-medium max-w-3xl">
+        Мы знаем, как важно выдохнуть. В ТурКлубе «Эва» мы становимся вашими невидимыми помощниками. Мы берем на себя всю головную боль по логистике и организации, чтобы вы могли полностью посвятить время людям.
+      </p>
+    </div>
+  </FadeIn>
+</div>
 
         {/* 3 Главные боли */}
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">

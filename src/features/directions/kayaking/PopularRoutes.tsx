@@ -37,8 +37,7 @@ const otherFormats = [
   { title: "Сплавы на 2 дня", desc: "С палатками/домиками", icon: Tent },
   { title: "На 3 и более дней", desc: "Длинные экспедиции", icon: CalendarDays },
   { title: "Сплав + Пикник", desc: "Вкусный отдых на природе", icon: Flame },
-  { title: "С размещением на ночлег", desc: "Комфорт вместо палаток", icon: Moon },
-];
+ ];
 
 export default function PopularRoutes() {
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
@@ -120,42 +119,45 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-        {/* OTHER FORMATS */}
-        <div
-          ref={formatsView.ref}
-          style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-          className="mt-12 md:mt-14 border-t border-white/10 pt-10"
-        >
-          <div className="mb-6 md:mb-8 text-left">
-            <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
-              Другие <span className="text-amber-500">Форматы</span>
-            </h3>
-            <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
-          </div>
-          
-          <div className="relative">
-            <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {otherFormats.map((format, idx) => {
-                const Icon = format.icon;
-                return (
-                  <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center gap-3 md:gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
-                      <Icon size={22} strokeWidth={1.5} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-white text-sm leading-tight mb-1 group-hover:text-amber-400 transition-colors">{format.title}</h4>
-                      <p className="text-[11px] md:text-xs text-slate-400 font-medium line-clamp-2 md:line-clamp-1">{format.desc}</p>
-                    </div>
-                  </div>
-                );
-              })}
+    {/* OTHER FORMATS */}
+<div
+  ref={formatsView.ref}
+  style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+  className="mt-12 md:mt-14 border-t border-white/10 pt-10"
+>
+  <div className="mb-6 md:mb-8 text-left">
+    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
+      Другие <span className="text-amber-500">Форматы</span>
+    </h3>
+    <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
+  </div>
+  
+  <div className="relative">
+    {/* ИСПРАВЛЕНО: lg:grid-cols-3 для десктопа, чтобы карточки были шире и встали в 2 ряда */}
+    <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      {otherFormats.map((format, idx) => {
+        const Icon = format.icon;
+        return (
+          <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-5 flex items-center gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
+              <Icon size={22} strokeWidth={1.5} />
             </div>
-            <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-              <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-              <ChevronRight size={14} className="text-teal-400" />
+            <div>
+              <h4 className="font-bold text-white text-[15px] leading-tight mb-1.5 group-hover:text-amber-400 transition-colors">{format.title}</h4>
+              {/* ИСПРАВЛЕНО: Удалили line-clamp, чтобы текст выводился полностью */}
+              <p className="text-[12px] md:text-[13px] text-slate-400 font-medium leading-snug">{format.desc}</p>
             </div>
           </div>
-        </div>
+        );
+      })}
+    </div>
+    
+    <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
+      <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
+      <ChevronRight size={14} className="text-teal-400" />
+    </div>
+  </div>
+</div>
 
       </div>
 

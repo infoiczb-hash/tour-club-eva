@@ -14,7 +14,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 const mainBenefits = [
   { id: 1, title: "Сплавы по Днестру с ТК «Эва»", desc: "Это не только физическая активность, но и идеальный способ провести время с семьёй или друзьями на природе, наслаждаясь её красотами.", icon: Waves, tag: "Турклуб Эва", desktopClass: "md:col-span-2 lg:col-span-6 bg-gradient-to-br from-teal-900/40 to-slate-900 border-teal-500/30", isCompactOnMobile: false },
-  { id: 2, title: "Всё продумано до мелочей", desc: "Комфорт в деталях — от посадки до хранения ваших вещей в лодке.", icon: CheckCircle2, features: ["Продуманная логистика", "Удобные мягкие сидушки", "Места для багажа", "Гермомешки для гаджетов"], desktopClass: "md:col-span-2 lg:col-span-6", isCompactOnMobile: false },
+  { id: 2, title: "Всё продумано до мелочей", desc: "Комфорт в деталях — от посадки до хранения ваших вещей в лодке.", icon: CheckCircle2, features: ["Продуманная логистика", "Удобные мягкие сидушки", "Места для багажа", "Гермомешки для гаджетов (отдельная опция)"], desktopClass: "md:col-span-2 lg:col-span-6", isCompactOnMobile: false },
   { id: 3, title: "Можно с детьми", desc: "Спокойные воды и надежные байдарки делают сплав доступным для самых маленьких. От двух лет", icon: Users, desktopClass: "md:col-span-1 lg:col-span-3", isCompactOnMobile: true },
   { id: 4, title: "Никогда не гребли?", desc: "60 % наших гостей — новички. Обучим азам за 15 минут до старта.", icon: Zap, desktopClass: "md:col-span-1 lg:col-span-3 border-orange-500/20 bg-orange-500/5", isCompactOnMobile: true },
   { id: 5, title: "Нужна перезагрузка?", desc: "Тишина реки и мерный плеск весла — лучший детокс от суеты.", icon: Heart, desktopClass: "md:col-span-1 lg:col-span-3 border-pink-500/20 bg-pink-500/5", isCompactOnMobile: true },
@@ -23,7 +23,7 @@ const mainBenefits = [
 
 const instructorRoles = [
   { title: "Детальный инструктаж", desc: "Перед выходом на воду ставим правильную технику гребли и объясняем правила поведения. Никаких «разберетесь по ходу».", icon: Megaphone },
-  { title: "Помощь на воде", desc: "Гид всегда рядом. Покажет лучшую траекторию, поможет причалить, а если силы покинут — возьмет на буксир.", icon: Anchor },
+  { title: "Помощь на воде", desc: "Гид всегда рядом. Покажет лучшую траекторию, поможет причалить, а если силы покинут — смотивирует плыть дальше.", icon: Anchor },
   { title: "Безопасность и аптечка", desc: "У инструктора всегда под рукой стандартная групповая аптечка первой помощи и ремкомплект для непредвиденных ситуаций.", icon: BriefcaseMedical },
 ];
 

@@ -123,13 +123,15 @@ export default async function GuidePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* --- HERO СЕКЦИЯ --- */}
-      <section className="relative w-full h-[60vh] md:h-[70vh] flex items-end pb-12 md:pb-24">
+      {/* ИСПРАВЛЕНИЕ: Увеличили высоту для мобилок (min-h-[85vh]), чтобы был воздух */}
+      <section className="relative w-full min-h-[85vh] md:min-h-[90vh] flex items-end pb-12 md:pb-24">
         {guide.actionImage || guide.image ? (
           <Image 
             src={guide.actionImage || guide.image || ''} 
             alt={`Гид ${guide.name}`} 
             fill 
-            className="object-cover opacity-60"
+            /* ИСПРАВЛЕНИЕ: Изменили фокус обрезки, чтобы голова всегда была в кадре */
+            className="object-cover object-top md:object-[center_15%] opacity-70"
             priority
             fetchPriority="high"
             sizes="100vw"
@@ -137,94 +139,81 @@ export default async function GuidePage({ params }: Props) {
         ) : (
           <div className="absolute inset-0 bg-slate-900" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
         
-        <div className="container mx-auto px-4 relative z-10">
-          <Link href="/guides" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-sm font-bold uppercase tracking-widest bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5 hover:bg-slate-800">
+        {/* ИСПРАВЛЕНИЕ: Более плотный градиент снизу, чтобы текст читался идеально, но верх оставался светлым */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
+        
+        <div className="container mx-auto px-4 relative z-10 pt-32">
+          <Link href="/guides" className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors mb-8 md:mb-10 text-[11px] md:text-sm font-bold uppercase tracking-widest bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-slate-800">
             <ArrowLeft size={16} /> К списку гидов
           </Link>
           
-          <div className="flex flex-col md:flex-row gap-4 md:items-end justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500 text-slate-950 mb-4 font-black uppercase tracking-widest text-xs shadow-[0_0_15px_rgba(20,184,166,0.4)]">
-                {guide.role}
-              </div>
-              <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-lg">
-                {guide.name} 
-              </h1>
-              {guide.experience && (
-                <p className="text-teal-400 font-mono text-sm md:text-base uppercase tracking-widest drop-shadow-md">
-                  Опыт: {guide.experience}
-                </p>
-              )}
+          <div className="max-w-4xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-500 text-slate-950 mb-5 font-black uppercase tracking-widest text-[10px] md:text-xs shadow-[0_0_20px_rgba(20,184,166,0.4)]">
+              {guide.role}
             </div>
+            
+            <h1 className="text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-2xl">
+              {guide.name} 
+            </h1>
+            
+            {guide.experience && (
+              <p className="text-teal-400 font-bold text-xs md:text-sm uppercase tracking-widest drop-shadow-md mb-6 md:mb-8">
+                Опыт: {guide.experience}
+              </p>
+            )}
+
+            {/* ИСПРАВЛЕНИЕ: Краткое Bio переехало в Hero секцию */}
+            {guide.bio && (
+              <p className="text-[15px] md:text-xl text-slate-300 font-medium leading-relaxed max-w-3xl border-l-2 border-teal-500/50 pl-4 md:pl-6">
+                {guide.bio}
+              </p>
+            )}
           </div>
         </div>
       </section>
 
-      {/* --- КОНТЕНТ --- */}
-      <section className="container mx-auto px-4 pb-24 relative z-10 -mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      {/* --- ОСНОВНОЙ КОНТЕНТ --- */}
+      <section className="container mx-auto px-4 pb-24 relative z-10 mt-10 md:mt-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           
-          {/* ЛЕВАЯ КОЛОНКА */}
-          <div className="lg:col-span-8 space-y-12">
+          {/* ЛЕВАЯ КОЛОНКА (Контент гида) */}
+          <div className="lg:col-span-8 flex flex-col gap-10 md:gap-14">
             
-            {guide.quotes && guide.quotes.length > 0 && (
-              <div className="border-l-4 border-teal-500 pl-6 py-2 bg-slate-900/30 rounded-r-2xl p-4">
-                <p className="text-2xl md:text-3xl font-medium text-white italic leading-snug">
-                  «{guide.quotes[0]}»
-                </p>
-              </div>
-            )}
-
-            <div className="prose prose-base md:prose-lg prose-invert max-w-none 
-                prose-p:text-slate-300 prose-p:text-[16px] md:prose-p:text-[18px] prose-p:leading-[1.8] prose-p:mb-8 prose-p:mt-0
-                prose-strong:text-white prose-strong:font-bold">
-              <h2 className="text-xl font-bold uppercase tracking-widest text-slate-500 mb-6 not-prose">Биография</h2>
-              <div className="whitespace-pre-wrap">
-                {guide.fullBio || guide.bio || 'Этот гид пока не написал свою историю, но он точно профессионал!'}
-              </div>
-            </div>
-
+            {/* 1. Теги и Суперсила */}
             {(guide.tags?.length > 0 || guide.superpower) && (
-              <div>
-                <h2 className="text-xl font-bold uppercase tracking-widest text-slate-500 mb-6">Особенности</h2>
-                <div className="flex flex-wrap gap-3">
-                  {guide.superpower && (
-                    <span className="px-4 py-2 bg-teal-950/50 border border-teal-500/30 text-teal-400 text-sm font-bold uppercase tracking-widest rounded-xl flex items-center gap-2 shadow-sm">
-                      <Sparkles size={16} /> {guide.superpower}
-                    </span>
-                  )}
-                  {guide.tags.map((tag, idx) => (
-                    <span key={idx} className="px-4 py-2 bg-white/5 border border-white/10 text-slate-300 text-sm font-bold uppercase tracking-widest rounded-xl shadow-sm">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-3">
+                {guide.superpower && (
+                  <span className="px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[12px] md:text-sm font-bold uppercase tracking-widest rounded-xl flex items-center gap-2 shadow-sm">
+                    <Sparkles size={16} /> {guide.superpower}
+                  </span>
+                )}
+                {guide.tags?.map((tag, idx) => (
+                  <span key={idx} className="px-4 py-2.5 bg-slate-900 border border-white/10 text-slate-300 text-[12px] md:text-sm font-bold uppercase tracking-widest rounded-xl shadow-sm">
+                    #{tag}
+                  </span>
+                ))}
               </div>
             )}
-          </div>
 
-          {/* ПРАВАЯ КОЛОНКА */}
-          <div className="lg:col-span-4 space-y-8">
-            
+            {/* 2. Шкалы навыков (RPG) */}
             {stats.length > 0 && (
-              <div className="bg-slate-900/50 backdrop-blur-md border border-white/5 p-8 rounded-[2rem] shadow-xl">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Навыки гида</h3>
-                <div className="space-y-6">
+              <div className="bg-slate-900/50 border border-white/5 p-6 md:p-8 rounded-[2rem]">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6 md:mb-8">Навыки и специализация</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 md:gap-y-8">
                   {stats.map((stat: any, i: number) => {
                     const mapping = ICON_MAP[stat.icon] || ICON_MAP['Zap'];
                     const Icon = mapping.icon;
                     return (
                       <div key={i}>
-                        <div className="flex justify-between items-end mb-2">
+                        <div className="flex justify-between items-end mb-3">
                           <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-slate-300">
-                            <Icon size={14} className={mapping.color} />
+                            <Icon size={16} className={mapping.color} />
                             <span>{stat.label}</span>
                           </div>
                           <span className="text-xs font-mono font-bold text-white">{stat.value}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                           <div 
                             style={{ width: `${stat.value}%` }}
                             className={cn(
@@ -241,15 +230,40 @@ export default async function GuidePage({ params }: Props) {
               </div>
             )}
 
-            <div className="bg-gradient-to-br from-teal-900/40 to-slate-900 border border-teal-500/20 p-8 rounded-[2rem] text-center shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-[50px] rounded-full pointer-events-none" />
-              
+            {/* 3. Длинный текст (Full Bio) */}
+            {guide.fullBio && (
+              <div className="prose prose-base md:prose-lg prose-invert max-w-none 
+                  prose-p:text-slate-300 prose-p:text-[15px] md:prose-p:text-[18px] prose-p:leading-[1.8] prose-p:mb-6 prose-p:mt-0
+                  prose-strong:text-white prose-strong:font-bold">
+                <div className="whitespace-pre-wrap">
+                  {guide.fullBio}
+                </div>
+              </div>
+            )}
+
+            {/* 4. Цитата */}
+            {guide.quotes && guide.quotes.length > 0 && (
+              <div className="border-l-4 border-teal-500 pl-6 md:pl-8 py-2 md:py-4 mt-4">
+                <p className="text-2xl md:text-3xl lg:text-4xl font-medium text-white italic leading-tight">
+                  «{guide.quotes[0]}»
+                </p>
+              </div>
+            )}
+
+          </div>
+
+          {/* ПРАВАЯ КОЛОНКА (Сall to Action и Ссылки) */}
+          <div className="lg:col-span-4 space-y-6 md:space-y-8 lg:sticky lg:top-28 self-start mt-8 lg:mt-0">
+            
+            {/* ИСПРАВЛЕНИЕ: Контрастный блок "В поход с гидом" */}
+            <div className="bg-slate-900 border-2 border-teal-500/50 p-8 md:p-10 rounded-[2rem] text-center shadow-[0_0_40px_rgba(20,184,166,0.15)] relative">
               <div className="relative z-10">
-                  <div className="w-16 h-16 mx-auto bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center rounded-2xl mb-4 shadow-lg">
-                    <MapPin size={32} />
+                  <div className="w-16 h-16 mx-auto bg-teal-500 text-slate-950 flex items-center justify-center rounded-2xl mb-6 shadow-lg transform -rotate-3">
+                    <MapPin size={32} strokeWidth={2} />
                   </div>
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-2">В поход с гидом</h3>
-                  <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                  
+                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight mb-4 text-white">В поход с гидом</h3>
+                  <p className="text-[14px] md:text-[15px] text-slate-300 mb-8 leading-relaxed font-medium">
                     Оставьте заявку, и мы подберем маршрут, который поведет {guide.name}.
                   </p>
                   
@@ -258,24 +272,25 @@ export default async function GuidePage({ params }: Props) {
                     
                     <Link 
                       href="/tour" 
-                      className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all border border-white/10"
+                      className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold uppercase tracking-wider text-[12px] md:text-xs flex items-center justify-center gap-2 transition-all border border-white/5"
                     >
-                      Или смотреть все туры
+                      Смотреть все туры
                     </Link>
                   </div>
               </div>
             </div>
 
+            {/* 5. Соцсети */}
             {(guide.instagram || guide.telegram) && (
               <div className="flex justify-center gap-4">
                 {guide.instagram && (
-                  <a href={guide.instagram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-400 hover:text-teal-400 transition-all shadow-lg">
-                    <Instagram size={20} />
+                  <a href={guide.instagram} target="_blank" rel="noreferrer" className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-all shadow-lg">
+                    <Instagram size={24} />
                   </a>
                 )}
                 {guide.telegram && (
-                  <a href={guide.telegram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-400 hover:text-teal-400 transition-all shadow-lg">
-                    <Send size={20} />
+                  <a href={guide.telegram} target="_blank" rel="noreferrer" className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-all shadow-lg">
+                    <Send size={24} className="ml-[-2px]" />
                   </a>
                 )}
               </div>

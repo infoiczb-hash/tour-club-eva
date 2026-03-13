@@ -96,49 +96,52 @@ export default function KidsFormats() {
                         Наши <span className="text-amber-500">Форматы</span>
                     </h2>
                     <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
-                        Мы не просто продаем даты, мы создаем опыт. Выберите формат, который идеально подойдет вашему ребенку по возрасту и уровню подготовки.
+                        Мы не просто продаем туры, мы создаем опыт. Выберите формат, который идеально подойдет вашему ребенку по возрасту и уровню подготовки.
                     </p>
                 </FadeBlock>
 
                 <div className="relative mb-12 md:mb-20">
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {FORMATS.map((format, idx) => (
-                            <FadeBlock 
-                                key={idx}
-                                delay={idx * 0.1}
-                                startY={20}
-                                className="shrink-0 snap-center w-[85vw] md:w-auto group bg-slate-900/60 backdrop-blur-md rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-500 flex flex-col shadow-xl"
-                            >
-                                <div className="relative h-56 md:h-64 overflow-hidden isolate shrink-0">
-                                    <Image 
-                                        src={format.img} 
-                                        alt={format.title} 
-                                        fill 
-                                        className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100" 
-                                        sizes="(max-width: 768px) 85vw, (max-width: 1024px) 50vw, 33vw"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
-                                    
-                                    <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-                                        {format.tags.map(tag => (
-                                            <span key={tag} className={cn("px-3 py-1.5 text-[12px] font-bold uppercase rounded-xl border shadow-lg tracking-wide", format.accent)}>
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                
-                                <div className="p-6 md:p-8 flex flex-col flex-1 relative z-10 bg-slate-900">
-                                    <h3 className="text-xl md:text-2xl font-black text-white mb-3 tracking-tight group-hover:text-amber-400 transition-colors leading-tight">
-                                        {format.title}
-                                    </h3>
-                                    <p className="text-[14px] md:text-base text-slate-400 leading-relaxed font-medium">
-                                        {format.desc}
-                                    </p>
-                                </div>
-                            </FadeBlock>
-                        ))}
-                    </div>
+                        </div>
+                       {FORMATS.map((format, idx) => (
+    <FadeBlock 
+        key={idx}
+        delay={idx * 0.1}
+        startY={20}
+        // 👇 ДОБАВЛЕНО h-full к карточке
+        className="shrink-0 snap-center w-[85vw] md:w-auto h-full group bg-slate-900/60 backdrop-blur-md rounded-[2rem] overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-500 flex flex-col shadow-xl"
+    >
+        <div className="relative h-56 md:h-64 overflow-hidden isolate shrink-0">
+            <Image 
+                src={format.img} 
+                alt={format.title} 
+                fill 
+                className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100" 
+                sizes="(max-width: 768px) 85vw, (max-width: 1024px) 50vw, 33vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
+            
+            <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
+                {format.tags.map(tag => (
+                    <span key={tag} className={cn("px-3 py-1.5 text-[12px] font-bold uppercase rounded-xl border shadow-lg tracking-wide", format.accent)}>
+                        {tag}
+                    </span>
+                ))}
+            </div>
+        </div>
+        
+        {/* 👇 ИСПРАВЛЕНИЕ: Заменили flex-1 на grow и добавили h-full */}
+        <div className="p-6 md:p-8 flex flex-col grow h-full relative z-10 bg-slate-900">
+            <h3 className="text-xl md:text-2xl font-black text-white mb-3 tracking-tight group-hover:text-amber-400 transition-colors leading-tight">
+                {format.title}
+            </h3>
+            <p className="text-[14px] md:text-base text-slate-400 leading-relaxed font-medium">
+                {format.desc}
+            </p>
+        </div>
+        
+    </FadeBlock>
+))}
 
                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
                         <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
