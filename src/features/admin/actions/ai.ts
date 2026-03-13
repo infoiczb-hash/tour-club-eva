@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 
 // === 1. КОНФИГУРАЦИЯ ===
-const model = google('gemini-1.5-flash');
+const model = google('gemini-1.5-flash-8b');
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
 const TourAiSchema = z.object({
