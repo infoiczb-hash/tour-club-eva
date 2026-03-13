@@ -57,7 +57,7 @@ export const RawTourSchema = z.object({
 
   // Маркетинг
   type: z.string().default('hiking'), // Старое поле
-  category_id: z.string().uuid().nullable().optional(), // ✅ НОВОЕ ПОЛЕ
+  categoryId: z.string().uuid().nullable().optional(), // ✅ НОВОЕ ПОЛЕ
   label: z.string().nullable().optional(),
   difficulty: z.string().default('medium'),
   tags: z.array(z.string()).optional(), 

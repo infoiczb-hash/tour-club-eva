@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { 
   CheckCircle, 
   XCircle, 
@@ -12,17 +11,12 @@ import {
   ShieldCheck, 
   ChevronDown 
 } from 'lucide-react';
-import DOMPurify from 'isomorphic-dompurify';
-
-// Framer Motion убран — аккордеон реализован через CSS grid-rows trick.
-// grid-rows-[0fr] → grid-rows-[1fr] анимирует height: auto на compositor thread
-// без единой строки JS-анимации.
 
 interface TourEssentialsProps {
   included: string[];
   additionalExpenses: string[];
   documents?: any[];
-  checklist?: string | null;
+  checklist?: string[] | null;
 }
 
 export default function TourEssentials({ 
@@ -77,7 +71,6 @@ export default function TourEssentials({
             />
           </button>
           
-          {/* CSS grid-rows trick вместо motion.div */}
           <div
             id="included-list"
             className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
@@ -156,11 +149,15 @@ export default function TourEssentials({
           <h3 className="text-teal-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-4">
             <Backpack size={16} aria-hidden="true" /> Снаряжение
           </h3>
-          {checklist ? (
-            <div 
-              className="text-slate-300 text-sm prose prose-invert prose-p:leading-relaxed max-w-none" 
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(checklist || 'Список вещей уточняется...') }}
-            />
+          {checklist && checklist.length > 0 ? (
+            <ul className="space-y-3">
+              {checklist.map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(20,184,166,0.8)]" aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           ) : (
             <p className="text-slate-400 text-sm italic">
               Специальное снаряжение не требуется. Достаточно удобной одежды по погоде.
@@ -176,10 +173,11 @@ export default function TourEssentials({
           {documents && documents.length > 0 ? (
             <div className="space-y-3">
               {documents.map((doc: any, i: number) => (
-                <Link 
+                <a 
                   key={i} 
                   href={doc.url || '#'} 
                   target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={`Скачать документ: ${doc.title || `Документ ${i + 1}`}`}
                   className="group flex items-center justify-between p-3 bg-white/5 hover:bg-teal-500/10 border border-white/5 hover:border-teal-500/30 rounded-xl transition-all"
                 >
@@ -195,7 +193,7 @@ export default function TourEssentials({
                     </div>
                   </div>
                   <Download size={16} className="text-slate-600 group-hover:text-teal-500 transition-colors shrink-0" aria-hidden="true" />
-                </Link>
+                </a>
               ))}
             </div>
           ) : (

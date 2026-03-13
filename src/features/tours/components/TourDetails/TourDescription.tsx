@@ -1,7 +1,6 @@
 import React from 'react';
 import { Star, Zap, Shield, Heart, Camera, Coffee, Mountain, Map, Sun, Compass, Hash } from 'lucide-react';
 import { clsx } from 'clsx';
-import DOMPurify from 'isomorphic-dompurify';
 
 const ICON_MAP: Record<string, any> = {
   star: Star, zap: Zap, shield: Shield, 
@@ -31,7 +30,7 @@ export default function TourDescription({ description, highlights, tags }: TourD
         <div key={index} className="mb-4 last:mb-0">
           <div 
             className="text-slate-300 text-sm md:text-base leading-relaxed font-normal text-left"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formattedHtml) }}
+            dangerouslySetInnerHTML={{ __html: formattedHtml }}
           />
         </div>
       );
@@ -81,9 +80,6 @@ export default function TourDescription({ description, highlights, tags }: TourD
                       <div className="w-8 h-8 rounded-lg bg-slate-800 text-teal-500 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
                         <IconComponent size={16} strokeWidth={2} aria-hidden="true" />
                       </div>
-                      {/* h4 корректен здесь — он вложен внутри карточки,
-                          родительский h2 "О путешествии" теперь стоит ниже,
-                          поэтому используем p для заголовка карточки highlight */}
                       <p className="font-bold text-white text-[14px] md:text-sm leading-tight group-hover:text-teal-400 transition-colors line-clamp-2">
                         {item.title}
                       </p>
