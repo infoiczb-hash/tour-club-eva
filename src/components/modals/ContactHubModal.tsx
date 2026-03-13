@@ -75,6 +75,13 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
       setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
+  // ✅ Функция для авто-растягивания текстовых полей
+const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.currentTarget;
+    target.style.height = 'auto'; // Сбрасываем высоту, чтобы узнать реальный размер
+    target.style.height = `${target.scrollHeight}px`; // Ставим высоту по контенту
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -87,35 +94,13 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
         {/* Язычок для мобилки (декор) */}
         <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-1 md:hidden" />
 
-        {/* HEADER */}
-        <div className="p-5 md:p-8 pb-4 md:pb-6 border-b border-white/5 bg-slate-900 z-10 shrink-0">
-           <div className="flex justify-between items-center mb-6">
+        {/* ✅ HEADER: Теперь тут только заголовок и крестик */}
+        <div className="p-5 md:p-6 border-b border-white/5 bg-slate-900 z-10 shrink-0">
+           <div className="flex justify-between items-center">
               <h3 id="modal-contact-title" className="text-white font-black text-2xl md:text-3xl tracking-tight">Центр связи</h3>
-              <button onClick={onClose} aria-label="Закрыть" className="p-2.5 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={onClose} aria-label="Закрыть" className="p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
                   <X size={20}/>
               </button>
-           </div>
-           
-           {/* TABS (Оставили wrap как договаривались) */}
-           <div className="flex flex-wrap gap-2.5">
-              {TABS.map(tab => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => { setActiveTab(tab.id); setFormData({}); }}
-                        className={clsx(
-                            "flex items-center gap-2 px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide transition-all border",
-                            isActive 
-                                ? "bg-teal-500 border-teal-500 text-slate-900 shadow-lg shadow-teal-500/20" 
-                                : "bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/20 hover:text-white"
-                        )}
-                      >
-                          <tab.icon size={16} strokeWidth={isActive ? 2.5 : 2}/> {tab.label}
-                      </button>
-                  );
-              })}
            </div>
         </div>
 
@@ -131,6 +116,28 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                </div>
            ) : (
                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                   
+                   {/* ✅ TABS: Перенесены в скроллируемую зону формы */}
+                   <div className="flex flex-wrap gap-2.5 mb-6 md:mb-8">
+                      {TABS.map(tab => {
+                          const isActive = activeTab === tab.id;
+                          return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => { setActiveTab(tab.id); setFormData({}); }}
+                                className={clsx(
+                                    "flex items-center gap-2 px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide transition-all border",
+                                    isActive 
+                                        ? "bg-teal-500 border-teal-500 text-slate-900 shadow-lg shadow-teal-500/20" 
+                                        : "bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                                )}
+                              >
+                                  <tab.icon size={16} strokeWidth={isActive ? 2.5 : 2}/> {tab.label}
+                              </button>
+                          );
+                      })}
+                   </div>
                    
                    <div className="space-y-6 md:space-y-8 flex-1">
                        {/* Context Banner */}
@@ -187,13 +194,19 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                    <option value="photo">Фотограф / Контент</option>
                                    <option value="other">Другое</option>
                                </select>
+                               {/* ✅ Добавлен onInput и удален resize-none */}
                                <textarea required placeholder="Ваш опыт (где работали, навыки, хобби)" 
-                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[120px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                   value={formData.experience || ''} onChange={e => updateField('experience', e.target.value)}
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[80px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
+                                   value={formData.experience || ''} 
+                                   onInput={handleInputResize}
+                                   onChange={e => updateField('experience', e.target.value)}
                                />
+                               {/* ✅ Добавлен onInput и удален resize-none */}
                                <textarea required placeholder="Почему хотите именно к нам?" 
-                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[120px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                   value={formData.motivation || ''} onChange={e => updateField('motivation', e.target.value)}
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[80px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
+                                   value={formData.motivation || ''} 
+                                   onInput={handleInputResize}
+                                   onChange={e => updateField('motivation', e.target.value)}
                                />
                            </div>
                        )}
@@ -211,8 +224,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                    ))}
                                </div>
                                <textarea required placeholder="Опишите тему или дайте ссылку на Google Docs..." 
-                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                   value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
+                                   value={formData.message || ''} 
+                                   onInput={handleInputResize}
+                                   onChange={e => updateField('message', e.target.value)}
                                />
                            </div>
                        )}
@@ -228,8 +243,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                    />
                                </div>
                                <textarea required placeholder="Опишите масштаб выезда: количество человек, пожелания, примерные даты..." 
-                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                   value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
+                                   value={formData.message || ''} 
+                                   onInput={handleInputResize}
+                                   onChange={e => updateField('message', e.target.value)}
                                />
                            </div>
                        )}
@@ -245,8 +262,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                                    ))}
                                </div>
                                <textarea required placeholder="Ваши честные впечатления о туре..." 
-                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                   value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
+                                   value={formData.message || ''} 
+                                   onInput={handleInputResize}
+                                   onChange={e => updateField('message', e.target.value)}
                                />
                            </div>
                        )}
@@ -256,8 +275,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                            <div className="animate-in fade-in">
                                <textarea required 
                                    placeholder={activeTab === 'TOUR' ? "Напишите ваш вопрос (например: можно ли взять собаку?)..." : "Опишите ситуацию, с которой нужна помощь..."} 
-                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[160px] resize-none focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
-                                   value={formData.message || ''} onChange={e => updateField('message', e.target.value)}
+                                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
+                                   value={formData.message || ''} 
+                                   onInput={handleInputResize}
+                                   onChange={e => updateField('message', e.target.value)}
                                />
                            </div>
                        )}
@@ -266,7 +287,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
                    {/* Honeypot (Hidden) */}
                    <input ref={honeypotRef} type="text" name="website" className="hidden" autoComplete="off" tabIndex={-1} />
 
-                   {/* 🔥 КНОПКА ОТПРАВКИ И ТЕЛЕГРАМ (Жестко отделены от контента) */}
+                   {/* 🔥 КНОПКА ОТПРАВКИ И ТЕЛЕГРАМ */}
                    <div className="mt-8 pt-6 border-t border-white/5 shrink-0 flex flex-col gap-4">
                        <button 
                            disabled={status === 'loading'}

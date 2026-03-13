@@ -80,7 +80,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
           <div className="grid grid-cols-2 gap-4">
              {/* 👇 ИЗМЕНИЛИ NAME НА category_id И ПОДСТАВИЛИ ДИНАМИЧЕСКИЕ ОПЦИИ */}
              <FormSelect 
-                name="category_id" 
+                name="categoryId" 
                 label="Категория тура"
                 options={categoryOptions}
              />

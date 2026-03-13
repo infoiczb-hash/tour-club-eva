@@ -165,14 +165,14 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         )}
 
         <div className="flex items-center gap-3 pt-5 border-t border-white/5 mt-auto">
-          {/* ИСПРАВЛЕНИЕ: Увеличили размер кружка (w-10 h-10) и добавили focus (object-top) */}
+          {/* Убрали комментарий про object-top и сам костыль из className */}
           <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/10 shadow-sm">
             {post.author_image ? (
               <Image 
                 src={post.author_image} 
                 alt={post.author_name || 'Автор'} 
                 fill 
-                className="object-cover object-top md:object-[center_15%]" 
+                className="object-cover" 
                 sizes="40px" 
               />
             ) : (

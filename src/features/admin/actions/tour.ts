@@ -95,6 +95,7 @@ export async function saveTour(formData: any) {
 
     const rawData = {
       ...formData,
+      categoryId: formData.categoryId ?? formData.category_id,
       isActive: formData.isActive ?? formData.is_active ?? false,
       meetingPoint: formData.meetingPoint ?? formData.meeting_point,
       priceOld: formData.priceOld ?? formData.price_old,

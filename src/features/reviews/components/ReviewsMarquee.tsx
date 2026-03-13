@@ -1,12 +1,10 @@
-// src/features/reviews/components/ReviewsMarquee.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-// ✅ Добавили ChevronRight для подсказки
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import Image from 'next/image' 
+import Image from 'next/image';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -59,17 +57,16 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
   return (
     <div className={cn(
-      // ✅ ДОБАВЛЕН класс h-fit, чтобы карточки не растягивались по высоте соседей
       "group relative flex flex-col flex-shrink-0 w-[85vw] md:w-[380px] p-6 rounded-[2rem] snap-center h-fit",
       "bg-slate-900/80 backdrop-blur-xl border border-white/5 shadow-xl", 
-      "transition-all duration-500 ease-out cursor-default md:hover:-translate-y-2",
+      "transition-all duration-500 ease-out md:hover:-translate-y-2",
       config.borderClass, config.glowClass
     )}>
       
       {/* HEADER */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden shrink-0">
+          <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden shrink-0 pointer-events-none">
              {review.avatar ? (
                <Image
                   src={review.avatar}
@@ -77,6 +74,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
                   width={40}
                   height={40}
                   className="w-full h-full object-cover"
+                  draggable={false}
                />
              ) : (
                review.name[0]
@@ -85,7 +83,6 @@ const ReviewCard = ({ review }: { review: Review }) => {
           
           <div className="flex flex-col">
             <span className="text-sm font-bold text-white leading-none">{review.name}</span>
-            {/* ✅ ИСПРАВЛЕНА ДОСТУПНОСТЬ: Убрана opacity-60 */}
             <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300", config.iconColor)}>
                {config.icon}
                <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
@@ -107,7 +104,6 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
       {/* FOOTER */}
       <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-        {/* ✅ ИСПРАВЛЕНА ДОСТУПНОСТЬ: Изменен цвет на text-slate-400 (был text-slate-500) */}
         <span className="text-[11px] font-mono text-slate-400 transition-colors">
             {time}
         </span>
@@ -137,19 +133,44 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
     return displayReviews.filter(r => (r.category || 'general') === activeCategory);
   }, [activeCategory, displayReviews]);
 
-  // ✅ БОЛЬШЕ НЕ ДУБЛИРУЕМ МАССИВ
-  const displayList = filteredReviews;
+  // --- DRAG TO SCROLL LOGIC ---
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeftPos(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => setIsDragging(false);
+  const handleMouseUp = () => setIsDragging(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // Скорость прокрутки
+    
+    // Временно отключаем smooth скролл во время перетаскивания для мгновенного отклика
+    scrollContainerRef.current.style.scrollBehavior = 'auto';
+    scrollContainerRef.current.scrollLeft = scrollLeftPos - walk;
+    scrollContainerRef.current.style.scrollBehavior = 'smooth';
+  };
 
   return (
     <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
       
       {/* Background Ambience */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:md:blur-[150px]  rounded-full pointer-events-none opacity-50" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none opacity-50" />
 
       <div className="container mx-auto px-4 mb-8 md:mb-12 relative z-10">
         
         {/* HEADER */}
-        <div className="text-left mb-8">
+        <div className="text-left mb-8 md:mb-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
                 <MessageCircle size={14} className="text-teal-400" />
                 <span className="text-[12px] md:text-[14px] font-bold uppercase tracking-widest text-teal-400">Люди говорят</span>
@@ -167,43 +188,50 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
             </div>
         </div>
 
-        {/* ФИЛЬТРЫ КАТЕГОРИЙ */}
+        {/* ФИЛЬТРЫ КАТЕГОРИЙ В ДВА ЭТАЖА */}
         {availableCategories.length > 1 && (
-            <div className="flex gap-2 md:gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <button
-                    onClick={() => setActiveCategory('all')}
-                    className={cn(
-                        "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border",
-                        activeCategory === 'all' 
-                            ? "bg-teal-700 text-white border-teal-600 shadow-lg shadow-teal-900/20" 
-                            : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
-                    )}
-                >
-                    Все отзывы
-                </button>
-                {availableCategories.map(catId => {
-                    const catInfo = CATEGORY_MAP[catId] || CATEGORY_MAP.general;
-                    return (
-                        <button
-                            key={catId}
-                            onClick={() => setActiveCategory(catId)}
-                            className={cn(
-                                "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border",
-                                activeCategory === catId 
-                                    ? "bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-900/20" 
-                                    : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
-                            )}
-                        >
-                            {catInfo.label}
-                        </button>
-                    )
-                })}
+            <div className="flex flex-col gap-4 md:gap-5">
+                {/* 1 ЭТАЖ: Сброс (Все отзывы) */}
+                <div className="flex items-center">
+                    <button
+                        onClick={() => setActiveCategory('all')}
+                        className={cn(
+                            "px-6 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border shadow-sm",
+                            activeCategory === 'all' 
+                                ? "bg-teal-700 text-white border-teal-600 shadow-teal-900/20" 
+                                : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
+                        )}
+                    >
+                        Все отзывы
+                    </button>
+                </div>
+
+                {/* 2 ЭТАЖ: Конкретные направления */}
+                <div className="flex gap-2 md:gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    {availableCategories.map(catId => {
+                        const catInfo = CATEGORY_MAP[catId] || CATEGORY_MAP.general;
+                        return (
+                            <button
+                                key={catId}
+                                onClick={() => setActiveCategory(catId)}
+                                className={cn(
+                                    "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border shadow-sm",
+                                    activeCategory === catId 
+                                        ? "bg-teal-600 text-white border-teal-500 shadow-teal-900/20" 
+                                        : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
+                                )}
+                            >
+                                {catInfo.label}
+                            </button>
+                        )
+                    })}
+                </div>
             </div>
         )}
 
       </div>
 
-      {/* --- CARDS CONTAINER --- */}
+      {/* --- CARDS CONTAINER С DRAG TO SCROLL --- */}
       <div className="relative flex flex-col gap-8">
          {/* Fade Edges (Desktop only) */}
          <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
@@ -211,19 +239,27 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
 
          <div className="relative">
              <div 
+                ref={scrollContainerRef}
                 key={activeCategory}
                 tabIndex={0} 
                 role="region" 
                 aria-label={`Отзывы в категории ${activeCategory}`} 
-                // ✅ УБРАНЫ классы md:animate-marquee и добавлены классы обычного скролла
-                className="flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                style={{ WebkitOverflowScrolling: 'touch' }}
+                className={cn(
+                    "flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500",
+                    isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab snap-x snap-mandatory"
+                )}
               >
-                {displayList.map((review, i) => (
+                {filteredReviews.map((review, i) => (
                   <ReviewCard key={`${review.id}-${i}`} review={review} />
                 ))}
               </div>
 
-           {/* ✅ ДОБАВЛЕНА ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
+           {/* ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
            <div className="absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
               <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
               <ChevronRight size={14} />
