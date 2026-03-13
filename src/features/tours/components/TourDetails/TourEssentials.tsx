@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { 
   CheckCircle, 
   XCircle, 
@@ -12,11 +13,45 @@ import {
   ChevronDown 
 } from 'lucide-react';
 
+/**
+ * Безопасный парсер для текста.
+ * Заменяет **текст** на жирный шрифт и -> на стрелочки.
+ */
+const FormattedEssentialsText = ({ text }: { text: string | null | undefined }) => {
+  if (!text) return null;
+  
+  const paragraphs = text.split(/\n+/).filter(p => p.trim() !== '');
+  
+  return (
+    <div className="space-y-3">
+      {paragraphs.map((para, idx) => {
+        const withArrows = para.replace(/->/g, '→');
+        const parts = withArrows.split(/(\*\*.*?\*\*)/g);
+        
+        return (
+          <p key={idx} className="text-slate-300 text-sm leading-relaxed">
+            {parts.map((part, i) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                return (
+                  <strong key={i} className="text-white font-black">
+                    {part.slice(2, -2)}
+                  </strong>
+                );
+              }
+              return part;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 interface TourEssentialsProps {
   included: string[];
   additionalExpenses: string[];
   documents?: any[];
-  checklist?: string[] | null;
+  checklist?: string | null;
 }
 
 export default function TourEssentials({ 
@@ -149,15 +184,8 @@ export default function TourEssentials({
           <h3 className="text-teal-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-4">
             <Backpack size={16} aria-hidden="true" /> Снаряжение
           </h3>
-          {checklist && checklist.length > 0 ? (
-            <ul className="space-y-3">
-              {checklist.map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(20,184,166,0.8)]" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+          {checklist ? (
+            <FormattedEssentialsText text={checklist} />
           ) : (
             <p className="text-slate-400 text-sm italic">
               Специальное снаряжение не требуется. Достаточно удобной одежды по погоде.
@@ -173,12 +201,10 @@ export default function TourEssentials({
           {documents && documents.length > 0 ? (
             <div className="space-y-3">
               {documents.map((doc: any, i: number) => (
-                <a 
+                <Link 
                   key={i} 
                   href={doc.url || '#'} 
                   target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Скачать документ: ${doc.title || `Документ ${i + 1}`}`}
                   className="group flex items-center justify-between p-3 bg-white/5 hover:bg-teal-500/10 border border-white/5 hover:border-teal-500/30 rounded-xl transition-all"
                 >
                   <div className="flex items-center gap-3 overflow-hidden">
@@ -193,7 +219,7 @@ export default function TourEssentials({
                     </div>
                   </div>
                   <Download size={16} className="text-slate-600 group-hover:text-teal-500 transition-colors shrink-0" aria-hidden="true" />
-                </a>
+                </Link>
               ))}
             </div>
           ) : (
