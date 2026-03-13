@@ -50,9 +50,39 @@ const FormattedEssentialsText = ({ text }: { text: any }) => {
   );
 };
 
+// ✅ НОВАЯ ФУНКЦИЯ: Умный рендеринг элементов списка, который не падает от объектов
+const renderSafeListItem = (item: any): React.ReactNode => {
+  if (!item) return null;
+  
+  // Если это обычная строка (как мы ожидали изначально)
+  if (typeof item === 'string') {
+    return <span>{item}</span>;
+  }
+  
+  // Если это тот самый сложный объект из базы ({items, title, category})
+  if (typeof item === 'object') {
+    const title = item.title || item.category || '';
+    const itemsList = Array.isArray(item.items) ? item.items : [];
+    
+    return (
+      <div className="flex flex-col gap-1">
+        {title && <strong className="text-white font-bold">{title}</strong>}
+        {itemsList.length > 0 && (
+          <span className="text-slate-400 text-sm">
+            {itemsList.join(', ')}
+          </span>
+        )}
+      </div>
+    );
+  }
+  
+  // Фолбэк для любых других непонятных данных
+  return <span>{String(item)}</span>;
+};
+
 interface TourEssentialsProps {
-  included: string[];
-  additionalExpenses: string[];
+  included: any[]; // Изменили типизацию, чтобы разрешить объекты
+  additionalExpenses: any[];
   documents?: any[];
   checklist?: any;
 }
@@ -121,7 +151,8 @@ export default function TourEssentials({
                   {included.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]" aria-hidden="true" />
-                      {item}
+                      {/* ✅ ИСПОЛЬЗУЕМ БЕЗОПАСНЫЙ РЕНДЕР */}
+                      {renderSafeListItem(item)}
                     </li>
                   ))}
                 </ul>
@@ -170,7 +201,8 @@ export default function TourEssentials({
                   {additionalExpenses.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.8)]" aria-hidden="true" />
-                      {item}
+                      {/* ✅ ИСПОЛЬЗУЕМ БЕЗОПАСНЫЙ РЕНДЕР */}
+                      {renderSafeListItem(item)}
                     </li>
                   ))}
                 </ul>
