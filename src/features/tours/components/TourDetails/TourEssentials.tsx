@@ -13,14 +13,17 @@ import {
   ChevronDown 
 } from 'lucide-react';
 
-/**
- * Безопасный парсер для текста.
- * Заменяет **текст** на жирный шрифт и -> на стрелочки.
- */
-const FormattedEssentialsText = ({ text }: { text: string | null | undefined }) => {
+const FormattedEssentialsText = ({ text }: { text: any }) => {
   if (!text) return null;
   
-  const paragraphs = text.split(/\n+/).filter(p => p.trim() !== '');
+  let paragraphs: string[] = [];
+  if (typeof text === 'string') {
+    paragraphs = text.split(/\n+/).filter(p => p.trim() !== '');
+  } else if (Array.isArray(text)) {
+    paragraphs = text.filter(p => typeof p === 'string' && p.trim() !== '');
+  } else {
+    paragraphs = [String(text)];
+  }
   
   return (
     <div className="space-y-3">
@@ -51,7 +54,7 @@ interface TourEssentialsProps {
   included: string[];
   additionalExpenses: string[];
   documents?: any[];
-  checklist?: string | null;
+  checklist?: any;
 }
 
 export default function TourEssentials({ 
@@ -94,7 +97,7 @@ export default function TourEssentials({
               <CheckCircle size={16} aria-hidden="true" />
               Что включено
               <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px]">
-                {included?.length || 0}
+                {Array.isArray(included) ? included.length : 0}
               </span>
             </h3>
             <ChevronDown 
@@ -113,7 +116,7 @@ export default function TourEssentials({
             }`}
           >
             <div className="overflow-hidden">
-              {included && included.length > 0 && (
+              {Array.isArray(included) && included.length > 0 && (
                 <ul className="px-5 pb-5 space-y-3">
                   {included.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
@@ -143,7 +146,7 @@ export default function TourEssentials({
               <XCircle size={16} aria-hidden="true" />
               Дополнительно
               <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[10px]">
-                {additionalExpenses?.length || 0}
+                {Array.isArray(additionalExpenses) ? additionalExpenses.length : 0}
               </span>
             </h3>
             <ChevronDown 
@@ -162,7 +165,7 @@ export default function TourEssentials({
             }`}
           >
             <div className="overflow-hidden">
-              {additionalExpenses && additionalExpenses.length > 0 && (
+              {Array.isArray(additionalExpenses) && additionalExpenses.length > 0 && (
                 <ul className="px-5 pb-5 space-y-3">
                   {additionalExpenses.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
@@ -177,7 +180,6 @@ export default function TourEssentials({
         </div>
       </div>
 
-      {/* Снаряжение и документы */}
       <div className="grid md:grid-cols-2 gap-4">
         
         <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
@@ -198,7 +200,7 @@ export default function TourEssentials({
             <ShieldCheck size={16} aria-hidden="true" /> Документы
           </h3>
           
-          {documents && documents.length > 0 ? (
+          {Array.isArray(documents) && documents.length > 0 ? (
             <div className="space-y-3">
               {documents.map((doc: any, i: number) => (
                 <Link 

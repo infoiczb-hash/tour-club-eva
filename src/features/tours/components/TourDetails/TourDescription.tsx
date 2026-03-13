@@ -1,6 +1,5 @@
 import React from 'react';
 import { Star, Zap, Shield, Heart, Camera, Coffee, Mountain, Map, Sun, Compass, Hash } from 'lucide-react';
-import { clsx } from 'clsx';
 
 const ICON_MAP: Record<string, any> = {
   star: Star, zap: Zap, shield: Shield, 
@@ -9,43 +8,51 @@ const ICON_MAP: Record<string, any> = {
 };
 
 interface TourDescriptionProps {
-  description?: string | null;
+  description?: any;
   highlights?: any[];
   tags?: string[];
 }
 
-export default function TourDescription({ description, highlights, tags }: TourDescriptionProps) {
+const FormattedText = ({ text }: { text: any }) => {
+  if (!text) return null;
+  const safeText = typeof text === 'string' ? text : String(text);
   
-  const renderDescription = (text: string) => {
-    if (!text) return null;
-    const paragraphs = text.split(/\n+/); 
-    return paragraphs.map((paragraph, index) => {
-      const trimmed = paragraph.trim();
-      if (!trimmed) return null;
-      let formattedHtml = trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-black">$1</strong>')
-        .replace(/<b>(.*?)<\/b>/g, '<strong class="text-white font-black">$1</strong>')
-        .replace(/->/g, '<span class="text-teal-500 font-bold mx-1">→</span>');
-      return (
-        <div key={index} className="mb-4 last:mb-0">
-          <div 
-            className="text-slate-300 text-sm md:text-base leading-relaxed font-normal text-left"
-            dangerouslySetInnerHTML={{ __html: formattedHtml }}
-          />
-        </div>
-      );
-    });
-  };
+  const withArrows = safeText.replace(/->/g, '→');
+  const parts = withArrows.split(/(\*\*.*?\*\*)/g);
+
+  return (
+    <p className="text-slate-300 text-sm md:text-base leading-relaxed font-normal text-left mb-4 last:mb-0">
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <strong key={i} className="text-white font-black">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      })}
+    </p>
+  );
+};
+
+export default function TourDescription({ description, highlights, tags }: TourDescriptionProps) {
+  let paragraphs: string[] = [];
+  
+  if (typeof description === 'string') {
+    paragraphs = description.split(/\n+/).filter(p => p.trim() !== '');
+  } else if (Array.isArray(description)) {
+    paragraphs = description.filter(p => p && typeof p === 'string' && p.trim() !== '');
+  } else if (description) {
+    paragraphs = [String(description)];
+  }
 
   return (
     <section className="scroll-mt-24" id="about">
       
-      {/* ===== 1. БЛОК ВПЕЧАТЛЕНИЙ И ТЕГОВ ===== */}
-      {(highlights && highlights.length > 0) || (tags && tags.length > 0) ? (
+      {((highlights && highlights.length > 0) || (tags && tags.length > 0)) && (
         <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-          {/* Лейбл блока — p вместо h3 чтобы не нарушать порядок заголовков:
-              h3 до h2 — нарушение. Визуально идентично, семантически корректно. */}
           <div className="flex items-center gap-3 mb-4">
             <span className="w-8 h-[2px] bg-teal-500 rounded-full" aria-hidden="true"></span>
             <p className="text-xs md:text-sm font-black text-teal-400 uppercase tracking-widest">
@@ -93,9 +100,8 @@ export default function TourDescription({ description, highlights, tags }: TourD
             </div>
           )}
         </div>
-      ) : null}
+      )}
 
-      {/* ===== 2. О ПУТЕШЕСТВИИ (h2 — главный заголовок секции) ===== */}
       <div className="flex items-center gap-4 mb-5">
         <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20 shrink-0">
           <Compass size={20} strokeWidth={2} aria-hidden="true" />
@@ -107,7 +113,11 @@ export default function TourDescription({ description, highlights, tags }: TourD
 
       <div className="bg-slate-900/30 rounded-3xl border border-white/5 p-5 md:p-8">
         <div className="prose prose-invert max-w-none">
-          {description ? renderDescription(description) : (
+          {paragraphs.length > 0 ? (
+            paragraphs.map((para, idx) => (
+              <FormattedText key={idx} text={para} />
+            ))
+          ) : (
             <p className="italic text-slate-400 text-sm">Описание готовится...</p>
           )}
         </div>
