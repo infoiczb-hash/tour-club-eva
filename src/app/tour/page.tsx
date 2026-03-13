@@ -39,9 +39,8 @@ export const metadata: Metadata = {
 
 // 2. СТРАНИЦА (Async Server Component)
 export default async function AllToursPage() {
-  const tours = await getTours();
-  const catRes = await getTourCategoriesAction();
-  const categories = catRes.success ? catRes.data : [];
+  // Вызовы данных здесь были удалены, так как компонент ToursBrowserWrapper 
+  // делает эти запросы к БД самостоятельно и параллельно.
 
  return (
     <main className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">

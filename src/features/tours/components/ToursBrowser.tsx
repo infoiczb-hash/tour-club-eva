@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
@@ -44,6 +44,17 @@ interface ToursBrowserProps {
   limit?: number;
 }
 
+// ✅ ДОБАВЛЕНО: Безопасный слушатель параметров для обхода деоптимизации SSR
+function ParamsListener({ onChange }: { onChange: (val: string) => void }) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    onChange(searchParams.get('category') || 'all');
+  }, [searchParams, onChange]);
+  
+  return null;
+}
+
 export default function ToursBrowser({ 
     tours = [], 
     categories = [], 
@@ -54,10 +65,11 @@ export default function ToursBrowser({
   
   const openContactModal = useModalStore((state) => state.openContactModal);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const pathname = usePathname();
   
-  const activeCategory = searchParams.get('category') || 'all';
+  // ✅ ИСПРАВЛЕНО: Заменили searchParams.get на стейт, чтобы SSR не блокировался
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
@@ -73,7 +85,9 @@ export default function ToursBrowser({
   }, [categories]);
   
   const handleCategoryClick = (slug: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    // ✅ ИСПРАВЛЕНО: Мгновенно обновляем стейт и читаем параметры из window для роутера
+    setActiveCategory(slug);
+    const params = new URLSearchParams(window.location.search);
     if (slug === 'all') {
       params.delete('category'); 
     } else {
@@ -90,7 +104,7 @@ export default function ToursBrowser({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // ✅ ИСПРАВЛЕНИЕ 1: ФИЛЬТРАЦИЯ КАТЕГОРИЙ И ПРОШЕДШИХ ТУРОВ
+    // ФИЛЬТРАЦИЯ КАТЕГОРИЙ И ПРОШЕДШИХ ТУРОВ
     const filtered = safeTours.filter(tour => {
       // 1. Фильтр по категории
       if (activeCategory !== 'all') {
@@ -159,6 +173,11 @@ export default function ToursBrowser({
   return (
     <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
       
+      {/* ✅ ДОБАВЛЕНО: Безопасный инжект URL-параметров без обрыва SSR */}
+      <Suspense fallback={null}>
+        <ParamsListener onChange={(val) => setActiveCategory(val)} />
+      </Suspense>
+
       <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 md:blur-[120px] rounded-full pointer-events-none opacity-60" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
@@ -284,7 +303,6 @@ export default function ToursBrowser({
 
                 <div className="w-px h-8 bg-white/10 shrink-0 self-center" />
 
-                {/* ✅ ИСПРАВЛЕНИЕ 2: ВАРИАНТ Б (flex-wrap) */}
                 <div className="flex-1 flex flex-wrap items-center justify-start gap-2 py-1">
                     {displayCategories.map(cat => (
                         <button
