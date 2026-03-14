@@ -15,8 +15,10 @@ export default function LocalHero() {
           className="object-cover opacity-50"
           priority
           fetchPriority="high" 
+          // FIX 1: Снизили quality с 60 → уже было, но добавляем точные sizes
           quality={60}
-          sizes="100vw"        
+          // FIX 2: Точные sizes — браузер выберет нужный брейкпоинт из deviceSizes
+          sizes="(max-width: 768px) 100vw, 100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />
       </div>

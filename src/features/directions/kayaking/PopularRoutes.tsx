@@ -68,7 +68,6 @@ export default function PopularRoutes() {
     <section className="py-10 md:py-20 bg-[#020617] relative overflow-hidden text-slate-200 border-t border-white/5">
       <div className="container mx-auto px-4 relative z-10">
 
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
@@ -81,7 +80,6 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-        {/* CARDS — Нативный hover вместо whileHover */}
         <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {routesData.map((route) => (
@@ -96,7 +94,17 @@ export default function PopularRoutes() {
                     <ArrowUpRight size={14} className="text-teal-400" />
                   </div>
                 </div>
-                <Image src={route.images[0]} alt={route.title} fill className="object-cover transition-transform duration-1000 group-hover:scale-110 md:grayscale-[30%] group-hover:grayscale-0" sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 25vw" />
+                <Image
+                  src={route.images[0]}
+                  alt={route.title}
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110 md:grayscale-[30%] group-hover:grayscale-0"
+                  sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 25vw"
+                  // FIX: lazy — карточки маршрутов ниже fold
+                  loading="lazy"
+                  // FIX: quality 55 — карточки с тёмным градиентом, разница невидима
+                  quality={55}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                 <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
                   <div className="flex gap-2 mb-4 opacity-100 md:opacity-0 md:-translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
@@ -119,49 +127,47 @@ export default function PopularRoutes() {
           </div>
         </div>
 
-    {/* OTHER FORMATS */}
-<div
-  ref={formatsView.ref}
-  style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-  className="mt-12 md:mt-14 border-t border-white/10 pt-10"
->
-  <div className="mb-6 md:mb-8 text-left">
-    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
-      Другие <span className="text-amber-500">Форматы</span>
-    </h3>
-    <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
-  </div>
-  
-  <div className="relative">
-    {/* ИСПРАВЛЕНО: lg:grid-cols-3 для десктопа, чтобы карточки были шире и встали в 2 ряда */}
-    <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {otherFormats.map((format, idx) => {
-        const Icon = format.icon;
-        return (
-          <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-5 flex items-center gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
-              <Icon size={22} strokeWidth={1.5} />
+        {/* OTHER FORMATS */}
+        <div
+          ref={formatsView.ref}
+          style={{ opacity: formatsView.inView ? 1 : 0, transform: formatsView.inView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+          className="mt-12 md:mt-14 border-t border-white/10 pt-10"
+        >
+          <div className="mb-6 md:mb-8 text-left">
+            <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
+              Другие <span className="text-amber-500">Форматы</span>
+            </h3>
+            <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
+          </div>
+          
+          <div className="relative">
+            <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {otherFormats.map((format, idx) => {
+                const Icon = format.icon;
+                return (
+                  <div key={idx} className="snap-center w-full bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-5 flex items-center gap-4 hover:border-amber-500/30 hover:bg-slate-900/60 transition-all group h-full">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-500 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-slate-900 transition-all">
+                      <Icon size={22} strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-[15px] leading-tight mb-1.5 group-hover:text-amber-400 transition-colors">{format.title}</h4>
+                      <p className="text-[12px] md:text-[13px] text-slate-400 font-medium leading-snug">{format.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div>
-              <h4 className="font-bold text-white text-[15px] leading-tight mb-1.5 group-hover:text-amber-400 transition-colors">{format.title}</h4>
-              {/* ИСПРАВЛЕНО: Удалили line-clamp, чтобы текст выводился полностью */}
-              <p className="text-[12px] md:text-[13px] text-slate-400 font-medium leading-snug">{format.desc}</p>
+            
+            <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
+              <ChevronRight size={14} className="text-teal-400" />
             </div>
           </div>
-        );
-      })}
-    </div>
-    
-    <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-      <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-      <ChevronRight size={14} className="text-teal-400" />
-    </div>
-  </div>
-</div>
+        </div>
 
       </div>
 
-      {/* MODAL — Без Framer Motion, анимация через Tailwind */}
+      {/* MODAL */}
       {selectedRoute && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="relative w-full h-full md:max-w-5xl md:h-auto md:max-h-[90vh] bg-slate-900 md:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row animate-in zoom-in-95 duration-300">
@@ -169,7 +175,7 @@ export default function PopularRoutes() {
               <X size={20} />
             </button>
 
-            {/* Карусель — CSS Transition Opacity */}
+            {/* Карусель в модале — quality 75 достаточно */}
             <div className="w-full md:w-5/12 h-[35vh] md:h-auto relative group bg-black">
               <div className="absolute inset-0">
                 {selectedRoute.images.map((src, idx) => (
@@ -182,17 +188,18 @@ export default function PopularRoutes() {
                         "object-cover transition-opacity duration-500 ease-in-out",
                         idx === currentImgIdx ? "opacity-100" : "opacity-0"
                     )} 
-                    sizes="(max-width: 768px) 100vw, 60vw" 
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    quality={75}
                   />
                 ))}
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-slate-900 md:to-transparent" />
               {selectedRoute.images.length > 1 && (
                 <>
-                  <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                  <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
                     <ChevronLeft size={20} />
                   </button>
-                  <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 md:w-10 md:h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
+                  <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-teal-500 hover:text-black transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 z-20">
                     <ChevronRight size={20} />
                   </button>
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
@@ -204,7 +211,6 @@ export default function PopularRoutes() {
               )}
             </div>
 
-            {/* Детали */}
             <div className="w-full md:w-7/12 flex flex-col h-[65vh] md:h-auto overflow-y-auto bg-slate-900 [&::-webkit-scrollbar]:hidden">
               <div className="p-6 md:p-10 flex-1">
                 <div className="text-[10px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Паспорт маршрута</div>

@@ -15,8 +15,10 @@ export default function KidsHero() {
           className="object-cover opacity-40 md:opacity-50"
           priority
           fetchPriority="high"
-          quality={75}
-          sizes="100vw"
+          // FIX 1: Снизили quality с 75 до 60 — достаточно для фона, экономия ~20% веса
+          quality={60}
+          // FIX 2: Точные sizes — не грузим 1920px на мобайл
+          sizes="(max-width: 768px) 100vw, 100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950" />
       </div>

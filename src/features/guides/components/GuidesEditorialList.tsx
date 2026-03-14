@@ -15,7 +15,6 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// СЛОВАРЬ ИКОНОК ДЛЯ НАВЫКОВ
 const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
   Zap: { icon: Zap, color: "text-amber-400" },
   Utensils: { icon: Utensils, color: "text-rose-400" },
@@ -46,7 +45,6 @@ interface Guide {
   order: number;
 }
 
-// --- КОМПОНЕНТ ШКАЛЫ НАВЫКА ---
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     <div className="mb-2">
        <div className="flex justify-between items-end mb-2">
@@ -65,7 +63,6 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     </div>
 );
 
-// --- ГЛАВНЫЙ КОМПОНЕНТ СПИСКА ---
 export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }) {
     const openContactModal = useModalStore((state) => state.openContactModal);
     
@@ -77,21 +74,17 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
         <div className="container mx-auto px-4 max-w-7xl">
             <div className="flex flex-col gap-24 md:gap-32 pb-24">
                 
-                {/* 1. Блоки Гидов */}
                 {displayGuides.map((guide, index) => (
                     <EditorialGuideBlock 
                         key={guide.id} 
                         guide={guide} 
                         index={index} 
-                        // ✅ ИСПРАВЛЕНО: Даем высокий приоритет загрузки первым двум гидам для быстрого LCP
+                        // FIX: priority только для первых 2, остальные lazy
                         priority={index < 2} 
                     />
                 ))}
 
-                {/* 2. Блок HR (Призыв в команду) */}
-                <div
-                    className="relative mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-                >
+                <div className="relative mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[300px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col items-center">
@@ -119,10 +112,7 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
     );
 }
 
-// --- ОТДЕЛЬНЫЙ БЛОК ГИДА (Z-ПАТТЕРН) ---
-// ✅ ИСПРАВЛЕНО: Добавлен пропс priority в интерфейс и деструктуризацию
 function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide, index: number, priority?: boolean }) {
-    // Если индекс нечетный — меняем порядок колонок на десктопе
     const isReverse = index % 2 !== 0;
 
     let parsedStats: any[] = [];
@@ -146,9 +136,13 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                         src={guide.actionImage || guide.image || ''}
                         alt={guide.name}
                         fill
-                        priority={priority} // ✅ ИСПРАВЛЕНО: Прокидываем атрибут priority в Next.js Image
+                        priority={priority}
+                        // FIX: явный lazy для гидов 3+ чтобы не грузить всю страницу сразу
+                        loading={priority ? undefined : "lazy"}
                         className="object-cover transition-transform duration-1000 group-hover:scale-105"
                         sizes="(max-width: 1024px) 100vw, 50vw"
+                        // FIX: quality 65 — большие портреты, нужна детализация, но не максимум
+                        quality={65}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -163,7 +157,6 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                 "lg:col-span-7 flex flex-col",
                 isReverse ? "lg:order-1" : "lg:order-2"
             )}>
-                {/* 1. Бейджи */}
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                     <span className="px-4 py-1.5 bg-teal-500 text-slate-950 text-sm font-black uppercase tracking-widest rounded-lg shadow-lg">
                         {guide.role}
@@ -175,17 +168,14 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     )}
                 </div>
 
-                {/* 2. Имя */}
                 <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-6 drop-shadow-lg">
                     {guide.name}
                 </h2>
 
-                {/* 3. Краткая Биография (только bio для превью) */}
                 <div className="text-base md:text-lg text-slate-400 leading-relaxed mb-6 font-medium whitespace-pre-wrap">
                     {guide.bio || guide.fullBio}
                 </div>
 
-                {/* 4. Теги */}
                 <div className="flex flex-wrap gap-2 mb-8">
                     {guide.tags && guide.tags.map((tag, idx) => (
                         <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
@@ -194,7 +184,6 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     ))}
                 </div>
 
-                {/* 5. RPG Статистика */}
                 {parsedStats.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-8 p-6 md:p-8 bg-slate-900/50 rounded-3xl border border-white/5 shadow-inner">
                         {parsedStats.map((stat, i) => {
@@ -212,7 +201,6 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     </div>
                 )}
 
-                {/* 6. Цитата (как финальный аккорд перед кнопкой) */}
                 {guide.quotes && guide.quotes.length > 0 && (
                     <div className="border-l-4 border-teal-500 pl-6 py-2 mb-10">
                         <p className="text-xl md:text-2xl font-medium text-slate-300 italic leading-snug">
@@ -221,7 +209,6 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     </div>
                 )}
 
-                {/* 7. Кнопки действий */}
                 <div className="flex flex-wrap items-center gap-4 mt-auto pt-8 border-t border-white/10">
                     <Link
                         href={`/guides/${guide.slug}`}

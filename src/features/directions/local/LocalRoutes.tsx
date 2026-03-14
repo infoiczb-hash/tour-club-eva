@@ -6,19 +6,20 @@ const ROUTES = [
         title: "Северные Ущелья", 
         subtitle: "Строенцы и Рашков",
         desc: "Калагурские ущелья, Красная скала и башни ветров. Прогулка по тропам, где камни дышат. Идеально для тех, кто любит масштаб и панорамные виды.",
-        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771666029/5_nmcfpa.jpg"
+        // FIX: Убрали ручной f_auto,q_60 из URL — cloudinary-loader сам добавит трансформации
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771666029/5_nmcfpa.jpg"
     },
     {
         title: "Дубоссарское Море", 
         subtitle: "Маркауцы и Роги",
         desc: "Обзорные площадки водохранилища, прогулка по кромке воды, паромный баркас и гамаки в сосновом бору. День полного отключения от суеты.",
-        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771665919/2_hjcjd8.jpg"
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771665919/2_hjcjd8.jpg"
     },
     {
         title: "Школьные Выезды", 
         subtitle: "Для классов и групп",
         desc: "Компактные туры в лес для детей от 15 человек на каникулах или выходных. Командообразование, природа и настоящие эмоции вместо экранов.",
-        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771665925/3_evqllj.jpg"
+        img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771665925/3_evqllj.jpg"
     }
 ];
 
@@ -48,7 +49,12 @@ export default function LocalRoutes() {
                                     alt={route.title} 
                                     fill 
                                     className="object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                    // FIX: Точные sizes — на мобайле карточка 85vw, на десктопе 1/3 контейнера
                                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
+                                    // FIX: lazy для карточек ниже fold — не мешаем LCP hero
+                                    loading="lazy"
+                                    // FIX: Снизили quality до 55 — карточки с тёмным оверлеем, разницы нет
+                                    quality={55}
                                 />
                                 
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent opacity-90" />

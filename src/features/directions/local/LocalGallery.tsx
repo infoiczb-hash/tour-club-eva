@@ -1,13 +1,15 @@
 import Image from 'next/image';
 import { Camera, ChevronRight } from 'lucide-react';
 
+// FIX: Убрали ручные /f_auto,q_60/ из URL — cloudinary-loader добавит трансформации сам
+// с правильным width под конкретный брейкпоинт устройства
 const GALLERY_IMAGES = [
-    "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771669025/2_e0imrh.jpg",
-    "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771669311/3_hwlb7w.webp",
-    "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771669023/5_blvvir.jpg",
-    "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771669309/4_k5ylnt.webp",
-    "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771669024/1_kac1bp.webp",
-    "https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_60/v1771669024/6_imtnsk.jpg",
+    "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771669025/2_e0imrh.jpg",
+    "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771669311/3_hwlb7w.webp",
+    "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771669023/5_blvvir.jpg",
+    "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771669309/4_k5ylnt.webp",
+    "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771669024/1_kac1bp.webp",
+    "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771669024/6_imtnsk.jpg",
 ];
 
 export default function LocalGallery() {
@@ -54,7 +56,10 @@ export default function LocalGallery() {
                                         sizes={isWide
                                             ? "(max-width: 640px) 85vw, (max-width: 1024px) 85vw, 66vw"
                                             : "(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"}
-                                        priority={i === 0}
+                                        // FIX: Все галерейные фото — lazy, они ниже fold
+                                        loading="lazy"
+                                        // FIX: quality 55 — с тёмным оверлеем артефакты невидимы
+                                        quality={55}
                                     />
                                     <div className="absolute inset-0 bg-slate-950/10 group-hover:bg-transparent transition-colors duration-500" />
                                 </div>

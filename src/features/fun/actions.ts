@@ -8,11 +8,11 @@ import { Tour } from '@/features/tours/types';
 import { headers } from 'next/headers';
 
 // ==========================================
-// IN-MEMORY RATE LIMITER (Защита от спама ИИ)
+// IN-MEMORY RATE LIMITER (Увеличили лимит до 50 для тестов)
 // ==========================================
 const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
-const LIMIT = 5; // Максимум 10 запросов к ИИ с одного IP
-const WINDOW_MS = 60 * 60 * 1000; // В течение 1 часа
+const LIMIT = 50; 
+const WINDOW_MS = 60 * 60 * 1000; 
 
 async function checkRateLimit() {
   try {
@@ -27,14 +27,28 @@ async function checkRateLimit() {
     }
 
     if (userLimit.count >= LIMIT) {
-      return false; // Лимит исчерпан
+      return false; 
     }
 
     userLimit.count += 1;
     return true;
   } catch (e) {
-    return true; // Если не удалось получить IP, пропускаем, чтобы не блокировать честных юзеров
+    return true; 
   }
+}
+
+// ==========================================
+// 🔥 СВЕРХЛЕГКИЙ КОНТЕКСТ ДЛЯ ИИ (ЗАЩИТА ОТ ОШИБКИ 429)
+// ==========================================
+async function getLiteToursContext() {
+  const allTours = await getTours();
+  // Оставляем только первые 10 туров и только их ID и названия.
+  // Это радикально снижает потребление токенов!
+  const liteContext = allTours.slice(0, 10).map(t => ({
+    id: t.id,
+    title: t.title
+  }));
+  return { allTours, liteContext };
 }
 
 // ==========================================
@@ -42,43 +56,28 @@ async function checkRateLimit() {
 // ==========================================
 export async function analyzeFearsAction(fearsDetailed: string[]) {
   try {
-    if (!(await checkRateLimit())) {
-      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
-    }
+    if (!(await checkRateLimit())) return { success: false, error: "Превышен лимит запросов к ИИ." };
 
-    const allTours = await getTours();
-    
-    // Делаем компактную выжимку туров для ИИ, чтобы экономить токены
-    const toursContext = allTours.map(t => ({
-      id: t.id,
-      title: t.title,
-      category: t.category?.title || 'Активный отдых',
-      difficulty: t.difficulty,
-      location: t.location,
-      duration: t.duration
-    }));
+    const { allTours, liteContext } = await getLiteToursContext();
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-latest'),
+      model: google('gemini-2.0-flash'),
       schema: z.object({
-        analysis: z.string().describe('Глубокий психологический разбор страхов пользователя (2-3 абзаца). Тон: эмпатичный, профессиональный, поддерживающий. Прямо обращайся к пользователю на "ты".'),
-        recommendedTourId: z.string().nullable().describe('ID идеального тура из предложенного списка, который лучше всего подойдет для старта и мягко снимет эти страхи. Если ничего не подходит, верни null.')
+        analysis: z.string().describe('Глубокий психологический разбор страхов (2-3 абзаца). Тон: эмпатичный, обращайся на "ты".'),
+        recommendedTourId: z.string().nullable().describe('ID идеального тура из списка для старта.')
       }),
       prompt: `
-        Ты — туристический психолог и опытный гид. Клиент хочет пойти в поход, но его останавливают следующие страхи: 
+        Ты — туристический психолог. Клиент боится: 
         \n${fearsDetailed.join('\n')}
         
-        Вот список актуальных туров нашего клуба:
-        \n${JSON.stringify(toursContext)}
+        Туры клуба (только названия и ID):
+        \n${JSON.stringify(liteContext)}
         
-        Твоя задача:
-        1. Сделай терапевтичный разбор: почему эти страхи нормальны и как они решаются в реальности.
-        2. Выбери из списка туров ОДИН идеальный для этого человека по ID, чтобы он мог сделать первый безопасный шаг.
+        Сделай разбор страхов и выбери 1 подходящий тур по ID.
       `
     });
 
     const recommendedTour = allTours.find(t => t.id === object.recommendedTourId) || null;
-
     return { success: true, analysis: object.analysis, tour: recommendedTour as Tour | null };
   } catch (error: any) {
     console.error("AI Fear Analysis Error:", error);
@@ -91,44 +90,27 @@ export async function analyzeFearsAction(fearsDetailed: string[]) {
 // ==========================================
 export async function analyzePhysicalAction(answersText: string, levelTitle: string, levelSummary: string) {
   try {
-    if (!(await checkRateLimit())) {
-      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
-    }
+    if (!(await checkRateLimit())) return { success: false, error: "Превышен лимит запросов к ИИ." };
 
-    const allTours = await getTours();
-    const toursContext = allTours.map(t => ({
-      id: t.id, 
-      title: t.title, 
-      category: t.category?.title || 'Активный отдых',
-      difficulty: t.difficulty, 
-      location: t.location, 
-      duration: t.duration
-    }));
+    const { allTours, liteContext } = await getLiteToursContext();
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-latest'),
+      model: google('gemini-2.0-flash'),
       schema: z.object({
-        analysis: z.string().describe('Персональный разбор (2-3 абзаца). Тон: профессиональный, как спортивный врач или опытный гид. Обращайся на "ты". Опиши сильные стороны и дай один конкретный совет по подготовке.'),
-        recommendedTourId: z.string().nullable().describe('ID идеального тура из списка, который подходит под уровень подготовки человека. Для слабых - легкие (вода/локал), для сильных - горы. Если ничего нет, верни null.')
+        analysis: z.string().describe('Разбор формы (2-3 абзаца). Тон: спортивный врач. Обращайся на "ты".'),
+        recommendedTourId: z.string().nullable().describe('ID идеального тура из списка.')
       }),
       prompt: `
-        Ты — спортивный врач и гид турклуба. Клиент прошел тест на физическую готовность к походу.
-        Его базовый результат: "${levelTitle}" (${levelSummary}).
+        Уровень формы: "${levelTitle}" (${levelSummary}).
+        Ответы: \n${answersText}
         
-        Вот ответы на вопросы:
-        \n${answersText}
+        Туры клуба: \n${JSON.stringify(liteContext)}
         
-        Вот список актуальных туров нашего клуба:
-        \n${JSON.stringify(toursContext)}
-        
-        Твоя задача:
-        1. Сделай персональный анализ его физической формы на основе ответов.
-        2. Выбери из списка туров ОДИН идеальный для него по ID. Обоснуй выбор: почему этот тур подходит его уровню.
+        Сделай анализ формы и выбери 1 подходящий тур по ID.
       `
     });
 
     const recommendedTour = allTours.find(t => t.id === object.recommendedTourId) || null;
-
     return { success: true, analysis: object.analysis, tour: recommendedTour as Tour | null };
   } catch (error: any) {
     console.error("AI Physical Analysis Error:", error);
@@ -141,41 +123,26 @@ export async function analyzePhysicalAction(answersText: string, levelTitle: str
 // ==========================================
 export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
   try {
-    if (!(await checkRateLimit())) {
-      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
-    }
+    if (!(await checkRateLimit())) return { success: false, error: "Превышен лимит запросов к ИИ." };
 
-    const allTours = await getTours();
-    const toursContext = allTours.map(t => ({
-      id: t.id, 
-      title: t.title, 
-      category: t.category?.title || 'Активный отдых',
-      difficulty: t.difficulty, 
-      location: t.location, 
-      duration: t.duration
-    }));
+    const { allTours, liteContext } = await getLiteToursContext();
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-latest'),
+      model: google('gemini-2.0-flash'),
       schema: z.object({
-        analysis: z.string().describe('Анализ симптомов (2-3 абзаца). Тон: заботливый врач, без паники, информативно. Обращайся на "ты". Объясни возможную общую причину симптомов и дай советы.'),
-        recommendedTourId: z.string().nullable().describe('ID идеального тура из списка, который будет безопасен и комфортен при таких симптомах. (Например, при боли в коленях — вода/сплавы). Если ничего нет, верни null.')
+        analysis: z.string().describe('Анализ симптомов (2-3 абзаца). Тон: врач, без паники.'),
+        recommendedTourId: z.string().nullable().describe('ID безопасного тура из списка.')
       }),
       prompt: `
-        Ты — спортивный врач туристического клуба. Турист отметил следующие симптомы во время похода:
-        \n${symptomsDetailed.join('\n')}
+        Симптомы в походе: \n${symptomsDetailed.join('\n')}
         
-        Вот список актуальных туров нашего клуба:
-        \n${JSON.stringify(toursContext)}
+        Туры: \n${JSON.stringify(liteContext)}
         
-        Твоя задача:
-        1. Сделай персональный разбор: как эти симптомы связаны, что они говорят о состоянии тела.
-        2. Выбери из списка туров ОДИН, который идеально подойдет этому человеку прямо сейчас (щадящий для его симптомов). Обоснуй выбор.
+        Сделай разбор симптомов и выбери 1 щадящий тур по ID.
       `
     });
 
     const recommendedTour = allTours.find(t => t.id === object.recommendedTourId) || null;
-
     return { success: true, analysis: object.analysis, tour: recommendedTour as Tour | null };
   } catch (error: any) {
     console.error("AI Body Signals Analysis Error:", error);
@@ -188,41 +155,26 @@ export async function analyzeBodySignalsAction(symptomsDetailed: string[]) {
 // ==========================================
 export async function analyzeDebriefAction(answersText: string) {
   try {
-    if (!(await checkRateLimit())) {
-      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
-    }
+    if (!(await checkRateLimit())) return { success: false, error: "Превышен лимит запросов к ИИ." };
 
-    const allTours = await getTours();
-    const toursContext = allTours.map(t => ({
-      id: t.id, 
-      title: t.title, 
-      category: t.category?.title || 'Активный отдых',
-      difficulty: t.difficulty, 
-      location: t.location, 
-      duration: t.duration
-    }));
+    const { allTours, liteContext } = await getLiteToursContext();
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-latest'),
+      model: google('gemini-2.0-flash'),
       schema: z.object({
-        analysis: z.string().describe('Глубокий разбор. Структура: "Что я вижу", "Твой инсайт", "Вопрос на потом". Тон: тёплый, честный, как умный друг. Обращайся на "ты". Используй форматирование Markdown (**жирный**).'),
-        recommendedTourId: z.string().nullable().describe('ID идеального тура для СЛЕДУЮЩЕГО шага на основе его рефлексии. Например, если он хочет больше тишины - дай спокойный тур, если хочет превзойти себя - дай сложный поход. Если нет подходящего, верни null.')
+        analysis: z.string().describe('Глубокий разбор: "Что я вижу", "Инсайт". Тон: теплый.'),
+        recommendedTourId: z.string().nullable().describe('ID идеального следующего тура.')
       }),
       prompt: `
-        Ты — психолог, работающий с опытом природных путешествий. Человек вернулся из похода и написал рефлексию:
-        \n${answersText}
+        Рефлексия туриста: \n${answersText}
         
-        Вот список актуальных туров нашего клуба:
-        \n${JSON.stringify(toursContext)}
+        Туры: \n${JSON.stringify(liteContext)}
         
-        Твоя задача:
-        1. Сделай персональный анализ его опыта. Что в нем проявилось? Какой главный вывод он может забрать с собой?
-        2. Выбери из списка туров ОДИН идеальный тур для его следующего приключения. Обоснуй выбор, опираясь на его инсайты.
+        Дай анализ опыта и выбери 1 следующий тур по ID.
       `
     });
 
     const recommendedTour = allTours.find(t => t.id === object.recommendedTourId) || null;
-
     return { success: true, analysis: object.analysis, tour: recommendedTour as Tour | null };
   } catch (error: any) {
     console.error("AI Debrief Analysis Error:", error);
@@ -235,25 +187,25 @@ export async function analyzeDebriefAction(answersText: string) {
 // ==========================================
 export async function analyzeFullProfileAction(profile: any) {
   try {
-    if (!(await checkRateLimit())) {
-      return { success: false, error: "Превышен лимит запросов к ИИ. Попробуйте через час." };
-    }
+    if (!(await checkRateLimit())) return { success: false, error: "Превышен лимит запросов к ИИ." };
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-flash-latest'),
+      model: google('gemini-2.0-flash'),
       schema: z.object({
         summaryTitle: z.string(),
         psychologicalPortrait: z.string(),
         mainInsight: z.string(),
         advice: z.string()
       }),
-      prompt: `Проведи глубокий психологический синтез профиля туриста:
-        - Страхи: ${profile.fears?.length ? profile.fears.join(', ') : 'Не указаны'}
-        - Физика: ${profile.physicalLevel || 'Не указана'}
-        - Тело: ${profile.bodySymptoms?.length ? profile.bodySymptoms.join(', ') : 'Жалоб нет'}
-        - Игровой архетип (Тотем/Психотип/Навыки): ${profile.touristType || 'Не определен'}
+      prompt: `
+        Синтез профиля:
+        - Страхи: ${profile.fears?.length ? profile.fears.join(', ') : 'Нет'}
+        - Физика: ${profile.physicalLevel || 'Нет'}
+        - Тело: ${profile.bodySymptoms?.length ? profile.bodySymptoms.join(', ') : 'Нет'}
+        - Архетип: ${profile.touristType || 'Нет'}
         
-        Дай портрет личности, один мощный инсайт и совет по росту. Учитывай его игровой архетип (если он есть) как метафору его характера. Туры не предлагай.`
+        Дай портрет личности, инсайт и совет по росту.
+      `
     });
 
     return { success: true, ...object };

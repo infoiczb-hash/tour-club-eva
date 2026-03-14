@@ -17,14 +17,18 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
 
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
-  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingGallery(true);
       try {
         const files = Array.from(e.target.files);
         for (const file of files) {
-          const url = await uploadFile(file, 'tours'); 
-          if (url) append(url); 
+          // 1. Получаем ответ (объект)
+          const response = await uploadFile(file, 'tours'); 
+          // 2. Вытаскиваем из него ТОЛЬКО строчку с ссылкой (response.url)
+          if (response && response.url) {
+             append(response.url); 
+          }
         }
       } catch (err) {
         console.error(err);

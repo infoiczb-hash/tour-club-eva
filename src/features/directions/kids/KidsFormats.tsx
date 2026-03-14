@@ -46,6 +46,7 @@ const FORMATS = [
         title: "Один день в лесу",
         tags: ["4-5 часов", "8+ лет", "Без ночевки"],
         desc: "Верёвочное ралли, командные игры и обед/чай на костре. Идеально для застенчивых детей и безопасной адаптации к природе.",
+        // FIX: Убрали ручные трансформации из URL — loader сам добавит нужный width
         img: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771665911/1_suclsq.jpg",
         accent: "text-emerald-400 border-emerald-500/30 bg-slate-950/90"
     },
@@ -101,7 +102,6 @@ export default function KidsFormats() {
                 </FadeBlock>
 
                 <div className="relative mb-12 md:mb-20">
-                    {/* ✅ ИСПРАВЛЕНИЕ: Контейнер сетки теперь обертывает карточки, а не закрывается перед ними */}
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                        {FORMATS.map((format, idx) => (
                           <FadeBlock 
@@ -116,7 +116,12 @@ export default function KidsFormats() {
                                       alt={format.title} 
                                       fill 
                                       className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100" 
+                                      // FIX: Точные sizes для карточек форматов
                                       sizes="(max-width: 768px) 85vw, (max-width: 1024px) 50vw, 33vw"
+                                      // FIX: lazy — карточки ниже hero, не конкурируют с LCP
+                                      loading="lazy"
+                                      // FIX: quality 55 — с градиентным оверлеем артефакты не видны
+                                      quality={55}
                                   />
                                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
                                   

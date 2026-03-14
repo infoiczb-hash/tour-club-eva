@@ -17,7 +17,6 @@ export default function KayakRules() {
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
 
-        {/* HEADER */}
         <div className="flex flex-col text-left mb-6 md:mb-10 max-w-3xl">
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/20 bg-amber-950/30 backdrop-blur-md mb-4 md:mb-6">
@@ -34,7 +33,6 @@ export default function KayakRules() {
           </div>
         </div>
 
-        {/* RULES GRID */}
         <div className="relative">
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {rules.map((rule, idx) => (
@@ -44,7 +42,17 @@ export default function KayakRules() {
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <div className="relative h-48 w-full grayscale-[50%] group-hover:grayscale-0 transition-all duration-700">
-                  <Image src={rule.image} alt={rule.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 400px" />
+                  <Image
+                    src={rule.image}
+                    alt={rule.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 80vw, (max-width: 1024px) 50vw, 33vw"
+                    // FIX: lazy — правила ниже fold
+                    loading="lazy"
+                    // FIX: quality 55 — b&w-карточки с оверлеем, артефакты скрыты
+                    quality={55}
+                  />
                   <div className="absolute top-4 left-4 w-8 h-8 bg-red-500/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.5)]">
                     <XCircle size={18} className="text-white" />
                   </div>
@@ -64,7 +72,6 @@ export default function KayakRules() {
           </div>
         </div>
 
-        {/* GOLDEN RULE BANNER */}
         <div className="mt-6 md:mt-8 p-6 md:p-8 rounded-[2.5rem] bg-gradient-to-r from-teal-900/40 to-slate-900 border border-teal-500/20 flex flex-col md:flex-row items-center gap-6 md:gap-8 animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
           <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center text-slate-950 shrink-0 shadow-[0_0_20px_rgba(20,184,166,0.4)]">
             <Anchor size={32} />
