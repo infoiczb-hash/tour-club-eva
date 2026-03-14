@@ -10,9 +10,6 @@ export default function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
   const [contentOpacity, setContentOpacity] = useState(1);
 
-  // Заменяет useScroll + useTransform:
-  // - фон: parallax через RAF (как в главном Hero)
-  // - контент: плавно скрывается при скролле через CSS
   useEffect(() => {
     let rafId: number;
     let lastScrollY = 0;
@@ -25,7 +22,6 @@ export default function Hero() {
       if (bgRef.current) {
         bgRef.current.style.transform = `translateY(${lastScrollY * 0.3}px)`;
       }
-      // opacity контента: 1 → 0 при скролле 0 → 400px
       const op = Math.max(0, 1 - lastScrollY / 400);
       setContentOpacity(op);
       rafId = requestAnimationFrame(update);
@@ -43,29 +39,28 @@ export default function Hero() {
   return (
     <section className="relative min-h-[100svh] w-full overflow-hidden bg-slate-950 flex flex-col items-center justify-center">
 
-      {/* PARALLAX БГ — через RAF, без Framer Motion */}
+      {/* PARALLAX БГ */}
       <div ref={bgRef} className="absolute inset-0 z-0" style={{ willChange: 'transform' }}>
         <Image
-          // ✅ ИСПРАВЛЕНО: Закодированный URL (Cyrillic to URI string) для мгновенной загрузки CDN
           src="https://res.cloudinary.com/dwrei7k2z/image/upload/v1771584228/%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5_viber_2025-06-21_11-50-14-080_a7uba5.jpg"
           alt="Сплав на байдарках"
           fill
           className="object-cover opacity-60"
           priority
           fetchPriority="high"
-          quality={85}
+          // FIX: 85 → 60. Фон с 60% прозрачностью — разница незаметна, экономия ~30% веса
+          quality={60}
+          // FIX: уточнили sizes — одинаково для всех брейкпоинтов, 100vw
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/40" />
       </div>
 
-      {/* КОНТЕНТ — opacity через CSS transition */}
+      {/* КОНТЕНТ */}
       <div
         className="relative z-10 container mx-auto px-4 text-center mt-12 md:mt-0 flex flex-col items-center"
         style={{ opacity: contentOpacity, transition: 'opacity 0.1s linear' }}
       >
-        {/* ✅ ИСПРАВЛЕНО: Убрали жесткий opacity-0 и искусственные задержки (animation-delay), 
-            чтобы текст появлялся сразу и Googlebot не штрафовал LCP */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
           <Waves size={14} className="text-teal-400 animate-pulse" />
           <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
@@ -82,7 +77,6 @@ export default function Hero() {
           Водные походы для новичков и тех, кто ищет природу и команду. Перезагрузка на воде. Только ты, весло и бесконечный горизонт.
         </p>
 
-        {/* ПЕРЕКЛЮЧАТЕЛЬ — без layoutId, стилизуем активный таб напрямую */}
         <div className="bg-slate-900/80 p-1.5 rounded-2xl border border-white/10 inline-flex flex-col sm:flex-row gap-1 w-full sm:w-auto shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 fill-mode-both">
           <button
             onClick={() => setActiveTab("newbie")}
@@ -104,7 +98,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* SCROLL INDICATOR — CSS анимация */}
+      {/* SCROLL INDICATOR */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none animate-in fade-in duration-1000 delay-1000 fill-mode-both">
         <span className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.2em]">Вниз</span>
         <div className="w-6 h-10 border-2 border-slate-500 rounded-full flex justify-center p-1">

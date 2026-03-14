@@ -82,8 +82,12 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                 alt={`Gallery ${index}`} 
                 fill 
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
-                priority={isMain} 
+                // FIX: только главное фото eager, остальные lazy
+                priority={isMain}
+                loading={isMain ? undefined : "lazy"}
                 sizes={isMain ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
+                // FIX: превью галереи — quality 55, в лайтбоксе будет 90
+                quality={isMain ? 65 : 55}
               />
               
               {isLastVisible && remainingCount > 0 ? (
@@ -100,6 +104,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         })}
       </div>
 
+      {/* Лайтбокс — quality 90 остаётся, грузится только при открытии */}
       {isOpen && (
         <div 
           className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center touch-none animate-in fade-in duration-200"

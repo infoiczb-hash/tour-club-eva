@@ -20,7 +20,6 @@ const galleryImages = [
 export default function Gallery() {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
-  // Блокировка скролла страницы при открытом лайтбоксе
   useEffect(() => {
     if (selectedImage !== null) {
       document.body.style.overflow = 'hidden';
@@ -30,7 +29,6 @@ export default function Gallery() {
     return () => { document.body.style.overflow = 'auto'; };
   }, [selectedImage]);
 
-  // Навигация с клавиатуры
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedImage === null) return;
@@ -52,12 +50,10 @@ export default function Gallery() {
 
   return (
     <section className="py-12 md:py-24 bg-[#020617] relative overflow-hidden border-t border-white/5 font-sans">
-      {/* Декоративный фон */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         
-        {/* HEADER */}
         <div className="max-w-3xl mb-10 md:mb-16 text-left">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4 md:mb-6">
@@ -73,7 +69,7 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* GRID: 2 колонки на мобильных, 4 на десктопе */}
+        {/* GRID */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
           {galleryImages.map((img, idx) => (
             <div
@@ -87,9 +83,11 @@ export default function Gallery() {
                 fill
                 className={cn("object-cover transition-transform duration-700 group-hover:scale-105", img.focus)}
                 sizes="(max-width: 768px) 50vw, 25vw"
+                // FIX: lazy — галерея ниже fold, не конкурирует с hero LCP
+                loading="lazy"
+                // FIX: 55 достаточно для превью-сетки; полное качество в лайтбоксе
+                quality={55}
               />
-              
-              {/* Оверлей при наведении с иконкой "Увеличить" */}
               <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-colors duration-500 flex items-center justify-center">
                 <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                   <Maximize2 className="text-white w-5 h-5" />
@@ -100,10 +98,9 @@ export default function Gallery() {
         </div>
       </div>
 
-      {/* ЛАЙТБОКС (Полноэкранный просмотр без framer-motion) */}
+      {/* ЛАЙТБОКС — качество 90 остаётся, грузится только при открытии */}
       {selectedImage !== null && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-in fade-in duration-300 touch-none" onClick={() => setSelectedImage(null)}>
-          {/* Кнопка закрытия */}
           <button
             onClick={() => setSelectedImage(null)}
             className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50"
@@ -111,7 +108,6 @@ export default function Gallery() {
             <X size={24} />
           </button>
 
-          {/* Контролы перелистывания (Десктоп) */}
           <button
             onClick={(e) => { e.stopPropagation(); showPrev(); }}
             className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 items-center justify-center text-white hover:bg-white/20 hover:scale-110 transition-all z-50"
@@ -125,7 +121,6 @@ export default function Gallery() {
             <ChevronRight size={32} />
           </button>
 
-          {/* Сама картинка в лайтбоксе */}
           <div className="relative w-full h-full max-w-6xl aspect-[4/3] md:aspect-[16/9] px-4 md:px-0 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
             <Image
               src={galleryImages[selectedImage].src}
@@ -142,7 +137,6 @@ export default function Gallery() {
              {selectedImage + 1} / {galleryImages.length}
           </div>
 
-          {/* Невидимые зоны для клика на мобилках (листание тапами по краям экрана) */}
           <div className="absolute inset-y-0 left-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); showPrev(); }} />
           <div className="absolute inset-y-0 right-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); showNext(); }} />
         </div>
