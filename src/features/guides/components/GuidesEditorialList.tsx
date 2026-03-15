@@ -92,10 +92,10 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                             <Zap size={36} strokeWidth={1.5} />
                         </div>
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 leading-none">
-                            Хочешь носить <br className="hidden md:block"/><span className="text-teal-500">такой же бейдж?</span>
+                            Хочешь к нам  <br className="hidden md:block"/><span className="text-teal-500">в команду?</span>
                         </h2>
                         <p className="text-slate-400 font-medium text-base md:text-lg max-w-2xl leading-relaxed mb-10">
-                            Мы всегда в поиске людей, влюбленных в природу: гидов, фотографов, поваров и организаторов. Если ты готов делиться эмоциями — нам по пути.
+                            Мы всегда в поиске людей, влюбленных в природу: гидов, водителей, фотографов, поваров и технических помощников. 
                         </p>
                         <button
                             onClick={() => openContactModal(undefined, 'HR')}

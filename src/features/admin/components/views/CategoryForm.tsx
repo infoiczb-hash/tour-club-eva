@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { X, Save, Tent, Mountain, Waves, Compass, Map, Sun, Snowflake, TreePine, Bike, Footprints, Loader2, MapPin, Anchor, Flame, Star } from 'lucide-react';
+// FIX: импортируем CATEGORY_COLORS из единого источника правды вместо дублирования
+import { CATEGORY_COLORS } from '@/lib/schemas';
 
 const AVAILABLE_ICONS = [
   { name: 'Compass', icon: Compass, label: 'Компас (универсально)' },
@@ -20,19 +22,12 @@ const AVAILABLE_ICONS = [
   { name: 'Star', icon: Star, label: 'Звезда (хит, особенное)' },
 ];
 
-// ✅ ПАЛИТРА ДИЗАЙН-СИСТЕМЫ 
-const AVAILABLE_COLORS = [
-  { key: 'slate', bgClass: 'bg-slate-500' },
-  { key: 'teal', bgClass: 'bg-teal-500' },
-  { key: 'emerald', bgClass: 'bg-emerald-500' },
-  { key: 'sky', bgClass: 'bg-sky-500' },
-  { key: 'blue', bgClass: 'bg-blue-500' },
-  { key: 'violet', bgClass: 'bg-violet-500' },
-  { key: 'pink', bgClass: 'bg-pink-500' },
-  { key: 'rose', bgClass: 'bg-rose-500' },
-  { key: 'orange', bgClass: 'bg-orange-500' },
-  { key: 'amber', bgClass: 'bg-amber-500' },
-];
+// FIX: строим AVAILABLE_COLORS из импортированного CATEGORY_COLORS
+// Tailwind требует полные классы — bg- + название цвета
+const AVAILABLE_COLORS = CATEGORY_COLORS.map(key => ({
+  key,
+  bgClass: `bg-${key}-500` as const,
+}));
 
 interface Props {
   initialData?: any;
@@ -48,7 +43,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
     title: initialData?.title || '',
     slug: initialData?.slug || '',
     icon: initialData?.icon || 'Compass',
-    color: initialData?.color || 'teal', // ✅ Стейт для цвета
+    color: initialData?.color || 'teal',
     sort_order: initialData?.sortOrder || initialData?.sort_order || 0,
     is_active: initialData?.isActive ?? initialData?.is_active ?? true,
   });
@@ -77,7 +72,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
     try {
       await onSubmit(formData);
     } catch (error) {
-      console.error("Submit error:", error);
+      console.error('Submit error:', error);
     } finally {
       setLoading(false);
     }
@@ -124,7 +119,6 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
               />
             </div>
 
-            {/* Селектор иконок ТОЛЬКО для туров */}
             {type === 'tour' && (
               <div className="space-y-3">
                 <label className="text-sm font-medium text-slate-300">Иконка категории</label>
@@ -138,8 +132,8 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
                         onClick={() => setFormData(prev => ({ ...prev, icon: item.name }))}
                         title={item.label}
                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
-                          isSelected 
-                            ? 'bg-teal-500/20 border-teal-500 text-teal-400' 
+                          isSelected
+                            ? 'bg-teal-500/20 border-teal-500 text-teal-400'
                             : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
                         }`}
                       >
@@ -154,7 +148,6 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
               </div>
             )}
 
-            {/* ✅ НОВОЕ: ВЫБОР ЦВЕТА КАТЕГОРИИ */}
             {type === 'tour' && (
               <div className="space-y-3 border-t border-slate-800 pt-4">
                 <label className="text-sm font-medium text-slate-300">Фирменный цвет категории</label>
