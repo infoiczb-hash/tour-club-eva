@@ -1,28 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, MessageCircle, Sparkles } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const FAQ_DATA = [
@@ -44,8 +30,8 @@ export default function HikesFAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
     const openContactModal = useModalStore((state) => state.openContactModal);
     
-    const faqView = useInView();
-    const ctaView = useInView();
+    const faqView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+    const ctaView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
     return (
         <section className="py-8 md:py-16 bg-stone-950 text-stone-100 border-t border-white/5 relative overflow-hidden">

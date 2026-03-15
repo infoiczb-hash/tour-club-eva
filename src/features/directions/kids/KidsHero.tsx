@@ -27,15 +27,15 @@ export default function KidsHero() {
         <div className="flex flex-col items-center">
           
           {/* Бейдж */}
-          <div className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 backdrop-blur-md rounded-full mb-8">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 backdrop-blur-md rounded-full mb-8">
             <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
             <span className="text-[10px] md:text-xs font-bold tracking-widest text-amber-400 uppercase">
               Детское направление
             </span>
           </div>
 
-          {/* Заголовок */}
-          <h1 className="opacity-0 animate-fade-in-up [animation-delay:150ms] text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter">
+          {/* Заголовок - МГНОВЕННЫЙ РЕНДЕР БЕЗ DELAY */}
+          <h1 className="animate-in fade-in zoom-in-95 duration-700 text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter">
             ВМЕСТО ЭКРАНА <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
               КОСТЁР
@@ -43,12 +43,12 @@ export default function KidsHero() {
           </h1>
 
           {/* Описание */}
-          <p className="opacity-0 animate-fade-in-up [animation-delay:300ms] text-base md:text-xl text-slate-300 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both text-base md:text-xl text-slate-300 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
             Мы возвращаем детям детство, а подросткам даём приключения, которыми гордишься.
           </p>
 
           {/* Кнопка превращена в якорную ссылку */}
-          <div className="opacity-0 animate-fade-in-up [animation-delay:450ms]">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
             <Link 
               href="#formats"
               className="group px-8 py-4 bg-amber-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(245,158,11,0.3)] flex items-center gap-3 mx-auto"

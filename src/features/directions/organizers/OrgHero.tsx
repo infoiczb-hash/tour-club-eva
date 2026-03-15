@@ -11,23 +11,23 @@ export default function OrganizersHero() {
   <div className="relative z-10 container mx-auto px-4 text-center max-w-5xl mt-8 md:mt-12">
         <div>
           {/* B2B Badge */}
-          <div className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md rounded-full mb-8">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md rounded-full mb-8">
             <Users className="w-4 h-4 text-indigo-400" />
             <span className="text-xs font-bold tracking-[0.15em] text-indigo-300 uppercase">
               Для HR, руководителей и мастеров
             </span>
           </div>
 
-          <h1 className="opacity-0 animate-fade-in-up [animation-delay:150ms] text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
+          <h1 className="animate-in fade-in zoom-in-95 duration-700 text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
             МЫ СОЗДАЕМ <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">СОБЫТИЯ</span>,<br />
             КОТОРЫЕ МЕНЯЮТ ЛЮДЕЙ И КОМАНДЫ
           </h1>
 
-          <p className="opacity-0 animate-fade-in-up [animation-delay:300ms] text-lg md:text-xl text-slate-300 font-medium mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both text-lg md:text-xl text-slate-300 font-medium mb-10 max-w-3xl mx-auto leading-relaxed">
             Организация сплавов, тимбилдингов и ретритов на природе. От 10 до 100+ человек. 
           </p>
 
-          <div className="opacity-0 animate-fade-in-up [animation-delay:450ms] flex flex-col sm:flex-row justify-center gap-4">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both flex flex-col sm:flex-row justify-center gap-4">
              {/* ✅ Кнопка открытия модального окна */}
              <button 
                onClick={() => openContactModal('Организация мероприятия / Корпоратив', 'TOUR')}

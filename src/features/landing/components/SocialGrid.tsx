@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Heart, Instagram, Send, Play, X, Volume2, VolumeX, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+
+// ✅ РЕШЕНИЕ 1: Импортируем статический JSON напрямую. 
+// Никаких fetch, useEffect и водопадов загрузки!
+import postsData from '../../../../public/social/posts.json';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -49,7 +53,36 @@ const SOCIAL_LINKS = [
 ];
 
 // ==========================================
-// 1. FullScreen Vertical Player (TikTok Style)
+// ✅ РЕШЕНИЕ 2: DRY Хук для IntersectionObserver (Автоплей видео)
+// ==========================================
+function useVideoAutoPlayback(options = { threshold: 0.6 }) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    useEffect(() => {
+        if (!videoRef.current) return;
+        
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                videoRef.current?.play().catch(() => {});
+                setIsPlaying(true);
+            } else {
+                videoRef.current?.pause();
+                if (videoRef.current) videoRef.current.currentTime = 0;
+                setIsPlaying(false);
+            }
+        }, options);
+
+        observer.observe(videoRef.current);
+        return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Запускаем 1 раз при маунте
+
+    return { videoRef, isPlaying };
+}
+
+// ==========================================
+// FullScreen Vertical Player (TikTok Style)
 // ==========================================
 const VerticalPlayer = ({ 
     posts, 
@@ -71,9 +104,7 @@ const VerticalPlayer = ({
     }, [initialIndex]);
 
     return (
-        <div 
-            className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300"
-        >
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300">
             {/* Close Button */}
             <button 
                 onClick={onClose}
@@ -102,31 +133,11 @@ const VerticalPlayer = ({
     );
 };
 
-// Отдельный слайд для логики IntersectionObserver (Play/Pause при скролле)
+// Отдельный слайд 
 const SingleSlide = ({ post }: { post: SocialPost }) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [isMuted, setIsMuted] = useState(true); // По умолчанию звук выключен (политика браузеров)
-    const [isPlaying, setIsPlaying] = useState(false);
-
-    // Intersection Observer: Запускает видео только когда оно в центре экрана
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    videoRef.current?.play().catch(() => {});
-                    setIsPlaying(true);
-                } else {
-                    videoRef.current?.pause();
-                    if (videoRef.current) videoRef.current.currentTime = 0;
-                    setIsPlaying(false);
-                }
-            },
-            { threshold: 0.6 } // 60% видео должно быть видно
-        );
-
-        if (videoRef.current) observer.observe(videoRef.current);
-        return () => observer.disconnect();
-    }, []);
+    // ✅ ИСПОЛЬЗУЕМ ЧИСТЫЙ ХУК ВМЕСТО ПРОСТЫНИ КОДА
+    const { videoRef, isPlaying } = useVideoAutoPlayback({ threshold: 0.6 });
+    const [isMuted, setIsMuted] = useState(true);
 
     const toggleMute = () => setIsMuted(!isMuted);
 
@@ -140,7 +151,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                 loop
                 playsInline
                 muted={isMuted}
-                onClick={toggleMute} // Клик по видео включает звук
+                onClick={toggleMute} 
             />
             
             {/* Sound Overlay Hint */}
@@ -190,20 +201,13 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
 };
 
 // ==========================================
-// 2. Main Component (Grid)
+// Main Component (Grid)
 // ==========================================
 export default function SocialGrid() {
-  const [posts, setPosts] = useState<SocialPost[]>([]);
   const [activePostIndex, setActivePostIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetch('/social/posts.json')
-      .then((res) => { if (!res.ok) throw new Error("Failed"); return res.json(); })
-      .then((data) => {
-        if (data.posts && Array.isArray(data.posts)) setPosts(data.posts.slice(0, 6));
-      })
-      .catch((err) => console.error(err));
-  }, []);
+  // ✅ ДАННЫЕ УЖЕ ЗДЕСЬ (Загружаются мгновенно без стейтов и загрузок)
+  const posts = postsData.posts.slice(0, 6) as SocialPost[];
 
   if (posts.length === 0) return null; 
 
@@ -254,26 +258,26 @@ export default function SocialGrid() {
             ))}
           </div>
         </div>
-{/* --- GRID / CAROUSEL --- */}
-<div className="relative group/carousel">
-    <div 
-      // ✅ ДОБАВЛЕНО ДЛЯ a11y:
-      tabIndex={0}
-      role="region"
-      aria-label="Лента моментов из туров"
-      className="
-        flex overflow-x-auto snap-x snap-mandatory hide-scrollbar
-        gap-4 md:gap-6 pb-8 px-4 -mx-4 md:px-0 md:mx-0
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
-    ">
-    {posts.map((post, index) => (
-        <ReelCard 
-            key={post.id} 
-            post={post} 
-            onClick={() => setActivePostIndex(index)} 
-        />
-    ))}
-    </div>
+        
+        {/* --- GRID / CAROUSEL --- */}
+        <div className="relative group/carousel">
+            <div 
+              tabIndex={0}
+              role="region"
+              aria-label="Лента моментов из туров"
+              className="
+                flex overflow-x-auto snap-x snap-mandatory hide-scrollbar
+                gap-4 md:gap-6 pb-8 px-4 -mx-4 md:px-0 md:mx-0
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl
+            ">
+            {posts.map((post, index) => (
+                <ReelCard 
+                    key={post.id} 
+                    post={post} 
+                    onClick={() => setActivePostIndex(index)} 
+                />
+            ))}
+            </div>
             
             {/* SWIPE HINT (Mobile only, bottom right) */}
             <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">

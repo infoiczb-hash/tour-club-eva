@@ -1,28 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Camera, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const GALLERY_ITEMS = [
@@ -78,8 +64,8 @@ const GALLERY_ITEMS = [
 ];
 
 export default function HikesGallery() {
-    const headerView = useInView();
-    const galleryView = useInView();
+    const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
+    const galleryView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
     return (
         <section className="py-8 md:py-16 bg-stone-950 border-t border-white/5 relative overflow-hidden">
@@ -126,7 +112,7 @@ export default function HikesGallery() {
                                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
                                 />
                                 
-                                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-50" />
 
                                 <div className="absolute bottom-0 left-0 w-full p-6 z-10">
                                     <div className="text-teal-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1.5">

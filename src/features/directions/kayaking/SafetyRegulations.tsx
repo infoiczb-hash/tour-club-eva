@@ -1,30 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   ShieldCheck, Anchor, Waves, Navigation, 
   Tent, LifeBuoy, UserCheck, Scale, ChevronDown, AlertCircle
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+// ✅ ДОБАВЛЕНО: Импорт глобального хука
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const regulations = [
@@ -40,8 +27,10 @@ const regulations = [
 
 export default function SafetyRegulations() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const headerView = useInView();
-  const listView = useInView();
+  
+  // ✅ ИСПРАВЛЕНО: Явно передаем параметры, чтобы сохранить оригинальное поведение
+  const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+  const listView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
   return (
     <section className="py-12 md:py-20 bg-[#020617] relative overflow-hidden font-sans border-t border-white/5">

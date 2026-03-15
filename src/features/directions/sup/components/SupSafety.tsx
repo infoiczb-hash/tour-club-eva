@@ -1,22 +1,9 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import React from "react";
 import { Shield, LifeBuoy, Navigation, ChevronRight } from 'lucide-react'; 
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
+// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+import { useInView } from '@/hooks/useInView';
 
 const SAFETY_GUARANTEES = [
     {
@@ -37,8 +24,9 @@ const SAFETY_GUARANTEES = [
 ];
 
 export default function SupSafety() {
-    const headerView = useInView();
-    const cardsView = useInView();
+    // ✅ ИСПРАВЛЕНО: Используем внешний хук
+    const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+    const cardsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
     return (
         <section className="py-8 md:py-14 bg-[#020617] relative overflow-hidden border-t border-white/5">

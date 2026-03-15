@@ -1,30 +1,18 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Play, Video } from 'lucide-react';
 import Image from 'next/image';
-
-function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
+// ✅ ДОБАВЛЕНО: Глобальный хук
+import { useInView } from '@/hooks/useInView';
 
 export default function SupVideo() {
     // Состояние, которое переключает обложку на реальный плеер
     const [isPlaying, setIsPlaying] = useState(false);
     
-    const headerView = useInView();
-    const playerView = useInView();
+    // ✅ ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
+    const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
+    const playerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
     // Данные видео
     const videoId = "Ki5m2YG_ALU";

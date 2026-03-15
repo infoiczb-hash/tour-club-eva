@@ -1,22 +1,9 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import React from "react";
 import { Coffee, Heart, Users, Briefcase, Dog, Baby, ArrowRight } from 'lucide-react';
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
+// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+import { useInView } from '@/hooks/useInView';
 
 const FORMATS = [
   { icon: Heart, label: "Романтики/Свиданий" },
@@ -28,8 +15,9 @@ const FORMATS = [
 ];
 
 export default function SupFormats() {
-  const headerView = useInView();
-  const listView = useInView();
+  // ✅ ИСПРАВЛЕНО: Используем внешний хук
+  const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+  const listView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
   return (
     <section className="py-10 md:py-12 bg-slate-950 relative overflow-hidden">

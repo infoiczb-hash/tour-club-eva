@@ -4,23 +4,6 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-// Формируем надежный CSP заголовок
-const cspHeader = `
-  default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;
-  style-src 'self' 'unsafe-inline';
-  img-src * blob: data:;
-  media-src * blob: data:;
-  connect-src *;
-  font-src 'self' data:;
-  frame-src 'self' https://www.youtube.com;
-  object-src 'none';
-  base-uri 'none';
-  form-action 'self';
-  frame-ancestors 'none';
-  upgrade-insecure-requests;
-`.replace(/\s{2,}/g, ' ').trim();
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -86,7 +69,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Content-Security-Policy', value: cspHeader },
+          // УДАЛЕНО: Content-Security-Policy (теперь в middleware)
         ],
       },
     ];

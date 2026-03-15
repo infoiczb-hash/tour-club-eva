@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
 import Image from 'next/image';
 import { 
     Gauge, MoveHorizontal, Timer, ShieldCheck, 
@@ -9,25 +8,11 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
+// ✅ ДОБАВЛЕНО: Глобальный хук
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-// Легкий нативный хук
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 // 1. Технические характеристики доски
@@ -68,11 +53,12 @@ const GEAR = [
 ];
 
 export default function SupEquipment() {
-    const headerView = useInView();
-    const boardView = useInView();
-    const statsView = useInView();
-    const gearHeaderView = useInView();
-    const gearListView = useInView();
+    // ✅ ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
+    const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+    const boardView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+    const statsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+    const gearHeaderView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+    const gearListView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
     return (
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
@@ -191,7 +177,6 @@ export default function SupEquipment() {
                         <h4 className="text-[15px] sm:text-base font-black text-white mb-1 tracking-tight group-hover:text-teal-300 transition-colors leading-tight">
                             {item.title}
                         </h4>
-                        {/* 👇 ИСПРАВЛЕНИЕ: удален класс line-clamp-2 */}
                         <p className="text-[14px] text-slate-400 leading-snug font-medium">
                             {item.desc}
                         </p>

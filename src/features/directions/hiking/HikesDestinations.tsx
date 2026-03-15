@@ -1,23 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Tent, Droplets, Mountain, ChevronRight } from 'lucide-react'; 
 import Image from 'next/image';
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
+import { useInView } from '@/hooks/useInView';
 
 const DESTINATIONS = [
   {
@@ -47,8 +33,8 @@ const DESTINATIONS = [
 ];
 
 export default function HikesDestinations() {
-  const headerView = useInView();
-  const cardsView = useInView();
+  const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+  const cardsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
   return (
     <section className="py-8 md:py-16 bg-stone-900 border-t border-white/5 relative overflow-hidden">

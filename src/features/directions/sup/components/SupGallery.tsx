@@ -1,28 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Heart, Camera, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
+// ✅ ДОБАВЛЕНО: Глобальный хук
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const PHOTOS = [
@@ -54,8 +41,9 @@ const PHOTOS = [
 ];
 
 export default function SupGallery() {
-    const headerView = useInView();
-    const galleryView = useInView();
+    // ✅ ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
+    const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
+    const galleryView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
     return (
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">

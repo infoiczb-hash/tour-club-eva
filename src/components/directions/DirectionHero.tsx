@@ -110,7 +110,7 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
         
         {/* Динамический бейдж */}
         <div 
-            className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-6 sm:mb-8 shadow-2xl"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-700 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-6 sm:mb-8 shadow-2xl"
             style={{ 
                 backgroundColor: `${theme.glow.replace('0.4', '0.1')}`, 
                 borderColor: `${theme.glow.replace('0.4', '0.3')}` 
@@ -124,16 +124,16 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
             </span>
         </div>
 
-        {/* Гигантский заголовок (LCP) */}
+        {/* Гигантский заголовок (LCP) - МГНОВЕННЫЙ РЕНДЕР БЕЗ DELAY */}
         <h1 
-            className="opacity-0 animate-fade-in-up [animation-delay:100ms] text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.95] mb-6 drop-shadow-2xl max-w-5xl"
+            className="animate-in fade-in zoom-in-95 duration-700 text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.95] mb-6 drop-shadow-2xl max-w-5xl"
         >
             {data.hero.title}
         </h1>
 
         {/* Подзаголовок */}
         <p 
-            className="opacity-0 animate-fade-in-up [animation-delay:200ms] text-sm sm:text-lg md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed drop-shadow-md"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both text-sm sm:text-lg md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed drop-shadow-md"
         >
             {data.hero.subtitle}
         </p>
@@ -146,7 +146,7 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
           <button
             onClick={handleScrollDown}
-            className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto opacity-0 animate-fade-in-up [animation-delay:800ms]"
+            className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto animate-in fade-in duration-1000 delay-500 fill-mode-both"
           >
               <div 
                   className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border flex items-center justify-center transition-all duration-500 shadow-lg backdrop-blur-sm"
