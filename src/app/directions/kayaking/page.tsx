@@ -1,28 +1,27 @@
 import React from 'react';
 import { Metadata } from 'next';
-// Закомментировали запрос к БД, пока не разберемся с зависанием
-// import { getTours } from '@/features/tours/api'; 
+import { getTours } from '@/features/tours/api'; // ✅ РАЗБЛОКИРОВАН ЗАПРОС К БД
 import KayakingLanding from '@/features/directions/kayaking/KayakingLanding';
 
-export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 60; 
+
 export const metadata: Metadata = {
   title: 'Сплав на байдарках по Днестру в Приднестровье | Турклуб «Эва»',
   description: 'Сплавы по Днестру каждые выходные. Для новичков, команд, семей с детьми.',
   keywords: [
     'сплав байдарки Днестр',
-     'сплав байдарки Тирасполь',
-      'байдарки Днестр Приднестровье',
+    'сплав байдарки Тирасполь',
+    'байдарки Днестр Приднестровье',
     'каяки Приднестровье',
     'водный поход Тирасполь',
     'байдарки Молдова',
-  'сплав по Днестру цена',
-   'сплав с детьми Днестр',
-   'водный поход выходные',
-   'сплав для начинающих Днестр',
-
+    'сплав по Днестру цена',
+    'сплав с детьми Днестр',
+    'водный поход выходные',
+    'сплав для начинающих Днестр',
   ],
   alternates: {
-    canonical: '/directions/kayaking', // Защита от дублей
+    canonical: '/directions/kayaking', 
   },
   openGraph: {
     title: 'Сплав на байдарках по Днестру | Турклуб «Эва»',
@@ -31,7 +30,7 @@ export const metadata: Metadata = {
     siteName: 'Турклуб «Эва»',
     images: [
       {
-        url: '/og-default.jpg', // Надежный фолбэк для соцсетей
+        url: '/og-default.jpg', 
         width: 1200,
         height: 630,
         alt: 'Сплав на байдарках по Днестру с турклубом Эва',
@@ -48,12 +47,18 @@ export const metadata: Metadata = {
   }
 };
 
-// УБРАЛИ async! Это теперь обычный синхронный компонент
-export default function KayakingLandingPage() {
+// ✅ ВОЗВРАЩЕН async ДЛЯ СЕРВЕРНОГО КОМПОНЕНТА
+export default async function KayakingLandingPage() {
+  const allTours = await getTours();
+  
+  // ✅ ЧЕСТНАЯ ФИЛЬТРАЦИЯ
+  const kayakingTours = allTours.filter(tour => 
+    tour.category?.slug === 'kayak' || tour.category?.slug === 'kayaking'
+  );
+
   return (
     <main>
-      {/* Передаем пустой массив, чтобы ничего не ломалось */}
-      <KayakingLanding tours={[]} />
+      <KayakingLanding tours={kayakingTours} />
     </main>
   );
 }

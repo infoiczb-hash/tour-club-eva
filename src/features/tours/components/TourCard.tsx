@@ -117,7 +117,8 @@ const dateStr = dateObj
                 : "bg-slate-900/60 border-white/10 text-teal-400"
             )}>
               <Calendar size={16} strokeWidth={2.5} />
-              <span className="text-sm font-black uppercase tracking-wider">{dateStr}</span>
+              {/* ✅ ЭТАП 4: Изменение только здесь! suppressHydrationWarning */}
+              <span suppressHydrationWarning className="text-sm font-black uppercase tracking-wider">{dateStr}</span>
               {/* 👇 ИСПРАВЛЕНИЕ: Новый текст для бейджика дополнительных дат */}
               {hasMoreDates && (
                 <span className="text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
@@ -198,4 +199,5 @@ const dateStr = dateObj
     </Link>
   );
 }
+
 export default memo(TourCard);

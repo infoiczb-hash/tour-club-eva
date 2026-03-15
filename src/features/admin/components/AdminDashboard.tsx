@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { Tour } from '@/features/tours/types'; 
-import { Blog, BookingStatus, Guide, Review, Inquiry, FunTest } from '@prisma/client'; 
+// ✅ ИСПРАВЛЕНО: Добавлены все необходимые модели и типы
+import { Blog, BookingStatus, Guide, Review, Inquiry, FunTest, TourCategory, BlogCategory } from '@prisma/client'; 
 import AdminNavigation from './AdminNavigation';
 import FunTestTable from '@/features/admin/components/FunTestTab';
 import FanForm from '@/features/admin/components/FanForm';
@@ -41,12 +42,13 @@ import { getGuides } from '@/features/guides/api';
 import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
 
-// 👇 ИСПРАВЛЕНИЕ 1: Импортируем правильный экшен для гидов
 import { upsertGuideAction } from '@/features/admin/actions/guides';
 import { 
   deleteGuideAction, 
   savePostAction, 
   deletePostAction, 
+  togglePostStatusAction, 
+  SavePostPayload,        
   saveContentBlockAction, 
   getRegistrationsAction, 
   updateRegistrationStatus 
@@ -95,13 +97,14 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [posts, setPosts] = useState<Blog[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [contentBlocks, setContentBlocks] = useState<any>({});
+  
+  const [contentBlocks, setContentBlocks] = useState<Record<string, Record<string, unknown> | null>>({});
   const [funTests, setFunTests] = useState<FunTest[]>([]);
   
   // Categories State
-  const [tourCategories, setTourCategories] = useState<any[]>([]);
-  const [blogCategories, setBlogCategories] = useState<any[]>([]);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [tourCategories, setTourCategories] = useState<TourCategory[]>([]);
+  const [blogCategories, setBlogCategories] = useState<BlogCategory[]>([]);
+  const [editingCategory, setEditingCategory] = useState<TourCategory | BlogCategory | null>(null);
   const [categoryType, setCategoryType] = useState<'tour' | 'blog'>('tour');
 
   // Modals
@@ -115,7 +118,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     category: false 
   });
   
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<unknown>(null);
   const [editingSlug, setEditingSlug] = useState('');
 
    // --- INIT ---
@@ -168,7 +171,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   // ==========================================
   // ОБРАБОТЧИКИ КАТЕГОРИЙ
   // ==========================================
-  const handleSaveCategory = async (data: any) => {
+  const handleSaveCategory = async (data: Record<string, unknown>) => {
     const action = categoryType === 'tour' ? upsertTourCategoryAction : upsertBlogCategoryAction;
     const res = await action(data);
     if (res.success) {
@@ -203,7 +206,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     }
   };
 
-  const openCategoryModal = (type: 'tour' | 'blog', category: any = null) => {
+  const openCategoryModal = (type: 'tour' | 'blog', category: TourCategory | BlogCategory | null = null) => {
     setCategoryType(type);
     setEditingCategory(category);
     setModalState(p => ({ ...p, category: true }));
@@ -255,8 +258,8 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       if (list.length === 0) return showToast('Список пуст', 'error');
       
       let msg = `📋 <b>Список группы: ${title}</b>\n\n`;
-list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
-msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
+      list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
+      msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
       
       const res = await sendToTelegram(msg);
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
@@ -288,10 +291,10 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
       if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
   };
 
-  const togglePostStatus = async (post: any, field: 'isActive' | 'is_trending') => {
+  const togglePostStatus = async (post: Blog, field: 'isActive' | 'is_trending') => {
       const newVal = !post[field];
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, [field]: newVal } : p));
-      await savePostAction({ id: post.id, title: post.title, [field === 'isActive' ? 'is_active' : 'is_trending']: newVal });
+      await togglePostStatusAction(post.id, field, newVal);
   };
 
   const toggleReviewStatus = async (review: Review) => {
@@ -313,6 +316,7 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
             
       <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto w-full transition-all duration-300">
         
+        {/* --- 1. Dashboard --- */}
         {activeTab === 'dashboard' && (
             <DashboardTab 
                 stats={stats}
@@ -321,7 +325,8 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
             />
         )}
 
-       {activeTab === 'tours' && (
+        {/* --- 2. Tours & Categories --- */}
+        {activeTab === 'tours' && (
             <ToursTab 
                 tours={tours}
                 bookings={bookings as any} 
@@ -342,12 +347,18 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
                 onToggleCategoryStatus={handleToggleCategory}
             />
         )}
+
+        {/* --- 3. Bookings (CRM) --- */}
         {activeTab === 'bookings' && (
             <BookingsTab bookings={bookings} onStatusChange={handleStatusChange} />
         )}
+
+        {/* --- 4. Inquiries --- */}
         {activeTab === 'inquiries' && (
             <InquiriesTab inquiries={inquiries} />
         )}
+
+        {/* --- 5. Reviews --- */}
         {activeTab === 'reviews' && (
             <ReviewsTab 
                 reviews={reviews}
@@ -357,6 +368,8 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
                 onToggleStatus={toggleReviewStatus}
             />
         )}
+
+        {/* --- 6. Guides --- */}
         {activeTab === 'guides' && (
             <GuidesTab 
                 guides={guides}
@@ -365,7 +378,9 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
                 onDelete={(id) => handleDelete('guide', id)}
             />
         )}
-       {activeTab === 'blog' && (
+
+        {/* --- 7. Blog --- */}
+        {activeTab === 'blog' && (
             <BlogTab
                 posts={posts}
                 categories={blogCategories}
@@ -384,13 +399,17 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
                 onToggleCategoryStatus={handleToggleCategory}
             />
         )}
+
+        {/* --- 8. Content Blocks --- */}
         {activeTab === 'content' && (
             <ContentTab onEdit={(slug) => { 
                 setEditingSlug(slug); 
                 setModalState(p => ({...p, content: true})); 
             }} />
         )}
-       {activeTab === 'fun' && (
+
+        {/* --- 9. Fan Sector --- */}
+        {activeTab === 'fun' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
@@ -415,10 +434,12 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
         )}
       </main>
 
-      {/* МОДАЛКИ */}
+      {/* --- MODALS --- */}
+
+      {/* Tour Modal */}
       {modalState.tour && (
         <TourForm 
-            initialData={editingItem} 
+            initialData={editingItem as React.ComponentProps<typeof TourForm>['initialData']} 
             guides={guidesForForm}
             categories={tourCategories}
             onClose={() => setModalState(p => ({ ...p, tour: false }))}
@@ -430,50 +451,57 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
         />
       )}
       
-  {modalState.guide && (
+      {/* Guide Modal */}
+      {modalState.guide && (
           <GuideForm 
-            initialData={editingItem}
+            initialData={editingItem as React.ComponentProps<typeof GuideForm>['initialData']}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
-            onSubmit={async (data: Record<string, any>) => { 
-                // ✅ Сохраняем результат вызова экшена
+            onSubmit={async (data: Record<string, unknown>) => { 
                 const res = await upsertGuideAction(data); 
-                
                 if (res.success) {
-                    showToast('Досье гида сохранено!', 'success'); // ✅ Показываем зеленый тостер
-                    await loadAllData(); // Обновляем данные в таблице
+                    showToast('Досье гида сохранено!', 'success');
+                    await loadAllData();
                 } else {
-                    showToast(res.error || 'Ошибка при сохранении гида', 'error'); // ❌ Показываем красный тостер
+                    showToast(res.error || 'Ошибка при сохранении гида', 'error');
                 }
             }}
           />
       )}
       
+      {/* Post Modal */}
       {modalState.post && (
          <PostForm
-            initialData={editingItem}
+            initialData={editingItem as React.ComponentProps<typeof PostForm>['initialData']}
             categories={blogCategories}
             onClose={() => setModalState(p => ({ ...p, post: false }))}
-            onSubmit={async (data: Record<string, unknown>) => { await savePostAction(data); loadAllData(); }}
+            // ✅ ИСПРАВЛЕНО: Безопасное двойное приведение типов
+            onSubmit={async (data: Record<string, unknown>) => { 
+                await savePostAction(data as unknown as SavePostPayload); 
+                loadAllData(); 
+            }}
         />
       )}
 
+      {/* Review Modal */}
       {modalState.review && (
           <ReviewForm
-            initialData={editingItem}
+            initialData={editingItem as React.ComponentProps<typeof ReviewForm>['initialData']}
             onClose={() => setModalState(p => ({ ...p, review: false }))}
             onSuccess={() => { setModalState(p => ({ ...p, review: false })); loadAllData(); showToast('Отзыв сохранен', 'success'); }}
           />
       )}
       
+      {/* Content Block Modal */}
       {modalState.content && (
           <ContentForm
             slug={editingSlug}
-            initialContent={contentBlocks[editingSlug]}
+            initialContent={contentBlocks[editingSlug] as React.ComponentProps<typeof ContentForm>['initialContent']}
             onClose={() => setModalState(p => ({ ...p, content: false }))}
             onSubmit={async (s, d) => { await saveContentBlockAction(s, d); loadAllData(); }}
           />
       )}
       
+      {/* Fun Sector Modal */}
       {modalState.fun && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl relative shadow-2xl my-auto">
@@ -481,16 +509,17 @@ msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||
                 <X size={24}/>
              </button>
              <FanForm 
-                initialData={editingItem} 
+                initialData={editingItem as React.ComponentProps<typeof FanForm>['initialData']} 
                 onSuccess={() => { setModalState(p => ({...p, fun: false})); loadAllData(); showToast('Карточка сохранена', 'success'); }}
              />
           </div>
         </div>
       )}
 
+      {/* Category Modal */}
       {modalState.category && (
         <CategoryForm
-          initialData={editingCategory}
+          initialData={editingCategory as React.ComponentProps<typeof CategoryForm>['initialData']}
           type={categoryType}
           onClose={() => setModalState(p => ({ ...p, category: false }))}
           onSubmit={handleSaveCategory}

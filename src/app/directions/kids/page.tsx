@@ -1,6 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import KidsLandingClient from '@/features/directions/kids/KidsLanding'
+import { getTours } from '@/features/tours/api'; // ✅ Добавлено: импорт API
 
 export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
 
@@ -43,10 +44,14 @@ export const metadata: Metadata = {
   }
 };
 
-export default function KidsPage() {
+export default async function KidsPage() {
+  // ✅ ЭТАП 3: Честная фильтрация по категории
+  const allTours = await getTours();
+  const kidsTours = allTours.filter(t => t.category?.slug === 'kids');
+
   return (
     <main className="bg-slate-950 min-h-screen selection:bg-amber-500/30">
-      <KidsLandingClient />
+      <KidsLandingClient tours={kidsTours} />
     </main>
   );
 }

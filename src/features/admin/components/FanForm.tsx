@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Save, AlertCircle, Loader2, Tags, Key } from "lucide-react";
 import { upsertFunTestAction } from "@/features/admin/actions/fun";
+import type { FunTest } from "@prisma/client"; // ✅ ДОБАВЛЕНО: Строгий тип из базы данных
 
 // --- КОНСТАНТЫ ДЛЯ УДОБСТВА ---
 const CATEGORIES = [
@@ -32,10 +33,11 @@ const SYSTEM_SLUGS = [
 
 // --- Схема валидации Zod ---
 const formSchema = z.object({
+  id: z.string().optional(), // ✅ ДОБАВЛЕНО: Для корректного сохранения при редактировании
   slug: z.string().min(2, "Выберите системный ключ"),
   title: z.string().min(2, "Введите название теста"),
   description: z.string().min(5, "Добавьте краткое описание"),
-  image: z.string().url("Введите корректный URL картинки").or(z.literal("")),
+  image: z.string().url("Введите корректный URL картинки").or(z.literal("")).optional().nullable(), // ✅ ИСПРАВЛЕНО: Разрешаем null
   category: z.string().min(2, "Укажите категорию"),
   isActive: z.boolean(), 
   passCount: z.number().min(0), 
@@ -43,8 +45,9 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// ✅ ИСПРАВЛЕНО: Строгая типизация вместо any
 interface Props {
-  initialData?: any; 
+  initialData?: Partial<FunTest> | null; 
   onSuccess?: () => void; 
 }
 
@@ -52,16 +55,18 @@ export default function FanForm({ initialData, onSuccess }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ ИСПРАВЛЕНО: Безопасный маппинг данных из БД в форму
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      slug: "",
-      title: "",
-      description: "",
-      image: "",
-      category: "Психологические тесты",
-      isActive: true, // По умолчанию делаем активным при создании
-      passCount: 0,
+    defaultValues: {
+      id: initialData?.id || undefined,
+      slug: initialData?.slug || "",
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      image: initialData?.image || "", // Конвертируем null в пустую строку
+      category: initialData?.category || "Психологические тесты",
+      isActive: initialData?.isActive ?? true, // По умолчанию делаем активным при создании
+      passCount: initialData?.passCount ?? 0,
     },
   });
 
@@ -70,7 +75,20 @@ export default function FanForm({ initialData, onSuccess }: Props) {
     setError(null);
     
     try {
-      const res = await upsertFunTestAction(data);
+      // ✅ ИСПРАВЛЕНО: Приводим данные к строгому формату экшена
+      const payload = {
+        id: data.id,
+        slug: data.slug,
+        title: data.title,
+        description: data.description,
+        image: data.image || "", 
+        category: data.category,
+        isActive: data.isActive,
+        passCount: data.passCount,
+      };
+
+      const res = await upsertFunTestAction(payload);
+      
       if (res.success) {
         if (onSuccess) onSuccess(); 
       } else {

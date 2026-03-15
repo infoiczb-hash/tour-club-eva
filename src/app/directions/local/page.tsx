@@ -1,9 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { getTours } from '@/features/tours/api'; // Проверьте путь к вашему API
+import { getTours } from '@/features/tours/api'; 
 import LocalProgram from '@/features/directions/local/LocalLanding';
 
-export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 60; 
 
 export const metadata: Metadata = {
   title: 'Маршруты по Приднестровью | Турклуб Эва',
@@ -17,16 +17,15 @@ export const metadata: Metadata = {
     "Валя Адынкэ",
     'активный отдых в Приднестровье',
     "куда поехать на выходные Тирасполь",
-  "маршрут Цыпово с гидом",
-  "экскурсия Рашков Строенцы",
-  "Ягорлык заповедник",
-  "активный отдых Приднестровье",
-  "Кицканский лес поход",
-  "однодневный тур Тирасполь",
-
+    "маршрут Цыпово с гидом",
+    "экскурсия Рашков Строенцы",
+    "Ягорлык заповедник",
+    "активный отдых Приднестровье",
+    "Кицканский лес поход",
+    "однодневный тур Тирасполь",
   ],
   alternates: {
-    canonical: '/directions/local', // Защита от дублей
+    canonical: '/directions/local', 
   },
   openGraph: {
     title: 'Приключения в Приднестровье | Турклуб «Эва»',
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
     siteName: 'Турклуб «Эва»',
     images: [
       {
-        url: '/og-default.jpg', // Подтянется красивая обложка при репосте
+        url: '/og-default.jpg', 
         width: 1200,
         height: 630,
         alt: 'Маршруты по Приднестровью с турклубом Эва',
@@ -53,17 +52,12 @@ export const metadata: Metadata = {
 };
 
 export default async function LocalPage() {
-  // 1. Получаем все туры
+  // ✅ 1. Получаем все активные туры
   const allTours = await getTours();
 
-  // 2. Фильтруем: Ищем тег "local", "moldova" или категорию
-  // Логику фильтрации можно адаптировать под вашу базу данных
-const localTours = allTours.filter(tour => 
-    tour.category?.slug === 'local' || // ✅ Проверяем по slug новой категории локальных туров
-    tour.title.toLowerCase().includes('молдова') ||
-    tour.title.toLowerCase().includes('днестр') ||
-    tour.title.toLowerCase().includes('строенцы')
-  );
+  // ✅ 2. ЧЕСТНАЯ ФИЛЬТРАЦИЯ (Без хардкода "молдова")
+  // Опираемся только на строгий slug категории из базы данных
+  const localTours = allTours.filter(tour => tour.category?.slug === 'local');
 
   return (
     <main className="bg-slate-950 min-h-screen selection:bg-emerald-500/30">

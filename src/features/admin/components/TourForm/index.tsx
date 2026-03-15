@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, Resolver } from 'react-hook-form'; // 👈 ИСПРАВЛЕНО: Добавлен импорт Resolver
 import { zodResolver } from '@hookform/resolvers/zod';
 import { tourFormSchema, type TourFormValues } from './schema';
 import { saveTour } from '@/features/admin/actions/tour';
@@ -34,7 +34,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
   // =========================================================
   // 1. МАППИНГ ДАННЫХ (БАЗА -> ФОРМА)
   // =========================================================
-  const defaultValues = useMemo(() => {
+  const defaultValues: Partial<TourFormValues> = useMemo(() => {
     // Дефолтные значения для НОВОГО тура
     if (!initialData) {
       return {
@@ -54,7 +54,12 @@ export default function TourForm({ initialData, onClose, guides, categories = []
          highlights: [],
          checklist: [],
          spots: 15,
-         spotsLeft: 15
+         spotsLeft: 15,
+         // 👇 Добавлено для соответствия строгой схеме Zod без ошибок:
+         difficulty: 'medium',
+         label: '',
+         location: '',
+         duration: '1 день',
       };
     }
 
@@ -119,7 +124,8 @@ export default function TourForm({ initialData, onClose, guides, categories = []
   // 2. ИНИЦИАЛИЗАЦИЯ ФОРМЫ
   // =========================================================
   const methods = useForm<TourFormValues>({
-    resolver: zodResolver(tourFormSchema) as any, 
+    // 👈 ИСПРАВЛЕНО: Безопасное приведение типов для обхода конфликта Zod и RHF
+    resolver: zodResolver(tourFormSchema) as unknown as Resolver<TourFormValues>, 
     defaultValues,
     mode: 'onChange' 
   });
@@ -136,7 +142,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
   // =========================================================
   // 3. ОТПРАВКА ДАННЫХ
   // =========================================================
-const onSubmit = async (data: TourFormValues) => {
+  const onSubmit = async (data: TourFormValues) => {
     try {
       const payload = { ...data };
       

@@ -1,29 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { ChevronDown, HelpCircle, MessageCircle, BookOpen, ArrowRight } from "lucide-react";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+// ✅ ДОБАВЛЕНО: Импортируем глобальный оптимизированный хук
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const faqs = [
@@ -38,8 +25,9 @@ export default function FAQ() {
   const openContactModal = useModalStore((state) => state.openContactModal);
   const { setActiveTab } = useKayakTab();
 
-  const headerView = useInView();
-  const faqsView = useInView();
+  // ✅ ИСПРАВЛЕНО: Используем глобальный хук с сохранением оригинальных параметров
+  const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
+  const faqsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
   const actionCardsContent = (
     <div className="flex flex-col gap-4 mt-2">

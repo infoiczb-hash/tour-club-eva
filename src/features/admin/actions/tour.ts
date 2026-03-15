@@ -1,98 +1,29 @@
 'use server';
 
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client'; // ✅ Добавили импорт типов Prisma
+import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
-// ==========================================
-// ZOD SCHEMA
-// ==========================================
-const tourSchema = z.object({
-  id: z.string().optional(),
+// ✅ ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ ДЛЯ ВАЛИДАЦИИ
+import { tourFormSchema, type TourFormValues } from '@/features/admin/components/TourForm/schema';
 
-  isActive: z.boolean().default(false),
-
-  title: z.string().min(3, 'Название обязательно'),
-  subtitle: z.string().optional().nullable(),
-  slug: z.string().min(3),
-
-  categoryId: z.string().optional().nullable(), // ✅ Заменили type на categoryId
-  difficulty: z.string().default('medium'),
-  label: z.string().optional().nullable(),
-  tags: z.array(z.string()).default([]),
-
-  location: z.string(),
-  route: z.string().optional().nullable(),
-  distance: z.string().optional().nullable(),
-  duration: z.string().optional().nullable(),
-  meetingPoint: z.string().optional().nullable(),
-
-  dates: z.array(z.object({
-    start: z.string(),
-    end: z.string().optional(),
-    time: z.string().optional(),
-    guide_id: z.string().optional().nullable(),
-  })).default([]),
-
-  currency: z.string().default('RUB'),
-  price: z.coerce.number(),
-  priceOld: z.coerce.number().optional().nullable(),
-  priceChild: z.coerce.number().optional().nullable(),
-  priceFamily: z.coerce.number().optional().nullable(),
-  priceMember: z.coerce.number().optional().nullable(),
-
-  spots: z.coerce.number().default(15),
-  spotsLeft: z.coerce.number().default(15),
-
-  coverImage: z.string().optional().nullable(),
-  gallery: z.array(z.string()).default([]),
-
-  description: z.string().optional().nullable(),
-  highlights: z.array(z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    icon: z.string().optional(),
-  })).default([]),
-  program: z.array(z.object({
-    day: z.number().optional(),
-    title: z.string(),
-    description: z.string().optional(),
-    activities: z.array(z.string()).optional(),
-  })).default([]),
-  faq: z.array(z.object({
-    question: z.string(),
-    answer: z.string(),
-  })).default([]),
-  checklist: z.array(z.object({
-    title: z.string(),
-    items: z.array(z.string()).optional(),
-  })).default([]),
-  documents: z.array(z.object({
-    title: z.string(),
-    url: z.string().optional(),
-  })).default([]),
-
-  included: z.array(z.string()).default([]),
-  additionalExpenses: z.array(z.string()).default([]),
-
-  metaTitle: z.string().optional().nullable(),
-  metaDesc: z.string().optional().nullable(),
-});
-
-type TourPayload = z.infer<typeof tourSchema>;
+// ✅ СТРОГАЯ ТИПИЗАЦИЯ ВХОДЯЩИХ ДАННЫХ (ВМЕСТО ANY)
+export type SaveTourPayload = Record<string, unknown> & {
+  id?: string;
+};
 
 // ==========================================
 // SAVE TOUR (CREATE / UPDATE)
 // ==========================================
-export async function saveTour(formData: any) {
+export async function saveTour(formData: SaveTourPayload) {
   try {
     // ✅ AUTH CHECK
     await requireAuth();
 
+    // 1. Нормализуем данные, приводя старые snake_case к camelCase, если они есть
     const rawData = {
       ...formData,
       categoryId: formData.categoryId ?? formData.category_id,
@@ -107,27 +38,37 @@ export async function saveTour(formData: any) {
       additionalExpenses: formData.additionalExpenses ?? formData.additional_expenses,
       metaTitle: formData.metaTitle ?? formData.meta_title,
       metaDesc: formData.metaDesc ?? formData.meta_desc,
+      
       tags: Array.isArray(formData.tags) ? formData.tags : [],
       included: Array.isArray(formData.included) ? formData.included : [],
+      
+      // Защита от пустых UUID для гидов
+      dates: Array.isArray(formData.dates) ? formData.dates.map((d: any) => ({
+        ...d,
+        guide_id: d.guide_id === "" ? null : d.guide_id 
+      })) : [],
     };
 
-    const result = tourSchema.safeParse(rawData);
+    // 2. Валидируем данные через ЕДИНУЮ схему (ту самую, что и в форме)
+    const result = tourFormSchema.safeParse(rawData);
     if (!result.success) {
       console.error('❌ Validation Error:', result.error.flatten());
       return { success: false, error: 'Ошибка проверки данных. Проверьте обязательные поля.' };
     }
 
-    const data: TourPayload = result.data;
-    const mainGuideId = data.dates?.[0]?.guide_id ?? null;
+    const data: TourFormValues = result.data;
+    
+    // Если гид не выбран, присваиваем null, чтобы избежать ошибки UUID в Prisma
+    const mainGuideId = data.dates?.[0]?.guide_id || null;
 
-    // ✅ Строгая типизация: Prisma точно знает, что мы передаем плоские данные
+    // 3. Формируем строго типизированный пейлоад для Prisma
     const prismaPayload: Prisma.TourUncheckedCreateInput = {
       slug: data.slug,
       title: data.title,
       subtitle: data.subtitle ?? null,
       isActive: data.isActive,
 
-      categoryId: data.categoryId ?? null, // ✅ Подключили новую связь
+      categoryId: data.categoryId ?? null, 
       difficulty: data.difficulty,
       label: data.label ?? '',
       tags: data.tags,
@@ -138,11 +79,8 @@ export async function saveTour(formData: any) {
       duration: data.duration ?? null,
       meetingPoint: data.meetingPoint ?? null,
 
-      // ✅ Приводим массивы объектов из Zod к типу Prisma JSON
-      dates: data.dates as Prisma.InputJsonValue,
-      
-      // ✅ Убрали вложенный объект `guide`, пишем напрямую в скалярное поле `guideId`
-      guideId: mainGuideId ?? null,
+      dates: data.dates as unknown as Prisma.InputJsonValue,
+      guideId: mainGuideId,
 
       currency: data.currency,
       price: data.price,
@@ -159,12 +97,11 @@ export async function saveTour(formData: any) {
 
       description: data.description ?? null,
       
-      // ✅ Приводим остальные сложные объекты к Prisma.InputJsonValue
-      highlights: data.highlights as Prisma.InputJsonValue,
-      program: data.program as Prisma.InputJsonValue,
-      faq: data.faq as Prisma.InputJsonValue,
-      checklist: data.checklist as Prisma.InputJsonValue,
-      documents: data.documents as Prisma.InputJsonValue,
+      highlights: data.highlights as unknown as Prisma.InputJsonValue,
+      program: data.program as unknown as Prisma.InputJsonValue,
+      faq: data.faq as unknown as Prisma.InputJsonValue,
+      checklist: data.checklist as unknown as Prisma.InputJsonValue,
+      documents: data.documents as unknown as Prisma.InputJsonValue,
 
       included: data.included,
       additionalExpenses: data.additionalExpenses,
@@ -179,7 +116,7 @@ export async function saveTour(formData: any) {
       // === UPDATE ===
       await prisma.tour.update({
         where: { id: formData.id },
-        data: prismaPayload, // ✅ Никаких `as any`, идеальная проверка типов
+        data: prismaPayload, 
       });
     } else {
       // === CREATE — проверка slug, инкремент вместо рандома ===
@@ -195,15 +132,15 @@ export async function saveTour(formData: any) {
         prismaPayload.slug = slug;
       }
 
-      await prisma.tour.create({ data: prismaPayload }); // ✅ Никаких `as any`
+      await prisma.tour.create({ data: prismaPayload }); 
     }
 
-    // ✅ revalidatePath со slug
     revalidatePath('/admin');
     revalidatePath('/tour');
     revalidatePath(`/tour/${slug}`);
     revalidatePath('/');
-if (!formData.id && data.isActive) {
+
+    if (!formData.id && data.isActive) {
       const caption = [
         `🏕 <b>${data.title}</b>`,
         data.subtitle ? `<i>${data.subtitle}</i>` : null,
@@ -222,12 +159,13 @@ if (!formData.id && data.isActive) {
     }
 
     return { success: true };
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'Unauthorized') {
       return { success: false, error: 'Unauthorized' };
     }
-    console.error('❌ Database Error:', error);
-    return { success: false, error: error.message || 'Ошибка сохранения в базу' };
+    console.error('❌ Database Error:', err);
+    return { success: false, error: err.message || 'Ошибка сохранения в базу' };
   }
 }
 
@@ -253,7 +191,6 @@ export async function getActiveGuides() {
 // ==========================================
 export async function deleteTour(id: string) {
   try {
-    // ✅ AUTH CHECK
     await requireAuth();
 
     const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
@@ -261,14 +198,15 @@ export async function deleteTour(id: string) {
 
     revalidatePath('/admin');
     revalidatePath('/tour');
-    if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); // ✅ slug, не ID
+    if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); 
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'Unauthorized') {
       return { success: false, error: 'Unauthorized' };
     }
-    console.error('Delete Error:', error);
+    console.error('Delete Error:', err);
     return { success: false, error: 'Ошибка удаления' };
   }
 }
@@ -278,7 +216,6 @@ export async function deleteTour(id: string) {
 // ==========================================
 export async function updateTourStatus(id: string, isActive: boolean) {
   try {
-    // ✅ AUTH CHECK
     await requireAuth();
 
     const tour = await prisma.tour.update({
@@ -291,8 +228,9 @@ export async function updateTourStatus(id: string, isActive: boolean) {
     revalidatePath('/tour');
     revalidatePath(`/tour/${tour.slug}`);
     return { success: true };
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') {
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'Unauthorized') {
       return { success: false, error: 'Unauthorized' };
     }
     return { success: false, error: 'Ошибка обновления статуса' };

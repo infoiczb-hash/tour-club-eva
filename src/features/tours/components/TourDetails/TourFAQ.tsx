@@ -13,7 +13,13 @@ export default function TourFAQ({ tour }: TourFAQProps) {
   const faqItems = React.useMemo(() => {
     if (!tour.faq) return [];
     if (Array.isArray(tour.faq)) return tour.faq;
-    if (typeof tour.faq === 'object' && tour.faq.items) return tour.faq.items;
+    
+    // ✅ ИСПРАВЛЕНО: Безопасная проверка на legacy-структуру без конфликтов типизации
+    const rawFaq = tour.faq as Record<string, unknown>;
+    if (typeof rawFaq === 'object' && rawFaq !== null && 'items' in rawFaq) {
+      return Array.isArray(rawFaq.items) ? rawFaq.items : [];
+    }
+    
     return [];
   }, [tour.faq]);
 

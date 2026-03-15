@@ -1,10 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
-// Закомментировали запрос к БД, пока не разберемся с зависанием
-// import { getTours } from '@/features/tours/api'; 
+import { getTours } from '@/features/tours/api'; // ✅ РАЗБЛОКИРОВАН ЗАПРОС К БД
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
-export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 60; 
 
 export const metadata: Metadata = {
   title: 'Приключенческие туры в горы из Приднестровья и Молдовы | Турклуб «Эва»',
@@ -12,17 +11,16 @@ export const metadata: Metadata = {
   keywords: [
     'Туры в румынию',
     'поход в горы из Тирасполя',
-      'поход в горы из Кишинева',
+    'поход в горы из Кишинева',
     'горные маршруты Румыния',
     'горы и хайкинг для новичков',
     'турпоходы Румыния',
-       'пеший тур горы с гидом',
-     'lets go в Румынию',
+    'пеший тур горы с гидом',
+    'lets go в Румынию',
     'хочу туда в Румынию'
-  
   ],
   alternates: {
-    canonical: '/directions/hiking', // Защита от дублей
+    canonical: '/directions/hiking', 
   },
   openGraph: {
     title: 'Приключенческие туры в горы из Приднестровья и Молдовы | Турклуб «Эва»',
@@ -31,7 +29,7 @@ export const metadata: Metadata = {
     siteName: 'Турклуб «Эва»',
     images: [
       {
-        url: '/og-default.jpg', // Подтянется обложка
+        url: '/og-default.jpg', 
         width: 1200,
         height: 630,
         alt: 'Пешие походы и экспедиции с турклубом Эва',
@@ -48,13 +46,14 @@ export const metadata: Metadata = {
   }
 };
 
-// УБРАЛИ async! Это теперь обычный синхронный компонент
-export default function HikingPage() {
+// ✅ ВОЗВРАЩЕН async ДЛЯ СЕРВЕРНОГО КОМПОНЕНТА
+export default async function HikingPage() {
+  const allTours = await getTours();
   
-  // Когда почините запрос к БД, раскомментируйте getTours, 
-  // верните async функции и передайте const tours = await getTours()
+  // ✅ ЧЕСТНАЯ ФИЛЬТРАЦИЯ
+  const hikingTours = allTours.filter(tour => tour.category?.slug === 'hiking');
   
   return (
-      <HikesLanding tours={[]} />
+      <HikesLanding tours={hikingTours} />
   );
 }

@@ -32,11 +32,18 @@ export function formatTourDate(date: string | Date, endDate?: string | Date | nu
   return `${ruDateFull.format(start)} — ${ruDateFull.format(end)}`;
 }
 
+// ✅ ДОБАВЛЕНО: Строгий интерфейс вместо any
+export interface TourDurationInput {
+  duration?: string | null;
+  date?: string | Date | null;
+  endDate?: string | Date | null;
+}
+
 /**
  * Вычисляет длительность тура, если она не задана вручную.
  * @example "3 дня"
  */
-export function getTourDuration(tour: any): string {
+export function getTourDuration(tour: TourDurationInput): string {
   // 1. Если длительность уже прописана в админке текстом — возвращаем её
   if (tour.duration) return tour.duration;
 

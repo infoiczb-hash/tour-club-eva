@@ -1,27 +1,66 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { 
   X, Save, Sparkles, Loader2, Wand2, 
   Instagram, Send, Upload, User, 
-  Award, Clock, Camera, Plus, Trash2, Zap, Flame, Utensils, Activity, Heart, Compass
+  Camera, Plus, Trash2, Zap, Flame, Utensils, Activity, Heart, Compass
 } from 'lucide-react';
 import Button from '@/shared/ui/Button';
 import { performAiTask } from '@/features/admin/actions/ai';
 import { uploadImage } from '@/lib/api';
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 // Словарь иконок для статов
 const ICONS: Record<string, React.ElementType> = {
   Zap, Flame, Utensils, Activity, Heart, Compass, Sparkles
 };
 
-const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: any) => {
+// === СТРОГАЯ ТИПИЗАЦИЯ ===
+interface RichTextareaProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  height?: string;
+}
+
+interface StatItem {
+  label: string;
+  value: number;
+  icon: string;
+}
+
+interface GuideFormData {
+  id?: string;
+  name: string;
+  slug: string;
+  role: string;
+  image: string | null;
+  actionImage: string | null;
+  bio: string | null;
+  fullBio: string | null;
+  experience: string | null;
+  superpower: string | null;
+  achievements: string[] | string;
+  tags: string[] | string;
+  quotes: string[] | string;
+  instagram: string | null;
+  telegram: string | null;
+  contact: string | null;
+  order: number;
+  isActive: boolean;
+  stats: string | StatItem[];
+}
+
+interface GuideFormProps {
+  initialData?: Partial<GuideFormData> | null;
+  onClose: () => void;
+  onSubmit: (data: Record<string, unknown>) => Promise<void>;
+}
+
+// === КОМПОНЕНТЫ ===
+
+const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: RichTextareaProps) => {
     const [aiLoading, setAiLoading] = useState(false);
   
     const handleAiImprove = async () => {
@@ -29,9 +68,12 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
       setAiLoading(true);
       try {
         const res = await performAiTask({ mode: 'improve_text', text: value, tone: 'selling' });
-        if(res.success) onChange(res.data);
-      } catch (e) { console.error(e); }
-      finally { setAiLoading(false); }
+        if(res.success && typeof res.data === 'string') onChange(res.data);
+      } catch (e) { 
+        console.error(e); 
+      } finally { 
+        setAiLoading(false); 
+      }
     };
   
     return (
@@ -53,15 +95,22 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
     );
 };
 
-export default function GuideForm({ initialData, onClose, onSubmit }: any) {
+export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [loadingField, setLoadingField] = useState<string | null>(null);
   
   // Умный парсинг JSON со статами, если они пришли строкой
-  const parseStats = (stats: any) => {
+  const parseStats = (stats: unknown): StatItem[] => {
       if (!stats) return [];
-      if (typeof stats === 'string') return JSON.parse(stats);
-      return stats;
+      if (typeof stats === 'string') {
+        try {
+          return JSON.parse(stats);
+        } catch {
+          return [];
+        }
+      }
+      if (Array.isArray(stats)) return stats as StatItem[];
+      return [];
   };
 
   const [formData, setFormData] = useState({
@@ -74,9 +123,9 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
     fullBio: initialData?.fullBio || '',
     experience: initialData?.experience || '',   
     superpower: initialData?.superpower || '',   
-    achievements: initialData?.achievements ? initialData.achievements.join(', ') : '', 
-    tags: initialData?.tags ? initialData.tags.join(', ') : '', 
-    quotes: initialData?.quotes ? initialData.quotes.join('\n') : '', 
+    achievements: Array.isArray(initialData?.achievements) ? initialData.achievements.join(', ') : (initialData?.achievements || ''), 
+    tags: Array.isArray(initialData?.tags) ? initialData.tags.join(', ') : (initialData?.tags || ''), 
+    quotes: Array.isArray(initialData?.quotes) ? initialData.quotes.join('\n') : (initialData?.quotes || ''), 
     instagram: initialData?.instagram || '', 
     telegram: initialData?.telegram || '', 
     contact: initialData?.contact || '',
@@ -85,7 +134,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
     stats: parseStats(initialData?.stats)
   });
 
-  const handleStatChange = (index: number, field: string, value: string | number) => {
+  const handleStatChange = (index: number, field: keyof StatItem, value: string | number) => {
       const newStats = [...formData.stats];
       newStats[index] = { ...newStats[index], [field]: value };
       setFormData({ ...formData, stats: newStats });
@@ -105,7 +154,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
     e.preventDefault();
     setIsUploading(true);
     try {
-        const payload = {
+        const payload: Record<string, unknown> = {
             ...formData,
             image: formData.image || null,
             actionImage: formData.actionImage || null,
@@ -223,7 +272,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
              {formData.stats.length === 0 && <p className="text-xs text-slate-500">Нет характеристик. Добавьте "Выносливость", "Кулинария" и т.д.</p>}
 
              <div className="space-y-3">
-                 {formData.stats.map((stat: any, i: number) => (
+                 {formData.stats.map((stat: StatItem, i: number) => (
                     <div key={i} className="flex flex-wrap md:flex-nowrap items-center gap-3 bg-slate-950 p-3 rounded-lg border border-slate-800">
                        <input 
                          className="flex-1 min-w-[120px] p-2 bg-slate-900 border border-slate-700 rounded-lg outline-none text-sm text-white focus:border-teal-500"
@@ -250,15 +299,15 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
           {/* ТЕКСТЫ */}
           <div className="space-y-1">
              <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Теги-фишки (через запятую)</label>
-             <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none text-sm text-white" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="играет на гитаре, воспитывает черепаху"/>
+             <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none text-sm text-white" value={formData.tags as string} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="играет на гитаре, воспитывает черепаху"/>
           </div>
 
-          <RichTextarea label="Превью для карточки (Коротко)" placeholder="2-3 предложения для сетки..." value={formData.bio} onChange={(val: string) => setFormData({...formData, bio: val})} height="h-24" />
-          <RichTextarea label="Полная биография (Для SEO-страницы)" placeholder="Развернутая история..." value={formData.fullBio} onChange={(val: string) => setFormData({...formData, fullBio: val})} height="h-40" />
+          <RichTextarea label="Превью для карточки (Коротко)" placeholder="2-3 предложения для сетки..." value={formData.bio || ''} onChange={(val: string) => setFormData({...formData, bio: val})} height="h-24" />
+          <RichTextarea label="Полная биография (Для SEO-страницы)" placeholder="Развернутая история..." value={formData.fullBio || ''} onChange={(val: string) => setFormData({...formData, fullBio: val})} height="h-40" />
           
           <div className="space-y-1">
              <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Цитаты гида (каждая с новой строки)</label>
-             <textarea className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 h-28" value={formData.quotes} onChange={e => setFormData({...formData, quotes: e.target.value})} placeholder="«Горы не покоряют, в них гостят»"/>
+             <textarea className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 h-28" value={formData.quotes as string} onChange={e => setFormData({...formData, quotes: e.target.value})} placeholder="«Горы не покоряют, в них гостят»"/>
           </div>
 
           <label className="flex items-center gap-3 p-4 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-900/50 transition">
@@ -270,7 +319,6 @@ export default function GuideForm({ initialData, onClose, onSubmit }: any) {
 
        <div className="p-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex justify-end gap-3 shrink-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isUploading}>Отмена</Button>
-            {/* ✅ Оставили только type="submit" */}
            <Button type="submit" form="guide-form" variant="primary" disabled={isUploading} className="bg-teal-600 hover:bg-teal-500 text-white">
               {isUploading ? <Loader2 className="animate-spin mr-2" size={18}/> : <Save size={18} className="mr-2"/>} Сохранить досье
             </Button>
