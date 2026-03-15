@@ -1,32 +1,21 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, MessageCircleQuestion, MessageCircle, Quote, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, MessageCircleQuestion, Quote, CheckCircle2, MessageCircle } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
+// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setInView(true); observer.disconnect(); }
-    }, options);
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
-
+// Обновленный FadeBlock с использованием глобального хука
 function FadeBlock({ children, delay = 0, startX = 0, startY = 20, className = '' }: any) {
-  const { ref, inView } = useInView();
+  const { ref, inView } = useInView({ threshold: 0.1, rootMargin: '-30px' });
   return (
     <div
       ref={ref}

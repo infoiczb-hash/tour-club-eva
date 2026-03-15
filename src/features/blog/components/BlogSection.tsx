@@ -171,7 +171,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   quality={75}
-                  priority
+                  loading="lazy" /* no priority */
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
@@ -179,9 +179,9 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   <span className="px-3 py-1.5 bg-teal-400 text-slate-900 text-[14px] font-black uppercase tracking-widest rounded-lg mb-4 shadow-lg shadow-teal-500/20">
                     {getLabel(featuredPost)}
                   </span>
-                  <h3 className="text-2xl md:text-5xl font-black text-white leading-[1.1] mb-6 group-hover:text-teal-400 transition-colors line-clamp-3 drop-shadow-lg">
-                    {featuredPost.title}
-                  </h3>
+<h3 className="text-2xl md:text-5xl font-black text-white leading-[1.1] mb-6 group-hover:text-teal-400 transition-colors drop-shadow-lg">
+  {featuredPost.title}
+</h3>
                   <div className="flex items-center gap-4 pt-6 border-t border-white/10 w-full">
                     {/* ДОБАВИЛИ shrink-0 к обертке аватарки */}
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800 shrink-0">
@@ -238,9 +238,9 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                       </span>
                       <span className="text-[10px] text-slate-300 font-mono">{formatDate(post.date || post.createdAt)}</span>
                     </div>
-                    <h4 className="font-bold text-slate-200 text-sm md:text-base leading-snug group-hover:text-teal-400 transition-colors line-clamp-2">
-                      {post.title}
-                    </h4>
+                   <h4 className="font-bold text-slate-200 text-sm md:text-base leading-snug group-hover:text-teal-400 transition-colors">
+  {post.title}
+</h4>
                   </div>
                 </Link>
               ))}

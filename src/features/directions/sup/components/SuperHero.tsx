@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Waves, Map, ArrowRight } from "lucide-react";
+import { Waves, Map } from "lucide-react";
 
 export default function SupHero() {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -68,16 +68,18 @@ export default function SupHero() {
           </span>
         </div>
 
-        {/* SEO: H1 больше не прячется под opacity-0 ! */}
-        <h1 className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl animate-in fade-in zoom-in-95 duration-1000 delay-150 fill-mode-both">
+        {/* Заголовок - МГНОВЕННЫЙ РЕНДЕР БЕЗ DELAY */}
+        <h1 className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl animate-in fade-in zoom-in-95 duration-700">
          СКОЛЬЗИ <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">ПО ВОДЕ</span>
         </h1>
 
-        <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
-          Ваше идеальное мини-путешествие. Никакого шума и спешки — только вы, доска и природа. Открываем знакомые места с совершенно нового ракурса." </p>
+        <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
+          Ваше идеальное мини-путешествие. Никакого шума и спешки — только вы, доска и природа. Открываем знакомые места с совершенно нового ракурса.
+        </p>
+        
         {/* КНОПКИ ДЕЙСТВИЯ */}
-        <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 fill-mode-both">
+        <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
           <Link
             href="#catalog" // Замени на нужный якорь или ссылку
             className="px-8 py-4 rounded-xl bg-teal-500 text-slate-950 font-black uppercase tracking-widest text-sm hover:bg-teal-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"
@@ -88,7 +90,7 @@ export default function SupHero() {
       </div>
 
       {/* АНИМАЦИЯ ПОДСКАЗКИ СКРОЛЛА */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none animate-in fade-in duration-1000 delay-1000 fill-mode-both">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none animate-in fade-in duration-1000 delay-500 fill-mode-both">
         <span className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.2em]">Вниз</span>
         <div className="w-6 h-10 border-2 border-slate-500 rounded-full flex justify-center p-1">
           <div className="w-1 h-2 bg-teal-500 rounded-full animate-bounce" />

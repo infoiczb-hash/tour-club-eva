@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activity, BookOpen, Brain, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
-import { getFunTestsAction } from '@/features/admin/actions/fun';
+// import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { FunTest } from '@prisma/client';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -46,7 +46,7 @@ const FALLBACK_QUIZZES = [
   { id: '3', slug: 'backpack', title: 'Собери рюкзак', description: 'Мини-игра: выбери только нужное.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675806/fun3_quee6m.webp', category: 'Игры' }
 ] as FunTest[];
 
-export default function FunSectorWidget() {
+export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest[] }) {
   const [quizzes, setQuizzes] = useState<FunTest[]>(FALLBACK_QUIZZES);
   const [isLoaded, setIsLoaded] = useState(false);
   const ctaView = useInView();
@@ -56,23 +56,23 @@ export default function FunSectorWidget() {
 
     const fetchAndShuffleQuizzes = async () => {
       try {
-        const res = await getFunTestsAction();
+        // const res = await getFunTestsAction();
         
         // Если тестов нет, просто показываем фолбэк и выходим
-        if (!res.success || !res.data || res.data.length === 0) { 
+        if (!activeTests || activeTests.length === 0) { 
           setIsLoaded(true); 
           return; 
         }
 
         // 1. Оставляем только активные
-        const activeTests = res.data.filter(t => t.isActive);
+        // const activeTests = res.data.filter(t => t.isActive);
         if (activeTests.length === 0) { 
           setIsLoaded(true); 
           return; 
         }
 
         // 2. Тотальный рандом: перемешиваем ВСЕ тесты как колоду карт
-        const shuffled = activeTests.sort(() => 0.5 - Math.random());
+        const shuffled = [...activeTests].sort(() => 0.5 - Math.random());
 
         // 3. Забираем первые 3 штуки
         if (isMounted) { 
@@ -89,7 +89,7 @@ export default function FunSectorWidget() {
     fetchAndShuffleQuizzes();
     
     return () => { isMounted = false; };
-  }, []);
+  }, [activeTests]);
   
   return (
     <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">

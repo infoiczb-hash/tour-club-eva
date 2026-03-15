@@ -1,22 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Bus, Tent, Utensils, SignalHigh, ArrowRight } from 'lucide-react';
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
+import { useInView } from '@/hooks/useInView';
 
 const logisticsData = [
     {
@@ -42,7 +28,7 @@ const logisticsData = [
 ];
 
 export default function HikesLogistics() {
-    const cardsView = useInView();
+    const cardsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
     return (
         <section className="py-12 md:py-24 relative overflow-hidden">

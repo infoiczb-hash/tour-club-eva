@@ -9,6 +9,8 @@ import { getTours } from '@/features/tours/api';
 import { getReviews } from '@/features/reviews/actions';
 // ✅ ДОБАВИЛИ ИМПОРТ КАТЕГОРИЙ БЛОГА
 import { getTourCategoriesAction, getBlogCategoriesAction } from '@/features/admin/actions/categories';
+// ✅ ДОБАВЛЕНО: Экшен для тестов (чтобы убрать Waterfall-фетч с клиента)
+import { getFunTestsAction } from '@/features/admin/actions/fun';
 
 import Hero from '@/features/landing/components/Hero';
 import Philosophy from '@/features/landing/components/Philosophy';
@@ -60,7 +62,7 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // ✅ ДОБАВИЛИ ЗАПРОС КАТЕГОРИЙ БЛОГА В PROMISE.ALL
-const [rawGuides, posts, allReviews, bCatRes] = await Promise.all([
+const [rawGuides, posts, allReviews, bCatRes, funRes] = await Promise.all([
     prisma.guide.findMany({ 
       where: { isActive: true },
       orderBy: { order: 'asc' } 
@@ -70,10 +72,12 @@ const [rawGuides, posts, allReviews, bCatRes] = await Promise.all([
     getReviews(),
     // ❌ getTourCategoriesAction() удален отсюда
     getBlogCategoriesAction(),
+    getFunTestsAction(), // ✅ Грузим тесты сразу на сервере
   ]);
 
   // ✅ ИЗВЛЕКАЕМ КАТЕГОРИИ БЛОГА
   const blogCategories = bCatRes.success ? bCatRes.data : [];
+  const activeTests = funRes?.success && funRes.data ? funRes.data.filter(t => t.isActive) : [];
 
   const activeReviews = allReviews.filter(r => r.isActive).map(r => ({
     id: r.id,
@@ -124,7 +128,8 @@ const [rawGuides, posts, allReviews, bCatRes] = await Promise.all([
       {/* ✅ ПЕРЕДАЕМ КАТЕГОРИИ В БЛОГ */}
       <BlogList posts={posts} categories={blogCategories} />
       
-      <LazyFunSector />
+      {/* ✅ ПЕРЕДАЕМ ТЕСТЫ С СЕРВЕРА */}
+      <LazyFunSector activeTests={activeTests} />
     </>
   );
 }

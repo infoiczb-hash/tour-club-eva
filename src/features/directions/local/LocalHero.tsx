@@ -26,26 +26,27 @@ export default function LocalHero() {
       <div className="relative z-10 container mx-auto px-4 text-center mt-12">
         <div className="flex flex-col items-center">
           
-          <div className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-emerald-900/30 border border-emerald-500/20 backdrop-blur-md rounded-full mb-8">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 inline-flex items-center gap-2 px-4 py-2 bg-emerald-900/30 border border-emerald-500/20 backdrop-blur-md rounded-full mb-8">
             <Compass className="w-4 h-4 text-emerald-500" />
             <span className="text-xs font-bold tracking-[0.2em] text-emerald-400 uppercase">
               Локальные Маршруты
             </span>
           </div>
 
-          <h1 className="opacity-0 animate-fade-in-up [animation-delay:150ms] text-5xl md:text-7xl lg:text-9xl font-black text-white mb-6 tracking-tighter leading-[0.9]">
+          {/* Заголовок - МГНОВЕННЫЙ РЕНДЕР БЕЗ DELAY */}
+          <h1 className="animate-in fade-in zoom-in-95 duration-700 text-5xl md:text-7xl lg:text-9xl font-black text-white mb-6 tracking-tighter leading-[0.9]">
             ТИШИНА <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-400">
               РЯДОМ
             </span>
           </h1>
 
-          <p className="opacity-0 animate-fade-in-up [animation-delay:300ms] text-lg md:text-2xl text-stone-300 font-light max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both text-lg md:text-2xl text-stone-300 font-light max-w-2xl mx-auto leading-relaxed mb-10">
             Самые важные путешествия начинаются за порогом. <br className="hidden md:block"/>
             Вдох, выдох — и мы уезжаем в глубины природы и себя.
           </p>
 
-          <div className="opacity-0 animate-fade-in-up [animation-delay:450ms]">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
             <Link 
               href="#schedule"
               className="group px-4 py-4 bg-emerald-500 text-slate-950 font-black uppercase tracking-wider text-sm rounded-2xl hover:bg-emerald-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(16,185,129,0.3)] flex items-center gap-3"
