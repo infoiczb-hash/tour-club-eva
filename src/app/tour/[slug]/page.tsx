@@ -107,6 +107,12 @@ export default async function TourPage({ params }: Props) {
     notFound(); 
   }
 
+  // ✅ ЭТАП 3: Честная выборка "Похожих туров" по Category ID
+  const allTours = await getTours();
+  const similarTours = allTours
+    .filter(t => t.categoryId === tour.categoryId && t.id !== tour.id)
+    .slice(0, 3); // Берем только 3 штуки
+
   // Собираем картинки для микроразметки
   const schemaImages = [
     tour.image,
@@ -176,8 +182,8 @@ export default async function TourPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* Передаем тур в интерактивный клиентский компонент */}
-      <TourDetailsWrapper tour={tour} />
+      {/* ✅ Передаем similarTours в обертку */}
+      <TourDetailsWrapper tour={tour} similarTours={similarTours} />
     </main>
   );
 }
