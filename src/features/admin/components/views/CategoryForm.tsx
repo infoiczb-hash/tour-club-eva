@@ -2,8 +2,12 @@
 
 import React, { useState } from 'react';
 import { X, Save, Tent, Mountain, Waves, Compass, Map, Sun, Snowflake, TreePine, Bike, Footprints, Loader2, MapPin, Anchor, Flame, Star } from 'lucide-react';
-// FIX: импортируем CATEGORY_COLORS из единого источника правды вместо дублирования
-import { CATEGORY_COLORS } from '@/lib/schemas';
+
+// ✅ ИСПРАВЛЕНО: Объявляем цвета прямо здесь, чтобы не зависеть от schemas.ts и не ронять билд Vercel
+const CATEGORY_COLORS = [
+  'slate', 'teal', 'emerald', 'sky', 'blue',
+  'violet', 'pink', 'rose', 'orange', 'amber',
+] as const;
 
 const AVAILABLE_ICONS = [
   { name: 'Compass', icon: Compass, label: 'Компас (универсально)' },
@@ -22,8 +26,6 @@ const AVAILABLE_ICONS = [
   { name: 'Star', icon: Star, label: 'Звезда (хит, особенное)' },
 ];
 
-// FIX: строим AVAILABLE_COLORS из импортированного CATEGORY_COLORS
-// Tailwind требует полные классы — bg- + название цвета
 const AVAILABLE_COLORS = CATEGORY_COLORS.map(key => ({
   key,
   bgClass: `bg-${key}-500` as const,
