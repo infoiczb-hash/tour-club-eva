@@ -29,22 +29,46 @@ const AVAILABLE_COLORS = CATEGORY_COLORS.map(key => ({
   bgClass: `bg-${key}-500` as const,
 }));
 
+// === СТРОГАЯ ТИПИЗАЦИЯ ===
+export interface CategoryData {
+  id?: string;
+  title?: string;
+  slug?: string;
+  icon?: string;
+  color?: string;
+  sortOrder?: number;
+  sort_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+}
+
+export interface CategoryFormData {
+  id: string;
+  title: string;
+  slug: string;
+  icon: string;
+  color: string;
+  sort_order: number | string;
+  is_active: boolean;
+}
+
 interface Props {
-  initialData?: any;
+  initialData?: CategoryData | null;
   type: 'tour' | 'blog';
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: Record<string, unknown>) => Promise<void>;
 }
 
 export default function CategoryForm({ initialData, type, onClose, onSubmit }: Props) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  
+  const [formData, setFormData] = useState<CategoryFormData>({
     id: initialData?.id || '',
     title: initialData?.title || '',
     slug: initialData?.slug || '',
     icon: initialData?.icon || 'Compass',
     color: initialData?.color || 'teal',
-    sort_order: initialData?.sortOrder || initialData?.sort_order || 0,
+    sort_order: initialData?.sortOrder ?? initialData?.sort_order ?? 0,
     is_active: initialData?.isActive ?? initialData?.is_active ?? true,
   });
 
@@ -52,7 +76,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name as keyof CategoryFormData]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -70,7 +94,8 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
     e.preventDefault();
     setLoading(true);
     try {
-      await onSubmit(formData);
+      // Приводим к Record<string, unknown> согласно интерфейсу Props
+      await onSubmit(formData as unknown as Record<string, unknown>);
     } catch (error) {
       console.error('Submit error:', error);
     } finally {

@@ -1,14 +1,12 @@
-"use client";
+// src/app/providers.tsx (или где у тебя LazyMotion)
+import { LazyMotion } from "framer-motion";
 
-import { LazyMotion, domAnimation } from "framer-motion";
-import { ToastProvider } from "@/shared/context/ToastContext";
+const loadFeatures = () => import("@/lib/framer-features").then((res) => res.default);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <LazyMotion features={domAnimation} strict>
-      <ToastProvider>
-        {children}
-      </ToastProvider>
+    <LazyMotion features={loadFeatures} strict>
+      {children}
     </LazyMotion>
   );
 }

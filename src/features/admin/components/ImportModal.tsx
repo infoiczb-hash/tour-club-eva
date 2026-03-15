@@ -5,10 +5,11 @@ import { X, FileDown, Loader2, Clipboard } from 'lucide-react';
 import Button from '@/shared/ui/Button';
 import { performAiTask } from '@/features/admin/actions/ai';
 
+// ✅ ИСПРАВЛЕНО: Строгая типизация вместо any
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: any) => void; // Функция, которая заполнит форму
+  onImport: (data: Record<string, unknown>) => void; 
 }
 
 export default function ImportModal({ isOpen, onClose, onImport }: Props) {
@@ -24,7 +25,8 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
     setLoading(false);
 
     if (res.success) {
-      onImport(res.data); // Передаем распаршенные данные в TourForm
+      // ✅ ИСПРАВЛЕНО: Безопасное приведение данных от AI к ожидаемому типу
+      onImport(res.data as Record<string, unknown>); 
       onClose();
       setText(''); // Очищаем
     } else {
@@ -68,7 +70,13 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               className="w-full h-64 p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none dark:text-white placeholder:text-slate-400 transition-all"
-              placeholder="Вставьте сюда описание тура:&#10;— Название&#10;— Даты&#10;— Цены&#10;— Программа...&#10;&#10;AI сам разложит всё по полочкам."
+              placeholder="Вставьте сюда описание тура:
+— Название
+— Даты
+— Цены
+— Программа...
+
+AI сам разложит всё по полочкам."
             />
             {!text && (
               <button 

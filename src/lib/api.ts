@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/client'; // ✅ SSR-клиент с
 // ==========================================
 // 1. ПОЛУЧЕНИЕ КОНТЕНТА
 // ==========================================
-export async function getContentBlock(slug: string): Promise<any> {
+export async function getContentBlock(slug: string): Promise<Record<string, unknown> | null> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('content_blocks')
@@ -12,7 +12,7 @@ export async function getContentBlock(slug: string): Promise<any> {
     .single();
 
   if (error || !data) return null;
-  return data.content;
+  return data.content as Record<string, unknown>;
 }
 
 // ==========================================

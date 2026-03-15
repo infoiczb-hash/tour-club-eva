@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { X, Save, Loader2, MessageCircle, Send, Instagram, Phone, Tags } from 'lucide-react';
 import Button from '@/shared/ui/Button';
+import { Review } from '@prisma/client';
 
 // Импортируем экшен
 import { upsertReview } from '@/features/reviews/actions';
 
 interface ReviewFormProps {
-  initialData?: any; 
+  initialData?: Partial<Review> | null; 
   onClose: () => void;
   onSuccess: () => void; 
 }
@@ -24,13 +25,14 @@ const CATEGORIES = [
 
 export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFormProps) {
   const [loading, setLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
     id: initialData?.id || '',
     name: initialData?.name || '',
     text: initialData?.text || '',
     source: initialData?.source || 'tg',
-    category: initialData?.category || 'general', // 🔥 Добавили стейт категории
-    isActive: initialData ? initialData.isActive : true
+    category: initialData?.category || 'general',
+    isActive: initialData?.isActive ?? true
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,7 +103,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
             </div>
           </div>
 
-          {/* 🔥 НОВОЕ: Категория тура */}
+          {/* Категория тура */}
           <div>
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 <Tags size={12} /> Направление

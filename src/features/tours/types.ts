@@ -1,7 +1,7 @@
 // src/features/tours/types.ts
 
 // ==========================================
-// 1. НОВЫЕ ТИПЫ ДЛЯ РЕЛЯЦИОННЫХ ДАТ
+// 1. ТИПЫ ДЛЯ РЕЛЯЦИОННЫХ ДАТ
 // ==========================================
 export interface TourDateItem {
   id: string;
@@ -28,7 +28,48 @@ export interface GuideInfo {
 }
 
 // ==========================================
-// 3. ОСНОВНОЙ ТИП ТУРА
+// 3. ВЛОЖЕННЫЕ ТИПЫ ДЛЯ JSON-ПОЛЕЙ
+// ==========================================
+export interface TourHighlight {
+  title: string;
+  description?: string;
+  desc?: string;
+  icon?: string;
+}
+
+export interface TourFaq {
+  question: string;
+  answer: string;
+}
+
+export interface TourChecklist {
+  title: string;
+  items?: string;
+}
+
+export interface TourDocument {
+  title: string;
+  url?: string;
+}
+
+export interface TourActivity {
+  time?: string;
+  title: string;
+  description?: string;
+  icon?: string; 
+}
+
+export interface TourProgramDay {
+  day: number;
+  title: string;
+  date?: string;
+  activities: TourActivity[];
+  description?: string; 
+  location?: string; 
+}
+
+// ==========================================
+// 4. ОСНОВНОЙ ТИП ТУРА
 // ==========================================
 export interface Tour {
   id: string;
@@ -69,11 +110,11 @@ export interface Tour {
     title: string;
     slug: string;
     icon: string;
-    color?: string; // ✅ ДОБАВИЛИ ЦВЕТ В ТИПЫ
+    color?: string;
   } | null;
 
   tags?: string[];         
-  highlights?: any[];      
+  highlights?: TourHighlight[];      
 
   // === ЛОГИСТИКА И ХАРАКТЕРИСТИКИ ===
   location: string;
@@ -83,7 +124,7 @@ export interface Tour {
   difficulty?: 'easy' | 'medium' | 'hard' | 'expert' | string | null;
   route?: string | null;
   distance?: string | null; 
-  meta?: any; 
+  meta?: unknown; // Заменили any на unknown (безопасный тип)
 
   // === СТАТИСТИКА ===
   spots: number;     
@@ -92,10 +133,11 @@ export interface Tour {
 
   guide?: GuideInfo | null;
 
-  program: any;                 
-  faq: any;                     
-  checklist?: any;              
-  documents?: any;              
+  // === СТРОГИЕ МАССИВЫ ВМЕСТО ANY ===
+  program: TourProgramDay[];                 
+  faq: TourFaq[];                     
+  checklist?: TourChecklist[];              
+  documents?: TourDocument[];              
   
   included: string[];           
   additionalExpenses: string[];  
@@ -114,22 +156,6 @@ export type TourProgramData =
   | string 
   | { days: TourProgramDay[] } 
   | TourProgramDay[];
-
-export interface TourActivity {
-  time?: string;
-  title: string;
-  description?: string;
-  icon?: string; 
-}
-
-export interface TourProgramDay {
-  day: number;
-  title: string;
-  date?: string;
-  activities: TourActivity[];
-  description?: string; 
-  location?: string; 
-}
 
 export interface TourGuide {
   id: string;

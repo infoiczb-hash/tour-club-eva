@@ -13,13 +13,15 @@ export const Content = () => {
 
   // Теги
   const tags = watch("tags") || [];
-  const handleAddTag = (e: any) => {
+  
+  // ✅ ИСПРАВЛЕНО: Заменили any на React.KeyboardEvent
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const val = e.target.value.trim();
+      const val = e.currentTarget.value.trim();
       if (val && !tags.includes(val)) {
         setValue('tags', [...tags, val], { shouldDirty: true });
-        e.target.value = '';
+        e.currentTarget.value = '';
       }
     }
   };
@@ -28,7 +30,7 @@ export const Content = () => {
   return (
     <div className="space-y-10">
       
-      {/* 1. ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ (HIGHLIGHTS) - НОВЫЙ БЛОК */}
+      {/* 1. ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ (HIGHLIGHTS) */}
       <div>
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
           <div className="flex items-center gap-2">

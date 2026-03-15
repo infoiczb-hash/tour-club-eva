@@ -12,7 +12,7 @@ import { performAiTask } from '@/features/admin/actions/ai';
 import { uploadImage, uploadImageFromUrl } from '@/lib/api';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import TiptapEditor from '@/shared/ui/TiptapEditor'; // Убедись, что путь верный
+import TiptapEditor from '@/shared/ui/TiptapEditor'; 
 import { getGuides } from '@/features/tours/api';
 
 function cn(...inputs: ClassValue[]) {
@@ -50,6 +50,20 @@ const calculateReadTime = (html: string): number => {
   return time < 1 ? 1 : time;
 };
 
+// === СТРОГАЯ ТИПИЗАЦИЯ ===
+interface BlogCategory {
+  id: string;
+  slug: string;
+  title: string;
+}
+
+interface GuideData {
+  id: string;
+  name: string;
+  role: string;
+  image: string | null;
+}
+
 interface ExtendedBlog extends Omit<Blog, 'guideId' | 'categoryId' | 'tags'> {
   guideId?: string | null;
   categoryId?: string | null;
@@ -59,9 +73,9 @@ interface ExtendedBlog extends Omit<Blog, 'guideId' | 'categoryId' | 'tags'> {
 
 interface Props {
   initialData?: ExtendedBlog | null;
-  categories?: any[]; // ✅ ДОБАВЛЕНО: Массив категорий блога
+  categories?: BlogCategory[];
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: Record<string, unknown>) => Promise<void>;
 }
 
 export default function PostForm({ initialData, categories = [], onClose, onSubmit }: Props) {
@@ -70,9 +84,8 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
   const [isImageGenerating, setIsImageGenerating] = useState(false);
   const [loadingField, setLoadingField] = useState<string | null>(null); 
   
-  const [guides, setGuides] = useState<any[]>([]);
+  const [guides, setGuides] = useState<GuideData[]>([]);
 
-  // ✅ ДОБАВЛЕНО: Состояние для ввода нового тега
   const [tagInput, setTagInput] = useState('');
 
   const defaultCategoryId = categories.length > 0 ? categories[0].id : '';
@@ -84,7 +97,6 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     content: initialData?.content || '',
     image: initialData?.image || '',
     
-    // ✅ ДОБАВЛЕНО: Маппинг category_id и tags
     category_id: initialData?.categoryId ?? initialData?.category_id ?? defaultCategoryId,
     category: initialData?.category || '', 
     tags: initialData?.tags || [], 
@@ -101,7 +113,8 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
   useEffect(() => {
     async function loadGuides() {
       const list = await getGuides();
-      setGuides(list);
+      // Убеждаемся, что данные с сервера ложатся в строгий интерфейс
+      setGuides(list as GuideData[]);
     }
     loadGuides();
   }, []);
@@ -121,11 +134,10 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     }));
   };
 
-  // ✅ ДОБАВЛЕНО: Обработчик добавления тегов (Enter или запятая)
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault(); // Предотвращаем отправку формы
-      const newTag = tagInput.trim().replace(/^#/, ''); // Убираем решетку, если ввели
+      e.preventDefault(); 
+      const newTag = tagInput.trim().replace(/^#/, ''); 
       if (newTag && !formData.tags.includes(newTag)) {
         setFormData(prev => ({ ...prev, tags: [...prev.tags, newTag] }));
       }
@@ -133,7 +145,6 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     }
   };
 
-  // ✅ ДОБАВЛЕНО: Удаление тега
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
   };
@@ -144,7 +155,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     try {
       const finalSlug = formData.slug || slugify(formData.title) || `post-${Date.now()}`;
 
-      const payload = { 
+      const payload: Record<string, unknown> = { 
           ...formData, 
           slug: finalSlug,
           read_time: Number(formData.read_time) || 5, 
@@ -154,7 +165,6 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
           id: initialData?.id 
       };
 
-      // ✅ ДОБАВЛЕНО: Очистка пустой категории
       if (payload.category_id === '') delete payload.category_id;
 
       await onSubmit(payload);
@@ -212,19 +222,19 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     const res = await performAiTask({ mode: 'generate_blog', topic });
     setIsAiGenerating(false);
     if (res.success) {
-        const data = res.data as any;
+        // Убираем any, задаем жесткую структуру ответа Gemini
+        const data = res.data as { title: string; excerpt: string; content: string; read_time: string | number; category: string; };
         setFormData(prev => ({ 
             ...prev, 
             title: data.title, 
             excerpt: data.excerpt, 
             content: data.content, 
             read_time: String(data.read_time), 
-            category: data.category, // Оставляем для AI, но пользователь выберет category_id ручками
+            category: data.category, 
             slug: slugify(data.title) 
         }));
     } else { alert("AI Error: " + res.error); }
   };
-
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
@@ -284,7 +294,6 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Tag size={10}/> Category</label>
-                        {/* ✅ ИЗМЕНЕНО: Динамический селект категорий */}
                         <select className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white appearance-none cursor-pointer" 
                             value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
                             <option value="">-- Выберите категорию --</option>
@@ -304,7 +313,6 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                     </div>
                 </div>
 
-                {/* ✅ ДОБАВЛЕНО: Блок для ввода тегов */}
                 <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
                         <Tag size={10}/> Tags (Теги статьи)
@@ -480,11 +488,11 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
              <div className="flex gap-2 w-full sm:w-auto">
                  <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[10px] flex-1" onClick={async () => {
                      const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' });
-                     if(res.success) navigator.clipboard.writeText(res.data as string).then(() => alert('✅ Copied!'));
+                     if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
                  }}><Instagram size={14} className="mr-2 text-pink-600"/> Instagram</Button>
                  <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[10px] flex-1" onClick={async () => {
                      const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' });
-                     if(res.success) navigator.clipboard.writeText(res.data as string).then(() => alert('✅ Copied!'));
+                     if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
                  }}><Send size={14} className="mr-2 text-sky-500"/> Telegram</Button>
              </div>
           </div>

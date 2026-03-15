@@ -20,8 +20,8 @@ const jsonHelper = z.any()
 
 // ── 1. КАТЕГОРИИ ──────────────────────────────────────────────────────────────
 
-// FIX: Добавлено поле color, которое отсутствовало (есть в Prisma и AdminForm)
-const CATEGORY_COLORS = [
+// ✅ ДОБАВЛЕН EXPORT (чтобы формы админки могли импортировать массив)
+export const CATEGORY_COLORS = [
   'slate', 'teal', 'emerald', 'sky', 'blue',
   'violet', 'pink', 'rose', 'orange', 'amber',
 ] as const;
@@ -31,7 +31,7 @@ export const TourCategorySchema = z.object({
   slug: z.string().min(1, 'Slug обязателен'),
   title: z.string().min(1, 'Название обязательно'),
   icon: z.string().default('Compass'),
-  color: z.enum(CATEGORY_COLORS).default('teal'), // FIX: было отсутствует
+  color: z.enum(CATEGORY_COLORS).default('teal'),
   sort_order: z.coerce.number().default(0),
   is_active: z.boolean().default(true),
 });
@@ -59,7 +59,6 @@ export const RawTourSchema = z.object({
   is_active: z.boolean().nullable().optional(),
 
   type: z.string().default('hiking'),
-  // FIX: было 'categoryId' — теперь оба варианта (camelCase из Prisma и snake_case из legacy)
   categoryId: z.string().uuid().nullable().optional(),
   category_id: z.string().uuid().nullable().optional(),
   label: z.string().nullable().optional(),
@@ -106,9 +105,6 @@ export const RawTourSchema = z.object({
   guide: jsonHelper,
 }).passthrough();
 
-// FIX: transform теперь корректно прокидывает categoryId (был баг: data.category_id
-// всегда undefined, т.к. поле в схеме называлось categoryId в camelCase)
-// FIX: добавлено поле category (relation object) — раньше оно полностью терялось
 export const TourSchema = RawTourSchema.transform((data) => {
   let startDate = '';
   let endDate = null;
@@ -127,9 +123,7 @@ export const TourSchema = RawTourSchema.transform((data) => {
     subtitle: data.subtitle,
     description: data.description,
 
-    // FIX: берём оба варианта написания — camelCase приоритетнее
     categoryId: data.categoryId ?? data.category_id ?? null,
-    // FIX: category relation прокидывается если пришёл из include (через passthrough)
     category: (data as any).category ?? null,
 
     label: data.label,
@@ -187,8 +181,6 @@ export const UpdateTourSchema = RawTourSchema.partial();
 
 // ── 3. ГИДЫ ───────────────────────────────────────────────────────────────────
 
-// FIX: добавлены все поля которые есть в Prisma Guide — раньше их не было и они
-// срезались при валидации: fullBio, quotes, stats, tags, achievements, order
 export const GuideSchema = z.object({
   id: z.union([z.string(), z.number()]).optional(),
   slug: z.string().optional(),
@@ -197,17 +189,17 @@ export const GuideSchema = z.object({
   image: z.string().nullable().optional(),
   actionImage: z.string().nullable().optional(),
   bio: z.string().nullable().optional(),
-  fullBio: z.string().nullable().optional(),         // FIX: было отсутствует
-  quotes: z.array(z.string()).default([]),            // FIX: было отсутствует
+  fullBio: z.string().nullable().optional(),         
+  quotes: z.array(z.string()).default([]),            
   experience: z.string().nullable().optional(),
   superpower: z.string().nullable().optional(),
-  tags: z.array(z.string()).default([]),              // FIX: было отсутствует
-  achievements: z.array(z.string()).default([]),      // FIX: было отсутствует
-  stats: z.any().nullable().optional(),              // FIX: было отсутствует (Json в Prisma)
+  tags: z.array(z.string()).default([]),              
+  achievements: z.array(z.string()).default([]),      
+  stats: z.any().nullable().optional(),              
   contact: z.string().nullable().optional(),
   instagram: z.string().nullable().optional(),
   telegram: z.string().nullable().optional(),
-  order: z.coerce.number().default(0),               // FIX: было отсутствует
+  order: z.coerce.number().default(0),               
   is_active: z.boolean().nullable().optional().transform(val => val !== false),
 });
 export type Guide = z.infer<typeof GuideSchema>;
@@ -238,16 +230,10 @@ export type BlogPost = z.infer<typeof PostSchema>;
 
 // ── 5. БРОНИРОВАНИЕ ───────────────────────────────────────────────────────────
 
-// FIX: RegistrationSchema удалена — модель Registration устарела, используем Booking.
-// Схема бронирования живёт в src/features/tours/actions/createBooking.ts (BookingSchema).
-//
-// BookingAdminItemSchema описывает DTO который возвращает getRegistrationsAction —
-// маппинг Prisma Booking → AdminUI с алиасами user_name/user_phone для совместимости
-// с BookingsTab.tsx.
 export const BookingAdminItemSchema = z.object({
   id: z.string().uuid(),
-  user_name: z.string(),        // alias for Booking.name
-  user_phone: z.string(),       // alias for Booking.phone
+  user_name: z.string(),        
+  user_phone: z.string(),       
   status: z.enum(['pending', 'confirmed', 'cancelled']),
   created_at: z.union([z.string(), z.date()]),
   tickets_adult: z.number().default(0),
@@ -256,7 +242,7 @@ export const BookingAdminItemSchema = z.object({
   total_price: z.number(),
   comment: z.string().optional(),
   social: z.string().optional(),
-  event_id: z.string().uuid(),  // alias for Booking.tourId
+  event_id: z.string().uuid(),  
   tour: z.object({
     title: z.string(),
     date: z.union([z.string(), z.date()]).nullable(),

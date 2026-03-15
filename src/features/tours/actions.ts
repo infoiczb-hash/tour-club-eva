@@ -22,9 +22,9 @@ export async function createTour(data: Partial<Tour>) {
       subtitle:     data.subtitle     ?? null,
       description:  data.description  ?? null,
       isActive:     data.isActive     ?? false,
-     category: data.categoryId 
-  ? { connect: { id: data.categoryId } } 
-  : undefined,
+      category: data.categoryId 
+        ? { connect: { id: data.categoryId } } 
+        : undefined,
       difficulty:   data.difficulty   ?? 'medium',
       label:        data.label        ?? '',
       tags:         data.tags         ?? [],
@@ -34,9 +34,9 @@ export async function createTour(data: Partial<Tour>) {
       duration:     data.duration     ?? null,
       meetingPoint: data.meetingPoint ?? null,
 
-      dates: (data.dates ?? []) as Prisma.InputJsonValue,
+      // ✅ ИСПРАВЛЕНО: Безопасное приведение пользовательских типов к Prisma.InputJsonValue
+      dates: (data.dates ?? []) as unknown as Prisma.InputJsonValue,
 
-      // Связь с гидом через connect — правильный Prisma-способ
       guide: data.guide?.id
         ? { connect: { id: data.guide.id } }
         : undefined,
@@ -54,11 +54,12 @@ export async function createTour(data: Partial<Tour>) {
       coverImage:   data.image        ?? null,
       gallery:      data.gallery      ?? [],
 
-      highlights: (data.highlights ?? []) as Prisma.InputJsonValue,
-      program:    (data.program    ?? []) as Prisma.InputJsonValue,
-      faq:        (data.faq        ?? []) as Prisma.InputJsonValue,
-      checklist:  (data.checklist  ?? []) as Prisma.InputJsonValue,
-      documents:  (data.documents  ?? []) as Prisma.InputJsonValue,
+      // ✅ ИСПРАВЛЕНО: Приведение через unknown
+      highlights: (data.highlights ?? []) as unknown as Prisma.InputJsonValue,
+      program:    (data.program    ?? []) as unknown as Prisma.InputJsonValue,
+      faq:        (data.faq        ?? []) as unknown as Prisma.InputJsonValue,
+      checklist:  (data.checklist  ?? []) as unknown as Prisma.InputJsonValue,
+      documents:  (data.documents  ?? []) as unknown as Prisma.InputJsonValue,
 
       included:           data.included           ?? [],
       additionalExpenses: data.additionalExpenses ?? [],
@@ -92,10 +93,10 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.description !== undefined) payload.description = data.description;
     if (data.isActive    !== undefined) payload.isActive    = data.isActive;
     if (data.categoryId !== undefined) {
-  payload.category = data.categoryId 
-    ? { connect: { id: data.categoryId } } 
-    : { disconnect: true }; // Или undefined, если это только для создания (Create)
-}
+      payload.category = data.categoryId 
+        ? { connect: { id: data.categoryId } } 
+        : { disconnect: true }; 
+    }
     if (data.difficulty  !== undefined) payload.difficulty  = data.difficulty ?? 'medium';
     if (data.label       !== undefined) payload.label       = data.label ?? '';
     if (data.tags        !== undefined) payload.tags        = data.tags;
@@ -106,11 +107,11 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.duration     !== undefined) payload.duration     = data.duration;
     if (data.meetingPoint !== undefined) payload.meetingPoint = data.meetingPoint;
 
+    // ✅ ИСПРАВЛЕНО
     if (data.dates !== undefined) {
-      payload.dates = data.dates as Prisma.InputJsonValue;
+      payload.dates = data.dates as unknown as Prisma.InputJsonValue;
     }
 
-    // connect / disconnect — не guideId напрямую
     if (data.guide !== undefined) {
       payload.guide = data.guide?.id
         ? { connect: { id: data.guide.id } }
@@ -130,11 +131,12 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.image   !== undefined) payload.coverImage = data.image;
     if (data.gallery !== undefined) payload.gallery    = data.gallery;
 
-    if (data.highlights !== undefined) payload.highlights = data.highlights as Prisma.InputJsonValue;
-    if (data.program    !== undefined) payload.program    = data.program    as Prisma.InputJsonValue;
-    if (data.faq        !== undefined) payload.faq        = data.faq        as Prisma.InputJsonValue;
-    if (data.checklist  !== undefined) payload.checklist  = data.checklist  as Prisma.InputJsonValue;
-    if (data.documents  !== undefined) payload.documents  = data.documents  as Prisma.InputJsonValue;
+    // ✅ ИСПРАВЛЕНО
+    if (data.highlights !== undefined) payload.highlights = data.highlights as unknown as Prisma.InputJsonValue;
+    if (data.program    !== undefined) payload.program    = data.program    as unknown as Prisma.InputJsonValue;
+    if (data.faq        !== undefined) payload.faq        = data.faq        as unknown as Prisma.InputJsonValue;
+    if (data.checklist  !== undefined) payload.checklist  = data.checklist  as unknown as Prisma.InputJsonValue;
+    if (data.documents  !== undefined) payload.documents  = data.documents  as unknown as Prisma.InputJsonValue;
 
     if (data.included           !== undefined) payload.included           = data.included;
     if (data.additionalExpenses !== undefined) payload.additionalExpenses = data.additionalExpenses;
