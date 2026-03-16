@@ -5,6 +5,8 @@ import { google } from '@ai-sdk/google';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
+// ✅ ДОБАВЛЕНО: Импорт админского лимитера и функции получения IP
+import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // === 1. КОНФИГУРАЦИЯ ===
 const model = google('gemini-2.0-flash');
@@ -73,6 +75,22 @@ export async function performAiTask(task: AiTaskType) {
     await requireAuth();
   } catch {
     return { success: false, error: 'Unauthorized' };
+  }
+
+  // ✅ ДОБАВЛЕНО: Rate Limiting (защита кошелька API от чрезмерного использования)
+  try {
+    const ip = await getClientIp();
+    const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
+
+    if (!rateLimitSuccess) {
+      return { 
+        success: false, 
+        error: 'Превышен лимит запросов к AI (15 в минуту). Пожалуйста, немного подождите.' 
+      };
+    }
+  } catch (error) {
+    console.error('Rate limit error in performAiTask:', error);
+    // При падении Redis пропускаем запрос, чтобы админ мог продолжить работу
   }
 
   try {

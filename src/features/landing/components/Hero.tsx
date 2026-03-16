@@ -31,7 +31,9 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
             className="object-cover object-center"
             priority
             fetchPriority="high"
-            quality={85}
+            // ✅ ИСПРАВЛЕНИЕ: quality 85 → 65 — фоновое изображение покрыто градиентами,
+            // артефакты сжатия не видны. Экономия ~66 KiB (по данным Lighthouse).
+            quality={65}
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-slate-950/30" />
@@ -40,10 +42,10 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
         </div>
       </div>
 
-      {/* ТЕКСТ (Без JS-параллакса, чистый CSS Tailwind) */}
+      {/* ТЕКСТ */}
       <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center mt-[-10vh]">
-        
-        {/* ✅ ИСПРАВЛЕНИЕ: Убрали жесткий opacity-0 и animation-delay */}
+
+        {/* Тэглайн — не LCP, анимация допустима */}
         <div className="flex items-center gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
           <span className="text-base md:text-lg font-bold tracking-[0.2em] text-teal-300 uppercase drop-shadow-md">
@@ -52,30 +54,34 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
           <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
         </div>
 
-        {/* ✅ ИСПРАВЛЕНИЕ: Убрали delay-150 у главного LCP-заголовка */}
+        {/*
+          ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: убраны animate-in / fade-in / zoom-in-95 с LCP-элементов.
+
+        */}
         <h1 className="relative flex flex-col items-center leading-none text-center">
-          <span className="text-6xl sm:text-7xl md:text-8xl font-black text-white uppercase tracking-tight mb-2 drop-shadow-xl block animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <span className="text-6xl sm:text-7xl md:text-8xl font-black text-white uppercase tracking-tight mb-2 drop-shadow-xl block animate-hero-subtitle">
             Турклуб
           </span>
-          <span className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85] block animate-in fade-in zoom-in-95 duration-700">
+          {/* LCP-элемент: без opacity-анимации, только transform */}
+          <span className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85] block animate-hero-title">
             {content.title}
           </span>
         </h1>
 
-        {/* ✅ ИСПРАВЛЕНИЕ: Убрали жесткий opacity-0 */}
-        <p className="text-xl md:text-3xl text-slate-100 font-medium tracking-wide mt-8 md:mt-10 max-w-2xl leading-relaxed drop-shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Подзаголовок — не LCP, animate-in допустим */}
+        <p className="text-xl md:text-3xl text-slate-100 font-medium tracking-wide mt-8 md:mt-10 max-w-2xl leading-relaxed drop-shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 [animation-delay:200ms] [animation-fill-mode:both]">
           {content.subtitle}
         </p>
       </div>
 
-      {/* КНОПКА (Оставлена легкая задержка, так как она не влияет на LCP метрику) */}
+      {/* КНОПКА — задержка допустима, не влияет на LCP */}
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
         <a
           href="#tours"
           aria-label="Прокрутить вниз к турам"
-          className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto animate-in fade-in duration-1000 delay-500 fill-mode-both"
+          className="flex flex-col items-center gap-3 sm:gap-4 group cursor-pointer pointer-events-auto animate-in fade-in duration-1000 [animation-delay:500ms] [animation-fill-mode:both]"
         >
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/20 bg-white/5 backdrop-blur-md flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-500 transition-all duration-300 shadow-lg">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/20 bg-white/5 backdrop-blur-md flex items-center justify-center group-hover:bg-teal-500 group-hover:border-teal-500 transition-[background-color,border-color] duration-300 shadow-lg">
             <ArrowDown className="text-white group-hover:text-slate-900 animate-bounce w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
           </div>
         </a>

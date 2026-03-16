@@ -2,7 +2,13 @@ import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormInput, FormTextarea } from '../ui/FormUI';
 import { FileText, Plus, Trash2, Hash, HelpCircle, List, Sparkles, Smile } from 'lucide-react';
-import TiptapEditor from '@/shared/ui/TiptapEditor'; 
+import dynamic from 'next/dynamic'; // 👈 ДОБАВИЛИ
+
+// 👈 ДОБАВИЛИ: Ленивая загрузка тяжелого редактора
+const TiptapEditor = dynamic(() => import('@/shared/ui/TiptapEditor'), { 
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full bg-slate-100 animate-pulse rounded-xl" />
+});
 
 export const Content = () => {
   const { control, register, setValue, watch } = useFormContext();
@@ -14,7 +20,6 @@ export const Content = () => {
   // Теги
   const tags = watch("tags") || [];
   
-  // ✅ ИСПРАВЛЕНО: Заменили any на React.KeyboardEvent
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();

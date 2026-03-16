@@ -1,41 +1,26 @@
-import ReactDOM from 'react-dom'; // ✅ ДОБАВЛЕНО: preload LCP-изображения
+import ReactDOM from 'react-dom';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
-import FunClient from './FunClient';
 import { Suspense } from 'react';
+import FunWrapper from './FunWrapper'; // 👈 Подключаем наш новый мост
 
-// Опционально: кэшируем страницу на 60 секунд для скорости
-// ✅ ИЗМЕНЕНО: 60 → 3600 — квизы меняются редко, холодный старт бил по каждому посетителю
 export const revalidate = 3600;
 
-// 🔥 СУПЕР-SEO ДЛЯ ФАН-СЕКТОРА
+// ✅ ТВОЙ SEO-БЛОК ПОЛНОСТЬЮ НА МЕСТЕ
 export const metadata: Metadata = {
   title: 'Фан-сектор: Тесты, квизы и подбор туров | Турклуб «Эва»',
   description: 'Интерактивные тесты для туристов. Узнай свой психотип в походе, пройди тест на выживание, собери идеальный рюкзак и позволь AI подобрать тебе маршрут.',
   keywords: [
-    'тесты для туристов',
-    'какой ты турист',
-    'подобрать тур',
-    'квиз выживание в лесу',
-    'туристические игры',
-    'турклуб Эва'
+    'тесты для туристов', 'какой ты турист', 'подобрать тур',
+    'квиз выживание в лесу', 'туристические игры', 'турклуб Эва'
   ],
-  alternates: {
-    canonical: '/fun', // Защита от дублей
-  },
+  alternates: { canonical: '/fun' },
   openGraph: {
     title: 'Фан-сектор: Тесты и квизы | Турклуб «Эва»',
     description: 'Интерактивные тесты для туристов. Пройди квиз и позволь AI подобрать тебе идеальный маршрут.',
     url: 'https://evatur.club/fun',
     siteName: 'Турклуб «Эва»',
-    images: [
-      {
-        url: '/og-default.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Фан-сектор: Тесты и интерактивы от Турклуба Эва',
-      }
-    ],
+    images: [{ url: '/og-default.jpg', width: 1200, height: 630, alt: 'Фан-сектор: Тесты и интерактивы от Турклуба Эва' }],
     type: 'website',
     locale: 'ru_RU',
   },
@@ -48,16 +33,13 @@ export const metadata: Metadata = {
 };
 
 export default async function FunSectorPage() {
+  // ✅ ТВОЙ ПРИЗМА-ЗАПРОС
   const tests = await prisma.funTest.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'desc' }
   });
 
-  // ✅ ДОБАВЛЕНО: preload первого изображения — LCP-элемент страницы.
-  // Без этого браузер узнаёт об изображении только после парсинга JS FunClient,
-  // что даёт задержку загрузки ресурса ~950 мс (Lighthouse).
-  // ReactDOM.preload() инжектирует <link rel="preload" as="image"> в <head>
-  // до парсинга body — браузер начинает загрузку немедленно.
+  // ✅ ТВОЙ PRELOAD
   const firstImage = tests[0]?.image;
   if (firstImage) {
     ReactDOM.preload(firstImage, {
@@ -68,9 +50,9 @@ export default async function FunSectorPage() {
   }
 
   return (
-    // 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE
     <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
-      <FunClient activeTests={tests} />
+      {/* Используем Wrapper, который прокинет данные в FunClient без SSR */}
+      <FunWrapper activeTests={tests} />
     </Suspense>
   );
 }

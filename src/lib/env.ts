@@ -15,6 +15,10 @@ const serverSchema = z.object({
   TELEGRAM_CHANNEL_ID:     z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY:               z.string().optional(),
+  
+  // ✅ ДОБАВЛЕНО: Ключи для Upstash Redis
+  UPSTASH_REDIS_REST_URL:       z.string().url('Некорректный URL Upstash Redis'),
+  UPSTASH_REDIS_REST_TOKEN:     z.string().min(1, 'Отсутствует Token Upstash Redis'),
 });
 
 // Проверяем, где мы сейчас находимся: на сервере или в браузере
@@ -35,6 +39,10 @@ const parsedServer = isServer
       TELEGRAM_CHANNEL_ID:           process.env.TELEGRAM_CHANNEL_ID,
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       OPENAI_API_KEY:                process.env.OPENAI_API_KEY,
+      
+      // ✅ ДОБАВЛЕНО: Прокидываем ключи в парсер
+      UPSTASH_REDIS_REST_URL:        process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_TOKEN:      process.env.UPSTASH_REDIS_REST_TOKEN,
     }) 
   : {} as z.infer<typeof serverSchema>; // В браузере просто отдаем пустышку, чтобы не было ошибки
 

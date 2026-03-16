@@ -3,6 +3,8 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+// ✅ ДОБАВЛЕНО: Импорт лимитера и функции получения IP
+import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Безопасное получение URL сайта для кнопок в Telegram
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -36,8 +38,24 @@ export type BookingResult =
 // ── 3. ГЛАВНЫЙ ACTION ─────────────────────────────────────────────────────────
 export async function createBookingAction(raw: BookingInput): Promise<BookingResult> {
 
+  // ✅ ДОБАВЛЕНО: Rate Limiting (защита от спам-бронирований)
+  try {
+    const ip = await getClientIp();
+    const { success: rateLimitSuccess } = await basicRateLimit.limit(ip);
+
+    if (!rateLimitSuccess) {
+      return { 
+        success: false, 
+        error: 'Слишком много попыток бронирования. Пожалуйста, подождите одну минуту.' 
+      };
+    }
+  } catch (error) {
+    console.error('Rate limit error in createBooking:', error);
+    // При ошибке Redis (например, сеть упала) пропускаем запрос, чтобы не блокировать реальных клиентов
+  }
+
   // 3.1 Валидация входных данных
- const parsed = BookingSchema.safeParse(raw);
+  const parsed = BookingSchema.safeParse(raw);
   if (!parsed.success) {
     const fields: Record<string, string> = {};
     
@@ -215,8 +233,8 @@ async function notifyTelegram(
 // ── 5. ХЕЛПЕР ─────────────────────────────────────────────────────────────────
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"');
 }

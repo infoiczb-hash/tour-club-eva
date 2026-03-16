@@ -274,7 +274,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {(activeTab === 'TOUR' || activeTab === 'HELP') && (
                            <div className="animate-in fade-in">
                                <textarea required 
-                                   placeholder={activeTab === 'TOUR' ? "Напишите ваш вопрос (например: можно ли взять собаку?)..." : "Опишите ситуацию, с которой нужна помощь..."} 
+                                   placeholder={activeTab === 'TOUR' ? "Напишите ваш вопрос который Вас интересует" : "Опишите ситуацию, с которой нужна помощь..."} 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.message || ''} 
                                    onInput={handleInputResize}
