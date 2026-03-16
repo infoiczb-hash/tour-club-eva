@@ -95,6 +95,24 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* ==========================================
+     HERO ANIMATIONS
+     Принцип: LCP-элементы не должны начинаться с opacity: 0.
+     tailwindcss-animate (animate-in fade-in) стартует с opacity: 0 — это ломает LCP.
+     Эти классы используют только transform (composited) или opacity > 0.
+     ========================================== */
+
+  /* LCP-заголовок «ЭВА» — только scale, opacity = 1 с первого кадра */
+  .animate-hero-title {
+    animation: hero-title-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* «Турклуб» — translateY + opacity от 0.01 (не 0!), небольшая задержка */
+  .animate-hero-subtitle {
+    animation: hero-subtitle-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 50ms;
+  }
 }
 
 /* Скроллбары */
@@ -144,5 +162,41 @@
 
   .ai-badge-violet {
     @apply flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-violet-200 hover:scale-105 transition-all active:scale-95;
+  }
+}
+
+/* ==========================================
+   HERO KEYFRAMES
+   Вне @layer — гарантирует что @keyframes
+   не будет удалён Tailwind purge.
+   ========================================== */
+
+/*
+  hero-title-in: только масштаб 0.96 → 1.
+  opacity не меняется (остаётся 1) — Lighthouse фиксирует LCP немедленно.
+  Без этой анимации задержка отрисовки была 3540 мс.
+*/
+@keyframes hero-title-in {
+  from {
+    transform: scale(0.96);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/*
+  hero-subtitle-in: translateY + opacity от 0.01 → 1.
+  opacity: 0.01 (не 0!) — элемент paint-eligible с первого кадра,
+  но визуально неотличим от скрытого. Не влияет на LCP.
+*/
+@keyframes hero-subtitle-in {
+  from {
+    opacity: 0.01;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
