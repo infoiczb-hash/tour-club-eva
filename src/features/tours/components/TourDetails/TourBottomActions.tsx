@@ -61,7 +61,8 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
           role="tooltip"
           id="prices-tooltip"
           className={clsx(
-            "absolute bottom-full left-4 mb-3 w-64 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden transition-all origin-bottom-left",
+            // ✅ ИСПРАВЛЕНИЕ: transition-[opacity,transform] вместо transition-all
+            "absolute bottom-full left-4 mb-3 w-64 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden transition-[opacity,transform] origin-bottom-left",
             showHint ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"
           )}
         >
@@ -125,7 +126,8 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
             disabled={isSoldOut}
             aria-label={isSoldOut ? 'Мест нет' : `Записаться в тур ${tour.title}`}
             className={clsx(
-              "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg active:scale-95 transition-all whitespace-nowrap",
+              // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
+              "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg active:scale-95 transition whitespace-nowrap",
               isSoldOut
                 ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                 : "bg-teal-500 text-slate-900 shadow-teal-500/20"

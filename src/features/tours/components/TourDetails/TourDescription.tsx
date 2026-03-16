@@ -13,38 +13,15 @@ interface TourDescriptionProps {
   tags?: string[];
 }
 
-const FormattedText = ({ text }: { text: any }) => {
-  if (!text) return null;
-  const safeText = typeof text === 'string' ? text : String(text);
-  
-  const withArrows = safeText.replace(/->/g, '→');
-  const parts = withArrows.split(/(\*\*.*?\*\*)/g);
-
-  return (
-    <p className="text-slate-300 text-sm md:text-base leading-relaxed font-normal text-left mb-4 last:mb-0">
-      {parts.map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return (
-            <strong key={i} className="text-white font-black">
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        return part;
-      })}
-    </p>
-  );
-};
-
 export default function TourDescription({ description, highlights, tags }: TourDescriptionProps) {
-  let paragraphs: string[] = [];
-  
+  // Подготавливаем HTML-контент из базы
+  let htmlContent = '';
   if (typeof description === 'string') {
-    paragraphs = description.split(/\n+/).filter(p => p.trim() !== '');
+    htmlContent = description;
   } else if (Array.isArray(description)) {
-    paragraphs = description.filter(p => p && typeof p === 'string' && p.trim() !== '');
+    htmlContent = description.filter(p => typeof p === 'string').join('<br/>');
   } else if (description) {
-    paragraphs = [String(description)];
+    htmlContent = String(description);
   }
 
   return (
@@ -65,10 +42,10 @@ export default function TourDescription({ description, highlights, tags }: TourD
               {tags.map((tag, i) => (
                 <span 
                   key={i}
-                  className="px-2.5 py-1 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] md:text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 cursor-default"
+                  className="px-2.5 py-1 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] md:text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 cursor-default min-w-0 max-w-full"
                 >
-                  <Hash size={12} strokeWidth={2.5} aria-hidden="true" />
-                  {tag}
+                  <Hash size={12} strokeWidth={2.5} aria-hidden="true" className="shrink-0" />
+                  <span className="truncate">{tag}</span>
                 </span>
               ))}
             </div>
@@ -81,17 +58,17 @@ export default function TourDescription({ description, highlights, tags }: TourD
                 return (
                   <div 
                     key={i} 
-                    className="group bg-slate-900/50 border border-white/5 rounded-2xl p-3 md:p-4 hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-300 flex flex-col"
+                    className="group bg-slate-900/50 border border-white/5 rounded-2xl p-3 md:p-4 hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-300 flex flex-col min-w-0"
                   >
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 text-teal-500 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
+                    <div className="flex items-start gap-2.5 mb-2 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-slate-800 text-teal-500 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors mt-0.5">
                         <IconComponent size={16} strokeWidth={2} aria-hidden="true" />
                       </div>
-                      <p className="font-bold text-white text-[14px] md:text-sm leading-tight group-hover:text-teal-400 transition-colors line-clamp-2">
+                      <p className="font-bold text-white text-[14px] md:text-sm leading-tight group-hover:text-teal-400 transition-colors line-clamp-2 break-words min-w-0 flex-1 pt-1.5">
                         {item.title}
                       </p>
                     </div>
-                    <p className="text-slate-400 text-sm md:text-sm leading-snug text-left">
+                    <p className="text-slate-400 text-sm md:text-sm leading-snug text-left break-words">
                       {item.desc || item.description}
                     </p>
                   </div>
@@ -102,25 +79,28 @@ export default function TourDescription({ description, highlights, tags }: TourD
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-5">
+      <div className="flex items-center gap-4 mb-5 min-w-0">
         <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20 shrink-0">
           <Compass size={20} strokeWidth={2} aria-hidden="true" />
         </div>
-        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight break-words flex-1">
           О путешествии
         </h2>
       </div>
 
-      <div className="bg-slate-900/30 rounded-3xl border border-white/5 p-5 md:p-8">
-        <div className="prose prose-invert max-w-none">
-          {paragraphs.length > 0 ? (
-            paragraphs.map((para, idx) => (
-              <FormattedText key={idx} text={para} />
-            ))
-          ) : (
-            <p className="italic text-slate-400 text-sm">Описание готовится...</p>
-          )}
-        </div>
+      <div className="bg-slate-900/30 rounded-3xl border border-white/5 p-5 md:p-8 min-w-0 overflow-hidden">
+        {htmlContent ? (
+          <div 
+            className="prose prose-invert prose-sm md:prose-base max-w-none break-words
+                       prose-p:text-slate-300 prose-p:leading-relaxed
+                       prose-a:text-teal-400 hover:prose-a:text-teal-300
+                       prose-strong:text-white prose-strong:font-bold
+                       prose-ul:text-slate-300 prose-ol:text-slate-300"
+            dangerouslySetInnerHTML={{ __html: htmlContent }} 
+          />
+        ) : (
+          <p className="italic text-slate-400 text-sm">Описание готовится...</p>
+        )}
       </div>
 
     </section>
