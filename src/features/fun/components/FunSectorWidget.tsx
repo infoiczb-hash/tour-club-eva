@@ -100,7 +100,7 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-950/30 backdrop-blur-md mb-3 md:mb-4">
               <Gamepad2 size={14} className="text-violet-400" />
-              <span className="text-[16px] font-bold uppercase tracking-widest text-violet-400">Тесты и квизы</span>
+              <span className="text-[16px] font-bold uppercase tracking-widest text-violet-400">Психология и игры</span>
             </div>
             <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Тесты и квизы</h2>
           </div>
