@@ -40,16 +40,17 @@ export default function TourStickyNav() {
   return (
     <header
       className={clsx(
+        // ✅ transition-transform — composited, панель скользит без Layout recalc
         "fixed top-0 left-0 right-0 z-[100] bg-slate-900/95 backdrop-blur-md border-b border-white/10 transition-transform duration-300 ease-in-out shadow-2xl",
         isVisible ? "translate-y-0" : "-translate-y-full"
       )}
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        
-        {/* Кнопка «Наверх» — aria-label для screen readers, т.к. текст скрыт на мобиле */}
+
         <button
           onClick={scrollToTop}
           aria-label="Прокрутить наверх"
+          // ✅ transition-colors вместо transition-all — только цвет, без layout
           className="flex items-center gap-2 text-white font-bold uppercase hover:text-teal-400 transition-colors"
         >
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
@@ -63,14 +64,14 @@ export default function TourStickyNav() {
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
-              className="text-xs font-bold text-slate-400 hover:text-teal-400 hover:bg-white/5 px-3 py-2 rounded-lg transition-all uppercase tracking-wide"
+              // ✅ transition-colors вместо transition-all
+              className="text-xs font-bold text-slate-400 hover:text-teal-400 hover:bg-white/5 px-3 py-2 rounded-lg transition-colors uppercase tracking-wide"
             >
               {item.label}
             </button>
           ))}
         </nav>
 
-        {/* Кнопка мобильного меню — aria-label + aria-expanded */}
         <button
           className="md:hidden text-white p-2"
           aria-label="Открыть меню навигации"
@@ -83,7 +84,6 @@ export default function TourStickyNav() {
 
       </div>
 
-      {/* Мобильное меню — появляется по кнопке */}
       {mobileMenuOpen && (
         <nav
           id="mobile-tour-nav"
@@ -95,7 +95,8 @@ export default function TourStickyNav() {
               <button
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
-                className="text-sm font-bold text-slate-400 hover:text-teal-400 hover:bg-white/5 px-3 py-3 rounded-lg transition-all uppercase tracking-wide text-left"
+                // ✅ transition-colors вместо transition-all
+                className="text-sm font-bold text-slate-400 hover:text-teal-400 hover:bg-white/5 px-3 py-3 rounded-lg transition-colors uppercase tracking-wide text-left"
               >
                 {item.label}
               </button>

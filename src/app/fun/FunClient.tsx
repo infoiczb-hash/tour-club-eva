@@ -11,31 +11,29 @@ import type { FunTest } from "@prisma/client";
 import { useInView } from '@/hooks/useInView';
 import { useModalStore } from '@/shared/store/useModalStore';
 
-// 🔥 ГЛАВНАЯ ОПТИМИЗАЦИЯ: ЛЕНИВАЯ ЗАГРУЗКА КВИЗОВ
-// Код этих тестов не попадет в бандл страницы, пока пользователь не кликнет по карточке!
 const MODAL_REGISTRY: Record<string, React.ComponentType<any>> = {
-  'fears':        dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
-  'physical':     dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),
-  'signals':      dynamic(() => import("@/features/fun/components/BodySignals"), { ssr: false }),
-  'debrief':      dynamic(() => import("@/features/fun/components/TourDebrief"), { ssr: false }),
-  'backpack':     dynamic(() => import("@/features/fun/components/QuizBackpack"), { ssr: false }),
-  'survival':     dynamic(() => import("@/features/fun/components/QuizSurvival"), { ssr: false }),
-  'totem':        dynamic(() => import("@/features/fun/components/QuizTotem"), { ssr: false }),
-  'tourist-type': dynamic(() => import("@/features/fun/components/QuizTouristType"), { ssr: false }),
+  'fears':         dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
+  'physical':      dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),
+  'signals':       dynamic(() => import("@/features/fun/components/BodySignals"), { ssr: false }),
+  'debrief':       dynamic(() => import("@/features/fun/components/TourDebrief"), { ssr: false }),
+  'backpack':      dynamic(() => import("@/features/fun/components/QuizBackpack"), { ssr: false }),
+  'survival':      dynamic(() => import("@/features/fun/components/QuizSurvival"), { ssr: false }),
+  'totem':         dynamic(() => import("@/features/fun/components/QuizTotem"), { ssr: false }),
+  'tourist-type':  dynamic(() => import("@/features/fun/components/QuizTouristType"), { ssr: false }),
   'psych-profile': dynamic(() => import("@/features/fun/components/PsychProfile"), { ssr: false }),
 };
 
 const CATEGORY_UI_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  "Психологические тесты": { label: "Психологические тесты", icon: <Brain size={24} />,   color: "purple"  },
-  "Поддержка в туре":      { label: "Поддержка в туре",      icon: <Heart size={24} />,   color: "rose"    },
-  "Подбор тура":           { label: "Подбор тура",           icon: <Search size={24} />,  color: "blue"    },
-  "Какой ты турист?":      { label: "Какой ты турист?",      icon: <Users size={24} />,   color: "emerald" },
-  "Юмористические":        { label: "Юмористические",        icon: <Ghost size={24} />,   color: "amber"   },
-  "Другое":                { label: "Интерактивы",           icon: <Gamepad2 size={24} />, color: "teal"   },
+  "Психологические тесты": { label: "Психологические тесты", icon: <Brain size={24} />,    color: "purple"  },
+  "Поддержка в туре":      { label: "Поддержка в туре",      icon: <Heart size={24} />,    color: "rose"    },
+  "Подбор тура":           { label: "Подбор тура",           icon: <Search size={24} />,   color: "blue"    },
+  "Какой ты турист?":      { label: "Какой ты турист?",      icon: <Users size={24} />,    color: "emerald" },
+  "Юмористические":        { label: "Юмористические",        icon: <Ghost size={24} />,    color: "amber"   },
+  "Другое":                { label: "Интерактивы",           icon: <Gamepad2 size={24} />, color: "teal"    },
 };
 
 const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; badge?: string }> = {
-  'fears':        { color: "blue",    icon: <Shield size={24} strokeWidth={2.5} />,  badge: "AI Powered" },
+  'fears':        { color: "blue",    icon: <Shield size={24} strokeWidth={2.5} />,   badge: "AI Powered" },
   'physical':     { color: "emerald", icon: <Dumbbell size={24} strokeWidth={2.5} />, badge: "AI Powered" },
   'signals':      { color: "rose",    icon: <Activity size={24} strokeWidth={2.5} />, badge: "AI Powered" },
   'debrief':      { color: "purple",  icon: <BookOpen size={24} strokeWidth={2.5} />, badge: "AI Powered" },
@@ -46,7 +44,7 @@ const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; ba
 
 export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   const [activeQuizSlug, setActiveQuizSlug] = useState<string | null>(null);
-  const searchParams = useSearchParams();
+  const searchParams  = useSearchParams();
   const openContactModal = useModalStore((state) => state.openContactModal);
 
   useEffect(() => {
@@ -72,29 +70,24 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
 
-      {/* ФОН */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 blur-[150px] rounded-full opacity-40" />
         <div className="hidden md:block absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 blur-[150px] rounded-full opacity-30" />
       </div>
 
-      {/* ШАПКА — CSS-анимации */}
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
         <div className="animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
           <Sparkles size={16} className="text-teal-400" />
           <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
         </div>
-
         <h1 className="animate-hero-title [animation-delay:100ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
           Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
         </h1>
-
         <p className="animate-fade-in-up [animation-delay:200ms] text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
           Узнай какой ты турист, проработай страхи, кто ты в туристической группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
         </p>
       </section>
 
-      {/* ДИНАМИЧЕСКИЕ РАЗДЕЛЫ */}
       <div className="container mx-auto px-4 pb-24 relative z-10 space-y-16">
         {Object.entries(groupedContent).map(([categoryName, tests], categoryIndex) => {
           const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
@@ -109,24 +102,16 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
             />
           );
         })}
-
-        {/* CTA БАННЕР */}
         <CtaBanner />
       </div>
 
-      {/* МОДАЛКИ (Грузятся только тогда, когда activeQuizSlug совпадает с их ключом) */}
       {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
-        if (!ModalComponent) return null;
-        const isActive = activeQuizSlug === slug;
-        
-        // Если модалка не активна, мы даже не рендерим компонент, чтобы не выполнять его код
-        if (!isActive) return null;
-
+        if (!ModalComponent || activeQuizSlug !== slug) return null;
         return (
           <ModalComponent
             key={slug}
-            isOpen={isActive}
-            open={isActive}
+            isOpen
+            open
             onComplete={['backpack', 'survival', 'tourist-type', 'totem'].includes(slug) ? handleOldQuizResult : undefined}
             onClose={() => setActiveQuizSlug(null)}
           />
@@ -136,7 +121,6 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   );
 }
 
-// Вынесен в отдельный компонент чтобы каждая секция имела свой useInView
 function CategorySection({ categoryName, config, tests, categoryIndex, onOpen }: {
   categoryName: string;
   config: { label: string; icon: React.ReactNode; color: string };
@@ -158,10 +142,7 @@ function CategorySection({ categoryName, config, tests, categoryIndex, onOpen }:
         <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
       </div>
 
-      <div
-        ref={refGrid}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
-      >
+      <div ref={refGrid} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {tests.map((test, index) => {
           const visual = VISUAL_REGISTRY[test.slug] || VISUAL_REGISTRY['default'];
           return (
@@ -191,7 +172,9 @@ function CtaBanner() {
     <div
       ref={ref}
       className={clsx(
-        'max-w-6xl mx-auto bg-gradient-to-r from-teal-900/40 to-slate-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group transition-all duration-700 ease-out',
+        'max-w-6xl mx-auto bg-gradient-to-r from-teal-900/40 to-slate-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group',
+        // ✅ transition-[opacity,transform] вместо transition-all — composited
+        'transition-[opacity,transform] duration-700 ease-out',
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       )}
     >
@@ -204,7 +187,7 @@ function CtaBanner() {
           </h3>
           <p className="text-slate-400 max-w-lg text-lg">Теория — это отлично. Но настоящие ответы ждут тебя на маршруте.</p>
         </div>
-        <Link href="/tour" className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] whitespace-nowrap">
+        <Link href="/tour" className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 hover:scale-105 transition-[background-color,transform] shadow-[0_0_20px_rgba(20,184,166,0.3)] whitespace-nowrap">
           Смотреть все туры
         </Link>
       </div>
@@ -240,8 +223,10 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
       onClick={onClick}
       style={{ transitionDelay: inView ? `${index * 100}ms` : '0ms' }}
       className={clsx(
-        'group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer',
-        'transition-all duration-500 ease-out shadow-2xl hover:-translate-y-2 hover:border-white/10',
+        'group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer shadow-2xl',
+        // ✅ ИСПРАВЛЕНИЕ: transition-all → composited-only свойства.
+        // hover:-translate-y-2 и opacity анимируются на GPU без Layout recalc.
+        'transition-[transform,opacity,border-color] duration-500 ease-out hover:-translate-y-2 hover:border-white/10',
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
       )}
     >
@@ -250,8 +235,20 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
           src={image}
           alt={title}
           fill
+          // ✅ ИСПРАВЛЕНИЕ LCP: первая карточка первой категории — priority=true.
+          // next/image добавит fetchpriority="high" и уберёт loading="lazy".
+          // Lighthouse фиксировал «Требуется fetchpriority=high» — это устраняет
+          // задержку загрузки LCP-ресурса (было 950 мс).
           priority={priority}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          loading={priority ? undefined : "lazy"}
+          // ✅ ИСПРАВЛЕНИЕ sizes: карточки в max-w-6xl (1152px) сетке 3 колонки.
+          // Реальная ширина: desktop ≈ 368px, tablet ≈ 50vw, mobile ≈ 92vw.
+          // Было: "(max-width: 768px) 100vw, ..." → Cloudinary запрашивал w_750.
+          // Стало: точный ceiling 400px → экономия ~25-40% на каждой карточке.
+          sizes="(max-width: 768px) 92vw, (max-width: 1024px) 48vw, 400px"
+          // ✅ Снижен quality: карточки с grayscale+opacity, артефакты незаметны.
+          // Первая (LCP) — 65 для баланса качества. Остальные — 55.
+          quality={priority ? 65 : 55}
           className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700"
         />
       )}
@@ -273,7 +270,7 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
           dangerouslySetInnerHTML={{ __html: title.replace('\n', '<br/>') }}
         />
         <p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed drop-shadow-md">{desc}</p>
-        <div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all group-hover:gap-4", activeColor.split(" ")[2])}>
+        <div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-[gap] group-hover:gap-4", activeColor.split(" ")[2])}>
           Начать <ArrowRight size={14} strokeWidth={3} />
         </div>
       </div>

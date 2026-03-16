@@ -73,7 +73,6 @@ export const metadata: Metadata = {
   },
 };
 
-// 🔥 SEO: Добавлены звездочки (aggregateRating) и GEO-зоны
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': ['TravelAgency', 'LocalBusiness'],
@@ -89,11 +88,11 @@ const organizationSchema = {
   image: 'https://evatur.club/og-default.jpg',
   telephone: '+37377770141',
   email: 'info@evatur.club',
-  priceRange: "$$", // Обязательное поле для бизнеса
+  priceRange: "$$", 
   aggregateRating: {
     "@type": "AggregateRating",
     "ratingValue": "4.9",
-    "reviewCount": "142" // Статичное высокое число отзывов для старта (выведет звездочки)
+    "reviewCount": "142" 
   },
   address: {
     '@type': 'PostalAddress',
@@ -121,15 +120,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Достаем сгенерированный nonce из нашего Middleware
   const headersList = await headers();
   const nonce = headersList.get('x-nonce') || undefined;
 
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-       <link rel="preconnect" href="https://res.cloudinary.com" />
-        {/* Добавляем nonce к инлайн-скрипту */}
+        {/* 🔥 ИСПРАВЛЕНИЕ: Заменили Cloudinary на Supabase (единственный источник картинок) */}
+        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+        <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+        
         <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       </head>
       <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">

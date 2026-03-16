@@ -2,23 +2,23 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { Tour } from '@/features/tours/types';
 
-// ✅ Above-fold — статические импорты (попадают в initial bundle)
+// ✅ Above-fold (Первый экран) — статические импорты (попадают в initial bundle)
 import TourStickyNav from './TourStickyNav';
 import TourHero from './TourHero';
-import TourStats from './TourStats';
-import TourLogistics from './TourLogistics';
-import TourSidebar from './TourSidebar';
-import TourBottomActions from './TourBottomActions';
 
-// ✅ Below-fold — lazy (не блокируют LCP, грузятся после)
-const TourDescription  = dynamic(() => import('./TourDescription'));
-const TourProgram      = dynamic(() => import('./TourProgram'));
-const TourGallery      = dynamic(() => import('./TourGallery'));
-const TourEssentials   = dynamic(() => import('./TourEssentials'));
-const TourDates        = dynamic(() => import('./TourDates'));
-const TourFAQ          = dynamic(() => import('./TourFAQ'));
+// ✅ Below-fold (Ниже первого экрана) — ленивые импорты (разгружают Main Thread)
+const TourStats         = dynamic(() => import('./TourStats'));
+const TourLogistics     = dynamic(() => import('./TourLogistics'));
+const TourSidebar       = dynamic(() => import('./TourSidebar'));
+const TourBottomActions = dynamic(() => import('./TourBottomActions'));
+const TourDescription   = dynamic(() => import('./TourDescription'));
+const TourProgram       = dynamic(() => import('./TourProgram'));
+const TourGallery       = dynamic(() => import('./TourGallery'));
+const TourEssentials    = dynamic(() => import('./TourEssentials'));
+const TourDates         = dynamic(() => import('./TourDates'));
+const TourFAQ           = dynamic(() => import('./TourFAQ'));
 const TourActionButtons = dynamic(() => import('./TourActionButtons'));
-const SimilarTours     = dynamic(() => import('./SimilarTours'));
+const SimilarTours      = dynamic(() => import('./SimilarTours'));
 
 interface TourDetailsWrapperProps {
   tour: Tour;
@@ -27,6 +27,7 @@ interface TourDetailsWrapperProps {
 
 export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWrapperProps) {
   return (
+    // ✅ ИСПРАВЛЕНИЕ: Убрали overflow-x-hidden отсюда, чтобы вернуть сайдбару способность прилипать (sticky)
     <div className="bg-slate-950 min-h-screen pb-0 selection:bg-teal-500/30 selection:text-teal-200">
 
       <TourStickyNav />
@@ -35,7 +36,8 @@ export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWr
       <main className="container mx-auto px-4 relative z-10 mt-6 md:mt-10 pb-24">
         <div className="grid lg:grid-cols-12 gap-8 items-start">
 
-          <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10">
+          {/* ✅ ИСПРАВЛЕНИЕ: Перенесли overflow-x-hidden сюда. Теперь левая колонка защищена от вылезания контента, а правая может быть sticky */}
+          <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-hidden">
             <TourStats tour={tour} />
             <TourLogistics tour={tour} />
             <TourDescription description={tour.description} highlights={tour.highlights} tags={tour.tags} />
@@ -43,7 +45,6 @@ export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWr
             <TourGallery images={tour.gallery || []} />
             <TourEssentials included={tour.included || []} additionalExpenses={tour.additionalExpenses || []} documents={tour.documents} checklist={tour.checklist} />
 
-            {/* Передаем только тур. Внутри TourDates кнопка сама вызовет Zustand */}
             <TourDates tour={tour} />
 
             <TourFAQ tour={tour} />
@@ -60,7 +61,6 @@ export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWr
         <SimilarTours tours={similarTours || []} />
       </main>
 
-      {/* Передаем только тур. Внутри TourBottomActions кнопка сама вызовет Zustand */}
       <TourBottomActions tour={tour} />
 
     </div>

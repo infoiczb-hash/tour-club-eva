@@ -23,17 +23,17 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
          <div className="w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full bg-teal-500/10 flex items-center justify-center text-teal-500 shrink-0 border border-teal-500/20">
             <MapPin size={20} />
          </div>
-         <div>
-            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+         <div className="min-w-0 flex-1">
+            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1 truncate" title="Место сбора">
                Место сбора
             </h3>
-            <p className="text-white font-bold text-sm leading-snug">
+            <p className="text-white font-bold text-sm leading-snug break-words">
                {tour.meetingPoint || 'Уточняется у менеджера'}
             </p>
          </div>
       </div>
 
-      {/* 2. ГИД (С ФОТО) - Исправлено сплющивание */}
+      {/* 2. ГИД (С ФОТО) */}
       <div className="flex gap-4 items-center">
          <div className="relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden bg-indigo-500/10 border border-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400">
             {guideImage ? (
@@ -41,7 +41,8 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
                 src={guideImage} 
                 alt={guideName} 
                 fill 
-                priority
+                // ✅ ИСПРАВЛЕНИЕ: Убрали priority, добавили lazy. Это разблокирует LCP обложки тура.
+                loading="lazy"
                 className="object-cover"
                 sizes="40px"
               />
@@ -50,11 +51,11 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             )}
          </div>
          
-         <div>
-            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+         <div className="min-w-0 flex-1">
+            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1 break-words">
                {guideRole}
             </h3>
-            <p className="text-white font-bold text-sm leading-snug">
+            <p className="text-white font-bold text-sm leading-snug break-words">
                {guideName}
             </p>
          </div>
@@ -65,11 +66,11 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
          <div className="w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 border border-amber-500/20">
             <Navigation size={20} />
          </div>
-         <div>
-            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+         <div className="min-w-0 flex-1">
+            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1 truncate" title="Нить маршрута">
                Нить маршрута
             </h3>
-            <p className="text-white font-medium text-sm leading-snug">
+            <p className="text-white font-medium text-sm leading-snug break-words">
                {tour.route || 'Кольцевой маршрут'}
             </p>
          </div>

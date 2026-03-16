@@ -13,53 +13,14 @@ import {
   ChevronDown 
 } from 'lucide-react';
 
-const FormattedEssentialsText = ({ text }: { text: any }) => {
-  if (!text) return null;
-  
-  let paragraphs: string[] = [];
-  if (typeof text === 'string') {
-    paragraphs = text.split(/\n+/).filter(p => p.trim() !== '');
-  } else if (Array.isArray(text)) {
-    paragraphs = text.filter(p => typeof p === 'string' && p.trim() !== '');
-  } else {
-    paragraphs = [String(text)];
-  }
-  
-  return (
-    <div className="space-y-3">
-      {paragraphs.map((para, idx) => {
-        const withArrows = para.replace(/->/g, '→');
-        const parts = withArrows.split(/(\*\*.*?\*\*)/g);
-        
-        return (
-          <p key={idx} className="text-slate-300 text-sm leading-relaxed">
-            {parts.map((part, i) => {
-              if (part.startsWith('**') && part.endsWith('**')) {
-                return (
-                  <strong key={i} className="text-white font-black">
-                    {part.slice(2, -2)}
-                  </strong>
-                );
-              }
-              return part;
-            })}
-          </p>
-        );
-      })}
-    </div>
-  );
-};
-
-// ✅ НОВАЯ ФУНКЦИЯ: Умный рендеринг элементов списка, который не падает от объектов
+// Умный рендеринг элементов списка для Включено / Не включено
 const renderSafeListItem = (item: any): React.ReactNode => {
   if (!item) return null;
   
-  // Если это обычная строка (как мы ожидали изначально)
   if (typeof item === 'string') {
     return <span>{item}</span>;
   }
   
-  // Если это тот самый сложный объект из базы ({items, title, category})
   if (typeof item === 'object') {
     const title = item.title || item.category || '';
     const itemsList = Array.isArray(item.items) ? item.items : [];
@@ -76,12 +37,11 @@ const renderSafeListItem = (item: any): React.ReactNode => {
     );
   }
   
-  // Фолбэк для любых других непонятных данных
   return <span>{String(item)}</span>;
 };
 
 interface TourEssentialsProps {
-  included: any[]; // Изменили типизацию, чтобы разрешить объекты
+  included: any[]; 
   additionalExpenses: any[];
   documents?: any[];
   checklist?: any;
@@ -151,7 +111,6 @@ export default function TourEssentials({
                   {included.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]" aria-hidden="true" />
-                      {/* ✅ ИСПОЛЬЗУЕМ БЕЗОПАСНЫЙ РЕНДЕР */}
                       {renderSafeListItem(item)}
                     </li>
                   ))}
@@ -201,7 +160,6 @@ export default function TourEssentials({
                   {additionalExpenses.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.8)]" aria-hidden="true" />
-                      {/* ✅ ИСПОЛЬЗУЕМ БЕЗОПАСНЫЙ РЕНДЕР */}
                       {renderSafeListItem(item)}
                     </li>
                   ))}
@@ -214,12 +172,29 @@ export default function TourEssentials({
 
       <div className="grid md:grid-cols-2 gap-4">
         
+        {/* БЛОК СНАРЯЖЕНИЯ (ЧЕК-ЛИСТ) */}
         <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
-          <h3 className="text-teal-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-4">
-            <Backpack size={16} aria-hidden="true" /> Снаряжение
+          <h3 className="text-teal-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+            <Backpack size={16} aria-hidden="true" /> Что взять с собой
           </h3>
-          {checklist ? (
-            <FormattedEssentialsText text={checklist} />
+          
+          {Array.isArray(checklist) && checklist.length > 0 ? (
+            <div className="space-y-6">
+              {checklist.map((block: any, idx: number) => (
+                <div key={idx}>
+                  <h4 className="text-white font-bold text-sm mb-2 uppercase tracking-wide">
+                    {block.title || `Категория ${idx + 1}`}
+                  </h4>
+                  <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line pl-2 border-l-2 border-teal-500/30">
+                    {block.items}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : typeof checklist === 'string' && checklist.trim() !== '' ? (
+            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+              {checklist}
+            </div>
           ) : (
             <p className="text-slate-400 text-sm italic">
               Специальное снаряжение не требуется. Достаточно удобной одежды по погоде.
@@ -227,8 +202,9 @@ export default function TourEssentials({
           )}
         </div>
 
+        {/* БЛОК ДОКУМЕНТОВ */}
         <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
-          <h3 className="text-teal-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-4">
+          <h3 className="text-teal-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
             <ShieldCheck size={16} aria-hidden="true" /> Документы
           </h3>
           

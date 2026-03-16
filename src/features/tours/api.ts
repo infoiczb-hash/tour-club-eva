@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { Tour } from './types';
+import { cache } from 'react';
 
 // ─────────────────────────────────────────────
 // Строгий тип для данных из Prisma с релейшенами
@@ -181,8 +182,8 @@ export async function getTours(): Promise<Tour[]> {
   }
 }
 
-// Публичная страница тура — только активные
-export async function getTourBySlug(slug: string): Promise<Tour | null> {
+// ✅ ИСПРАВЛЕНИЕ: Обернули в cache() для дедупликации запросов между metadata и page
+export const getTourBySlug = cache(async (slug: string): Promise<Tour | null> => {
   try {
     const tour = await prisma.tour.findUnique({
       where: { slug, isActive: true },
@@ -193,6 +194,27 @@ export async function getTourBySlug(slug: string): Promise<Tour | null> {
   } catch (error) {
     console.error(`Ошибка получения тура ${slug}:`, error);
     return null;
+  }
+});
+
+// ✅ ИСПРАВЛЕНИЕ: Точечный и быстрый запрос похожих туров на уровне БД
+export async function getSimilarTours(categoryId: string | null, excludeId: string, limit: number = 3): Promise<Tour[]> {
+  if (!categoryId) return [];
+  try {
+    const tours = await prisma.tour.findMany({
+      where: {
+        isActive: true,
+        categoryId: categoryId,
+        id: { not: excludeId }
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: { guide: true, category: true }
+    });
+    return tours.map(mapPrismaTourToFrontend).filter(isTourRelevant);
+  } catch (error) {
+    console.error('Ошибка получения похожих туров:', error);
+    return [];
   }
 }
 

@@ -14,7 +14,7 @@ export default function TourFAQ({ tour }: TourFAQProps) {
     if (!tour.faq) return [];
     if (Array.isArray(tour.faq)) return tour.faq;
     
-    // ✅ ИСПРАВЛЕНО: Безопасная проверка на legacy-структуру без конфликтов типизации
+    // Безопасная проверка на legacy-структуру без конфликтов типизации
     const rawFaq = tour.faq as Record<string, unknown>;
     if (typeof rawFaq === 'object' && rawFaq !== null && 'items' in rawFaq) {
       return Array.isArray(rawFaq.items) ? rawFaq.items : [];
@@ -67,7 +67,8 @@ export default function TourFAQ({ tour }: TourFAQProps) {
             <div 
               key={index}
               className={clsx(
-                "rounded-2xl border transition-all duration-300 overflow-hidden print:border-slate-300 print:bg-transparent print:shadow-none print:break-inside-avoid print:mb-4",
+                // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
+                "rounded-2xl border transition duration-300 overflow-hidden print:border-slate-300 print:bg-transparent print:shadow-none print:break-inside-avoid print:mb-4",
                 isOpen && !isPrinting
                   ? "bg-slate-900 border-teal-500/30 shadow-lg" 
                   : "bg-slate-900/40 border-white/5 hover:border-white/10"
@@ -86,16 +87,17 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                 </span>
                 
                 <div className={clsx(
-                  "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 print:hidden",
+                  // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
+                  "w-8 h-8 rounded-full flex items-center justify-center transition duration-300 shrink-0 print:hidden",
                   isOpen && !isPrinting ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
                 )}>
                   {isOpen ? <Minus size={18} /> : <Plus size={18} />}
                 </div>
               </button>
 
-              {/* Нативный CSS Grid Аккордеон */}
+              {/* ✅ ИСПРАВЛЕНИЕ: transition-[grid-template-rows,opacity] для честного GPU-аккордеона */}
               <div className={clsx(
-                  "grid transition-all duration-300 ease-in-out print:block",
+                  "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out print:block",
                   isOpen ? "grid-rows-[1fr] opacity-100 print:h-auto print:opacity-100" : "grid-rows-[0fr] opacity-0"
               )}>
                   <div className="overflow-hidden">

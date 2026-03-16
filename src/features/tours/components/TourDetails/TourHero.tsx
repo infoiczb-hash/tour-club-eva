@@ -9,7 +9,6 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// ✅ СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
 const COLOR_THEMES: Record<string, string> = {
   slate:   "bg-slate-500 text-white",
   teal:    "bg-teal-500 text-slate-900",
@@ -56,12 +55,9 @@ export default function TourHero({ tour }: TourHeroProps) {
     return '1 день';
   };
 
-  // 👇 ИСПРАВЛЕНИЕ: Берем цвет из категории, с фолбэком на teal (как было в оригинале)
   const themeColor = tour.category?.color || 'teal';
   const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.teal;
-
-  // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
-  const typeLabel = tour.category?.title || '1234';
+  const typeLabel = tour.category?.title || 'Тур';
 
   return (
     <section className="relative h-[80vh] min-h-[550px] w-full flex items-end overflow-hidden">
@@ -100,12 +96,14 @@ export default function TourHero({ tour }: TourHeroProps) {
               )}
             </div>
 
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase leading-[1.1] tracking-tight drop-shadow-xl">
+            {/* ✅ ИСПРАВЛЕНИЕ: Добавлен break-words */}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase leading-[1.1] tracking-tight drop-shadow-xl break-words">
               {tour.title}
             </h1>
             
+            {/* ✅ ИСПРАВЛЕНИЕ: Добавлен break-words */}
             {tour.subtitle && (
-              <p className="text-sm md:text-lg text-slate-200 font-normal max-w-2xl leading-relaxed opacity-90">
+              <p className="text-sm md:text-lg text-slate-200 font-normal max-w-2xl leading-relaxed opacity-90 break-words">
                 {tour.subtitle}
               </p>
             )}
@@ -113,33 +111,34 @@ export default function TourHero({ tour }: TourHeroProps) {
             <div className="pt-6 md:pt-8 mt-4 border-t border-white/10">
                 <div className="grid grid-cols-2 md:flex md:items-center gap-y-6 gap-x-8 md:gap-12 text-white">
                     
-                    <div className="flex items-center gap-3">
+                    {/* ✅ ИСПРАВЛЕНИЕ: Добавлен min-w-0 и truncate в каждый блок */}
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
                             <MapPin size={16} />
                         </div>
-                        <div>
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Локация</p>
-                            <p className="font-bold text-sm md:text-base leading-none">{tour.location}</p>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Локация">Локация</p>
+                            <p className="font-bold text-sm md:text-base leading-none truncate" title={tour.location}>{tour.location}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
                             <Calendar size={16} />
                         </div>
-                        <div>
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Даты</p>
-                            <p className="font-bold text-sm md:text-base leading-none capitalize">{renderDateRange()}</p>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Даты">Даты</p>
+                            <p className="font-bold text-sm md:text-base leading-none capitalize truncate" title={renderDateRange()}>{renderDateRange()}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 col-span-2 md:col-span-1">
+                    <div className="flex items-center gap-3 col-span-2 md:col-span-1 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
                             <Clock size={16} />
                         </div>
-                        <div>
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">Длительность</p>
-                            <p className="font-bold text-sm md:text-base leading-none">{getDuration()}</p>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Длительность">Длительность</p>
+                            <p className="font-bold text-sm md:text-base leading-none truncate" title={getDuration()}>{getDuration()}</p>
                         </div>
                     </div>
 

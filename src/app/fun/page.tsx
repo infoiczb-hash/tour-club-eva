@@ -1,10 +1,12 @@
+import ReactDOM from 'react-dom'; // ✅ ДОБАВЛЕНО: preload LCP-изображения
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import FunClient from './FunClient';
 import { Suspense } from 'react';
 
 // Опционально: кэшируем страницу на 60 секунд для скорости
-export const revalidate = 60; 
+// ✅ ИЗМЕНЕНО: 60 → 3600 — квизы меняются редко, холодный старт бил по каждому посетителю
+export const revalidate = 3600;
 
 // 🔥 СУПЕР-SEO ДЛЯ ФАН-СЕКТОРА
 export const metadata: Metadata = {
@@ -44,11 +46,26 @@ export const metadata: Metadata = {
     images: ['/og-default.jpg'],
   }
 };
+
 export default async function FunSectorPage() {
   const tests = await prisma.funTest.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'desc' }
   });
+
+  // ✅ ДОБАВЛЕНО: preload первого изображения — LCP-элемент страницы.
+  // Без этого браузер узнаёт об изображении только после парсинга JS FunClient,
+  // что даёт задержку загрузки ресурса ~950 мс (Lighthouse).
+  // ReactDOM.preload() инжектирует <link rel="preload" as="image"> в <head>
+  // до парсинга body — браузер начинает загрузку немедленно.
+  const firstImage = tests[0]?.image;
+  if (firstImage) {
+    ReactDOM.preload(firstImage, {
+      as: 'image',
+      fetchPriority: 'high',
+      imageSizes: '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
+    });
+  }
 
   return (
     // 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE
