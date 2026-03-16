@@ -12,8 +12,14 @@ import { performAiTask } from '@/features/admin/actions/ai';
 import { uploadImage, uploadImageFromUrl } from '@/lib/api';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import TiptapEditor from '@/shared/ui/TiptapEditor'; 
 import { getGuides } from '@/features/tours/api';
+import dynamic from 'next/dynamic'; // 👈 ДОБАВИЛИ
+
+// 👈 ДОБАВИЛИ: Ленивая загрузка тяжелого редактора
+const TiptapEditor = dynamic(() => import('@/shared/ui/TiptapEditor'), { 
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+});
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

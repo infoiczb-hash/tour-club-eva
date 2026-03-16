@@ -7,6 +7,31 @@ export const metadata: Metadata = {
   title: 'О клубе | Турклуб «Эва»',
   description: 'Узнайте больше о турклубе «Эва»: наша история, философия активного отдыха, безопасность на маршрутах и команда профессиональных гидов.',
   robots: { index: true, follow: true },
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'О клубе | Турклуб «Эва»',
+    description: 'Узнайте больше о турклубе «Эва»: история, философия и команда.',
+    url: 'https://evatur.club/about',
+    siteName: 'Турклуб «Эва»',
+    locale: "ru_RU",
+    type: "website",
+    images: [
+      {
+        url: '/og-default.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'О турклубе Эва'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'О клубе | Турклуб «Эва»',
+    description: 'Узнайте больше о турклубе «Эва»: история, философия и команда.',
+    images: ['/og-default.jpg'],
+  }
 };
 
 export default function AboutPage() {

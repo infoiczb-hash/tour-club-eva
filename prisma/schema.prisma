@@ -32,10 +32,12 @@ model Blog {
   guideId      String?    @map("guide_id") @db.Uuid
   isActive     Boolean    @default(false) @map("is_active")
   
-  guide        Guide?        @relation(fields: [guideId], references: [id])
+  guide        Guide?     @relation(fields: [guideId], references: [id])
   blogCategory BlogCategory? @relation(fields: [categoryId], references: [id]) // ✅ Связь
 
   @@map("blog_posts")
+  @@index([isActive])
+  @@index([categoryId])
 }
 
 model Tour {
@@ -85,6 +87,8 @@ model Tour {
   category           TourCategory?  @relation(fields: [categoryId], references: [id]) // ✅ Связь
 
   @@map("tours")
+  @@index([isActive])
+  @@index([categoryId])
 }
 
 model TourCategory {
@@ -104,7 +108,6 @@ model TourCategory {
   @@map("tour_categories")
 }
 
-// ✅ НОВАЯ МОДЕЛЬ: КАТЕГОРИИ БЛОГА
 model BlogCategory {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug        String   @unique
@@ -153,6 +156,7 @@ model Guide {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("guides")
+  @@index([isActive])
 }
 
 model Booking {
@@ -169,6 +173,8 @@ model Booking {
   tour       Tour          @relation(fields: [tourId], references: [id], onUpdate: NoAction)
 
   @@map("bookings")
+  @@index([tourId])
+  @@index([status])
 }
 
 model ContentBlock {
@@ -209,6 +215,7 @@ model Review {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("reviews")
+  @@index([isActive])
 }
 
 enum PostFormat {
@@ -237,6 +244,8 @@ model Inquiry {
   updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("inquiries")
+  @@index([status])
+  @@index([type])
 }
 
 enum InquiryType {

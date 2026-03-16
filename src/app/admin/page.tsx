@@ -8,6 +8,8 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+export const dynamic = 'force-dynamic'; // 👈 ДОБАВИЛИ: явное указание Next.js не кэшировать роут
+
 export default async function AdminPage() {
   // Серверная проверка сессии
   const supabase = await createServerSupabaseClient();

@@ -3,20 +3,38 @@
 import { prisma } from '@/lib/prisma';
 import { InquirySchema, InquiryInput } from './schema';
 import { sendToTelegram } from '@/features/admin/actions/telegram';
+// ✅ ДОБАВЛЕНО: Импорт лимитера и функции получения IP
+import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // ✅ ДОБАВЛЕНА: Функция экранирования опасных символов
 function escapeHtml(str: string | null | undefined): string {
   if (!str) return "";
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"');
 }
 
 export async function submitInquiry(data: InquiryInput) {
+  // ✅ ДОБАВЛЕНО: Rate Limiting (защита от спама)
   try {
-    // 1. Проверка Honeypot (Защита от ботов)
+    const ip = await getClientIp();
+    const { success: rateLimitSuccess } = await basicRateLimit.limit(ip);
+
+    if (!rateLimitSuccess) {
+      return { 
+        success: false, 
+        error: 'Слишком много запросов. Пожалуйста, подождите одну минуту перед следующей отправкой.' 
+      };
+    }
+  } catch (error) {
+    console.error('Rate limit error in submitInquiry:', error);
+    // При падении Redis просто пропускаем запрос дальше, чтобы не блокировать формы
+  }
+
+  try {
+    // 1. Проверка Honeypot (Защита от глупых ботов)
     if (data.honeypot) {
       return { success: true };
     }

@@ -81,6 +81,8 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
                 alt={data.hero.title}
                 fill
                 priority
+                fetchPriority="high" // 👈 ДОБАВИЛИ для LCP
+                quality={75}         // 👈 ДОБАВИЛИ для оптимизации веса
                 className="object-cover"
                 sizes="100vw"
             />
