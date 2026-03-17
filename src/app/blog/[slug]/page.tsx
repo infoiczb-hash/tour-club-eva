@@ -8,7 +8,7 @@ import { ArrowLeft, Calendar, Clock, User, ArrowRight, BookOpen } from "lucide-r
 import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -309,7 +309,18 @@ export default async function BlogPostPage({ params }: PageProps) {
                     prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
                     
                     prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6 prose-blockquote:font-medium"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} 
+                   dangerouslySetInnerHTML={{ 
+  __html: sanitizeHtml(post.content, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
+    allowedAttributes: {
+      '*': ['class', 'style'],
+      'a': ['href', 'name', 'target'],
+      'img': ['src', 'alt'],
+      'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
+    },
+    allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
+  }) 
+}}
                 />
 
                 <ArticleShare title={post.title} slug={post.slug} />

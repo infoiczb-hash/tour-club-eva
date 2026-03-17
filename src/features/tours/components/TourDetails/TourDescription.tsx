@@ -4,7 +4,7 @@ import {
   Compass, Tent, Flame, Heart, Star, Coffee, Navigation 
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 interface TourDescriptionProps {
   tour: Tour;
@@ -63,7 +63,16 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
           </h2>
           <div 
             className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tour.description) }}
+           dangerouslySetInnerHTML={{ 
+  __html: sanitizeHtml(tour.description, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span' ]),
+    allowedAttributes: {
+      '*': ['class', 'style'],
+      'a': ['href', 'name', 'target'],
+      'img': ['src', 'alt']
+    }
+  }) 
+}}
           />
         </div>
       )}
