@@ -110,8 +110,9 @@ export async function getRegistrationsAction() {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized', data: [] };
+    // 🛡️ Защита от утечки
     console.error('Get Registrations Error:', error);
-    return { error: err.message, data: [] };
+    return { error: 'Произошла внутренняя ошибка сервера при загрузке бронирований', data: [] };
   }
 }
 
@@ -128,8 +129,9 @@ export async function updateRegistrationStatus(id: string, status: string) {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
+    // 🛡️ Защита от утечки
     console.error('Update Status Error:', error);
-    return { error: 'Ошибка обновления статуса' };
+    return { error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
   }
 }
 
@@ -175,8 +177,9 @@ export async function saveGuideAction(data: SaveGuidePayload) {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
+    // 🛡️ Защита от утечки
     console.error('Save Guide Error:', error);
-    return { error: err.message || 'Ошибка при сохранении гида' };
+    return { error: 'Произошла внутренняя ошибка сервера при сохранении профиля гида' };
   }
 }
 
@@ -194,8 +197,9 @@ export async function deleteGuideAction(id: string | number) {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
+    // 🛡️ Защита от утечки
     console.error('Delete Guide Error:', error);
-    return { error: 'Не удалось удалить гида' };
+    return { error: 'Произошла внутренняя ошибка сервера при удалении гида' };
   }
 }
 
@@ -252,8 +256,11 @@ export async function savePostAction(data: SavePostPayload) {
   } catch (error: unknown) {
     const err = error as { message?: string, code?: string };
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
+    // Единственная разрешенная техническая ошибка (понятна юзеру)
     if (err.code === 'P2002') return { error: 'URL (slug) должен быть уникальным' };
-    return { error: err.message || 'Ошибка сохранения' };
+    // 🛡️ Защита от утечки
+    console.error('Save Post Error:', error);
+    return { error: 'Произошла внутренняя ошибка сервера при сохранении поста' };
   }
 }
 
@@ -269,7 +276,10 @@ export async function togglePostStatusAction(id: string, field: 'isActive' | 'is
     revalidatePath('/');
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: 'Ошибка обновления статуса' };
+    const err = error as Error;
+    if (err.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    console.error('Toggle Post Status Error:', error);
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
   }
 }
 
@@ -284,7 +294,9 @@ export async function deletePostAction(id: string) {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    return { error: 'Ошибка удаления поста' };
+    // 🛡️ Защита от утечки
+    console.error('Delete Post Error:', error);
+    return { error: 'Произошла внутренняя ошибка сервера при удалении поста' };
   }
 }
 
@@ -312,7 +324,9 @@ export async function deleteTourAction(id: string) {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    return { error: 'Ошибка удаления тура' };
+    // 🛡️ Защита от утечки
+    console.error('Delete Tour Action Error:', error);
+    return { error: 'Произошла внутренняя ошибка сервера при удалении тура' };
   }
 }
 
@@ -335,7 +349,8 @@ export async function saveContentBlockAction(slug: string, content: Prisma.Input
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
+    // 🛡️ Защита от утечки
     console.error('Content Save Error:', error);
-    return { error: 'Ошибка сохранения блока' };
+    return { error: 'Произошла внутренняя ошибка сервера при сохранении блока' };
   }
 }

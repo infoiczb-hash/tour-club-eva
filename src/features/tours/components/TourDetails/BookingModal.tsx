@@ -31,10 +31,12 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     name: '',
     phone: '+373 ',
     social: '',
-    comment: ''
+    comment: '',
+    // Скрытое поле для защиты от ботов
+    website: '' 
   });
 
-  // ✅ ИСПРАВЛЕНО: Храним и строку (для UI/TG), и ID (для БД)
+  // Храним и строку (для UI/TG), и ID (для БД)
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
 
@@ -56,7 +58,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     }
   }, [isOpen, initialDate, initialDateId, tour]);
 
-  // ✅ ИСПРАВЛЕНО: Добавлен семейный билет
+  // Добавлен семейный билет
   const [tickets, setTickets] = useState({
     adult: 1,
     child: 0,
@@ -72,7 +74,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
       const timer = setTimeout(() => {
         setStep('form');
         setErrorMsg(null);
-        setFormData({ name: '', phone: '+373 ', social: '', comment: '' });
+        setFormData({ name: '', phone: '+373 ', social: '', comment: '', website: '' });
         setTickets({ adult: 1, child: 0, member: 0, family: 0 });
       }, 300);
       return () => clearTimeout(timer);
@@ -80,7 +82,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  // ✅ ИСПРАВЛЕНО: Учитываем цену семейного пакета
+  // Учитываем цену семейного пакета
   const totalPrice = useMemo(() => {
     let sum = tickets.adult * tour.price;
     if (tour.priceChild) sum += tickets.child * tour.priceChild;
@@ -111,17 +113,19 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     try {
       const result = await createBookingAction({
         tourId:        String(tour.id),
-        tourDateId:    selectedDateId || undefined, // ✅ Передаем конкретную дату в БД
+        tourDateId:    selectedDateId || undefined, 
         tourTitle:     tour.title,
         tourDate:      selectedDateStr,
         name:          formData.name.trim(),
         phone:         formData.phone.trim(),
         social:        formData.social.trim() || undefined,
         comment:       formData.comment.trim() || undefined,
+        // Передаем значение ловушки
+        website:       formData.website, 
         ticketsAdult:  tickets.adult,
         ticketsChild:  tickets.child,
         ticketsMember: tickets.member,
-        ticketsFamily: tickets.family, // ✅ Передаем семейные билеты
+        ticketsFamily: tickets.family, 
         totalPrice,
         currency:      tour.currency ?? 'MDL',
       });
@@ -199,12 +203,22 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
           <div className="p-6 overflow-y-auto custom-scrollbar">
             {step === 'form' ? (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Honeypot field - visually hidden */}
+                <input 
+                  type="text" 
+                  name="website" 
+                  style={{ display: 'none' }} 
+                  tabIndex={-1} 
+                  autoComplete="off"
+                  value={formData.website}
+                  onChange={(e) => setFormData({...formData, website: e.target.value})}
+                />
+
                 <div className="space-y-2">
                    <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
                       <Calendar size={12} /> Дата и время
                    </label>
                    
-                   {/* ✅ ИСПРАВЛЕНО: Селект теперь пишет и ID, и красивую строку */}
                    {initialDate && initialDateId ? (
                       <div className="w-full bg-slate-950/50 border border-teal-500/30 rounded-xl px-4 py-3 text-teal-400 font-bold">
                          {initialDate}
@@ -320,7 +334,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
               </form>
             ) : (
               <div className="flex flex-col items-center text-center py-8">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-6 border border-emerald-500/20 animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-6 border border-emerald-500/20 animate-in zoom-in duration-500">
                   <CheckCircle size={40} />
                 </div>
                 <h3 className="text-2xl font-black text-white uppercase mb-2">

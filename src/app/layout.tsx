@@ -89,11 +89,7 @@ const organizationSchema = {
   telephone: '+37377770141',
   email: 'info@evatur.club',
   priceRange: "$$", 
-  aggregateRating: {
-    "@type": "AggregateRating",
-    "ratingValue": "4.9",
-    "reviewCount": "142" 
-  },
+ 
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Тирасполь',

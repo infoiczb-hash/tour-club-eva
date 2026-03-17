@@ -21,12 +21,20 @@ export async function getContentBlock(slug: string): Promise<Record<string, unkn
 // ==========================================
 export async function uploadImage(file: File, folder: string = ''): Promise<string | null> {
     try {
+        // ✅ ФАЗА 3: Жёсткий лимит размера файла (5 MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+        if (file.size > MAX_FILE_SIZE) {
+            alert(`Файл слишком большой! Максимальный размер 5 МБ. Размер вашего файла: ${(file.size / 1024 / 1024).toFixed(2)} МБ.`);
+            return null;
+        }
+
         const supabase = createClient();
         const bucket = 'tours-images'; // 👈 Жестко зафиксировали корзину
         
         const fileExt = file.name.split('.').pop();
         // Уникальное имя файла
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const safeName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
+        const fileName = `${Date.now()}-${safeName}.${fileExt}`;
         
         // 👈 Склеиваем путь: если передали папку 'blog', получится 'blog/12345.jpg'
         const filePath = folder ? `${folder}/${fileName}` : fileName; 
@@ -58,7 +66,7 @@ export async function uploadImageFromUrl(url: string, folder: string = ''): Prom
         // 2. Создаем файл
         const file = new File([blob], `ai-gen-${Date.now()}.png`, { type: 'image/png' });
         
-        // 3. Загружаем как обычный файл, прокидывая папку дальше
+        // 3. Загружаем как обычный файл, прокидывая папку дальше (лимит проверится внутри)
         return await uploadImage(file, folder);
     } catch (error) {
         console.error("URL Upload error:", error);

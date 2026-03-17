@@ -76,14 +76,14 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
       </div>
 
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
-        <div className="animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
+        <div className="animate-hero-subtitle inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
           <Sparkles size={16} className="text-teal-400" />
           <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
         </div>
-        <h1 className="animate-hero-title [animation-delay:100ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
+        <h1 className="animate-hero-title text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
           Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
         </h1>
-        <p className="animate-fade-in-up [animation-delay:200ms] text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+        <p className="animate-hero-subtitle text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
           Узнай какой ты турист, проработай страхи, кто ты в туристической группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
         </p>
       </section>

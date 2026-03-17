@@ -8,6 +8,7 @@ import { ArrowLeft, Calendar, Clock, User, ArrowRight, BookOpen } from "lucide-r
 import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
+import DOMPurify from 'isomorphic-dompurify';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -65,13 +66,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     imageUrl = `${BASE_URL}${imageUrl}`;
   }
 
-  // 🔥 SEO: GEO-СИНОНИМЫ И РЕГИОНАЛЬНЫЕ ЗАПРОСЫ
-  const keywordsStr = `${(post as any).blogCategory?.title || post.category}, Приднестровье, ПМР, Молдова, Transnistria, активный отдых, турклуб Эва, советы туристам, мотивация, туризм, сплавы, отдых на природе`;
-
+  // ✅ Keywords удалены для чистоты кода и SEO-оптимизации под современные алгоритмы
   return {
     title: `${post.title} | Турклуб «Эва»`,
     description: post.excerpt || `Статья от турклуба «Эва»: ${post.title}`,
-    keywords: keywordsStr,
     alternates: {
       canonical: postUrl, 
     },
@@ -225,7 +223,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             </h1>
 
             {/* ИСПРАВЛЕНИЕ: Мобильная структура в виде колонки (flex-col md:flex-row) */}
-         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">)
+         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
                 <div className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
                         {post.author_image ? (
@@ -241,7 +239,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                                 <User size={20}/>
                             </div>
                         )}
-                    </div>
                     </div>
                     <div>
                         <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">{post.author_name}</div>
@@ -264,6 +261,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
             </div>
         </div>
+      </div>
       
       {/* --- 2. CONTENT GRID --- */}
       <div className="container mx-auto px-4 max-w-7xl mt-8 md:mt-16">
@@ -311,7 +309,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
                     
                     prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6 prose-blockquote:font-medium"
-                    dangerouslySetInnerHTML={{ __html: post.content }} 
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} 
                 />
 
                 <ArticleShare title={post.title} slug={post.slug} />

@@ -61,7 +61,7 @@ export default function Hero() {
         className="relative z-10 container mx-auto px-4 text-center mt-12 md:mt-0 flex flex-col items-center"
         style={{ opacity: contentOpacity, transition: 'opacity 0.1s linear' }}
       >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+      <div className="animate-hero-subtitle inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6">
           <Waves size={14} className="text-teal-400 animate-pulse" />
           <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
             Маршруты по Днестру
@@ -69,16 +69,16 @@ export default function Hero() {
         </div>
 
         {/* Заголовок - МГНОВЕННЫЙ РЕНДЕР БЕЗ DELAY */}
-        <h1 className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl animate-in fade-in zoom-in-95 duration-700">
+        <h1 className="animate-hero-title text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl">
           Сплавы на <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">байдарках</span>
         </h1>
 
-        <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
+        <p className="animate-hero-subtitle text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md">
           Водные походы для новичков и тех, кто ищет природу и команду. Перезагрузка на воде. Только ты, весло и бесконечный горизонт.
         </p>
 
-        <div className="bg-slate-900/80 p-1.5 rounded-2xl border border-white/10 inline-flex flex-col sm:flex-row gap-1 w-full sm:w-auto shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+        <div className="animate-hero-subtitle bg-slate-900/80 p-1.5 rounded-2xl border border-white/10 inline-flex flex-col sm:flex-row gap-1 w-full sm:w-auto shadow-2xl backdrop-blur-md">
           <button
             onClick={() => setActiveTab("newbie")}
             className={`relative px-8 py-4 md:py-5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 ${activeTab === 'newbie' ? 'bg-teal-500 text-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.4)]' : 'bg-transparent text-slate-400 hover:text-white'}`}

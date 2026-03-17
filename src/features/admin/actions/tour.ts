@@ -129,7 +129,7 @@ export async function saveTour(formData: SaveTourPayload) {
     if (formData.id) {
       // === UPDATE ===
       await prisma.tour.update({
-        where: { id: formData.id },
+        where: { id: formData.id as string },
         data: {
             ...prismaPayload,
             tourDates: {
@@ -189,8 +189,9 @@ export async function saveTour(formData: SaveTourPayload) {
     if (err.message === 'Unauthorized') {
       return { success: false, error: 'Unauthorized' };
     }
-    console.error('❌ Database Error:', err);
-    return { success: false, error: err.message || 'Ошибка сохранения в базу' };
+    // 🛡️ Защита от утечки данных: логируем настоящую ошибку на сервере, отдаем заглушку
+    console.error('❌ Database Error in saveTour:', err);
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при сохранении тура.' };
   }
 }
 
@@ -236,8 +237,9 @@ export async function deleteTour(id: string) {
     if (err.message === 'Unauthorized') {
       return { success: false, error: 'Unauthorized' };
     }
+    // 🛡️ Защита от утечки
     console.error('Delete Error:', err);
-    return { success: false, error: 'Ошибка удаления' };
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при удалении тура.' };
   }
 }
 
@@ -263,6 +265,8 @@ export async function updateTourStatus(id: string, isActive: boolean) {
     if (err.message === 'Unauthorized') {
       return { success: false, error: 'Unauthorized' };
     }
-    return { success: false, error: 'Ошибка обновления статуса' };
+    // 🛡️ Защита от утечки
+    console.error('Update Status Error:', err);
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса.' };
   }
 }

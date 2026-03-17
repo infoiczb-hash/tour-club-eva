@@ -1,49 +1,75 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+'use server';
 
-const supabase = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL,
-  env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { requireAuth } from '@/lib/auth';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+
 /**
- * Универсальная функция загрузки файлов в Supabase Storage
- * @param file - Объект файла (из input type="file")
- * @param folder - Папка назначения ('tours', 'docs', 'blog', 'guides'). По умолчанию 'tours'.
+ * Универсальная функция загрузки файлов (Server Action)
+ * @param formData - Данные формы, содержащие 'file' и опционально 'folder'
  */
-export const uploadFile = async (file: File, folder: string = 'tours'): Promise<{ url: string | null; error?: string }> => {
+export const uploadFile = async (formData: FormData): Promise<{ url: string | null; error?: string }> => {
   try {
-    // 1. Генерация безопасного имени файла
-    // Убираем кириллицу и спецсимволы, добавляем время для уникальности
+    // 1. Проверка авторизации на сервере
+    // Бросает исключение, если пользователь не вошел в админку
+    await requireAuth(); // 
+
+    const file = formData.get('file') as File;
+    const folder = (formData.get('folder') as string) || 'tours';
+
+    if (!file) {
+      return { url: null, error: 'Файл не найден в запросе' };
+    }
+
+    // 2. Валидация размера (Max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return { url: null, error: 'Файл слишком большой (макс. 5Мб)' };
+    }
+
+    // 3. Генерация безопасного имени файла
     const fileExt = file.name.split('.').pop();
-    // Оставляем только латинские буквы и цифры в названии, остальное заменяем на "_"
-    const safeName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
-    const fileName = `${Date.now()}_${safeName}.${fileExt}`;
+    const safeName = file.name
+      .replace(/\.[^/.]+$/, "") // убираем расширение
+      .replace(/[^a-zA-Z0-9]/g, "_"); // заменяем спецсимволы на _
     
-    // Итоговый путь: "tours/1709823_foto.jpg" или "docs/1709823_contract.pdf"
+    const fileName = `${Date.now()}_${safeName}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
-    // 2. Загрузка в бакет 'tours-images'
+    // 4. Инициализация серверного клиента Supabase
+    const supabase = await createServerSupabaseClient(); // 
+
+    // 5. Загрузка в бакет 'tours-images'
+    // На сервере мы используем ArrayBuffer для загрузки
+    const fileBuffer = await file.arrayBuffer();
+
     const { error: uploadError } = await supabase.storage
       .from('tours-images') 
-      .upload(filePath, file, {
+      .upload(filePath, fileBuffer, {
         upsert: true,
-        cacheControl: '3600'
+        cacheControl: '3600',
+        contentType: file.type // сохраняем MIME-тип
       });
 
     if (uploadError) {
       console.error('Supabase Upload Error:', uploadError);
-      throw uploadError;
+      return { url: null, error: 'Ошибка хранилища при загрузке' };
     }
 
-    // 3. Получение публичной ссылки
+    // 6. Получение публичной ссылки
     const { data } = supabase.storage
       .from('tours-images')
       .getPublicUrl(filePath);
 
     return { url: data.publicUrl };
 
-  } catch (error: any) {
-    console.error('Global Upload Error:', error);
-    return { url: null, error: error.message || 'Ошибка при загрузке файла' };
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Global Upload Action Error:', err);
+    
+    if (err.message === 'Unauthorized') {
+        return { url: null, error: 'Доступ запрещен' };
+    }
+    
+    return { url: null, error: 'Внутренняя ошибка сервера при загрузке' };
   }
 };

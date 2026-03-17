@@ -61,7 +61,7 @@ export default function SupHero() {
         className="relative z-10 container mx-auto px-4 text-center mt-12 md:mt-0 flex flex-col items-center"
         style={{ opacity: contentOpacity, transition: 'opacity 0.1s linear' }}
       >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+       <div className="animate-hero-subtitle inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-950/50 backdrop-blur-md mb-6">
           <Waves size={14} className="text-teal-400 animate-pulse" />
           <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">
             SUP-прогулки
@@ -69,17 +69,17 @@ export default function SupHero() {
         </div>
 
         {/* Заголовок - МГНОВЕННЫЙ РЕНДЕР БЕЗ DELAY */}
-        <h1 className="text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl animate-in fade-in zoom-in-95 duration-700">
+        <h1 className="animate-hero-title text-5xl md:text-8xl lg:text-[7rem] font-black text-white uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl">
          СКОЛЬЗИ <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">ПО ВОДЕ</span>
         </h1>
 
-        <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
+        <p className="animate-hero-subtitle text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-md">
           Ваше идеальное мини-путешествие. Никакого шума и спешки — только вы, доска и природа. Открываем знакомые места с совершенно нового ракурса.
         </p>
         
         {/* КНОПКИ ДЕЙСТВИЯ */}
-        <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+        <div className="animate-hero-subtitle flex flex-col sm:flex-row gap-4">
           <Link
             href="#catalog" // Замени на нужный якорь или ссылку
             className="px-8 py-4 rounded-xl bg-teal-500 text-slate-950 font-black uppercase tracking-widest text-sm hover:bg-teal-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center justify-center gap-2"

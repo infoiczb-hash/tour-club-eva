@@ -4,6 +4,7 @@ import {
   Compass, Tent, Flame, Heart, Star, Coffee, Navigation 
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface TourDescriptionProps {
   tour: Tour;
@@ -39,7 +40,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
   return (
     <section className="scroll-mt-24 mb-12 md:mb-16" id="about">
       
-      {/* ✅ НОВЫЙ БЛОК: ВАЖНАЯ ИНФОРМАЦИЯ (ФАЗА 1) */}
+      {/* ✅ ВАЖНАЯ ИНФОРМАЦИЯ (ФАЗА 1) */}
       {tour.importantInfo && (
         <div className="mb-10 p-5 sm:p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex gap-4 items-start animate-in fade-in shadow-lg">
           <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={24} strokeWidth={2.5} />
@@ -54,31 +55,23 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
         </div>
       )}
 
-      {/* ОПИСАНИЕ ТУРА (Оригинальный рендер с разбивкой на абзацы) */}
+      {/* ✅ ИСПРАВЛЕНИЕ XSS И БАГА РЕНДЕРА: Описание тура теперь безопасно поддерживает HTML из TiptapEditor */}
       {tour.description && (
         <div className="prose prose-invert prose-teal max-w-none mb-12">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
             О туре
           </h2>
-          <div className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4">
-            {tour.description.split('\n').map((paragraph, index) => (
-              paragraph.trim() ? (
-                <p key={index} className="m-0">
-                  {paragraph}
-                </p>
-              ) : (
-                <br key={index} />
-              )
-            ))}
-          </div>
+          <div 
+            className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tour.description) }}
+          />
         </div>
       )}
 
-      {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ (Оригинальная сетка с иконками) */}
+      {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ */}
       {tour.highlights && tour.highlights.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 md:px-10 border border-white/5 shadow-2xl relative overflow-hidden">
           
-          {/* Декоративное свечение */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           
           <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-8 md:mb-10 relative z-10 flex items-center gap-4">

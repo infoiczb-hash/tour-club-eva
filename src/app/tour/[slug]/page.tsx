@@ -48,26 +48,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
 
-  const typeKeyword = tour.category?.title || 'приключения'; 
-  
-  const keywords = [
-    `тур ${tour.title}`,
-    `${typeKeyword} Приднестровье`,
-    `${typeKeyword} ПМР`,
-    `${typeKeyword} Молдова`,
-    `${typeKeyword} Transnistria`,
-    `активный отдых Тирасполь`,
-    `Турклуб Эва`,
-    `походы Молдова`,
-    `горы Румыния`,
-    `SUP и сплавы на байдарках на Днестре`
-  ];
-
+ 
   return {
     title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
-    keywords: keywords,
-    alternates: {
+     alternates: {
       canonical: url, 
     },
     openGraph: {
