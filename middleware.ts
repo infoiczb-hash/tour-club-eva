@@ -7,14 +7,14 @@ export async function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== 'production';
   
   // Формируем CSP на базе твоих старых настроек, но заменяем unsafe-inline на nonce для скриптов
-  const cspHeader = `
+ const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://va.vercel-scripts.com ${isDev ? "'unsafe-eval'" : ""};
-    style-src 'self' 'unsafe-inline';
+    script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src * blob: data:;
     media-src * blob: data:;
     connect-src *;
-    font-src 'self' data:;
+    font-src 'self' data: https://fonts.gstatic.com;
     frame-src 'self' https://www.youtube.com;
     object-src 'none';
     base-uri 'none';
