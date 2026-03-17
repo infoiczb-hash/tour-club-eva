@@ -8,14 +8,6 @@ import { BookingStatus, Prisma } from '@prisma/client';
 // ==========================================
 // TYPES
 // ==========================================
-interface TicketsJson {
-  adult?: number;
-  child?: number;
-  member?: number;
-  comment?: string;
-  social?: string;
-}
-
 interface TourDatesJson {
   start?: string;
   end?: string;
@@ -70,17 +62,22 @@ export async function getRegistrationsAction() {
   try {
     await requireAuth(); 
 
+    // ✅ ИСПРАВЛЕНИЕ: Подтягиваем новую связь tourDate
     const rawData = await prisma.booking.findMany({
       include: {
         tour: { select: { title: true, dates: true } },
+        tourDate: { select: { startDate: true } } 
       },
       orderBy: { createdAt: 'desc' },
     });
 
     const data = rawData.map((item) => {
-      const dates = (item.tour?.dates as TourDatesJson[]) || [];
-      const firstDate = dates[0]?.start ? new Date(dates[0].start) : null;
-      const tickets = (item.tickets as TicketsJson) || {};
+      // Фолбэк для старых JSON-дат (если тур был создан до обновы)
+      const legacyDates = (item.tour?.dates as TourDatesJson[]) || [];
+      const firstLegacyDate = legacyDates[0]?.start ? new Date(legacyDates[0].start) : null;
+      
+      // ✅ ИСПРАВЛЕНИЕ: Определяем самую точную дату выезда для заявки
+      const actualDate = item.tourDate?.startDate || item.bookedDate || firstLegacyDate;
 
       return {
         id: item.id,
@@ -88,15 +85,23 @@ export async function getRegistrationsAction() {
         user_phone: item.phone,
         status: item.status || 'pending',
         created_at: item.createdAt,
-        tickets_adult: Number(tickets.adult || 0),
-        tickets_child: Number(tickets.child || 0),
-        tickets_member: Number(tickets.member || 0),
+        
+        // ✅ ИСПРАВЛЕНИЕ: Берем билеты из новых плоских колонок
+        tickets_adult: item.ticketsAdult,
+        tickets_child: item.ticketsChild,
+        tickets_family: item.ticketsFamily,
+        tickets_member: item.ticketsMember,
+        
+        // ✅ ИСПРАВЛЕНИЕ: Новые поля CRM
+        amount_paid: item.amountPaid,
+        source: item.source,
         total_price: item.totalPrice,
-        comment: tickets.comment || '',
-        social: item.email || tickets.social || '',
+        
+        comment: item.comment || '',
+        social: item.social || item.email || '',
         event_id: item.tourId,
         tour: item.tour
-          ? { title: item.tour.title, date: item.bookedDate || firstDate }
+          ? { title: item.tour.title, date: actualDate }
           : undefined,
       };
     });
@@ -252,7 +257,6 @@ export async function savePostAction(data: SavePostPayload) {
   }
 }
 
-// ✅ ДОБАВЛЕНО: Безопасный точечный экшен для статуса
 export async function togglePostStatusAction(id: string, field: 'isActive' | 'is_trending', value: boolean) {
   try {
     await requireAuth();
@@ -293,7 +297,12 @@ export async function deleteTourAction(id: string) {
     await requireAuth(); 
 
     const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
-    await prisma.tour.delete({ where: { id } });
+    
+    // ✅ ИСПРАВЛЕНИЕ: Мягкое удаление (Soft Delete), чтобы защитить статистику CRM
+    await prisma.tour.update({ 
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false }
+    });
 
     revalidatePath('/admin');
     revalidatePath('/tour');

@@ -3,25 +3,33 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, Check, X as XIcon, Phone, Send, Instagram, 
-  Users, ClipboardCopy, ChevronDown, Map, AlertCircle
+  Users, ClipboardCopy, ChevronDown, Map, AlertCircle, Globe
 } from 'lucide-react';
 import { BookingStatus } from '@prisma/client';
 import { clsx } from 'clsx';
 import { useToast } from '@/shared/context/ToastContext';
 
-// --- ИНТЕРФЕЙСЫ ---
+// --- ИНТЕРФЕЙСЫ (Обновлены под новую реляционную БД) ---
 interface BookingItem {
   id: string;
   user_name: string;
   user_phone: string;
   status: BookingStatus;
   created_at: Date | string;
+  
+  // Плоские поля билетов
   tickets_adult: number;
   tickets_child: number;
-  tickets_member?: number;
+  tickets_family: number;
+  tickets_member: number;
+  
+  // CRM поля
   total_price: number;
-  comment?: string;
-  social?: string;
+  amount_paid: number;
+  source: string;
+  
+  comment?: string | null;
+  social?: string | null;
   event_id: string;
   tour?: { title: string; date: Date | string };
 }
@@ -33,18 +41,23 @@ interface BookingsTabProps {
 
 type TabMode = 'list' | 'groups';
 
-// --- ХЕЛПЕР: ФОРМАТИРОВАНИЕ БИЛЕТОВ ---
+// --- ХЕЛПЕРЫ ---
 const formatTickets = (b: BookingItem) => {
   const parts = [];
   if (b.tickets_adult > 0) parts.push(`${b.tickets_adult} взр`);
   if (b.tickets_child > 0) parts.push(`${b.tickets_child} дет`);
-  
-  // Добавляем проверку на семейные билеты (из нашей схемы Prisma)
-  // @ts-ignore - если поле добавлено недавно и TS еще не видит его в интерфейсе
-  const familyCount = b.tickets_family || 0;
-  if (familyCount > 0) parts.push(`${familyCount} сем`);
-  
+  if (b.tickets_family > 0) parts.push(`${b.tickets_family} сем`);
+  if (b.tickets_member > 0) parts.push(`${b.tickets_member} клуб`);
   return parts.join(' + ') || '0';
+};
+
+const getSourceBadge = (source: string) => {
+  switch(source?.toLowerCase()) {
+    case 'telegram': return <span className="bg-sky-500/10 text-sky-500 border border-sky-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 text-[9px] uppercase font-bold"><Send size={8}/> TG</span>;
+    case 'instagram': return <span className="bg-pink-500/10 text-pink-500 border border-pink-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 text-[9px] uppercase font-bold"><Instagram size={8}/> INST</span>;
+    case 'offline': return <span className="bg-slate-500/10 text-slate-500 border border-slate-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 text-[9px] uppercase font-bold"><Users size={8}/> OFFLINE</span>;
+    default: return <span className="bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 text-[9px] uppercase font-bold"><Globe size={8}/> WEB</span>;
+  }
 };
 
 export default function BookingsTab({ bookings, onStatusChange }: BookingsTabProps) {
@@ -87,7 +100,8 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
        }
 
        groups[key].bookings.push(b);
-       groups[key].totalTickets += (b.tickets_adult || 0) + (b.tickets_child || 0) + (b.tickets_member || 0);
+       // ✅ ИСПРАВЛЕНИЕ: Семейный пакет занимает 3 места в автобусе
+       groups[key].totalTickets += (b.tickets_adult || 0) + (b.tickets_child || 0) + (b.tickets_member || 0) + ((b.tickets_family || 0) * 3);
     });
 
     // Сортируем группы по дате выезда
@@ -115,14 +129,14 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
          text += `${i+1}. ${b.user_name} — ${ticketsStr}\n📞 ${b.user_phone}${statusMark}\n\n`;
       });
       
-      text += `👥 *Всего билетов: ${group.totalTickets}*`;
+      text += `👥 *Всего мест: ${group.totalTickets}*`;
 
       navigator.clipboard.writeText(text).then(() => {
           showToast('Список скопирован в буфер обмена', 'success');
       });
   };
 
-  const renderSocialIcon = (social?: string) => {
+  const renderSocialIcon = (social?: string | null) => {
       if (!social) return null;
       const lower = social.toLowerCase();
       if (lower.includes('inst')) return <Instagram size={12} className="text-pink-500" />;
@@ -190,7 +204,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                             <th className="p-5 w-[20%]">Тур и Дата</th>
                             <th className="p-5 w-[15%]">Клиент</th>
                             <th className="p-5 w-[15%]">Экономика</th>
-                            {/* Выделенная колонка под текст */}
                             <th className="p-5 w-[25%]">Комментарий</th>
                             <th className="p-5 w-[15%] text-center">Статус</th>
                             <th className="p-5 w-[10%] text-right">Действия</th>
@@ -206,8 +219,11 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                     </div>
                                 </td>
                                 <td className="p-5 align-top">
-                                    <div className="font-bold text-slate-900 dark:text-white mb-1">
-                                        {b.user_name}
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="font-bold text-slate-900 dark:text-white">
+                                            {b.user_name}
+                                        </div>
+                                        {getSourceBadge(b.source)}
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <a href={`tel:${b.user_phone.replace(/\s/g, '')}`} className="text-xs text-slate-500 hover:text-teal-500 transition-colors flex items-center gap-1 font-mono">
@@ -224,15 +240,20 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                     <div className="font-black text-slate-900 dark:text-white mb-1 text-xs">
                                         {formatTickets(b)}
                                     </div>
-                                    <div className="text-[10px] font-bold text-teal-600 uppercase tracking-wider bg-teal-500/10 w-fit px-2 py-0.5 rounded">
+                                    <div className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider bg-teal-500/10 border border-teal-500/20 w-fit px-2 py-0.5 rounded">
                                         {b.total_price.toLocaleString()} MDL
                                     </div>
+                                    {b.amount_paid > 0 && (
+                                        <div className="text-[9px] text-slate-500 mt-1 uppercase font-bold">
+                                            Оплачено: <span className="text-emerald-500">{b.amount_paid} MDL</span>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="p-5 align-top">
                                     {b.comment ? (
                                         <div 
                                             className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed line-clamp-3 cursor-help border-l-2 border-amber-500/50 pl-2"
-                                            title={b.comment} // Нативный тултип при наведении
+                                            title={b.comment}
                                         >
                                             {b.comment}
                                         </div>
@@ -245,7 +266,7 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                         value={b.status} 
                                         onChange={(e) => onStatusChange(b.id, e.target.value)} 
                                         className={clsx(
-                                            "text-xs font-bold uppercase tracking-wider rounded-lg px-3 py-1.5 outline-none cursor-pointer border appearance-none text-center w-full",
+                                            "text-xs font-bold uppercase tracking-wider rounded-lg px-3 py-1.5 outline-none cursor-pointer border appearance-none text-center w-full transition-colors",
                                             b.status === 'confirmed' ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-500/30" :
                                             b.status === 'cancelled' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500 border-rose-200 dark:border-rose-500/30" :
                                             "bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-500/30"
@@ -283,13 +304,15 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                         
                         <div className="flex justify-between items-start pl-2">
                             <div>
-                                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{b.tour?.date ? new Date(b.tour.date).toLocaleDateString('ru-RU') : 'Без даты'}</div>
+                                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                  {b.tour?.date ? new Date(b.tour.date).toLocaleDateString('ru-RU') : 'Без даты'}
+                                </div>
                                 <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight line-clamp-2">{b.tour?.title}</h3>
                             </div>
                             <select 
                                 value={b.status} 
                                 onChange={(e) => onStatusChange(b.id, e.target.value)} 
-                                className="bg-transparent text-[10px] font-black uppercase text-slate-400 outline-none text-right"
+                                className="bg-transparent text-[10px] font-black uppercase text-slate-400 outline-none text-right appearance-none"
                             >
                                 <option value="pending">Новая</option>
                                 <option value="confirmed">Оплачено</option>
@@ -302,7 +325,10 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                 <div className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
                                     {b.user_name}
                                 </div>
-                                <div className="text-xs font-bold text-teal-600 mt-1">{formatTickets(b)} • {b.total_price} MDL</div>
+                                <div className="text-xs font-bold text-teal-600 mt-1">
+                                  {formatTickets(b)} • {b.total_price} MDL
+                                  {b.amount_paid > 0 && <span className="ml-2 text-emerald-500 border-l border-teal-500/30 pl-2">Аванс: {b.amount_paid}</span>}
+                                </div>
                             </div>
                             <div className="flex gap-2 shrink-0">
                                 <a href={`tel:${b.user_phone.replace(/\s/g, '')}`} className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 active:scale-95 transition-transform"><Phone size={16}/></a>
@@ -310,14 +336,16 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                             </div>
                         </div>
 
-                        {/* Комментарий в мобильной карточке */}
                         {b.comment && (
                             <div className="ml-2 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex gap-3 items-start">
                                 <AlertCircle size={16} className="text-amber-500 mt-0.5 shrink-0" />
                                 <p className="text-xs font-medium text-amber-700 dark:text-amber-200/80 leading-relaxed">{b.comment}</p>
                             </div>
                         )}
-
+                        
+                        <div className="ml-2 flex items-center gap-2 mt-[-5px]">
+                            {getSourceBadge(b.source)}
+                        </div>
                     </div>
                 ))}
             </div>
@@ -355,7 +383,7 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                         <div className="flex items-center gap-3 text-xs font-bold text-slate-500 uppercase tracking-widest">
                                             <span className="text-teal-600">{group.date}</span>
                                             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                                            <span>{group.totalTickets} билетов</span>
+                                            <span>{group.totalTickets} мест</span>
                                         </div>
                                     </div>
                                 </div>
@@ -380,7 +408,10 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                                             <div className="absolute inset-0 bg-teal-500 rounded-[2px] opacity-0 peer-checked:opacity-100 transition-opacity" />
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-sm text-slate-900 dark:text-white leading-none mb-1">{b.user_name}</div>
+                                                            <div className="font-bold text-sm text-slate-900 dark:text-white leading-none mb-1 flex items-center gap-2">
+                                                              {b.user_name}
+                                                              {b.amount_paid > 0 && <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 text-[9px] rounded uppercase font-black">Аванс</span>}
+                                                            </div>
                                                             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{formatTickets(b)}</div>
                                                         </div>
                                                     </label>
@@ -392,7 +423,7 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                                         {b.user_phone}
                                                     </a>
                                                     {b.status === 'pending' && (
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-500 rounded">Не оплачено</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-500 rounded">Ожидает</span>
                                                     )}
                                                 </div>
                                             </div>

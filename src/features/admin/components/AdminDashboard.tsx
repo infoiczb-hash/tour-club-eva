@@ -70,12 +70,18 @@ interface BookingItem {
   user_phone: string;
   status: BookingStatus;
   created_at: Date | string;
+  
   tickets_adult: number;
   tickets_child: number;
-  tickets_member?: number;
+  tickets_family: number; // <-- ДОБАВЛЕНО
+  tickets_member: number;
+  
   total_price: number;
-  comment?: string;
-  social?: string;
+  amount_paid: number;    // <-- ДОБАВЛЕНО
+  source: string;         // <-- ДОБАВЛЕНО
+  
+  comment?: string | null;
+  social?: string | null;
   event_id: string;
   tour?: { title: string; date: Date | string };
 }

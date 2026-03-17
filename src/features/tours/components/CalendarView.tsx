@@ -1,4 +1,3 @@
-// src/features/tours/components/CalendarView.tsx
 "use client";
 
 import React, { useMemo } from 'react';
@@ -27,9 +26,14 @@ const COLOR_THEMES: Record<string, string> = {
   amber:   "bg-amber-500/10 border-amber-500/20 text-amber-400",
 };
 
+// ✅ ИСПРАВЛЕНО: Добавлен currentPrice для динамического ценообразования дат
 type CalendarTour = Omit<Tour, 'date'> & {
-  uniqueId: string; originalId: string;
-  date: string | null; endDate: string | null; guideId: string | null;
+  uniqueId: string; 
+  originalId: string;
+  date: string | null; 
+  endDate: string | null; 
+  guideId: string | null;
+  currentPrice?: number | null; 
 };
 
 interface CalendarViewProps { events: Tour[]; }
@@ -40,13 +44,11 @@ export default function CalendarView({ events }: CalendarViewProps) {
     today.setHours(0, 0, 0, 0);
 
     const explodedEvents: CalendarTour[] = events.flatMap((tour): CalendarTour[] => {
-      let datesArray: any[] = [];
-      try {
-        if (typeof tour.dates === 'string') datesArray = JSON.parse(tour.dates);
-        else if (Array.isArray(tour.dates)) datesArray = tour.dates;
-      } catch (e) { console.error("Ошибка парсинга дат для тура", tour.id); }
+      
+      // ✅ ИСПРАВЛЕНО: Убрали костыль с JSON.parse. api.ts уже отдаёт чистый массив.
+      const datesArray = Array.isArray(tour.dates) ? tour.dates : [];
 
-      if (datesArray && datesArray.length > 0) {
+      if (datesArray.length > 0) {
         const futureDates = datesArray.filter(dateObj => {
             if (!dateObj.start) return false;
             const eventDate = new Date(dateObj.start);
@@ -57,13 +59,19 @@ export default function CalendarView({ events }: CalendarViewProps) {
         if (futureDates.length === 0) return [];
 
         return futureDates.map((dateObj, idx) => ({
-          ...tour, date: dateObj.start || null, endDate: dateObj.end || null,
-          guideId: dateObj.guide_id || null, originalId: tour.id,
-          uniqueId: `${tour.id}-${dateObj.start}-${idx}`
+          ...tour, 
+          date: dateObj.start || null, 
+          endDate: dateObj.end || null,
+          guideId: dateObj.guide_id || null, 
+          originalId: tour.id,
+          // ✅ ИСПРАВЛЕНО: Берем UUID из TourDate, если он есть, иначе фолбэк
+          uniqueId: dateObj.id || `${tour.id}-${dateObj.start}-${idx}`,
+          // ✅ ИСПРАВЛЕНО: Динамическая цена конкретной даты (если задана) перекрывает базовую
+          currentPrice: dateObj.basePrice || tour.price 
         }));
       }
 
-      return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null } as CalendarTour];
+      return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null, currentPrice: tour.price } as CalendarTour];
     });
 
     const sorted = explodedEvents.sort((a, b) => {
@@ -145,12 +153,11 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
   const endDateObj = tour.endDate ? new Date(tour.endDate) : null;
   const isMultiDay = endDateObj && dateObj && endDateObj.getTime() !== dateObj.getTime();
 
-  // 👇 ИСПРАВЛЕНИЕ: Берем цвет из категории, с фолбэком на slate
   const themeColor = tour.category?.color || 'slate';
   const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
 
-  // 👇 ИСПРАВЛЕНИЕ: Выводим реальное название категории из БД
-const badgeLabel = tour.category?.title || 'Тур';
+  const badgeLabel = tour.category?.title || 'Тур';
+  const displayPrice = tour.currentPrice ?? tour.price; // Выводим переопределенную цену
 
   return (
     <Link href={`/tour/${tour.slug}`} className="group block outline-none">
@@ -176,7 +183,6 @@ const badgeLabel = tour.category?.title || 'Тур';
 
         <div className="flex flex-col justify-center flex-1 min-w-0 py-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-            {/* 👇 ИСПРАВЛЕНИЕ: Выводим динамический бейдж с правильным цветом */}
             {badgeLabel && (
               <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px]", badgeStyle)}>
                 {badgeLabel}
@@ -202,7 +208,7 @@ const badgeLabel = tour.category?.title || 'Тур';
           <div className="hidden sm:flex flex-col items-end justify-center pr-5 border-r border-white/10 h-full">
             <span className="text-[12px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">Билет от</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-white leading-none tracking-tight">{Number(tour.price).toLocaleString()}</span>
+              <span className="text-xl font-black text-white leading-none tracking-tight">{Number(displayPrice).toLocaleString()}</span>
               <span className="text-xs font-bold text-teal-500">{tour.currency || 'MDL'}</span>
             </div>
           </div>

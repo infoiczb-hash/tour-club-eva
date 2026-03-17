@@ -15,9 +15,9 @@ model Blog {
   excerpt      String
   content      String
   
-  category     String     @default("OTHER") // ⚠️ Старое поле (пока оставляем)
-  categoryId   String?    @map("category_id") @db.Uuid // ✅ НОВОЕ: Связь с категорией
-  tags         String[]   @default([])      // ✅ НОВОЕ: Теги для блога
+  category     String     @default("OTHER")
+  categoryId   String?    @map("category_id") @db.Uuid
+  tags         String[]   @default([])      
   
   image        String?
   read_time    Int        @default(5)
@@ -33,7 +33,7 @@ model Blog {
   isActive     Boolean    @default(false) @map("is_active")
   
   guide        Guide?     @relation(fields: [guideId], references: [id])
-  blogCategory BlogCategory? @relation(fields: [categoryId], references: [id]) // ✅ Связь
+  blogCategory BlogCategory? @relation(fields: [categoryId], references: [id])
 
   @@map("blog_posts")
   @@index([isActive])
@@ -46,7 +46,7 @@ model Tour {
   title              String
   subtitle           String?
   description        String?
-  categoryId         String?        @map("category_id") @db.Uuid // ✅ НОВОЕ: Связь с категорией
+  categoryId         String?        @map("category_id") @db.Uuid
   
   label              String         @default("")
   duration           String?
@@ -54,41 +54,172 @@ model Tour {
   spots              Int            @default(15)
   spotsLeft          Int            @default(15) @map("spots_left")
   currency           String         @default("RUB")
+  
+  // Базовые списки и JSON
   gallery            String[]       @default([])
   program            Json?          @default("[]")
   faq                Json?          @default("[]")
   included           String[]       @default([])
   additionalExpenses String[]       @default([]) @map("additional_expenses")
-  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  documents          Json?          @default("[]")
+  highlights         Json?          @default("[]")
+  checklist          Json?          @default("[]")
+  dates              Json           @default("[]") // Старое поле для совместимости
+  
+  // ✅ НОВЫЕ ПОЛЯ КОНТЕНТА И SEO
+  includedDetailed   Json?          @map("included_detailed")
+  excludedDetailed   Json?          @map("excluded_detailed")
+  tourFormat         String?        @map("tour_format")
+  accommodation      String?
+  groupInfo          String?        @map("group_info")
+  importantInfo      String?        @map("important_info")
+  
+  // Логистика
   difficulty         String         @default("medium")
   distance           String?
-  documents          Json?          @default("[]")
-  guideId            String?        @map("guide_id") @db.Uuid
-  isActive           Boolean        @default(false) @map("is_active")
   meetingPoint       String?        @map("meeting_point")
-  priceChild         Int?           @map("price_child")
+  route              String?
+  
+  // Цены
+  price              Int            @default(0)
   priceOld           Int?           @map("price_old")
+  priceChild         Int?           @map("price_child")
+  priceFamily        Int?           @map("price_family")
+  priceMember        Int?           @map("price_member")
+  
+  // SEO и мета
   coverImage         String?        @map("cover_image")
-  dates              Json           @default("[]")
-  highlights         Json?          @default("[]")
   metaDesc           String?        @map("meta_desc")
   metaTitle          String?        @map("meta_title")
-  price              Int            @default(0)
-  priceMember        Int?           @map("price_member")
-  route              String?
   tags               String[]       @default([])
-  checklist          Json?          @default("[]")
-  priceFamily        Int?           @map("price_family")
   
-  bookings           Booking[]
-  registrations      Registration[]
+  isActive           Boolean        @default(false) @map("is_active")
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?      @map("deleted_at") @db.Timestamptz(6) // ✅ МЯГКОЕ УДАЛЕНИЕ
+
+  guideId            String?        @map("guide_id") @db.Uuid
   guide              Guide?         @relation(fields: [guideId], references: [id])
-  category           TourCategory?  @relation(fields: [categoryId], references: [id]) // ✅ Связь
+  category           TourCategory?  @relation(fields: [categoryId], references: [id])
+  
+  // Связи
+  bookings           Booking[]
+  tourDates          TourDate[]     // ✅ СВЯЗЬ С ДАТАМИ
+  waitlists          Waitlist[]     // ✅ ЛИСТ ОЖИДАНИЯ
+  reviews            Review[]       // ✅ SEO ОТЗЫВЫ
 
   @@map("tours")
   @@index([isActive])
   @@index([categoryId])
+}
+
+model TourDate {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tourId              String    @map("tour_id") @db.Uuid
+  guideId             String?   @map("guide_id") @db.Uuid
+  
+  startDate           DateTime  @map("start_date") @db.Date
+  endDate             DateTime? @map("end_date") @db.Date
+  time                String?
+  
+  spots               Int       @default(15)
+  spotsLeft           Int       @default(15) @map("spots_left")
+
+  // ✅ ДИНАМИЧЕСКОЕ ЦЕНООБРАЗОВАНИЕ
+  basePrice           Int?      @map("base_price")
+  discountEarlyBird   Int?      @map("discount_early_bird")
+  earlyBirdDeadline   Int?      @map("early_bird_deadline")
+  surchargeLastMinute Int?      @map("surcharge_last_minute")
+  lastMinuteTrigger   Int?      @map("last_minute_trigger")
+
+  status              String    @default("scheduled")
+  isActive            Boolean   @default(true) @map("is_active")
+
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tour                Tour      @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  guide               Guide?    @relation(fields: [guideId], references: [id])
+  bookings            Booking[]
+  waitlists           Waitlist[]
+
+  @@map("tour_dates")
+  @@index([tourId])
+  @@index([startDate])
+}
+
+model Booking {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  phone         String
+  email         String?
+  social        String?       
+  
+  // ✅ РАСЩЕПЛЕННЫЕ БИЛЕТЫ
+  ticketsAdult  Int           @default(0) @map("tickets_adult")
+  ticketsChild  Int           @default(0) @map("tickets_child")
+  ticketsFamily Int           @default(0) @map("tickets_family")
+  ticketsMember Int           @default(0) @map("tickets_member")
+  comment       String?
+  
+  // ✅ CRM И ПЛАТЕЖИ
+  totalPrice    Int           @map("total_price")
+  amountPaid    Int           @default(0) @map("amount_paid")
+  discount      Int           @default(0)
+  paymentMethod String?       @map("payment_method")
+  source        String        @default("website")
+  
+  status        BookingStatus @default(pending)
+  bookedDate    DateTime?     @map("booked_date")
+  
+  tourId        String        @map("tour_id") @db.Uuid
+  tourDateId    String?       @map("tour_date_id") @db.Uuid
+  promoCodeId   String?       @map("promo_code_id") @db.Uuid
+  
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  
+  tour          Tour          @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tourDate      TourDate?     @relation(fields: [tourDateId], references: [id], onDelete: SetNull)
+  promoCode     PromoCode?    @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+
+  @@map("bookings")
+  @@index([tourId])
+  @@index([status])
+}
+
+model Waitlist {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tourId      String    @map("tour_id") @db.Uuid
+  tourDateId  String?   @map("tour_date_id") @db.Uuid
+  name        String
+  phone       String
+  social      String?
+  
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tour        Tour      @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tourDate    TourDate? @relation(fields: [tourDateId], references: [id], onDelete: Cascade)
+
+  @@map("waitlists")
+  @@index([tourId])
+  @@index([tourDateId])
+}
+
+model PromoCode {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String    @unique
+  discount    Int
+  type        String    @default("percent")
+  validUntil  DateTime? @map("valid_until") @db.Timestamptz(6)
+  usageCount  Int       @default(0) @map("usage_count")
+  isActive    Boolean   @default(true) @map("is_active")
+
+  bookings    Booking[]
+
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("promo_codes")
+  @@index([code])
 }
 
 model TourCategory {
@@ -151,6 +282,7 @@ model Guide {
   
   posts        Blog[]
   tours        Tour[]
+  tourDates    TourDate[]
 
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -159,48 +291,11 @@ model Guide {
   @@index([isActive])
 }
 
-model Booking {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  phone      String
-  email      String?
-  tickets    Json
-  totalPrice Int           @map("total_price")
-  status     BookingStatus @default(pending)
-  bookedDate DateTime?     @map("booked_date")
-  tourId     String        @map("tour_id") @db.Uuid
-  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  tour       Tour          @relation(fields: [tourId], references: [id], onUpdate: NoAction)
-
-  @@map("bookings")
-  @@index([tourId])
-  @@index([status])
-}
-
 model ContentBlock {
   slug    String @id @unique
   content Json
 
   @@map("content_blocks")
-}
-
-model Registration {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  phone          String
-  email          String?
-  tickets        Int
-  ticket_type    String?   @default("adult")
-  total_price    Int
-  status         String?   @default("new")
-  created_at     DateTime? @default(now()) @db.Timestamptz(6)
-  tickets_adult  Int?      @default(0)
-  tickets_child  Int?      @default(0)
-  tickets_family Int?      @default(0)
-  tour_id        String?   @db.Uuid
-  tour           Tour?     @relation(fields: [tour_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@map("registrations")
 }
 
 model Review {
@@ -211,22 +306,15 @@ model Review {
   avatar    String?
   category  String   @default("general") 
   isActive  Boolean  @default(true) @map("is_active")
+  
+  tourId    String?  @map("tour_id") @db.Uuid // ✅ ПРИВЯЗКА К ТУРУ
+  tour      Tour?    @relation(fields: [tourId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("reviews")
   @@index([isActive])
-}
-
-enum PostFormat {
-  short
-  long
-}
-
-enum BookingStatus {
-  pending
-  confirmed
-  cancelled
 }
 
 model Inquiry {
@@ -248,6 +336,31 @@ model Inquiry {
   @@index([type])
 }
 
+model FunTest {
+  id          String   @id @default(cuid())
+  slug        String   @unique 
+  title       String   
+  description String   
+  image       String?  
+  category    String   @default("general")
+  isActive    Boolean  @default(false) 
+  passCount   Int      @default(0)     
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum PostFormat {
+  short
+  long
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
 enum InquiryType {
   TOUR      
   HR        
@@ -261,18 +374,4 @@ enum InquiryStatus {
   NEW       
   WORK      
   DONE      
-}
-
-model FunTest {
-  id          String   @id @default(cuid())
-  slug        String   @unique 
-  title       String   
-  description String   
-  image       String?  
-  category    String   @default("general")
-  isActive    Boolean  @default(false) 
-  passCount   Int      @default(0)     
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
