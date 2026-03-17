@@ -105,13 +105,15 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         <CtaBanner />
       </div>
 
-      {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
-        if (!ModalComponent || activeQuizSlug !== slug) return null;
+     {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
+        if (!ModalComponent) return null;
+        const isActive = activeQuizSlug === slug;
+        
         return (
           <ModalComponent
             key={slug}
-            isOpen
-            open
+            isOpen={isActive}
+            open={isActive}
             onComplete={['backpack', 'survival', 'tourist-type', 'totem'].includes(slug) ? handleOldQuizResult : undefined}
             onClose={() => setActiveQuizSlug(null)}
           />
@@ -120,7 +122,6 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
     </div>
   );
 }
-
 function CategorySection({ categoryName, config, tests, categoryIndex, onOpen }: {
   categoryName: string;
   config: { label: string; icon: React.ReactNode; color: string };
