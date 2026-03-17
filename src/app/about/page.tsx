@@ -46,23 +46,23 @@ export default function AboutPage() {
       {/* 🔥 ИСПРАВЛЕНИЕ: Убран лишний mt-12, так как теперь есть padding у main */}
       <div className="relative z-10 text-center max-w-2xl mx-auto flex flex-col items-center">
         
-        {/* Бейдж статуса */}
-        <div className="opacity-0 animate-fade-in-up inline-flex items-center gap-2 px-4 py-2 bg-slate-900/80 border border-white/10 backdrop-blur-md rounded-full mb-8 shadow-xl">
+       {/* Бейдж статуса */}
+        <div className="animate-hero-subtitle inline-flex items-center gap-2 px-4 py-2 bg-slate-900/80 border border-white/10 backdrop-blur-md rounded-full mb-8 shadow-xl">
           <Hammer className="w-4 h-4 text-slate-400" />
           <span className="text-[10px] md:text-xs font-bold tracking-[0.15em] text-slate-300 uppercase">
             Страница в разработке
           </span>
         </div>
 
-        {/* Главный заголовок */}
-        <h1 className="opacity-0 animate-fade-in-up [animation-delay:150ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-10 leading-none">
+        {/* Главный заголовок - МГНОВЕННЫЙ РЕНДЕР (LCP) */}
+        <h1 className="animate-hero-title text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-10 leading-none">
           О <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">клубе</span>
         </h1>
 
         {/* Текстовые блоки */}
         <div className="space-y-8 text-base md:text-lg text-slate-300 font-medium leading-relaxed max-w-xl mx-auto">
           
-          <div className="opacity-0 animate-fade-in-up [animation-delay:300ms] relative">
+          <div className="animate-hero-subtitle relative">
              <PawPrint className="absolute -top-6 -left-4 w-12 h-12 text-teal-500/10 -rotate-12" />
              <p className="relative z-10 text-xl md:text-2xl text-white font-bold leading-snug">
                 Скоро здесь появится история о том,<br className="hidden md:block"/>

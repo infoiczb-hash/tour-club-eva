@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
-import { MapPin, Clock, Calendar } from 'lucide-react';
+import Link from 'next/link'; // ✅ ДОБАВИЛИ
+import { MapPin, Clock, Calendar, ArrowLeft } from 'lucide-react'; // ✅ ДОБАВИЛИ ArrowLeft
 import { Tour } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -70,11 +71,22 @@ export default function TourHero({ tour }: TourHeroProps) {
           className="object-cover opacity-60"
           priority
           fetchPriority="high"
-          quality={75}
+          quality={65} // ✅ ИСПРАВЛЕНИЕ LCP: снизили с 75 до 65
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950/60 to-transparent" />
+      </div>
+
+      {/* ✅ НОВЫЙ ЭЛЕМЕНТ: Кнопка "В каталог" */}
+      <div className="absolute top-24 left-4 md:left-8 z-20">
+        <Link
+          href="/tour"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all text-[11px] md:text-xs font-bold uppercase tracking-widest shadow-lg group"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          В каталог
+        </Link>
       </div>
 
       <div className="container mx-auto px-4 relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">

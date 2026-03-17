@@ -74,9 +74,10 @@ export async function createTour(data: Partial<Tour>) {
     revalidatePath('/tour');
     revalidatePath('/');
     return { success: true, data: tour };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // 🛡️ Защита от утечки данных: логируем ошибку на сервере, но не отдаем клиенту
     console.error('Create Tour Error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при создании тура.' };
   }
 }
 
@@ -107,7 +108,6 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.duration     !== undefined) payload.duration     = data.duration;
     if (data.meetingPoint !== undefined) payload.meetingPoint = data.meetingPoint;
 
-    // ✅ ИСПРАВЛЕНО
     if (data.dates !== undefined) {
       payload.dates = data.dates as unknown as Prisma.InputJsonValue;
     }
@@ -131,7 +131,6 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.image   !== undefined) payload.coverImage = data.image;
     if (data.gallery !== undefined) payload.gallery    = data.gallery;
 
-    // ✅ ИСПРАВЛЕНО
     if (data.highlights !== undefined) payload.highlights = data.highlights as unknown as Prisma.InputJsonValue;
     if (data.program    !== undefined) payload.program    = data.program    as unknown as Prisma.InputJsonValue;
     if (data.faq        !== undefined) payload.faq        = data.faq        as unknown as Prisma.InputJsonValue;
@@ -151,9 +150,10 @@ export async function updateTour(id: string, data: Partial<Tour>) {
     if (data.slug) revalidatePath(`/tour/${data.slug}`);
     revalidatePath('/');
     return { success: true, data: tour };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // 🛡️ Защита от утечки данных
     console.error('Update Tour Error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении тура.' };
   }
 }
 
@@ -174,8 +174,9 @@ export async function deleteTour(id: string) {
     if (tour?.slug) revalidatePath(`/tour/${tour.slug}`);
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // 🛡️ Защита от утечки данных
     console.error('Delete Tour Error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при удалении тура.' };
   }
 }

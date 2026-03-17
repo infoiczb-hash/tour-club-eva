@@ -40,10 +40,13 @@ export async function upsertReview(data: any) {
     revalidatePath('/');
     revalidatePath('/admin');
     return { success: true };
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
-    console.error('Ошибка сохранения отзыва:', error);
-    return { success: false, error: error.message || 'Не удалось сохранить отзыв' };
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    
+    // 🛡️ Защита от утечки: логируем на сервере, отдаем заглушку
+    console.error('Ошибка сохранения отзыва:', err);
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при сохранении отзыва' };
   }
 }
 
@@ -55,9 +58,12 @@ export async function deleteReview(id: string) {
     revalidatePath('/');
     revalidatePath('/admin');
     return { success: true };
-  } catch (error: any) {
-    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
-    console.error('Ошибка удаления отзыва:', error);
-    return { success: false, error: 'Не удалось удалить отзыв' };
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    
+    // 🛡️ Защита от утечки: логируем на сервере, отдаем заглушку
+    console.error('Ошибка удаления отзыва:', err);
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при удалении отзыва' };
   }
 }

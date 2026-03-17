@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { UploadCloud, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { clsx } from 'clsx';
-// Импортируем вашу функцию загрузки (проверьте путь, он был в старом файле)
+// Импортируем вашу функцию загрузки (теперь это Server Action)
 import { uploadFile } from '@/features/admin/upload'; 
 
 interface ImageUploaderProps {
@@ -43,15 +43,21 @@ export const ImageUploader = ({
 
     try {
       setIsUploading(true);
-      // Загружаем в Supabase
-      const response = await uploadFile(file, folder); // Изменили имя переменной для ясности
+      
+      // ✅ ИСПРАВЛЕНИЕ: Формируем FormData для отправки в Server Action
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', folder);
+
+      // Загружаем в Supabase через сервер
+      const response = await uploadFile(formData); 
       
       // Достаем url из объекта response
       if (response.url) {
         // Записываем полученную СТРОКУ в форму
         setValue(name, response.url, { shouldDirty: true, shouldValidate: true });
       } else if (response.error) {
-        alert("Ошибка от Supabase: " + response.error);
+        alert("Ошибка сервера: " + response.error);
       }
     } catch (e) {
       console.error("Upload error:", e);

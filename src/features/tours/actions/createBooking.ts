@@ -11,7 +11,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 // ── 1. СХЕМА ВАЛИДАЦИИ ────────────────────────────────────────────────────────
 const BookingSchema = z.object({
   tourId:      z.string().uuid('Неверный ID тура'),
-  tourDateId:  z.string().uuid('Пожалуйста, выберите конкретную дату').optional().nullable(), // ✅ Опционально для обратной совместимости со старыми турами
+  tourDateId:  z.string().uuid('Пожалуйста, выберите конкретную дату').optional().nullable(),
   tourTitle:   z.string().min(1),
   tourDate:    z.string().min(1, 'Укажите дату'),
 
@@ -19,10 +19,13 @@ const BookingSchema = z.object({
   phone:       z.string().min(7,  'Введите корректный номер телефона'),
   social:      z.string().optional(),
   comment:     z.string().optional(),
+  
+  // Поле-ловушка для ботов
+  website:     z.string().optional(), 
 
   ticketsAdult:  z.number().int().min(0).default(1),
   ticketsChild:  z.number().int().min(0).default(0),
-  ticketsFamily: z.number().int().min(0).default(0), // ✅ ДОБАВЛЕНО (Семейный пакет)
+  ticketsFamily: z.number().int().min(0).default(0),
   ticketsMember: z.number().int().min(0).default(0),
 
   totalPrice:  z.number().int().min(0),
@@ -66,9 +69,17 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     
     return { success: false, error: 'Ошибка валидации формы. Проверьте данные.', fields };
   }
-  const data = parsed.data;
   
-  // ✅ Учитываем, что 1 Семейный билет обычно = 3 места
+  const data = parsed.data;
+
+  // 🛡️ ЗАЩИТА ОТ СПАМА (Honeypot)
+  // Если скрытое поле "website" заполнено — это бот. 
+  // Мы имитируем успех, чтобы бот не пробовал другие варианты, но данные не сохраняем.
+  if (data.website && data.website.length > 0) {
+    console.warn('Honeypot triggered: blocking bot registration.');
+    return { success: true, bookingId: 'sp-checked' };
+  }
+  
   const familySpots = data.ticketsFamily * 3;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
 
@@ -92,7 +103,6 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
       
       let spotsUpdated = false;
 
-      // ✅ ИСПРАВЛЕНИЕ: Пытаемся отнять места с конкретной даты, если она передана
       if (data.tourDateId) {
         const updatedTourDate = await tx.tourDate.updateMany({
           where: { 
@@ -103,7 +113,6 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         });
         if (updatedTourDate.count > 0) spotsUpdated = true;
       } else {
-        // Фолбэк для старых туров без привязки дат
         const updatedTour = await tx.tour.updateMany({
           where: { 
               id: data.tourId,
@@ -114,12 +123,10 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         if (updatedTour.count > 0) spotsUpdated = true;
       }
 
-      // Если ни один счетчик мест не обновился — места кончились в эту секунду
       if (!spotsUpdated) {
         throw new Error('SPOTS_GONE');
       }
 
-      // ✅ ИСПРАВЛЕНИЕ: Создаем бронь с плоскими полями и привязкой к TourDate
       const newBooking = await tx.booking.create({
         data: {
           tourId:        data.tourId,
@@ -134,7 +141,7 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
           ticketsMember: data.ticketsMember,
           comment:       data.comment || null,
           totalPrice:    data.totalPrice,
-          source:        'website', // Указываем жестко для аналитики CRM
+          source:        'website',
           status:        'pending',
           bookedDate:    new Date(),
         },
@@ -144,8 +151,14 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     });
 
     // 3.4 Telegram-уведомление
-    // 🔥 ГЛАВНЫЙ ФИКС VERCEL BUG: Жесткий await, чтобы процесс дожил до отправки
-    await notifyTelegram(data, booking.id, tour.coverImage);
+    // 🔥 ГЛАВНЫЙ ФИКС VERCEL BUG: Жесткий await и обработка ошибок.
+    // Try/catch здесь гарантирует, что даже если Telegram упадет, 
+    // экшен завершится успешно (т.к. запись в БД уже прошла).
+    try {
+      await notifyTelegram(data, booking.id, tour.coverImage);
+    } catch (tgError) {
+      console.error('CRITICAL: Telegram notification failed during booking:', tgError);
+    }
 
     // 3.5 Инвалидируем кэш
     if (tour.slug) {
@@ -157,9 +170,8 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     return { success: true, bookingId: booking.id };
 
   } catch (error: any) {
-    console.error('createBooking error:', error);
+    console.error('createBooking action error:', error);
     
-    // Перехватываем нашу специфичную ошибку овербукинга
     if (error.message === 'SPOTS_GONE') {
         return {
             success: false,
@@ -167,9 +179,10 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         };
     }
 
+    // 🛡️ Information Disclosure Fix: Не отдаем системные ошибки Prisma наружу
     return {
       success: false,
-      error: 'Произошла ошибка при сохранении. Попробуйте ещё раз или свяжитесь с нами напрямую.',
+      error: 'Произошла ошибка при сохранении заявки. Пожалуйста, попробуйте ещё раз или свяжитесь с нами напрямую.',
     };
   }
 }
@@ -223,37 +236,32 @@ async function notifyTelegram(
     }),
   };
 
+  const method = coverImage ? 'sendPhoto' : 'sendMessage';
   if (coverImage) {
-    body.method  = 'sendPhoto';
-    body.photo   = coverImage;
+    body.photo = coverImage;
     body.caption = lines.slice(0, 1024);
   } else {
-    body.method = 'sendMessage';
-    body.text   = lines;
+    body.text = lines;
   }
 
-  const method = coverImage ? 'sendPhoto' : 'sendMessage';
-
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body),
-    });
-    
-    if (!response.ok) {
-       console.error('Telegram notification failed:', await response.text());
-    }
-  } catch (error) {
-     console.error('Telegram fetch error:', error);
+  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  
+  if (!response.ok) {
+     const errorText = await response.text();
+     throw new Error(`Telegram API responded with ${response.status}: ${errorText}`);
   }
 }
 
 // ── 5. ХЕЛПЕР ─────────────────────────────────────────────────────────────────
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

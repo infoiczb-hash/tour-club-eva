@@ -16,22 +16,34 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
 
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
- const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingGallery(true);
       try {
         const files = Array.from(e.target.files);
+        
         for (const file of files) {
-          const response = await uploadFile(file, 'tours'); 
+          // 1. Создаем объект FormData для каждого файла
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folder', 'tours'); // Передаем папку здесь
+
+          // 2. Вызываем uploadFile, передавая ровно один аргумент (FormData)
+          const response = await uploadFile(formData); 
+          
           if (response && response.url) {
-             append(response.url); 
+              append(response.url); 
+          } else if (response && response.error) {
+              console.error(`Ошибка загрузки файла ${file.name}:`, response.error);
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Критическая ошибка при загрузке галереи:", err);
         alert('Ошибка загрузки фото');
       } finally {
         setIsUploadingGallery(false);
+        // Сбрасываем значение input, чтобы можно было выбрать те же файлы повторно
+        e.target.value = '';
       }
     }
   };

@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activity, BookOpen, Brain, Sparkles } from 'lucide-react';
+import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activity, BookOpen, Brain, Sparkles, Trophy } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
-// import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { FunTest } from '@prisma/client';
+import DOMPurify from 'isomorphic-dompurify'; // ✅ ДОБАВИЛИ ИМПОРТ
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -56,30 +56,17 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 
     const fetchAndShuffleQuizzes = async () => {
       try {
-        // const res = await getFunTestsAction();
-        
-        // Если тестов нет, просто показываем фолбэк и выходим
         if (!activeTests || activeTests.length === 0) { 
           setIsLoaded(true); 
           return; 
         }
 
-        // 1. Оставляем только активные
-        // const activeTests = res.data.filter(t => t.isActive);
-        if (activeTests.length === 0) { 
-          setIsLoaded(true); 
-          return; 
-        }
-
-        // 2. Тотальный рандом: перемешиваем ВСЕ тесты как колоду карт
         const shuffled = [...activeTests].sort(() => 0.5 - Math.random());
 
-        // 3. Забираем первые 3 штуки
         if (isMounted) { 
           setQuizzes(shuffled.slice(0, 3)); 
           setIsLoaded(true); 
         }
-
       } catch (error) { 
         console.error(error);
         setIsLoaded(true); 
@@ -124,7 +111,6 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
             ))}
         </div>
 
-        {/* Скрыто на десктопе, показываем на мобилке, анимируем через css/inView */}
         <div
           ref={ctaView.ref}
           style={{ opacity: ctaView.inView ? 1 : 0, transform: ctaView.inView ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s' }}
@@ -143,6 +129,10 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 function QuizCard({ quiz }: { quiz: FunTest }) {
   const visual = VISUAL_REGISTRY[quiz.slug] || VISUAL_REGISTRY['default'];
   const Icon = visual.icon;
+  
+  // ✅ ИСПРАВЛЕНИЕ: Вырезаем возможные XSS-скрипты при рендере заголовка с переносами строк
+  const sanitizedTitle = DOMPurify.sanitize(quiz.title.replace('\n', '<br/>'));
+
   return (
     <Link href={`/fun?quiz=${quiz.slug}`} className={cn(
       "group relative flex w-full h-full overflow-hidden border border-white/10 transition-all duration-500 bg-slate-900",
@@ -161,7 +151,13 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
         </div>
         <div className="flex-1 lg:mt-6 w-full">
           <div className="hidden lg:block text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">{quiz.category}</div>
-          <h3 className="font-black text-white uppercase text-sm md:text-lg lg:text-xl leading-tight mb-1 lg:mb-2 drop-shadow-md">{quiz.title}</h3>
+          
+          {/* ✅ ЗАЩИЩЕННЫЙ РЕНДЕР */}
+          <h3 
+            className="font-black text-white uppercase text-sm md:text-lg lg:text-xl leading-tight mb-1 lg:mb-2 drop-shadow-md" 
+            dangerouslySetInnerHTML={{ __html: sanitizedTitle }} 
+          />
+          
           <p className="hidden lg:block text-slate-300 font-medium text-xs lg:text-sm line-clamp-2 drop-shadow-md">{quiz.description}</p>
         </div>
         <div className="lg:hidden shrink-0 ml-3 text-white/50 group-hover:text-white transition-colors"><ArrowRight size={18} /></div>
