@@ -1,7 +1,6 @@
+// src/features/admin/components/TourForm/schema.ts
 import { z } from 'zod';
 
-// Схема для формы тура в админке (camelCase, строгие типы, React Hook Form)
-// Для парсинга данных из БД используй src/lib/schemas.ts → RawTourSchema
 export const tourFormSchema = z.object({
   id: z.string().optional(),
 
@@ -15,11 +14,16 @@ export const tourFormSchema = z.object({
 
   // === МАРКЕТИНГ ===
   type: z.string().default('hiking'),
-  // FIX: добавлена uuid-валидация для единообразия с lib/schemas.ts
   categoryId: z.string().uuid('Неверный формат ID категории').optional().nullable(),
   difficulty: z.string().default('medium'),
   label: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
+
+  // ✅ НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК (ФАЗА 1)
+  tourFormat: z.string().optional().nullable(),
+  accommodation: z.string().optional().nullable(),
+  groupInfo: z.string().optional().nullable(),
+  importantInfo: z.string().optional().nullable(),
 
   // === ЛОГИСТИКА ===
   location: z.string().min(1, 'Локация обязательна'),
@@ -28,15 +32,27 @@ export const tourFormSchema = z.object({
   duration: z.string().min(1, "Укажите длительность (например '3 дня')"),
   meetingPoint: z.string().optional().nullable(),
 
-  // === ДАТЫ ===
+  // === ДАТЫ И ВЫЕЗДЫ (Теперь связаны с таблицей TourDate) ===
   dates: z.array(z.object({
+    id: z.string().optional(), // ID существующего выезда (для обновления)
     start: z.string().min(1, 'Дата старта обязательна'),
-    end: z.string().optional(),
-    time: z.string().optional(),
+    end: z.string().optional().nullable(),
+    time: z.string().optional().nullable(),
     guide_id: z.string().uuid().optional().nullable(),
+    
+    // ✅ Лимиты для конкретной даты
+    spots: z.coerce.number().optional(),
+    spotsLeft: z.coerce.number().optional(),
+
+    // ✅ Динамические цены для даты (Early Bird / Last Minute)
+    basePrice: z.coerce.number().optional().nullable(),
+    discountEarlyBird: z.coerce.number().optional().nullable(),
+    earlyBirdDeadline: z.coerce.number().optional().nullable(),
+    surchargeLastMinute: z.coerce.number().optional().nullable(),
+    lastMinuteTrigger: z.coerce.number().optional().nullable(),
   })).default([]),
 
-  // === ДЕНЬГИ ===
+  // === ДЕНЬГИ (Глобальные дефолты тура) ===
   currency: z.string().default('RUB'),
   price: z.coerce.number().min(0, 'Цена не может быть отрицательной'),
   priceOld: z.coerce.number().optional().nullable(),
@@ -80,8 +96,13 @@ export const tourFormSchema = z.object({
     url: z.string().optional(),
   })).default([]),
 
+  // Старые плоские массивы оставляем для обратной совместимости
   included: z.array(z.string()).default([]),
   additionalExpenses: z.array(z.string()).default([]),
+
+  // ✅ НОВЫЕ: Детализированные списки (Аккордеоны)
+  includedDetailed: z.any().optional().nullable(),
+  excludedDetailed: z.any().optional().nullable(),
 
   // === SEO ===
   metaTitle: z.string().optional().nullable(),

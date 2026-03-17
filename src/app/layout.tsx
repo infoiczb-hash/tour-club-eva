@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 
-import { Providers } from "./providers";
+
 import { ToastProvider } from "@/shared/context/ToastContext";
 import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 
@@ -133,14 +133,13 @@ export default async function RootLayout({
         <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       </head>
       <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
-        <Providers>
+       
           <ToastProvider>
             <MainLayoutWrapper header={<Header />} footer={<Footer />} promo={<PromoBlock />}>
               {children}
             </MainLayoutWrapper>
           </ToastProvider>
-        </Providers>
-        <GlobalModals />
+           <GlobalModals />
         <AxeReporter />
         <Analytics />
         <SpeedInsights />

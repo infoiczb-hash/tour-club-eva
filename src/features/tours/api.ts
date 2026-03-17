@@ -1,3 +1,4 @@
+// src/features/tours/api.ts
 "use server";
 
 import { prisma } from '@/lib/prisma';
@@ -9,7 +10,7 @@ import { cache } from 'react';
 // Строгий тип для данных из Prisma с релейшенами
 // ─────────────────────────────────────────────
 type PrismaTourWithRelations = Prisma.TourGetPayload<{
-  include: { guide: true; category: true };
+  include: { guide: true; category: true; tourDates: true }; // ✅ ДОБАВЛЕНО: tourDates
 }>;
 
 // ─────────────────────────────────────────────
@@ -46,11 +47,27 @@ function getNearestFutureDate(
 // Маппер Prisma → фронтенд Tour
 // ─────────────────────────────────────────────
 function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
-  const dates = ensureArray(item.dates as any);
+  // ✅ 1. Читаем новые реляционные даты из базы
+  const relationalDates = item.tourDates?.map(td => ({
+    id: td.id, 
+    start: td.startDate.toISOString(),
+    end: td.endDate ? td.endDate.toISOString() : undefined,
+    time: td.time || undefined,
+    spots: td.spots,
+    spotsLeft: td.spotsLeft,
+    guide_id: td.guideId || undefined,
+    basePrice: td.basePrice,
+  })) || [];
+
+  // ✅ 2. Фолбэк на старые JSON-даты (для обратной совместимости)
+  const legacyDates = ensureArray(item.dates as any);
+
+  // Сливаем, если нужны обе, но лучше брать реляционные, если они есть
+  const datesToUse = relationalDates.length > 0 ? relationalDates : legacyDates;
 
   // Ближайшая актуальная дата — используется в карточке, Hero и календаре.
   // Фолбэк на первую дату если все прошли (страница тура должна быть доступна).
-  const nearestDate = getNearestFutureDate(dates) ?? dates[0] ?? null;
+  const nearestDate = getNearestFutureDate(datesToUse) ?? datesToUse[0] ?? null;
 
   // Места берём с ближайшей актуальной даты если она есть,
   // иначе — глобальное поле тура.
@@ -92,12 +109,20 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
       ? new Date(nearestDate.end).toISOString()
       : null,
     // Полный массив дат — для TourDates (бронирование)
-    dates,
+    dates: datesToUse,
 
     duration: item.duration ?? null,
     distance: item.distance ?? null,
     meetingPoint: item.meetingPoint ?? null,
     route: item.route ?? null,
+
+    // ✅ ДОБАВЛЕНЫ НОВЫЕ ХАРАКТЕРИСТИКИ С ФОЛБЭКОМ НА NULL
+    tourFormat: item.tourFormat ?? null,
+    accommodation: item.accommodation ?? null,
+    groupInfo: item.groupInfo ?? null,
+    importantInfo: item.importantInfo ?? null,
+    includedDetailed: item.includedDetailed ?? null,
+    excludedDetailed: item.excludedDetailed ?? null,
 
     price: Number(item.price) || 0,
     currency: item.currency ?? 'RUB',
@@ -171,9 +196,13 @@ function isTourRelevant(tour: Tour): boolean {
 export async function getTours(): Promise<Tour[]> {
   try {
     const tours = await prisma.tour.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: null }, // ✅ ДОБАВЛЕНО: Soft Delete
       orderBy: { createdAt: 'desc' },
-      include: { guide: true, category: true },
+      include: { 
+        guide: true, 
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' } } // ✅ ДОБАВЛЕНО: Даты
+      },
     });
     return tours.map(mapPrismaTourToFrontend).filter(isTourRelevant);
   } catch (error) {
@@ -185,9 +214,13 @@ export async function getTours(): Promise<Tour[]> {
 // ✅ ИСПРАВЛЕНИЕ: Обернули в cache() для дедупликации запросов между metadata и page
 export const getTourBySlug = cache(async (slug: string): Promise<Tour | null> => {
   try {
-    const tour = await prisma.tour.findUnique({
-      where: { slug, isActive: true },
-      include: { guide: true, category: true },
+    const tour = await prisma.tour.findFirst({ // ✅ ИСПРАВЛЕНО: findFirst вместо findUnique (из-за deletedAt)
+      where: { slug, isActive: true, deletedAt: null },
+      include: { 
+        guide: true, 
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' } } 
+      },
     });
     if (!tour) return null;
     return mapPrismaTourToFrontend(tour);
@@ -204,12 +237,17 @@ export async function getSimilarTours(categoryId: string | null, excludeId: stri
     const tours = await prisma.tour.findMany({
       where: {
         isActive: true,
+        deletedAt: null, // ✅ ДОБАВЛЕНО: Soft Delete
         categoryId: categoryId,
         id: { not: excludeId }
       },
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { guide: true, category: true }
+      include: { 
+        guide: true, 
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' } } 
+      }
     });
     return tours.map(mapPrismaTourToFrontend).filter(isTourRelevant);
   } catch (error) {
@@ -222,8 +260,13 @@ export async function getSimilarTours(categoryId: string | null, excludeId: stri
 export async function getAllTours(): Promise<Tour[]> {
   try {
     const tours = await prisma.tour.findMany({
+      where: { deletedAt: null }, // ✅ ДОБАВЛЕНО: Скрываем из админки Soft Delete туры
       orderBy: { createdAt: 'desc' },
-      include: { guide: true, category: true },
+      include: { 
+        guide: true, 
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' } } 
+      },
     });
     return tours.map(mapPrismaTourToFrontend);
   } catch (error) {
@@ -232,6 +275,7 @@ export async function getAllTours(): Promise<Tour[]> {
   }
 }
 
+// ✅ Старый экшен для бронирования (оставлен для совместимости, но адаптирован к плоским полям)
 export async function createBookingAction(params: {
   eventId: string;
   name: string;
@@ -246,7 +290,9 @@ export async function createBookingAction(params: {
         tourId: params.eventId,
         name: params.name,
         phone: params.phone,
-        tickets: params.tickets as any,
+        ticketsAdult: params.tickets.adult,
+        ticketsChild: params.tickets.child,
+        ticketsFamily: params.tickets.family || 0,
         totalPrice: params.totalPrice,
         status: 'pending',
         bookedDate: params.bookedDate,

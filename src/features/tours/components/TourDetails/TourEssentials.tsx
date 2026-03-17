@@ -26,12 +26,28 @@ const renderSafeListItem = (item: any): React.ReactNode => {
     const itemsList = Array.isArray(item.items) ? item.items : [];
     
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 w-full">
         {title && <strong className="text-white font-bold">{title}</strong>}
         {itemsList.length > 0 && (
-          <span className="text-slate-400 text-sm">
-            {itemsList.join(', ')}
-          </span>
+          <div className="text-slate-400 text-sm">
+            {/* Если внутри старые строки - выводим как раньше. Если новые объекты - рендерим списком */}
+            {typeof itemsList[0] === 'string' ? (
+              itemsList.join(', ')
+            ) : (
+              <div className="flex flex-col gap-2 mt-1.5 w-full">
+                {itemsList.map((subItem: { label: string; price?: string | number }, idx: number) => (
+                  <div key={idx} className="flex justify-between items-start gap-4">
+                    <span className="text-slate-300 leading-snug">{subItem.label}</span>
+                    {subItem.price && (
+                      <span className="text-[10px] font-black text-slate-400 whitespace-nowrap bg-slate-950 px-2 py-0.5 rounded border border-white/5 shrink-0 mt-0.5 shadow-sm">
+                        {subItem.price}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
     );
@@ -45,17 +61,26 @@ interface TourEssentialsProps {
   additionalExpenses: any[];
   documents?: any[];
   checklist?: any;
+  // ✅ ИНЖЕКЦИЯ: Новые типы для детальных списков
+  includedDetailed?: any[];
+  excludedDetailed?: any[];
 }
 
 export default function TourEssentials({ 
   included, 
   additionalExpenses, 
   documents = [], 
-  checklist 
+  checklist,
+  includedDetailed, // ✅ Получаем новые поля
+  excludedDetailed
 }: TourEssentialsProps) {
   
   const [includedOpen, setIncludedOpen] = useState(true);
   const [excludedOpen, setExcludedOpen] = useState(false);
+
+  // ✅ ИНЖЕКЦИЯ: Умный фолбэк. Если есть новые данные - берем их, иначе старые
+  const finalIncluded = Array.isArray(includedDetailed) && includedDetailed.length > 0 ? includedDetailed : included;
+  const finalExcluded = Array.isArray(excludedDetailed) && excludedDetailed.length > 0 ? excludedDetailed : additionalExpenses;
 
   return (
     <section className="scroll-mt-24" id="essentials">
@@ -87,7 +112,7 @@ export default function TourEssentials({
               <CheckCircle size={16} aria-hidden="true" />
               Что включено
               <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px]">
-                {Array.isArray(included) ? included.length : 0}
+                {Array.isArray(finalIncluded) ? finalIncluded.length : 0}
               </span>
             </h3>
             <ChevronDown 
@@ -106,10 +131,10 @@ export default function TourEssentials({
             }`}
           >
             <div className="overflow-hidden">
-              {Array.isArray(included) && included.length > 0 && (
-                <ul className="px-5 pb-5 space-y-3">
-                  {included.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
+              {Array.isArray(finalIncluded) && finalIncluded.length > 0 && (
+                <ul className="px-5 pb-5 space-y-4">
+                  {finalIncluded.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed border-b border-white/5 pb-3 last:border-0 last:pb-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]" aria-hidden="true" />
                       {renderSafeListItem(item)}
                     </li>
@@ -136,7 +161,7 @@ export default function TourEssentials({
               <XCircle size={16} aria-hidden="true" />
               Дополнительно
               <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[10px]">
-                {Array.isArray(additionalExpenses) ? additionalExpenses.length : 0}
+                {Array.isArray(finalExcluded) ? finalExcluded.length : 0}
               </span>
             </h3>
             <ChevronDown 
@@ -155,10 +180,10 @@ export default function TourEssentials({
             }`}
           >
             <div className="overflow-hidden">
-              {Array.isArray(additionalExpenses) && additionalExpenses.length > 0 && (
-                <ul className="px-5 pb-5 space-y-3">
-                  {additionalExpenses.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed">
+              {Array.isArray(finalExcluded) && finalExcluded.length > 0 && (
+                <ul className="px-5 pb-5 space-y-4">
+                  {finalExcluded.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm leading-relaxed border-b border-white/5 pb-3 last:border-0 last:pb-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.8)]" aria-hidden="true" />
                       {renderSafeListItem(item)}
                     </li>

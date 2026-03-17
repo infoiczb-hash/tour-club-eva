@@ -1,63 +1,166 @@
 import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormInput, FormTextarea } from '../ui/FormUI';
-import { CheckCircle2, XCircle, FileText, Plus, Trash2, Backpack } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText, Plus, Trash2, Backpack, ChevronDown, ListPlus } from 'lucide-react';
 
 export const Lists = () => {
   const { control } = useFormContext();
 
-  const { fields: incFields, append: appendInc, remove: removeInc } = useFieldArray({ control, name: "included" });
-  const { fields: expFields, append: appendExp, remove: removeExp } = useFieldArray({ control, name: "additionalExpenses" });
-  const { fields: docFields, append: appendDoc, remove: removeDoc } = useFieldArray({ control, name: "documents" });
+  // --- 1. НОВЫЕ ДЕТАЛИЗИРОВАННЫЕ СПИСКИ (JSON / Аккордеоны) ---
+  const { fields: incDetailed, append: appendIncDet, remove: removeIncDet } = useFieldArray({ 
+    control, 
+    name: "includedDetailed" 
+  });
   
-  // НОВЫЙ БЛОК: ЧЕК-ЛИСТ
+  const { fields: excDetailed, append: appendExcDet, remove: removeExcDet } = useFieldArray({ 
+    control, 
+    name: "excludedDetailed" 
+  });
+
+  // --- 2. СТАРЫЕ СПИСКИ (Для совместимости) ---
+  const { fields: docFields, append: appendDoc, remove: removeDoc } = useFieldArray({ control, name: "documents" });
   const { fields: checkFields, append: appendCheck, remove: removeCheck } = useFieldArray({ control, name: "checklist" });
 
+  // Вспомогательный компонент для рендера вложенных пунктов аккордеона
+  const DetailedItemsList = ({ nestIndex, name }: { nestIndex: number, name: string }) => {
+    const { fields, append, remove } = useFieldArray({
+      control,
+      name: `${name}.${nestIndex}.items`
+    });
+
+    return (
+      <div className="space-y-2 mt-3 pl-4 border-l-2 border-slate-200">
+        {fields.map((item, k) => (
+          <div key={item.id} className="flex gap-2 items-center">
+            <div className="flex-1">
+              <FormInput 
+                name={`${name}.${nestIndex}.items.${k}.label`} 
+                label="" 
+                placeholder="Пункт (напр. Трансфер)" 
+                className="bg-white text-xs py-2"
+              />
+            </div>
+            <div className="w-24">
+              <FormInput 
+                name={`${name}.${nestIndex}.items.${k}.price`} 
+                label="" 
+                placeholder="Цена" 
+                className="bg-white text-xs py-2"
+              />
+            </div>
+            <button 
+              type="button" 
+              onClick={() => remove(k)} 
+              className="text-slate-300 hover:text-rose-500 transition-colors"
+            >
+              <XCircle size={14}/>
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => append({ label: '', price: '' })}
+          className="text-[10px] font-black uppercase text-teal-600 hover:text-teal-700 flex items-center gap-1 mt-1"
+        >
+          <Plus size={12}/> Добавить подпункт
+        </button>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       
-      {/* 1. ФИНАНСОВЫЕ СПИСКИ (2 колонки) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Включено */}
-        <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
-          <div className="flex justify-between items-center mb-4">
-             <h4 className="font-black text-emerald-800 flex gap-2"><CheckCircle2 size={20}/> Включено</h4>
-             <button type="button" onClick={() => appendInc("")} className="text-xs font-bold text-emerald-700 bg-white border border-emerald-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-100">+ Пункт</button>
-          </div>
-          <div className="space-y-2">
-            {incFields.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
-                 <div className="flex-1">
-                   <FormInput name={`included.${index}`} label="" placeholder="Трансфер, Гид..." className="bg-white border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20" />
-                 </div>
-                 <button type="button" onClick={() => removeInc(index)} className="text-emerald-300 hover:text-rose-500 pt-2"><Trash2 size={18}/></button>
-              </div>
-            ))}
-            {incFields.length === 0 && <p className="text-xs text-emerald-600/50 italic text-center py-2">Список пуст</p>}
-          </div>
+      {/* СЕКЦИЯ: ВХОДИТ В СТОИМОСТЬ (АККОРДЕОНЫ) */}
+      <div className="bg-emerald-50/50 p-6 rounded-[2rem] border border-emerald-100">
+        <div className="flex justify-between items-center mb-6">
+           <h4 className="text-xl font-black text-emerald-900 flex gap-2 items-center">
+             <CheckCircle2 size={24} className="text-emerald-500"/> Включено (Аккордеон)
+           </h4>
+           <button 
+             type="button" 
+             onClick={() => appendIncDet({ title: '', items: [] })} 
+             className="text-xs font-bold text-white bg-emerald-600 px-4 py-2 rounded-xl shadow-md hover:bg-emerald-700 transition-all flex items-center gap-2"
+           >
+             <ListPlus size={16}/> Добавить категорию
+           </button>
         </div>
 
-        {/* Не включено */}
-        <div className="bg-rose-50 p-5 rounded-2xl border border-rose-100">
-          <div className="flex justify-between items-center mb-4">
-             <h4 className="font-black text-rose-800 flex gap-2"><XCircle size={20}/> Не включено</h4>
-             <button type="button" onClick={() => appendExp("")} className="text-xs font-bold text-rose-700 bg-white border border-rose-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-rose-100">+ Пункт</button>
-          </div>
-          <div className="space-y-2">
-            {expFields.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
-                 <div className="flex-1">
-                   <FormInput name={`additionalExpenses.${index}`} label="" placeholder="Обед, Сувениры..." className="bg-white border-rose-200 focus:border-rose-500 focus:ring-rose-500/20" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {incDetailed.map((field, index) => (
+            <div key={field.id} className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm relative group">
+              <div className="flex justify-between items-start mb-2">
+                 <div className="flex-1 mr-8">
+                   <FormInput 
+                     name={`includedDetailed.${index}.title`} 
+                     label="Заголовок категории" 
+                     placeholder="Транспорт / Питание" 
+                     className="font-bold border-emerald-200" 
+                   />
                  </div>
-                 <button type="button" onClick={() => removeExp(index)} className="text-rose-300 hover:text-rose-500 pt-2"><Trash2 size={18}/></button>
+                 <button 
+                   type="button" 
+                   onClick={() => removeIncDet(index)} 
+                   className="text-slate-300 hover:text-rose-500 transition-colors"
+                 >
+                   <Trash2 size={18}/>
+                 </button>
               </div>
-            ))}
-             {expFields.length === 0 && <p className="text-xs text-rose-600/50 italic text-center py-2">Список пуст</p>}
-          </div>
+              
+              <DetailedItemsList nestIndex={index} name="includedDetailed" />
+            </div>
+          ))}
+          {incDetailed.length === 0 && (
+            <div className="col-span-full py-8 text-center border-2 border-dashed border-emerald-200 rounded-2xl text-emerald-400 text-sm italic">
+              Нажмите кнопку выше, чтобы создать детализированный список включенных услуг
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 2. ЧЕК-ЛИСТ (СНАРЯЖЕНИЕ) - НОВЫЙ БЛОК */}
+      {/* СЕКЦИЯ: ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ (АККОРДЕОНЫ) */}
+      <div className="bg-rose-50/50 p-6 rounded-[2rem] border border-rose-100">
+        <div className="flex justify-between items-center mb-6">
+           <h4 className="text-xl font-black text-rose-900 flex gap-2 items-center">
+             <XCircle size={24} className="text-rose-500"/> Не включено / Доп. расходы
+           </h4>
+           <button 
+             type="button" 
+             onClick={() => appendExcDet({ title: '', items: [] })} 
+             className="text-xs font-bold text-white bg-rose-600 px-4 py-2 rounded-xl shadow-md hover:bg-rose-700 transition-all flex items-center gap-2"
+           >
+             <ListPlus size={16}/> Добавить категорию
+           </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {excDetailed.map((field, index) => (
+            <div key={field.id} className="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm relative group">
+              <div className="flex justify-between items-start mb-2">
+                 <div className="flex-1 mr-8">
+                   <FormInput 
+                     name={`excludedDetailed.${index}.title`} 
+                     label="Заголовок категории" 
+                     placeholder="Входные билеты / Аренда" 
+                     className="font-bold border-rose-200" 
+                   />
+                 </div>
+                 <button 
+                   type="button" 
+                   onClick={() => removeExcDet(index)} 
+                   className="text-slate-300 hover:text-rose-500 transition-colors"
+                 >
+                   <Trash2 size={18}/>
+                 </button>
+              </div>
+              
+              <DetailedItemsList nestIndex={index} name="excludedDetailed" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. ЧЕК-ЛИСТ (СНАРЯЖЕНИЕ) */}
       <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
          <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
              <h4 className="text-lg font-black text-slate-800 flex gap-2"><Backpack size={20} className="text-blue-500"/> Что взять с собой (Чек-лист)</h4>
@@ -72,12 +175,13 @@ export const Lists = () => {
                   name={`checklist.${index}.items`} 
                   label="Список вещей (каждый с новой строки)" 
                   rows={5} 
-                  placeholder="- Паспорт&#10;- Страховка&#10;- Билеты" 
+                  placeholder="- Паспорт
+- Страховка
+- Билеты" 
                 />
                 <button type="button" onClick={() => removeCheck(index)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
               </div>
             ))}
-            {checkFields.length === 0 && <div className="col-span-full text-center py-8 text-slate-400">Добавьте категории вещей</div>}
          </div>
       </div>
 
@@ -97,7 +201,7 @@ export const Lists = () => {
                   <FormInput name={`documents.${index}.title`} label="Название" placeholder="Памятка туристу" />
                   <FormInput name={`documents.${index}.url`} label="Ссылка (URL)" placeholder="https://..." className="text-xs font-mono" />
                 </div>
-                <button type="button" onClick={() => removeDoc(index)} className="text-slate-300 hover:text-rose-500"><Trash2 size={16}/></button>
+                <button type="button" onClick={() => removeDoc(index)} className="text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
               </div>
             ))}
          </div>

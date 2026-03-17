@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormInput } from '../ui/FormUI';
-import { MapPin, Calendar, Plus, Trash2, User } from 'lucide-react';
+import { MapPin, Calendar, Plus, Trash2, User, Zap, DollarSign } from 'lucide-react';
 import { clsx } from 'clsx';
 
 // Принимаем список гидов как проп, так как это данные с сервера
@@ -21,7 +21,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
   return (
     <div className="space-y-8">
       
-      {/* 1. Блок ЛОГИСТИКА (Исправляем потерянные поля) */}
+      {/* 1. Блок ЛОГИСТИКА */}
       <div>
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
           <MapPin className="text-teal-500" size={20} />
@@ -32,8 +32,6 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           <FormInput name="location" label="Локация (Регион)" placeholder="Карпаты, Румыния" />
           <FormInput name="meetingPoint" label="Место сбора" placeholder="Кишинев, Цирк" />
           <FormInput name="duration" label="Длительность" placeholder="3 дня / 2 ночи" />
-          
-          {/* 👇 ВОТ ПОТЕРЯННОЕ ПОЛЕ */}
           <FormInput name="route" label="Нитка маршрута" placeholder="Город А - Город Б - Город В" />
         </div>
         
@@ -43,89 +41,111 @@ export const Logistics = ({ guides }: LogisticsProps) => {
         </div>
       </div>
 
-      {/* 2. Блок ДАТЫ И ГИДЫ */}
+      {/* 2. Блок ДАТЫ, ГИДЫ И ЦЕНООБРАЗОВАНИЕ */}
       <div>
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="text-teal-500" size={20} />
-            <h3 className="font-bold text-slate-700">Даты и Гиды</h3>
+            <h3 className="font-bold text-slate-700">Выезды (Даты, Цены, Места)</h3>
           </div>
           <button 
             type="button" 
-            onClick={() => append({ start: '', end: '', guide_id: '' })}
+            onClick={() => append({ start: '', end: '', guide_id: '', spots: '', spotsLeft: '', basePrice: '', discountEarlyBird: '', earlyBirdDeadline: '', surchargeLastMinute: '', lastMinuteTrigger: '' })}
             className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-500 bg-teal-50 px-3 py-1.5 rounded-lg transition-colors"
           >
             <Plus size={14} /> Добавить дату
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-slate-50 p-3 rounded-xl border border-slate-100 relative group">
+            <div key={field.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative group transition-all hover:border-teal-200">
               
-              <div className="col-span-6 md:col-span-3">
-                <FormInput 
-                  name={`dates.${index}.start`} 
-                  label={index === 0 ? "Старт" : ""} 
-                  type="date" 
-                />
+              {/* Кнопка удаления даты */}
+              <button 
+                type="button" 
+                onClick={() => remove(index)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors z-10"
+                title="Удалить дату"
+              >
+                <Trash2 size={18} />
+              </button>
+
+              {/* ОСНОВНЫЕ ПАРАМЕТРЫ ДАТЫ */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pr-10 mb-4">
+                <div className="md:col-span-3">
+                  <FormInput name={`dates.${index}.start`} label="Старт" type="date" />
+                </div>
+                <div className="md:col-span-3">
+                  <FormInput name={`dates.${index}.end`} label="Конец (опционально)" type="date" />
+                </div>
+                <div className="md:col-span-2">
+                  <FormInput name={`dates.${index}.time`} label="Время" placeholder="09:00" />
+                </div>
+                <div className="md:col-span-4">
+                   <label className="text-xs font-bold uppercase text-slate-500 mb-1.5 block">
+                      Гид на выезд
+                   </label>
+                   <div className="relative">
+                     <select 
+                       {...register(`dates.${index}.guide_id`)}
+                       className="w-full appearance-none bg-white border border-slate-200 rounded-lg px-3 py-[11px] text-sm font-bold text-slate-700 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 cursor-pointer"
+                     >
+                       <option value="">-- Без гида --</option>
+                       {guides.map(g => (
+                         <option key={g.id} value={g.id}>{g.name}</option>
+                       ))}
+                     </select>
+                     <User className="absolute right-3 top-3 text-slate-400 pointer-events-none" size={14} />
+                   </div>
+                </div>
               </div>
-              
-              <div className="col-span-6 md:col-span-3">
-                <FormInput 
-                  name={`dates.${index}.end`} 
-                  label={index === 0 ? "Конец" : ""} 
-                  type="date" 
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200/60">
+                 <FormInput name={`dates.${index}.spots`} label="Всего мест на дату" type="number" placeholder="По умолчанию тура" />
+                 <FormInput name={`dates.${index}.spotsLeft`} label="Осталось мест" type="number" placeholder="По умолчанию тура" />
+                 <FormInput name={`dates.${index}.basePrice`} label="Своя цена (Переопределение)" type="number" placeholder="В валюте тура" />
               </div>
-              
-              {/* Выбор ГИДА для конкретной даты */}
-              <div className="col-span-10 md:col-span-4">
-                 <label className="text-xs font-bold uppercase text-slate-500 mb-1.5 block">
-                    {index === 0 ? "Гид" : ""}
-                 </label>
-                 <div className="relative">
-                   <select 
-                     {...register(`dates.${index}.guide_id`)}
-                     className="w-full appearance-none bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-teal-500"
-                   >
-                     <option value="">Без гида</option>
-                     {guides.map(g => (
-                       <option key={g.id} value={g.id}>{g.name}</option>
-                     ))}
-                   </select>
-                   <User className="absolute right-3 top-3 text-slate-400 pointer-events-none" size={14} />
+
+              {/* ДИНАМИЧЕСКОЕ ЦЕНООБРАЗОВАНИЕ */}
+              <div className="pt-4">
+                 <h4 className="text-xs font-black uppercase text-teal-600 mb-3 flex items-center gap-1.5">
+                    <Zap size={14} /> Маркетинг и Динамические цены
+                 </h4>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                       <FormInput name={`dates.${index}.discountEarlyBird`} label="Early Bird Скидка (%)" type="number" placeholder="Напр: 15" />
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                       <FormInput name={`dates.${index}.earlyBirdDeadline`} label="Сгорает за (Дней)" type="number" placeholder="Напр: 30" />
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                       <FormInput name={`dates.${index}.surchargeLastMinute`} label="Last Minute Наценка (%)" type="number" placeholder="Напр: 10" />
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                       <FormInput name={`dates.${index}.lastMinuteTrigger`} label="Включается за (Дней)" type="number" placeholder="Напр: 3" />
+                    </div>
                  </div>
               </div>
 
-              <div className="col-span-2 md:col-span-2 flex justify-end">
-                <button 
-                  type="button" 
-                  onClick={() => remove(index)}
-                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                  title="Удалить дату"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
             </div>
           ))}
 
           {fields.length === 0 && (
-            <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
-              <p className="text-slate-400 text-sm">Даты еще не добавлены</p>
+            <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+              <p className="text-slate-400 text-sm font-medium">Даты выездов еще не добавлены</p>
               <button 
                 type="button"
-                onClick={() => append({ start: '', end: '', guide_id: '' })}
-                className="text-teal-500 font-bold text-sm mt-2 hover:underline"
+                onClick={() => append({ start: '', end: '', guide_id: '', spots: '', spotsLeft: '', basePrice: '', discountEarlyBird: '', earlyBirdDeadline: '', surchargeLastMinute: '', lastMinuteTrigger: '' })}
+                className="text-teal-600 font-bold text-sm mt-3 hover:text-teal-500 hover:underline flex items-center justify-center gap-1 mx-auto"
               >
-                Добавить первую дату
+                <Plus size={16} /> Создать первый выезд
               </button>
             </div>
           )}
         </div>
-        <p className="text-[10px] text-slate-400 mt-2">
-          * Гид, выбранный в <strong>первой дате</strong>, будет считаться основным гидом тура.
+        <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1">
+          <DollarSign size={12} /> Если оставить "Свою цену" пустой, будет использоваться базовая цена из вкладки "Финансы".
         </p>
       </div>
     </div>

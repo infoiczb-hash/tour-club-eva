@@ -1,107 +1,112 @@
 import React from 'react';
-import { Star, Zap, Shield, Heart, Camera, Coffee, Mountain, Map, Sun, Compass, Hash } from 'lucide-react';
-
-const ICON_MAP: Record<string, any> = {
-  star: Star, zap: Zap, shield: Shield, 
-  heart: Heart, camera: Camera, coffee: Coffee,
-  mountain: Mountain, map: Map, sun: Sun
-};
+import { 
+  CheckCircle2, AlertCircle, Sparkles, Map, Camera, Mountain, 
+  Compass, Tent, Flame, Heart, Star, Coffee, Navigation 
+} from 'lucide-react';
+import { Tour } from '@/features/tours/types';
 
 interface TourDescriptionProps {
-  description?: any;
-  highlights?: any[];
-  tags?: string[];
+  tour: Tour;
 }
 
-export default function TourDescription({ description, highlights, tags }: TourDescriptionProps) {
-  // Подготавливаем HTML-контент из базы
-  let htmlContent = '';
-  if (typeof description === 'string') {
-    htmlContent = description;
-  } else if (Array.isArray(description)) {
-    htmlContent = description.filter(p => typeof p === 'string').join('<br/>');
-  } else if (description) {
-    htmlContent = String(description);
+// Вспомогательная функция для рендера динамических иконок из БД
+const renderIcon = (iconName?: string) => {
+  const iconProps = { className: "text-teal-500", size: 24, strokeWidth: 1.5 };
+  
+  if (!iconName) return <CheckCircle2 {...iconProps} />;
+  
+  switch (iconName.toLowerCase()) {
+    case 'map': return <Map {...iconProps} />;
+    case 'camera': return <Camera {...iconProps} />;
+    case 'mountain': return <Mountain {...iconProps} />;
+    case 'compass': return <Compass {...iconProps} />;
+    case 'tent': return <Tent {...iconProps} />;
+    case 'flame': return <Flame {...iconProps} />;
+    case 'heart': return <Heart {...iconProps} />;
+    case 'star': return <Star {...iconProps} />;
+    case 'coffee': return <Coffee {...iconProps} />;
+    case 'sparkles': return <Sparkles {...iconProps} />;
+    case 'navigation': return <Navigation {...iconProps} />;
+    default: return <CheckCircle2 {...iconProps} />;
+  }
+};
+
+export default function TourDescription({ tour }: TourDescriptionProps) {
+  if (!tour.description && (!tour.highlights || tour.highlights.length === 0) && !tour.importantInfo) {
+    return null;
   }
 
   return (
-    <section className="scroll-mt-24" id="about">
+    <section className="scroll-mt-24 mb-12 md:mb-16" id="about">
       
-      {((highlights && highlights.length > 0) || (tags && tags.length > 0)) && (
-        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-          <div className="flex items-center gap-3 mb-4">
-            <span className="w-8 h-[2px] bg-teal-500 rounded-full" aria-hidden="true"></span>
-            <p className="text-xs md:text-sm font-black text-teal-400 uppercase tracking-widest">
-              Что вас ждет в туре
-            </p>
+      {/* ✅ НОВЫЙ БЛОК: ВАЖНАЯ ИНФОРМАЦИЯ (ФАЗА 1) */}
+      {tour.importantInfo && (
+        <div className="mb-10 p-5 sm:p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex gap-4 items-start animate-in fade-in shadow-lg">
+          <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={24} strokeWidth={2.5} />
+          <div>
+            <h4 className="text-rose-500 font-black uppercase tracking-widest text-sm mb-2">
+              Важная информация
+            </h4>
+            <div className="text-rose-100/90 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">
+              {tour.importantInfo}
+            </div>
           </div>
-
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {tags.map((tag, i) => (
-                <span 
-                  key={i}
-                  className="px-2.5 py-1 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] md:text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 cursor-default min-w-0 max-w-full"
-                >
-                  <Hash size={12} strokeWidth={2.5} aria-hidden="true" className="shrink-0" />
-                  <span className="truncate">{tag}</span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {highlights && highlights.length > 0 && (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-              {highlights.map((item: any, i: number) => {
-                const IconComponent = ICON_MAP[item.icon?.toLowerCase()] || Star;
-                return (
-                  <div 
-                    key={i} 
-                    className="group bg-slate-900/50 border border-white/5 rounded-2xl p-3 md:p-4 hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-300 flex flex-col min-w-0"
-                  >
-                    <div className="flex items-start gap-2.5 mb-2 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 text-teal-500 flex items-center justify-center shrink-0 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors mt-0.5">
-                        <IconComponent size={16} strokeWidth={2} aria-hidden="true" />
-                      </div>
-                      <p className="font-bold text-white text-[14px] md:text-sm leading-tight group-hover:text-teal-400 transition-colors line-clamp-2 break-words min-w-0 flex-1 pt-1.5">
-                        {item.title}
-                      </p>
-                    </div>
-                    <p className="text-slate-400 text-sm md:text-sm leading-snug text-left break-words">
-                      {item.desc || item.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-5 min-w-0">
-        <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20 shrink-0">
-          <Compass size={20} strokeWidth={2} aria-hidden="true" />
+      {/* ОПИСАНИЕ ТУРА (Оригинальный рендер с разбивкой на абзацы) */}
+      {tour.description && (
+        <div className="prose prose-invert prose-teal max-w-none mb-12">
+          <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
+            О туре
+          </h2>
+          <div className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4">
+            {tour.description.split('\n').map((paragraph, index) => (
+              paragraph.trim() ? (
+                <p key={index} className="m-0">
+                  {paragraph}
+                </p>
+              ) : (
+                <br key={index} />
+              )
+            ))}
+          </div>
         </div>
-        <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight break-words flex-1">
-          О путешествии
-        </h2>
-      </div>
+      )}
 
-      <div className="bg-slate-900/30 rounded-3xl border border-white/5 p-5 md:p-8 min-w-0 overflow-hidden">
-        {htmlContent ? (
-          <div 
-            className="prose prose-invert prose-sm md:prose-base max-w-none break-words
-                       prose-p:text-slate-300 prose-p:leading-relaxed
-                       prose-a:text-teal-400 hover:prose-a:text-teal-300
-                       prose-strong:text-white prose-strong:font-bold
-                       prose-ul:text-slate-300 prose-ol:text-slate-300"
-            dangerouslySetInnerHTML={{ __html: htmlContent }} 
-          />
-        ) : (
-          <p className="italic text-slate-400 text-sm">Описание готовится...</p>
-        )}
-      </div>
+      {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ (Оригинальная сетка с иконками) */}
+      {tour.highlights && tour.highlights.length > 0 && (
+        <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 md:px-10 border border-white/5 shadow-2xl relative overflow-hidden">
+          
+          {/* Декоративное свечение */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          
+          <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-8 md:mb-10 relative z-10 flex items-center gap-4">
+            <Sparkles className="text-teal-500" size={32} strokeWidth={2} />
+            Главные впечатления
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 relative z-10">
+            {tour.highlights.map((item, idx) => (
+              <div key={idx} className="flex gap-5 items-start group">
+                <div className="w-12 h-12 rounded-2xl bg-slate-800/80 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-teal-500/20 group-hover:border-teal-500/30 transition-all duration-300 border border-white/5 shadow-lg">
+                  {renderIcon(item.icon)}
+                </div>
+                <div className="flex flex-col justify-center">
+                  <div className="font-black text-white text-lg md:text-xl mb-1.5 group-hover:text-teal-400 transition-colors leading-tight">
+                    {item.title}
+                  </div>
+                  {(item.description || item.desc) && (
+                    <div className="text-sm md:text-base text-slate-400 leading-relaxed font-medium">
+                      {item.description || item.desc}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </section>
   );

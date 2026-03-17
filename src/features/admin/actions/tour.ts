@@ -1,3 +1,4 @@
+// src/features/admin/actions/tour.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
@@ -7,10 +8,8 @@ import { requireAuth } from '@/lib/auth';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
-// ✅ ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ ДЛЯ ВАЛИДАЦИИ
 import { tourFormSchema, type TourFormValues } from '@/features/admin/components/TourForm/schema';
 
-// ✅ СТРОГАЯ ТИПИЗАЦИЯ ВХОДЯЩИХ ДАННЫХ (ВМЕСТО ANY)
 export type SaveTourPayload = Record<string, unknown> & {
   id?: string;
 };
@@ -20,10 +19,9 @@ export type SaveTourPayload = Record<string, unknown> & {
 // ==========================================
 export async function saveTour(formData: SaveTourPayload) {
   try {
-    // ✅ AUTH CHECK
     await requireAuth();
 
-    // 1. Нормализуем данные, приводя старые snake_case к camelCase, если они есть
+    // 1. Нормализуем данные, приводя старые snake_case к camelCase
     const rawData = {
       ...formData,
       categoryId: formData.categoryId ?? formData.category_id,
@@ -42,14 +40,13 @@ export async function saveTour(formData: SaveTourPayload) {
       tags: Array.isArray(formData.tags) ? formData.tags : [],
       included: Array.isArray(formData.included) ? formData.included : [],
       
-      // Защита от пустых UUID для гидов
       dates: Array.isArray(formData.dates) ? formData.dates.map((d: any) => ({
         ...d,
         guide_id: d.guide_id === "" ? null : d.guide_id 
       })) : [],
     };
 
-    // 2. Валидируем данные через ЕДИНУЮ схему (ту самую, что и в форме)
+    // 2. Валидируем данные через ЕДИНУЮ схему Zod
     const result = tourFormSchema.safeParse(rawData);
     if (!result.success) {
       console.error('❌ Validation Error:', result.error.flatten());
@@ -57,11 +54,19 @@ export async function saveTour(formData: SaveTourPayload) {
     }
 
     const data: TourFormValues = result.data;
-    
-    // Если гид не выбран, присваиваем null, чтобы избежать ошибки UUID в Prisma
     const mainGuideId = data.dates?.[0]?.guide_id || null;
 
-    // 3. Формируем строго типизированный пейлоад для Prisma
+    // ✅ ПОДГОТОВКА ДАТ ДЛЯ РЕЛЯЦИОННОЙ ТАБЛИЦЫ
+    const tourDatesData = data.dates.map((d) => ({
+      startDate: new Date(d.start),
+      endDate: d.end ? new Date(d.end) : null,
+      time: d.time || null,
+      guideId: d.guide_id || null,
+      spots: data.spots,
+      spotsLeft: data.spotsLeft, // В будущем здесь будет логика сохранения остатка мест при редактировании
+    }));
+
+    // 3. Формируем Payload тура
     const prismaPayload: Prisma.TourUncheckedCreateInput = {
       slug: data.slug,
       title: data.title,
@@ -79,6 +84,7 @@ export async function saveTour(formData: SaveTourPayload) {
       duration: data.duration ?? null,
       meetingPoint: data.meetingPoint ?? null,
 
+      // Даты теперь идут в tourDates, но для жесткой обратной совместимости оставляем и JSON
       dates: data.dates as unknown as Prisma.InputJsonValue,
       guideId: mainGuideId,
 
@@ -106,6 +112,14 @@ export async function saveTour(formData: SaveTourPayload) {
       included: data.included,
       additionalExpenses: data.additionalExpenses,
 
+   // ✅ ПРОБРАСЫВАЕМ НОВЫЕ ПОЛЯ (если они пришли с фронта)
+      tourFormat: data.tourFormat ?? null,
+      accommodation: data.accommodation ?? null,
+      groupInfo: data.groupInfo ?? null,
+      importantInfo: data.importantInfo ?? null,
+      includedDetailed: data.includedDetailed ? (data.includedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
+      excludedDetailed: data.excludedDetailed ? (data.excludedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
+
       metaTitle: data.metaTitle ?? null,
       metaDesc: data.metaDesc ?? null,
     };
@@ -116,10 +130,16 @@ export async function saveTour(formData: SaveTourPayload) {
       // === UPDATE ===
       await prisma.tour.update({
         where: { id: formData.id },
-        data: prismaPayload, 
+        data: {
+            ...prismaPayload,
+            tourDates: {
+                deleteMany: {}, // Очищаем старые даты
+                create: tourDatesData // Пишем новые
+            }
+        }, 
       });
     } else {
-      // === CREATE — проверка slug, инкремент вместо рандома ===
+      // === CREATE ===
       const existing = await prisma.tour.findUnique({ where: { slug } });
       if (existing) {
         let counter = 1;
@@ -132,7 +152,12 @@ export async function saveTour(formData: SaveTourPayload) {
         prismaPayload.slug = slug;
       }
 
-      await prisma.tour.create({ data: prismaPayload }); 
+      await prisma.tour.create({ 
+          data: {
+              ...prismaPayload,
+              tourDates: { create: tourDatesData }
+          } 
+      }); 
     }
 
     revalidatePath('/admin');
@@ -154,7 +179,7 @@ export async function saveTour(formData: SaveTourPayload) {
         caption,
         data.coverImage ?? undefined,
         `${env.NEXT_PUBLIC_SITE_URL}/tour/${slug}`,
-        true  // → публичный канал
+        true
       ).catch(console.error);
     }
 
@@ -187,14 +212,19 @@ export async function getActiveGuides() {
 }
 
 // ==========================================
-// DELETE TOUR
+// DELETE TOUR (✅ SOFT DELETE)
 // ==========================================
 export async function deleteTour(id: string) {
   try {
     await requireAuth();
 
     const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
-    await prisma.tour.delete({ where: { id } });
+    
+    // ✅ ИСПРАВЛЕНИЕ: Вместо физического удаления, скрываем тур из выдачи
+    await prisma.tour.update({ 
+        where: { id },
+        data: { deletedAt: new Date(), isActive: false }
+    });
 
     revalidatePath('/admin');
     revalidatePath('/tour');

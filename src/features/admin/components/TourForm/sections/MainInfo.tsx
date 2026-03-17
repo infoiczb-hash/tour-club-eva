@@ -6,7 +6,6 @@ import { AlignLeft, Plus, X } from 'lucide-react';
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
 
-// 👇 ДОБАВИЛИ ПРОПС ДЛЯ КАТЕГОРИЙ
 export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
   const { control, watch } = useFormContext();
   
@@ -23,9 +22,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
       try {
         const files = Array.from(e.target.files);
         for (const file of files) {
-          // 1. Получаем ответ (объект)
           const response = await uploadFile(file, 'tours'); 
-          // 2. Вытаскиваем из него ТОЛЬКО строчку с ссылкой (response.url)
           if (response && response.url) {
              append(response.url); 
           }
@@ -39,7 +36,6 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
     }
   };
 
-  // 👇 ФОРМИРУЕМ ОПЦИИ ДЛЯ СЕЛЕКТА ИЗ БАЗЫ ДАННЫХ
   const categoryOptions = [
     { value: '', label: '— Выберите категорию —' },
     ...categories.map(c => ({ value: c.id, label: c.title }))
@@ -82,7 +78,6 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
            />
 
           <div className="grid grid-cols-2 gap-4">
-             {/* 👇 ИЗМЕНИЛИ NAME НА category_id И ПОДСТАВИЛИ ДИНАМИЧЕСКИЕ ОПЦИИ */}
              <FormSelect 
                 name="categoryId" 
                 label="Категория тура"
@@ -92,6 +87,37 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
                 name="label" 
                 label="Метка (Badge)" 
                 placeholder="ХИТ, NEW, -20%" 
+             />
+          </div>
+
+          {/* ✅ НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК */}
+          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+             <h4 className="text-xs font-black uppercase text-slate-500 mb-2">Детализация для карточки</h4>
+             
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <FormInput 
+                    name="tourFormat" 
+                    label="Формат тура" 
+                    placeholder="Напр: С рюкзаками" 
+                 />
+                 <FormInput 
+                    name="accommodation" 
+                    label="Проживание" 
+                    placeholder="Напр: Отель / Палатки" 
+                 />
+             </div>
+             
+             <FormInput 
+                name="groupInfo" 
+                label="Инфо о группе" 
+                placeholder="Напр: До 12 человек, можно с детьми" 
+             />
+             
+             <FormTextarea 
+                name="importantInfo" 
+                label="Важная информация (Красный блок)" 
+                placeholder="Напр: Обязательно наличие загранпаспорта..." 
+                rows={2}
              />
           </div>
         </div>

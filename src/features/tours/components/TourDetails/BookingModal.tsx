@@ -13,6 +13,15 @@ interface BookingModalProps {
   initialDateId?: string;
 }
 
+// Вспомогательная функция для красивого вывода даты
+const formatDateForDropdown = (d: any) => {
+  const dateVal = d.start || d.date;
+  if (!dateVal) return '';
+  const dateObj = new Date(dateVal);
+  const str = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return `${str}${d.time ? ` в ${d.time}` : ''}`;
+};
+
 export default function BookingModal({ isOpen, onClose, tour, initialDate, initialDateId }: BookingModalProps) {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,28 +34,34 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     comment: ''
   });
 
+  // ✅ ИСПРАВЛЕНО: Храним и строку (для UI/TG), и ID (для БД)
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
+  const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      if (initialDate) {
+      if (initialDate && initialDateId) {
         setSelectedDateStr(initialDate);
+        setSelectedDateId(initialDateId);
       } else if (tour.dates && tour.dates.length > 0) {
         const first = tour.dates[0];
-        const label = `${first.start}${first.time ? ` в ${first.time}` : ''}`;
-        setSelectedDateStr(label);
+        setSelectedDateId(first.id || null);
+        setSelectedDateStr(formatDateForDropdown(first));
       } else {
         const dateObj = new Date(tour.date);
         const ruDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
         setSelectedDateStr(ruDate);
+        setSelectedDateId(null);
       }
     }
-  }, [isOpen, initialDate, tour]);
+  }, [isOpen, initialDate, initialDateId, tour]);
 
+  // ✅ ИСПРАВЛЕНО: Добавлен семейный билет
   const [tickets, setTickets] = useState({
     adult: 1,
     child: 0,
     member: 0,
+    family: 0, 
   });
 
   useEffect(() => {
@@ -58,27 +73,29 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
         setStep('form');
         setErrorMsg(null);
         setFormData({ name: '', phone: '+373 ', social: '', comment: '' });
-        setTickets({ adult: 1, child: 0, member: 0 });
+        setTickets({ adult: 1, child: 0, member: 0, family: 0 });
       }, 300);
       return () => clearTimeout(timer);
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  // ✅ ИСПРАВЛЕНО: Учитываем цену семейного пакета
   const totalPrice = useMemo(() => {
     let sum = tickets.adult * tour.price;
     if (tour.priceChild) sum += tickets.child * tour.priceChild;
     if (tour.priceMember) sum += tickets.member * tour.priceMember;
+    if (tour.priceFamily) sum += tickets.family * tour.priceFamily;
     return sum;
   }, [tickets, tour]);
 
  const getSmartPlaceholder = () => {
     const categorySlug = tour.category?.slug;
-    if (categorySlug === 'water') {
-      return 'Укажите для каждого участника, какой размер жилета взять у нас есть детские и от XS до 5XL. Сообщите если будут с вами дети до 10 лет.';
+    if (categorySlug === 'water' || categorySlug === 'kayaking' || categorySlug === 'sup') {
+      return 'Укажите для каждого участника, какой размер жилета взять (от детских до 5XL). Сообщите, если с вами будут дети до 10 лет.';
     }
     if (categorySlug === 'abroad' || tour.location?.toLowerCase().includes('румыния')) {
-      return 'Какое снаряжение вам надо? Есть ли у Вас действующий биометрический паспорт?';
+      return 'Какое снаряжение вам нужно? Есть ли у Вас действующий биометрический паспорт?';
     }
     if (categorySlug === 'kids') {
       return 'Укажите возраст детей ...';
@@ -94,6 +111,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     try {
       const result = await createBookingAction({
         tourId:        String(tour.id),
+        tourDateId:    selectedDateId || undefined, // ✅ Передаем конкретную дату в БД
         tourTitle:     tour.title,
         tourDate:      selectedDateStr,
         name:          formData.name.trim(),
@@ -103,6 +121,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
         ticketsAdult:  tickets.adult,
         ticketsChild:  tickets.child,
         ticketsMember: tickets.member,
+        ticketsFamily: tickets.family, // ✅ Передаем семейные билеты
         totalPrice,
         currency:      tour.currency ?? 'MDL',
       });
@@ -119,7 +138,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     }
   };
 
-  const Counter = ({ label, price, value, type }: { label: string, price: number, value: number, type: 'adult'|'child'|'member' }) => (
+  const Counter = ({ label, price, value, type }: { label: string, price: number, value: number, type: 'adult'|'child'|'member'|'family' }) => (
     <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
       <div>
         <div className="text-sm font-bold text-white">{label}</div>
@@ -184,7 +203,9 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                    <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
                       <Calendar size={12} /> Дата и время
                    </label>
-                   {initialDate ? (
+                   
+                   {/* ✅ ИСПРАВЛЕНО: Селект теперь пишет и ID, и красивую строку */}
+                   {initialDate && initialDateId ? (
                       <div className="w-full bg-slate-950/50 border border-teal-500/30 rounded-xl px-4 py-3 text-teal-400 font-bold">
                          {initialDate}
                       </div>
@@ -192,14 +213,18 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                       tour.dates && tour.dates.length > 0 ? (
                         <div className="relative">
                           <select 
-                            value={selectedDateStr}
-                            onChange={(e) => setSelectedDateStr(e.target.value)}
+                            value={selectedDateId || ''}
+                            onChange={(e) => {
+                               const id = e.target.value;
+                               setSelectedDateId(id);
+                               const d = tour.dates?.find(x => x.id === id);
+                               if (d) setSelectedDateStr(formatDateForDropdown(d));
+                            }}
                             className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 focus:outline-none cursor-pointer"
                           >
-                            {tour.dates.map((d, i) => {
-                              const val = `${d.start}${d.time ? ` в ${d.time}` : ''}`;
-                              return <option key={i} value={val}>{val}</option>;
-                            })}
+                            {tour.dates.map((d, i) => (
+                               <option key={d.id || i} value={d.id || ''}>{formatDateForDropdown(d)}</option>
+                            ))}
                           </select>
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
                         </div>
@@ -216,9 +241,13 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                     {tour.priceChild && tour.priceChild > 0 ? (
                        <Counter label="Детский" price={tour.priceChild} value={tickets.child} type="child" />
                     ) : null}
-                    {tour.priceMember && tour.priceMember > 0 ? (
-                       <Counter label="Клубная карта" price={tour.priceMember} value={tickets.member} type="member" />
+                    {tour.priceFamily && tour.priceFamily > 0 ? (
+                       <Counter label="Семейный (2 взр. + 1 реб.)" price={tour.priceFamily} value={tickets.family} type="family" />
                     ) : null}
+                    {tour.priceMember && tour.priceMember > 0 ? (
+                       <Counter label="По клубной карте" price={tour.priceMember} value={tickets.member} type="member" />
+                    ) : null}
+                    
                     <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
                        <span className="text-xs font-bold text-slate-400 uppercase">Итого:</span>
                        <span className="text-xl font-black text-teal-400">

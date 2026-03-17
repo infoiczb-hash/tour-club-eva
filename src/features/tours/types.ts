@@ -91,11 +91,14 @@ export interface Tour {
   date: string | Date;            
   endDate?: string | Date | null; 
   dates?: {
+    id?: string;            
     start: string;
     end?: string;
     guide_id?: string;
     time?: string;
     spots?: number; 
+    spotsLeft?: number;     
+    basePrice?: number | null; 
   }[];
 
   // === МЕДИА ===
@@ -116,6 +119,12 @@ export interface Tour {
   tags?: string[];         
   highlights?: TourHighlight[];      
 
+  // ✅ НОВЫЕ ХАРАКТЕРИСТИКИ (Фаза 1)
+  tourFormat?: string | null;
+  accommodation?: string | null;
+  groupInfo?: string | null;
+  importantInfo?: string | null;
+
   // === ЛОГИСТИКА И ХАРАКТЕРИСТИКИ ===
   location: string;
   startLocation?: string | null; 
@@ -124,7 +133,7 @@ export interface Tour {
   difficulty?: 'easy' | 'medium' | 'hard' | 'expert' | string | null;
   route?: string | null;
   distance?: string | null; 
-  meta?: unknown; // Заменили any на unknown (безопасный тип)
+  meta?: unknown; 
 
   // === СТАТИСТИКА ===
   spots: number;     
@@ -133,7 +142,7 @@ export interface Tour {
 
   guide?: GuideInfo | null;
 
-  // === СТРОГИЕ МАССИВЫ ВМЕСТО ANY ===
+  // === СТРОГИЕ МАССИВЫ ===
   program: TourProgramDay[];                 
   faq: TourFaq[];                     
   checklist?: TourChecklist[];              
@@ -141,6 +150,10 @@ export interface Tour {
   
   included: string[];           
   additionalExpenses: string[];  
+
+  // ✅ НОВЫЕ ДЕТАЛИЗИРОВАННЫЕ СПИСКИ (Аккордеоны)
+  includedDetailed?: any | null;
+  excludedDetailed?: any | null;
 
   metaTitle?: string | null;
   metaDesc?: string | null;

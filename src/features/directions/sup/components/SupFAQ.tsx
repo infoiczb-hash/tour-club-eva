@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, MessageCircle } from 'lucide-react';
 
 const FAQ_DATA = [
@@ -24,7 +23,6 @@ const FAQ_DATA = [
 ];
 
 export default function SupFAQ() {
-    // Состояние для открытия нужного вопроса
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
@@ -60,7 +58,6 @@ export default function SupFAQ() {
                               className="bg-slate-900/50 backdrop-blur-sm border border-white/5 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-teal-500/30 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-8 fill-mode-both"
                               style={{ animationDelay: `${index * 150}ms` }}
                             >
-                                {/* КНОПКА ВОПРОСА */}
                                 <button
                                   onClick={() => setOpenIndex(isOpen ? null : index)}
                                   className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group"
@@ -68,31 +65,25 @@ export default function SupFAQ() {
                                     <span className="font-bold pr-4 text-[14px] md:text-lg text-slate-200 group-hover:text-white transition-colors leading-tight">
                                         {item.q}
                                     </span>
-                                    {/* ИКОНКА СТРЕЛОЧКИ */}
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isOpen ? 'rotate-180 bg-teal-500/10 text-teal-400' : 'bg-white/5 text-slate-400 group-hover:bg-white/10'}`}>
                                         <ChevronDown size={18} />
                                     </div>
                                 </button>
                                 
-                                {/* ПЛАВНОЕ РАЗВОРАЧИВАНИЕ ОТВЕТА (Framer Motion) */}
-                                <AnimatePresence>
-                                    {isOpen && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                                            className="px-5 md:px-6 pb-5 md:pb-6 text-[14px] md:text-base text-slate-400 border-t border-white/5 pt-4 font-medium leading-relaxed"
-                                        >
+                                {/* CSS-анимация вместо Framer Motion */}
+                                <div 
+                                    className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                                >
+                                    <div className="overflow-hidden">
+                                        <div className="px-5 md:px-6 pb-5 md:pb-6 text-[14px] md:text-base text-slate-400 border-t border-white/5 pt-4 font-medium leading-relaxed">
                                             {item.a}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         );
                     })}
                 </div>
-
             </div>
         </section>
     );

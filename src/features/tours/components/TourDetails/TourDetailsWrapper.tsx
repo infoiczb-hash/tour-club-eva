@@ -40,10 +40,22 @@ export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWr
           <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-hidden">
             <TourStats tour={tour} />
             <TourLogistics tour={tour} />
-            <TourDescription description={tour.description} highlights={tour.highlights} tags={tour.tags} />
+            
+            {/* ✅ ИНЖЕКЦИЯ: Передаем весь объект tour для доступа к importantInfo */}
+            <TourDescription tour={tour} />
+            
             <TourProgram program={tour.program} />
             <TourGallery images={tour.gallery || []} />
-            <TourEssentials included={tour.included || []} additionalExpenses={tour.additionalExpenses || []} documents={tour.documents} checklist={tour.checklist} />
+            
+            {/* ✅ ИНЖЕКЦИЯ: Добавили новые детальные списки (аккордеоны) */}
+            <TourEssentials 
+              included={tour.included || []} 
+              additionalExpenses={tour.additionalExpenses || []} 
+              documents={tour.documents} 
+              checklist={tour.checklist} 
+              includedDetailed={tour.includedDetailed} 
+              excludedDetailed={tour.excludedDetailed} 
+            />
 
             <TourDates tour={tour} />
 
