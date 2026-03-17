@@ -265,14 +265,20 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
         <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg", activeColor.split(" ").slice(0, 2).join(" "))}>
           {icon}
         </div>
-        <h3
-          className="text-3xl font-black text-white uppercase mb-3 leading-[0.95] drop-shadow-md"
-          dangerouslySetInnerHTML={{ __html: title.replace('\n', '<br/>') }}
-        />
-        <p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed drop-shadow-md">{desc}</p>
-        <div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-[gap] group-hover:gap-4", activeColor.split(" ")[2])}>
-          Начать <ArrowRight size={14} strokeWidth={3} />
-        </div>
+      <h3 className="text-3xl font-black text-white uppercase mb-3 leading-[0.95] drop-shadow-md">
+  {title.split('\n').map((line, idx, array) => (
+    <React.Fragment key={idx}>
+      {line}
+      {idx < array.length - 1 && <br />}
+    </React.Fragment>
+  ))}
+</h3>
+<p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed drop-shadow-md">
+  {desc}
+</p>
+<div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-[gap] group-hover:gap-4", activeColor.split(" ")[2])}>
+  Начать <ArrowRight size={14} strokeWidth={3} />
+</div>
       </div>
     </div>
   );
