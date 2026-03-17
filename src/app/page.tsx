@@ -21,7 +21,6 @@ import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 import dynamic from 'next/dynamic';
 import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
 
-
 const LazyGuidesList = dynamic(() => import('@/features/guides/components/GuidesList'), {
   loading: () => <section className="min-h-[400px] w-full bg-slate-50 dark:bg-slate-950 animate-pulse" />
 });
@@ -35,16 +34,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Турклуб «Эва» — Активный отдых в Приднестровье",
   description: "Сплавы по Днестру, туры в горы, SUP. Приключения в Приднестровье и Молдове.",
-  keywords: [
-    "турклуб Приднестровье",
-    "активный отдых Тирасполь",
-    "сплав на байдарках Днестр",
-    "поход выходного дня Тирасполь",
-    "туризм Приднестровье",
-    "отдых на природе Молдова",
-    "туры с гидом Тирасполь",
-    "SUP Днестр",
-  ],
+  // ❌ УДАЛЕНО: keywords (Google их игнорирует, код стал чище)
   alternates: {
     canonical: '/',
   },
@@ -80,9 +70,7 @@ const [rawGuides, posts, allReviews, bCatRes, funRes] = await Promise.all([
       orderBy: { order: 'asc' } 
     }),
     getBlogPosts(),
-    // ❌ getTours() удален отсюда
     getReviews(),
-    // ❌ getTourCategoriesAction() удален отсюда
     getBlogCategoriesAction(),
     getFunTestsAction(), // ✅ Грузим тесты сразу на сервере
   ]);
@@ -123,8 +111,27 @@ const [rawGuides, posts, allReviews, bCatRes, funRes] = await Promise.all([
     isActive: guide.isActive
   }));
 
+  // ✅ ДОБАВЛЕНО: Микроразметка WebSite + SearchAction для Google
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    'name': 'Турклуб «Эва»',
+    'url': process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club',
+    'potentialAction': {
+      '@type': 'SearchAction',
+      'target': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club'}/tour?q={search_term_string}`,
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
   return (
     <>
+      {/* ✅ ДОБАВЛЕНО: Инжектим JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+
       <Hero />
        <Suspense fallback={<TourSkeleton />}>
         <ToursBrowserWrapper limit={8} title="Афиша Приключений" />

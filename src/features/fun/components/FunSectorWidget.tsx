@@ -7,7 +7,6 @@ import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activ
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import { FunTest } from '@prisma/client';
-import sanitizeHtml from 'sanitize-html';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -129,10 +128,8 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 function QuizCard({ quiz }: { quiz: FunTest }) {
   const visual = VISUAL_REGISTRY[quiz.slug] || VISUAL_REGISTRY['default'];
   const Icon = visual.icon;
-  
-  const sanitizedTitle = sanitizeHtml(quiz.title.replace(/\n/g, '<br/>'), {
-  allowedTags: ['br', 'b', 'i', 'em', 'strong'] // разрешаем только безопасные теги текста
-});
+
+  // ❌ МЫ ПОЛНОСТЬЮ УДАЛИЛИ sanitizeHtml ОТСЮДА
 
   return (
     <Link href={`/fun?quiz=${quiz.slug}`} className={cn(
@@ -153,11 +150,15 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
         <div className="flex-1 lg:mt-6 w-full">
           <div className="hidden lg:block text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">{quiz.category}</div>
           
-          {/* ✅ ЗАЩИЩЕННЫЙ РЕНДЕР */}
-          <h3 
-            className="font-black text-white uppercase text-sm md:text-lg lg:text-xl leading-tight mb-1 lg:mb-2 drop-shadow-md" 
-            dangerouslySetInnerHTML={{ __html: sanitizedTitle }} 
-          />
+          {/* ✅ БЕЗОПАСНЫЙ НАТИВНЫЙ РЕНДЕР БЕЗ SANITIZE-HTML */}
+          <h3 className="font-black text-white uppercase text-sm md:text-lg lg:text-xl leading-tight mb-1 lg:mb-2 drop-shadow-md">
+            {quiz.title.split('\n').map((line, idx, array) => (
+              <React.Fragment key={idx}>
+                {line}
+                {idx < array.length - 1 && <br />}
+              </React.Fragment>
+            ))}
+          </h3>
           
           <p className="hidden lg:block text-slate-300 font-medium text-xs lg:text-sm line-clamp-2 drop-shadow-md">{quiz.description}</p>
         </div>
