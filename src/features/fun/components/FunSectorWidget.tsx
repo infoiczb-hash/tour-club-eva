@@ -7,7 +7,7 @@ import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activ
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import { FunTest } from '@prisma/client';
-import DOMPurify from 'isomorphic-dompurify'; // ✅ ДОБАВИЛИ ИМПОРТ
+import sanitizeHtml from 'sanitize-html';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -130,8 +130,9 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
   const visual = VISUAL_REGISTRY[quiz.slug] || VISUAL_REGISTRY['default'];
   const Icon = visual.icon;
   
-  // ✅ ИСПРАВЛЕНИЕ: Вырезаем возможные XSS-скрипты при рендере заголовка с переносами строк
-  const sanitizedTitle = DOMPurify.sanitize(quiz.title.replace('\n', '<br/>'));
+  const sanitizedTitle = sanitizeHtml(quiz.title.replace(/\n/g, '<br/>'), {
+  allowedTags: ['br', 'b', 'i', 'em', 'strong'] // разрешаем только безопасные теги текста
+});
 
   return (
     <Link href={`/fun?quiz=${quiz.slug}`} className={cn(
