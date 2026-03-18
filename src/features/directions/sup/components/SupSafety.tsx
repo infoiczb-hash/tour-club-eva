@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Shield, LifeBuoy, Navigation, ChevronRight } from 'lucide-react'; 
+import { Shield, LifeBuoy, Navigation, ArrowRight  } from 'lucide-react'; 
 // ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 
@@ -99,10 +99,10 @@ export default function SupSafety() {
                          })}
                      </div>
 
-                     <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
-                         <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-                         <ChevronRight size={14} />
-                     </div>
+                     <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
+                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
+                              </div>
                  </div>
 
             </div>
