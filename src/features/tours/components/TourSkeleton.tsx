@@ -1,78 +1,77 @@
-import { Skeleton } from "@/shared/ui/Skeleton"; // Убедитесь, что этот компонент поддерживает className
+import { Skeleton } from "@/shared/ui/Skeleton";
 
 export const TourSkeletonCard = () => (
-    <div className="bg-slate-900 border-white/5 overflow-hidden h-full flex flex-col relative">
-        
-        {/* 1. ФОТО */}
-      <div className="relative w-full aspect-[4/3] bg-slate-800">
-             {/* Имитация метки типа тура (слева сверху) */}
-             <div className="absolute top-4 left-4">
-                <Skeleton className="h-6 w-20 rounded-lg" />
-             </div>
-             {/* Имитация кнопки лайка/метки (справа сверху) */}
-             <div className="absolute top-4 right-4">
-                <Skeleton className="h-6 w-24 rounded-lg" />
-             </div>
-        </div>
-        
-        {/* 2. КОНТЕНТ */}
-        <div className="p-6 flex flex-col flex-grow">
-            
-            {/* Мета-инфо (Локация и Дата) */}
-            <div className="flex gap-3 mb-4">
-                <Skeleton className="h-5 w-24 rounded-md" />
-                <Skeleton className="h-5 w-20 rounded-md" />
-            </div>
-
-            {/* Заголовок (2 строки) */}
-            <div className="space-y-2 mb-3">
-                <Skeleton className="h-7 w-11/12 rounded-lg" />
-                <Skeleton className="h-7 w-2/3 rounded-lg" />
-            </div>
-            
-            {/* Описание */}
-            <div className="space-y-2 mb-6 opacity-70">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-            </div>
-
-            {/* Теги билетов (Детские/Семейные) */}
-            <div className="flex gap-2 mb-auto">
-                <Skeleton className="h-6 w-28 rounded-md" />
-            </div>
-
-            {/* Низ (Цена и Большая Кнопка) */}
-            <div className="mt-6 pt-5 flex justify-between items-end border-t border-slate-100">
-                <div className="space-y-1">
-                    <Skeleton className="h-3 w-8" /> {/* "от" */}
-                    <Skeleton className="h-8 w-32 rounded-lg" /> {/* Цена */}
-                </div>
-                {/* Кнопка (Квадратная с закруглением, как в оригинале) */}
-                <Skeleton className="h-12 w-12 rounded-2xl" />
-            </div>
-        </div>
+  // 1. Обертка в точности повторяет классы TourCard (без фиксированной высоты)
+  <div className="relative flex flex-col h-full rounded-[2rem] overflow-hidden border-2 border-white/5 bg-[#0d131a]">
+    
+    {/* 2. Блок картинки с правильными пропорциями */}
+    <div className="relative w-full aspect-[4/3] bg-slate-800/50">
+      {/* Бейдж слева вверху */}
+      <div className="absolute top-4 left-4">
+        <Skeleton className="h-6 w-20 rounded-xl" />
+      </div>
+      {/* Бейдж даты слева внизу */}
+      <div className="absolute bottom-4 left-4">
+        <Skeleton className="h-9 w-32 rounded-xl" />
+      </div>
     </div>
+    
+    {/* 3. Контентная часть */}
+    <div className="p-5 sm:p-6 flex flex-col flex-grow">
+      
+      {/* Локация и длительность */}
+      <div className="flex gap-4 mb-3">
+        <Skeleton className="h-4 w-24 rounded-md" />
+        <Skeleton className="h-4 w-16 rounded-md" />
+      </div>
+
+      {/* Заголовок (две строки для реалистичности) */}
+      <div className="space-y-2 mb-6">
+        <Skeleton className="h-6 sm:h-8 w-11/12 rounded-lg" />
+        <Skeleton className="h-6 sm:h-8 w-2/3 rounded-lg" />
+      </div>
+
+      {/* Теги (Стандарт / Детский и т.д.) - прижаты к низу через mt-auto */}
+      <div className="flex gap-2 mb-6 mt-auto">
+        <Skeleton className="h-7 w-20 rounded-lg" />
+        <Skeleton className="h-7 w-24 rounded-lg" />
+      </div>
+
+      {/* Линия-разделитель */}
+      <div className="h-px w-full bg-white/5 mb-5" />
+
+      {/* Подвал карточки: Цена и кнопка */}
+      <div className="flex justify-between items-end">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-8 sm:h-10 w-28 rounded-lg" />
+        </div>
+        <Skeleton className="h-12 w-12 rounded-xl" />
+      </div>
+      
+    </div>
+  </div>
 );
 
 export const TourSkeleton = () => (
-    // ✅ ДОБАВИЛИ ТЕМНУЮ СЕКЦИЮ С ОТСТУПАМИ, КАК В TOURS BROWSER
-    <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden">
-        <div className="container mx-auto px-4 max-w-7xl relative z-10">
-            
-            {/* Имитация заголовка (чтобы страница не прыгала) */}
-            <div className="mb-8 md:mb-14">
-                <div className="h-6 w-32 bg-slate-800/50 rounded-full mb-4 animate-pulse" />
-                <div className="h-12 md:h-20 w-3/4 md:w-1/2 bg-slate-800/50 rounded-xl animate-pulse" />
-            </div>
+  // Секция в точности повторяет обертку ToursBrowser
+  <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden w-full">
+    <div className="container mx-auto px-4 max-w-7xl relative z-10">
+      
+      {/* Заголовок секции */}
+      <div className="mb-8 md:mb-14">
+        <Skeleton className="h-7 w-36 rounded-full mb-4" />
+        <Skeleton className="h-10 md:h-16 w-3/4 md:w-1/2 rounded-xl" />
+      </div>
 
-            {/* Сама сетка карточек */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-5">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-[450px]">
-                        <TourSkeletonCard />
-                    </div>
-                ))}
-            </div>
-        </div>
-    </section>
+      {/* Сетка карточек (точно такие же gap и cols) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-5">
+        {/* Рендерим 6 скелетонов, чтобы заполнить экран на десктопе */}
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <TourSkeletonCard key={i} />
+        ))}
+      </div>
+      
+    </div>
+  </section>
 );

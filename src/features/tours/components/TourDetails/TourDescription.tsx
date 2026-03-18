@@ -54,30 +54,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
           </div>
         </div>
       )}
-
-      {/* ✅ ИСПРАВЛЕНИЕ XSS И БАГА РЕНДЕРА: Описание тура теперь безопасно поддерживает HTML из TiptapEditor */}
-      {tour.description && (
-        <div className="prose prose-invert prose-teal max-w-none mb-12">
-          <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
-            О туре
-          </h2>
-          <div 
-            className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"
-           dangerouslySetInnerHTML={{ 
-  __html: sanitizeHtml(tour.description, {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span' ]),
-    allowedAttributes: {
-      '*': ['class', 'style'],
-      'a': ['href', 'name', 'target'],
-      'img': ['src', 'alt']
-    }
-  }) 
-}}
-          />
-        </div>
-      )}
-
-      {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ */}
+        {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ */}
       {tour.highlights && tour.highlights.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 md:px-10 border border-white/5 shadow-2xl relative overflow-hidden">
           
@@ -110,6 +87,30 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
         </div>
       )}
 
+
+      {/* ✅ ИСПРАВЛЕНИЕ XSS И БАГА РЕНДЕРА: Описание тура теперь безопасно поддерживает HTML из TiptapEditor */}
+      {tour.description && (
+        <div className="prose prose-invert prose-teal max-w-none mb-12">
+          <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
+            О туре
+          </h2>
+          <div 
+            className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"
+           dangerouslySetInnerHTML={{ 
+  __html: sanitizeHtml(tour.description, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span' ]),
+    allowedAttributes: {
+      '*': ['class', 'style'],
+      'a': ['href', 'name', 'target'],
+      'img': ['src', 'alt']
+    }
+  }) 
+}}
+          />
+        </div>
+      )}
+
+    
     </section>
   );
 }

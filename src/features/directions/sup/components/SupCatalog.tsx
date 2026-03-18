@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { type ElementType } from 'react';
-import { Clock, MapPin, Users, Star, Compass, ChevronRight } from 'lucide-react';
+import { Clock, MapPin, Users, Star, Compass, ArrowRight } from 'lucide-react';
 
 // 1. Описываем, как выглядит маршрут
 type RouteType = { name: string; dist: string; time: string };
@@ -166,10 +166,10 @@ export default function SupCatalog() {
                 </div>
 
                 {activeTab === 'tours' && (
-                    <div className="md:hidden absolute top-5 right-5 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
-                        <ChevronRight size={12} />
-                    </div>
+                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
+                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
+                              </div>
                 )}
             </div>
 

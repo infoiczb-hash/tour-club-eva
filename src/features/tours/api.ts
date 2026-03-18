@@ -46,7 +46,7 @@ function getNearestFutureDate(
     )[0];
   }
   
-  // ✅ ИСПРАВЛЕНИЕ: Если будущих дат нет, возвращаем самую "свежую" прошедшую
+  // Если будущих дат нет, возвращаем самую "свежую" прошедшую
   return [...dates].sort(
     (a, b) => new Date(b.start).getTime() - new Date(a.start).getTime()
   )[0];
@@ -66,6 +66,11 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
     spotsLeft: td.spotsLeft,
     guide_id: td.guideId || undefined,
     basePrice: td.basePrice,
+    // 👇 ВОССТАНОВИЛИ ПОЛЯ ДЛЯ ФОРМЫ (Динамические цены)
+    discountEarlyBird: td.discountEarlyBird,
+    earlyBirdDeadline: td.earlyBirdDeadline,
+    surchargeLastMinute: td.surchargeLastMinute,
+    lastMinuteTrigger: td.lastMinuteTrigger,
   })) || [];
 
   // ✅ 2. Фолбэк на старые JSON-даты (для обратной совместимости)
@@ -133,6 +138,10 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
     includedDetailed: item.includedDetailed ?? null,
     excludedDetailed: item.excludedDetailed ?? null,
 
+    // 👇 ВОССТАНОВИЛИ SEO-ПОЛЯ
+    metaTitle: item.metaTitle ?? null,
+    metaDesc: item.metaDesc ?? null,
+
     price: Number(item.price) || 0,
     currency: item.currency ?? 'RUB',
     priceOld: item.priceOld ? Number(item.priceOld) : null,
@@ -180,14 +189,15 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
 // ─────────────────────────────────────────────
 function isTourRelevant(tour: Tour): boolean {
   const hasDatesArray = Array.isArray(tour.dates) && tour.dates.length > 0;
-  const hasLegacyDate = typeof tour.date === 'string' ? tour.date.length > 0 : !!tour.date;
+  const hasLegacyDate =
+    typeof tour.date === 'string' ? tour.date.length > 0 : !!tour.date;
 
   // Анонс без дат — показываем
   if (!hasDatesArray && !hasLegacyDate) return true;
 
   const now = today();
 
-  // ✅ ИСПРАВЛЕНИЕ: Есть массив dates — хотя бы одна дата должна быть >= сегодня
+  // Есть массив dates — хотя бы одна должна быть в будущем
   if (hasDatesArray) {
     return tour.dates!.some((d: any) => {
         const end = d.end ? new Date(d.end) : new Date(d.start);

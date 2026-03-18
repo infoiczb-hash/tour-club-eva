@@ -41,9 +41,9 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
                 src={guideImage} 
                 alt={guideName} 
                 fill 
-                // ✅ ИСПРАВЛЕНИЕ: Убрали priority, добавили lazy. Это разблокирует LCP обложки тура.
                 loading="lazy"
-                className="object-cover"
+                // ✅ ИСПРАВЛЕНИЕ: Добавили object-top (или object-[center_15%]), чтобы при обрезке фокус был на лице, а не на пузе
+                className="object-cover object-[center_15%]"
                 sizes="40px"
               />
             ) : (
