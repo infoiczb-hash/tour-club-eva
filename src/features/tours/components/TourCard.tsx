@@ -54,12 +54,23 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
   } = tour;
 
   const dateObj = date ? new Date(date) : null;
-const dateStr = dateObj
-  ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) // ✅ Выдаст "20 февраля"
-  : 'Скоро';
+  const dateStr = dateObj
+    ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) // ✅ Выдаст "20 февраля"
+    : 'Скоро';
 
-  // 👇 ИСПРАВЛЕНИЕ: Реальная проверка количества дат вместо фейковой математики с ID
-  const hasMoreDates = Array.isArray(dates) && dates.length > 1;
+  // 👇 ИСПРАВЛЕНИЕ: Проверяем, прошла ли дата и считаем только будущие для бейджа
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const isPast = dateObj ? dateObj.getTime() < today.getTime() : false;
+  
+  const futureDatesCount = Array.isArray(dates) ? dates.filter((d: any) => {
+     const end = d.end ? new Date(d.end) : new Date(d.start);
+     end.setHours(0, 0, 0, 0);
+     return end >= today;
+  }).length : 0;
+  
+  const hasMoreDates = futureDatesCount > 1;
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
 
   const themeColor = category?.color || 'slate';
@@ -118,9 +129,14 @@ const dateStr = dateObj
             )}>
               <Calendar size={16} strokeWidth={2.5} />
               {/* ✅ ЭТАП 4: Изменение только здесь! suppressHydrationWarning */}
-              <span suppressHydrationWarning className="text-sm font-black uppercase tracking-wider">{dateStr}</span>
+              <span suppressHydrationWarning className={cn(
+                  "text-sm font-black uppercase tracking-wider",
+                  isPast && "text-slate-400"
+              )}>
+                 {isPast ? "Завершен" : dateStr}
+              </span>
               {/* 👇 ИСПРАВЛЕНИЕ: Новый текст для бейджика дополнительных дат */}
-              {hasMoreDates && (
+              {hasMoreDates && !isPast && (
                 <span className="text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
               )}
             </div>
