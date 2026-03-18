@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link'; // ✅ ДОБАВИЛИ
-import { MapPin, Clock, Calendar, ArrowLeft } from 'lucide-react'; // ✅ ДОБАВИЛИ ArrowLeft
+import Link from 'next/link';
+import { MapPin, Clock, Calendar, ArrowLeft, Tent } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -29,6 +29,7 @@ interface TourHeroProps {
 
 export default function TourHero({ tour }: TourHeroProps) {
   
+  // ✅ ИСПРАВЛЕНА ЛОГИКА ДАТ: Теперь проверяются и дни, чтобы не было "26 - 26 апреля"
   const renderDateRange = () => {
     if (!tour.date) return 'Дата уточняется';
     
@@ -39,9 +40,22 @@ export default function TourHero({ tour }: TourHeroProps) {
     if (!tour.endDate) return ruDate.format(startDate);
 
     const endDate = new Date(tour.endDate);
+
+    // 1. Если даты абсолютно одинаковые (тот же день, месяц и год) — выводим одну дату
+    if (
+      startDate.getDate() === endDate.getDate() &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getFullYear() === endDate.getFullYear()
+    ) {
+      return ruDate.format(startDate);
+    }
+
+    // 2. Если дни разные, но месяц один — выводим "26 — 28 апреля"
     if (startDate.getMonth() === endDate.getMonth()) {
        return `${dayOnly.format(startDate)} — ${ruDate.format(endDate)}`;
     }
+    
+    // 3. Если месяцы разные — выводим "28 апреля — 2 мая"
     return `${ruDate.format(startDate)} — ${ruDate.format(endDate)}`;
   };
 
@@ -71,14 +85,13 @@ export default function TourHero({ tour }: TourHeroProps) {
           className="object-cover opacity-60"
           priority
           fetchPriority="high"
-          quality={65} // ✅ ИСПРАВЛЕНИЕ LCP: снизили с 75 до 65
+          quality={65} 
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950/60 to-transparent" />
       </div>
 
-      {/* ✅ НОВЫЙ ЭЛЕМЕНТ: Кнопка "В каталог" */}
       <div className="absolute top-24 left-4 md:left-8 z-20">
         <Link
           href="/tour"
@@ -108,12 +121,10 @@ export default function TourHero({ tour }: TourHeroProps) {
               )}
             </div>
 
-            {/* ✅ ИСПРАВЛЕНИЕ: Добавлен break-words */}
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase leading-[1.1] tracking-tight drop-shadow-xl break-words">
               {tour.title}
             </h1>
             
-            {/* ✅ ИСПРАВЛЕНИЕ: Добавлен break-words */}
             {tour.subtitle && (
               <p className="text-sm md:text-lg text-slate-200 font-normal max-w-2xl leading-relaxed opacity-90 break-words">
                 {tour.subtitle}
@@ -121,9 +132,9 @@ export default function TourHero({ tour }: TourHeroProps) {
             )}
 
             <div className="pt-6 md:pt-8 mt-4 border-t border-white/10">
-                <div className="grid grid-cols-2 md:flex md:items-center gap-y-6 gap-x-8 md:gap-12 text-white">
+                {/* ✅ ИСПРАВЛЕНА СЕТКА: Теперь это grid-cols-2 на мобилке без разрывов */}
+                <div className="grid grid-cols-2 md:flex md:items-center gap-y-6 gap-x-8 md:gap-10 text-white">
                     
-                    {/* ✅ ИСПРАВЛЕНИЕ: Добавлен min-w-0 и truncate в каждый блок */}
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
                             <MapPin size={16} />
@@ -144,13 +155,27 @@ export default function TourHero({ tour }: TourHeroProps) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 col-span-2 md:col-span-1 min-w-0">
+                    {/* ✅ ИСПРАВЛЕНО: Убран col-span-2, чтобы вставало в идеальный квадрат 2x2 на мобилках */}
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
                             <Clock size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Длительность">Длительность</p>
                             <p className="font-bold text-sm md:text-base leading-none truncate" title={getDuration()}>{getDuration()}</p>
+                        </div>
+                    </div>
+
+                    {/* ✅ ДОБАВЛЕНО: Четвертая метрика "Проживание" */}
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
+                            <Tent size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Проживание">Проживание</p>
+                            <p className="font-bold text-sm md:text-base leading-none truncate" title={tour.accommodation || 'Без проживания'}>
+                              {tour.accommodation || 'Без проживания'}
+                            </p>
                         </div>
                     </div>
 

@@ -2,7 +2,7 @@ import ReactDOM from 'react-dom';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { Suspense } from 'react';
-import FunClient from './FunClient';
+import FunWrapper from './FunWrapper'; 
 
 export const revalidate = 3600;
 
@@ -48,7 +48,7 @@ export default async function FunSectorPage() {
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
-      <FunClient activeTests={tests} />
+      <FunWrapper activeTests={tests} />
     </Suspense>
   );
 }
