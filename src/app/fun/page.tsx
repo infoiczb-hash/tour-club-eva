@@ -2,11 +2,10 @@ import ReactDOM from 'react-dom';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { Suspense } from 'react';
-import FunWrapper from './FunWrapper'; // 👈 Подключаем наш новый мост
+import FunClient from './FunClient';
 
 export const revalidate = 3600;
 
-// ✅ ТВОЙ SEO-БЛОК ПОЛНОСТЬЮ НА МЕСТЕ
 export const metadata: Metadata = {
   title: 'Фан-сектор: Тесты, квизы и подбор туров | Турклуб «Эва»',
   description: 'Интерактивные тесты для туристов. Узнай свой психотип в походе, пройди тест на выживание, собери идеальный рюкзак и позволь AI подобрать тебе маршрут.',
@@ -33,13 +32,11 @@ export const metadata: Metadata = {
 };
 
 export default async function FunSectorPage() {
-  // ✅ ТВОЙ ПРИЗМА-ЗАПРОС
   const tests = await prisma.funTest.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'desc' }
   });
 
-  // ✅ ТВОЙ PRELOAD
   const firstImage = tests[0]?.image;
   if (firstImage) {
     ReactDOM.preload(firstImage, {
@@ -51,8 +48,7 @@ export default async function FunSectorPage() {
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
-      {/* Используем Wrapper, который прокинет данные в FunClient без SSR */}
-      <FunWrapper activeTests={tests} />
+      <FunClient activeTests={tests} />
     </Suspense>
   );
 }

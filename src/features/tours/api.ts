@@ -31,15 +31,24 @@ const today = (): Date => {
 function getNearestFutureDate(
   dates: { start: string; end?: string }[]
 ): { start: string; end?: string } | null {
+  if (!dates || dates.length === 0) return null;
+
   const now = today();
   const future = dates.filter(d => {
     const end = d.end ? new Date(d.end) : new Date(d.start);
     end.setHours(0, 0, 0, 0);
     return end >= now;
   });
-  if (!future.length) return null;
-  return future.sort(
-    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+  
+  if (future.length > 0) {
+    return future.sort(
+      (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+    )[0];
+  }
+  
+  // ✅ ИСПРАВЛЕНИЕ: Если будущих дат нет, возвращаем самую "свежую" прошедшую
+  return [...dates].sort(
+    (a, b) => new Date(b.start).getTime() - new Date(a.start).getTime()
   )[0];
 }
 
@@ -171,21 +180,26 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
 // ─────────────────────────────────────────────
 function isTourRelevant(tour: Tour): boolean {
   const hasDatesArray = Array.isArray(tour.dates) && tour.dates.length > 0;
-  const hasLegacyDate =
-    typeof tour.date === 'string' ? tour.date.length > 0 : !!tour.date;
+  const hasLegacyDate = typeof tour.date === 'string' ? tour.date.length > 0 : !!tour.date;
 
   // Анонс без дат — показываем
   if (!hasDatesArray && !hasLegacyDate) return true;
 
-  // Есть массив dates — хотя бы одна должна быть в будущем
+  const now = today();
+
+  // ✅ ИСПРАВЛЕНИЕ: Есть массив dates — хотя бы одна дата должна быть >= сегодня
   if (hasDatesArray) {
-    return getNearestFutureDate(tour.dates as any) !== null;
+    return tour.dates!.some((d: any) => {
+        const end = d.end ? new Date(d.end) : new Date(d.start);
+        end.setHours(0, 0, 0, 0);
+        return end >= now;
+    });
   }
 
   // Фолбэк на legacy поле date
   const d = new Date(tour.date);
   d.setHours(0, 0, 0, 0);
-  return d >= today();
+  return d >= now;
 }
 
 // ─────────────────────────────────────────────

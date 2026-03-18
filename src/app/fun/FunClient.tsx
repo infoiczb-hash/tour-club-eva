@@ -3,24 +3,39 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { Gamepad2, Backpack, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 import type { FunTest } from "@prisma/client";
 import { useInView } from '@/hooks/useInView';
 import { useModalStore } from '@/shared/store/useModalStore';
 
+// 1. СТАТИЧЕСКИЕ ИМПОРТЫ МОДАЛОК (Лечим тихий сбой чанков и тайм-ауты Vercel)
+import FearDebrief from "@/features/fun/components/FearDebrief";
+import PhysicalReadiness from "@/features/fun/components/PhysicalReadiness";
+import BodySignals from "@/features/fun/components/BodySignals";
+import TourDebrief from "@/features/fun/components/TourDebrief";
+import QuizBackpack from "@/features/fun/components/QuizBackpack";
+import QuizSurvival from "@/features/fun/components/QuizSurvival";
+import QuizTotem from "@/features/fun/components/QuizTotem";
+import QuizTouristType from "@/features/fun/components/QuizTouristType";
+import PsychProfile from "@/features/fun/components/PsychProfile";
+
+function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
+}
+
 const MODAL_REGISTRY: Record<string, React.ComponentType<any>> = {
-  'fears':         dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
-  'physical':      dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),
-  'signals':       dynamic(() => import("@/features/fun/components/BodySignals"), { ssr: false }),
-  'debrief':       dynamic(() => import("@/features/fun/components/TourDebrief"), { ssr: false }),
-  'backpack':      dynamic(() => import("@/features/fun/components/QuizBackpack"), { ssr: false }),
-  'survival':      dynamic(() => import("@/features/fun/components/QuizSurvival"), { ssr: false }),
-  'totem':         dynamic(() => import("@/features/fun/components/QuizTotem"), { ssr: false }),
-  'tourist-type':  dynamic(() => import("@/features/fun/components/QuizTouristType"), { ssr: false }),
-  'psych-profile': dynamic(() => import("@/features/fun/components/PsychProfile"), { ssr: false }),
+  'fears':         FearDebrief,
+  'physical':      PhysicalReadiness,
+  'signals':       BodySignals,
+  'debrief':       TourDebrief,
+  'backpack':      QuizBackpack,
+  'survival':      QuizSurvival,
+  'totem':         QuizTotem,
+  'tourist-type':  QuizTouristType,
+  'psych-profile': PsychProfile,
 };
 
 const CATEGORY_UI_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -76,33 +91,37 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
       </div>
 
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
-        <div className="animate-hero-subtitle inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
-          <Sparkles size={16} className="text-teal-400" />
-          <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
+        <div className="animate-fade-in-up opacity-0 inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
+           <Sparkles size={16} className="text-teal-400" />
+           <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
         </div>
-        <h1 className="animate-hero-title text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
-          Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
+
+        <h1 className="animate-hero-title opacity-0 [animation-delay:100ms] text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
+           Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
         </h1>
-        <p className="animate-hero-subtitle text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-          Узнай какой ты турист, проработай страхи, кто ты в туристической группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
+
+        <p className="animate-fade-in-up opacity-0 [animation-delay:200ms] text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+           Узнай какой ты турист, проработай страхи, кто ты в туристисеской группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
         </p>
       </section>
 
       <div className="container mx-auto px-4 pb-24 relative z-10 space-y-16">
-        {Object.entries(groupedContent).map(([categoryName, tests], categoryIndex) => {
-          const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
-          return (
-            <CategorySection
-              key={categoryName}
-              categoryName={categoryName}
-              config={config}
-              tests={tests}
-              categoryIndex={categoryIndex}
-              onOpen={setActiveQuizSlug}
-            />
-          );
-        })}
-        <CtaBanner />
+         {Object.entries(groupedContent).map(([categoryName, tests], categoryIndex) => {
+            const config = CATEGORY_UI_CONFIG[categoryName] || { label: categoryName, icon: <Gamepad2 />, color: "teal" };
+            
+            return (
+              <CategorySection
+                key={categoryName}
+                categoryName={categoryName}
+                config={config}
+                tests={tests}
+                categoryIndex={categoryIndex}
+                onOpen={setActiveQuizSlug}
+              />
+            );
+         })}
+
+         <CtaBanner />
       </div>
 
      {Object.entries(MODAL_REGISTRY).map(([slug, ModalComponent]) => {
@@ -122,6 +141,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
     </div>
   );
 }
+
 function CategorySection({ categoryName, config, tests, categoryIndex, onOpen }: {
   categoryName: string;
   config: { label: string; icon: React.ReactNode; color: string };
@@ -174,7 +194,6 @@ function CtaBanner() {
       ref={ref}
       className={clsx(
         'max-w-6xl mx-auto bg-gradient-to-r from-teal-900/40 to-slate-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group',
-        // ✅ transition-[opacity,transform] вместо transition-all — composited
         'transition-[opacity,transform] duration-700 ease-out',
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       )}
@@ -225,8 +244,6 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
       style={{ transitionDelay: inView ? `${index * 100}ms` : '0ms' }}
       className={clsx(
         'group relative h-[380px] bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/5 cursor-pointer shadow-2xl',
-        // ✅ ИСПРАВЛЕНИЕ: transition-all → composited-only свойства.
-        // hover:-translate-y-2 и opacity анимируются на GPU без Layout recalc.
         'transition-[transform,opacity,border-color] duration-500 ease-out hover:-translate-y-2 hover:border-white/10',
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
       )}
@@ -236,19 +253,9 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
           src={image}
           alt={title}
           fill
-          // ✅ ИСПРАВЛЕНИЕ LCP: первая карточка первой категории — priority=true.
-          // next/image добавит fetchpriority="high" и уберёт loading="lazy".
-          // Lighthouse фиксировал «Требуется fetchpriority=high» — это устраняет
-          // задержку загрузки LCP-ресурса (было 950 мс).
           priority={priority}
           loading={priority ? undefined : "lazy"}
-          // ✅ ИСПРАВЛЕНИЕ sizes: карточки в max-w-6xl (1152px) сетке 3 колонки.
-          // Реальная ширина: desktop ≈ 368px, tablet ≈ 50vw, mobile ≈ 92vw.
-          // Было: "(max-width: 768px) 100vw, ..." → Cloudinary запрашивал w_750.
-          // Стало: точный ceiling 400px → экономия ~25-40% на каждой карточке.
           sizes="(max-width: 768px) 92vw, (max-width: 1024px) 48vw, 400px"
-          // ✅ Снижен quality: карточки с grayscale+opacity, артефакты незаметны.
-          // Первая (LCP) — 65 для баланса качества. Остальные — 55.
           quality={priority ? 65 : 55}
           className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700"
         />
@@ -266,20 +273,20 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
         <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg", activeColor.split(" ").slice(0, 2).join(" "))}>
           {icon}
         </div>
-      <h3 className="text-3xl font-black text-white uppercase mb-3 leading-[0.95] drop-shadow-md">
-  {title.split('\n').map((line, idx, array) => (
-    <React.Fragment key={idx}>
-      {line}
-      {idx < array.length - 1 && <br />}
-    </React.Fragment>
-  ))}
-</h3>
-<p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed drop-shadow-md">
-  {desc}
-</p>
-<div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-[gap] group-hover:gap-4", activeColor.split(" ")[2])}>
-  Начать <ArrowRight size={14} strokeWidth={3} />
-</div>
+        <h3 className="text-3xl font-black text-white uppercase mb-3 leading-[0.95] drop-shadow-md">
+          {title.split('\n').map((line, idx, array) => (
+            <React.Fragment key={idx}>
+              {line}
+              {idx < array.length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </h3>
+        <p className="text-sm text-slate-300 font-medium line-clamp-2 mb-6 leading-relaxed drop-shadow-md">
+          {desc}
+        </p>
+        <div className={clsx("flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-[gap] group-hover:gap-4", activeColor.split(" ")[2])}>
+          Начать <ArrowRight size={14} strokeWidth={3} />
+        </div>
       </div>
     </div>
   );
