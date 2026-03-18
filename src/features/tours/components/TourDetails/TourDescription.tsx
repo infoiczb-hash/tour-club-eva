@@ -54,6 +54,8 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
           </div>
         </div>
       )}
+
+
         {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ */}
       {tour.highlights && tour.highlights.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 md:px-10 border border-white/5 shadow-2xl relative overflow-hidden">

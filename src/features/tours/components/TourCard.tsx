@@ -55,7 +55,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
 
   const dateObj = date ? new Date(date) : null;
   const dateStr = dateObj
-    ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) // ✅ Выдаст "20 февраля"
+    ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) 
     : 'Скоро';
 
   // 👇 ИСПРАВЛЕНИЕ: Проверяем, прошла ли дата и считаем только будущие для бейджа

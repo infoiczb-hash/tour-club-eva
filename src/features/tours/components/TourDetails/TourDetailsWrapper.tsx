@@ -63,8 +63,11 @@ export default function TourDetailsWrapper({ tour, similarTours }: TourDetailsWr
             <TourActionButtons tour={tour} />
           </div>
 
-          <div className="hidden lg:block lg:col-span-4 relative">
-            <div className="sticky top-24 self-start">
+          <div className="hidden lg:block
+  lg:col-span-4 relative
+  self-start">
+  <div className="sticky top-24">
+
               <TourSidebar tour={tour} />
             </div>
           </div>
