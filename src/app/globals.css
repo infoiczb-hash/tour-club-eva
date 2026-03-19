@@ -98,21 +98,66 @@
 
   /* ==========================================
      HERO ANIMATIONS
-     Принцип: LCP-элементы не должны начинаться с opacity: 0.
-     tailwindcss-animate (animate-in fade-in) стартует с opacity: 0 — это ломает LCP.
-     Эти классы используют только transform (composited) или opacity > 0.
+     LCP-элементы не должны начинаться с opacity: 0.
+     animate-hero-title анимирует только scale — opacity=1 с первого кадра.
      ========================================== */
 
-  /* LCP-заголовок «ЭВА» — только scale, opacity = 1 с первого кадра */
   .animate-hero-title {
     animation: hero-title-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  /* «Турклуб» — translateY + opacity от 0.01 (не 0!), небольшая задержка */
   .animate-hero-subtitle {
     animation: hero-subtitle-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: 50ms;
   }
+
+  /* ==========================================
+     ANIMATE-IN COMPATIBILITY LAYER
+     Заменяет плагин tailwindcss-animate.
+     Воспроизводит те же CSS custom properties и @keyframes enter,
+     поэтому все существующие классы (animate-in, fade-in, slide-in-from-*,
+     zoom-in-*, fill-mode-both) работают без изменений в JSX-файлах.
+     ========================================== */
+
+  /* Базовый класс — запускает анимацию enter с нужными параметрами */
+  .animate-in {
+    animation-name: enter;
+    animation-duration: var(--tw-duration, 150ms);
+    --tw-enter-opacity: 1;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+  }
+
+  /* Opacity: начинает с 0 */
+  .fade-in  { --tw-enter-opacity: 0; }
+
+  /* Opacity: заканчивает на 0 (для Toast-выхода) */
+  .fade-out { --tw-enter-opacity: 0; }
+
+  /* Scale */
+  .zoom-in    { --tw-enter-scale: 0; }
+  .zoom-in-95 { --tw-enter-scale: .95; }
+
+  /* Slide from bottom — spacing scale: 2=0.5rem 4=1rem 8=2rem 10=2.5rem */
+  .slide-in-from-bottom-2  { --tw-enter-translate-y:  0.5rem; }
+  .slide-in-from-bottom-4  { --tw-enter-translate-y:  1rem; }
+  .slide-in-from-bottom-8  { --tw-enter-translate-y:  2rem; }
+  .slide-in-from-bottom-10 { --tw-enter-translate-y:  2.5rem; }
+
+  /* Slide from top */
+  .slide-in-from-top-2 { --tw-enter-translate-y: -0.5rem; }
+
+  /* Slide from left */
+  .slide-in-from-left-4 { --tw-enter-translate-x: -1rem; }
+  .slide-in-from-left-8 { --tw-enter-translate-x: -2rem; }
+
+  /* Slide from right */
+  .slide-in-from-right-4 { --tw-enter-translate-x: 1rem; }
+
+  /* fill-mode — нативный Tailwind не имеет этого класса */
+  .fill-mode-both { animation-fill-mode: both; }
 }
 
 /* Скроллбары */
@@ -166,30 +211,16 @@
 }
 
 /* ==========================================
-   HERO KEYFRAMES
-   Вне @layer — гарантирует что @keyframes
-   не будет удалён Tailwind purge.
+   KEYFRAMES — вне @layer чтобы не удалял Tailwind purge
    ========================================== */
 
-/*
-  hero-title-in: только масштаб 0.96 → 1.
-  opacity не меняется (остаётся 1) — Lighthouse фиксирует LCP немедленно.
-  Без этой анимации задержка отрисовки была 3540 мс.
-*/
+/* hero-title-in: только масштаб, opacity=1 — LCP фиксируется мгновенно */
 @keyframes hero-title-in {
-  from {
-    transform: scale(0.96);
-  }
-  to {
-    transform: scale(1);
-  }
+  from { transform: scale(0.96); }
+  to   { transform: scale(1); }
 }
 
-/*
-  hero-subtitle-in: translateY + opacity от 0.01 → 1.
-  opacity: 0.01 (не 0!) — элемент paint-eligible с первого кадра,
-  но визуально неотличим от скрытого. Не влияет на LCP.
-*/
+/* hero-subtitle-in: opacity от 0.01 (не 0!) — не влияет на LCP */
 @keyframes hero-subtitle-in {
   from {
     opacity: 0.01;
@@ -198,5 +229,25 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* enter: используется animate-in через CSS custom properties.
+   Воспроизводит поведение tailwindcss-animate без самого плагина. */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform:
+      translate3d(
+        var(--tw-enter-translate-x, 0),
+        var(--tw-enter-translate-y, 0),
+        0
+      )
+      scale3d(
+        var(--tw-enter-scale, 1),
+        var(--tw-enter-scale, 1),
+        var(--tw-enter-scale, 1)
+      )
+      rotate(var(--tw-enter-rotate, 0));
   }
 }

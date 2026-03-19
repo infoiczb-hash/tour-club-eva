@@ -58,16 +58,12 @@ function QuizModalManager() {
   const pathname = usePathname();
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  const slug = searchParams.get('quiz'); // может быть string | null
+  const slug = searchParams.get('quiz');
 
-  // === ДЕБАГ (уберёшь потом) ===
-  console.log('🔍 QuizModalManager → slug из URL:', slug);
-  console.log('📦 Есть в реестре?', slug ? !!MODAL_REGISTRY[slug] : false);
+  console.log('🔍 QuizModalManager → slug:', slug);
+  console.log('📦 Компонент найден:', slug ? !!MODAL_REGISTRY[slug] : false);
 
-  // Защита от null + правильная типизация
-  const ActiveModal = slug && MODAL_REGISTRY[slug] 
-    ? MODAL_REGISTRY[slug] 
-    : null;
+  const ActiveModal = slug && MODAL_REGISTRY[slug] ? MODAL_REGISTRY[slug] : null;
 
   const handleClose = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -82,22 +78,32 @@ function QuizModalManager() {
     }
   };
 
-  // Если слуга нет или компонент не найден — ничего не рендерим
-  if (!ActiveModal || !slug) {
-    return null;
-  }
+  if (!ActiveModal || !slug) return null;
 
   return (
-    <ActiveModal
-      isOpen={true}
-      open={true}
-      onClose={handleClose}
-      onComplete={handleComplete}
-      slug={slug}                    // на всякий случай
-    />
+    <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-slate-950 rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto border border-white/10 shadow-2xl relative">
+        
+        {/* Крестик закрытия */}
+        <button
+          onClick={handleClose}
+          className="absolute top-5 right-5 text-slate-400 hover:text-white text-3xl z-10 transition"
+        >
+          ✕
+        </button>
+
+        {/* Сам квиз */}
+        <ActiveModal
+          isOpen={true}
+          open={true}
+          onClose={handleClose}
+          onComplete={handleComplete}
+          slug={slug}
+        />
+      </div>
+    </div>
   );
 }
-
 
 export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   const router = useRouter();
