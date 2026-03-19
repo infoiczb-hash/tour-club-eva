@@ -1,32 +1,58 @@
-import Hero from "./Hero";
-import Benefits from "./Benefits";
-import Timeline from "./Timeline";
-import Fleet from "./Fleet";
-import PopularRoutes from "./PopularRoutes";
-import Gallery from "./Gallery"; 
-import FAQ from "./FAQ";
-import PackingList from "./PackingList";
-import KayakRules from "./KayakRules";
-import VideoGuide from "./VideoGuide";
-import SafetyRegulations from "./SafetyRegulations";
-import PreparationCTA from "./PreparationCTA";
+import dynamic from 'next/dynamic';
 import { Tour } from "@/features/tours/types";
 import { KayakingTabProvider, KayakingTabContent } from "./KayakingTabProvider";
-import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic'
+import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
+
+// Первый экран — синхронно, это LCP
+import Hero from "./Hero";
+
+// Серверные компоненты первого таба — синхронно, нет JS-бандла
+import Benefits from "./Benefits";
+import Fleet from "./Fleet";
+import Timeline from "./Timeline";
+import KayakRules from "./KayakRules";
+
+// Клиентские компоненты первого таба — ниже фолда, lazy
+const PopularRoutes = dynamic(() => import('./PopularRoutes'), {
+  loading: () => <div className="h-96 bg-slate-950" />,
+});
+
+const Gallery = dynamic(() => import('./Gallery'), {
+  loading: () => <div className="h-96 bg-slate-950" />,
+});
+
+const FAQ = dynamic(() => import('./FAQ'), {
+  loading: () => <div className="h-80 bg-slate-950" />,
+});
+
+// Второй таб — скрыт при загрузке, всё lazy
+const PackingList = dynamic(() => import('./PackingList'), {
+  loading: () => <div className="h-80 bg-slate-950" />,
+});
+
+const VideoGuide = dynamic(() => import('./VideoGuide'), {
+  loading: () => <div className="h-80 bg-slate-950" />,
+});
+
+const SafetyRegulations = dynamic(() => import('./SafetyRegulations'), {
+  loading: () => <div className="h-96 bg-slate-950" />,
+});
+
+const PreparationCTA = dynamic(() => import('./PreparationCTA'), {
+  loading: () => <div className="h-40 bg-slate-950" />,
+});
 
 export default function KayakingLanding({ tours }: { tours: Tour[] }) {
   return (
     <div className="bg-slate-950 min-h-screen selection:bg-teal-500/30">
       <KayakingTabProvider>
-        
-        {/* Главный экран сам достанет нужный стейт из контекста */}
+
+        {/* Первый экран */}
         <Hero />
-        
-        {/* ==========================================
-            ПОТОК 1: "ХОЧУ НА СПЛАВ" (ПРОДАЖА И ЭМОЦИИ)
-            Эти блоки теперь СЕРВЕРНЫЕ КОМПОНЕНТЫ!
-            ========================================== */}
+
+        {/* ПОТОК 1: "ХОЧУ НА СПЛАВ" */}
         <KayakingTabContent value="newbie">
+          {/* Benefits и Fleet — серверные, грузятся без JS */}
           <Benefits />
           <Fleet />
           <PopularRoutes />
@@ -34,26 +60,24 @@ export default function KayakingLanding({ tours }: { tours: Tour[] }) {
           <Gallery />
           <FAQ />
           <div id="tours" className="bg-[#0B1120] border-y border-white/5 relative z-20">
-             <ToursBrowserDynamic 
-                tours={tours} 
-                title="Ближайшие сплавы" 
-                subtitle="Выбери свою дату" 
-                limit={3} 
-              />
+            <ToursBrowserDynamic
+              tours={tours}
+              title="Ближайшие сплавы"
+              subtitle="Выбери свою дату"
+              limit={3}
+            />
           </div>
         </KayakingTabContent>
 
-        {/* ==========================================
-            ПОТОК 2: "Я УЧАСТНИК" (ИНСТРУКЦИЯ И ПОДГОТОВКА)
-            ========================================== */}
+        {/* ПОТОК 2: "Я УЧАСТНИК" — скрыт при загрузке, всё lazy */}
         <KayakingTabContent value="participant">
-           <PackingList />
-           <KayakRules />
-           <VideoGuide />
-           <SafetyRegulations />
-           <PreparationCTA />
+          <PackingList />
+          <KayakRules />
+          <VideoGuide />
+          <SafetyRegulations />
+          <PreparationCTA />
         </KayakingTabContent>
-        
+
       </KayakingTabProvider>
     </div>
   );
