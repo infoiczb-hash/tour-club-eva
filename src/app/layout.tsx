@@ -122,10 +122,19 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        {/* 🔥 ИСПРАВЛЕНИЕ: Заменили Cloudinary на Supabase (единственный источник картинок) */}
-        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+        {/* Cloudinary — Hero-изображения и статические фото (100 файлов).
+            preconnect экономит ~200–400 мс на LCP. */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+        {/* Supabase Storage — обложки туров и фото гидов из админки
+            (/tour/[slug], /guides/[slug], /account/*). */}
+        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
-        
+
+        {/* YouTube — превью VideoGuide на каякинге и SUP */}
+        <link rel="dns-prefetch" href="https://img.youtube.com" />
+
         <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       </head>
       <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">

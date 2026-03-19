@@ -131,7 +131,7 @@ export default function LoginPage() {
             Турклуб «Эва»
           </p>
           <h1 className="text-2xl font-black text-white uppercase tracking-tight">
-            Личный кабинет
+            Личный кабинет. Кабинет начнет функционировать с 20.04.2026.
           </h1>
         </div>
 

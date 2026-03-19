@@ -52,41 +52,48 @@ const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; ba
 };
 
 
-// ✅ НОВЫЙ ПОДХОД: Изолированный рендер модалки.
-// Он сам читает URL и рендерит нужный квиз. Никаких стейтов и useEffect'ов!
 function QuizModalManager() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  // Читаем URL напрямую (источник истины)
-  const activeQuizSlug = searchParams.get('quiz');
-  
-  // Достаем компонент из реестра
-  const ActiveModal = activeQuizSlug ? MODAL_REGISTRY[activeQuizSlug] : null;
+  const slug = searchParams.get('quiz'); // может быть string | null
+
+  // === ДЕБАГ (уберёшь потом) ===
+  console.log('🔍 QuizModalManager → slug из URL:', slug);
+  console.log('📦 Есть в реестре?', slug ? !!MODAL_REGISTRY[slug] : false);
+
+  // Защита от null + правильная типизация
+  const ActiveModal = slug && MODAL_REGISTRY[slug] 
+    ? MODAL_REGISTRY[slug] 
+    : null;
 
   const handleClose = () => {
-    // Очищаем URL, что приведет к автоматическому исчезновению модалки
     const params = new URLSearchParams(searchParams.toString());
     params.delete('quiz');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const handleOldQuizResult = (resultText: string) => {
+  const handleComplete = (resultText?: string) => {
     handleClose();
-    setTimeout(() => { openContactModal(resultText, 'TOUR'); }, 400);
+    if (resultText) {
+      setTimeout(() => openContactModal(resultText, 'TOUR'), 300);
+    }
   };
 
-  // Если в URL нет валидного параметра ?quiz=..., ничего не рендерим
-  if (!ActiveModal) return null;
+  // Если слуга нет или компонент не найден — ничего не рендерим
+  if (!ActiveModal || !slug) {
+    return null;
+  }
 
   return (
     <ActiveModal
       isOpen={true}
       open={true}
-      onComplete={['backpack', 'survival', 'tourist-type', 'totem'].includes(activeQuizSlug!) ? handleOldQuizResult : undefined}
       onClose={handleClose}
+      onComplete={handleComplete}
+      slug={slug}                    // на всякий случай
     />
   );
 }
@@ -114,7 +121,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   }, [activeTests]);
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
+<div suppressHydrationWarning className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
 
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />

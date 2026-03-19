@@ -150,7 +150,7 @@ async function getDashboardData(userId: string) {
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login?next=/account/dashboard');
+  if (!user) redirect('/login?next=/account/dashboard'); 
 
   const data = await getDashboardData(user.id);
   if (!data) redirect('/login?next=/account/dashboard');
