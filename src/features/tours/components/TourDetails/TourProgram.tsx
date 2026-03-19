@@ -4,6 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ChevronDown, Flag, Navigation, CircleDot, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 
+// ✅ ДОБАВЛЕНО: Утилита для правильного склонения числительных в русском языке
+function plural(n: number, one: string, few: string, many: string): string {
+  const abs = Math.abs(n) % 100;
+  const mod = abs % 10;
+  if (abs >= 11 && abs <= 19) return many;
+  if (mod === 1) return one;
+  if (mod >= 2 && mod <= 4) return few;
+  return many;
+}
+
 interface TourProgramProps {
   program: any;
 }
@@ -42,7 +52,13 @@ export default function TourProgram({ program }: TourProgramProps) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase break-words">Программа тура</h2>
-          <p className="text-slate-400 text-lg font-medium truncate">Маршрут разбит на {days.length} дня</p>
+          {/* ✅ ИСПРАВЛЕНИЕ: Умный рендер подзаголовка с учетом количества дней */}
+          <p className="text-slate-400 text-sm md:text-lg font-medium truncate">
+            {days.length === 1 
+              ? 'Однодневная программа' 
+              : `Маршрут разбит на ${days.length} ${plural(days.length, 'день', 'дня', 'дней')}`
+            }
+          </p>
         </div>
       </div>
 
@@ -58,7 +74,6 @@ export default function TourProgram({ program }: TourProgramProps) {
                   onClick={() => toggleDay(index)}
                   aria-expanded={isOpen}
                   className={clsx(
-                    // ✅ ИСПРАВЛЕНИЕ: Заменен transition-all на transition (ускорение GPU, нет Layout shift)
                     "absolute left-0 top-0 w-10 h-10 rounded-full border-4 flex items-center justify-center z-10 transition duration-300 print:border-slate-300 print:bg-white print:text-black shrink-0",
                     isOpen && !isPrinting
                       ? "bg-teal-500 text-slate-900 border-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.5)] scale-110"
@@ -69,7 +84,6 @@ export default function TourProgram({ program }: TourProgramProps) {
                 </button>
 
                 <div className={clsx(
-                  // ✅ ИСПРАВЛЕНИЕ: Заменен transition-all на transition-colors + shadow
                   "rounded-2xl border transition-colors shadow-sm overflow-hidden print:border-slate-300 print:bg-transparent print:shadow-none",
                   isOpen && !isPrinting
                     ? "bg-slate-900 border-teal-500/30 shadow-lg"
@@ -89,7 +103,6 @@ export default function TourProgram({ program }: TourProgramProps) {
                     <ChevronDown size={18} className={clsx("shrink-0 text-slate-400 transition-transform duration-300 print:hidden mt-1 md:mt-0", isOpen && "rotate-180 text-teal-500")} />
                   </div>
 
-                  {/* ✅ ИСПРАВЛЕНИЕ: transition-[grid-template-rows,opacity] для честного GPU-аккордеона */}
                   <div className={clsx(
                       "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out print:block",
                       isOpen ? "grid-rows-[1fr] opacity-100 print:h-auto print:opacity-100" : "grid-rows-[0fr] opacity-0"

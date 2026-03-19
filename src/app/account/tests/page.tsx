@@ -19,7 +19,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Тип туриста',
     emoji: '🧭',
     description: 'Кто ты в путешествии — романтик, исследователь или организатор?',
-    href: '/fun#tourist-type',
+    href: '/fun?quiz=tourist-type', // ✅ ИСПРАВЛЕНО (# -> ?quiz=)
     color: 'text-teal-400',
     bgColor: 'bg-teal-500/10',
     borderColor: 'border-teal-500/20',
@@ -28,7 +28,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Психологический профиль',
     emoji: '🧠',
     description: 'Как ты реагируешь на трудности и незнакомые ситуации в дороге?',
-    href: '/fun#psych-profile',
+    href: '/fun?quiz=psych-profile', // ✅ ИСПРАВЛЕНО
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-500/20',
@@ -37,7 +37,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Тотемное животное',
     emoji: '🦅',
     description: 'Какой дух-хранитель сопровождает тебя в походах?',
-    href: '/fun#totem',
+    href: '/fun?quiz=totem', // ✅ ИСПРАВЛЕНО
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
@@ -46,7 +46,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Выживание',
     emoji: '🏕️',
     description: 'Насколько ты готов к нештатным ситуациям на маршруте?',
-    href: '/fun#survival',
+    href: '/fun?quiz=survival', // ✅ ИСПРАВЛЕНО
     color: 'text-orange-400',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/20',
@@ -55,7 +55,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Что в рюкзаке?',
     emoji: '🎒',
     description: 'Твой стиль сборов и что это говорит о характере.',
-    href: '/fun#backpack',
+    href: '/fun?quiz=backpack', // ✅ ИСПРАВЛЕНО
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/20',
@@ -64,7 +64,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Сигналы тела',
     emoji: '💪',
     description: 'Уровень физической готовности к активным маршрутам.',
-    href: '/fun#body-signals',
+    href: '/fun?quiz=body-signals', // ✅ ИСПРАВЛЕНО
     color: 'text-green-400',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/20',

@@ -38,11 +38,13 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
   }
 
   return (
-    <section className="scroll-mt-24 mb-12 md:mb-16" id="about">
+    // ✅ ИСПРАВЛЕНИЕ: Убрали mb-12 и сделали секцию flex-контейнером с идеальным gap.
+    // Теперь блоки никогда не слипнутся, а снизу не будет лишней дыры.
+    <section className="scroll-mt-24 flex flex-col gap-10 md:gap-12" id="about">
       
-      {/* ✅ ВАЖНАЯ ИНФОРМАЦИЯ (ФАЗА 1) */}
+      {/* ВАЖНАЯ ИНФОРМАЦИЯ (ФАЗА 1) */}
       {tour.importantInfo && (
-        <div className="mb-10 p-5 sm:p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex gap-4 items-start animate-in fade-in shadow-lg">
+        <div className="p-5 sm:p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex gap-4 items-start animate-in fade-in shadow-lg">
           <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={24} strokeWidth={2.5} />
           <div>
             <h4 className="text-rose-500 font-black uppercase tracking-widest text-sm mb-2">
@@ -55,8 +57,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
         </div>
       )}
 
-
-        {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ */}
+      {/* ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ */}
       {tour.highlights && tour.highlights.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 md:px-10 border border-white/5 shadow-2xl relative overflow-hidden">
           
@@ -89,30 +90,30 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
         </div>
       )}
 
-
-      {/* ✅ ИСПРАВЛЕНИЕ XSS И БАГА РЕНДЕРА: Описание тура теперь безопасно поддерживает HTML из TiptapEditor */}
+      {/* Описание тура */}
       {tour.description && (
-        <div className="prose prose-invert prose-teal max-w-none mb-12">
+        // ✅ ИСПРАВЛЕНИЕ: Добавили px-2 md:px-0, чтобы на мобилке текст не лип к краям экрана 
+        // и убрали mb-12, чтобы убрать гигантскую дыру перед "Программой"
+        <div className="prose prose-invert prose-teal max-w-none px-2 md:px-0">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
             О туре
           </h2>
           <div 
             className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"
            dangerouslySetInnerHTML={{ 
-  __html: sanitizeHtml(tour.description, {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span' ]),
-    allowedAttributes: {
-      '*': ['class', 'style'],
-      'a': ['href', 'name', 'target'],
-      'img': ['src', 'alt']
-    }
-  }) 
-}}
+              __html: sanitizeHtml(tour.description, {
+                allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span' ]),
+                allowedAttributes: {
+                  '*': ['class', 'style'],
+                  'a': ['href', 'name', 'target'],
+                  'img': ['src', 'alt']
+                }
+              }) 
+            }}
           />
         </div>
       )}
 
-    
     </section>
   );
 }

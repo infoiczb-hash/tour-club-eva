@@ -1,8 +1,10 @@
+// src/app/fun/FunClient.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'; // ✅ Добавили нативные хуки роутера
 import { Gamepad2, Backpack, Compass, ArrowRight, Trophy, Sparkles, Shield, Dumbbell, Activity, BookOpen, Brain, Heart, Search, Users, Ghost } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
@@ -15,7 +17,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// 1. РЕЕСТР МОДАЛОК (Ленивая загрузка чанков)
+// 1. РЕЕСТР МОДАЛОК
 const MODAL_REGISTRY: Record<string, React.ComponentType<any>> = {
   'fears':         dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
   'physical':      dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),
@@ -49,30 +51,50 @@ const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; ba
   'default':      { color: "teal",    icon: <Sparkles size={24} strokeWidth={2.5} /> },
 };
 
+const FALLBACK_QUIZZES = [
+  { id: '1', slug: 'tourist-type', title: 'Кто ты в горах?', description: 'Узнай свой идеальный маршрут.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675801/fun1_bo3tsi.webp', category: 'Какой ты турист?' },
+  { id: '2', slug: 'survival', title: 'Выживешь в походе?', description: 'Ситуации: дождь, медведи и гречка.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675803/fun2_c27m1l.webp', category: 'Юмористические' },
+  { id: '3', slug: 'backpack', title: 'Собери рюкзак', description: 'Мини-игра: выбери только нужное.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675806/fun3_quee6m.webp', category: 'Игры' }
+] as FunTest[];
+
+
+// ✅ ДОБАВЛЕНО: Безопасный слушатель параметров URL
+function QuizParamsListener({ onChange }: { onChange: (slug: string | null) => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const quizParam = searchParams.get('quiz');
+    if (quizParam && MODAL_REGISTRY[quizParam]) {
+      onChange(quizParam);
+    } else {
+      onChange(null);
+    }
+  }, [searchParams, onChange]);
+  return null;
+}
+
+
 export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   const [activeQuizSlug, setActiveQuizSlug] = useState<string | null>(null);
   const openContactModal = useModalStore((state) => state.openContactModal);
+  
+  // ✅ ДОБАВЛЕНО: Роутер для нативного управления историей
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // ✅ Читаем URL при монтировании (Поддержка прямых ссылок от друзей)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const quizParam = params.get('quiz');
-      if (quizParam && MODAL_REGISTRY[quizParam]) {
-        setActiveQuizSlug(quizParam);
-      }
-    }
-  }, []);
-
-  // ✅ Бесшумно меняем URL и открываем модалку без запросов к серверу Next.js
+  // ✅ ИСПРАВЛЕНО: Теперь используем router.push вместо сырого pushState
   const handleOpenQuiz = (slug: string) => {
-    setActiveQuizSlug(slug);
-    window.history.pushState(null, '', `?quiz=${slug}`);
+    setActiveQuizSlug(slug); // Мгновенно открываем модалку
+    const params = new URLSearchParams(window.location.search);
+    params.set('quiz', slug);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  // ✅ ИСПРАВЛЕНО: Очищаем URL корректно
   const handleCloseQuiz = () => {
     setActiveQuizSlug(null);
-    window.history.replaceState(null, '', window.location.pathname);
+    const params = new URLSearchParams(window.location.search);
+    params.delete('quiz');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleOldQuizResult = (resultText: string) => {
@@ -90,11 +112,15 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
     return groups;
   }, [activeTests]);
 
-  // 🔥 ДОСТАЕМ КОМПОНЕНТ ТОЛЬКО АКТИВНОГО ТЕСТА
   const ActiveModal = activeQuizSlug ? MODAL_REGISTRY[activeQuizSlug] : null;
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
+
+      {/* ✅ ДОБАВЛЕНО: Подключаем слушатель URL (Обернут в Suspense чтобы не сломать SSR) */}
+      <Suspense fallback={null}>
+        <QuizParamsListener onChange={setActiveQuizSlug} />
+      </Suspense>
 
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
@@ -124,14 +150,13 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
               config={config}
               tests={tests}
               categoryIndex={categoryIndex}
-              onOpen={handleOpenQuiz} // Передаем нашу безопасную функцию
+              onOpen={handleOpenQuiz} 
             />
           );
         })}
         <CtaBanner />
       </div>
 
-      {/* 🔥 РЕНДЕРИТСЯ СТРОГО 1 МОДАЛКА ВМЕСТО 9 (Спасает от тайм-аута сокетов) */}
       {ActiveModal && (
          <ActiveModal
             isOpen={true}
@@ -259,7 +284,7 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
           loading={priority ? undefined : "lazy"}
           sizes="(max-width: 768px) 92vw, (max-width: 1024px) 48vw, 400px"
           quality={priority ? 65 : 55}
-          className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700"
+          className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:opacity-60 group-hover:scale-105 transition-transform duration-700"
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
