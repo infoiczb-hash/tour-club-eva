@@ -1,7 +1,8 @@
 import ReactDOM from 'react-dom';
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
-import FunClient from './FunClient'; 
+import FunClient from './FunClient';
 
 export const revalidate = 3600;
 
@@ -45,9 +46,11 @@ export default async function FunSectorPage() {
     });
   }
 
-  return (
+ return (
     <main>
-      <FunClient activeTests={tests} />
+      <Suspense fallback={null}>
+        <FunClient activeTests={tests} />
+      </Suspense>
     </main>
   );
 }
