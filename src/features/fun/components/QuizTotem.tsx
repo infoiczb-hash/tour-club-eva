@@ -1,3 +1,4 @@
+// src/features/fun/components/QuizTotem.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -13,6 +14,8 @@ import {
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+// ✅ ДОБАВЛЕНО: Наш новый хук
+import { useSaveTest } from "@/hooks/useSaveTest";
 
 /* =======================
    ТИПЫ
@@ -168,7 +171,9 @@ export default function QuizTotem({ open, onClose }: Props) {
   const [scores, setScores] = useState({ wolf: 0, bear: 0, eagle: 0, fox: 0 });
   const [view, setView] = useState<'question' | 'summoning' | 'result'>('question');
   const [finalResult, setFinalResult] = useState<Result | null>(null);
+  
   const { updateProfile } = useProfile();
+  const { saveResult } = useSaveTest(); // ✅ Инициализируем хук сохранения
 
   useEffect(() => {
     if (open) {
@@ -206,9 +211,18 @@ export default function QuizTotem({ open, onClose }: Props) {
       const res = results[winnerKey];
       setFinalResult(res);
       
+      // Локальное сохранение
       updateProfile({ touristType: `Тотем: ${res.animal}` });
       incrementFunTestPassAction('totem').catch(console.error);
       
+      // ✅ СОХРАНЕНИЕ В БАЗУ ДАННЫХ
+      saveResult('totem', {
+        type: res.animal,
+        badge: "🦅", 
+        description: res.description,
+        score: finalScores
+      });
+
       setView('result');
     }, 2500);
   };
@@ -280,7 +294,7 @@ export default function QuizTotem({ open, onClose }: Props) {
                   </motion.div>
               )}
 
-              {/* VIEW 2: SUMMONING (MAGIC LOADING) */}
+              {/* VIEW 2: SUMMONING */}
               {view === 'summoning' && (
                   <motion.div 
                     key="summoning"
@@ -349,7 +363,7 @@ export default function QuizTotem({ open, onClose }: Props) {
                           href={`/tour?category=${finalResult.directionSlug}`}
                           onClick={onClose}
                           className={clsx(
-                            "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-lg",
+                            "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg",
                             finalResult.buttonClass
                           )}
                         >

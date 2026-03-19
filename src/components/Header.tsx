@@ -1,5 +1,7 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import HeaderClient from "@/components/layout/HeaderClient"; 
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 
 const baseNavLinks = [
   { name: "Туры", href: "/tour" },
@@ -10,13 +12,27 @@ const baseNavLinks = [
   { name: "О клубе", href: "/about" },
 ];
 
-export default function Header() {
-  // ❌ МЫ ПОЛНОСТЬЮ УБРАЛИ import { cookies }
-  // Теперь этот компонент 100% статичный!
+export default async function Header() {
+  // Проверяем сессию на сервере (без задержек на клиенте)
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let userProfile = null;
+
+  if (user) {
+    // Если юзер есть, достаем его профиль для аватарки
+    const profile = await prisma.memberProfile.findUnique({
+      where: { userId: user.id },
+      select: { name: true, phone: true }
+    });
+    
+    userProfile = {
+      name: profile?.name || null,
+      phone: profile?.phone || user.phone || null
+    };
+  }
 
   return (
-        <HeaderClient navLinks={baseNavLinks} />
-  
+    <HeaderClient navLinks={baseNavLinks} user={userProfile} />
   );
-};
-
+}

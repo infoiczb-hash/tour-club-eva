@@ -355,10 +355,19 @@ model FunTest {
 
 model MemberProfile {
   id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String  @unique @map("user_id") // Supabase auth.users.id
-  phone      String? @unique // Опционально, для привязки исторических Booking
+  userId     String  @unique @map("user_id")
+  phone      String? @unique
   name       String?
+  email      String?
   avatarUrl  String? @map("avatar_url")
+  
+  // Новые поля для настроек участника
+  foodPref       String?   @map("food_pref")
+  shoeSize       String?   @map("shoe_size")
+  clothesSize    String?   @map("clothes_size")
+  lifeJacketSize String?   @map("life_jacket_size")
+  inventory      String[]  @default([])
+
   level      String  @default("Первопроходец")
   totalTours Int     @default(0) @map("total_tours")
   totalKm    Float   @default(0) @map("total_km")

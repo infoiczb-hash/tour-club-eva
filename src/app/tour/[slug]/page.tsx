@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getTourBySlug, getTours, getSimilarTours } from '@/features/tours/api'; 
 import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper'; 
+// ✅ ДОБАВЛЕНО: Импорты для проверки сессии и БД
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 
 // Базовый URL сайта (из env или фолбек на прод)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -16,8 +19,6 @@ export async function generateStaticParams() {
   }));
 }
 
-// ✅ ИСПРАВЛЕНИЕ: Подняли время жизни ISR кэша до 1 часа. 
-// Инвалидация при покупке билетов и так работает через revalidatePath
 export const revalidate = 3600;
 
 type Props = {
@@ -29,7 +30,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
   
-  // Благодаря React.cache() внутри api.ts, этот запрос не дублируется с запросом в TourPage
   const tour = await getTourBySlug(decodedSlug);
 
   if (!tour) {
@@ -48,7 +48,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
 
- 
   return {
     title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
@@ -91,8 +90,6 @@ export default async function TourPage({ params }: Props) {
     notFound(); 
   }
 
-  // 🔥 LCP PRELOAD: Принудительно инжектируем загрузку обложки в <head>
-  // Это сэкономит от 500ms до 1.5s на отрисовке самого важного элемента экрана
   if (tour.image) {
     ReactDOM.preload(tour.image, {
       as: 'image',
@@ -100,12 +97,26 @@ export default async function TourPage({ params }: Props) {
     });
   }
 
-  // ✅ ИСПРАВЛЕНИЕ: Делаем точечный запрос только за 3 похожими турами.
-  // Никакого выкачивания всей базы в память!
-  // Используем `?? null` для жесткого приведения undefined к null
   const similarTours = await getSimilarTours(tour.categoryId ?? null, tour.id, 3);
 
-  // Собираем картинки для микроразметки
+  // ✅ ДОБАВЛЕНО: ПРОВЕРКА ВИШЛИСТА
+  let isWished = false;
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    const profile = await prisma.memberProfile.findUnique({ 
+      where: { userId: user.id },
+      select: { id: true }
+    });
+    if (profile) {
+      const watch = await prisma.watchList.findFirst({ 
+        where: { memberId: profile.id, tourId: tour.id } 
+      });
+      isWished = !!watch; // Превращаем объект в boolean (true/false)
+    }
+  }
+
   const schemaImages = [
     tour.image,
     ...(tour.gallery || [])
@@ -168,7 +179,8 @@ export default async function TourPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TourDetailsWrapper tour={tour} similarTours={similarTours} />
+      {/* ✅ ПЕРЕДАЕМ isWished ДАЛЬШЕ */}
+      <TourDetailsWrapper tour={tour} similarTours={similarTours} isWished={isWished} />
     </main>
   );
 }

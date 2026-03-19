@@ -39,6 +39,7 @@ import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { getReviews, deleteReview, upsertReview } from '@/features/reviews/actions';
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { getGuides } from '@/features/guides/api';
+import { getAllTours } from '@/features/tours/api';
 import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
 
@@ -133,9 +134,9 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     loadAllData();
   }, []);
 
-  const loadAllData = async () => {
+ const loadAllData = async () => {
     try {
-        const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes] = await Promise.all([
+        const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes, freshTours] = await Promise.all([
             getRegistrationsAction(),
             getGuides(),
             getBlogPosts(),
@@ -145,8 +146,13 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
             getContentBlock('hero'),
             getContentBlock('footer'),
             getTourCategoriesAction(), 
-            getBlogCategoriesAction()  
+            getBlogCategoriesAction(),
+            getAllTours(),
         ]);
+
+        setTours(freshTours);
+        if (bRes.data) setBookings(bRes.data as BookingItem[]);
+        setGuides(gRes as unknown as GuideItem[]);
 
         if (bRes.data) setBookings(bRes.data as BookingItem[]);
         setGuides(gRes as unknown as GuideItem[]);

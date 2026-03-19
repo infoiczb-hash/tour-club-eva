@@ -1,3 +1,4 @@
+// src/features/fun/components/QuizSurvival.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -14,6 +15,8 @@ import {
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+// ✅ ДОБАВЛЕНО: Наш новый хук
+import { useSaveTest } from "@/hooks/useSaveTest";
 
 /* =======================
    ТИПЫ
@@ -176,7 +179,9 @@ export default function QuizSurvival({ open, onClose }: Props) {
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [view, setView] = useState<'question' | 'analyzing' | 'result'>('question');
   const [finalResult, setFinalResult] = useState<Result | null>(null);
+  
   const { updateProfile } = useProfile();
+  const { saveResult } = useSaveTest(); // ✅ Инициализируем хук
 
   useEffect(() => {
     if (open) {
@@ -206,8 +211,18 @@ export default function QuizSurvival({ open, onClose }: Props) {
     setTimeout(() => {
       const res = calculateResult(finalAnswers);
       setFinalResult(res);
+      
+      // Локальное сохранение
       updateProfile({ touristType: `Выживание: ${res.title}` });
       incrementFunTestPassAction('survival').catch(console.error);
+
+      // ✅ СОХРАНЕНИЕ В БАЗУ ДАННЫХ
+      saveResult('survival', {
+        type: res.title,
+        badge: "🏕️",
+        description: res.description,
+      });
+
       setView('result');
     }, 2000);
   };
