@@ -51,23 +51,19 @@ const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; ba
   'default':      { color: "teal",    icon: <Sparkles size={24} strokeWidth={2.5} /> },
 };
 
-
+// ====================== QUIZ MODAL MANAGER ======================
 function QuizModalManager() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  const slug = searchParams.get('quiz'); // может быть string | null
+  const slug = searchParams.get('quiz');
 
-  // === ДЕБАГ (уберёшь потом) ===
   console.log('🔍 QuizModalManager → slug из URL:', slug);
-  console.log('📦 Есть в реестре?', slug ? !!MODAL_REGISTRY[slug] : false);
+  console.log('📦 Компонент найден в реестре:', slug ? !!MODAL_REGISTRY[slug] : false);
 
-  // Защита от null + правильная типизация
-  const ActiveModal = slug && MODAL_REGISTRY[slug] 
-    ? MODAL_REGISTRY[slug] 
-    : null;
+  const ActiveModal = slug && MODAL_REGISTRY[slug] ? MODAL_REGISTRY[slug] : null;
 
   const handleClose = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -82,30 +78,28 @@ function QuizModalManager() {
     }
   };
 
-  // Если слуга нет или компонент не найден — ничего не рендерим
-  if (!ActiveModal || !slug) {
-    return null;
-  }
+  if (!ActiveModal || !slug) return null;
 
+  // ←←← Как было раньше: просто рендерим сам компонент (он уже модалка)
   return (
     <ActiveModal
       isOpen={true}
       open={true}
       onClose={handleClose}
       onComplete={handleComplete}
-      slug={slug}                    // на всякий случай
+      slug={slug}
     />
   );
 }
 
-
+// ====================== MAIN COMPONENT ======================
 export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();   // ←←← ОБЯЗАТЕЛЬНО
 
   const handleOpenQuiz = (slug: string) => {
-    // Просто добавляем параметр в URL. QuizModalManager сам перехватит это изменение и откроет окно.
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     params.set('quiz', slug);
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
@@ -121,7 +115,9 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   }, [activeTests]);
 
   return (
-<div suppressHydrationWarning className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
+    <div suppressHydrationWarning className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
+
+     
 
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />

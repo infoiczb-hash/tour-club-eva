@@ -20,17 +20,16 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)'
       },
       fontFamily: {
-        sans: ['var(--font-inter)'], // Для основного текста
-        display: ['var(--font-montserrat)'], // Для заголовков
+        sans: ['var(--font-inter)'],
+        display: ['var(--font-montserrat)'],
       },
-      // Анимация для главного заголовка (LCP)
       keyframes: {
         'hero-title': {
-          '0%': { opacity: '0', transform: 'scale(0.9)' },
+          '0%':   { opacity: '0', transform: 'scale(0.9)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'fade-in-up': {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '0%':   { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         }
       },
@@ -41,8 +40,10 @@ const config: Config = {
     }
   },
   plugins: [
-    require("tailwindcss-animate"),
-    require("@tailwindcss/typography") // ✅ ВКЛЮЧИЛИ ПЛАГИН ЗДЕСЬ
+    // tailwindcss-animate убран — классы animate-in, fade-in, slide-in-from-*,
+    // zoom-in-*, fill-mode-both воспроизведены в globals.css (@keyframes enter).
+    // Поведение идентично, файлы компонентов не тронуты.
+    require("@tailwindcss/typography"),
   ],
 };
 
