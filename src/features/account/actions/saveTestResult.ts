@@ -55,10 +55,10 @@ export async function saveTestResult(
     create: {
       memberId: profile.id,
       testSlug,
-      result,
+      result: result as any, // ✅ ИСПРАВЛЕНИЕ: кастуем в any для Prisma JSON
     },
     update: {
-      result,
+      result: result as any, // ✅ ИСПРАВЛЕНИЕ: кастуем в any для Prisma JSON
     },
   });
 

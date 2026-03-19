@@ -49,15 +49,17 @@ export async function submitReviewFromCabinet(
   }
 
   // Проверяем что отзыв ещё не оставлен
-  const existing = await prisma.review.findFirst({
-    where: {
-      tourId,
-      name: profile.name ?? profile.phone,
-    },
-  });
-  if (existing) {
-    return { success: false, error: 'Вы уже оставили отзыв на этот тур' };
-  }
+ const existing = await prisma.review.findFirst({
+  where: {
+    tourId,
+    // Добавляем запасной вариант "Участник", чтобы 100% была строка, а не null
+    name: profile.name ?? profile.phone ?? 'Участник',
+  },
+});
+
+if (existing) {
+  return { success: false, error: 'Вы уже оставили отзыв на этот тур' };
+}
 
   // Определяем категорию тура для отзыва
   const tour = await prisma.tour.findUnique({

@@ -185,8 +185,8 @@ export default async function TestsPage() {
                   </div>
                 </div>
 
-                {/* Детальные данные — если есть score */}
-                {res.score && typeof res.score === 'object' && (
+                {/* ✅ ИСПРАВЛЕНО: Явное приведение к boolean через !! */}
+                {!!res.score && typeof res.score === 'object' && (
                   <div className="mt-4 pt-4 border-t border-white/5">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {Object.entries(res.score as Record<string, number>)
@@ -195,12 +195,13 @@ export default async function TestsPage() {
                           <div key={key} className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-slate-500 capitalize">{key}</span>
-                              <span className={`font-bold ${config.color}`}>{value}%</span>
+                              {/* Явное приведение к Number на всякий случай */}
+                              <span className={`font-bold ${config.color}`}>{Number(value)}%</span>
                             </div>
                             <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${config.bgColor.replace('/10', '/60')}`}
-                                style={{ width: `${Math.min(value, 100)}%` }}
+                                style={{ width: `${Math.min(Number(value) || 0, 100)}%` }}
                               />
                             </div>
                           </div>

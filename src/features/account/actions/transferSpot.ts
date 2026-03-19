@@ -56,23 +56,22 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
       });
 
       // 2. Создаём новую бронь для нового участника
-      const newBooking = await tx.booking.create({
-        data: {
-          name: newName,
-          phone: newPhone,
-          tourId: booking.tourId,
-          tourDateId: booking.tourDateId,
-          ticketsAdult: booking.ticketsAdult,
-          ticketsChild: booking.ticketsChild,
-          ticketsFamily: booking.ticketsFamily,
-          ticketsMember: booking.ticketsMember,
-          totalPrice: booking.totalPrice,
-          currency: booking.currency,
-          source: 'transfer',
-          status: 'confirmed',
-          comment: `Передано от ${profile.name ?? profile.phone}`,
-        },
-      });
+    const newBooking = await tx.booking.create({
+  data: {
+    name: newName,
+    phone: newPhone,
+    tourId: booking.tourId,
+    tourDateId: booking.tourDateId,
+    ticketsAdult: booking.ticketsAdult,
+    ticketsChild: booking.ticketsChild,
+    ticketsFamily: booking.ticketsFamily,
+    ticketsMember: booking.ticketsMember,
+    totalPrice: booking.totalPrice,
+    source: 'transfer',
+    status: 'confirmed',
+    comment: `Передано от ${profile.name ?? profile.phone}`,
+  },
+});
 
       // 3. Привязываем новую бронь к профилю если новый участник уже зарегистрирован
       const newProfile = await tx.memberProfile.findUnique({
