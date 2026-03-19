@@ -46,11 +46,13 @@ export default async function FunSectorPage() {
     });
   }
 
- return (
-    <main>
-      <Suspense fallback={null}>
-        <FunClient activeTests={tests} />
-      </Suspense>
-    </main>
-  );
+const serializedTests = JSON.parse(JSON.stringify(tests));
+
+return (
+  <main>
+    <Suspense fallback={null}>
+      <FunClient activeTests={serializedTests} />
+    </Suspense>
+  </main>
+);
 }

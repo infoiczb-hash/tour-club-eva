@@ -114,7 +114,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   }, [activeTests]);
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 overflow-hidden relative">
+<div suppressHydrationWarning className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
 
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
