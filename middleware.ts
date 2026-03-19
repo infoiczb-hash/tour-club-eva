@@ -2,12 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  // 1. ГЕНЕРАЦИЯ NONCE И CSP
+  // 1. ГЕНЕРАЦИЯ NONCE И CSP (Оставляем твой стабильный, рабочий вариант)
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const isDev = process.env.NODE_ENV !== 'production';
   
-  // Формируем CSP на базе твоих старых настроек, но заменяем unsafe-inline на nonce для скриптов
-// Формируем стабильный CSP: Next.js может грузить JS, шрифты работают
   const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com;
@@ -24,16 +21,13 @@ export async function middleware(request: NextRequest) {
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, ' ').trim();
 
-  // Прокидываем заголовки в объект запроса для layout.tsx
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', cspHeader);
 
-  // 2. ИНИЦИАЛИЗАЦИЯ SUPABASE С НОВЫМИ ЗАГОЛОВКАМИ
+  // 2. ИНИЦИАЛИЗАЦИЯ SUPABASE
   let supabaseResponse = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
+    request: { headers: requestHeaders },
   });
 
   const supabase = createServerClient(
@@ -45,37 +39,58 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ 
-            request: { headers: requestHeaders } 
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
         },
       },
     }
   );
 
-  // 3. ЛОГИКА АВТОРИЗАЦИИ (Отрабатывает только для /admin)
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // 3. ЛОГИКА АВТОРИЗАЦИИ (ОПТИМИЗИРОВАННАЯ)
+  const pathname = request.nextUrl.pathname;
+
+  // Проверяем, нужна ли нам вообще авторизация на этом маршруте
+  const isAuthRoute = pathname.startsWith('/admin') || pathname.startsWith('/account') || pathname === '/login';
+
+  if (isAuthRoute) {
+    // Делаем ровно ОДИН запрос к базе только для защищенных путей
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Если не залогинен и пытается зайти в /admin
-    if (!user) {
-      if (request.nextUrl.pathname !== '/admin/login') {
+    // ── /admin ──────────────────────────────────────────────────────
+    if (pathname.startsWith('/admin')) {
+      if (!user && pathname !== '/admin/login') {
         const loginUrl = request.nextUrl.clone();
         loginUrl.pathname = '/admin/login';
         supabaseResponse = NextResponse.redirect(loginUrl);
+      } else if (user && pathname === '/admin/login') {
+        const adminUrl = request.nextUrl.clone();
+        adminUrl.pathname = '/admin';
+        supabaseResponse = NextResponse.redirect(adminUrl);
       }
-    } 
-    // Если залогинен и открывает /admin/login — редирект в админку
-    else if (user && request.nextUrl.pathname === '/admin/login') {
-      const adminUrl = request.nextUrl.clone();
-      adminUrl.pathname = '/admin';
-      supabaseResponse = NextResponse.redirect(adminUrl);
+    }
+
+    // ── /account ─────────────────────────────────────────────────────
+    if (pathname.startsWith('/account')) {
+      if (!user) {
+        // Сохраняем целевой URL в ?next= чтобы вернуться после входа
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = '/login';
+        loginUrl.searchParams.set('next', pathname);
+        supabaseResponse = NextResponse.redirect(loginUrl);
+      }
+    }
+
+    // ── /login ───────────────────────────────────────────────────────
+    if (pathname === '/login') {
+      if (user) {
+        // Если уже залогинен — отправляем туда, куда он шел, либо в кабинет
+        const next = request.nextUrl.searchParams.get('next') ?? '/account';
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = next;
+        redirectUrl.search = '';
+        supabaseResponse = NextResponse.redirect(redirectUrl);
+      }
     }
   }
 
@@ -85,7 +100,6 @@ export async function middleware(request: NextRequest) {
   return supabaseResponse;
 }
 
-// 5. НАСТРОЙКА MATCHER (Должен срабатывать везде кроме статики, чтобы раздавать CSP)
 export const config = {
   matcher: [
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
