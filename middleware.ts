@@ -2,9 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  // 1. ГЕНЕРАЦИЯ NONCE И CSP (Оставляем твой стабильный, рабочий вариант)
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  
+  const pathname = request.nextUrl.pathname;
+
+  // CSP — строится один раз для всех маршрутов
   const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com;
@@ -21,11 +21,24 @@ export async function middleware(request: NextRequest) {
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, ' ').trim();
 
+  // ── ПУБЛИЧНЫЕ МАРШРУТЫ ────────────────────────────────────────────
+  // Supabase не инициализируется — нет сетевых запросов, нет задержки
+  const isAuthRoute =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/account') ||
+    pathname === '/login';
+
+  if (!isAuthRoute) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Security-Policy', cspHeader);
+    return response;
+  }
+
+  // ── ЗАЩИЩЁННЫЕ МАРШРУТЫ (/admin, /account, /login) ───────────────
+  // Supabase инициализируется только здесь
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', cspHeader);
 
-  // 2. ИНИЦИАЛИЗАЦИЯ SUPABASE
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
   });
@@ -39,64 +52,60 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders },
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
     }
   );
 
-  // 3. ЛОГИКА АВТОРИЗАЦИИ (ОПТИМИЗИРОВАННАЯ)
-  const pathname = request.nextUrl.pathname;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Проверяем, нужна ли нам вообще авторизация на этом маршруте
-  const isAuthRoute = pathname.startsWith('/admin') || pathname.startsWith('/account') || pathname === '/login';
-
-  if (isAuthRoute) {
-    // Делаем ровно ОДИН запрос к базе только для защищенных путей
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // ── /admin ──────────────────────────────────────────────────────
-    if (pathname.startsWith('/admin')) {
-      if (!user && pathname !== '/admin/login') {
-        const loginUrl = request.nextUrl.clone();
-        loginUrl.pathname = '/admin/login';
-        supabaseResponse = NextResponse.redirect(loginUrl);
-      } else if (user && pathname === '/admin/login') {
-        const adminUrl = request.nextUrl.clone();
-        adminUrl.pathname = '/admin';
-        supabaseResponse = NextResponse.redirect(adminUrl);
-      }
-    }
-
-    // ── /account ─────────────────────────────────────────────────────
-    if (pathname.startsWith('/account')) {
-      if (!user) {
-        // Сохраняем целевой URL в ?next= чтобы вернуться после входа
-        const loginUrl = request.nextUrl.clone();
-        loginUrl.pathname = '/login';
-        loginUrl.searchParams.set('next', pathname);
-        supabaseResponse = NextResponse.redirect(loginUrl);
-      }
-    }
-
-    // ── /login ───────────────────────────────────────────────────────
-    if (pathname === '/login') {
-      if (user) {
-        // Если уже залогинен — отправляем туда, куда он шел, либо в кабинет
-        const next = request.nextUrl.searchParams.get('next') ?? '/account';
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = next;
-        redirectUrl.search = '';
-        supabaseResponse = NextResponse.redirect(redirectUrl);
-      }
+  // ── /admin ───────────────────────────────────────────────────────
+  if (pathname.startsWith('/admin')) {
+    if (!user && pathname !== '/admin/login') {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/admin/login';
+      supabaseResponse = NextResponse.redirect(loginUrl);
+    } else if (user && pathname === '/admin/login') {
+      const adminUrl = request.nextUrl.clone();
+      adminUrl.pathname = '/admin';
+      supabaseResponse = NextResponse.redirect(adminUrl);
     }
   }
 
-  // 4. УСТАНАВЛИВАЕМ CSP В ОТВЕТ БРАУЗЕРУ
-  supabaseResponse.headers.set('Content-Security-Policy', cspHeader);
+  // ── /account ─────────────────────────────────────────────────────
+  if (pathname.startsWith('/account')) {
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('next', pathname);
+      supabaseResponse = NextResponse.redirect(loginUrl);
+    }
+  }
 
+  // ── /login ───────────────────────────────────────────────────────
+  if (pathname === '/login') {
+    if (user) {
+      const next =
+        request.nextUrl.searchParams.get('next') ?? '/account';
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = next;
+      redirectUrl.search = '';
+      supabaseResponse = NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  supabaseResponse.headers.set('Content-Security-Policy', cspHeader);
   return supabaseResponse;
 }
 
