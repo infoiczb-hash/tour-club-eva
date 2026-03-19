@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 // ─── Добавить / убрать тур из вишлиста ──────────────────────────────
@@ -13,7 +13,7 @@ interface ToggleWishlistInput {
 }
 
 export async function toggleWishlist(input: ToggleWishlistInput) {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false };
 
@@ -57,7 +57,7 @@ interface ToggleCategoryInput {
 export async function toggleCategorySubscription(
   input: ToggleCategoryInput
 ): Promise<{ success: boolean }> {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false };
 
@@ -89,7 +89,7 @@ export async function toggleCategorySubscription(
 export async function getTourWishlistStatus(
   tourId: string
 ): Promise<{ inWishlist: boolean; watchlistId?: string; memberId?: string }> {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { inWishlist: false };
 

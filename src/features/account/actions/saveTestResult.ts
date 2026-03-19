@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 interface SaveTestResultInput {
@@ -22,7 +22,7 @@ type SaveTestResultOutput =
 export async function saveTestResult(
   input: SaveTestResultInput
 ): Promise<SaveTestResultOutput> {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   // Не залогинен — возвращаем специальный флаг

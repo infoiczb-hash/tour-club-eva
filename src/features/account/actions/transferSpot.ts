@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 
@@ -17,7 +17,7 @@ type TransferResult =
 
 export async function transferBookingSpot(input: TransferInput): Promise<TransferResult> {
   // Проверяем авторизацию
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Необходима авторизация' };
 
