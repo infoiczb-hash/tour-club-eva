@@ -15,15 +15,33 @@ export const useKayakTab = () => {
   return context;
 };
 
-// Провайдер управляет стейтом
 export function KayakingTabProvider({ children }: { children: React.ReactNode }) {
-    const [activeTab, setActiveTab] = useState<FlowTab>("newbie");
-    return <TabContext.Provider value={{ activeTab, setActiveTab }}>{children}</TabContext.Provider>;
+  const [activeTab, setActiveTab] = useState<FlowTab>("newbie");
+  return (
+    <TabContext.Provider value={{ activeTab, setActiveTab }}>
+      {children}
+    </TabContext.Provider>
+  );
 }
 
-// Этот компонент принимает СЕРВЕРНЫЕ блоки как children и рендерит их по условию
-export function KayakingTabContent({ value, children }: { value: FlowTab, children: React.ReactNode }) {
-    const { activeTab } = useKayakTab();
-    if (activeTab !== value) return null;
-    return <div className="animate-in fade-in duration-700">{children}</div>;
+// Было: return null — при переключении монтировало кучу компонентов → тяжёлый INP
+// Стало: hidden div — DOM готов сразу, переключение мгновенное
+export function KayakingTabContent({
+  value,
+  children,
+}: {
+  value: FlowTab;
+  children: React.ReactNode;
+}) {
+  const { activeTab } = useKayakTab();
+  const isActive = activeTab === value;
+
+  return (
+    <div
+      className={isActive ? "animate-in fade-in duration-700" : "hidden"}
+      aria-hidden={!isActive}
+    >
+      {children}
+    </div>
+  );
 }

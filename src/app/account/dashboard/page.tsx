@@ -8,6 +8,7 @@ import {
   ChevronRight, Calendar, ArrowRight,
   Star, Flame,
 } from 'lucide-react';
+import VirtualCard from '@/features/account/components/VirtualCard';
 
 // ─── уровни ─────────────────────────────────────────────────────────
 const LEVELS = [
@@ -162,38 +163,25 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* ── Приветствие + уровень ──────────────────────────────── */}
-      <section className="bg-slate-900/60 border border-white/5 rounded-2xl p-6">
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div>
-            <p className="text-sm text-slate-400 mb-1">Добро пожаловать,</p>
-            <h1 className="text-2xl font-black text-white">{displayName}</h1>
-          </div>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${levelStyle.badge}`}>
-            {profile.level}
-          </span>
+    {/* ── Приветствие + Виртуальная карта ────────────────────── */}
+      <section className="flex flex-col mb-4">
+        <div className="mb-6">
+          <p className="text-sm text-slate-400 mb-1">Добро пожаловать,</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">{displayName}</h1>
         </div>
-
-        {/* Прогресс-бар */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>{stats.totalTours} {plural(stats.totalTours, 'тур', 'тура', 'туров')}</span>
-            {nextName ? (
-              <span>До «{nextName}» — ещё {toNext} {plural(toNext, 'тур', 'тура', 'туров')}</span>
-            ) : (
-              <span className="text-amber-400 font-bold">Максимальный уровень 🏆</span>
-            )}
-          </div>
-          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${levelStyle.bar}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+        
+        <div className="w-full max-w-md mx-auto md:mx-0">
+          <VirtualCard 
+            name={displayName} 
+            level={profile.level} 
+            totalTours={stats.totalTours} 
+            totalKm={stats.totalKm} 
+            memberId={profile.id}
+          />
         </div>
       </section>
 
-      {/* ── Статистика ──────────────────────────────────────────── */}
+        {/* ── Статистика ──────────────────────────────────────────── */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Туров',    value: stats.totalTours,   unit: '',   icon: Flame    },

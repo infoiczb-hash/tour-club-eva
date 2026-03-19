@@ -35,10 +35,13 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           <FormInput name="route" label="Нитка маршрута" placeholder="Город А - Город Б - Город В" />
         </div>
         
-        <div className="grid grid-cols-2 gap-4 mt-4">
-             <FormInput name="distance" label="Дистанция (км)" placeholder="15 км" />
-             <FormInput name="difficulty" label="Сложность" placeholder="medium" />
-        </div>
+     <div className="grid grid-cols-2 gap-4 mt-4">
+     <FormInput name="distance" label="Дистанция (км)" placeholder="не определено" />
+     <FormInput name="difficulty" label="Сложность" placeholder="medium" />
+</div>
+<div className="grid grid-cols-1 mt-4">
+     <FormInput name="tourFormat" label="Формат тура" placeholder="не определено" />
+</div>
       </div>
 
       {/* 2. Блок ДАТЫ, ГИДЫ И ЦЕНООБРАЗОВАНИЕ */}
@@ -50,7 +53,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           </div>
           <button 
             type="button" 
-            onClick={() => append({ start: '', end: '', guide_id: '', spots: '', spotsLeft: '', basePrice: '', discountEarlyBird: '', earlyBirdDeadline: '', surchargeLastMinute: '', lastMinuteTrigger: '' })}
+            onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
             className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-500 bg-teal-50 px-3 py-1.5 rounded-lg transition-colors"
           >
             <Plus size={14} /> Добавить дату
@@ -136,7 +139,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
               <p className="text-slate-400 text-sm font-medium">Даты выездов еще не добавлены</p>
               <button 
                 type="button"
-                onClick={() => append({ start: '', end: '', guide_id: '', spots: '', spotsLeft: '', basePrice: '', discountEarlyBird: '', earlyBirdDeadline: '', surchargeLastMinute: '', lastMinuteTrigger: '' })}
+              onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
                 className="text-teal-600 font-bold text-sm mt-3 hover:text-teal-500 hover:underline flex items-center justify-center gap-1 mx-auto"
               >
                 <Plus size={16} /> Создать первый выезд

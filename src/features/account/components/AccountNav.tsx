@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
   LayoutDashboard, Calendar, Clock, Heart,
-  FlaskConical, LogOut, ChevronRight, Menu, X,
+  FlaskConical, LogOut, ChevronRight, Menu, X, Settings
 } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { href: '/account/history',   label: 'История',   icon: Clock },
   { href: '/account/wishlist',  label: 'Вишлист',   icon: Heart },
   { href: '/account/tests',     label: 'Тесты',     icon: FlaskConical },
+  { href: '/account/settings',  label: 'Настройки', icon: Settings },
 ];
 
 // ─── цвета уровней ──────────────────────────────────────────────────

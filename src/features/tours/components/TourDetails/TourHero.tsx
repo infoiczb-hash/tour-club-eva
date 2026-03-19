@@ -5,6 +5,7 @@ import { MapPin, Clock, Calendar, ArrowLeft, Tent } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import TourWishlistButton from './TourWishlistButton'; 
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,9 +26,10 @@ const COLOR_THEMES: Record<string, string> = {
 
 interface TourHeroProps {
   tour: Tour;
+  isWished: boolean; // ✅ Добавили пропс
 }
 
-export default function TourHero({ tour }: TourHeroProps) {
+export default function TourHero({ tour, isWished }: TourHeroProps) {
   
   // ✅ ИСПРАВЛЕНА ЛОГИКА ДАТ: Теперь проверяются и дни, чтобы не было "26 - 26 апреля"
   const renderDateRange = () => {
@@ -92,7 +94,7 @@ export default function TourHero({ tour }: TourHeroProps) {
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950/60 to-transparent" />
       </div>
 
-      <div className="absolute top-24 left-4 md:left-8 z-20">
+   <div className="absolute top-24 left-4 md:left-8 z-20">
         <Link
           href="/tour"
           className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all text-[11px] md:text-xs font-bold uppercase tracking-widest shadow-lg group"
@@ -100,6 +102,11 @@ export default function TourHero({ tour }: TourHeroProps) {
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           В каталог
         </Link>
+      </div>
+
+      {/* ✅ ДОБАВЛЕНО: Кнопка добавления в избранное (выровнена симметрично кнопке "В каталог") */}
+      <div className="absolute top-24 right-4 md:right-8 z-20">
+        <TourWishlistButton tourId={tour.id} initialIsWished={isWished} />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">

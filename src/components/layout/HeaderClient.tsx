@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Phone, ArrowRight, Instagram, Send } from "lucide-react";
+import { Menu, X, Phone, ArrowRight, Instagram, Send, User } from "lucide-react";
 import { usePathname } from 'next/navigation';
 import { useModalStore } from '@/shared/store/useModalStore';
 
@@ -11,16 +11,24 @@ interface NavLink {
   href: string;
 }
 
-export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
-  // Новые стейты для умного хедера
-  const [isVisible, setIsVisible] = useState(true); // Виден ли хедер сейчас
-  const [isAtTop, setIsAtTop] = useState(true);     // Находится ли юзер в самом верху (для прозрачности)
+interface UserProfile {
+  name: string | null;
+  phone: string | null;
+}
+
+export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], user: UserProfile | null }) {
+  const [isVisible, setIsVisible] = useState(true); 
+  const [isAtTop, setIsAtTop] = useState(true);     
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const openContactModal = useModalStore((state) => state.openContactModal);
   const pathname = usePathname();
 
-  // Оптимизированный слушатель скролла
+  // Генерируем инициалы для аватарки
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : <User size={16} />;
+
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let ticking = false;
@@ -30,15 +38,11 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
 
-          // 1. Проверяем, на самом ли мы верху (первые 50px)
           setIsAtTop(currentScrollY < 50);
 
-          // 2. Логика умного скрытия/появления
           if (currentScrollY > lastScrollY && currentScrollY > 100) {
-            // Скроллим вниз — прячем хедер
             setIsVisible(false);
           } else if (currentScrollY < lastScrollY) {
-            // Скроллим вверх — показываем хедер
             setIsVisible(true);
           }
 
@@ -50,16 +54,14 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    // Проверка при монтировании (если юзер обновил страницу где-то в середине)
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Блокировка скролла при открытом меню
   useEffect(() => {
     if (isMobileMenuOpen) {
-      setIsVisible(true); // Принудительно показываем хедер, если открыли меню
+      setIsVisible(true); 
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -73,8 +75,8 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out
           ${!isVisible ? "-translate-y-full" : "translate-y-0"} 
           ${isAtTop
-            ? "py-3 md:py-6 bg-gradient-to-b from-slate-950/80 to-transparent border-transparent" // Прозрачный на самом верху (с легким градиентом сверху для читаемости лого)
-            : "py-2 md:py-4 bg-slate-950/90 backdrop-blur-md border-b border-white/10 shadow-lg" // Максимально компактный при скролле
+            ? "py-3 md:py-6 bg-gradient-to-b from-slate-950/80 to-transparent border-transparent" 
+            : "py-2 md:py-4 bg-slate-950/90 backdrop-blur-md border-b border-white/10 shadow-lg" 
           }`}
       >
         <div className="container mx-auto px-4 flex items-center justify-between">
@@ -86,7 +88,6 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <div className="flex flex-col leading-none">
-              {/* Уменьшили размер шрифта на мобилках: text-xl вместо text-2xl */}
               <span className="font-black text-xl md:text-2xl tracking-tighter text-white group-hover:text-teal-400 transition-colors">
                 ЭВА
               </span>
@@ -97,29 +98,53 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           </Link>
 
           {/* ДЕСКТОП МЕНЮ */}
-          <nav className="hidden md:flex items-center gap-10">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                aria-current={pathname === link.href ? 'page' : undefined}
-                className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
-              >
-                {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-500 transition-all duration-300 group-hover:w-full" />
-              </Link>
-            ))}
-          </nav>
+          <div className="hidden md:flex items-center gap-8">
+            <nav className="flex items-center gap-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  aria-current={pathname === link.href ? 'page' : undefined}
+                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+                >
+                  {link.name}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-500 transition-all duration-300 group-hover:w-full" />
+                </Link>
+              ))}
+            </nav>
+
+            {/* Разделитель и Блок пользователя */}
+            <div className="w-px h-6 bg-white/10" />
+
+            {user ? (
+               <Link href="/account" className="flex items-center gap-2.5 group">
+                 <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[10px] font-black">
+                    {initials}
+                 </div>
+                 <span className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors">Кабинет</span>
+               </Link>
+            ) : (
+               <Link href="/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors px-4 py-2 rounded-full border border-white/10 hover:border-white/30 hover:bg-white/5">
+                 Войти
+               </Link>
+            )}
+          </div>
 
           {/* БУРГЕР */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            // Убрали лишние p-2, уменьшили иконку до 26
-            className="md:hidden relative z-50 text-white p-1 outline-none"
-            aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
-          >
-            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
-          </button>
+          <div className="md:hidden flex items-center gap-4 relative z-50">
+            {user && (
+              <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[10px] font-black">
+                {initials}
+              </Link>
+            )}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-white p-1 outline-none"
+              aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
+            >
+              {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -129,7 +154,6 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         }`}
       >
-        {/* Навигационные ссылки */}
         <div className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 py-4">
           {navLinks.map((link, i) => (
             <Link
@@ -149,12 +173,21 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
           ))}
         </div>
 
-        {/* Нижняя часть */}
         <div
-          className={`flex-shrink-0 flex flex-col gap-4 transition-all duration-500 delay-300 ${
+          className={`flex-shrink-0 flex flex-col gap-3 transition-all duration-500 delay-300 ${
             isMobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           }`}
         >
+          {/* Кнопка Личного Кабинета для мобильных */}
+          <Link
+            href={user ? "/account" : "/login"}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-full py-4 bg-slate-900 border border-white/5 text-white font-bold uppercase tracking-widest text-sm text-center rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            {user ? 'Личный кабинет' : 'Войти в кабинет'}
+            <ArrowRight size={18} className="text-slate-500" />
+          </Link>
+
           <button
             type="button"
             onClick={() => {
@@ -167,7 +200,7 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
             <ArrowRight size={18} />
           </button>
 
-          <div className="flex items-center justify-between border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-1">
             <div className="flex flex-col gap-2">
               <a href="tel:+37377770141" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2">
                 <Phone size={14} /> +373 777 70141
@@ -178,20 +211,10 @@ export default function HeaderClient({ navLinks }: { navLinks: NavLink[] }) {
             </div>
 
             <div className="flex gap-3">
-              <a
-                href="https://t.me/evaturclub"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all"
-              >
+              <a href="https://t.me/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
                 <Send size={16} className="-ml-0.5" />
               </a>
-              <a
-                href="https://instagram.com/evaturclub"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all"
-              >
+              <a href="https://instagram.com/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
                 <Instagram size={16} />
               </a>
             </div>
