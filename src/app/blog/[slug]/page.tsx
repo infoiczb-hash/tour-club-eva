@@ -1,5 +1,5 @@
 // src/app/blog/[slug]/page.tsx
-import React from "react";
+import { cache } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,7 +12,7 @@ import sanitizeHtml from 'sanitize-html';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const posts = await prisma.blog.findMany({
@@ -29,7 +29,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getPost(slug: string) {
+const getPost = cache(async (slug: string) => {
   if (!slug) return null;
   const decodedSlug = decodeURIComponent(slug);
 
@@ -50,7 +50,8 @@ async function getPost(slug: string) {
   });
 
   return { post, relatedPosts };
-}
+});
+
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Phone, ArrowRight, RotateCcw, ShieldCheck, Loader } from 'lucide-react';
@@ -10,15 +10,14 @@ type Step = 'phone' | 'otp';
 
 // ─── маска номера телефона ──────────────────────────────────────────
 function formatPhone(raw: string): string {
-  // Оставляем только цифры и ведущий +
   return raw.replace(/[^\d+]/g, '');
 }
 
-// ─── компонент ─────────────────────────────────────────────────────
+// ─── ОСНОВНОЙ КОМПОНЕНТ СТРАНИЦЫ ───────────────────────────────────
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') ?? '/account/dashboard'; // Уточнил путь по умолчанию
+  const next = searchParams.get('next') ?? '/account/dashboard';
 
   const supabase = createClient();
 
@@ -29,7 +28,6 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState(0);
   const [isPending, startTransition] = useTransition();
 
-  // ── обратный отсчёт для повторной отправки ──────────────────────
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
@@ -39,15 +37,12 @@ export default function LoginPage() {
   // ── ВХОД ЧЕРЕЗ GOOGLE ───────────────────────────────────────────
   async function handleGoogleLogin() {
     setError('');
-    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // Отправляем на наш callback, чтобы он установил куки и перенаправил куда надо
         redirectTo: `${window.location.origin}/auth/callback?next=${next}`, 
       },
     });
-
     if (error) {
       setError('Ошибка при входе через Google. Попробуйте позже.');
       console.error(error);
@@ -68,16 +63,13 @@ export default function LoginPage() {
     startTransition(async () => {
       const { error } = await supabase.auth.signInWithOtp({
         phone: formatted,
-        options: {
-          shouldCreateUser: true,
-        },
+        options: { shouldCreateUser: true },
       });
 
       if (error) {
         setError(getErrorMessage(error.message));
         return;
       }
-
       setStep('otp');
       setCountdown(60);
     });
@@ -113,44 +105,38 @@ export default function LoginPage() {
     });
   }
 
-  // ── повторная отправка ──────────────────────────────────────────
+  // ── повторная отправка SMS ──────────────────────────────────────
   async function handleResend() {
     setError('');
     setOtp('');
-
     const { error } = await supabase.auth.signInWithOtp({
       phone: formatPhone(phone),
       options: { shouldCreateUser: true },
     });
-
     if (error) {
       setError(getErrorMessage(error.message));
       return;
     }
-
     setCountdown(60);
   }
 
   return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-teal-500/5 blur-[120px] rounded-full" />
       </div>
 
       <div className="relative w-full max-w-md">
-
         <div className="text-center mb-8">
           <p className="text-sm font-bold tracking-[0.2em] text-teal-400 uppercase mb-2">
             Турклуб «Эва»
           </p>
           <h1 className="text-2xl font-black text-white uppercase tracking-tight">
-            Кабинет будет работать с 20.04.2026
+            КАБИНЕТ БУДЕТ РАБОТАТЬ С 20.04.2026 года
           </h1>
         </div>
 
         <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
-
           {step === 'phone' ? (
             <PhoneStep
               phone={phone}
@@ -173,20 +159,50 @@ export default function LoginPage() {
               countdown={countdown}
             />
           )}
-
         </div>
 
         <p className="text-center text-xs text-slate-500 mt-6 leading-relaxed">
           Входя в кабинет, вы соглашаетесь с условиями использования.
           <br />Мы не передаём ваши данные третьим лицам.
         </p>
-
       </div>
     </main>
   );
 }
 
-// ─── шаг 1: ввод номера ────────────────────────────────────────────
+// ─── КОМПОНЕНТ: ВИДЖЕТ ТЕЛЕГРАМ ────────────────────────────────────
+function TelegramLoginWidget() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Очищаем контейнер, чтобы скрипт не задублировался при HMR в Next.js
+    containerRef.current.innerHTML = '';
+
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    // Твой юзернейм бота
+    script.setAttribute('data-telegram-login', 'authevaclub_bot'); 
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-radius', '12'); // Скругляем углы
+    // Куда отправить данные после успешного входа в виджете:
+    script.setAttribute('data-auth-url', `${window.location.origin}/api/auth/telegram`);
+    script.setAttribute('data-request-access', 'write');
+    script.async = true;
+
+    containerRef.current.appendChild(script);
+  }, []);
+
+  return (
+    <div 
+      ref={containerRef} 
+      className="flex justify-center w-full bg-slate-800/50 py-3 rounded-xl border border-white/10 min-h-[50px]"
+    />
+  );
+}
+
+// ─── ШАГ 1: ВЫБОР СПОСОБА ВХОДА (Телефон / Google / Telegram) ───────
 function PhoneStep({
   phone,
   onPhoneChange,
@@ -205,8 +221,11 @@ function PhoneStep({
   return (
     <div className="space-y-6">
       
-      {/* Кнопка Google */}
-      <div>
+      {/* Кнопка Telegram */}
+      <div className="space-y-3">
+        <TelegramLoginWidget />
+
+        {/* Кнопка Google */}
         <button
           onClick={onGoogleLogin}
           disabled={isPending}
@@ -236,7 +255,7 @@ function PhoneStep({
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="phone" className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            По номеру телефона
+            По номеру телефона (SMS)
           </label>
           <div className="relative">
             <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -268,7 +287,7 @@ function PhoneStep({
   );
 }
 
-// ─── шаг 2: ввод OTP ───────────────────────────────────────────────
+// ─── ШАГ 2: ВВОД OTP КОДА (Если выбрали SMS) ───────────────────────
 function OtpStep({
   phone,
   otp,
@@ -292,7 +311,6 @@ function OtpStep({
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-
       <div>
         <div className="inline-flex items-center gap-2 mb-3">
           <ShieldCheck size={18} className="text-teal-400" />
@@ -365,12 +383,11 @@ function OtpStep({
           </button>
         )}
       </div>
-
     </form>
   );
 }
 
-// ─── привязка MemberProfile ─────────────────────────────────────────
+// ─── ПРИВЯЗКА БРОНЕЙ (Если вошли по SMS) ───────────────────────────
 async function linkMemberProfile(userId: string, phone: string) {
   try {
     await fetch('/api/account/link-profile', {
@@ -379,11 +396,11 @@ async function linkMemberProfile(userId: string, phone: string) {
       body: JSON.stringify({ userId, phone }),
     });
   } catch {
-    // Не критично — профиль создастся при следующем заходе в кабинет
+    // Не критично
   }
 }
 
-// ─── читаемые сообщения об ошибках ─────────────────────────────────
+// ─── ОШИБКИ ────────────────────────────────────────────────────────
 function getErrorMessage(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'Неверный код. Попробуйте ещё раз.';
   if (msg.includes('Token has expired')) return 'Код истёк. Запросите новый.';

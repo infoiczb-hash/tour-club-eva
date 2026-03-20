@@ -1,11 +1,30 @@
-import { Tour } from '@/features/tours/types'; 
+import { Tour } from '@/features/tours/types';
+import dynamic from 'next/dynamic';
 
+// Первый экран — синхронно, это LCP (серверный, без JS)
 import HikesHero from './HikesHero';
-import HikesStory from './HikesStory';
-import HikesDestinations from './HikesDestinations';
-import HikesLogistics from './HikesLogistics';
-import HikesGallery from './HikesGallery';
-import HikesFAQ from './HikesFAQ';
+
+// Всё ниже фолда — lazy
+const HikesStory = dynamic(() => import('./HikesStory'), {
+  loading: () => <div className="min-h-[500px] bg-stone-950" />,
+});
+
+const HikesLogistics = dynamic(() => import('./HikesLogistics'), {
+  loading: () => <div className="min-h-[400px] bg-stone-950" />,
+});
+
+const HikesDestinations = dynamic(() => import('./HikesDestinations'), {
+  loading: () => <div className="min-h-[500px] bg-stone-950" />,
+});
+
+const HikesGallery = dynamic(() => import('./HikesGallery'), {
+  loading: () => <div className="min-h-[400px] bg-stone-950" />,
+});
+
+const HikesFAQ = dynamic(() => import('./HikesFAQ'), {
+  loading: () => <div className="min-h-[400px] bg-stone-950" />,
+});
+
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
 
 export default function HikesLanding({ tours = [] }: { tours?: Tour[] }) {

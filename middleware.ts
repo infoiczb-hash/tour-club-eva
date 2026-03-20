@@ -3,22 +3,25 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  
+  // ✅ ПРОВЕРКА ОКРУЖЕНИЯ: Включаем HTTPS-апгрейд только в продакшене
+  const isProd = process.env.NODE_ENV === 'production';
 
   // CSP — строится один раз для всех маршрутов
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src * blob: data:;
     media-src * blob: data:;
     connect-src *;
     font-src 'self' data: https://fonts.gstatic.com;
-    frame-src 'self' https://www.youtube.com;
+    frame-src 'self' https://www.youtube.com https://oauth.telegram.org https://telegram.org;
     object-src 'none';
     base-uri 'none';
     form-action 'self';
     frame-ancestors 'none';
-    upgrade-insecure-requests;
+    ${isProd ? 'upgrade-insecure-requests;' : ''}
   `.replace(/\s{2,}/g, ' ').trim();
 
   // ── ПУБЛИЧНЫЕ МАРШРУТЫ ────────────────────────────────────────────

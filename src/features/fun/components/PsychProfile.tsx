@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   ChevronLeft, RotateCcw, Mountain, Users, Search, 

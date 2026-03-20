@@ -1,9 +1,23 @@
-// Импортируем все готовые модули страницы
+// Первый экран — синхронно (клиентский только из-за useModalStore в кнопке)
 import OrgHero from '@features/directions/organizers/OrgHero';
-import OrgEmpathy from '@features/directions/organizers/OrgEmpathy';
-import OrgFormats from '@features/directions/organizers/OrgFormats';
-import OrgWorkflow from '@features/directions/organizers/OrgWorkflow';
-import OrgContact from '@features/directions/organizers/OrgContact';
+import dynamic from 'next/dynamic';
+
+// Всё ниже фолда — lazy
+const OrgFormats = dynamic(() => import('@features/directions/organizers/OrgFormats'), {
+  loading: () => <div className="min-h-[500px] bg-slate-950" />,
+});
+
+const OrgEmpathy = dynamic(() => import('@features/directions/organizers/OrgEmpathy'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
+
+const OrgWorkflow = dynamic(() => import('@features/directions/organizers/OrgWorkflow'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
+
+const OrgContact = dynamic(() => import('@features/directions/organizers/OrgContact'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
 
 export default function OrganizersLanding() {
   return (

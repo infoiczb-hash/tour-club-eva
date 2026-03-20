@@ -32,8 +32,9 @@ model Blog {
   guideId      String?    @map("guide_id") @db.Uuid
   isActive     Boolean    @default(false) @map("is_active")
 
-  guide        Guide?        @relation(fields: [guideId], references: [id])
-  blogCategory BlogCategory? @relation(fields: [categoryId], references: [id])
+  guide        Guide?         @relation(fields: [guideId], references: [id])
+  blogCategory BlogCategory?  @relation(fields: [categoryId], references: [id])
+  favoritedBy  FavoritePost[] // Связь с закладками пользователя
 
   @@index([isActive])
   @@index([categoryId])
@@ -76,12 +77,11 @@ model Tour {
   distance     String?
   meetingPoint String? @map("meeting_point")
   route        String?
-
-  price       Int  @default(0)
-  priceOld    Int? @map("price_old")
-  priceChild  Int? @map("price_child")
-  priceFamily Int? @map("price_family")
-  priceMember Int? @map("price_member")
+  price        Int     @default(0)
+  priceOld     Int?    @map("price_old")
+  priceChild   Int?    @map("price_child")
+  priceFamily  Int?    @map("price_family")
+  priceMember  Int?    @map("price_member")
 
   coverImage String?  @map("cover_image")
   metaDesc   String?  @map("meta_desc")
@@ -116,9 +116,8 @@ model TourDate {
   startDate DateTime  @map("start_date") @db.Date
   endDate   DateTime? @map("end_date") @db.Date
   time      String?
-
-  spots     Int @default(15)
-  spotsLeft Int @default(15) @map("spots_left")
+  spots     Int       @default(15)
+  spotsLeft Int       @default(15) @map("spots_left")
 
   basePrice           Int? @map("base_price")
   discountEarlyBird   Int? @map("discount_early_bird")
@@ -159,7 +158,6 @@ model Booking {
   ticketsFamily Int     @default(0) @map("tickets_family")
   ticketsMember Int     @default(0) @map("tickets_member")
   comment       String?
-
   totalPrice    Int     @map("total_price")
   amountPaid    Int     @default(0) @map("amount_paid")
   discount      Int     @default(0)
@@ -192,8 +190,7 @@ model Waitlist {
   name       String
   phone      String
   social     String?
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   tour     Tour      @relation(fields: [tourId], references: [id], onDelete: Cascade)
   tourDate TourDate? @relation(fields: [tourDateId], references: [id], onDelete: Cascade)
@@ -350,7 +347,7 @@ model FunTest {
 }
 
 // ─────────────────────────────────────────────
-// ЛИЧНЫЙ КАБИНЕТ УЧАСТНИКА (НОВЫЕ МОДЕЛИ)
+// ЛИЧНЫЙ КАБИНЕТ УЧАСТНИКА
 // ─────────────────────────────────────────────
 
 model MemberProfile {
@@ -361,11 +358,10 @@ model MemberProfile {
   email      String?
   avatarUrl  String? @map("avatar_url")
   
-  // Новые поля для настроек участника
-  foodPref       String?   @map("food_pref")
-  shoeSize       String?   @map("shoe_size")
-  clothesSize    String?   @map("clothes_size")
-  lifeJacketSize String?   @map("life_jacket_size")
+  foodPref       String? @map("food_pref")
+  shoeSize       String? @map("shoe_size")
+  clothesSize    String? @map("clothes_size")
+  lifeJacketSize String? @map("life_jacket_size")
   inventory      String[]  @default([])
 
   level      String  @default("Первопроходец")
@@ -375,9 +371,10 @@ model MemberProfile {
   joinedAt  DateTime @default(now()) @map("joined_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  bookings    Booking[]
-  watchLists  WatchList[]
-  testResults TestResult[]
+  bookings      Booking[]
+  watchLists    WatchList[]
+  testResults   TestResult[]
+  favoritePosts FavoritePost[] // Добавлен массив закладок статей
 
   @@index([phone])
   @@index([userId])
@@ -390,21 +387,35 @@ model WatchList {
   memberId String        @map("member_id") @db.Uuid
   member   MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  tourId String? @map("tour_id") @db.Uuid // конкретный тур
+  tourId String? @map("tour_id") @db.Uuid
   tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
-  categoryId String?       @map("category_id") @db.Uuid // или целая категория
+  categoryId String?       @map("category_id") @db.Uuid
   category   TourCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  notified Boolean @default(false) // уже отправляли пуш?
-
+  notified  Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@unique([memberId, tourId]) // один участник — одна запись на тур
-  @@unique([memberId, categoryId]) // один участник — одна запись на категорию
+  @@unique([memberId, tourId])
+  @@unique([memberId, categoryId])
   @@index([memberId])
   @@index([tourId])
   @@map("watch_list")
+}
+
+model FavoritePost {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  member    MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  post      Blog          @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, postId])
+  @@index([memberId])
+  @@index([postId])
+  @@map("favorite_posts")
 }
 
 model TestResult {
@@ -413,12 +424,12 @@ model TestResult {
   memberId String        @map("member_id") @db.Uuid
   member   MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  testSlug String @map("test_slug") // "tourist-type" | "psych-profile" | "totem" | "survival" | ...
-  result   Json // { type: "Романтик", score: {...}, badge: "🌙" }
+  testSlug String @map("test_slug")
+  result   Json 
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@unique([memberId, testSlug]) // один результат на тест (перезаписывается)
+  @@unique([memberId, testSlug])
   @@index([memberId])
   @@map("test_results")
 }

@@ -1,9 +1,12 @@
+// src/features/tours/actions/createBooking.ts
 'use server';
 
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
+// ✅ ДОБАВИЛИ ИМПОРТ: Для привязки сессии
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Безопасное получение URL сайта для кнопок в Telegram
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -73,8 +76,6 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
   const data = parsed.data;
 
   // 🛡️ ЗАЩИТА ОТ СПАМА (Honeypot)
-  // Если скрытое поле "website" заполнено — это бот. 
-  // Мы имитируем успех, чтобы бот не пробовал другие варианты, но данные не сохраняем.
   if (data.website && data.website.length > 0) {
     console.warn('Honeypot triggered: blocking bot registration.');
     return { success: true, bookingId: 'sp-checked' };
@@ -82,6 +83,22 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
   
   const familySpots = data.ticketsFamily * 3;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
+
+  // ✅ ЧИСТИМ НОМЕР ТЕЛЕФОНА (чтобы он 100% совпадал с тем, что мы ищем при логине)
+  const cleanPhone = data.phone.replace(/[^\d+]/g, '');
+
+  // ✅ УМНАЯ ПРИВЯЗКА: Если пользователь уже в ЛК и делает бронь — сразу привязываем
+  let currentMemberId = null;
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+       const profile = await prisma.memberProfile.findUnique({ where: { userId: user.id } });
+       if (profile) currentMemberId = profile.id;
+    }
+  } catch (e) {
+    // Игнорируем (значит оформляет обычный гость)
+  }
 
   try {
     // 3.2 Быстрая проверка тура
@@ -131,8 +148,9 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         data: {
           tourId:        data.tourId,
           tourDateId:    data.tourDateId || null,
+          memberId:      currentMemberId, // ✅ МГНОВЕННАЯ ПРИВЯЗКА
           name:          data.name,
-          phone:         data.phone,
+          phone:         cleanPhone,      // ✅ СОХРАНЯЕМ ЧИСТЫЙ НОМЕР
           email:         data.social?.includes('@') ? data.social : null,
           social:        data.social || null,
           ticketsAdult:  data.ticketsAdult,
@@ -151,9 +169,6 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     });
 
     // 3.4 Telegram-уведомление
-    // 🔥 ГЛАВНЫЙ ФИКС VERCEL BUG: Жесткий await и обработка ошибок.
-    // Try/catch здесь гарантирует, что даже если Telegram упадет, 
-    // экшен завершится успешно (т.к. запись в БД уже прошла).
     try {
       await notifyTelegram(data, booking.id, tour.coverImage);
     } catch (tgError) {
@@ -166,6 +181,7 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     }
     revalidatePath('/tour');
     revalidatePath('/admin');
+    revalidatePath('/account', 'layout'); // ✅ Обновляем ЛК
 
     return { success: true, bookingId: booking.id };
 
@@ -179,7 +195,6 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         };
     }
 
-    // 🛡️ Information Disclosure Fix: Не отдаем системные ошибки Prisma наружу
     return {
       success: false,
       error: 'Произошла ошибка при сохранении заявки. Пожалуйста, попробуйте ещё раз или свяжитесь с нами напрямую.',
@@ -263,5 +278,5 @@ function escapeHtml(str: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#39;');
 }

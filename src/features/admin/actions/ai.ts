@@ -9,7 +9,7 @@ import { requireAuth } from '@/lib/auth';
 import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // === 1. КОНФИГУРАЦИЯ ===
-const model = google('gemini-2.0-flash');
+const model = google('gemini-1.5-flash');
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
 const TourAiSchema = z.object({

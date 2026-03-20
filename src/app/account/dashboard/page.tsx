@@ -1,3 +1,4 @@
+// src/app/account/dashboard/page.tsx
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
@@ -43,15 +44,6 @@ function getProgressToNext(totalTours: number) {
   return { pct, toNext, nextName: nextLevel.name };
 }
 
-function plural(n: number, one: string, few: string, many: string) {
-  const abs = Math.abs(n) % 100;
-  const mod = abs % 10;
-  if (abs >= 11 && abs <= 19) return many;
-  if (mod === 1) return one;
-  if (mod >= 2 && mod <= 4) return few;
-  return many;
-}
-
 function formatDate(d: Date) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
@@ -64,14 +56,15 @@ async function getDashboardData(userId: string) {
 
   if (!profile) return null;
 
-  // Ближайший предстоящий тур
-  const upcomingBooking = await prisma.booking.findFirst({
+  // ✅ ИСПРАВЛЕНИЕ: Ближайший предстоящий тур (теперь учитывает и туры без конкретной даты)
+const upcomingBooking = await prisma.booking.findFirst({
     where: {
       memberId: profile.id,
       status: { in: ['pending', 'confirmed'] },
-      tourDate: {
-        startDate: { gte: new Date() },
-      },
+      OR: [
+        { tourDate: { startDate: { gte: new Date() } } },
+        { tourDateId: null } // ✅ Теперь туры с открытой датой тоже попадают в ЛК
+      ]
     },
     orderBy: { tourDate: { startDate: 'asc' } },
     include: {
@@ -122,7 +115,7 @@ async function getDashboardData(userId: string) {
 
   // Последние 3 тура для блока "История"
   const recentBookings = await prisma.booking.findMany({
-    where: { memberId: profile.id },
+    where: { memberId: profile.id, status: { not: 'cancelled' } },
     orderBy: { createdAt: 'desc' },
     take: 3,
     include: {
@@ -156,8 +149,6 @@ export default async function DashboardPage() {
   if (!data) redirect('/login?next=/account/dashboard');
 
   const { profile, upcomingBooking, stats, recentBookings } = data;
-  const levelStyle = LEVEL_STYLES[profile.level] ?? LEVEL_STYLES['Первопроходец'];
-  const { pct, toNext, nextName } = getProgressToNext(stats.totalTours);
   const displayName = profile.name ?? 'Участник';
 
   return (

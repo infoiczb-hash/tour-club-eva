@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { getTours } from '@/features/tours/api'; // ✅ РАЗБЛОКИРОВАН ЗАПРОС К БД
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
-export const revalidate = 60; 
+export const revalidate = 300; 
 
 export const metadata: Metadata = {
   title: 'Приключенческие туры в горы из Приднестровья и Молдовы | Турклуб «Эва»',
