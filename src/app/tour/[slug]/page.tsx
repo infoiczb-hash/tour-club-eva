@@ -84,39 +84,32 @@ export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   
   const decodedSlug = decodeURIComponent(slug);
+
   const tour = await getTourBySlug(decodedSlug);
+if (!tour) { notFound(); }
+if (tour.image) { ReactDOM.preload(tour.image, { as: 'image', fetchPriority: 'high' }); }
 
-  if (!tour) {
-    notFound(); 
-  }
+// getSimilarTours и проверка сессии — независимы, запускаем параллельно
+const [similarTours, supabase] = await Promise.all([
+  getSimilarTours(tour.categoryId ?? null, tour.id, 3),
+  createServerSupabaseClient(),
+]);
 
-  if (tour.image) {
-    ReactDOM.preload(tour.image, {
-      as: 'image',
-      fetchPriority: 'high',
+const { data: { user } } = await supabase.auth.getUser();
+
+let isWished = false;
+if (user) {
+  const profile = await prisma.memberProfile.findUnique({
+    where: { userId: user.id },
+    select: { id: true },
+  });
+  if (profile) {
+    const watch = await prisma.watchList.findFirst({
+      where: { memberId: profile.id, tourId: tour.id },
     });
+    isWished = !!watch;
   }
-
-  const similarTours = await getSimilarTours(tour.categoryId ?? null, tour.id, 3);
-
-  // ✅ ДОБАВЛЕНО: ПРОВЕРКА ВИШЛИСТА
-  let isWished = false;
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (user) {
-    const profile = await prisma.memberProfile.findUnique({ 
-      where: { userId: user.id },
-      select: { id: true }
-    });
-    if (profile) {
-      const watch = await prisma.watchList.findFirst({ 
-        where: { memberId: profile.id, tourId: tour.id } 
-      });
-      isWished = !!watch; // Превращаем объект в boolean (true/false)
-    }
-  }
-
+}
   const schemaImages = [
     tour.image,
     ...(tour.gallery || [])

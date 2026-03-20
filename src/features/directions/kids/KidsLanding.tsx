@@ -1,10 +1,29 @@
+import { Tour } from '@/features/tours/types';
+import dynamic from 'next/dynamic';
+
+// Первый экран — синхронно, это LCP (с изображением Cloudinary + priority)
 import KidsHero from './KidsHero';
-import KidsParents from './KidsParents';
-import KidsTransformation from './KidsTransformation';
-import KidsFormats from './KidsFormats';
-import KidsFAQ from './KidsFAQ';
-import KidsCatalog from './KidsCatalog';
-import { Tour } from '@/features/tours/types'; // ✅ Тип тура
+
+// Всё ниже фолда — lazy
+const KidsParents = dynamic(() => import('./KidsParents'), {
+  loading: () => <div className="min-h-[500px] bg-slate-950" />,
+});
+
+const KidsTransformation = dynamic(() => import('./KidsTransformation'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
+
+const KidsFormats = dynamic(() => import('./KidsFormats'), {
+  loading: () => <div className="min-h-[500px] bg-slate-950" />,
+});
+
+const KidsFAQ = dynamic(() => import('./KidsFAQ'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
+
+const KidsCatalog = dynamic(() => import('./KidsCatalog'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
 
 // ✅ Ожидаем массив туров из page.tsx
 export default function KidsLanding({ tours = [] }: { tours?: Tour[] }) {

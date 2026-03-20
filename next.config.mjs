@@ -7,7 +7,13 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+ // ✅ 1. Добавляем транспиляцию
+  transpilePackages: ['ai'], 
 
+  // ✅ 2. ГОВОРИМ NEXT.JS НЕ БАНДЛИТЬ AI (решает проблему с ai/rsc)
+  experimental: {
+    serverExternalPackages: ['ai'],
+  },
   images: {
     loader: 'custom',
     loaderFile: './src/lib/cloudinary-loader.ts',

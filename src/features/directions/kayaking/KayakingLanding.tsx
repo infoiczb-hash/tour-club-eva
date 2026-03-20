@@ -13,33 +13,34 @@ import Timeline from "./Timeline";
 import KayakRules from "./KayakRules";
 
 // Клиентские компоненты первого таба — ниже фолда, lazy
+// min-h вместо h- — скелетон не режет контент если реальный блок выше → нет CLS
 const PopularRoutes = dynamic(() => import('./PopularRoutes'), {
-  loading: () => <div className="h-96 bg-slate-950" />,
+  loading: () => <div className="min-h-[500px] bg-slate-950" />,
 });
 
 const Gallery = dynamic(() => import('./Gallery'), {
-  loading: () => <div className="h-96 bg-slate-950" />,
+  loading: () => <div className="min-h-[500px] bg-slate-950" />,
 });
 
 const FAQ = dynamic(() => import('./FAQ'), {
-  loading: () => <div className="h-80 bg-slate-950" />,
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
 });
 
 // Второй таб — скрыт при загрузке, всё lazy
 const PackingList = dynamic(() => import('./PackingList'), {
-  loading: () => <div className="h-80 bg-slate-950" />,
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
 });
 
 const VideoGuide = dynamic(() => import('./VideoGuide'), {
-  loading: () => <div className="h-80 bg-slate-950" />,
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
 });
 
 const SafetyRegulations = dynamic(() => import('./SafetyRegulations'), {
-  loading: () => <div className="h-96 bg-slate-950" />,
+  loading: () => <div className="min-h-[500px] bg-slate-950" />,
 });
 
 const PreparationCTA = dynamic(() => import('./PreparationCTA'), {
-  loading: () => <div className="h-40 bg-slate-950" />,
+  loading: () => <div className="min-h-[160px] bg-slate-950" />,
 });
 
 export default function KayakingLanding({ tours }: { tours: Tour[] }) {

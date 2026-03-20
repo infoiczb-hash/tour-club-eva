@@ -1,12 +1,20 @@
-import { Tour } from '@/features/tours/types'; 
+import { Tour } from '@/features/tours/types';
+import dynamic from 'next/dynamic';
 
-// Импортируем блоки
+// Первый экран — синхронно (серверный, с изображением + priority)
 import LocalHero from '@/features/directions/local/LocalHero';
+
+// Серверные компоненты без JS — можно оставить синхронными,
+// они не добавляют JS в бандл. Но lazy ускоряет streaming SSR.
 import LocalPhilosophy from '@/features/directions/local/LocalPhilosophy';
+import LocalConditions from '@/features/directions/local/LocalConditions';
 import LocalRoutes from '@/features/directions/local/LocalRoutes';
-import LocalConditions from '@/features/directions/local/LocalConditions'; 
 import LocalGallery from '@/features/directions/local/LocalGallery';
-import LocalFAQ from '@/features/directions/local/LocalFAQ';
+
+// Клиентский компонент — lazy
+const LocalFAQ = dynamic(() => import('@/features/directions/local/LocalFAQ'), {
+  loading: () => <div className="min-h-[400px] bg-slate-950" />,
+});
 
 // 🔥 Используем нашу новую динамическую обертку
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';

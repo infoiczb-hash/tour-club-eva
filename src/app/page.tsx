@@ -5,7 +5,6 @@ import { Metadata } from 'next';
 
 // Оставляем статичными блоки с высокой SEO-ценностью (первый экран и текст)
 import { getBlogPosts } from '@/features/blog/api';
-import { getTours } from '@/features/tours/api'; 
 import { getReviews } from '@/features/reviews/actions';
 // ✅ ДОБАВИЛИ ИМПОРТ КАТЕГОРИЙ БЛОГА
 import { getTourCategoriesAction, getBlogCategoriesAction } from '@/features/admin/actions/categories';
@@ -13,13 +12,23 @@ import { getTourCategoriesAction, getBlogCategoriesAction } from '@/features/adm
 import { getFunTestsAction } from '@/features/admin/actions/fun';
 
 import Hero from '@/features/landing/components/Hero';
-import Philosophy from '@/features/landing/components/Philosophy';
-import BlogList from '@/features/blog/components/BlogSection';
 import LazySocialGrid from '@/features/landing/components/LazySocialGrid';
 import LazyFunSector from '@/features/fun/components/LazyFunSector';
 import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 import dynamic from 'next/dynamic';
 import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
+
+// ✅ Philosophy — клиентский компонент с drag-логикой и 6 изображениями,
+// не в первом экране — грузим лениво, скелетон цвет совпадает с фоном (нет CLS)
+const Philosophy = dynamic(() => import('@/features/landing/components/Philosophy'), {
+  loading: () => <section className="min-h-[600px] bg-slate-950 w-full" />,
+});
+
+// ✅ BlogList — клиентский компонент с фильтрацией и useState,
+// стоит в конце страницы — грузим лениво
+const BlogList = dynamic(() => import('@/features/blog/components/BlogSection'), {
+  loading: () => <section className="min-h-[500px] bg-slate-50 w-full animate-pulse" />,
+});
 
 const LazyGuidesList = dynamic(() => import('@/features/guides/components/GuidesList'), {
   loading: () => <section className="min-h-[400px] w-full bg-slate-50 dark:bg-slate-950 animate-pulse" />
