@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, Wind, Brain, Thermometer, Moon, Utensils,
   Sparkles, Loader2, ArrowLeft, Activity, X, ShieldAlert, Compass, HelpCircle, Check
@@ -13,6 +13,7 @@ import { analyzeBodySignalsAction } from "@/features/fun/actions";
 import { Tour } from "@/features/tours/types";
 import { useProfile } from "@/hooks/useProfile"; 
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+import { readStreamableValue } from 'ai/rsc';
 
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -93,33 +94,46 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
 
   const handleGetAiMagic = async () => {
     if (isAiLoading || selected.length === 0) return;
-    
+
     setStep("ai_result");
     setIsAiLoading(true);
     setAiAnalysis("");
+    setRecommendedTour(null);
 
     try {
-      const symptomsDetailed = selected.map(key => {
-        const s = SYMPTOMS.find(x => x.key === key);
-        const info = SYMPTOM_INFO[key];
-        return `Симптом: ${s?.label}. Почему происходит физиологически: ${info?.why}.`;
-      });
+      const res = await analyzeBodySignalsAction(selected);
+      
+      if (res.success && res.stream) {
+        // Выключаем лоадер сразу, как только сервер ответил потоком!
+        setIsAiLoading(false);
 
-      const res = await analyzeBodySignalsAction(symptomsDetailed);
-      if (res.success) {
-        setAiAnalysis(res.analysis || "");
-        if (res.tour) setRecommendedTour(res.tour);
+        // Читаем поток в реальном времени
+        for await (const partial of readStreamableValue(res.stream)) {
+          if (partial) {
+            // Печатаем текст
+            if (partial.analysis) {
+              setAiAnalysis(partial.analysis);
+            }
+            // Если ИИ уже выбрал тур, показываем карточку
+            if (partial.recommendedTourId) {
+               const tour = res.allTours?.find((t: any) => t.id === partial.recommendedTourId);
+               if (tour) setRecommendedTour(tour);
+            }
+          }
+        }
         
-        updateProfile({ bodySymptoms: selected });
+        // Поток закончился — сохраняем результат
+        updateProfile({bodySignals: selected });
         incrementFunTestPassAction('body-signals').catch(console.error);
+
       } else {
-        setAiAnalysis("ИИ-врач сейчас отдыхает, но вы можете выбрать щадящий тур в нашем каталоге.");
+        setIsAiLoading(false);
+        setAiAnalysis(res.error || "ИИ-терапевт сейчас недоступен. Попробуй позже.");
       }
     } catch (error) {
-      console.error("Network error:", error);
-      setAiAnalysis("Произошла ошибка сети. Не удалось связаться с сервером.");
-    } finally {
+      console.error(error);
       setIsAiLoading(false);
+      setAiAnalysis("Произошла ошибка сети.");
     }
   };
 

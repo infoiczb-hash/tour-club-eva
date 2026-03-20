@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import OrganizersLanding from '@/features/directions/organizers/OrganizersLanding';
 
-export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 300; // Страница будет кэшироваться на 60 секунд
 
 export const metadata: Metadata = {
   title: 'Тимбилдинг и Корпоративный отдых в Приднестровье',

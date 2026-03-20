@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight, ArrowLeft, Activity,
   CheckCircle, AlertCircle, Sparkles, Loader2, X, Compass, Dumbbell, AlertTriangle
@@ -13,6 +13,7 @@ import { analyzePhysicalAction } from "@/features/fun/actions";
 import { Tour } from "@/features/tours/types";
 import { useProfile } from "@/hooks/useProfile";  
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+import { readStreamableValue } from 'ai/rsc';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -104,12 +105,13 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
   const q = QUESTIONS[current];
   const progress = (current / QUESTIONS.length) * 100;
 
-  const handleGetAiMagic = async () => {
+ const handleGetAiMagic = async () => {
     if (isAiLoading || !result) return;
     
     setStep("ai_result");
     setIsAiLoading(true);
     setAiAnalysis("");
+    setRecommendedTour(null);
 
     try {
       const answersText = QUESTIONS.map(q => {
@@ -119,22 +121,32 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
       const res = await analyzePhysicalAction(answersText, result.title, result.summary);
       
-      if (res.success) {
-        setAiAnalysis(res.analysis || "");
-        if (res.tour) setRecommendedTour(res.tour);
+      if (res.success && res.stream) {
+        setIsAiLoading(false);
+
+        for await (const partial of readStreamableValue(res.stream)) {
+          if (partial) {
+            if (partial.analysis) setAiAnalysis(partial.analysis);
+            if (partial.recommendedTourId) {
+               const tour = res.allTours?.find((t: any) => t.id === partial.recommendedTourId);
+               if (tour) setRecommendedTour(tour);
+            }
+          }
+        }
+        
         updateProfile({ physicalLevel: result?.level || "prepare" });
         incrementFunTestPassAction('physical-readiness').catch(console.error);
+
       } else {
+        setIsAiLoading(false);
         setAiAnalysis("Извините, сейчас спортивный ИИ-врач недоступен. Но вы можете посмотреть расписание в каталоге.");
       }
     } catch (error) {
       console.error("Network error:", error);
-      setAiAnalysis("Произошла ошибка при соединении с сервером. Пожалуйста, попробуйте позже.");
-    } finally {
       setIsAiLoading(false);
+      setAiAnalysis("Произошла ошибка при соединении с сервером. Пожалуйста, попробуйте позже.");
     }
   };
-
   const getLoadingText = () => {
     if (loadingStep === 0) return "Оцениваем выносливость и восстановление...";
     if (loadingStep === 1) return `Анализируем результат: ${result?.title.toLowerCase()}...`;

@@ -1,241 +1,154 @@
+// src/features/account/components/AccountNav.tsx
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import {
-  LayoutDashboard, Calendar, Clock, Heart,
-  FlaskConical, LogOut, ChevronRight, Menu, X, Settings
+import { 
+  LayoutDashboard, 
+  Ticket, 
+  History, 
+  Heart, 
+  Settings, 
+  LogOut,
+  Compass
 } from 'lucide-react';
-import { useState } from 'react';
-import { clsx } from 'clsx';
+import { createClient } from '@/lib/supabase/client';
 
-// ─── типы ───────────────────────────────────────────────────────────
-interface AccountNavProps {
+type AccountNavProps = {
   profile: {
     name: string | null;
     level: string;
     totalTours: number;
   };
-}
-
-// ─── пункты навигации ───────────────────────────────────────────────
-const NAV_ITEMS = [
-  { href: '/account/dashboard', label: 'Главная',   icon: LayoutDashboard },
-  { href: '/account/bookings',  label: 'Брони',     icon: Calendar },
-  { href: '/account/history',   label: 'История',   icon: Clock },
-  { href: '/account/wishlist',  label: 'Вишлист',   icon: Heart },
-  { href: '/account/tests',     label: 'Тесты',     icon: FlaskConical },
-  { href: '/account/settings',  label: 'Настройки', icon: Settings },
-];
-
-// ─── цвета уровней ──────────────────────────────────────────────────
-const LEVEL_COLORS: Record<string, string> = {
-  'Первопроходец': 'text-teal-400 bg-teal-400/10',
-  'Походник':      'text-green-400 bg-green-400/10',
-  'Бывалый':       'text-blue-400 bg-blue-400/10',
-  'Ветеран':       'text-purple-400 bg-purple-400/10',
-  'Легенда клуба': 'text-amber-400 bg-amber-400/10',
 };
 
-// ─── компонент ──────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { name: 'Дашборд', href: '/account/dashboard', icon: LayoutDashboard },
+  { name: 'Мои туры', href: '/account/bookings',  icon: Ticket },
+  { name: 'История', href: '/account/history',   icon: History },
+  { name: 'Вишлист', href: '/account/wishlist',  icon: Heart },
+  { name: 'Профиль', href: '/account/profile',   icon: Settings },
+];
+
 export default function AccountNav({ profile }: AccountNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
+const supabase = createClient();
 
-  const levelColor = LEVEL_COLORS[profile.level] ?? 'text-slate-400 bg-slate-400/10';
-  const displayName = profile.name ?? 'Участник';
-  const initials = displayName
-    .split(' ')
-    .map(w => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  async function handleLogout() {
-    const supabase = createClient();
+  const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/');
     router.refresh();
-  }
+  };
 
   return (
     <>
-      {/* ── Desktop sidebar ─────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-60 bg-slate-900 border-r border-white/5 z-40">
-
-        {/* Логотип */}
-        <div className="px-5 py-5 border-b border-white/5">
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-xs font-black tracking-widest text-teal-400 uppercase">
-              ЭВА
-            </span>
-            <ChevronRight size={12} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
-            <span className="text-xs text-slate-500 group-hover:text-slate-300 transition-colors">
-              Кабинет
-            </span>
-          </Link>
-        </div>
-
-        {/* Профиль */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            {/* Аватар */}
-            <div className="w-10 h-10 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-teal-400">{initials}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">{displayName}</p>
-              <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full', levelColor)}>
-                {profile.level}
-              </span>
+      {/* ─── ДЕСКТОПНАЯ ВЕРСИЯ (Верхняя панель) ─────────────────────────── */}
+      <header className="hidden md:block sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
+        <div className="container mx-auto px-4 max-w-5xl h-20 flex items-center justify-between">
+          
+          {/* Левая часть: Логотип и мини-профиль */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 text-white hover:text-teal-400 transition-colors">
+              <Compass size={28} className="text-teal-500" />
+              <span className="font-black tracking-widest uppercase text-lg">EVA</span>
+            </Link>
+            
+            <div className="h-8 w-px bg-white/10" />
+            
+            <div>
+              <p className="text-sm font-bold text-white leading-tight">
+                {profile.name || 'Турист'}
+              </p>
+              <p className="text-xs text-teal-400 font-medium">
+                {profile.level} · {profile.totalTours} туров
+              </p>
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            {profile.totalTours} {plural(profile.totalTours, 'тур', 'тура', 'туров')}
-          </p>
-        </div>
 
-        {/* Навигация */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const active = pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                  active
-                    ? 'bg-teal-500/10 text-teal-400'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                )}
-              >
-                <Icon size={16} />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Выход */}
-        <div className="px-3 py-4 border-t border-white/5">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-red-400 hover:bg-red-400/5 transition-all"
-          >
-            <LogOut size={16} />
-            Выйти
-          </button>
-        </div>
-
-      </aside>
-
-      {/* ── Mobile top bar ──────────────────────────────────────── */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur border-b border-white/5">
-        <div className="flex items-center justify-between px-4 py-3">
-
-          {/* Логотип */}
-          <Link href="/" className="text-xs font-black tracking-widest text-teal-400 uppercase">
-            ЭВА
-          </Link>
-
-          {/* Имя + уровень */}
-          <div className="flex items-center gap-2">
-            <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full', levelColor)}>
-              {profile.level}
-            </span>
-          </div>
-
-          {/* Бургер */}
-          <button
-            onClick={() => setMobileOpen(o => !o)}
-            className="p-1 text-slate-400 hover:text-white transition-colors"
-            aria-label="Меню"
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          {/* Правая часть: Ссылки навигации */}
+          <nav className="flex items-center gap-2">
+            {NAV_LINKS.map((link) => {
+              const isActive = pathname === link.href;
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    isActive 
+                      ? 'bg-teal-500/10 text-teal-400' 
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={18} />
+                  {link.name}
+                </Link>
+              );
+            })}
+            
+            <div className="h-8 w-px bg-white/10 mx-2" />
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            >
+              <LogOut size={18} />
+              Выйти
+            </button>
+          </nav>
         </div>
       </header>
 
-      {/* ── Mobile menu overlay ─────────────────────────────────── */}
-      {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-30 bg-slate-950/80 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
 
-      <div
-        className={clsx(
-          'md:hidden fixed top-[53px] left-0 right-0 z-30 bg-slate-900 border-b border-white/5 transition-all duration-300',
-          mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-        )}
-      >
-        {/* Профиль */}
-        <div className="px-4 py-3 border-b border-white/5 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
-            <span className="text-sm font-bold text-teal-400">{initials}</span>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white">{displayName}</p>
-            <p className="text-xs text-slate-500">
-              {profile.totalTours} {plural(profile.totalTours, 'тур', 'тура', 'туров')}
-            </p>
-          </div>
-        </div>
-
-        {/* Пункты */}
-        <nav className="px-3 py-3 space-y-1">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const active = pathname.startsWith(href);
+      {/* ─── МОБИЛЬНАЯ ВЕРСИЯ (Нижний свайп-бар) ────────────────────────── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 pb-safe">
+        {/* Контейнер с горизонтальным скроллом и скрытым скроллбаром */}
+        <div className="flex items-center overflow-x-auto snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-2 py-2 gap-1">
+          
+          {NAV_LINKS.map((link) => {
+            const isActive = pathname === link.href;
+            const Icon = link.icon;
             return (
               <Link
-                key={href}
-                href={href}
-                onClick={() => setMobileOpen(false)}
-                className={clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                  active
-                    ? 'bg-teal-500/10 text-teal-400'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                )}
+                key={link.href}
+                href={link.href}
+                className={`snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl transition-all relative ${
+                  isActive 
+                    ? 'text-teal-400' 
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
               >
-                <Icon size={16} />
-                {label}
+                {/* Подложка для активного пункта */}
+                {isActive && (
+                  <div className="absolute inset-0 bg-teal-500/10 rounded-2xl -z-10 animate-in fade-in zoom-in duration-300" />
+                )}
+                <Icon size={20} className={isActive ? 'mb-1' : 'mb-1 opacity-80'} />
+                <span className="text-[10px] font-bold tracking-wide">
+                  {link.name}
+                </span>
               </Link>
             );
           })}
-        </nav>
 
-        {/* Выход */}
-        <div className="px-3 py-3 border-t border-white/5">
+          <div className="shrink-0 w-px h-8 bg-white/10 mx-1" />
+
+          {/* Кнопка выхода */}
           <button
-            onClick={() => { setMobileOpen(false); handleLogout(); }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-red-400 hover:bg-red-400/5 transition-all"
+            onClick={handleLogout}
+            className="snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl text-slate-600 hover:text-red-400 transition-colors"
           >
-            <LogOut size={16} />
-            Выйти
+            <LogOut size={20} className="mb-1" />
+            <span className="text-[10px] font-bold tracking-wide">
+              Выход
+            </span>
           </button>
+          
+          {/* Пустой блок для отступа в конце скролла */}
+          <div className="shrink-0 w-2" />
         </div>
-      </div>
-
-      {/* ── Отступ для десктоп sidebar ──────────────────────────── */}
-      <div className="hidden md:block w-60 shrink-0" />
-
-      {/* ── Отступ для мобильного хедера ────────────────────────── */}
-      <div className="md:hidden h-[53px]" />
+      </nav>
     </>
   );
-}
-
-// ─── склонение числительных ─────────────────────────────────────────
-function plural(n: number, one: string, few: string, many: string): string {
-  const abs = Math.abs(n) % 100;
-  const mod = abs % 10;
-  if (abs >= 11 && abs <= 19) return many;
-  if (mod === 1) return one;
-  if (mod >= 2 && mod <= 4) return few;
-  return many;
 }

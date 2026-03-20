@@ -19,3 +19,4 @@ export async function GET() {
     }, { status: 500 });
   }
 }
+export const POST = GET;

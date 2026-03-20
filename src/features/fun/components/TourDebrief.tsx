@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link"; // Добавили для перехода в каталог
 import {
   BookOpen, ChevronRight, ArrowLeft,
@@ -14,6 +14,7 @@ import { analyzeDebriefAction } from "@/features/fun/actions";
 import { Tour } from "@/features/tours/types";
 import { useProfile } from "@/hooks/useProfile";  
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+import { readStreamableValue } from 'ai/rsc';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -90,41 +91,49 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
     else setCurrent(c => c + 1);
   };
 
-  const handleGetAiMagic = async () => {
-    // 🛡️ Защита: от двойного клика и отсутствия заполненных полей
+ const handleGetAiMagic = async () => {
     if (isAiLoading || answeredCount === 0) return;
 
     setStep("ai_result");
     setIsAiLoading(true);
     setAiAnalysis("");
+    setRecommendedTour(null);
 
     try {
-      // 🧠 RAG: Передаем ИИ структурированные ответы с привязкой к сферам опыта
       const answersText = QUESTIONS.map((q) => {
         const ans = answers[q.id]?.trim();
         return ans ? `[Сфера: ${BLOCK_META[q.block].label}] Вопрос: ${q.text}\nОтвет: ${ans}` : null;
       }).filter(Boolean).join("\n\n");
 
       const res = await analyzeDebriefAction(answersText);
-      if (res.success) {
-        setAiAnalysis(res.analysis || "");
-        if (res.tour) setRecommendedTour(res.tour);
+      
+      if (res.success && res.stream) {
+        setIsAiLoading(false);
+
+        for await (const partial of readStreamableValue(res.stream)) {
+          if (partial) {
+            if (partial.analysis) setAiAnalysis(partial.analysis);
+            if (partial.recommendedTourId) {
+               const tour = res.allTours?.find((t: any) => t.id === partial.recommendedTourId);
+               if (tour) setRecommendedTour(tour);
+            }
+          }
+        }
         
-        // Сохраняем факт прохождения в профиль
         updateProfile({ touristType: "Reflective" }); 
         incrementFunTestPassAction('tour-debrief').catch(console.error);
         
       } else {
+        setIsAiLoading(false);
         setAiAnalysis("ИИ-психолог сейчас недоступен. Но мы будем рады видеть тебя в новых турах.");
       }
     } catch (error) {
       console.error("Network error:", error);
-      setAiAnalysis("Произошла ошибка при соединении с сервером. Пожалуйста, проверьте интернет.");
-    } finally {
       setIsAiLoading(false);
+      setAiAnalysis("Произошла ошибка при соединении с сервером. Пожалуйста, проверьте интернет.");
     }
   };
-
+  
   const getLoadingText = () => {
     if (loadingStep === 0) return "Считываем скрытые смыслы...";
     if (loadingStep === 1) return "Формируем психологический инсайт...";

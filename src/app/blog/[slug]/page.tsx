@@ -12,7 +12,7 @@ import sanitizeHtml from 'sanitize-html';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const posts = await prisma.blog.findMany({

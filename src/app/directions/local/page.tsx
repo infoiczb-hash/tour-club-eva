@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { getTours } from '@/features/tours/api'; 
 import LocalProgram from '@/features/directions/local/LocalLanding';
 
-export const revalidate = 60; 
+export const revalidate = 300; 
 
 export const metadata: Metadata = {
   title: 'Маршруты по Приднестровью | Турклуб Эва',

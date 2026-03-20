@@ -5,7 +5,7 @@ import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import { Suspense } from 'react';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
 export const metadata: Metadata = {

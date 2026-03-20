@@ -6,7 +6,7 @@ import { getTourCategoriesAction } from '@/features/admin/actions/categories';
 import { Suspense } from 'react'; // 👈 ДОБАВЛЕНО
 import { TourSkeleton } from '@/features/tours/components/TourSkeleton'; // 👈 ДОБАВЛЕНО
 
-export const revalidate = 60; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 300; // Страница будет кэшироваться на 60 секунд
 
 // 1. 🔥 СУПЕР-SEO ДЛЯ КАТАЛОГА ТУРОВ (Приднестровье/Молдова)
 export const metadata: Metadata = {

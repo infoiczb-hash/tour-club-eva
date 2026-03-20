@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { getTours } from '@/features/tours/api'; // ✅ РАЗБЛОКИРОВАН ЗАПРОС К БД
 import KayakingLanding from '@/features/directions/kayaking/KayakingLanding';
 
-export const revalidate = 60; 
+export const revalidate = 300; 
 
 export const metadata: Metadata = {
   title: 'Сплав на байдарках по Днестру в Приднестровье | Турклуб «Эва»',

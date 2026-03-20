@@ -1,9 +1,11 @@
+// src/app/account/layout.tsx
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import AccountNav from '@/features/account/components/AccountNav';
+// 👇 1. Импортируем наш новый компонент
+import OnboardingModal from '@/features/account/components/OnboardingModal';
 
-// Загружаем профиль участника — используется во всех дочерних страницах
 export async function getAccountProfile() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,13 +27,10 @@ export default async function AccountLayout({
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Middleware уже редиректит, но дублируем для надёжности
   if (!user) {
     redirect('/login?next=/account');
   }
 
-  // Если профиль ещё не создан (первый вход до завершения link-profile)
-  // — создаём минимальный профиль здесь
   let profile = await prisma.memberProfile.findUnique({
     where: { userId: user.id },
   });
@@ -46,7 +45,6 @@ export default async function AccountLayout({
       },
     });
 
-    // Привязываем исторические брони если есть телефон
     if (phone) {
       await prisma.booking.updateMany({
         where: { phone, memberId: null },
@@ -55,8 +53,11 @@ export default async function AccountLayout({
     }
   }
 
+  // 👇 2. Проверяем, нужен ли онбординг (если телефон пустой)
+  const needsOnboarding = !profile.phone;
+
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-950 relative">
 
       {/* Навигация кабинета */}
       <AccountNav
@@ -68,8 +69,11 @@ export default async function AccountLayout({
       />
 
       {/* Контент страницы */}
-      <main className="container mx-auto px-4 pt-6 pb-20 max-w-5xl">
+      <main className="container mx-auto px-4 pt-6 pb-20 max-w-5xl relative z-10">
         {children}
+        
+        {/* 👇 3. Блокируем ЛК, если нет телефона */}
+        {needsOnboarding && <OnboardingModal />}
       </main>
 
     </div>

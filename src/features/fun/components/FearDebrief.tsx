@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, ArrowLeft, Check, X, Compass, Sparkles, Loader2, HelpCircle
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { analyzeFearsAction } from "@/features/fun/actions";
 import { Tour } from "@/features/tours/types";
 import { useProfile } from "@/hooks/useProfile"; 
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+import { readStreamableValue } from 'ai/rsc';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -99,27 +100,41 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
     setStep("ai_result");
     setIsAiLoading(true);
     setAiAnalysis("");
+    setRecommendedTour(null);
 
     try {
       const res = await analyzeFearsAction(selected);
       
-      if (res.success) {
-        setAiAnalysis(res.analysis || "");
-        if (res.tour) setRecommendedTour(res.tour);
+      if (res.success && res.stream) {
+        // Отключаем лоадер, как только пошел поток
+        setIsAiLoading(false);
+
+        // Читаем поток в реальном времени
+        for await (const partial of readStreamableValue(res.stream)) {
+          if (partial) {
+            if (partial.analysis) setAiAnalysis(partial.analysis);
+            if (partial.recommendedTourId) {
+               const tour = res.allTours?.find((t: any) => t.id === partial.recommendedTourId);
+               if (tour) setRecommendedTour(tour);
+            }
+          }
+        }
         
+        // Поток завершен — сохраняем прогресс
         updateProfile({ fears: selected }); 
         incrementFunTestPassAction('fear-debrief').catch(console.error);
+
       } else {
-        setAiAnalysis("ИИ-психолог сейчас недоступен. Попробуй позже.");
+        setIsAiLoading(false);
+        setAiAnalysis(res.error || "ИИ-психолог сейчас недоступен. Попробуй позже.");
       }
     } catch (error) {
       console.error(error);
-      setAiAnalysis("Произошла ошибка сети.");
-    } finally {
       setIsAiLoading(false);
+      setAiAnalysis("Произошла ошибка сети.");
     }
   };
-
+  
   const getLoadingText = () => {
     if (loadingStep === 0) return "Собираем твои ответы...";
     if (loadingStep === 1 && selected.length > 0) {

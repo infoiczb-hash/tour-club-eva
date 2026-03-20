@@ -1,21 +1,45 @@
 "use client";
 
 import React, { useState } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Loader2, Zap, Brain, ShieldCheck } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { analyzeFullProfileAction } from "@/features/fun/actions";
+import { readStreamableValue } from 'ai/rsc';
 
 export default function FullProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  const getSuperAnalysis = async () => {
+const getSuperAnalysis = async () => {
     setLoading(true);
-    const res = await analyzeFullProfileAction(profile);
-    if (res.success) setResult(res);
-    setLoading(false);
+    
+    try {
+      const res = await analyzeFullProfileAction(profile);
+      
+      if (res.success && res.stream) {
+        // Как только сервер ответил началом потока — убираем лоадер
+        setLoading(false);
+        
+        // Задаем пустой скелет, чтобы UI не прыгал
+        setResult({ summaryTitle: "", psychologicalPortrait: "", mainInsight: "", advice: "" });
+
+        // Начинаем читать поток данных в реальном времени
+        for await (const partial of readStreamableValue(res.stream)) {
+          if (partial) {
+            // Добавляем новые сгенерированные буквы к нашему результату
+            setResult((prev: any) => ({ ...prev, ...partial }));
+          }
+        }
+      } else {
+        setLoading(false);
+        console.error("AI Error:", res.error);
+      }
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;

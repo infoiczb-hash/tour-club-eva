@@ -164,7 +164,7 @@ function DirectionJsonLd({ slug }: { slug: string }) {
 // ==========================================
 // СТРАНИЦА
 // ==========================================
-export const revalidate = 60;
+export const revalidate = 300;
 export async function generateStaticParams() {
   return [
     { slug: 'kayaking' },

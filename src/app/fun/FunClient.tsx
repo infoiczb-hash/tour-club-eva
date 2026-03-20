@@ -12,6 +12,7 @@ import { twMerge } from "tailwind-merge";
 import type { FunTest } from "@prisma/client";
 import { useInView } from '@/hooks/useInView';
 import { useModalStore } from '@/shared/store/useModalStore';
+import { LazyMotion, domAnimation } from "framer-motion";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -153,12 +154,12 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         })}
         <CtaBanner />
       </div>
-
-      {/* ✅ ВМЕСТО ПРЕДЫДУЩИХ КОСТЫЛЕЙ, ПРОСТО ВЫЗЫВАЕМ МЕНЕДЖЕР В SUSPENSE */}
-      <Suspense fallback={null}>
-        <QuizModalManager />
-      </Suspense>
-
+{/* СТАЛО: Добавляем LazyMotion вокруг Suspense */}
+      <LazyMotion features={domAnimation}>
+        <Suspense fallback={null}>
+          <QuizModalManager />
+        </Suspense>
+      </LazyMotion>
     </div>
   );
 }
