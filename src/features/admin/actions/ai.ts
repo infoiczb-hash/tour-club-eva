@@ -15,11 +15,11 @@ const model = google('gemini-1.5-flash');
 const TourAiSchema = z.object({
   title: z.string().describe('Маркетинговое название тура'),
   subtitle: z.string().describe('Краткий слоган'),
-  type: z.enum(['hiking_1', 'water', 'weekend', 'kids', 'expedition']),
+  type: z.enum(['hiking', 'kayaking', 'sup', 'kids', 'local']),
   description: z.string().describe('Вкусное, продающее описание (Markdown, 2-3 абзаца)'),
   location: z.string(),
   meeting_point: z.string().optional(),
-  difficulty: z.enum(['Лёгкая', 'Средняя', 'Сложная']),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
   duration: z.string(),
   distance: z.string().optional(),
   price_adult: z.number(),

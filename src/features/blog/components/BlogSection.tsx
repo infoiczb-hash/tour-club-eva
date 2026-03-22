@@ -186,14 +186,13 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                     {/* ДОБАВИЛИ shrink-0 к обертке аватарки */}
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800 shrink-0">
                       {featuredPost.author_image ? (
-                        <Image
-                          src={featuredPost.author_image}
-                          alt={featuredPost.author_name || "Автор статьи"}
-                          fill
-                          sizes="40px"
-                          quality={75}
-                          className="object-cover"
-                        />
+                      <Image 
+  src={featuredPost.author_image} 
+  alt={featuredPost.author_name || 'Автор'} 
+  fill 
+  className="object-cover object-top" 
+  sizes="40px" 
+/>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-300"><User size={16} /></div>
                       )}

@@ -99,9 +99,8 @@ export default async function GuidePage({ params }: Props) {
     stats = typeof guide.stats === 'string' ? JSON.parse(guide.stats) : (guide.stats as any[]);
   }
 
-  // Защита массивов от null
-  const tags        = Array.isArray(guide.tags)         ? guide.tags         : [];
-  const quotes      = Array.isArray(guide.quotes)       ? guide.quotes       : [];
+  const tags         = Array.isArray(guide.tags)         ? guide.tags         : [];
+  const quotes       = Array.isArray(guide.quotes)       ? guide.quotes       : [];
   const achievements = Array.isArray(guide.achievements) ? guide.achievements : [];
 
   const jsonLd = {
@@ -119,40 +118,47 @@ export default async function GuidePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full min-h-[85vh] md:min-h-[90vh] flex items-end md:pb-24">
-        {guide.actionImage || guide.image ? (
-          <Image 
-            src={guide.actionImage || guide.image || ''} 
-            alt={`Гид ${guide.name}`} 
-            fill 
-            // FIX 1: убрали opacity-70 → фото не затемнено
-            className="object-cover object-top md:object-[center_15%]"
-            priority
-            fetchPriority="high"
-            sizes="100vw"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-slate-900" />
-        )}
+      <section className="relative w-full min-h-[100svh] md:min-h-[90vh] flex flex-col">
+        {/* BG IMAGE */}
+        <div className="absolute inset-0 z-0">
+          {guide.actionImage || guide.image ? (
+            <Image 
+              src={guide.actionImage || guide.image || ''} 
+              alt={`Гид ${guide.name}`} 
+              fill 
+              className="object-cover object-top md:object-[center_15%]"
+              priority
+              fetchPriority="high"
+              sizes="100vw"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-slate-900" />
+          )}
+          {/* Градиенты для читаемости (снизу и сверху) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-slate-950/60 to-transparent pointer-events-none" />
+        </div>
         
-        {/* FIX 1: ослабили via — верх фото светлый, низ читаемый */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-        
-        {/* FIX 2: убрали pb-12 на мобиле чтобы текст не давил фото */}
-        <div className="container mx-auto px-4 relative z-10 pt-32 pb-10 md:pb-0">
-          <Link
-            href="/guides"
-            className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors mb-8 md:mb-10 text-[11px] md:text-sm font-bold uppercase tracking-widest bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-slate-800"
-          >
-            <ArrowLeft size={16} /> К списку гидов
-          </Link>
+        {/* CONTENT CONTAINER */}
+        <div className="container mx-auto px-4 relative z-10 pt-28 md:pt-36 pb-12 md:pb-20 flex flex-col flex-grow">
           
-          <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-500 text-slate-950 mb-5 font-black uppercase tracking-widest text-[10px] md:text-xs shadow-[0_0_20px_rgba(20,184,166,0.4)]">
+          {/* TOP: Back Button */}
+          <div>
+            <Link
+              href="/guides"
+              className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-[11px] md:text-sm font-bold uppercase tracking-widest bg-slate-900/60 backdrop-blur-md px-5 py-2.5 md:px-6 md:py-3 rounded-full border border-white/10 hover:bg-slate-800 shadow-lg"
+            >
+              <ArrowLeft size={16} /> К списку гидов
+            </Link>
+          </div>
+
+          {/* BOTTOM: Text block (прижат к низу через mt-auto) */}
+          <div className="mt-auto max-w-4xl pt-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full bg-teal-500 text-slate-950 mb-4 md:mb-5 font-black uppercase tracking-widest text-[10px] md:text-xs shadow-[0_0_20px_rgba(20,184,166,0.4)]">
               {guide.role}
             </div>
             
-            <h1 className="text-5xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-2xl">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-6 drop-shadow-2xl">
               {guide.name} 
             </h1>
             
@@ -163,11 +169,12 @@ export default async function GuidePage({ params }: Props) {
             )}
 
             {guide.bio && (
-              <p className="text-[15px] md:text-xl text-slate-300 font-medium leading-relaxed max-w-3xl border-l-2 border-teal-500/50 pl-4 md:pl-6">
+              <p className="text-[15px] md:text-lg lg:text-xl text-slate-200 font-medium leading-relaxed max-w-3xl border-l-2 border-teal-500/50 pl-4 md:pl-6 drop-shadow-md">
                 {guide.bio}
               </p>
             )}
           </div>
+          
         </div>
       </section>
 
@@ -230,7 +237,7 @@ export default async function GuidePage({ params }: Props) {
               </div>
             )}
 
-            {/* 3. Достижения — REC 5: выводим achievements[] */}
+            {/* 3. Достижения */}
             {achievements.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-5">
@@ -250,7 +257,7 @@ export default async function GuidePage({ params }: Props) {
               </div>
             )}
 
-            {/* 4. Досье (fullBio) — FIX 3: добавлен заголовок */}
+            {/* 4. Досье (fullBio) */}
             {guide.fullBio && (
               <div>
                 <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white mb-6">
@@ -266,7 +273,7 @@ export default async function GuidePage({ params }: Props) {
               </div>
             )}
 
-            {/* 5. Цитаты — FIX 4 + REC 6: заголовок + все цитаты */}
+            {/* 5. Цитаты */}
             {quotes.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-6">

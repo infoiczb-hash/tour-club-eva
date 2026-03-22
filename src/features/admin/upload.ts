@@ -46,7 +46,7 @@ export const uploadFile = async (formData: FormData): Promise<{ url: string | nu
       .from('tours-images') 
       .upload(filePath, fileBuffer, {
         upsert: true,
-        cacheControl: '3600',
+        cacheControl: '31536000',
         contentType: file.type // сохраняем MIME-тип
       });
 

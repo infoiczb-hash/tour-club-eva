@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, CheckCircle, Loader2, Phone, User, MessageSquare, Calendar, AtSign, Minus, Plus, AlertCircle } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
+import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -40,23 +41,23 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (initialDate && initialDateId) {
-        setSelectedDateStr(initialDate);
-        setSelectedDateId(initialDateId);
-      } else if (tour.dates && tour.dates.length > 0) {
-        const first = tour.dates[0];
-        setSelectedDateId(first.id || null);
-        setSelectedDateStr(formatDateForDropdown(first));
-      } else {
-        const dateObj = new Date(tour.date);
-        const ruDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-        setSelectedDateStr(ruDate);
-        setSelectedDateId(null);
+useEffect(() => {
+  if (isOpen) {
+    // ... твой код с датами ...
+    
+    // 👇 ДОБАВЛЯЕМ ПОДТЯГИВАНИЕ ДАННЫХ
+    getMyProfileAction().then(profile => {
+      if (profile) {
+        setFormData(prev => ({
+          ...prev,
+          name: profile.name || prev.name,
+          phone: profile.phone || prev.phone,
+          social: profile.email || prev.social // Берем email как фолбэк для соцсети
+        }));
       }
-    }
-  }, [isOpen, initialDate, initialDateId, tour]);
+    });
+  }
+}, [isOpen, initialDate, initialDateId, tour]);
 
   // Добавлен семейный билет
   const [tickets, setTickets] = useState({

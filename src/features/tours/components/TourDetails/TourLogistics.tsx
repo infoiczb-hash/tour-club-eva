@@ -37,15 +37,14 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
       <div className="flex gap-4 items-center">
          <div className="relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden bg-indigo-500/10 border border-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400">
             {guideImage ? (
-              <Image 
-                src={guideImage} 
-                alt={guideName} 
-                fill 
-                loading="lazy"
-                // ✅ ИСПРАВЛЕНИЕ: Добавили object-top (или object-[center_15%]), чтобы при обрезке фокус был на лице, а не на пузе
-                className="object-cover object-[center_15%]"
-                sizes="40px"
-              />
+             <Image 
+  src={guideImage} 
+  alt={guideName} 
+  fill 
+  loading="lazy"
+  className="object-cover object-top"
+  sizes="40px"
+/>
             ) : (
               <User size={20} />
             )}

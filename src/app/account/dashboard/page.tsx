@@ -5,11 +5,13 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  MapPin, Clock, Users, TrendingUp,
+ MapPin, Clock, Users, TrendingUp,
   ChevronRight, Calendar, ArrowRight,
-  Star, Flame,
+  Star, Flame, Timer, Backpack,
+  FileText, Download
 } from 'lucide-react';
 import VirtualCard from '@/features/account/components/VirtualCard';
+import ReferralCard from '@/features/account/components/ReferralCard';
 
 // ─── уровни ─────────────────────────────────────────────────────────
 const LEVELS = [
@@ -29,19 +31,32 @@ const LEVEL_STYLES: Record<string, { bar: string; badge: string; glow: string }>
 };
 
 // ─── вспомогательные функции ─────────────────────────────────────────
-function getProgressToNext(totalTours: number) {
-  const current = LEVELS.find(l => totalTours >= l.min && totalTours <= l.max)
-    ?? LEVELS[LEVELS.length - 1];
-  const nextLevel = LEVELS[LEVELS.indexOf(current) + 1];
 
-  if (!nextLevel) return { pct: 100, toNext: 0, nextName: null };
+function getDaysLeft(targetDate: Date) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(targetDate);
+  target.setHours(0, 0, 0, 0);
+  const diffTime = target.getTime() - now.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
 
-  const range = nextLevel.min - current.min;
-  const done  = totalTours - current.min;
-  const pct   = Math.min(Math.round((done / range) * 100), 100);
-  const toNext = nextLevel.min - totalTours;
+function pluralDays(n: number) {
+  const abs = Math.abs(n) % 100;
+  const mod = abs % 10;
+  if (abs >= 11 && abs <= 19) return 'дней';
+  if (mod === 1) return 'день';
+  if (mod >= 2 && mod <= 4) return 'дня';
+  return 'дней';
+}
 
-  return { pct, toNext, nextName: nextLevel.name };
+function pluralThings(n: number) {
+  const abs = Math.abs(n) % 100;
+  const mod = abs % 10;
+  if (abs >= 11 && abs <= 19) return 'вещей';
+  if (mod === 1) return 'вещь';
+  if (mod >= 2 && mod <= 4) return 'вещи';
+  return 'вещей';
 }
 
 function formatDate(d: Date) {
@@ -56,14 +71,13 @@ async function getDashboardData(userId: string) {
 
   if (!profile) return null;
 
-  // ✅ ИСПРАВЛЕНИЕ: Ближайший предстоящий тур (теперь учитывает и туры без конкретной даты)
-const upcomingBooking = await prisma.booking.findFirst({
+  const upcomingBooking = await prisma.booking.findFirst({
     where: {
       memberId: profile.id,
       status: { in: ['pending', 'confirmed'] },
       OR: [
         { tourDate: { startDate: { gte: new Date() } } },
-        { tourDateId: null } // ✅ Теперь туры с открытой датой тоже попадают в ЛК
+        { tourDateId: null } 
       ]
     },
     orderBy: { tourDate: { startDate: 'asc' } },
@@ -76,6 +90,8 @@ const upcomingBooking = await prisma.booking.findFirst({
           coverImage: true,
           difficulty: true,
           duration: true,
+          checklist: true, // 👈 Это мы добавили в прошлый раз
+          documents: true, // 👈 А вот это добавляем СЕЙЧАС
         },
       },
       tourDate: {
@@ -91,7 +107,6 @@ const upcomingBooking = await prisma.booking.findFirst({
     },
   });
 
-  // Статистика: уникальные гиды
   const uniqueGuides = await prisma.booking.findMany({
     where: { memberId: profile.id },
     include: {
@@ -103,7 +118,6 @@ const upcomingBooking = await prisma.booking.findFirst({
     uniqueGuides.map(b => b.tourDate?.guideId).filter(Boolean)
   );
 
-  // Ночей вне дома — считаем из duration туров
   const bookingsForNights = await prisma.booking.findMany({
     where: { memberId: profile.id },
     include: { tour: { select: { duration: true } } },
@@ -113,7 +127,6 @@ const upcomingBooking = await prisma.booking.findFirst({
     return sum + (isNaN(d) || d < 0 ? 0 : d);
   }, 0);
 
-  // Последние 3 тура для блока "История"
   const recentBookings = await prisma.booking.findMany({
     where: { memberId: profile.id, status: { not: 'cancelled' } },
     orderBy: { createdAt: 'desc' },
@@ -150,6 +163,7 @@ export default async function DashboardPage() {
 
   const { profile, upcomingBooking, stats, recentBookings } = data;
   const displayName = profile.name ?? 'Участник';
+  const inventoryCount = profile.inventory?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -171,8 +185,11 @@ export default async function DashboardPage() {
           />
         </div>
       </section>
-
-        {/* ── Статистика ──────────────────────────────────────────── */}
+{/* ── Реферальная программа ───────────────────────────────── */}
+      <section>
+        <ReferralCard name={profile.name} userId={profile.userId} />
+      </section>
+      {/* ── Статистика ──────────────────────────────────────────── */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Туров',    value: stats.totalTours,   unit: '',   icon: Flame    },
@@ -223,6 +240,17 @@ export default async function DashboardPage() {
                   sizes="(max-width: 768px) 100vw, 700px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
+                
+                {/* Плашка обратного отсчета */}
+                {upcomingBooking.tourDate && getDaysLeft(upcomingBooking.tourDate.startDate) >= 0 && (
+                  <div className="absolute top-4 right-4 bg-teal-500 text-slate-950 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(20,184,166,0.5)] flex items-center gap-1.5 z-10">
+                    <Timer size={14} className="animate-pulse" />
+                    {getDaysLeft(upcomingBooking.tourDate.startDate) === 0
+                      ? 'Тур уже сегодня!'
+                      : `Через ${getDaysLeft(upcomingBooking.tourDate.startDate)} ${pluralDays(getDaysLeft(upcomingBooking.tourDate.startDate))}`}
+                  </div>
+                )}
+
                 {/* Дата поверх фото */}
                 {upcomingBooking.tourDate && (
                   <div className="absolute bottom-3 left-4 flex items-center gap-2">
@@ -237,12 +265,10 @@ export default async function DashboardPage() {
             )}
 
             <div className="p-4 space-y-3">
-              {/* Название */}
               <h3 className="text-lg font-black text-white leading-tight">
                 {upcomingBooking.tour.title}
               </h3>
 
-              {/* Детали */}
               <div className="flex flex-wrap gap-3 text-xs text-slate-400">
                 {upcomingBooking.tour.location && (
                   <span className="flex items-center gap-1">
@@ -256,7 +282,6 @@ export default async function DashboardPage() {
                 )}
               </div>
 
-              {/* Гид */}
               {upcomingBooking.tourDate?.guide && (
                 <div className="flex items-center gap-2 pt-1">
                   {upcomingBooking.tourDate.guide.image ? (
@@ -282,7 +307,6 @@ export default async function DashboardPage() {
                 </div>
               )}
 
-              {/* Кнопки */}
               <div className="flex gap-2 pt-1">
                 <Link
                   href={`/tour/${upcomingBooking.tour.slug}`}
@@ -299,6 +323,79 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* 👇 НОВЫЙ БЛОК: Умный чек-лист снаряжения 👇 */}
+          <div className="mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0">
+                <Backpack size={24} />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-sm mb-1">Снаряжение для тура</h3>
+                {inventoryCount > 0 ? (
+                  <p className="text-xs text-slate-400 font-medium">
+                    В вашем базовом инвентаре <strong className="text-teal-400">{inventoryCount} {pluralThings(inventoryCount)}</strong>. Сверьтесь со списком тура!
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-400 font-medium">
+                    Ваш базовый инвентарь пуст. Обязательно проверьте, что нужно взять с собой!
+                  </p>
+                )}
+              </div>
+            </div>
+            <Link
+              href={`/tour/${upcomingBooking.tour.slug}#essentials`}
+              className="w-full md:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/5 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors text-center shrink-0"
+            >
+              Смотреть список
+            </Link>
+          </div>
+          {/* 👆 КОНЕЦ НОВОГО БЛОКА 👆 */}
+{/* 👇 НОВЫЙ БЛОК: Документы тура 👇 */}
+          {(() => {
+            // Строго типизируем JSON из базы
+            interface TourDoc { title?: string; url?: string; }
+            const docs = upcomingBooking.tour.documents as unknown as TourDoc[] | null;
+
+            if (!Array.isArray(docs) || docs.length === 0) return null;
+
+            return (
+              <div className="mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} className="text-blue-400" />
+                  <h3 className="text-white font-bold text-sm">Материалы для скачивания</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {docs.map((doc, idx) => {
+                    if (!doc.url) return null; // Защита от битых ссылок
+                    return (
+                      <a
+                        key={idx}
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-white/5 transition-all group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                          <Download size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">
+                            {doc.title || 'Документ к туру'}
+                          </p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                            Открыть файл
+                          </p>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+          {/* 👆 КОНЕЦ БЛОКА ДОКУМЕНТОВ 👆 */}
         </section>
       ) : (
         /* Нет предстоящих туров */

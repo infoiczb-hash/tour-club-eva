@@ -1,20 +1,19 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { 
   LayoutGrid, Calendar as CalendarIcon, 
-  Flame, Mountain, Tent, Droplets, Baby, ArrowRight,
-  Sparkles, Layers, Filter, X, Bell,
-  Compass, Map as MapIcon, Sun, Snowflake, TreePine, Bike, Footprints, MapPin, Anchor, Star, Waves
+  Flame, Sparkles, Layers, Filter, X, Bell, ArrowRight,
+  Compass, Map as MapIcon, Sun, Snowflake, TreePine, Bike, Footprints, MapPin, Anchor, Star, Waves,
+  TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby // ✅ ВСЕ ИКОНКИ НА МЕСТЕ
 } from 'lucide-react';
 import Link from 'next/link';
 import { Tour } from '@/features/tours/types'; 
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 import dynamic from 'next/dynamic';
 import TourCard from './TourCard';
 import { useModalStore } from '@/shared/store/useModalStore'; 
+import { cn } from '@/lib/utils';
 
 const CalendarView = dynamic(() => import('./CalendarView'), {
   ssr: true,
@@ -23,10 +22,7 @@ const CalendarView = dynamic(() => import('./CalendarView'), {
   ),
 });
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
+// ✅ ИСПРАВЛЕНО: Честный маппинг всех иконок без костылей
 const getIconComponent = (iconName: string, size = 14) => {
   const icons: Record<string, any> = {
     Compass, Tent, Mountain, Waves, Map: MapIcon, Sun, Snowflake,
@@ -42,15 +38,19 @@ interface ToursBrowserProps {
   title?: string;
   subtitle?: string;
   limit?: number;
+  totalKm?: number; 
 }
 
-// ✅ ДОБАВЛЕНО: Безопасный слушатель параметров для обхода деоптимизации SSR
+// Слушатель для начальной инициализации фильтра из URL
 function ParamsListener({ onChange }: { onChange: (val: string) => void }) {
   const searchParams = useSearchParams();
   
   useEffect(() => {
-    onChange(searchParams.get('category') || 'all');
-  }, [searchParams, onChange]);
+    // Устанавливаем категорию только при маунте, чтобы не было конфликтов
+    const cat = searchParams.get('category');
+    if (cat) onChange(cat);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
   
   return null;
 }
@@ -60,18 +60,17 @@ export default function ToursBrowser({
     categories = [], 
     title = "Афиша Приключений", 
     subtitle = "ТУРЫ КЛУБА",
-    limit = 16 
+    limit = 8, // По умолчанию показываем 8, остальные по кнопке "Показать еще"
+    totalKm = 0
 }: ToursBrowserProps) {
   
   const openContactModal = useModalStore((state) => state.openContactModal);
-  const router = useRouter();
-  const pathname = usePathname();
   
-  // ✅ ИСПРАВЛЕНО: Заменили searchParams.get на стейт, чтобы SSR не блокировался
+  // ✅ ИСПРАВЛЕНО: Мгновенный стейт вместо зависимости от роутера Next.js
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(limit); // Для пагинации
 
   const displayCategories = useMemo(() => {
     const allBtn = { id: 'all', slug: 'all', label: 'Все', icon: <Layers size={14}/> };
@@ -85,97 +84,83 @@ export default function ToursBrowser({
   }, [categories]);
   
   const handleCategoryClick = (slug: string) => {
-    // ✅ ИСПРАВЛЕНО: Мгновенно обновляем стейт и читаем параметры из window для роутера
+    // 1. Мгновенно обновляем стейт (нулевая задержка UI)
     setActiveCategory(slug);
-    const params = new URLSearchParams(window.location.search);
+    setVisibleCount(limit); // Сбрасываем пагинацию при смене категории
+    setIsMobileFiltersOpen(false);
+
+    // 2. Тихо обновляем URL без перезагрузки страницы и запросов на сервер
+    const url = new URL(window.location.href);
     if (slug === 'all') {
-      params.delete('category'); 
+      url.searchParams.delete('category'); 
     } else {
-      params.set('category', slug); 
+      url.searchParams.set('category', slug); 
     }
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    window.history.replaceState(null, '', url.toString());
   };
 
-  // --- SMART FEED LOGIC ---
-  const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
+  // --- SMART FEED LOGIC (Новая логика: Строгая хронология + Анонсы) ---
+  const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
     const safeTours = tours || [];
-    
-    // Получаем начало сегодняшнего дня для корректного сравнения
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // ФИЛЬТРАЦИЯ КАТЕГОРИЙ И ПРОШЕДШИХ ТУРОВ
+    // 1. Фильтрация категорий и прошедших туров
     const filtered = safeTours.filter(tour => {
-      // 1. Фильтр по категории
+      // Категория
       if (activeCategory !== 'all') {
         const tourCategorySlug = tour.category?.slug;
         if (tourCategorySlug !== activeCategory.toLowerCase()) return false;
       }
 
-      // 2. Фильтр по времени (отсекаем полностью прошедшие туры)
+      // Отсекаем полностью прошедшие
       if (tour.dates && tour.dates.length > 0) {
-        // Оставляем тур, если есть хотя бы одна дата в будущем (или сегодня)
         const hasFutureDate = tour.dates.some((d: any) => {
            const dateToCompare = d.end ? new Date(d.end) : new Date(d.start);
            dateToCompare.setHours(0, 0, 0, 0);
            return dateToCompare >= today;
         });
-        if (!hasFutureDate) return false; // Исключаем тур из выдачи
+        if (!hasFutureDate) return false;
       } else if (tour.date) {
-        // Фолбэк на одиночную дату
         const singleDate = new Date(tour.date);
         singleDate.setHours(0, 0, 0, 0);
         if (singleDate < today) return false;
       }
       
-      // Туры без дат (анонсы) и туры с будущими датами проходят дальше
       return true;
     });
 
+    // 2. Хронологическая сортировка
     const sorted = filtered.sort((a, b) => {
         const dateA = a.date ? new Date(a.date).getTime() : Infinity;
         const dateB = b.date ? new Date(b.date).getTime() : Infinity;
         return dateA - dateB;
     });
 
-    const now = new Date();
-    const twoWeeksLater = new Date();
-    twoWeeksLater.setDate(now.getDate() + 14);
-
-    const hot: Tour[] = [];
-    const soon: Tour[] = [];
+    // 3. Разделение на "С датами" (scheduled) и "Без дат / Анонсы" (tba)
+    const scheduled: Tour[] = [];
+    const tba: Tour[] = [];
 
     sorted.forEach(t => {
-        if (!t.date) {
-            soon.push(t);
-            return;
-        }
-        const tDate = new Date(t.date);
-        if (tDate <= twoWeeksLater && tDate >= now) {
-            hot.push(t);
+        // Если у тура нет даты или пустой массив дат — это анонс
+        if (!t.date || (t.dates && t.dates.length === 0)) {
+            tba.push(t);
         } else {
-            soon.push(t);
+            scheduled.push(t);
         }
     });
 
-    if (hot.length < 3 && soon.length > 0) {
-        const needed = 3 - hot.length;
-        const toMove = soon.splice(0, needed);
-        hot.push(...toMove);
-    }
-
-    return { hotTours: hot, comingSoonTours: soon, allFilteredTours: sorted };
+    return { scheduledTours: scheduled, tbaTours: tba, allFilteredTours: sorted };
   }, [tours, activeCategory]);
 
-  const displayHot = limit ? hotTours.slice(0, limit) : hotTours;
-  const displaySoon = limit ? comingSoonTours.slice(0, limit) : comingSoonTours;
+  const displayScheduled = scheduledTours.slice(0, visibleCount);
+  const hasMoreScheduled = visibleCount < scheduledTours.length;
 
   return (
     <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
       
-      {/* ✅ ДОБАВЛЕНО: Безопасный инжект URL-параметров без обрыва SSR */}
       <Suspense fallback={null}>
-        <ParamsListener onChange={(val) => setActiveCategory(val)} />
+        <ParamsListener onChange={setActiveCategory} />
       </Suspense>
 
       <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 md:blur-[120px] rounded-full pointer-events-none opacity-60" />
@@ -184,10 +169,22 @@ export default function ToursBrowser({
         
         {/* --- HEADER --- */}
         <div className="mb-8 md:mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-4">
-               <CalendarIcon size={14} className="text-teal-400" />
-              <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md">
+                   <CalendarIcon size={14} className="text-teal-400" />
+                  <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
+                </div>
+                
+                {totalKm > 0 && (
+                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 backdrop-blur-md animate-in fade-in zoom-in duration-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+                      <TrendingUp size={14} className="text-amber-500" />
+                      <span className="text-[12px] md:text-[14px] font-bold uppercase tracking-widest text-amber-400">
+                         Ты уже прошел с нами {Math.round(totalKm)} км!
+                      </span>
+                   </div>
+                )}
             </div>
+            
             <h1 className="text-4xl md:text-6xl lg:text-7xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                 {title}
             </h1>
@@ -200,15 +197,10 @@ export default function ToursBrowser({
             <div className="grid grid-cols-3 gap-2 p-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
                 
                 <button 
-                    onClick={() => {
-                        setViewMode('grid');
-                        setIsMobileFiltersOpen(false);
-                    }}
+                    onClick={() => { setViewMode('grid'); setIsMobileFiltersOpen(false); }}
                     className={cn(
                         "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all",
-                        viewMode === 'grid' 
-                            ? "bg-teal-500 text-slate-900 shadow-md" 
-                            : "bg-transparent text-slate-400 active:bg-white/10"
+                        viewMode === 'grid' ? "bg-teal-500 text-slate-900 shadow-md" : "bg-transparent text-slate-400 active:bg-white/10"
                     )}
                 >
                     <LayoutGrid size={15} strokeWidth={2.5} />
@@ -216,15 +208,10 @@ export default function ToursBrowser({
                 </button>
 
                 <button 
-                    onClick={() => {
-                        setViewMode('calendar');
-                        setIsMobileFiltersOpen(false);
-                    }}
+                    onClick={() => { setViewMode('calendar'); setIsMobileFiltersOpen(false); }}
                     className={cn(
                         "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all",
-                        viewMode === 'calendar' 
-                            ? "bg-teal-500 text-slate-900 shadow-md" 
-                            : "bg-transparent text-slate-400 active:bg-white/10"
+                        viewMode === 'calendar' ? "bg-teal-500 text-slate-900 shadow-md" : "bg-transparent text-slate-400 active:bg-white/10"
                     )}
                 >
                     <CalendarIcon size={15} strokeWidth={2.5} />
@@ -235,9 +222,7 @@ export default function ToursBrowser({
                     onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
                     className={cn(
                         "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all border",
-                        isMobileFiltersOpen 
-                            ? "bg-slate-800 text-white border-teal-500/50" 
-                            : "bg-transparent border-transparent text-slate-400 active:bg-white/10"
+                        isMobileFiltersOpen ? "bg-slate-800 text-white border-teal-500/50" : "bg-transparent border-transparent text-slate-400 active:bg-white/10"
                     )}
                 >
                     {isMobileFiltersOpen ? <X size={15} strokeWidth={2.5}/> : <Filter size={15} strokeWidth={2.5} />}
@@ -246,13 +231,9 @@ export default function ToursBrowser({
             </div>
 
             {isMobileFiltersOpen && (
-                <div 
-                    className="overflow-hidden mt-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200"
-                >
+                <div className="overflow-hidden mt-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-4">
-                        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
-                            Категории туров:
-                        </span>
+                        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">Категории туров:</span>
                         <div className="flex flex-wrap gap-2">
                             {displayCategories.map(cat => (
                                 <button
@@ -343,45 +324,78 @@ export default function ToursBrowser({
         ) : (
             <div className="space-y-12 md:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-            {displayHot.length > 0 && (
-                <section aria-labelledby="hot-tours-heading">
-                    <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
-                        <Flame size={18} className="text-amber-500 animate-pulse" />
-                        <h3 id="hot-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
-                            Ближайшие туры
-                        </h3>
-                    </div>
+                {/* 1. БЛИЖАЙШИЕ ТУРЫ (Сетка + Свайп на мобилке) */}
+                {scheduledTours.length > 0 && (
+                    <section aria-labelledby="scheduled-tours-heading">
+                        <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
+                            <Flame size={18} className="text-amber-500 animate-pulse" />
+                            <h3 id="scheduled-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
+                                Расписание
+                            </h3>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {displayHot.map((tour, index) => (
-                            <TourCard key={tour.id} tour={tour} isHot priority={index === 0} />
-                        ))}
-                    </div>
-                </section>
-            )}
+                        {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
+                        <div className="relative">
+                            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                {displayScheduled.map((tour, index) => (
+                                    <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full">
+                                        <TourCard tour={tour} isHot priority={index < 4} />
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Подсказка для свайпа на мобилках */}
+                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-500 pointer-events-none">
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
+                                <ArrowRight size={14} className="text-teal-500 animate-pulse" />
+                            </div>
+                        </div>
 
-            {displaySoon.length > 0 && (
-                <section aria-labelledby="soon-tours-heading">
-                    <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
-                        <Sparkles size={18} className="text-slate-400" />
-                        <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-400">
-                            Планируй заранее (Анонсы)
-                        </h3>
-                    </div>
+                        {/* Кнопка "Показать еще" */}
+                        {hasMoreScheduled && (
+                            <div className="flex justify-center mt-10">
+                                <button
+                                    onClick={() => setVisibleCount(prev => prev + limit)}
+                                    className="group flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all shadow-lg hover:shadow-teal-500/10 hover:border-teal-500/30"
+                                >
+                                    <span className="uppercase tracking-wider text-sm">Показать еще туры</span>
+                                    <ArrowDownCircle size={20} className="text-teal-400 group-hover:translate-y-1 transition-transform" />
+                                </button>
+                            </div>
+                        )}
+                    </section>
+                )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-90 hover:opacity-100 transition-opacity">
-                        {displaySoon.map((tour, index) => (
-                         <TourCard  
-                            key={tour.id} 
-                            tour={tour} 
-                            priority={displayHot.length === 0 && index === 0} 
-                         />
-                        ))}
-                    </div>
-                </section>
-             )}
+                {/* 2. АНОНСЫ (Туры без дат) */}
+                {tbaTours.length > 0 && (
+                    <section aria-labelledby="soon-tours-heading">
+                        <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
+                            <Sparkles size={18} className="text-slate-400" />
+                            <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-400">
+                                Планируй заранее (Анонсы)
+                            </h3>
+                        </div>
 
-                {displayHot.length === 0 && displaySoon.length === 0 && (
+                        {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
+                        <div className="relative">
+                            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                {tbaTours.map((tour) => (
+                                    <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full opacity-90 hover:opacity-100 transition-opacity">
+                                        <TourCard tour={tour} />
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-500 pointer-events-none">
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
+                                <ArrowRight size={14} className="text-teal-500 animate-pulse" />
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* 3. ПУСТОЕ СОСТОЯНИЕ */}
+                {scheduledTours.length === 0 && tbaTours.length === 0 && (
                     <div className="text-center py-12 md:py-24 px-4 border border-dashed border-white/10 rounded-[2rem] md:rounded-[3rem] bg-gradient-to-b from-white/[0.02] to-transparent relative overflow-hidden shadow-2xl">
                         <div className="absolute inset-0 bg-teal-500/5 md:blur-[100px] rounded-full" />
                         

@@ -50,7 +50,6 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // ✅ УМНАЯ СЕТКА: Динамически задаем количество строк на мобилке в зависимости от кол-ва фото
   const mobileRowsClass = 
     displayedImages.length <= 1 ? 'grid-rows-1' :
     displayedImages.length <= 3 ? 'grid-rows-3' : 
@@ -68,11 +67,12 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         </h2>
       </div>
 
+      {/* ✅ УМНАЯ СЕТКА: Используем aspect-ratio вместо жестких пикселей */}
       <div className={clsx(
-        "grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 rounded-3xl overflow-hidden bg-slate-900 border border-white/5",
+        "grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 rounded-[2rem] md:rounded-3xl overflow-hidden bg-slate-900 border border-white/5 shadow-xl",
         "md:grid-rows-2",
         mobileRowsClass,
-        "h-[450px] sm:h-[500px] md:h-[600px]"
+        "aspect-[3/4] sm:aspect-[4/3] md:aspect-[2/1] lg:aspect-[2.5/1]"
       )}>
         
         {displayedImages.map((img, index) => {
@@ -90,24 +90,23 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
             >
               <Image 
                 src={img} 
-                alt={`Gallery ${index}`} 
+                alt={`Галерея тура фото ${index + 1}`} 
                 fill 
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                // ✅ ИСПРАВЛЕНИЕ: Никаких priority для галереи, она всегда ниже фолда
-                loading="lazy"
-                // ✅ ИСПРАВЛЕНИЕ: Ограничение размера контейнером (1280px)
+                // ✅ ФОКУС: object-[center_20%] держит фокус на лицах (верхняя часть) при любой обрезке
+                className="object-cover object-[center_20%] transition-transform duration-700 group-hover:scale-105"
+                loading={isMain ? "eager" : "lazy"}
+                fetchPriority={isMain ? "high" : "auto"}
                 sizes={
                   isMain 
                     ? "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 640px" 
                     : "(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 320px"
                 }
-                // ✅ ИСПРАВЛЕНИЕ: Снизили качество превьюшек для экономии трафика
-                quality={isMain ? 60 : 50}
+                quality={isMain ? 65 : 55}
               />
               
               {isLastVisible && remainingCount > 0 ? (
                  <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center border border-white/10 transition-colors group-hover:bg-slate-900/80">
-                     <span className="text-xl md:text-2xl font-black text-white">+{remainingCount}</span>
+                     <span className="text-2xl md:text-3xl font-black text-white">+{remainingCount}</span>
                  </div>
               ) : (
                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -119,50 +118,60 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         })}
       </div>
 
+      {/* ✅ ЛАЙТБОКС: Полностью переработан UX для мобильных и десктопов */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex items-center justify-center touch-none animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] bg-black/98 backdrop-blur-xl flex flex-col items-center justify-center touch-none animate-in fade-in duration-200"
           onClick={closeLightbox}
         >
+          {/* КНОПКА ЗАКРЫТИЯ: На мобилке слева сверху с учетом челки (safe-area), на десктопе справа */}
           <button 
-            className="absolute top-4 right-4 md:top-8 md:right-8 p-3 bg-black/50 hover:bg-white text-white hover:text-black border border-white/20 rounded-full transition-all z-[10000] shadow-xl"
-            aria-label="Закрыть галерею" onClick={closeLightbox}
+            className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 md:left-auto md:right-8 p-3 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 rounded-full transition-all z-[10000] shadow-xl"
+            aria-label="Закрыть галерею" 
+            onClick={closeLightbox}
           >
              <X size={24} className="md:w-8 md:h-8" />
           </button>
 
+          {/* КОНТЕЙНЕР КАРТИНКИ: Используем динамическую высоту dvh */}
           <div 
              key={currentIndex}
-             className="relative w-full h-full max-w-7xl max-h-[85vh] mx-4 flex items-center justify-center animate-in zoom-in-95 duration-200"
+             className="relative w-full h-[85dvh] md:h-[90dvh] max-w-7xl mx-auto flex items-center justify-center animate-in zoom-in-95 duration-200"
              onClick={(e) => e.stopPropagation()}
           >
              <Image 
                src={images[currentIndex]} 
-               alt="Fullscreen view" 
+               alt={`Фотография ${currentIndex + 1} из ${images.length}`} 
                fill 
-               className="object-contain"
-               // ✅ В лайтбоксе priority оправдан, так как картинка запрашивается по клику юзера
+               className="object-contain" // Картинка впишется без черных полос и обрезки
                priority
                sizes="100vw"
-               // ✅ Качество в лайтбоксе оставляем высоким для красивого просмотра
                quality={90}
              />
           </div>
 
-          <button 
-            className="absolute left-2 md:left-6 p-4 bg-black/20 md:bg-transparent rounded-full text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95 z-[10000]"
-           aria-label="Предыдущее фото" onClick={prevImage}
-          >
-             <ChevronLeft size={36} className="md:w-10 md:h-10" />
-          </button>
-          <button 
-            className="absolute right-2 md:right-6 p-4 bg-black/20 md:bg-transparent rounded-full text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95 z-[10000]"
-            aria-label="Следующее фото" onClick={nextImage}
-          >
-             <ChevronRight size={36} className="md:w-10 md:h-10" />
-          </button>
+          {/* СТРЕЛКИ НАВИГАЦИИ */}
+          {images.length > 1 && (
+            <>
+              <button 
+                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 p-3 md:p-4 bg-black/40 md:bg-transparent rounded-full text-white/70 hover:text-white transition-colors hover:scale-110 active:scale-95 z-[10000]"
+                aria-label="Предыдущее фото" 
+                onClick={prevImage}
+              >
+                 <ChevronLeft size={36} className="md:w-12 md:h-12" />
+              </button>
+              <button 
+                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 p-3 md:p-4 bg-black/40 md:bg-transparent rounded-full text-white/70 hover:text-white transition-colors hover:scale-110 active:scale-95 z-[10000]"
+                aria-label="Следующее фото" 
+                onClick={nextImage}
+              >
+                 <ChevronRight size={36} className="md:w-12 md:h-12" />
+              </button>
+            </>
+          )}
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-black/60 rounded-full text-white/90 font-bold text-sm backdrop-blur-md border border-white/10 shadow-lg z-[10000]">
+          {/* СЧЕТЧИК ФОТО */}
+          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 px-5 py-2.5 bg-black/60 rounded-full text-white/90 font-bold text-sm backdrop-blur-md border border-white/10 shadow-lg z-[10000] pointer-events-none">
              {currentIndex + 1} / {images.length}
           </div>
 

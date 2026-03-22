@@ -3,16 +3,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Heart, Instagram, Send, Play, X, Volume2, VolumeX, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from '@/lib/utils';
 
 // ✅ РЕШЕНИЕ 1: Импортируем статический JSON напрямую. 
 // Никаких fetch, useEffect и водопадов загрузки!
 import postsData from '../../../../public/social/posts.json';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 // --- ТИПЫ ---
 interface SocialPost {
@@ -150,6 +146,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
                 className="h-full w-full md:w-auto md:max-w-[500px] object-cover md:rounded-2xl"
                 loop
                 playsInline
+                preload="none"
                 muted={isMuted}
                 onClick={toggleMute} 
             />
@@ -341,6 +338,7 @@ function ReelCard({ post, onClick }: { post: SocialPost; onClick: () => void }) 
           muted
           loop
           playsInline
+          preload="none"
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover filter brightness-[0.85] group-hover:brightness-100 transition-all duration-700 z-0"
         />

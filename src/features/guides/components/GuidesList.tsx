@@ -327,7 +327,8 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                          <h2 className="text-5xl lg:text-6xl font-black text-white leading-[0.85] tracking-tight">{guide.name}</h2>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-4 -mr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-24 md:pb-32">
+                    {/* ✅ ИСПРАВЛЕНИЕ: Убрали pb-24/32, так как футер теперь не sticky */}
+                    <div className="flex-1 overflow-y-auto pr-4 -mr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-4">
                         
                         {/* Суперсила и Теги */}
                         <div className="flex flex-wrap gap-2 mb-8">
@@ -362,7 +363,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                             </div>
                         )}
 
-                        {/* БИОГРАФИЯ (Full Bio приоритетнее в модалке) */}
+                        {/* БИОГРАФИЯ */}
                         <div className="mb-8">
                             <h3 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Досье</h3>
                             <p className="text-sm text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
@@ -381,33 +382,33 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                         )}
 
                         {/* СОЦСЕТИ */}
-                        <div className="flex gap-3 mb-4">
+                        <div className="flex gap-3 mb-8">
                             {guide.instagram && <SocialBtn href={guide.instagram} icon={Instagram} />}
                             {guide.telegram && <SocialBtn href={guide.telegram} icon={Send} />}
                         </div>
-                    </div>
 
-                    {/* STICKY FOOTER */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:px-10 md:pb-10 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent">
-                         <Link 
-                            href={`/tour`} // В будущем можно сделать: href={`/tour?guide=${guide.slug}`}
-                            className="w-full py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] active:scale-[0.98]"
-                         >
-                            <MapPin size={18} strokeWidth={2.5} />
-                            <span>ТУРЫ СО МНОЙ</span>
-                         </Link>
-                    </div>
+                        {/* ✅ ИСПРАВЛЕНИЕ: Кнопка перенесена внутрь скроллируемого блока */}
+                        <div className="pt-6 border-t border-white/10">
+                            <Link 
+                                href={`/tour`} // В будущем можно сделать: href={`/tour?guide=${guide.slug}`}
+                                className="w-full py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] active:scale-[0.98]"
+                            >
+                                <MapPin size={18} strokeWidth={2.5} />
+                                <span>ТУРЫ СО МНОЙ</span>
+                            </Link>
+                        </div>
 
+                    </div>
                 </div>
             </div>
-             </div>
-        );
-    }
+        </div>
+    );
+}
 
-    function SocialBtn({ href, icon: Icon }: any) {
-       return (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 transition-all hover:text-white hover:border-white/30">
-             <Icon size={18} />
-          </a>
-       )
-    }
+function SocialBtn({ href, icon: Icon }: any) {
+   return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 transition-all hover:text-white hover:border-white/30">
+         <Icon size={18} />
+      </a>
+   )
+}

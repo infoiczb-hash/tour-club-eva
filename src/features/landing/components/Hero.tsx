@@ -33,7 +33,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
             fetchPriority="high"
             // ✅ ИСПРАВЛЕНИЕ: quality 85 → 65 — фоновое изображение покрыто градиентами,
             // артефакты сжатия не видны. Экономия ~66 KiB (по данным Lighthouse).
-            quality={65}
+            quality={45}
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-slate-950/30" />

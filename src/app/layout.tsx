@@ -68,8 +68,12 @@ export const metadata: Metadata = {
     google: "bQzEK-w6DrRPryfEde5_dJSFHBskbBJRcWeiPgMu0N0",
     yandex: "d9d080aa11f7b5b3",
   },
-  alternates: {
-    canonical: "/",
+alternates: {
+  canonical: "/",
+  languages: {
+    "ru":    "https://evatur.club",
+    "ru-MD": "https://evatur.club",
+  },
   },
 };
 
@@ -121,22 +125,21 @@ export default async function RootLayout({
 
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
-      <head>
-        {/* Cloudinary — Hero-изображения и статические фото (100 файлов).
-            preconnect экономит ~200–400 мс на LCP. */}
-        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+     <head>
+  {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
+      Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
+  <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
+  <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
 
-        {/* Supabase Storage — обложки туров и фото гидов из админки
-            (/tour/[slug], /guides/[slug], /account/*). */}
-        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+  {/* Cloudinary — Hero-изображения главной страницы и статические фото. */}
+  <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+  <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
-        {/* YouTube — превью VideoGuide на каякинге и SUP */}
-        <link rel="dns-prefetch" href="https://img.youtube.com" />
+  {/* YouTube — превью VideoGuide на каякинге и SUP */}
+  <link rel="dns-prefetch" href="https://img.youtube.com" />
 
-        <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
-      </head>
+  <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+</head>
       <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
        
           <ToastProvider>

@@ -21,6 +21,11 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
 
   // --- Supabase Storage ---
   if (src.includes('supabase.co')) {
+    // ✅ ИСПРАВЛЕНО: На бесплатном тарифе отдаем оригинальную ссылку, 
+    // чтобы избежать ошибки 400 Bad Request от платного оптимизатора.
+    return src;
+
+    /* --- ОРИГИНАЛЬНАЯ ЛОГИКА (Оставлена для Pro-тарифа) ---
     const q = quality ?? 75;
     const url = new URL(src);
 
@@ -35,9 +40,10 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
     
     // ✅ ИСПРАВЛЕНИЕ: Вернули 'origin'. Supabase сам решит, как отдать файл, 
     // не вызывая ошибку 400 Bad Request.
-    url.searchParams.set('format', 'origin');
+    url.searchParams.set('format', 'webp');
 
     return url.toString();
+    */
   }
 
   // --- Всё остальное (Unsplash, YouTube и т.д.) ---
