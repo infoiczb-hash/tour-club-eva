@@ -1,3 +1,4 @@
+// src/features/admin/components/AdminDashboard.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -139,7 +140,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
         const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes, freshTours] = await Promise.all([
             getRegistrationsAction(),
             getGuides(),
-            getBlogPosts(),
+            getBlogPosts({ includeDrafts: true }), // ✅ ИСПРАВЛЕНИЕ: Загружаем все посты блога в админке, включая черновики
             getReviews(),
             getInquiriesAction(),
             getFunTestsAction(),
@@ -156,7 +157,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
 
         if (bRes.data) setBookings(bRes.data as BookingItem[]);
         setGuides(gRes as unknown as GuideItem[]);
-        setPosts(pRes);
+        setPosts(pRes as Blog[]);
         setReviews(rRes);
         if (inqRes.success && inqRes.data) setInquiries(inqRes.data); 
         if (funRes && funRes.success) setFunTests(funRes.data);
@@ -486,7 +487,6 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
             initialData={editingItem as React.ComponentProps<typeof PostForm>['initialData']}
             categories={blogCategories}
             onClose={() => setModalState(p => ({ ...p, post: false }))}
-            // ✅ ИСПРАВЛЕНО: Безопасное двойное приведение типов
             onSubmit={async (data: Record<string, unknown>) => { 
                 await savePostAction(data as unknown as SavePostPayload); 
                 loadAllData(); 

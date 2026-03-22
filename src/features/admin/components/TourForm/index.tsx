@@ -1,3 +1,4 @@
+// src/features/admin/components/TourForm/index.tsx
 "use client";
 
 import React, { useEffect, useMemo } from 'react';
@@ -116,7 +117,12 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       gallery: initialData.gallery || [],
       
       // Даты
-      dates: Array.isArray(initialData.dates) ? initialData.dates : [],
+      // ✅ ИСПРАВЛЕНИЕ ДАТ: Отсекаем временную зону для <input type="date">
+      dates: Array.isArray(initialData.dates) ? initialData.dates.map((d: any) => ({
+        ...d,
+        start: d.start ? d.start.split('T')[0] : '', 
+        end: d.end ? d.end.split('T')[0] : '',
+      })) : [],
     };
   }, [initialData, defaultCategoryId]); // ✅ ДОБАВЛЕНО: defaultCategoryId в зависимости
 

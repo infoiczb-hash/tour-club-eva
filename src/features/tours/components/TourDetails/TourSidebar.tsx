@@ -93,7 +93,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2 text-pink-400">
                   <Baby size={14} />
-                  <span>Детский (до 12)</span>
+                  <span>Детский (до 13)</span>
                 </div>
                 <span className="font-bold text-white">{priceChild?.toLocaleString()} {currency}</span>
               </div>

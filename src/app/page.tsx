@@ -38,7 +38,7 @@ const LazyReviewsMarquee = dynamic(() => import('@/features/reviews/components/R
   loading: () => <section className="min-h-[300px] w-full bg-slate-50 dark:bg-slate-950 animate-pulse" />
 });
 
-export const revalidate = 330; 
+export const revalidate = 3600; 
 
 export const metadata: Metadata = {
   title: "Турклуб «Эва» — Активный отдых в Приднестровье",

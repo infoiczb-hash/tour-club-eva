@@ -4,6 +4,16 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { FlaskConical, ArrowRight, RefreshCw } from 'lucide-react';
 
+// ─── Строгие типы для JSON из БД ────────────────────────────────────
+interface TestResultData {
+  type?: string;
+  badge?: string;
+  description?: string;
+  fullAnalysis?: string;
+  score?: Record<string, number>;
+  [key: string]: unknown; // на случай расширения данных
+}
+
 // ─── конфиг квизов ──────────────────────────────────────────────────
 // Синхронизирован с FunClient / fun компонентами
 const QUIZ_CONFIG: Record<string, {
@@ -19,7 +29,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Тип туриста',
     emoji: '🧭',
     description: 'Кто ты в путешествии — романтик, исследователь или организатор?',
-    href: '/fun?quiz=tourist-type', // ✅ ИСПРАВЛЕНО (# -> ?quiz=)
+    href: '/fun?quiz=tourist-type',
     color: 'text-teal-400',
     bgColor: 'bg-teal-500/10',
     borderColor: 'border-teal-500/20',
@@ -28,7 +38,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Психологический профиль',
     emoji: '🧠',
     description: 'Как ты реагируешь на трудности и незнакомые ситуации в дороге?',
-    href: '/fun?quiz=psych-profile', // ✅ ИСПРАВЛЕНО
+    href: '/fun?quiz=psych-profile',
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-500/20',
@@ -37,7 +47,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Тотемное животное',
     emoji: '🦅',
     description: 'Какой дух-хранитель сопровождает тебя в походах?',
-    href: '/fun?quiz=totem', // ✅ ИСПРАВЛЕНО
+    href: '/fun?quiz=totem',
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
@@ -46,7 +56,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Выживание',
     emoji: '🏕️',
     description: 'Насколько ты готов к нештатным ситуациям на маршруте?',
-    href: '/fun?quiz=survival', // ✅ ИСПРАВЛЕНО
+    href: '/fun?quiz=survival',
     color: 'text-orange-400',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/20',
@@ -55,7 +65,7 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Что в рюкзаке?',
     emoji: '🎒',
     description: 'Твой стиль сборов и что это говорит о характере.',
-    href: '/fun?quiz=backpack', // ✅ ИСПРАВЛЕНО
+    href: '/fun?quiz=backpack',
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/20',
@@ -64,10 +74,46 @@ const QUIZ_CONFIG: Record<string, {
     title: 'Сигналы тела',
     emoji: '💪',
     description: 'Уровень физической готовности к активным маршрутам.',
-    href: '/fun?quiz=body-signals', // ✅ ИСПРАВЛЕНО
+    href: '/fun?quiz=body-signals',
     color: 'text-green-400',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/20',
+  },
+  'fears': {
+    title: 'Разбор страхов',
+    emoji: '🛡️',
+    description: 'Психологический разбор твоих опасений перед походом.',
+    href: '/fun?quiz=fears',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20',
+  },
+  'physical': {
+    title: 'Физическая готовность',
+    emoji: '💪',
+    description: 'Оценка твоей выносливости и готовности к нагрузкам.',
+    href: '/fun?quiz=physical',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/20',
+  },
+  'signals': {
+    title: 'Сигналы тела',
+    emoji: '🩺',
+    description: 'Анализ твоего самочувствия в туре.',
+    href: '/fun?quiz=signals',
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/10',
+    borderColor: 'border-rose-500/20',
+  },
+  'debrief': {
+    title: 'Рефлексия опыта',
+    emoji: '📖',
+    description: 'Осознание того, что открыл для тебя последний поход.',
+    href: '/fun?quiz=debrief',
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/10',
+    borderColor: 'border-violet-500/20',
   },
 };
 
@@ -135,11 +181,11 @@ export default async function TestsPage() {
             const config = QUIZ_CONFIG[result.testSlug];
             if (!config) return null;
 
-            // result.result — Json: { type, score, badge, description, ... }
-            const res = result.result as Record<string, unknown>;
-            const typeName   = String(res.type   ?? '');
-            const badge      = String(res.badge   ?? config.emoji);
-            const description = String(res.description ?? '');
+            // Строгая типизация JSON-объекта из БД
+            const res = result.result as unknown as TestResultData;
+            
+            const typeName   = res.type ?? '';
+            const badge      = res.badge ?? config.emoji;
 
             return (
               <div
@@ -162,6 +208,7 @@ export default async function TestsPage() {
                           {typeName || 'Результат'}
                         </p>
                       </div>
+                      
                       {/* Кнопка перепройти */}
                       <Link
                         href={config.href}
@@ -173,11 +220,19 @@ export default async function TestsPage() {
                       </Link>
                     </div>
 
-                    {description && (
+                    {/* Описание из конфига (безопасный рендер без &&) */}
+                    {config.description ? (
                       <p className="text-xs text-slate-400 leading-relaxed mt-1 mb-2">
-                        {description}
+                        {config.description}
                       </p>
-                    )}
+                    ) : null}
+
+                    {/* ИИ-Анализ (без дублирования, чистый блок) */}
+                    {res.fullAnalysis ? (
+                      <div className="mt-3 mb-2 p-4 bg-slate-950 rounded-xl border border-white/5 text-[13px] text-slate-300 leading-relaxed italic whitespace-pre-wrap">
+                        {res.fullAnalysis}
+                      </div>
+                    ) : null}
 
                     <p className="text-xs text-slate-600">
                       Пройден {formatDate(result.createdAt)}
@@ -185,30 +240,29 @@ export default async function TestsPage() {
                   </div>
                 </div>
 
-                {/* ✅ ИСПРАВЛЕНО: Явное приведение к boolean через !! */}
-                {!!res.score && typeof res.score === 'object' && (
+                {/* Вывод Score, если он есть */}
+                {!!res.score && typeof res.score === 'object' ? (
                   <div className="mt-4 pt-4 border-t border-white/5">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {Object.entries(res.score as Record<string, number>)
+                      {Object.entries(res.score)
                         .slice(0, 6)
                         .map(([key, value]) => (
                           <div key={key} className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-slate-500 capitalize">{key}</span>
-                              {/* Явное приведение к Number на всякий случай */}
-                              <span className={`font-bold ${config.color}`}>{Number(value)}%</span>
+                              <span className={`font-bold ${config.color}`}>{value}%</span>
                             </div>
                             <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${config.bgColor.replace('/10', '/60')}`}
-                                style={{ width: `${Math.min(Number(value) || 0, 100)}%` }}
+                                style={{ width: `${Math.min(value || 0, 100)}%` }}
                               />
                             </div>
                           </div>
                         ))}
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             );
           })}

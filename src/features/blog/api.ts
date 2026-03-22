@@ -2,23 +2,52 @@
 "use server"; 
 import { prisma } from '@/lib/prisma';
 
-export async function getBlogPosts() {
+export async function getBlogPosts(options?: { includeDrafts?: boolean }) {
   try {
     const posts = await prisma.blog.findMany({
-      orderBy: {
-        date: 'desc', // Или createdAt, если используете его
-      },
-      // 👇 ВАЖНО: Подтягиваем данные связанного гида и категории
-      include: {
+      // ✅ ДОБАВЛЕНО: Если просят включить черновики (для админки) — убираем фильтр, иначе только активные
+      where: options?.includeDrafts ? undefined : { isActive: true },
+      orderBy: { date: 'desc' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true, // ✅ ДОБАВЛЕНО: нужно для ExtendedBlog
+        image: true,
+        date: true,
+        tags: true, // ✅ ДОБАВЛЕНО: нужно для ExtendedBlog
+        createdAt: true,
+        updatedAt: true, // ✅ ДОБАВЛЕНО: нужно для ExtendedBlog
+        read_time: true,
+        is_trending: true,
+        category: true,
+        categoryId: true,
+        format: true, // ✅ ДОБАВЛЕНО: нужно для ExtendedBlog
+        author_name: true,
+        author_role: true,
+        author_image: true,
+        guideId: true, // ✅ ДОБАВЛЕНО: нужно для ExtendedBlog
+        isActive: true,
         guide: {
           select: {
             id: true,
             name: true,
             image: true,
-            role: true
+            role: true,
           }
         },
-        blogCategory: true // ✅ ДОБАВЛЕНО: Связь с категорией
+        blogCategory: {
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            isActive: true, // ✅ ДОБАВЛЕНО: для соответствия типу ExtendedBlog.blogCategory
+            sortOrder: true, // ✅ ДОБАВЛЕНО
+            createdAt: true, // ✅ ДОБАВЛЕНО
+            updatedAt: true  // ✅ ДОБАВЛЕНО
+          }
+        },
       }
     });
     return posts;

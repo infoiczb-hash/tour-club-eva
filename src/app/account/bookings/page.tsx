@@ -3,8 +3,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Users, ArrowRight, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowRight, CheckCircle, XCircle, AlertCircle, Hourglass } from 'lucide-react';
 import TransferSpotButton from '@/features/account/components/TransferSpotButton';
+import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton'; // 👈 Новый импорт
 
 // ─── статусы брони ───────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -85,7 +86,20 @@ async function getBookings(userId: string) {
     },
   });
 
-  return { profile, upcoming, past };
+  // 👇 ДОБАВЛЕНО: Лист ожидания (ищем по номеру телефона)
+  let waitlists: any[] = [];
+  if (profile.phone) {
+    waitlists = await prisma.waitlist.findMany({
+      where: { phone: profile.phone },
+      include: {
+        tour: { select: { title: true, slug: true, coverImage: true, location: true } },
+        tourDate: { select: { startDate: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  return { profile, upcoming, past, waitlists };
 }
 
 // ─── страница ────────────────────────────────────────────────────────
@@ -97,15 +111,61 @@ export default async function BookingsPage() {
   const data = await getBookings(user.id);
   if (!data) redirect('/login?next=/account/bookings');
 
-  const { upcoming, past } = data;
+  const { upcoming, past, waitlists } = data;
 
   return (
     <div className="space-y-8">
 
       <div>
         <h1 className="text-2xl font-black text-white mb-1">Мои брони</h1>
-        <p className="text-sm text-slate-400">Управляйте участием в турах</p>
+        <p className="text-sm text-slate-400">Управляйте участием в турах и заявками</p>
       </div>
+
+      {/* ── Лист ожидания (если есть) ─────────────────────────────── */}
+      {waitlists.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Hourglass size={16} className="text-amber-500 animate-pulse" />
+            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+              Лист ожидания
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {waitlists.map(waitlist => (
+              <div
+                key={waitlist.id}
+                className="flex items-center gap-4 bg-slate-900/40 border border-amber-500/20 rounded-xl p-4 transition-all"
+              >
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-800">
+                  {waitlist.tour.coverImage ? (
+                    <Image
+                      src={waitlist.tour.coverImage}
+                      alt={waitlist.tour.title}
+                      fill
+                      className="object-cover opacity-80"
+                      sizes="48px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-amber-500/10" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">
+                    {waitlist.tour.title}
+                  </p>
+                  <p className="text-xs text-amber-400/80 font-medium">
+                    {waitlist.tourDate ? formatDate(waitlist.tourDate.startDate) : 'Даты уточняются'}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <CancelWaitlistButton id={waitlist.id} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Предстоящие ─────────────────────────────────────────── */}
       <section className="space-y-4">

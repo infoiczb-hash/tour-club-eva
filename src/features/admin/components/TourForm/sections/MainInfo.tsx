@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+// src/features/admin/components/TourForm/sections/MainInfo.tsx
+import React, { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormInput, FormSelect, FormSwitch, FormTextarea } from '../ui/FormUI';
 import { ImageUploader } from '../ui/ImageUploader';
-import { AlignLeft, Plus, X } from 'lucide-react'; 
+import { AlignLeft, Plus, X, RefreshCw } from 'lucide-react'; 
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
+import { slugify } from '@/lib/slugify'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
 
 export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
-  const { control, watch } = useFormContext();
+  const { control, watch, setValue, getValues } = useFormContext();
   
   const { fields, append, remove } = useFieldArray({
     control,
@@ -16,33 +18,41 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
 
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
-const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ✅ ЛОГИКА АВТОГЕНЕРАЦИИ SLUG ДЛЯ НОВОГО ТУРА
+  const title = watch('title');
+  const slug = watch('slug');
+
+  useEffect(() => {
+    // Если создается новый тур (slug изначально пустой) - генерируем на лету
+    if (title && !getValues('id') && (!slug || slug === slugify(title.slice(0, -1)))) {
+      setValue('slug', slugify(title), { shouldValidate: true, shouldDirty: true });
+    }
+  }, [title]);
+
+  const handleRegenerateSlug = () => {
+    if (title) {
+      setValue('slug', slugify(title), { shouldValidate: true, shouldDirty: true });
+    }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingGallery(true);
       try {
         const files = Array.from(e.target.files);
-        
         for (const file of files) {
-          // 1. Создаем объект FormData для каждого файла
           const formData = new FormData();
           formData.append('file', file);
-          formData.append('folder', 'tours'); // Передаем папку здесь
-
-          // 2. Вызываем uploadFile, передавая ровно один аргумент (FormData)
+          formData.append('folder', 'tours');
           const response = await uploadFile(formData); 
-          
           if (response && response.url) {
               append(response.url); 
-          } else if (response && response.error) {
-              console.error(`Ошибка загрузки файла ${file.name}:`, response.error);
           }
         }
       } catch (err) {
-        console.error("Критическая ошибка при загрузке галереи:", err);
         alert('Ошибка загрузки фото');
       } finally {
         setIsUploadingGallery(false);
-        // Сбрасываем значение input, чтобы можно было выбрать те же файлы повторно
         e.target.value = '';
       }
     }
@@ -74,13 +84,26 @@ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
             placeholder="Придумай красивое название тура" 
           />
           
-          <FormInput 
-            name="slug" 
-            label="URL (Slug)" 
-            placeholder="auto-generated"
-            className="font-mono text-xs text-slate-500"
-            helperText="Уникальная ссылка на страницу тура"
-          />
+          {/* ✅ БЛОК SLUG С КНОПКОЙ */}
+          <div className="flex items-end gap-2">
+             <div className="flex-1">
+                 <FormInput 
+                   name="slug" 
+                   label="URL (Slug)" 
+                   placeholder="auto-generated"
+                   className="font-mono text-xs text-slate-500"
+                   helperText="Уникальная ссылка на страницу тура"
+                 />
+             </div>
+             <button 
+                type="button" 
+                onClick={handleRegenerateSlug} 
+                className="h-[44px] px-3 bg-slate-100 hover:bg-teal-50 text-slate-400 hover:text-teal-600 rounded-xl border border-slate-200 transition-colors flex items-center justify-center mb-6" 
+                title="Сгенерировать из названия"
+             >
+               <RefreshCw size={18} />
+             </button>
+          </div>
 
           <FormTextarea 
              name="subtitle" 
@@ -102,7 +125,6 @@ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
              />
           </div>
 
-          {/* ✅ НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК */}
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
              <h4 className="text-xs font-black uppercase text-slate-500 mb-2">Детализация для карточки</h4>
              
@@ -149,32 +171,16 @@ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="grid grid-cols-3 gap-2">
                 {fields.map((field, index) => (
                   <div key={field.id} className="relative aspect-square rounded-lg overflow-hidden group border border-slate-200 bg-white">
-                    <Image 
-                       src={watch(`gallery.${index}`) || ''} 
-                       alt="Gallery" 
-                       fill 
-                       className="object-cover"
-                    />
-                    <button 
-                      type="button" 
-                      onClick={() => remove(index)}
-                      className="absolute top-1 right-1 bg-rose-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
+                    <Image src={watch(`gallery.${index}`) || ''} alt="Gallery" fill className="object-cover"/>
+                    <button type="button" onClick={() => remove(index)} className="absolute top-1 right-1 bg-rose-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                       <X size={12} />
                     </button>
                   </div>
                 ))}
-
                 <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-400 hover:text-teal-600">
                   <Plus size={24} />
                   <span className="text-[12px] font-bold uppercase mt-1">Добавить</span>
-                  <input 
-                    type="file" 
-                    multiple 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={handleGalleryUpload} 
-                  />
+                  <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />
                 </label>
               </div>
            </div>

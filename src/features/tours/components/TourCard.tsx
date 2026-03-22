@@ -50,7 +50,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     priceMember, priceChild,
     image, location, duration,
     tags, label, category,
-    dates // 👇 Обязательно достаем массив дат из объекта тура
+    dates 
   } = tour;
 
   const dateObj = date ? new Date(date) : null;
@@ -58,7 +58,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) 
     : 'Скоро';
 
-  // 👇 ИСПРАВЛЕНИЕ: Проверяем, прошла ли дата и считаем только будущие для бейджа
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
@@ -79,18 +78,19 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
   const displayLabel = category?.title || "Тур";
 
   return (
-    <Link href={`/tour/${slug}`} className="group block h-full outline-none">
+    <Link href={`/tour/${slug}`} className="group block h-full outline-none w-full">
       <article
         className={cn(
-          "relative flex flex-col h-full rounded-[2rem] overflow-hidden transition-all duration-300",
-          "bg-[#0d131a] border-2",
+          "relative flex flex-col h-full rounded-[2rem] overflow-hidden transition-all duration-500",
+          "bg-[#0d131a] border border-white/5",
           isHighlighted
-            ? "border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.1)] hover:border-amber-400"
-            : "border-white/5 hover:border-teal-500/40 hover:shadow-2xl hover:shadow-teal-900/20",
-          "hover:-translate-y-1.5 transition-transform"
+            ? "shadow-[0_0_30px_rgba(245,158,11,0.08)] hover:border-amber-500/50"
+            : "hover:border-teal-500/40 hover:shadow-2xl hover:shadow-teal-900/20",
+          "hover:-translate-y-2"
         )}
       >
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-800">
+        {/* ✅ ИСПРАВЛЕНО: Кинематографичные пропорции фото 3:2 (мобильные) и 16:10 (десктоп) */}
+        <div className="relative w-full aspect-[3/2] sm:aspect-[16/10] overflow-hidden bg-slate-800 shrink-0">
           <Image
             src={image || '/placeholder-tour.jpg'}
             alt={title}
@@ -98,89 +98,95 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             quality={75}
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            className="object-cover transition-transform duration-1000 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90" />
+          {/* Легкий градиент снизу для плавного перехода в темный блок */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d131a] via-transparent to-slate-950/40" />
 
+          {/* Бейдж категории */}
           <div className={cn(
             "absolute top-4 left-4 flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm",
             typeStyle.bg, typeStyle.border
           )}>
-            <span className={cn("text-xs font-black uppercase tracking-wider", typeStyle.text)}>
+            <span className={cn("text-[10px] sm:text-xs font-black uppercase tracking-wider", typeStyle.text)}>
               {displayLabel}
             </span>
           </div>
 
+          {/* Плашка "Хит/Новинка" */}
           {label && (
             <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-lg bg-rose-500 text-white animate-pulse">
               {!label.includes('🔥') && !label.includes('✨') && (
                 <Flame size={14} strokeWidth={2.5} />
               )}
-              <span className="text-xs font-black uppercase tracking-wider">{label}</span>
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">{label}</span>
             </div>
           )}
 
-          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+          {/* Дата поверх фото снизу */}
+          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-md shadow-lg",
               isHighlighted
                 ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
                 : "bg-slate-900/60 border-white/10 text-teal-400"
             )}>
-              <Calendar size={16} strokeWidth={2.5} />
-              {/* ✅ ЭТАП 4: Изменение только здесь! suppressHydrationWarning */}
+              <Calendar size={14} strokeWidth={2.5} />
               <span suppressHydrationWarning className={cn(
-                  "text-sm font-black uppercase tracking-wider",
+                  "text-[12px] sm:text-sm font-black uppercase tracking-wider",
                   isPast && "text-slate-400"
               )}>
                  {isPast ? "Завершен" : dateStr}
               </span>
-              {/* 👇 ИСПРАВЛЕНИЕ: Новый текст для бейджика дополнительных дат */}
               {hasMoreDates && !isPast && (
-                <span className="text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
+                <span className="text-[10px] sm:text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
               )}
             </div>
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 flex flex-col flex-grow bg-gradient-to-b from-slate-950/90 to-[#0d131a]">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
+        {/* Текстовый блок */}
+        <div className="p-5 sm:p-6 flex flex-col flex-grow bg-[#0d131a]">
+          
+          {/* Локация и длительность */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
             <div className="flex items-center gap-1.5">
-              <MapPin size={14} className="text-teal-600" strokeWidth={2.5} />
+              <MapPin size={12} className="text-teal-600" strokeWidth={2.5} />
               <span className="truncate max-w-[140px] sm:max-w-full text-slate-300">{location}</span>
             </div>
             <div className="w-1 h-1 rounded-full bg-slate-700 shrink-0" />
             <div className="flex items-center gap-1.5">
-              <Clock size={14} className="text-teal-600" strokeWidth={2.5} />
+              <Clock size={12} className="text-teal-600" strokeWidth={2.5} />
               <span className="text-slate-300">{duration || '1 день'}</span>
             </div>
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-black text-white uppercase leading-[1.15] mb-4 group-hover:text-teal-400 transition-colors line-clamp-2 sm:line-clamp-3">
+          <h3 className="text-lg sm:text-xl font-black text-white uppercase leading-[1.2] mb-4 group-hover:text-teal-400 transition-colors line-clamp-2">
             {title}
           </h3>
 
           {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-5">
               {tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="flex items-center gap-1 text-[12px] font-black uppercase tracking-widest text-slate-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                  <Hash size={12} strokeWidth={4} /> {tag}
+                <span key={i} className="flex items-center gap-1 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                  <Hash size={10} strokeWidth={4} /> {tag}
                 </span>
               ))}
             </div>
           )}
 
+          {/* Тарифы */}
           <div className={cn("flex flex-wrap gap-2 mb-6 mt-auto", (!tags || tags.length === 0) && "mt-auto")}>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/5 text-[12px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/5 text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider">
               Стандарт
             </span>
             {(priceMember ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] sm:text-xs font-bold text-amber-400 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider">
                 <Crown size={12} strokeWidth={2.5} /> Клубная
               </span>
             )}
             {(priceChild ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20 text-[12px] sm:text-xs font-bold text-pink-400 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20 text-[10px] sm:text-[11px] font-bold text-pink-400 uppercase tracking-wider">
                 <Baby size={12} strokeWidth={2.5} /> Детский
               </span>
             )}
@@ -188,26 +194,28 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
 
           <div className="h-px w-full bg-gradient-to-r from-white/10 to-transparent mb-5" />
 
+          {/* Подвал с ценой и кнопкой */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              <span className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Стоимость</span>
-              <div className="flex items-baseline gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Стоимость</span>
+              <div className="flex items-baseline gap-1.5">
                 {(priceOld ?? 0) > Number(price) && (
-                  <span className="text-sm font-bold text-rose-400/80 line-through decoration-rose-400/50">{priceOld}</span>
+                  <span className="text-xs font-bold text-rose-400/80 line-through decoration-rose-400/50 mr-1">{priceOld}</span>
                 )}
-                <span className="text-3xl sm:text-4xl font-black text-white leading-none tracking-tighter drop-shadow-md">
+                <span className="text-2xl sm:text-3xl font-black text-white leading-none tracking-tighter drop-shadow-md">
                   {Number(price).toLocaleString()}
                 </span>
-                <span className="text-sm font-bold text-teal-400 uppercase tracking-wider">{currency || 'RUB'}</span>
+                <span className="text-[10px] sm:text-xs font-bold text-teal-400 uppercase tracking-wider">{currency || 'RUB'}</span>
               </div>
             </div>
+            
             <div className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg group-hover:scale-110",
+              "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg group-hover:scale-110",
               isHighlighted
                 ? "bg-amber-500 text-slate-900 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
                 : "bg-teal-500 text-slate-900 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.4)]"
             )}>
-              <ArrowRight size={22} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={20} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>

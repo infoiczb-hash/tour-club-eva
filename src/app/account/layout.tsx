@@ -1,10 +1,13 @@
-// src/app/account/layout.tsx
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import AccountNav from '@/features/account/components/AccountNav';
-// 👇 1. Импортируем наш новый компонент
 import OnboardingModal from '@/features/account/components/OnboardingModal';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export async function getAccountProfile() {
   const supabase = await createServerSupabaseClient();
@@ -53,13 +56,11 @@ export default async function AccountLayout({
     }
   }
 
-  // 👇 2. Проверяем, нужен ли онбординг (если телефон пустой)
   const needsOnboarding = !profile.phone;
 
   return (
-    <div className="min-h-screen bg-slate-950 relative">
+    <div className="min-h-screen bg-slate-950 relative flex">
 
-      {/* Навигация кабинета */}
       <AccountNav
         profile={{
           name: profile.name,
@@ -68,11 +69,10 @@ export default async function AccountLayout({
         }}
       />
 
-      {/* Контент страницы */}
-      <main className="container mx-auto px-4 pt-6 pb-20 max-w-5xl relative z-10">
+      {/* 👇 ИСПРАВЛЕНО: md:ml-64 отодвигает контент от левого края на ширину сайдбара */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 pt-6 md:pt-10 pb-24 md:pb-12 md:ml-64 relative z-10 transition-all">
         {children}
         
-        {/* 👇 3. Блокируем ЛК, если нет телефона */}
         {needsOnboarding && <OnboardingModal />}
       </main>
 

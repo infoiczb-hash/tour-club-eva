@@ -99,10 +99,12 @@ const { data: { user } } = await supabase.auth.getUser();
 
 let isWished = false;
 if (user) {
+  // ✅ ИСПРАВЛЕНО: Честно получаем профиль из БД вместо удаления строк с ошибкой Cannot find name 'profile'
   const profile = await prisma.memberProfile.findUnique({
     where: { userId: user.id },
-    select: { id: true },
+    select: { id: true }
   });
+
   if (profile) {
     const watch = await prisma.watchList.findFirst({
       where: { memberId: profile.id, tourId: tour.id },

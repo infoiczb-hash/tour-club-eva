@@ -1,18 +1,16 @@
+// src/features/admin/components/TourForm/sections/Logistics.tsx
 import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { FormInput } from '../ui/FormUI';
+import { FormInput, FormSelect } from '../ui/FormUI'; // ✅ ИМПОРТ FORMSELECT
 import { MapPin, Calendar, Plus, Trash2, User, Zap, DollarSign } from 'lucide-react';
-import { clsx } from 'clsx';
 
-// Принимаем список гидов как проп, так как это данные с сервера
 interface LogisticsProps {
   guides: { id: string; name: string }[];
 }
 
 export const Logistics = ({ guides }: LogisticsProps) => {
-  const { control, register, formState: { errors } } = useFormContext();
+  const { control, register } = useFormContext();
   
-  // Управление массивом дат
   const { fields, append, remove } = useFieldArray({
     control,
     name: "dates"
@@ -35,13 +33,20 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           <FormInput name="route" label="Нитка маршрута" placeholder="Город А - Город Б - Город В" />
         </div>
         
-     <div className="grid grid-cols-2 gap-4 mt-4">
-     <FormInput name="distance" label="Дистанция (км)" placeholder="не определено" />
-     <FormInput name="difficulty" label="Сложность" placeholder="medium" />
-</div>
-<div className="grid grid-cols-1 mt-4">
-     <FormInput name="tourFormat" label="Формат тура" placeholder="не определено" />
-</div>
+        {/* ✅ ИСПРАВЛЕНО: Удалили дубль TourFormat, Сложность стала Select */}
+        <div className="grid grid-cols-2 gap-4 mt-4">
+           <FormInput name="distance" label="Дистанция (км)" placeholder="не определено" />
+           <FormSelect 
+              name="difficulty" 
+              label="Сложность" 
+              options={[
+                 { value: 'easy', label: 'Легкая (Easy)' },
+                 { value: 'medium', label: 'Средняя (Medium)' },
+                 { value: 'hard', label: 'Сложная (Hard)' },
+                 { value: 'expert', label: 'Экстрим (Expert)' }
+              ]} 
+           />
+        </div>
       </div>
 
       {/* 2. Блок ДАТЫ, ГИДЫ И ЦЕНООБРАЗОВАНИЕ */}
@@ -64,7 +69,6 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           {fields.map((field, index) => (
             <div key={field.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 relative group transition-all hover:border-teal-200">
               
-              {/* Кнопка удаления даты */}
               <button 
                 type="button" 
                 onClick={() => remove(index)}
@@ -74,7 +78,6 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                 <Trash2 size={18} />
               </button>
 
-              {/* ОСНОВНЫЕ ПАРАМЕТРЫ ДАТЫ */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pr-10 mb-4">
                 <div className="md:col-span-3">
                   <FormInput name={`dates.${index}.start`} label="Старт" type="date" />
@@ -110,7 +113,6 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                  <FormInput name={`dates.${index}.basePrice`} label="Своя цена (Переопределение)" type="number" placeholder="В валюте тура" />
               </div>
 
-              {/* ДИНАМИЧЕСКОЕ ЦЕНООБРАЗОВАНИЕ */}
               <div className="pt-4">
                  <h4 className="text-xs font-black uppercase text-teal-600 mb-3 flex items-center gap-1.5">
                     <Zap size={14} /> Маркетинг и Динамические цены
@@ -139,7 +141,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
               <p className="text-slate-400 text-sm font-medium">Даты выездов еще не добавлены</p>
               <button 
                 type="button"
-              onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
+                onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
                 className="text-teal-600 font-bold text-sm mt-3 hover:text-teal-500 hover:underline flex items-center justify-center gap-1 mx-auto"
               >
                 <Plus size={16} /> Создать первый выезд

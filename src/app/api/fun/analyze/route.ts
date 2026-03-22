@@ -108,7 +108,7 @@ export async function POST(req: Request) {
       break;
     }
 
-    case 'full-profile': {
+   case 'full-profile': {
       // Специфичная схема для финального разбора профиля
       schema = z.object({
         summaryTitle: z.string(),
@@ -130,7 +130,13 @@ export async function POST(req: Request) {
 
     default:
       return new Response(JSON.stringify({ error: "Неизвестный тип квиза" }), { status: 400 });
+  } // <--- ВОТ ЗДЕСЬ ЗАКАНЧИВАЕТСЯ SWITCH
+
+  // 👇 ДОБАВЛЯЕМ ВОТ ЭТОТ БЛОК 👇
+  if (schema === baseQuizSchema) {
+    prompt += `\n\nВАЖНОЕ ТРЕБОВАНИЕ К JSON: Ключ "analysis" ДОЛЖЕН быть самым первым ключом в генерируемом объекте. Это критически важно для потоковой передачи на клиент. Ключ "recommendedTourId" генерируй в самом конце.`;
   }
+  // 👆 КОНЕЦ ВСТАВКИ 👆
 
   // 4. Запускаем магию Gemini
   const result = await streamObject({
