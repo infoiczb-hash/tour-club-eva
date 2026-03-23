@@ -38,8 +38,7 @@ interface ToursBrowserProps {
   title?: string;
   subtitle?: string;
   limit?: number;
-  totalKm?: number; 
-}
+  }
 
 // Слушатель для начальной инициализации фильтра из URL
 function ParamsListener({ onChange }: { onChange: (val: string) => void }) {
@@ -61,8 +60,7 @@ export default function ToursBrowser({
     title = "Афиша Приключений", 
     subtitle = "ТУРЫ КЛУБА",
     limit = 8, // По умолчанию показываем 8, остальные по кнопке "Показать еще"
-    totalKm = 0
-}: ToursBrowserProps) {
+   }: ToursBrowserProps) {
   
   const openContactModal = useModalStore((state) => state.openContactModal);
   
@@ -174,16 +172,7 @@ export default function ToursBrowser({
                    <CalendarIcon size={14} className="text-teal-400" />
                   <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">{subtitle}</span>
                 </div>
-                
-                {totalKm > 0 && (
-                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 backdrop-blur-md animate-in fade-in zoom-in duration-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-                      <TrendingUp size={14} className="text-amber-500" />
-                      <span className="text-[12px] md:text-[14px] font-bold uppercase tracking-widest text-amber-400">
-                         Ты уже прошел с нами {Math.round(totalKm)} км!
-                      </span>
-                   </div>
-                )}
-            </div>
+               </div>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                 {title}

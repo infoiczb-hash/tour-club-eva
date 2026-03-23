@@ -3,29 +3,12 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Users, ArrowRight, CheckCircle, XCircle, AlertCircle, Hourglass } from 'lucide-react';
-import TransferSpotButton from '@/features/account/components/TransferSpotButton';
-import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton'; // 👈 Новый импорт
+import { Calendar, MapPin, Clock, ArrowRight, Hourglass } from 'lucide-react';
+import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton';
+// ✅ ДОБАВЛЕНО: Импорт нашей новой премиальной карточки (Boarding Pass)
+import BookingCard from '@/features/account/components/BookingCard'; 
 
-// ─── статусы брони ───────────────────────────────────────────────────
-const STATUS_CONFIG = {
-  pending: {
-    label: 'Ожидает',
-    icon: AlertCircle,
-    style: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-  },
-  confirmed: {
-    label: 'Подтверждено',
-    icon: CheckCircle,
-    style: 'text-green-400 bg-green-400/10 border-green-400/20',
-  },
-  cancelled: {
-    label: 'Отменено',
-    icon: XCircle,
-    style: 'text-slate-500 bg-slate-500/10 border-slate-500/20',
-  },
-} as const;
-
+// ─── вспомогательные функции ─────────────────────────────────────────
 function formatDate(d: Date) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 }
@@ -86,7 +69,7 @@ async function getBookings(userId: string) {
     },
   });
 
-  // 👇 ДОБАВЛЕНО: Лист ожидания (ищем по номеру телефона)
+  // Лист ожидания
   let waitlists: any[] = [];
   if (profile.phone) {
     waitlists = await prisma.waitlist.findMany({
@@ -131,11 +114,11 @@ export default async function BookingsPage() {
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 max-w-4xl">
             {waitlists.map(waitlist => (
               <div
                 key={waitlist.id}
-                className="flex items-center gap-4 bg-slate-900/40 border border-amber-500/20 rounded-xl p-4 transition-all"
+                className="flex items-center gap-4 bg-slate-900/40 border border-amber-500/20 rounded-xl p-4 transition-all hover:bg-slate-900/60"
               >
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-800">
                   {waitlist.tour.coverImage ? (
@@ -168,7 +151,7 @@ export default async function BookingsPage() {
       )}
 
       {/* ── Предстоящие ─────────────────────────────────────────── */}
-      <section className="space-y-4">
+      <section className="space-y-4 max-w-4xl"> {/* 👈 ОГРАНИЧИТЕЛЬ ШИРИНЫ ДЛЯ БИЛЕТОВ */}
         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
           Предстоящие
         </h2>
@@ -184,138 +167,28 @@ export default async function BookingsPage() {
             </Link>
           </div>
         ) : (
-          upcoming.map(booking => {
-            const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
-            const StatusIcon = status.icon;
-            const totalTickets =
-              booking.ticketsAdult +
-              booking.ticketsChild +
-              booking.ticketsMember +
-              booking.ticketsFamily;
+          <div className="space-y-6"> {/* 👈 ОТСТУПЫ МЕЖДУ БИЛЕТАМИ */}
+            {upcoming.map(booking => {
+              
+              // Вычисляем общее количество мест для передачи в карточку
+              const guestsCount =
+                booking.ticketsAdult +
+                booking.ticketsChild +
+                booking.ticketsMember +
+                (booking.ticketsFamily * 3);
 
-            return (
-              <div
-                key={booking.id}
-                className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden"
-              >
-                {/* Фото + статус */}
-                <div className="relative h-36">
-                  {booking.tour.coverImage ? (
-                    <Image
-                      src={booking.tour.coverImage}
-                      alt={booking.tour.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 700px"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-slate-800" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+              // Расширяем объект брони для прокидывания в компонент
+              const bookingData = { ...booking, guestsCount };
 
-                  {/* Статус */}
-                  <div className="absolute top-3 right-3">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border ${status.style}`}>
-                      <StatusIcon size={11} />
-                      {status.label}
-                    </span>
-                  </div>
-
-                  {/* Дата */}
-                  {booking.tourDate && (
-                    <div className="absolute bottom-3 left-4 flex items-center gap-2">
-                      <Calendar size={13} className="text-teal-400" />
-                      <span className="text-sm font-bold text-white">
-                        {formatDate(booking.tourDate.startDate)}
-                        {booking.tourDate.time && ` · ${booking.tourDate.time}`}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Контент */}
-                <div className="p-4 space-y-3">
-                  <h3 className="text-base font-black text-white">
-                    {booking.tour.title}
-                  </h3>
-
-                  {/* Мета */}
-                  <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-                    {booking.tour.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin size={11} /> {booking.tour.location}
-                      </span>
-                    )}
-                    {booking.tour.duration && (
-                      <span className="flex items-center gap-1">
-                        <Clock size={11} /> {booking.tour.duration}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Users size={11} /> {totalTickets} {totalTickets === 1 ? 'место' : 'места'}
-                    </span>
-                  </div>
-
-                  {/* Гид */}
-                  {booking.tourDate?.guide && (
-                    <div className="flex items-center gap-2">
-                      {booking.tourDate.guide.image ? (
-                        <Image
-                          src={booking.tourDate.guide.image}
-                          alt={booking.tourDate.guide.name}
-                          width={24}
-                          height={24}
-                          className="rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center">
-                          <span className="text-xs font-bold text-teal-400">
-                            {booking.tourDate.guide.name[0]}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-xs text-slate-400">
-                        Гид: <span className="text-white font-medium">{booking.tourDate.guide.name}</span>
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Сумма */}
-                  <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                    <span className="text-xs text-slate-500">Итого</span>
-                    <span className="text-sm font-bold text-white">
-                      {formatPrice(booking.totalPrice, booking.tour.currency ?? 'MDL')}
-                    </span>
-                  </div>
-
-                  {/* Кнопки */}
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/tour/${booking.tour.slug}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold text-white bg-teal-600 hover:bg-teal-500 py-2.5 rounded-xl transition-all"
-                    >
-                      О туре <ArrowRight size={13} />
-                    </Link>
-
-                    {/* Передать место — только для pending/confirmed */}
-                    {booking.status !== 'cancelled' && booking.tourDate && (
-                      <TransferSpotButton
-                        bookingId={booking.id}
-                        tourTitle={booking.tour.title}
-                        tourDate={booking.tourDate.startDate.toISOString()}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
+              return <BookingCard key={booking.id} booking={bookingData} />;
+            })}
+          </div>
         )}
       </section>
 
       {/* ── Прошедшие ───────────────────────────────────────────── */}
       {past.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3 max-w-4xl">
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
             Прошедшие
           </h2>

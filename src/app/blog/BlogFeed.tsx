@@ -19,7 +19,8 @@ interface BlogCategory {
   sortOrder: number;
 }
 
-interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags'> {
+interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
+  content?: string | null;
   tags?: string[];
   categoryId?: string | null;
   blogCategory?: { 

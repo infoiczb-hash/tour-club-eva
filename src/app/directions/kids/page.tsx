@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import KidsLandingClient from '@/features/directions/kids/KidsLanding'
 import { getTours } from '@/features/tours/api'; // ✅ Добавлено: импорт API
 
-export const revalidate = 300; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 3600; // Страница будет кэшироваться на 60 секунд
 
 export const metadata: Metadata = {
   title: 'Детские Походы и Лагеря в Приднестровье | Junior Академия «Эва»',

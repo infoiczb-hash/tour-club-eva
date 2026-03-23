@@ -1,3 +1,4 @@
+// src/features/account/actions/updateSettings.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
@@ -8,6 +9,9 @@ import { z } from 'zod';
 const SettingsSchema = z.object({
   name: z.string().min(2, "Имя обязательно"),
   email: z.string().email("Неверный формат email").or(z.literal("")).optional().nullable(),
+  telegram: z.string().optional().nullable(),
+  instagram: z.string().optional().nullable(),
+  viber: z.string().optional().nullable(),
   foodPref: z.string().optional().nullable(),
   shoeSize: z.string().optional().nullable(),
   clothesSize: z.string().optional().nullable(),
@@ -36,6 +40,9 @@ export async function updateProfileSettingsAction(data: SettingsInput) {
       data: {
         name: parsed.data.name,
         email: parsed.data.email || null,
+        telegram: parsed.data.telegram || null,
+        instagram: parsed.data.instagram || null,
+        viber: parsed.data.viber || null,
         foodPref: parsed.data.foodPref || null,
         shoeSize: parsed.data.shoeSize || null,
         clothesSize: parsed.data.clothesSize || null,

@@ -10,7 +10,8 @@ import {
   Heart, 
   Settings, 
   LogOut,
-  Compass
+  Compass,
+  FlaskConical // ✅ ДОБАВЛЕНА ИКОНКА
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -27,7 +28,8 @@ const NAV_LINKS = [
   { name: 'Мои туры', href: '/account/bookings',  icon: Ticket },
   { name: 'История', href: '/account/history',   icon: History },
   { name: 'Вишлист', href: '/account/wishlist',  icon: Heart },
-  // 👇 ИСПРАВЛЕНО: правильный путь до настроек
+  // ✅ ДОБАВЛЕНА ВКЛАДКА "ТЕСТЫ"
+  { name: 'Мои тесты', href: '/account/tests',  icon: FlaskConical },
   { name: 'Настройки', href: '/account/settings',   icon: Settings }, 
 ];
 
@@ -97,7 +99,6 @@ export default function AccountNav({ profile }: AccountNavProps) {
           </button>
         </div>
       </aside>
-
 
       {/* ─── МОБИЛЬНАЯ ВЕРСИЯ (Нижний свайп-бар) ────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 pb-safe">

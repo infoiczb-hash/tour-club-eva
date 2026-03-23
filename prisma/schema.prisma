@@ -157,6 +157,10 @@ model Booking {
   ticketsChild  Int     @default(0) @map("tickets_child")
   ticketsFamily Int     @default(0) @map("tickets_family")
   ticketsMember Int     @default(0) @map("tickets_member")
+
+  // 👇 НОВОЕ ПОЛЕ: JSON для умных билетов (динамический список гостей и размеров)
+  guests        Json?   @default("[]")
+
   comment       String?
   totalPrice    Int     @map("total_price")
   amountPaid    Int     @default(0) @map("amount_paid")
@@ -201,17 +205,19 @@ model Waitlist {
 }
 
 model PromoCode {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code       String    @unique
-  discount   Int
-  type       String    @default("percent")
-  validUntil DateTime? @map("valid_until") @db.Timestamptz(6)
-  usageCount Int       @default(0) @map("usage_count")
-  isActive   Boolean   @default(true) @map("is_active")
 
-  bookings Booking[]
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String    @unique
+  discount    Int       @default(100) 
+  type        String    @default("fixed") // Для рефералки лучше "fixed" (лей), а не проценты
+  validUntil  DateTime? @map("valid_until") @db.Timestamptz(6)
+  usageCount  Int       @default(0) @map("usage_count")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  reward      Int       @default(50)  // Сколько баллов получает владелец кода за друга
+  memberId    String?   @unique @db.Uuid
+  member      MemberProfile? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
 
   @@index([code])
   @@map("promo_codes")
@@ -279,6 +285,7 @@ model Guide {
   posts     Blog[]
   tours     Tour[]
   tourDates TourDate[]
+  watchLists WatchList[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -357,6 +364,10 @@ model MemberProfile {
   name       String?
   email      String?
   avatarUrl  String? @map("avatar_url")
+  telegram       String?
+  tgChatId      String?   @unique @map("tg_chat_id")
+  instagram      String?
+  viber          String?
   
   foodPref       String? @map("food_pref")
   shoeSize       String? @map("shoe_size")
@@ -376,13 +387,17 @@ model MemberProfile {
   testResults   TestResult[]
   favoritePosts FavoritePost[] // Добавлен массив закладок статей
 
+  balance       Int       @default(0)
+  invitedByCode String?
+  promoCode     PromoCode?
+
   @@index([phone])
   @@index([userId])
   @@map("member_profiles")
 }
 
 model WatchList {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   memberId String        @map("member_id") @db.Uuid
   member   MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -390,14 +405,17 @@ model WatchList {
   tourId String? @map("tour_id") @db.Uuid
   tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
-  categoryId String?       @map("category_id") @db.Uuid
-  category   TourCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+categoryId String?       @map("category_id") @db.Uuid
+ category   TourCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+ guideId String? @map("guide_id") @db.Uuid
+ guide   Guide?  @relation(fields: [guideId], references: [id], onDelete: Cascade)
 
   notified  Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([memberId, tourId])
   @@unique([memberId, categoryId])
+  @@unique([memberId, guideId])
   @@index([memberId])
   @@index([tourId])
   @@map("watch_list")

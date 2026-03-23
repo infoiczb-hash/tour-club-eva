@@ -5,7 +5,7 @@ import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import { Suspense } from 'react';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 // 🔥 МОЩНОЕ ИНФОРМАЦИОННОЕ SEO ДЛЯ БЛОГА
 export const metadata: Metadata = {
@@ -47,14 +47,35 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  const posts = await prisma.blog.findMany({
-    orderBy: {
-      date: 'desc',
-    },
-  });
+  // ✅ Promise.all: два запроса параллельно вместо последовательных
+  const [posts, catRes] = await Promise.all([
+    prisma.blog.findMany({
+      where: { isActive: true },
+      orderBy: { date: 'desc' },
+      select: {
+        id: true, slug: true, title: true, excerpt: true,
+        image: true, date: true, read_time: true,
+        is_trending: true, category: true, categoryId: true,
+        format: true, author_name: true, author_role: true,
+        author_image: true, guideId: true, isActive: true,
+        tags: true, createdAt: true, updatedAt: true,
+        guide: { select: { id: true, name: true, image: true, role: true } },
+        blogCategory: {
+          select: {
+            id: true, slug: true, title: true,
+            isActive: true, sortOrder: true, createdAt: true, updatedAt: true,
+          }
+        },
+        // content не выбираем — не нужен в списке, экономим трафик
+      },
+    }),
+    getBlogCategoriesAction(),
+  ]);
 
-  const catRes = await getBlogCategoriesAction();
   const categories = catRes.success ? catRes.data : [];
+
+  // ✅ preload первой карточки — браузер грузит до гидрации JS
+  const firstPostImage = posts[0]?.image ?? null;
 
   return (
     <>
@@ -63,14 +84,16 @@ export default async function BlogPage() {
         { name: "Блог", url: "https://evatur.club/blog" },
       ]} />
 
-      {/*
-        ✅ PRECONNECT: экономит ~300мс LCP.
-        Браузер заранее устанавливает TCP+TLS соединение с Supabase Storage
-        ещё до того, как Next.js Image запросит первое изображение.
-        dns-prefetch — фолбэк для браузеров без поддержки preconnect.
-      */}
       <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" />
       <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+      {firstPostImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={`${firstPostImage.split('?')[0]}?width=828&quality=65&format=origin`}
+          fetchPriority="high"
+        />
+      )}
 
       <main className="min-h-screen bg-slate-950">
         <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>

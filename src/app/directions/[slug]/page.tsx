@@ -17,7 +17,7 @@ import OrganizersLanding from '@/features/directions/organizers/OrganizersLandin
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
 import { Tour } from '@/features/tours/types';
-import { getTours } from '@/features/tours/api';
+import { getTours, getToursByCategory } from '@/features/tours/api';
 
 // ==========================================
 // SEO: КОНФИГ НАПРАВЛЕНИЙ
@@ -165,7 +165,7 @@ function DirectionJsonLd({ slug }: { slug: string }) {
 // ==========================================
 // СТРАНИЦА
 // ==========================================
-export const revalidate = 300;
+export const revalidate = 3600;
 export async function generateStaticParams() {
   return [
     { slug: 'kayaking' },
@@ -185,8 +185,8 @@ export default async function DirectionPage({ params }: PageProps) {
   const { slug } = params;
 
   // Направления без каталога туров — не грузим БД зря
-  const noToursNeeded = slug === 'sup' || slug === 'organizers';
-  const tours: Tour[] = noToursNeeded ? [] : await getTours();
+ const noToursNeeded = slug === 'sup' || slug === 'organizers';
+  const tours: Tour[] = noToursNeeded ? [] : await getToursByCategory(slug, 6);
  
    switch (slug) {
     case 'kayaking':

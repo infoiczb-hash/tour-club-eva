@@ -1,3 +1,4 @@
+// src/features/fun/components/QuizBackpack.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -13,6 +14,7 @@ import {
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+import { useSaveTest } from "@/hooks/useSaveTest";
 
 /* =======================
    ТИПЫ
@@ -116,6 +118,7 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
   const [selected, setSelected] = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
   const { updateProfile } = useProfile();
+  const { saveResult } = useSaveTest();
 
   useEffect(() => {
     if (open) {
@@ -147,6 +150,14 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
   const handleCheck = () => {
     updateProfile({ touristType: `Сборка рюкзака: ${result.title}` });
     incrementFunTestPassAction('backpack').catch(console.error);
+
+    // Сохранение в БД
+    saveResult('backpack', {
+      type: result.title,
+      badge: "🎒",
+      description: result.description,
+    });
+
     setShowResult(true);
   };
 
@@ -172,7 +183,7 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]"
           onClick={(e) => e.stopPropagation()}
         >
           <button 
@@ -325,26 +336,31 @@ function ResultScreen({ result, selected, onClose }: { result: Result; selected:
                <span className="text-emerald-400 font-bold text-sm">Идеально! Ничего лишнего.</span>
            </div>
         )}
-      </div>
 
-      {/* SMART CTA */}
-      <div className="shrink-0 pt-4 mt-2 border-t border-white/10">
-        <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Твоя стихия ждет</p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href={`/directions/${result.directionSlug}`}
-            onClick={onClose}
-            className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
-          >
-            <Compass size={16} /> О направлении
-          </Link>
-          <Link
-            href={`/tour?category=${result.directionSlug}`}
-            onClick={onClose}
-            className="flex-1 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
-          >
-            Выбрать маршрут <ArrowRight size={16} />
-          </Link>
+        {/* SMART CTA (Теперь внутри скролла для UX/Mobile) */}
+        <div className="pt-6 mt-4 border-t border-white/10 text-center">
+          <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", result.iconColor)}>
+              Мы рекомендуем Вам
+          </p>
+          <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", result.iconColor)}>
+              {result.directionName}
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              href={`/directions/${result.directionSlug}`}
+              onClick={onClose}
+              className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+            >
+              <Compass size={16} /> О направлении
+            </Link>
+            <Link
+              href={`/tour?category=${result.directionSlug}`}
+              onClick={onClose}
+              className="flex-1 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+            >
+              Выбрать маршрут <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </div>
     </motion.div>
