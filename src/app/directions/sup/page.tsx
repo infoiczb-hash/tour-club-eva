@@ -1,9 +1,13 @@
 import React from 'react';
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 import { getTours } from '@/features/tours/api';
 import SupLandingClient from '@/features/directions/sup/SupLanding';
 
-export const revalidate = 300; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 3600; // Страница будет кэшироваться на 60 секунд
+
+export const viewport: Viewport = {
+  themeColor: '#020817',
+};
 
 export const metadata: Metadata = {
   title: 'SUP-прогулки на Днестре| Турклуб «Эва»',
@@ -52,6 +56,13 @@ export const metadata: Metadata = {
 export default function SupPage() {
   return (
     <main className="bg-slate-950 min-h-screen">
+      {/* preload hero — браузер начинает грузить до гидрации JS */}
+      <link
+        rel="preload"
+        as="image"
+        href="https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_75,w_828/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg"
+        fetchPriority="high"
+      />
       <SupLandingClient />
     </main>
   );

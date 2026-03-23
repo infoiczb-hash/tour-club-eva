@@ -1,9 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { getTours } from '@/features/tours/api'; 
+import { getToursByCategory } from '@/features/tours/api';
 import LocalProgram from '@/features/directions/local/LocalLanding';
 
-export const revalidate = 300; 
+export const revalidate = 3600; 
 
 export const metadata: Metadata = {
   title: 'Маршруты по Приднестровью | Турклуб Эва',
@@ -52,12 +52,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LocalPage() {
-  // ✅ 1. Получаем все активные туры
-  const allTours = await getTours();
-
-  // ✅ 2. ЧЕСТНАЯ ФИЛЬТРАЦИЯ (Без хардкода "молдова")
-  // Опираемся только на строгий slug категории из базы данных
-  const localTours = allTours.filter(tour => tour.category?.slug === 'local');
+  const localTours = await getToursByCategory('local', 6);
 
   return (
     <main className="bg-slate-950 min-h-screen selection:bg-emerald-500/30">

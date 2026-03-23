@@ -1,9 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { getTours } from '@/features/tours/api'; // ✅ РАЗБЛОКИРОВАН ЗАПРОС К БД
+import { getToursByCategory } from '@/features/tours/api';
 import KayakingLanding from '@/features/directions/kayaking/KayakingLanding';
 
-export const revalidate = 300; 
+export const revalidate = 3600; 
 
 export const metadata: Metadata = {
   title: 'Сплав на байдарках по Днестру в Приднестровье | Турклуб «Эва»',
@@ -49,12 +49,7 @@ export const metadata: Metadata = {
 
 // ✅ ВОЗВРАЩЕН async ДЛЯ СЕРВЕРНОГО КОМПОНЕНТА
 export default async function KayakingLandingPage() {
-  const allTours = await getTours();
-  
-  // ✅ ЧЕСТНАЯ ФИЛЬТРАЦИЯ
-  const kayakingTours = allTours.filter(tour => 
-    tour.category?.slug === 'kayak' || tour.category?.slug === 'kayaking'
-  );
+  const kayakingTours = await getToursByCategory('kayaking', 6);
 
   return (
     <main>

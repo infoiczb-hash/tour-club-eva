@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 interface Props {
   children: React.ReactNode;
-  header: React.ReactNode; // Если вы передаете хедер пропсом, иначе просто компонент <Header />
+  header: React.ReactNode;
   footer: React.ReactNode;
   promo: React.ReactNode;
 }
@@ -23,10 +23,9 @@ export default function MainLayoutWrapper({ children, header, footer, promo }: P
     );
   }
 
-  // 2. Проверка Страницы Тура (НОВОЕ)
-  // Если путь начинается с /tour (например /tours/altai или /tour/altai),
-  // то считаем, что это страница тура.
+  // 2. Проверка страниц без футера и промо-блока
   const isTourPage = pathname?.startsWith('/tour');
+  const isAccountPage = pathname?.startsWith('/account');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -37,10 +36,8 @@ export default function MainLayoutWrapper({ children, header, footer, promo }: P
         {children}
       </main>
 
-      {/* Показываем Промо и Футер ТОЛЬКО если это НЕ страница тура.
-          На странице тура будет виден только контент тура.
-      */}
-      {!isTourPage && (
+      {/* Показываем Промо и Футер ТОЛЬКО если это НЕ страница тура и НЕ личный кабинет */}
+      {!isTourPage && !isAccountPage && (
         <>
           {promo}
           {footer}

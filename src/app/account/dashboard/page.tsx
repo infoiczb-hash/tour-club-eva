@@ -5,30 +5,13 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
- MapPin, Clock, Users, TrendingUp,
+  MapPin, Clock, TrendingUp,
   ChevronRight, Calendar, ArrowRight,
   Star, Flame, Timer, Backpack,
-  FileText, Download
+  FileText, Download, Wallet // 👈 ДОБАВИЛИ Wallet для баланса
 } from 'lucide-react';
 import VirtualCard from '@/features/account/components/VirtualCard';
 import ReferralCard from '@/features/account/components/ReferralCard';
-
-// ─── уровни ─────────────────────────────────────────────────────────
-const LEVELS = [
-  { name: 'Первопроходец', min: 0,  max: 2  },
-  { name: 'Походник',      min: 3,  max: 6  },
-  { name: 'Бывалый',       min: 7,  max: 14 },
-  { name: 'Ветеран',       min: 15, max: 29 },
-  { name: 'Легенда клуба', min: 30, max: 30 },
-];
-
-const LEVEL_STYLES: Record<string, { bar: string; badge: string; glow: string }> = {
-  'Первопроходец': { bar: 'bg-teal-500',   badge: 'text-teal-400 bg-teal-400/10 border-teal-400/20',   glow: 'shadow-teal-500/20'   },
-  'Походник':      { bar: 'bg-green-500',  badge: 'text-green-400 bg-green-400/10 border-green-400/20', glow: 'shadow-green-500/20'  },
-  'Бывалый':       { bar: 'bg-blue-500',   badge: 'text-blue-400 bg-blue-400/10 border-blue-400/20',   glow: 'shadow-blue-500/20'   },
-  'Ветеран':       { bar: 'bg-purple-500', badge: 'text-purple-400 bg-purple-400/10 border-purple-400/20', glow: 'shadow-purple-500/20' },
-  'Легенда клуба': { bar: 'bg-amber-500',  badge: 'text-amber-400 bg-amber-400/10 border-amber-400/20', glow: 'shadow-amber-500/20'  },
-};
 
 // ─── вспомогательные функции ─────────────────────────────────────────
 
@@ -71,12 +54,15 @@ async function getDashboardData(userId: string) {
 
   if (!profile) return null;
 
+  const now = new Date();
+
+  // 1. Ближайший предстоящий тур (confirmed или pending)
   const upcomingBooking = await prisma.booking.findFirst({
     where: {
       memberId: profile.id,
       status: { in: ['pending', 'confirmed'] },
       OR: [
-        { tourDate: { startDate: { gte: new Date() } } },
+        { tourDate: { startDate: { gte: now } } },
         { tourDateId: null } 
       ]
     },
@@ -90,8 +76,8 @@ async function getDashboardData(userId: string) {
           coverImage: true,
           difficulty: true,
           duration: true,
-          checklist: true, // 👈 Это мы добавили в прошлый раз
-          documents: true, // 👈 А вот это добавляем СЕЙЧАС
+          checklist: true,
+          documents: true,
         },
       },
       tourDate: {
@@ -107,26 +93,41 @@ async function getDashboardData(userId: string) {
     },
   });
 
-  const uniqueGuides = await prisma.booking.findMany({
-    where: { memberId: profile.id },
-    include: {
-      tourDate: { select: { guideId: true } },
+  // 2. 🔥 ЧЕСТНАЯ ИСТОРИЯ: ТОЛЬКО 'confirmed' и ТОЛЬКО прошедшие
+  const pastConfirmedBookings = await prisma.booking.findMany({
+    where: { 
+      memberId: profile.id, 
+      status: 'confirmed',
+      tourDate: { startDate: { lt: now } }
     },
-    distinct: ['tourDateId'],
+    include: { 
+      tour: { select: { distance: true, duration: true } },
+      tourDate: { select: { startDate: true, endDate: true } }
+    },
   });
-  const guideIds = new Set(
-    uniqueGuides.map(b => b.tourDate?.guideId).filter(Boolean)
-  );
 
-  const bookingsForNights = await prisma.booking.findMany({
-    where: { memberId: profile.id },
-    include: { tour: { select: { duration: true } } },
-  });
-  const totalNights = bookingsForNights.reduce((sum, b) => {
-    const d = parseInt(b.tour?.duration ?? '1') - 1;
-    return sum + (isNaN(d) || d < 0 ? 0 : d);
-  }, 0);
+  // 3. 🔥 АГРЕГАЦИЯ ЧЕСТНОЙ СТАТИСТИКИ
+  let totalKm = 0;
+  let totalNights = 0;
+  const totalTours = pastConfirmedBookings.length;
 
+  for (const b of pastConfirmedBookings) {
+    // Считаем километры
+    const km = parseFloat(b.tour?.distance ?? '0');
+    totalKm += isNaN(km) ? 0 : km;
+
+    // Считаем ночевки: Приоритет реальным датам, фолбэк на текстовое поле duration
+    if (b.tourDate?.startDate && b.tourDate?.endDate) {
+      const diffTime = Math.abs(b.tourDate.endDate.getTime() - b.tourDate.startDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      totalNights += diffDays;
+    } else if (b.tour?.duration) {
+      const d = parseInt(b.tour.duration) - 1;
+      totalNights += (isNaN(d) || d < 0 ? 0 : d);
+    }
+  }
+
+  // 4. Последние 3 брони (для ленты внизу дашборда)
   const recentBookings = await prisma.booking.findMany({
     where: { memberId: profile.id, status: { not: 'cancelled' } },
     orderBy: { createdAt: 'desc' },
@@ -143,9 +144,9 @@ async function getDashboardData(userId: string) {
     profile,
     upcomingBooking,
     stats: {
-      totalTours: profile.totalTours,
-      totalKm: Math.round(profile.totalKm),
-      uniqueGuides: guideIds.size,
+      totalTours,
+      totalKm: Math.round(totalKm),
+      balance: profile.balance, // 👈 ТЯНЕМ БАЛАНС ИЗ ПРОФИЛЯ
       totalNights,
     },
     recentBookings,
@@ -179,23 +180,25 @@ export default async function DashboardPage() {
           <VirtualCard 
             name={displayName} 
             level={profile.level} 
-            totalTours={stats.totalTours} 
-            totalKm={stats.totalKm} 
+            totalTours={stats.totalTours} // 👈 ЧЕСТНОЕ КОЛИЧЕСТВО ТУРОВ
+            totalKm={stats.totalKm}       // 👈 ЧЕСТНЫЙ КИЛОМЕТРАЖ
             memberId={profile.id}
           />
         </div>
       </section>
-{/* ── Реферальная программа ───────────────────────────────── */}
+
+      {/* ── Реферальная программа ───────────────────────────────── */}
       <section>
         <ReferralCard name={profile.name} userId={profile.userId} />
       </section>
-      {/* ── Статистика ──────────────────────────────────────────── */}
+
+      {/* ── Статистика (ОБНОВЛЕННАЯ) ────────────────────────────── */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Туров',    value: stats.totalTours,   unit: '',   icon: Flame    },
-          { label: 'Км',       value: stats.totalKm,      unit: 'км', icon: TrendingUp },
-          { label: 'Гидов',    value: stats.uniqueGuides, unit: '',   icon: Users    },
-          { label: 'Ночей',    value: stats.totalNights,  unit: '',   icon: Star     },
+          { label: 'Туров',    value: stats.totalTours,   unit: '',    icon: Flame      },
+          { label: 'Км',       value: stats.totalKm,      unit: 'км',  icon: TrendingUp },
+          { label: 'Баланс',   value: stats.balance,      unit: 'MDL', icon: Wallet     }, // 👈 ЗАМЕНИЛИ ГИДОВ НА БАЛАНС
+          { label: 'Ночей',    value: stats.totalNights,  unit: '',    icon: Star       },
         ].map(({ label, value, unit, icon: Icon }) => (
           <div
             key={label}
@@ -324,7 +327,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* 👇 НОВЫЙ БЛОК: Умный чек-лист снаряжения 👇 */}
+          {/* Умный чек-лист снаряжения */}
           <div className="mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0">
@@ -350,10 +353,9 @@ export default async function DashboardPage() {
               Смотреть список
             </Link>
           </div>
-          {/* 👆 КОНЕЦ НОВОГО БЛОКА 👆 */}
-{/* 👇 НОВЫЙ БЛОК: Документы тура 👇 */}
+
+          {/* Документы тура */}
           {(() => {
-            // Строго типизируем JSON из базы
             interface TourDoc { title?: string; url?: string; }
             const docs = upcomingBooking.tour.documents as unknown as TourDoc[] | null;
 
@@ -368,7 +370,7 @@ export default async function DashboardPage() {
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {docs.map((doc, idx) => {
-                    if (!doc.url) return null; // Защита от битых ссылок
+                    if (!doc.url) return null;
                     return (
                       <a
                         key={idx}
@@ -395,7 +397,6 @@ export default async function DashboardPage() {
               </div>
             );
           })()}
-          {/* 👆 КОНЕЦ БЛОКА ДОКУМЕНТОВ 👆 */}
         </section>
       ) : (
         /* Нет предстоящих туров */

@@ -1,31 +1,36 @@
-import { getTours } from '@/features/tours/api';
-// 👇 1. ЗАМЕНИЛИ ИМПОРТ: Теперь тянем обертку (которая сама подтянет ToursBrowser лениво)
-import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
 import { Metadata } from 'next';
-import { getTourCategoriesAction } from '@/features/admin/actions/categories';
-import { Suspense } from 'react'; // 👈 ДОБАВЛЕНО
-import { TourSkeleton } from '@/features/tours/components/TourSkeleton'; // 👈 ДОБАВЛЕНО
+import { Suspense } from 'react';
+import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
+import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 
-export const revalidate = 300; // Страница будет кэшироваться на 60 секунд
+/**
+ * Страница каталога всех туров.
+ * Использует ISR (Incremental Static Regeneration).
+ * Страница пересобирается в фоне раз в час, обеспечивая мгновенную загрузку для SEO.
+ */
+export const revalidate = 3600; 
 
-// 1. 🔥 СУПЕР-SEO ДЛЯ КАТАЛОГА ТУРОВ (Приднестровье/Молдова)
+// 🔥 СУПЕР-SEO ДЛЯ КАТАЛОГА ТУРОВ (Приднестровье/Молдова)
 export const metadata: Metadata = {
   title: 'Расписание Туров 2026 — Сплавы, ТУРЫ и SUP | Турклуб «Эва»',
-  description: 'Афиша приключений 2026. Сплавы по Днестру, горные походы,SUP. Группы до 12 чел., с гидами. Бронируй место на ближайший тур.',
+  description: 'Афиша приключений 2026. Сплавы по Днестру, горные походы, SUP. Группы до 12 чел., с гидами. Бронируй место на ближайший тур.',
   keywords: [
     'туры Приднестровье 2026',
     'расписание туров',
-    'байдарки  и SUP на Днестре',
-     'туры в Румынию',
+    'байдарки и SUP на Днестре',
+    'туры в Румынию',
     'активный отдых выходного дня'
   ],
   openGraph: {
     title: 'Туры и Походы в Приднестровье 2026 — Расписание | Турклуб «Эва»',
     description: 'Расписание туров 2026: сплавы на байдарках по Днестру, пешие походы, SUP и детские программы. Активный отдых в Приднестровье и Молдове каждые выходные.',
+    url: 'https://evatur.club/tour',
+    siteName: 'Турклуб Эва',
+    locale: 'ru_RU',
     type: 'website',
     images: [
       {
-        url: '/og-default.jpg', // Подтянет ту же красивую обложку
+        url: '/og-default.jpg',
         width: 1200,
         height: 630,
         alt: 'Расписание туров Турклуба Эва'
@@ -33,18 +38,19 @@ export const metadata: Metadata = {
     ]
   },
   alternates: {
-    canonical: '/tour', // Указываем каноническую ссылку для защиты от дублей
+    canonical: '/tour',
   }
 };
 
-// 2. СТРАНИЦА (Async Server Component)
 export default async function AllToursPage() {
-  // Вызовы данных здесь были удалены, так как компонент ToursBrowserWrapper 
-  // делает эти запросы к БД самостоятельно и параллельно.
-
- return (
-    <main className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" id="tours">
-      {/* 👈 ДОБАВЛЕНА ОБЕРТКА SUSPENSE */}
+  return (
+    <main 
+      className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" 
+      id="tours"
+    >
+      {/* Suspense позволяет показать скелетон загрузки, пока ToursBrowserWrapper 
+        выполняет запросы к базе данных на стороне сервера.
+      */}
       <Suspense fallback={<TourSkeleton />}>
         <ToursBrowserWrapper
           title="Все Приключения"

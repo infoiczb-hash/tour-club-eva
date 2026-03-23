@@ -121,18 +121,9 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
       {/* ✅ ЛАЙТБОКС: Полностью переработан UX для мобильных и десктопов */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[9999] bg-black/98 backdrop-blur-xl flex flex-col items-center justify-center touch-none animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] bg-black/98 isolate backdrop-blur-xl flex flex-col items-center justify-center touch-none animate-in fade-in duration-200"
           onClick={closeLightbox}
         >
-          {/* КНОПКА ЗАКРЫТИЯ: На мобилке слева сверху с учетом челки (safe-area), на десктопе справа */}
-          <button 
-            className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 md:left-auto md:right-8 p-3 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 rounded-full transition-all z-[10000] shadow-xl"
-            aria-label="Закрыть галерею" 
-            onClick={closeLightbox}
-          >
-             <X size={24} className="md:w-8 md:h-8" />
-          </button>
-
           {/* КОНТЕЙНЕР КАРТИНКИ: Используем динамическую высоту dvh */}
           <div 
              key={currentIndex}
@@ -150,7 +141,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
              />
           </div>
 
-          {/* СТРЕЛКИ НАВИГАЦИИ */}
+          {/* СТРЕЛКИ НАВИГАЦИИ (Только если фото больше 1) */}
           {images.length > 1 && (
             <>
               <button 
@@ -170,11 +161,24 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
             </>
           )}
 
-          {/* СЧЕТЧИК ФОТО */}
-          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 px-5 py-2.5 bg-black/60 rounded-full text-white/90 font-bold text-sm backdrop-blur-md border border-white/10 shadow-lg z-[10000] pointer-events-none">
+          {/* СЧЕТЧИК ФОТО (Перемещен выше кнопки закрытия) */}
+          <div className="absolute bottom-[max(6rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-1/2 -translate-x-1/2 px-5 py-2.5 bg-black/60 rounded-full text-white/90 font-bold text-sm backdrop-blur-md border border-white/10 shadow-lg z-[10000] pointer-events-none">
              {currentIndex + 1} / {images.length}
           </div>
 
+          {/* КНОПКА ЗАКРЫТИЯ (В зоне большого пальца по центру) */}
+          <button 
+            className="absolute bottom-[max(2rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white backdrop-blur-md border border-white/10 rounded-full transition-all z-[10000] shadow-xl"
+            aria-label="Закрыть галерею" 
+            onClick={closeLightbox}
+          >
+             <X size={20} />
+             <span className="text-sm font-medium">Закрыть</span>
+          </button>
+
+          {/* Зоны клика для навигации на мобильных (невидимые) */}
+          <div className="absolute inset-y-0 left-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); prevImage(); }} />
+          <div className="absolute inset-y-0 right-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); nextImage(); }} />
         </div>
       )}
 

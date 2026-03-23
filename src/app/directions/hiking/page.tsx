@@ -1,9 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { getTours } from '@/features/tours/api'; // ✅ РАЗБЛОКИРОВАН ЗАПРОС К БД
+import { getToursByCategory } from '@/features/tours/api';
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
-export const revalidate = 300; 
+export const revalidate = 3600; 
 
 export const metadata: Metadata = {
   title: 'Приключенческие туры в горы из Приднестровья и Молдовы | Турклуб «Эва»',
@@ -48,10 +48,7 @@ export const metadata: Metadata = {
 
 // ✅ ВОЗВРАЩЕН async ДЛЯ СЕРВЕРНОГО КОМПОНЕНТА
 export default async function HikingPage() {
-  const allTours = await getTours();
-  
-  // ✅ ЧЕСТНАЯ ФИЛЬТРАЦИЯ
-  const hikingTours = allTours.filter(tour => tour.category?.slug === 'hiking');
+  const hikingTours = await getToursByCategory('hiking', 6);
   
   return (
       <HikesLanding tours={hikingTours} />

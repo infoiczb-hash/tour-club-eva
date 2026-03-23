@@ -15,7 +15,7 @@ import GuideContactButton from '@/features/guides/components/GuideContactButton'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const guides = await prisma.guide.findMany({

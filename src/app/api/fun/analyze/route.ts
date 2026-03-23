@@ -130,21 +130,56 @@ export async function POST(req: Request) {
 
     default:
       return new Response(JSON.stringify({ error: "Неизвестный тип квиза" }), { status: 400 });
-  } // <--- ВОТ ЗДЕСЬ ЗАКАНЧИВАЕТСЯ SWITCH
+  }
 
-  // 👇 ДОБАВЛЯЕМ ВОТ ЭТОТ БЛОК 👇
   if (schema === baseQuizSchema) {
     prompt += `\n\nВАЖНОЕ ТРЕБОВАНИЕ К JSON: Ключ "analysis" ДОЛЖЕН быть самым первым ключом в генерируемом объекте. Это критически важно для потоковой передачи на клиент. Ключ "recommendedTourId" генерируй в самом конце.`;
   }
-  // 👆 КОНЕЦ ВСТАВКИ 👆
 
-  // 4. Запускаем магию Gemini
-  const result = await streamObject({
-    model: google('gemini-1.5-flash'),
-    schema,
-    prompt,
-  });
+  // 4. Запускаем магию Gemini с Graceful Degradation
+  try {
+    const result = await streamObject({
+      // 🔥 HOTFIX: Меняем устаревшую модель на актуальную
+      model: google('gemini-2.5-flash'),
+      schema,
+      prompt,
+    });
 
-  // 5. Возвращаем поток клиенту
-  return result.toTextStreamResponse();
+    // 5. Возвращаем поток клиенту
+    return result.toTextStreamResponse();
+    
+  } catch (error) {
+    console.error("[AI_CRASH] Gemini API Error:", error);
+
+    // 🔥 HOTFIX: Graceful Degradation. 
+    // Вместо падения 500 и красного текста в UI, отдаем моковый успешный ответ.
+    let fallbackData: any = {};
+
+    if (type === 'full-profile') {
+      fallbackData = {
+        summaryTitle: "ИСТИННЫЙ ПУТЕШЕСТВЕННИК",
+        psychologicalPortrait: "Нейросети взяли паузу на привал, но твой профиль говорит сам за себя: ты готов к новым открытиям, не боишься трудностей и ценишь настоящие эмоции в горах.",
+        mainInsight: "Дикая природа — это твоя стихия!",
+        advice: "Не жди идеального момента, просто собирай рюкзак и отправляйся в путь. Мы поможем с остальным."
+      };
+    } else {
+      fallbackData = {
+        analysis: "Нейросети взяли паузу, но мы точно знаем: природа — лучший лекарь. Твои ответы показывают, что ты готов к новым вызовам. Доверься своей интуиции и выбери маршрут по душе!",
+        recommendedTourId: null
+      };
+    }
+
+    // Имитируем успешный ответ стрима для хука useObject
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(JSON.stringify(fallbackData)));
+        controller.close();
+      }
+    });
+
+    return new Response(stream, { 
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' } 
+    });
+  }
 }

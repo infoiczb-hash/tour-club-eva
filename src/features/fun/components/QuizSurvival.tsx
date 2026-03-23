@@ -15,7 +15,6 @@ import {
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
-// ✅ ДОБАВЛЕНО: Наш новый хук
 import { useSaveTest } from "@/hooks/useSaveTest";
 
 /* =======================
@@ -181,7 +180,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
   const [finalResult, setFinalResult] = useState<Result | null>(null);
   
   const { updateProfile } = useProfile();
-  const { saveResult } = useSaveTest(); // ✅ Инициализируем хук
+  const { saveResult } = useSaveTest();
 
   useEffect(() => {
     if (open) {
@@ -216,7 +215,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
       updateProfile({ touristType: `Выживание: ${res.title}` });
       incrementFunTestPassAction('survival').catch(console.error);
 
-      // ✅ СОХРАНЕНИЕ В БАЗУ ДАННЫХ
+      // Сохранение в базу данных
       saveResult('survival', {
         type: res.title,
         badge: "🏕️",
@@ -245,11 +244,12 @@ export default function QuizSurvival({ open, onClose }: Props) {
         className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       >
+        {/* Изменено max-h-[90vh] на max-h-[90dvh] */}
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl"
+          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors z-20 p-3 bg-white/5 hover:bg-white/10 rounded-full">
@@ -379,31 +379,34 @@ export default function QuizSurvival({ open, onClose }: Props) {
                         <p className="text-sm text-rose-200/80 font-medium">Не лезь сюда: {finalResult.notRecommended.join(", ")}</p>
                      </div>
                   )}
-                </div>
 
-                {/* SMART CTA */}
-                <div className="shrink-0 pt-4 mt-2 border-t border-white/10">
-                  <p className={clsx("text-center text-[10px] font-bold uppercase tracking-widest mb-3", finalResult.theme.color)}>
-                      Твоя стихия ждет
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Link
-                      href={`/directions/${finalResult.directionSlug}`}
-                      onClick={onClose}
-                      className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
-                    >
-                      <Compass size={16} /> О направлении
-                    </Link>
-                    <Link
-                      href={`/tour?category=${finalResult.directionSlug}`}
-                      onClick={onClose}
-                      className={clsx(
-                        "flex-1 py-4 rounded-xl text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg bg-gradient-to-r hover:brightness-110",
-                        finalResult.theme.gradient
-                      )}
-                    >
-                      Выбрать маршрут <ArrowRight size={16} />
-                    </Link>
+                  {/* SMART CTA (Теперь внутри скролла для UX/Mobile) */}
+                  <div className="pt-6 mt-4 border-t border-white/10 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                        Мы рекомендуем Вам
+                    </p>
+                    <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", finalResult.theme.color)}>
+                        {finalResult.directionName}
+                    </h3>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Link
+                        href={`/directions/${finalResult.directionSlug}`}
+                        onClick={onClose}
+                        className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+                      >
+                        <Compass size={16} /> О направлении
+                      </Link>
+                      <Link
+                        href={`/tour?category=${finalResult.directionSlug}`}
+                        onClick={onClose}
+                        className={clsx(
+                          "flex-1 py-4 rounded-xl text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg bg-gradient-to-r hover:brightness-110",
+                          finalResult.theme.gradient
+                        )}
+                      >
+                        Выбрать маршрут <ArrowRight size={16} />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </motion.div>

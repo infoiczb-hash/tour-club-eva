@@ -1,9 +1,9 @@
 // src/lib/cloudinary-loader.ts
 //
 // Кастомный loader для next/image.
-// Cloudinary:  f_auto,q_{quality},w_{width} — AVIF/WebP + точный размер
-// Supabase:    /render/image/public/... + ?width=&quality= — реальный Image Transform
-// Остальное:   возвращает src без изменений
+// 1. Cloudinary Upload: f_auto,q_{quality},w_{width}
+// 2. Supabase: Пропускаем через Cloudinary Fetch API для бесплатного on-the-fly ресайза и WebP
+// 3. Остальное: возвращает src без изменений
 
 type LoaderParams = {
   src: string;
@@ -12,40 +12,26 @@ type LoaderParams = {
 };
 
 export default function cloudinaryLoader({ src, width, quality }: LoaderParams): string {
-  // --- Cloudinary ---
-  if (src.includes('res.cloudinary.com')) {
-    const q = quality ?? 75;
+  const q = quality ?? 75;
+
+  // --- 1. Cloudinary (Наши статические файлы) ---
+  if (src.includes('res.cloudinary.com') && src.includes('/upload/')) {
     const transformation = `f_auto,q_${q},w_${width}`;
     return src.replace('/upload/', `/upload/${transformation}/`);
   }
 
-  // --- Supabase Storage ---
+  // --- 2. Supabase Storage (Динамические фото туров) ---
+  // Используем Cloudinary Fetch API как прокси-оптимизатор
   if (src.includes('supabase.co')) {
-    // ✅ ИСПРАВЛЕНО: На бесплатном тарифе отдаем оригинальную ссылку, 
-    // чтобы избежать ошибки 400 Bad Request от платного оптимизатора.
-    return src;
-
-    /* --- ОРИГИНАЛЬНАЯ ЛОГИКА (Оставлена для Pro-тарифа) ---
-    const q = quality ?? 75;
-    const url = new URL(src);
-
-    // Заменяем /object/public/ → /render/image/public/
-    // Если URL уже содержит /render/image/ — не трогаем (идемпотентность)
-    if (url.pathname.includes('/object/public/')) {
-      url.pathname = url.pathname.replace('/object/public/', '/render/image/public/');
-    }
-
-    url.searchParams.set('width', String(width));
-    url.searchParams.set('quality', String(q));
+    const cloudName = 'dwrei7k2z'; // Твой Cloudinary cloud_name
+    const transformation = `f_auto,q_${q},w_${width}`;
     
-    // ✅ ИСПРАВЛЕНИЕ: Вернули 'origin'. Supabase сам решит, как отдать файл, 
-    // не вызывая ошибку 400 Bad Request.
-    url.searchParams.set('format', 'webp');
-
-    return url.toString();
-    */
+    // ВАЖНО: Если URL Supabase содержит параметры (например, токены), 
+    // весь URL необходимо закодировать. Но в базовом варианте для Public бакетов работает и так.
+    // Если будут проблемы с загрузкой, используй encodeURIComponent(src)
+    return `https://res.cloudinary.com/${cloudName}/image/fetch/${transformation}/${src}`;
   }
 
-  // --- Всё остальное (Unsplash, YouTube и т.д.) ---
+  // --- 3. Всё остальное (Unsplash, YouTube и т.д.) ---
   return src;
 }

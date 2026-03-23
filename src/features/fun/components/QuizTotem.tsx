@@ -14,7 +14,6 @@ import {
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
-// ✅ ДОБАВЛЕНО: Наш новый хук
 import { useSaveTest } from "@/hooks/useSaveTest";
 
 /* =======================
@@ -173,7 +172,7 @@ export default function QuizTotem({ open, onClose }: Props) {
   const [finalResult, setFinalResult] = useState<Result | null>(null);
   
   const { updateProfile } = useProfile();
-  const { saveResult } = useSaveTest(); // ✅ Инициализируем хук сохранения
+  const { saveResult } = useSaveTest();
 
   useEffect(() => {
     if (open) {
@@ -215,7 +214,7 @@ export default function QuizTotem({ open, onClose }: Props) {
       updateProfile({ touristType: `Тотем: ${res.animal}` });
       incrementFunTestPassAction('totem').catch(console.error);
       
-      // ✅ СОХРАНЕНИЕ В БАЗУ ДАННЫХ
+      // Сохранение в базу данных
       saveResult('totem', {
         type: res.animal,
         badge: "🦅", 
@@ -246,7 +245,7 @@ export default function QuizTotem({ open, onClose }: Props) {
         </div>
 
         <motion.div 
-           className="relative w-full max-w-lg bg-indigo-950/40 border border-indigo-500/30 rounded-[2.5rem] p-6 md:p-10 shadow-[0_0_80px_rgba(79,70,229,0.15)] overflow-hidden flex flex-col max-h-[90vh]"
+           className="relative w-full max-w-lg bg-indigo-950/40 border border-indigo-500/30 rounded-[2.5rem] p-6 md:p-10 shadow-[0_0_80px_rgba(79,70,229,0.15)] overflow-hidden flex flex-col max-h-[90dvh]"
            initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
            onClick={(e) => e.stopPropagation()}
         >
@@ -346,29 +345,34 @@ export default function QuizTotem({ open, onClose }: Props) {
                               Сила: {finalResult.power}
                           </div>
                       </div>
-                    </div>
 
-                    {/* SMART CTA */}
-                    <div className="shrink-0 pt-4 mt-2 border-t border-white/10">
-                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Твоя стихия ждет</p>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Link
-                          href={`/directions/${finalResult.directionSlug}`}
-                          onClick={onClose}
-                          className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
-                        >
-                          <Compass size={16} /> О направлении
-                        </Link>
-                        <Link
-                          href={`/tour?category=${finalResult.directionSlug}`}
-                          onClick={onClose}
-                          className={clsx(
-                            "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg",
-                            finalResult.buttonClass
-                          )}
-                        >
-                          Выбрать маршрут <ArrowRight size={16} />
-                        </Link>
+                      {/* SMART CTA */}
+                      <div className="pt-6 mt-4 border-t border-white/10">
+                        <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", finalResult.colorClass)}>
+                          Мы рекомендуем Вам
+                        </p>
+                        <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", finalResult.colorClass)}>
+                          {finalResult.directionName}
+                        </h3>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Link
+                            href={`/directions/${finalResult.directionSlug}`}
+                            onClick={onClose}
+                            className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+                          >
+                            <Compass size={16} /> О направлении
+                          </Link>
+                          <Link
+                            href={`/tour?category=${finalResult.directionSlug}`}
+                            onClick={onClose}
+                            className={clsx(
+                              "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg",
+                              finalResult.buttonClass
+                            )}
+                          >
+                            Выбрать маршрут <ArrowRight size={16} />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </motion.div>

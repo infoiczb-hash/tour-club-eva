@@ -217,15 +217,15 @@ function isTourRelevant(tour: Tour): boolean {
 // ─────────────────────────────────────────────
 
 // Публичный каталог — только активные туры с актуальными датами
-export async function getTours(): Promise<Tour[]> {
+export const getTours = cache(async (): Promise<Tour[]> => {
   try {
     const tours = await prisma.tour.findMany({
-      where: { isActive: true, deletedAt: null }, // ✅ ДОБАВЛЕНО: Soft Delete
+      where: { isActive: true, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       include: { 
         guide: true, 
         category: true,
-        tourDates: { orderBy: { startDate: 'asc' } } // ✅ ДОБАВЛЕНО: Даты
+        tourDates: { orderBy: { startDate: 'asc' } }
       },
     });
     return tours.map(mapPrismaTourToFrontend).filter(isTourRelevant);
@@ -233,7 +233,32 @@ export async function getTours(): Promise<Tour[]> {
     console.error('Ошибка получения туров:', error);
     return [];
   }
-}
+});
+export const getToursByCategory = cache(async (
+  categorySlug: string,
+  take: number = 6
+): Promise<Tour[]> => {
+  try {
+    const tours = await prisma.tour.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+        category: { slug: categorySlug },
+      },
+      take,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        guide: true,
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' }, take: 1 },
+      },
+    });
+    return tours.map(mapPrismaTourToFrontend).filter(isTourRelevant);
+  } catch (error) {
+    console.error(`Ошибка получения туров категории ${categorySlug}:`, error);
+    return [];
+  }
+});
 
 // ✅ ИСПРАВЛЕНИЕ: Обернули в cache() для дедупликации запросов между metadata и page
 export const getTourBySlug = cache(async (slug: string): Promise<Tour | null> => {

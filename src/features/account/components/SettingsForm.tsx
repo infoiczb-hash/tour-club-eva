@@ -1,3 +1,4 @@
+// src/features/account/components/SettingsForm.tsx
 "use client";
 
 import React, { useTransition } from 'react';
@@ -6,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { 
   User, Phone, Mail, Apple, Shirt, 
-  LifeBuoy, Footprints, Backpack, Save, Loader2 
+  LifeBuoy, Footprints, Backpack, Save, Loader2,
+  Send, Instagram, MessageCircle
 } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { updateProfileSettingsAction } from '@/features/account/actions/updateSettings';
@@ -28,6 +30,9 @@ const SHOE_SIZES = Array.from({ length: 13 }, (_, i) => String(35 + i)); // от
 const formSchema = z.object({
   name: z.string().min(2, "Имя обязательно"),
   email: z.string().email("Неверный формат email").or(z.literal("")).optional().nullable(),
+  telegram: z.string().optional().nullable(),
+  instagram: z.string().optional().nullable(),
+  viber: z.string().optional().nullable(),
   foodPref: z.string().optional().nullable(),
   shoeSize: z.string().optional().nullable(),
   clothesSize: z.string().optional().nullable(),
@@ -43,15 +48,17 @@ export default function SettingsForm({ profile }: { profile: any }) {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(formSchema),
-    
-defaultValues: {
+    defaultValues: {
       name: profile.name || "",
       email: profile.email || "",
+      telegram: profile.telegram || "",
+      instagram: profile.instagram || "",
+      viber: profile.viber || "",
       foodPref: profile.foodPref || "",
       shoeSize: profile.shoeSize || "",
       clothesSize: profile.clothesSize || "",
       lifeJacketSize: profile.lifeJacketSize || "",
-      inventory: Array.isArray(profile.inventory) ? profile.inventory : [], // ✅ Безопасный массив
+      inventory: Array.isArray(profile.inventory) ? profile.inventory : [], 
     }
   });
 
@@ -80,7 +87,7 @@ defaultValues: {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pb-12">
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* БЛОК 1: Личные данные */}
+        {/* БЛОК 1: Личные данные и Соцсети */}
         <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
           <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
             <User className="text-teal-500" size={20} />
@@ -94,7 +101,7 @@ defaultValues: {
                 {...register("name")}
                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
               />
-              {errors.name && <p className="text-xs text-rose-500 mt-1 ml-1">{errors.name.message}</p>}
+              {errors.name && <p className="text-xs text-rose-500 mt-1 ml-1">{errors.name?.message}</p>}
             </div>
 
             <div>
@@ -118,7 +125,40 @@ defaultValues: {
                 placeholder="Для чеков и билетов"
                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
               />
-              {errors.email && <p className="text-xs text-rose-500 mt-1 ml-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-rose-500 mt-1 ml-1">{errors.email?.message}</p>}
+            </div>
+
+            {/* БЛОК СОЦСЕТЕЙ */}
+            <div className="pt-4 mt-2 border-t border-white/5">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-3 block">
+                    Соцсети (Для чатов групп)
+                </label>
+                <div className="space-y-3">
+                    <div className="relative group">
+                        <Send size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
+                        <input 
+                            {...register("telegram")}
+                            placeholder="@username в Telegram"
+                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all"
+                        />
+                    </div>
+                    <div className="relative group">
+                        <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-pink-400 transition-colors" />
+                        <input 
+                            {...register("instagram")}
+                            placeholder="@username в Instagram"
+                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 outline-none transition-all"
+                        />
+                    </div>
+                    <div className="relative group">
+                        <MessageCircle size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
+                        <input 
+                            {...register("viber")}
+                            placeholder="Номер в Viber (если отличается)"
+                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 outline-none transition-all"
+                        />
+                    </div>
+                </div>
             </div>
           </div>
         </div>
@@ -223,7 +263,7 @@ defaultValues: {
         </div>
       </div>
 
-      {/* КНОПКА СОХРАНЕНИЯ (Плавающая внизу для мобилок, обычная на десктопе) */}
+      {/* КНОПКА СОХРАНЕНИЯ */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/80 backdrop-blur-xl border-t border-white/10 md:static md:bg-transparent md:border-none md:p-0 md:backdrop-blur-none z-40">
         <button
           type="submit"

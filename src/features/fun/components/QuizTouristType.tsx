@@ -1,3 +1,4 @@
+// src/features/fun/components/QuizTouristType.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -13,6 +14,7 @@ import {
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
+import { useSaveTest } from "@/hooks/useSaveTest";
 
 /* =======================
    ТИПЫ
@@ -161,7 +163,9 @@ export default function QuizTouristType({ open, onClose }: Props) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [showResult, setShowResult] = useState(false);
+  
   const { updateProfile } = useProfile();
+  const { saveResult } = useSaveTest();
 
   useEffect(() => {
     if (open) {
@@ -185,8 +189,18 @@ export default function QuizTouristType({ open, onClose }: Props) {
       setTimeout(() => setStep(step + 1), 250);
     } else {
       const res = calculateResult(newAnswers);
+      
+      // Сохраняем в локальный профиль
       updateProfile({ touristType: res.title });
       incrementFunTestPassAction('tourist-type').catch(console.error);
+      
+      // Сохраняем в базу данных
+      saveResult('tourist-type', {
+        type: res.title,
+        badge: "🧭",
+        description: res.description,
+      });
+
       setTimeout(() => setShowResult(true), 250);
     }
   };
@@ -208,7 +222,7 @@ export default function QuizTouristType({ open, onClose }: Props) {
   return (
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
@@ -294,29 +308,34 @@ function ResultScreen({ result, onClose, theme }: { result: Result; onClose: () 
             ))}
           </div>
         </div>
-      </div>
 
-      {/* SMART CTA */}
-      <div className="shrink-0 pt-4 mt-2 border-t border-white/10">
-        <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Идеальный старт для тебя</p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href={`/directions/${result.directionSlug}`}
-            onClick={onClose}
-            className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
-          >
-            <Compass size={16} /> О направлении
-          </Link>
-          <Link
-            href={`/tour?category=${result.directionSlug}`}
-            onClick={onClose}
-            className={clsx(
-              "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:brightness-110",
-              theme.button
-            )}
-          >
-            Выбрать маршрут <ArrowRight size={16} />
-          </Link>
+        {/* SMART CTA */}
+        <div className="pt-6 mt-4 border-t border-white/10 text-center">
+          <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", theme.text)}>
+            Мы рекомендуем Вам
+          </p>
+          <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", theme.text)}>
+            {result.directionName}
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              href={`/directions/${result.directionSlug}`}
+              onClick={onClose}
+              className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+            >
+              <Compass size={16} /> О направлении
+            </Link>
+            <Link
+              href={`/tour?category=${result.directionSlug}`}
+              onClick={onClose}
+              className={clsx(
+                "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:brightness-110",
+                theme.button
+              )}
+            >
+              Выбрать маршрут <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </div>
     </motion.div>
