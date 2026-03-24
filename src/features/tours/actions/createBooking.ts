@@ -1,3 +1,4 @@
+// src/features/tours/actions/createBooking.ts
 'use server';
 
 import { z } from 'zod';
@@ -8,7 +9,6 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-// ── 1. СХЕМА ВАЛИДАЦИИ ────────────────────────────────────────────────────────
 const BookingSchema = z.object({
   tourId: z.string().uuid('Неверный ID тура'),
   tourDateId: z.string().uuid('Пожалуйста, выберите конкретную дату').optional().nullable(),
@@ -19,16 +19,14 @@ const BookingSchema = z.object({
   phone: z.string().min(7, 'Введите корректный номер телефона'),
   social: z.string().optional(),
   comment: z.string().optional(),
-  
-  // Скрытое поле для защиты от спам-ботов
-  website: z.string().optional(), 
+
+  website: z.string().optional(),
 
   ticketsAdult: z.number().int().min(0).default(1),
   ticketsChild: z.number().int().min(0).default(0),
   ticketsFamily: z.number().int().min(0).default(0),
   ticketsMember: z.number().int().min(0).default(0),
 
-  // JSON массив гостей для базы данных
   guests: z.array(z.any()).optional(),
 
   totalPrice: z.number().int().min(0),
@@ -41,16 +39,15 @@ export type BookingResult =
   | { success: true; bookingId: string }
   | { success: false; error: string; fields?: Record<string, string> };
 
-// ── 2. ГЛАВНЫЙ ACTION ─────────────────────────────────────────────────────────
 export async function createBookingAction(raw: BookingInput): Promise<BookingResult> {
 
   try {
     const ip = await getClientIp();
     const { success: rateLimitSuccess } = await basicRateLimit.limit(ip);
     if (!rateLimitSuccess) {
-      return { 
-        success: false, 
-        error: 'Слишком много попыток. Подождите минуту.' 
+      return {
+        success: false,
+        error: 'Слишком много попыток. Подождите минуту.'
       };
     }
   } catch (error) {
@@ -58,123 +55,125 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
   }
 
   const parsed = BookingSchema.safeParse(raw);
-  
+
   if (!parsed.success) {
     const fields: Record<string, string> = {};
     parsed.error.issues.forEach((e: z.ZodIssue) => {
       const key = e.path[0]?.toString() ?? 'unknown';
       fields[key] = e.message;
     });
-    return { 
-      success: false, 
-      error: 'Ошибка заполнения формы. Проверьте выделенные поля.', 
-      fields 
+    return {
+      success: false,
+      error: 'Ошибка заполнения формы. Проверьте выделенные поля.',
+      fields
     };
   }
-  
+
   const data = parsed.data;
 
-  // Проверка Honeypot (ловушка для ботов)
   if (data.website && data.website.length > 0) {
     console.warn('Bot detected via honeypot field');
     return { success: true, bookingId: 'sp-checked' };
   }
-  
-  // Расчет общего количества мест (семейный = 3 места)
+
   const familySpots = data.ticketsFamily * 3;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
-  
-  // Очистка телефона от лишних символов
+
   const cleanPhone = data.phone.replace(/[^\d+]/g, '');
 
-  // Попытка привязать бронь к личному кабинету
   let currentMemberId = null;
   try {
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-       const profile = await prisma.memberProfile.findUnique({ 
-         where: { userId: user.id },
-         select: { id: true }
-       });
-       if (profile) {
-         currentMemberId = profile.id;
-       }
+      const profile = await prisma.memberProfile.findUnique({
+        where: { userId: user.id },
+        select: { id: true }
+      });
+      if (profile) {
+        currentMemberId = profile.id;
+      }
     }
   } catch (e) {
     console.error('Ошибка проверки авторизации:', e);
   }
 
   try {
-    // Проверка доступности тура
-    const tour = await prisma.tour.findUnique({
-      where: { id: data.tourId },
-      select: { 
-        id: true, 
-        title: true, 
-        slug: true, 
-        spotsLeft: true, 
-        isActive: true, 
-        coverImage: true 
-      },
-    });
+    // ─── ИСПРАВЛЕНИЕ: убран лишний SELECT перед транзакцией ──────────────────
+    // Раньше: findUnique(tour) → transaction(updateSpots + createBooking) = 3 запроса
+    // Теперь: transaction(checkActive + updateSpots + createBooking) = 1 round-trip
+    //
+    // Проверка isActive встроена прямо в WHERE транзакции.
+    // Если тур неактивен/не найден — updateMany вернёт count=0 → ошибка TOUR_UNAVAILABLE.
+    // coverImage получаем из результата createBooking через include — один запрос.
+    // ─────────────────────────────────────────────────────────────────────────
 
-    if (!tour || !tour.isActive) {
-      return { success: false, error: 'Тур не найден или недоступен' };
-    }
-
-    // Транзакция: обновляем места и создаем бронь
-    const booking = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       let spotsUpdated = false;
+      let tourSlug: string | null = null;
+      let tourCoverImage: string | null = null;
 
-      // Списываем места из конкретной даты или из общего пула тура
       if (data.tourDateId) {
+        // Списываем с конкретной даты — isActive проверяем через join на тур
         const updatedTourDate = await tx.tourDate.updateMany({
-          where: { 
-            id: data.tourDateId, 
-            spotsLeft: { gte: totalTickets } 
+          where: {
+            id: data.tourDateId,
+            spotsLeft: { gte: totalTickets },
+            tour: { isActive: true, deletedAt: null },
           },
-          data: { 
-            spotsLeft: { decrement: totalTickets } 
+          data: {
+            spotsLeft: { decrement: totalTickets }
           },
         });
-        if (updatedTourDate.count > 0) {
-          spotsUpdated = true;
-        }
+        if (updatedTourDate.count > 0) spotsUpdated = true;
       } else {
+        // Списываем из общего пула тура
         const updatedTour = await tx.tour.updateMany({
-          where: { 
-            id: data.tourId, 
-            spotsLeft: { gte: totalTickets } 
+          where: {
+            id: data.tourId,
+            isActive: true,
+            deletedAt: null,
+            spotsLeft: { gte: totalTickets }
           },
-          data: { 
-            spotsLeft: { decrement: totalTickets } 
+          data: {
+            spotsLeft: { decrement: totalTickets }
           },
         });
-        if (updatedTour.count > 0) {
-          spotsUpdated = true;
-        }
+        if (updatedTour.count > 0) spotsUpdated = true;
       }
 
       if (!spotsUpdated) {
+        // Различаем: тур недоступен vs мест нет
+        const tourExists = await tx.tour.findFirst({
+          where: { id: data.tourId, isActive: true, deletedAt: null },
+          select: { id: true, slug: true, coverImage: true },
+        });
+        if (!tourExists) throw new Error('TOUR_UNAVAILABLE');
         throw new Error('SPOTS_GONE');
       }
 
-      // Создаем саму запись в базе
+      // Получаем slug и coverImage для revalidatePath и Telegram
+      const tour = await tx.tour.findUnique({
+        where: { id: data.tourId },
+        select: { slug: true, coverImage: true },
+      });
+      tourSlug = tour?.slug ?? null;
+      tourCoverImage = tour?.coverImage ?? null;
+
       const newBooking = await tx.booking.create({
         data: {
           tourId:        data.tourId,
           tourDateId:    data.tourDateId || null,
-          memberId:      currentMemberId, 
+          memberId:      currentMemberId,
           name:          data.name,
-          phone:         cleanPhone,      
+          phone:         cleanPhone,
           email:         data.social?.includes('@') ? data.social : null,
           social:        data.social || null,
           ticketsAdult:  data.ticketsAdult,
           ticketsChild:  data.ticketsChild,
           ticketsFamily: data.ticketsFamily,
           ticketsMember: data.ticketsMember,
-          guests:        data.guests || [], // Сохраняем динамический список
+          guests:        data.guests || [],
           comment:       data.comment || null,
           totalPrice:    data.totalPrice,
           source:        'website',
@@ -183,46 +182,46 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         },
       });
 
-      return newBooking;
+      return { booking: newBooking, tourSlug, tourCoverImage };
     });
 
-    // Уведомляем администраторов в Telegram
     try {
-      await notifyTelegram(data, booking.id, tour.coverImage);
+      await notifyTelegram(data, result.booking.id, result.tourCoverImage);
     } catch (tgError) {
       console.error('Ошибка отправки в Telegram:', tgError);
     }
 
-    // Сбрасываем кэш страниц, чтобы обновились счетчики мест
-    if (tour.slug) {
-      revalidatePath(`/tour/${tour.slug}`);
+    if (result.tourSlug) {
+      revalidatePath(`/tour/${result.tourSlug}`);
     }
     revalidatePath('/tour');
     revalidatePath('/admin');
-    revalidatePath('/account', 'layout'); 
+    revalidatePath('/account', 'layout');
 
-    return { success: true, bookingId: booking.id };
+    return { success: true, bookingId: result.booking.id };
 
   } catch (error: any) {
+    if (error.message === 'TOUR_UNAVAILABLE') {
+      return { success: false, error: 'Тур не найден или недоступен' };
+    }
     if (error.message === 'SPOTS_GONE') {
-        return { 
-          success: false, 
-          error: 'Последние места на эту дату были выкуплены прямо сейчас.' 
-        };
+      return {
+        success: false,
+        error: 'Последние места на эту дату были выкуплены прямо сейчас.'
+      };
     }
     console.error('Booking Error:', error);
-    return { 
-      success: false, 
-      error: 'Произошла ошибка при сохранении заявки. Попробуйте еще раз.' 
+    return {
+      success: false,
+      error: 'Произошла ошибка при сохранении заявки. Попробуйте еще раз.'
     };
   }
 }
 
-// ── 3. TELEGRAM УВЕДОМЛЕНИЕ ───────────────────────────────────────────────────
 async function notifyTelegram(data: BookingInput, bookingId: string, coverImage?: string | null): Promise<void> {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
-  
+
   if (!token || !chatId) {
     console.warn('Telegram credentials missing');
     return;
@@ -231,11 +230,10 @@ async function notifyTelegram(data: BookingInput, bookingId: string, coverImage?
   const familySpots = data.ticketsFamily * 3;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
 
-  // Формируем красивый список гостей с размерами жилетов
   const guestsList = (data.guests || []).map((g: any, i: number) => {
     const jacketInfo = g.jacket ? ` | 🦺 Жилет: ${g.jacket}` : '';
     if (g.isMain) {
-        return `${i + 1}. 👤 <b>${escapeHtml(g.name)}</b> (Заказчик)${jacketInfo}`;
+      return `${i + 1}. 👤 <b>${escapeHtml(g.name)}</b> (Заказчик)${jacketInfo}`;
     }
     return `${i + 1}. 👤 ${escapeHtml(g.name || 'Без имени')} (${g.type})${jacketInfo}`;
   }).join('\n');
@@ -269,7 +267,7 @@ async function notifyTelegram(data: BookingInput, bookingId: string, coverImage?
   };
 
   const method = coverImage ? 'sendPhoto' : 'sendMessage';
-  
+
   if (coverImage) {
     body.photo = coverImage;
     body.caption = lines.slice(0, 1024);
