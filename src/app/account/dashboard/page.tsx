@@ -7,8 +7,8 @@ import Image from 'next/image';
 import {
   MapPin, Clock, TrendingUp,
   ChevronRight, Calendar, ArrowRight,
-  Star, Flame, Timer, Backpack,
-  FileText, Download, Wallet
+  Star, Flame, Timer, Backpack, 
+  FileText, Download, Wallet, Tent, Map, Moon
 } from 'lucide-react';
 import VirtualCard from '@/features/account/components/VirtualCard';
 import ReferralCard from '@/features/account/components/ReferralCard';
@@ -194,73 +194,95 @@ export default async function DashboardPage() {
     ? Math.max(0, Math.min(100, ((stats.totalTours - currentConfig.min) / (nextConfig.min - currentConfig.min)) * 100))
     : 100;
 
-  return (
-    <div className="space-y-6">
+return (
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-3xl font-black text-white tracking-tight uppercase">Личный кабинет</h1>
+        <p className="text-slate-400 mt-2">Управляйте своими путешествиями и привилегиями</p>
+      </div>
 
-      {/* ── Приветствие + Виртуальная карта ────────────────────── */}
-      <section className="flex flex-col mb-4">
-        <div className="mb-6">
-          <p className="text-sm text-slate-400 mb-1">Добро пожаловать,</p>
-          <h1 className="text-3xl font-black text-white tracking-tight">{displayName}</h1>
-        </div>
-           
-        <div className="w-full max-w-md mx-auto md:mx-0">
-          <VirtualCard 
-            name={displayName} 
-            level={profile.level} 
-            totalTours={stats.totalTours}
-            totalKm={stats.totalKm}      
-            memberId={profile.id}
-          />
-        </div>
-
-        {/* 🔥 НОВЫЙ БЛОК: ПРОГРЕСС-БАР */}
-        {nextConfig && (
-          <div className="w-full max-w-md mx-auto md:mx-0 mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-4 md:p-5">
-            <div className="flex justify-between items-end mb-3">
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">Прогресс статуса</span>
-              <span className="text-[10px] sm:text-xs text-teal-400 font-bold">
-                Ещё {toursNeeded} {toursNeeded === 1 ? 'тур' : (toursNeeded >= 2 && toursNeeded <= 4) ? 'тура' : 'туров'} до «{nextConfig.name}»
-              </span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(20,184,166,0.5)]" 
-                style={{ width: `${progressPercent}%` }} 
-              />
-            </div>
+      {/* Основная сетка Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        
+        {/* ЛЕВАЯ КОЛОНКА: Карточка (Прогресс и Модалка уже внутри нее) */}
+        {/* На мобилке идет ВТОРОЙ (order-2), на десктопе ПЕРВОЙ (xl:order-1) */}
+        <div className="xl:col-span-5 flex flex-col gap-4 order-2 xl:order-1">
+          <div className="w-full max-w-md mx-auto xl:mx-0">
+            {/* Твои переменные могут немного отличаться названиями (например, profile.name), 
+                оставляй те, которые получаешь из Prisma */}
+            <VirtualCard 
+              name={displayName} 
+              level={profile.level} 
+              totalTours={stats.totalTours}
+              totalKm={stats.totalKm}      
+              memberId={profile.id}
+            />
           </div>
-        )}
-      </section>
+        </div>
 
-      {/* ── Реферальная программа ───────────────────────────────── */}
-      <section>
-        <ReferralCard name={profile.name} userId={profile.userId} />
-      </section>
-
-      {/* ── Статистика ──────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Туров',    value: stats.totalTours,   unit: '',    icon: Flame      },
-          { label: 'Км',       value: stats.totalKm,      unit: 'км',  icon: TrendingUp },
-          { label: 'Баланс',   value: stats.balance,      unit: 'MDL', icon: Wallet     }, 
-          { label: 'Ночей',    value: stats.totalNights,  unit: '',    icon: Star       },
-        ].map(({ label, value, unit, icon: Icon }) => (
-          <div
-            key={label}
-            className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">{label}</span>
-              <Icon size={14} className="text-slate-600" />
+        {/* ПРАВАЯ КОЛОНКА: Статистика и Баланс */}
+        {/* На мобилке идет ПЕРВОЙ (order-1), на десктопе ВТОРОЙ (xl:order-2) */}
+        <div className="xl:col-span-7 flex flex-col gap-6 order-1 xl:order-2">
+          
+          {/* Блок: Ваш баланс (Выделен визуально) */}
+          <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/10 border border-amber-500/20 rounded-3xl p-6 relative overflow-hidden shadow-lg">
+            <div className="absolute top-0 right-0 p-6 opacity-20 pointer-events-none">
+              <Wallet size={80} className="text-amber-500" />
             </div>
-            <p className="text-2xl font-black text-white">
-              {value}
-              {unit && <span className="text-sm font-bold text-slate-400 ml-1">{unit}</span>}
+            <h3 className="text-amber-500/80 font-medium text-sm mb-1 uppercase tracking-wider">Ваш баланс</h3>
+            <div className="text-4xl font-black text-white flex items-baseline gap-2">
+              {profile.balance || 0} <span className="text-xl font-medium text-amber-500/50">₽</span>
+            </div>
+            <p className="text-sm text-amber-500/60 mt-3 max-w-[80%]">
+              Используйте баланс для оплаты до 50% стоимости следующих приключений.
             </p>
           </div>
-        ))}
-      </section>
+
+          {/* Блок: Статистика походов */}
+          <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 shadow-lg">
+            <h3 className="text-slate-400 font-medium text-sm mb-6 uppercase tracking-wider">Вы прошли с нами</h3>
+            
+            <div className="grid grid-cols-3 gap-4">
+              {/* Туры */}
+              <div className="flex flex-col gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
+                  <Tent size={24} />
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-white">{stats.totalTours || 0}</div>
+                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Туров</div>
+                </div>
+              </div>
+
+              {/* Километры */}
+              <div className="flex flex-col gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-inner">
+                  <Map size={24} />
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-white">{Math.floor(stats.totalKm || 0)}</div>
+                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Километров</div>
+                </div>
+              </div>
+
+              {/* Ночи (если переменной totalNights пока нет, временно будет 0) */}
+              <div className="flex flex-col gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
+                  <Moon size={24} />
+                </div>
+                <div>
+                  {/* Замени stats.totalNights на правильную переменную, если она называется иначе */}
+                  <div className="text-3xl font-black text-white">{stats.totalNights || 0}</div>
+                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Ночей в лесу</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+     );
 
       {/* ── Ближайший тур ───────────────────────────────────────── */}
       {upcomingBooking ? (

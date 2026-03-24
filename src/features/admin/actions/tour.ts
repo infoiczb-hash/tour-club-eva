@@ -10,6 +10,7 @@ import { publishToTelegram, sendToUserTelegram } from '@/features/admin/actions/
 import { env } from '@/lib/env';
 
 import { tourFormSchema, type TourFormValues } from '@/features/admin/components/TourForm/schema';
+import { notifySubscribersOnNewDates } from "@/lib/telegram/notify";
 
 export type SaveTourPayload = Record<string, unknown> & {
   id?: string;
@@ -150,39 +151,22 @@ export async function saveTour(formData: SaveTourPayload) {
       savedTourId = newTour.id; 
     }
 
-    // 👇 НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ ЛИСТУ ОЖИДАНИЯ 👇
+    // 👇 НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine) 👇
     const hasNewDates = data.dates.some(d => !d.id);
     
     if (hasNewDates && data.isActive) {
-       const waitlisters = await prisma.waitlist.findMany({
-         where: { tourId: savedTourId }
-       });
-
-       if (waitlisters.length > 0) {
-         const phones = waitlisters.map(w => w.phone);
-         const profiles = await prisma.memberProfile.findMany({
-           where: { phone: { in: phones }, tgChatId: { not: null } }
-         });
-
-         const tourUrl = `${env.NEXT_PUBLIC_SITE_URL}/tour/${slug}`;
-         const message = `🔥 <b>Отличные новости!</b>\n\nВы ждали дат на тур <b>${data.title}</b>.\nМы только что добавили новое расписание!\n\nСкорее переходите по ссылке и бронируйте, пока места еще есть:`;
-
-         const notifiedPhones: string[] = [];
-
-         for (const profile of profiles) {
-           if (profile.tgChatId) {
-             const res = await sendToUserTelegram(profile.tgChatId, message, tourUrl);
-             if (res.success && profile.phone) {
-               notifiedPhones.push(profile.phone);
-             }
-           }
-         }
-
-         if (notifiedPhones.length > 0) {
-            await prisma.waitlist.deleteMany({
-               where: { tourId: savedTourId, phone: { in: notifiedPhones } }
-            });
-         }
+       try {
+         // Единый сервис соберет Ждунов (по memberId и телефону), 
+         // Подписчиков категории, Избранное, и разошлет всем пуши параллельно.
+         await notifySubscribersOnNewDates(
+           savedTourId,
+           data.categoryId || null, // Если в data есть categoryId, передаем его
+           data.title,
+           slug
+         );
+       } catch (notifyError) {
+         console.error("Ошибка при автоматической рассылке Telegram:", notifyError);
+         // Не даем ошибке рассылки сломать сохранение тура
        }
     }
     // 👆 КОНЕЦ БЛОКА 👆
@@ -269,17 +253,41 @@ export async function deleteTour(id: string) {
 }
 
 // ==========================================
-// 4. TOGGLE STATUS (БЕЗ ИЗМЕНЕНИЙ)
+// 4. TOGGLE STATUS (ОБНОВЛЕНО С ТЕЛЕГРАМ-РАССЫЛКОЙ)
 // ==========================================
 export async function updateTourStatus(id: string, isActive: boolean) {
   try {
     await requireAuth();
 
+    // 1. Обновляем статус и запрашиваем нужные поля для ТГ-рассылки
     const tour = await prisma.tour.update({
       where: { id },
       data: { isActive },
-      select: { slug: true },
+      select: { 
+        id: true,
+        slug: true, 
+        title: true,
+        categoryId: true,
+        isActive: true
+      },
     });
+
+    // 2. НАШ ТРИГГЕР: Если тур только что активировали (опубликовали) — запускаем рассылку
+    if (tour.isActive) {
+      try {
+        // Убедись, что функция импортирована в начале файла:
+        // import { notifySubscribersOnNewDates } from "@/lib/telegram/notify";
+        await notifySubscribersOnNewDates(
+          tour.id,
+          tour.categoryId,
+          tour.title,
+          tour.slug
+        );
+      } catch (notifyError) {
+        console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
+        // Мы только логируем ошибку, чтобы она не сломала админу обновление статуса
+      }
+    }
 
     revalidatePath('/admin');
     revalidatePath('/tour');

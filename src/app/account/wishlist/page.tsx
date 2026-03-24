@@ -1,4 +1,3 @@
-// src/app/account/wishlist/page.tsx
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
@@ -6,10 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   Heart, Bell, MapPin, Clock, TrendingUp, ArrowRight,
-  Hourglass, Send, BookOpen, ChevronRight, CheckCircle2 
+  Hourglass, Send, BookOpen, CheckCircle2 
 } from 'lucide-react';
 import WishlistToggle from '@/features/account/components/WishlistToggle';
-import CategorySubscribeToggle from '@/features/account/components/CategorySubscribeToggle';
+import CategoryPills from './components/CategoryPills';
 import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton';
 
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'evaturclub_bot';
@@ -21,18 +20,20 @@ async function getWishlistData(userId: string) {
   });
   if (!profile) return null;
 
-  // 1. Лист ожидания (Waitlist) - привязан по телефону
-  let waitlists: any[] = [];
-  if (profile.phone) {
-    waitlists = await prisma.waitlist.findMany({
-      where: { phone: profile.phone },
-      include: {
-        tour: { select: { title: true, slug: true, coverImage: true, location: true } },
-        tourDate: { select: { startDate: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
+  // 1. Лист ожидания (Waitlist) - ТЕПЕРЬ УМНЫЙ (по memberId и phone)
+  const waitlists = await prisma.waitlist.findMany({
+    where: {
+      OR: [
+        { memberId: profile.id },
+        ...(profile.phone ? [{ phone: profile.phone }] : [])
+      ]
+    },
+    include: {
+      tour: { select: { title: true, slug: true, coverImage: true, location: true } },
+      tourDate: { select: { startDate: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
   // 2. Вишлист туров (ОРИГИНАЛ - с подтягиванием ближайшей даты и мест)
   const tourWishlist = await prisma.watchList.findMany({
@@ -72,14 +73,10 @@ async function getWishlistData(userId: string) {
     orderBy: { createdAt: 'desc' },
   });
 
-  // 4. Подписки на категории (ОРИГИНАЛ)
+  // 4. Категории для Pill-тегов
   const categorySubscriptions = await prisma.watchList.findMany({
     where: { memberId: profile.id, categoryId: { not: null } },
-    include: {
-      category: {
-        select: { id: true, slug: true, title: true, icon: true, color: true },
-      },
-    },
+    select: { categoryId: true }
   });
 
   const allCategories = await prisma.tourCategory.findMany({
@@ -88,16 +85,13 @@ async function getWishlistData(userId: string) {
     select: { id: true, slug: true, title: true, icon: true, color: true },
   });
 
-  const subscribedCategoryIds = new Set(
-    categorySubscriptions.map(s => s.categoryId).filter(Boolean)
-  );
+  const subscribedCategoryIds = categorySubscriptions.map(s => s.categoryId).filter(Boolean) as string[];
 
   return {
     profile,
     waitlists,
     tourWishlist,
     favoritePosts,
-    categorySubscriptions,
     allCategories,
     subscribedCategoryIds,
   };
@@ -139,9 +133,7 @@ export default async function WishlistPage() {
     subscribedCategoryIds,
   } = data;
 
-  // Проверяем, привязан ли Telegram 
-  // (В будущем заменить на нормальное поле в БД, пока берем как any для совместимости)
- const isTelegramConnected = Boolean(profile.tgChatId);
+  const isTelegramConnected = Boolean(profile.tgChatId);
   const telegramLink = `https://t.me/${BOT_USERNAME}?start=user_${profile.id}`;
 
   return (
@@ -351,12 +343,12 @@ export default async function WishlistPage() {
         </section>
       )}
 
-      {/* ── ПОДПИСКИ НА КАТЕГОРИИ (Оригинал) ── */}
+      {/* ── ПОДПИСКИ НА КАТЕГОРИИ (Чистый UI с Pill-тегами) ── */}
       <section className="space-y-4 pt-4 border-t border-white/5">
         <div className="flex items-center gap-2">
           <Bell size={14} className="text-teal-400" />
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-            Уведомления по категориям
+            Направления (Подписки)
           </h2>
         </div>
 
@@ -364,28 +356,10 @@ export default async function WishlistPage() {
           Мы пришлём уведомление в Telegram когда появятся новые даты в выбранных категориях.
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {allCategories.map(cat => {
-            const isSubscribed = subscribedCategoryIds.has(cat.id);
-            const style = getCatStyle(cat.color);
+        {/* Рендерим наши новые минималистичные Pill-теги */}
+        <CategoryPills categories={allCategories} subscribedIds={subscribedCategoryIds} />
 
-            return (
-              <CategorySubscribeToggle
-                key={cat.id}
-                categoryId={cat.id}
-                memberId={profile.id}
-                title={cat.title}
-                icon={cat.icon}
-                isSubscribed={isSubscribed}
-                colorBg={style.bg}
-                colorText={style.text}
-                colorBorder={style.border}
-              />
-            );
-          })}
-        </div>
-
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-slate-600 mt-4">
           Уведомления приходят в Telegram. Убедитесь что вы подписаны на{' '}
           <a
             href="https://t.me/evaturclub"
