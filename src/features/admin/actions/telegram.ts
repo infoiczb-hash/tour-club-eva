@@ -72,3 +72,36 @@ export async function publishToTelegram(
 export async function sendToTelegram(text: string) {
   return publishToTelegram(text, undefined, undefined, false);
 }
+export async function sendToUserTelegram(chatId: string, text: string, linkUrl?: string) {
+  const token = env.TELEGRAM_BOT_TOKEN;
+  if (!token) return { success: false, error: 'Не настроен TELEGRAM_BOT_TOKEN' };
+
+  try {
+    const body: Record<string, unknown> = {
+      chat_id: chatId,
+      text: text,
+      parse_mode: 'HTML',
+    };
+
+    // Если передали ссылку, прикрепляем красивую кнопку
+    if (linkUrl) {
+      body.reply_markup = JSON.stringify({
+        inline_keyboard: [[
+          { text: '🚀 Забронировать место', url: linkUrl }
+        ]],
+      });
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+    return { success: data.ok, error: data.description };
+  } catch (error) {
+    console.error('sendToUserTelegram Error:', error);
+    return { success: false, error: 'Ошибка сети' };
+  }
+}
