@@ -8,10 +8,27 @@ import {
   MapPin, Clock, TrendingUp,
   ChevronRight, Calendar, ArrowRight,
   Star, Flame, Timer, Backpack,
-  FileText, Download, Wallet // 👈 ДОБАВИЛИ Wallet для баланса
+  FileText, Download, Wallet
 } from 'lucide-react';
 import VirtualCard from '@/features/account/components/VirtualCard';
 import ReferralCard from '@/features/account/components/ReferralCard';
+
+// ─── уровни ─────────────────────────────────────────────────────────
+const LEVELS = [
+  { name: 'Первопроходец', min: 0,  max: 2  },
+  { name: 'Походник',      min: 3,  max: 6  },
+  { name: 'Бывалый',       min: 7,  max: 14 },
+  { name: 'Ветеран',       min: 15, max: 29 },
+  { name: 'Легенда клуба', min: 30, max: 9999 }, // Увеличили max для последнего уровня, чтобы не ломался расчет
+];
+
+const LEVEL_STYLES: Record<string, { bar: string; badge: string; glow: string }> = {
+  'Первопроходец': { bar: 'bg-teal-500',   badge: 'text-teal-400 bg-teal-400/10 border-teal-400/20',   glow: 'shadow-teal-500/20'   },
+  'Походник':      { bar: 'bg-green-500',  badge: 'text-green-400 bg-green-400/10 border-green-400/20', glow: 'shadow-green-500/20'  },
+  'Бывалый':       { bar: 'bg-blue-500',   badge: 'text-blue-400 bg-blue-400/10 border-blue-400/20',   glow: 'shadow-blue-500/20'   },
+  'Ветеран':       { bar: 'bg-purple-500', badge: 'text-purple-400 bg-purple-400/10 border-purple-400/20', glow: 'shadow-purple-500/20' },
+  'Легенда клуба': { bar: 'bg-amber-500',  badge: 'text-amber-400 bg-amber-400/10 border-amber-400/20', glow: 'shadow-amber-500/20'  },
+};
 
 // ─── вспомогательные функции ─────────────────────────────────────────
 
@@ -146,7 +163,7 @@ async function getDashboardData(userId: string) {
     stats: {
       totalTours,
       totalKm: Math.round(totalKm),
-      balance: profile.balance, // 👈 ТЯНЕМ БАЛАНС ИЗ ПРОФИЛЯ
+      balance: profile.balance || 0, 
       totalNights,
     },
     recentBookings,
@@ -166,25 +183,54 @@ export default async function DashboardPage() {
   const displayName = profile.name ?? 'Участник';
   const inventoryCount = profile.inventory?.length || 0;
 
+  // 🔥 РАСЧЕТ ПРОГРЕССА ДО СЛЕДУЮЩЕГО УРОВНЯ
+  const currentLevelIndex = LEVELS.findIndex(l => stats.totalTours >= l.min && stats.totalTours <= l.max);
+  const safeIndex = currentLevelIndex !== -1 ? currentLevelIndex : (stats.totalTours >= LEVELS[LEVELS.length - 1].max ? LEVELS.length - 1 : 0);
+  const currentConfig = LEVELS[safeIndex];
+  const nextConfig = LEVELS[safeIndex + 1];
+
+  const toursNeeded = nextConfig ? nextConfig.min - stats.totalTours : 0;
+  const progressPercent = nextConfig 
+    ? Math.max(0, Math.min(100, ((stats.totalTours - currentConfig.min) / (nextConfig.min - currentConfig.min)) * 100))
+    : 100;
+
   return (
     <div className="space-y-6">
 
-    {/* ── Приветствие + Виртуальная карта ────────────────────── */}
+      {/* ── Приветствие + Виртуальная карта ────────────────────── */}
       <section className="flex flex-col mb-4">
         <div className="mb-6">
           <p className="text-sm text-slate-400 mb-1">Добро пожаловать,</p>
           <h1 className="text-3xl font-black text-white tracking-tight">{displayName}</h1>
         </div>
-        
+           
         <div className="w-full max-w-md mx-auto md:mx-0">
           <VirtualCard 
             name={displayName} 
             level={profile.level} 
-            totalTours={stats.totalTours} // 👈 ЧЕСТНОЕ КОЛИЧЕСТВО ТУРОВ
-            totalKm={stats.totalKm}       // 👈 ЧЕСТНЫЙ КИЛОМЕТРАЖ
+            totalTours={stats.totalTours}
+            totalKm={stats.totalKm}      
             memberId={profile.id}
           />
         </div>
+
+        {/* 🔥 НОВЫЙ БЛОК: ПРОГРЕСС-БАР */}
+        {nextConfig && (
+          <div className="w-full max-w-md mx-auto md:mx-0 mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-4 md:p-5">
+            <div className="flex justify-between items-end mb-3">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">Прогресс статуса</span>
+              <span className="text-[10px] sm:text-xs text-teal-400 font-bold">
+                Ещё {toursNeeded} {toursNeeded === 1 ? 'тур' : (toursNeeded >= 2 && toursNeeded <= 4) ? 'тура' : 'туров'} до «{nextConfig.name}»
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(20,184,166,0.5)]" 
+                style={{ width: `${progressPercent}%` }} 
+              />
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Реферальная программа ───────────────────────────────── */}
@@ -192,12 +238,12 @@ export default async function DashboardPage() {
         <ReferralCard name={profile.name} userId={profile.userId} />
       </section>
 
-      {/* ── Статистика (ОБНОВЛЕННАЯ) ────────────────────────────── */}
+      {/* ── Статистика ──────────────────────────────────────────── */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Туров',    value: stats.totalTours,   unit: '',    icon: Flame      },
           { label: 'Км',       value: stats.totalKm,      unit: 'км',  icon: TrendingUp },
-          { label: 'Баланс',   value: stats.balance,      unit: 'MDL', icon: Wallet     }, // 👈 ЗАМЕНИЛИ ГИДОВ НА БАЛАНС
+          { label: 'Баланс',   value: stats.balance,      unit: 'MDL', icon: Wallet     }, 
           { label: 'Ночей',    value: stats.totalNights,  unit: '',    icon: Star       },
         ].map(({ label, value, unit, icon: Icon }) => (
           <div

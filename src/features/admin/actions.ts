@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BookingStatus, Prisma } from '@prisma/client';
+import { sendToUserTelegram } from '@/features/admin/actions/telegram';
 
 // ==========================================
 // TYPES
@@ -115,21 +116,32 @@ export async function getRegistrationsAction() {
     return { error: 'Произошла внутренняя ошибка сервера при загрузке бронирований', data: [] };
   }
 }
-
 export async function updateRegistrationStatus(id: string, status: string) {
   try {
     await requireAuth(); 
 
-    await prisma.booking.update({
+    const booking = await prisma.booking.update({
       where: { id },
       data: { status: status as BookingStatus },
+      include: { 
+        tour: { select: { title: true, slug: true } },
+        member: { select: { tgChatId: true } } // Достаем ID телеграма
+      }
     });
+
+    // 🔥 ТРИГГЕР: Отправляем пуш юзеру, если статус стал "confirmed" (Оплачено)
+    if (status === 'confirmed' && (booking.member as any)?.tgChatId) {
+        const msg = `✅ <b>Оплата получена!</b>\n\nВаше участие в туре <b>${booking.tour.title}</b> успешно подтверждено.\nВся информация и билет уже ждут вас в личном кабинете.`;
+        const link = `${process.env.NEXT_PUBLIC_SITE_URL}/account/bookings`;
+        await sendToUserTelegram((booking.member as any).tgChatId, msg, link);
+    }
+
     revalidatePath('/admin');
+    revalidatePath('/account'); // Сброс кэша ЛК, чтобы статус обновился у клиента
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // 🛡️ Защита от утечки
     console.error('Update Status Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
   }

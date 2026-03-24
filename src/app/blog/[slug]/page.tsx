@@ -9,10 +9,13 @@ import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import sanitizeHtml from 'sanitize-html';
+// ✅ ДОБАВЛЕНО: Импорт кнопки, клиента Supabase и проверки сессии
+import PostWishlistButton from '@/features/blog/components/PostWishlistButton';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const posts = await prisma.blog.findMany({
@@ -67,7 +70,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     imageUrl = `${BASE_URL}${imageUrl}`;
   }
 
-  // ✅ Keywords удалены для чистоты кода и SEO-оптимизации под современные алгоритмы
   return {
     title: `${post.title} | Турклуб «Эва»`,
     description: post.excerpt || `Статья от турклуба «Эва»: ${post.title}`,
@@ -107,6 +109,30 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const { post, relatedPosts } = data;
   const postUrl = `${BASE_URL}/blog/${post.slug}`;
+
+  // ✅ ДОБАВЛЕНО: Проверка сессии и статуса "в избранном" для статьи
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let isWished = false;
+
+  if (user) {
+    const profile = await prisma.memberProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true }
+    });
+
+    if (profile) {
+      const fav = await prisma.favoritePost.findUnique({
+        where: {
+          memberId_postId: {
+            memberId: profile.id,
+            postId: post.id
+          }
+        }
+      });
+      isWished = !!fav;
+    }
+  }
 
   const formatDate = (date: Date) => new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
   const isoDate = new Date(post.date).toISOString();
@@ -202,13 +228,11 @@ export default async function BlogPostPage({ params }: PageProps) {
         {/* КОНТЕНТ */}
         <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
             
-            {/* ИСПРАВЛЕНИЕ: Кнопка на отдельном этаже */}
             <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-8 md:mb-10 group w-fit shadow-lg">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
             </Link>
 
-            {/* ИСПРАВЛЕНИЕ: Рубрика + Бейдж */}
             <div className="flex items-center gap-3 mb-4 md:mb-5">
                 <span className="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">
                     Рубрика:
@@ -218,23 +242,27 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </span>
             </div>
 
-            {/* ИСПРАВЛЕНИЕ: Добавлен класс text-balance */}
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-8 md:mb-10 max-w-4xl drop-shadow-2xl text-balance animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {post.title}
-            </h1>
+            {/* ✅ ИСПРАВЛЕНИЕ: Вывели заголовок и кнопку в Flex-контейнер */}
+            <div className="flex items-start justify-between gap-4 mb-8 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight max-w-4xl drop-shadow-2xl text-balance">
+                    {post.title}
+                </h1>
+                <div className="shrink-0 mt-1 md:mt-2">
+                    <PostWishlistButton postId={post.id} initialIsFavorite={isWished} />
+                </div>
+            </div>
 
-            {/* ИСПРАВЛЕНИЕ: Мобильная структура в виде колонки (flex-col md:flex-row) */}
-         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
                 <div className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
                         {post.author_image ? (
                          <Image 
-    src={post.author_image} 
-    alt={post.author_name || "Автор статьи"} 
-    fill 
-    className="object-cover object-top" 
-    sizes="48px" 
-/>
+                            src={post.author_image} 
+                            alt={post.author_name || "Автор статьи"} 
+                            fill 
+                            className="object-cover object-top" 
+                            sizes="48px" 
+                         />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-400">
                                 <User size={20}/>
@@ -311,17 +339,17 @@ export default async function BlogPostPage({ params }: PageProps) {
                     
                     prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6 prose-blockquote:font-medium"
                    dangerouslySetInnerHTML={{ 
-  __html: sanitizeHtml(post.content, {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
-    allowedAttributes: {
-      '*': ['class', 'style'],
-      'a': ['href', 'name', 'target'],
-      'img': ['src', 'alt'],
-      'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
-    },
-    allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
-  }) 
-}}
+                      __html: sanitizeHtml(post.content, {
+                        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
+                        allowedAttributes: {
+                          '*': ['class', 'style'],
+                          'a': ['href', 'name', 'target'],
+                          'img': ['src', 'alt'],
+                          'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
+                        },
+                        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
+                      }) 
+                    }}
                 />
 
                 <ArticleShare title={post.title} slug={post.slug} />

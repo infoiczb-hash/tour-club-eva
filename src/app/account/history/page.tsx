@@ -59,12 +59,12 @@ async function getHistory(userId: string) {
   });
 
   // Проверяем какие туры уже имеют отзыв от этого участника
-  const tourIdsWithReview = await prisma.review.findMany({
+const tourIdsWithReview = await prisma.review.findMany({
     where: {
       tourId: { in: bookings.map(b => b.tourId) },
-      // ищем отзыв по имени или телефону участника
-      name: profile.name ?? undefined,
-    },
+      // ✅ ИСПРАВЛЕНО: Ищем строго по ID профиля, а не по имени
+      memberId: profile.id, 
+    } as any, // as any на случай если TS еще не обновил типы Prisma
     select: { tourId: true },
   });
   const reviewedTourIds = new Set(tourIdsWithReview.map(r => r.tourId));
@@ -108,18 +108,36 @@ export default async function HistoryPage() {
   return (
     <div className="space-y-6">
 
-      {/* Заголовок */}
-      <div>
+     {/* Заголовок */}
+      <div className="mb-6">
         <h1 className="text-2xl font-black text-white mb-1">История туров</h1>
         <p className="text-sm text-slate-400">
           {stats.total > 0
-            ? `${stats.total} ${plural(stats.total, 'приключение', 'приключения', 'приключений')} · ${stats.totalKm} км · ${stats.seasons} ${plural(stats.seasons, 'сезон', 'сезона', 'сезонов')}`
+            ? 'Ваша летопись приключений в цифрах и фактах'
             : 'Здесь появятся ваши прошедшие туры'}
         </p>
       </div>
 
+      {/* 🔥 НОВЫЙ БЛОК СТАТИСТИКИ (Выводится только если есть туры) */}
+      {stats.total > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1">
+              <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest">Всего туров</span>
+              <p className="text-2xl sm:text-3xl font-black text-white">{stats.total}</p>
+          </div>
+          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1">
+              <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest">Километраж</span>
+              <p className="text-2xl sm:text-3xl font-black text-white">{stats.totalKm} <span className="text-sm text-slate-400 font-medium">км</span></p>
+          </div>
+          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1">
+              <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest">Сезонов</span>
+              <p className="text-2xl sm:text-3xl font-black text-white">{stats.seasons}</p>
+          </div>
+        </div>
+      )}
+
       {bookings.length === 0 ? (
-        /* Пустое состояние */
+        /* Твое оригинальное пустое состояние — ничего не тронуто! */
         <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-10 text-center">
           <p className="text-4xl mb-4">🗺️</p>
           <p className="text-white font-bold mb-2">Ваша история пока пуста</p>
