@@ -101,7 +101,7 @@ model Tour {
   tourDates  TourDate[]
   waitlists  Waitlist[]
   reviews    Review[]
-  watchLists WatchList[] // ✅ ДОБАВЛЕНА СВЯЗЬ ИЗБРАННОГО
+  watchLists WatchList[] // Связь избранного
 
   @@index([isActive])
   @@index([categoryId])
@@ -144,7 +144,6 @@ model TourDate {
 model Booking {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  // ✅ ДОБАВЛЕНА СВЯЗЬ С ЛИЧНЫМ КАБИНЕТОМ
   memberId String?        @map("member_id") @db.Uuid
   member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
 
@@ -158,7 +157,6 @@ model Booking {
   ticketsFamily Int     @default(0) @map("tickets_family")
   ticketsMember Int     @default(0) @map("tickets_member")
 
-  // 👇 НОВОЕ ПОЛЕ: JSON для умных билетов (динамический список гостей и размеров)
   guests        Json?   @default("[]")
 
   comment       String?
@@ -191,16 +189,22 @@ model Waitlist {
   id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tourId     String  @map("tour_id") @db.Uuid
   tourDateId String? @map("tour_date_id") @db.Uuid
+  
+  // ✅ ИЗМЕНЕНИЯ ЗДЕСЬ: Интеграция с MemberProfile
+  memberId   String? @map("member_id") @db.Uuid
   name       String
-  phone      String
+  phone      String? // Телефон теперь не обязателен, если есть memberId
   social     String?
+  
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tour     Tour      @relation(fields: [tourId], references: [id], onDelete: Cascade)
-  tourDate TourDate? @relation(fields: [tourDateId], references: [id], onDelete: Cascade)
+  tour       Tour           @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tourDate   TourDate?      @relation(fields: [tourDateId], references: [id], onDelete: Cascade)
+  member     MemberProfile? @relation(fields: [memberId], references: [id], onDelete: Cascade) // Связь
 
   @@index([tourId])
   @@index([tourDateId])
+  @@index([memberId]) // Индекс для быстрого поиска
   @@map("waitlists")
 }
 
@@ -209,12 +213,12 @@ model PromoCode {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code        String    @unique
   discount    Int       @default(100) 
-  type        String    @default("fixed") // Для рефералки лучше "fixed" (лей), а не проценты
+  type        String    @default("fixed") 
   validUntil  DateTime? @map("valid_until") @db.Timestamptz(6)
   usageCount  Int       @default(0) @map("usage_count")
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  reward      Int       @default(50)  // Сколько баллов получает владелец кода за друга
+  reward      Int       @default(50)  
   memberId    String?   @unique @db.Uuid
   member      MemberProfile? @relation(fields: [memberId], references: [id], onDelete: Cascade)
   bookings    Booking[]
@@ -233,7 +237,7 @@ model TourCategory {
   isActive  Boolean @default(true) @map("is_active")
 
   tours      Tour[]
-  watchLists WatchList[] // ✅ ДОБАВЛЕНА СВЯЗЬ ИЗБРАННОГО
+  watchLists WatchList[] 
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -312,6 +316,8 @@ model Review {
 
   tourId String? @map("tour_id") @db.Uuid
   tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  memberId String? @map("member_id") @db.Uuid
+  member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -385,7 +391,9 @@ model MemberProfile {
   bookings      Booking[]
   watchLists    WatchList[]
   testResults   TestResult[]
-  favoritePosts FavoritePost[] // Добавлен массив закладок статей
+  favoritePosts FavoritePost[] 
+  waitlists     Waitlist[]     // ✅ ИЗМЕНЕНИЯ ЗДЕСЬ: Обратная связь с листом ожидания
+  reviews       Review[]
 
   balance       Int       @default(0)
   invitedByCode String?
@@ -405,10 +413,11 @@ model WatchList {
   tourId String? @map("tour_id") @db.Uuid
   tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
-categoryId String?       @map("category_id") @db.Uuid
- category   TourCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
- guideId String? @map("guide_id") @db.Uuid
- guide   Guide?  @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  categoryId String?       @map("category_id") @db.Uuid
+  category   TourCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  guideId String? @map("guide_id") @db.Uuid
+  guide   Guide?  @relation(fields: [guideId], references: [id], onDelete: Cascade)
 
   notified  Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
