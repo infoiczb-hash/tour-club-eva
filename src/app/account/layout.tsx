@@ -9,19 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export async function getAccountProfile() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const profile = await prisma.memberProfile.findUnique({
-    where: { userId: user.id },
-  });
-
-  return profile;
-}
-
 export default async function AccountLayout({
   children,
 }: {
@@ -69,8 +56,15 @@ export default async function AccountLayout({
         }}
       />
 
-      {/* 👇 ИСПРАВЛЕНО: md:ml-64 отодвигает контент от левого края на ширину сайдбара */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 pt-6 md:pt-10 pb-24 md:pb-12 md:ml-64 relative z-10 transition-all">
+      {/* Главный контент аккаунта с надёжным отступом от Header */}
+      <main 
+        className="flex-1 w-full max-w-5xl mx-auto 
+                   px-4 md:px-6 lg:px-8 
+                   pt-[88px] md:pt-[108px] lg:pt-[118px] 
+                   pb-20 md:pb-12 
+                   md:ml-64 
+                   relative z-10 transition-all duration-300"
+      >
         {children}
         
         {needsOnboarding && <OnboardingModal />}

@@ -10,8 +10,10 @@ export async function toggleCategorySubscription(categoryId: string) {
 
   if (!session) throw new Error("Unauthorized");
 
+  // ОПТИМИЗАЦИЯ: Добавили select, чтобы не тянуть лишние данные (размеры, еду и тд) из базы
   const profile = await prisma.memberProfile.findUnique({
-    where: { userId: session.user.id }
+    where: { userId: session.user.id },
+    select: { id: true }
   });
 
   if (!profile) throw new Error("Profile not found");
@@ -23,7 +25,8 @@ export async function toggleCategorySubscription(categoryId: string) {
         memberId: profile.id,
         categoryId: categoryId
       }
-    }
+    },
+    select: { id: true } // ОПТИМИЗАЦИЯ: Нам нужен только факт существования и ID
   });
 
   if (existing) {
@@ -41,6 +44,6 @@ export async function toggleCategorySubscription(categoryId: string) {
     });
   }
 
-  // Мгновенно обновляем кэш страницы, чтобы тег поменял цвет
+  // Обновляем кэш страницы (теперь, с useOptimistic на клиенте, UI не будет ждать этот шаг)
   revalidatePath("/account/wishlist");
 }

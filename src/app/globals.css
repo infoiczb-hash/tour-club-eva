@@ -251,3 +251,22 @@
       rotate(var(--tw-enter-rotate, 0));
   }
 }
+/* =============================================
+   ACCOUNT LAYOUT — Отступ от фиксированного Header
+   ============================================= */
+
+:root {
+  --header-height: 82px;     /* мобильная версия */
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 104px;  /* md и выше */
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-height: 112px;  /* lg и выше — небольшой запас */
+  }
+}

@@ -46,7 +46,12 @@ function formatDate(date: Date) {
   }).format(new Date(date));
 }
 
-export default async function BookingDetailsPage({ params }: { params: { id: string } }) {
+// ⚠️ ИСПРАВЛЕНИЕ АРХИТЕКТУРЫ: В Next 15+ params — это Promise
+export default async function BookingDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  // Распаковываем параметры через await, чтобы получить строковый id
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+
   // ✅ ИСПРАВЛЕННЫЙ ВЫЗОВ SUPABASE
   const supabase = await createServerSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
@@ -55,9 +60,9 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     redirect("/login");
   }
 
-  // 2. Идем в Prisma за бронью и привязанным туром
+  // 2. Идем в Prisma за бронью и привязанным туром (используем распакованный id)
   const booking = await prisma.booking.findUnique({
-   where: { id: params.id },
+    where: { id: id },
     include: {
       tour: true,
       tourDate: true, // ✅ Запрашиваем конкретные даты выезда
