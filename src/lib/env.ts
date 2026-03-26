@@ -1,4 +1,3 @@
-// src/lib/env.ts
 import { z } from 'zod';
 
 // 1. Схема для ПУБЛИЧНЫХ (клиентских) переменных
@@ -10,9 +9,11 @@ const clientSchema = z.object({
 
 // 2. Схема для СЕКРЕТНЫХ (серверных) переменных
 const serverSchema = z.object({
-  TELEGRAM_BOT_TOKEN:      z.string().min(1, 'TELEGRAM_BOT_TOKEN не задан'),
-  TELEGRAM_ADMIN_CHAT_ID:  z.string().min(1, 'TELEGRAM_ADMIN_CHAT_ID не задан'),
-  TELEGRAM_CHANNEL_ID:     z.string().optional(),
+  TELEGRAM_BOT_TOKEN:           z.string().min(1, 'TELEGRAM_BOT_TOKEN не задан'),
+  // ✅ ДОБАВЛЕНО: Токен для бота авторизации
+  TELEGRAM_AUTH_BOT:            z.string().min(1, 'TELEGRAM_AUTH_BOT не задан'), 
+  TELEGRAM_ADMIN_CHAT_ID:       z.string().min(1, 'TELEGRAM_ADMIN_CHAT_ID не задан'),
+  TELEGRAM_CHANNEL_ID:          z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY:               z.string().optional(),
   
@@ -20,7 +21,7 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL:       z.string().url('Некорректный URL Upstash Redis'),
   UPSTASH_REDIS_REST_TOKEN:     z.string().min(1, 'Отсутствует Token Upstash Redis'),
 
-  // ✅ ДОБАВЛЕНО: Ключ для работы Admin API Supabase (создание юзеров в обход email)
+  // Ключ для работы Admin API Supabase (создание юзеров в обход email)
   SUPABASE_SERVICE_ROLE_KEY:    z.string().min(1, 'Отсутствует Service Role Key Supabase'),
 });
 
@@ -38,6 +39,7 @@ const parsedClient = clientSchema.parse({
 const parsedServer = isServer 
   ? serverSchema.parse({
       TELEGRAM_BOT_TOKEN:            process.env.TELEGRAM_BOT_TOKEN,
+      TELEGRAM_AUTH_BOT:             process.env.TELEGRAM_AUTH_BOT, // ✅ Передаем в парсер
       TELEGRAM_ADMIN_CHAT_ID:        process.env.TELEGRAM_ADMIN_CHAT_ID,
       TELEGRAM_CHANNEL_ID:           process.env.TELEGRAM_CHANNEL_ID,
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -45,8 +47,6 @@ const parsedServer = isServer
       
       UPSTASH_REDIS_REST_URL:        process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN:      process.env.UPSTASH_REDIS_REST_TOKEN,
-
-      // ✅ ДОБАВЛЕНО: Прокидываем ключ в парсер
       SUPABASE_SERVICE_ROLE_KEY:     process.env.SUPABASE_SERVICE_ROLE_KEY,
     }) 
   : {} as z.infer<typeof serverSchema>; // В браузере просто отдаем пустышку, чтобы не было ошибки

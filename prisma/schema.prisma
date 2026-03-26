@@ -83,6 +83,10 @@ model Tour {
   priceFamily  Int?    @map("price_family")
   priceMember  Int?    @map("price_member")
 
+  // ✅ НОВЫЕ ПОЛЯ ДЛЯ ОПЛАТЫ
+  biletpmrLink String? @map("biletpmr_link")
+  apbQrLink    String? @map("apb_qr_link")
+
   coverImage String?  @map("cover_image")
   metaDesc   String?  @map("meta_desc")
   metaTitle  String?  @map("meta_title")
@@ -93,9 +97,9 @@ model Tour {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  guideId  String?       @map("guide_id") @db.Uuid
-  guide    Guide?        @relation(fields: [guideId], references: [id])
-  category TourCategory? @relation(fields: [categoryId], references: [id])
+  guideId  String?        @map("guide_id") @db.Uuid
+  guide    Guide?         @relation(fields: [guideId], references: [id])
+  category TourCategory?  @relation(fields: [categoryId], references: [id])
 
   bookings   Booking[]
   tourDates  TourDate[]
@@ -116,6 +120,11 @@ model TourDate {
   startDate DateTime  @map("start_date") @db.Date
   endDate   DateTime? @map("end_date") @db.Date
   time      String?
+  
+  // НОВОЕ ПОЛЕ: Точное время и место сбора для конкретной даты (если отличается от стандартного)
+  meetingTime  String? @map("meeting_time")
+  meetingPoint String? @map("meeting_point_override")
+  
   spots     Int       @default(15)
   spotsLeft Int       @default(15) @map("spots_left")
 
@@ -143,6 +152,9 @@ model TourDate {
 
 model Booking {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // НОВОЕ ПОЛЕ: Короткий ID (например, 1024). Генерируется базой через sequence.
+  shortId Int @unique @default(autoincrement()) @map("short_id")
 
   memberId String?        @map("member_id") @db.Uuid
   member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -152,19 +164,19 @@ model Booking {
   email  String?
   social String?
 
-  ticketsAdult  Int     @default(0) @map("tickets_adult")
-  ticketsChild  Int     @default(0) @map("tickets_child")
-  ticketsFamily Int     @default(0) @map("tickets_family")
-  ticketsMember Int     @default(0) @map("tickets_member")
+  ticketsAdult  Int       @default(0) @map("tickets_adult")
+  ticketsChild  Int       @default(0) @map("tickets_child")
+  ticketsFamily Int       @default(0) @map("tickets_family")
+  ticketsMember Int       @default(0) @map("tickets_member")
 
-  guests        Json?   @default("[]")
+  guests        Json?     @default("[]")
 
   comment       String?
-  totalPrice    Int     @map("total_price")
-  amountPaid    Int     @default(0) @map("amount_paid")
-  discount      Int     @default(0)
-  paymentMethod String? @map("payment_method")
-  source        String  @default("website")
+  totalPrice    Int       @map("total_price")
+  amountPaid    Int       @default(0) @map("amount_paid")
+  discount      Int       @default(0)
+  paymentMethod String?   @map("payment_method")
+  source        String    @default("website")
 
   status     BookingStatus @default(pending)
   bookedDate DateTime?     @map("booked_date")
@@ -182,6 +194,7 @@ model Booking {
   @@index([tourId])
   @@index([status])
   @@index([memberId])
+  @@index([shortId]) // Индекс для быстрого поиска по номеру брони
   @@map("bookings")
 }
 
@@ -190,7 +203,7 @@ model Waitlist {
   tourId     String  @map("tour_id") @db.Uuid
   tourDateId String? @map("tour_date_id") @db.Uuid
   
-  // ✅ ИЗМЕНЕНИЯ ЗДЕСЬ: Интеграция с MemberProfile
+  //  ИЗМЕНЕНИЯ ЗДЕСЬ: Интеграция с MemberProfile
   memberId   String? @map("member_id") @db.Uuid
   name       String
   phone      String? // Телефон теперь не обязателен, если есть memberId

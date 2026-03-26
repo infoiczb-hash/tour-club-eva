@@ -282,8 +282,6 @@ return (
         </div>
       </div>
       
-     );
-
       {/* ── Ближайший тур ───────────────────────────────────────── */}
       {upcomingBooking ? (
         <section>
@@ -353,7 +351,7 @@ return (
                 )}
               </div>
 
-              {upcomingBooking.tourDate?.guide && (
+            {upcomingBooking.tourDate?.guide && (
                 <div className="flex items-center gap-2 pt-1">
                   {upcomingBooking.tourDate.guide.image ? (
                     <Image
@@ -361,10 +359,12 @@ return (
                       alt={upcomingBooking.tourDate.guide.name}
                       width={28}
                       height={28}
-                      className="rounded-full object-cover"
+                      // ✅ ДОБАВИЛИ w-7 h-7 и flex-shrink-0
+                      className="w-7 h-7 rounded-full object-cover flex-shrink-0" 
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center">
+                    // ✅ Сюда тоже добавили flex-shrink-0 на всякий случай
+                    <div className="w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-bold text-teal-400">
                         {upcomingBooking.tourDate.guide.name[0]}
                       </span>

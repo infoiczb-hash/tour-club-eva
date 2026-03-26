@@ -1,4 +1,3 @@
-// src/app/api/auth/telegram/route.ts
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
@@ -18,12 +17,13 @@ export async function GET(request: Request) {
     }
 
     // 2. Проверяем подлинность данных (магия криптографии Telegram)
-    const botToken = env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) {
-      throw new Error('TELEGRAM_BOT_TOKEN is not defined in .env');
+    // ✅ ИСПРАВЛЕНИЕ: Используем токен от бота авторизации, а не от бота уведомлений
+    const authBotToken = env.TELEGRAM_AUTH_BOT;
+    if (!authBotToken) {
+      throw new Error('TELEGRAM_AUTH_BOT is not defined in .env');
     }
 
-    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+    const secretKey = crypto.createHash('sha256').update(authBotToken).digest();
     const dataCheckString = Object.keys(userData)
       .filter(key => userData[key] !== undefined && userData[key] !== 'undefined')
       .sort()
@@ -40,7 +40,8 @@ export async function GET(request: Request) {
 
     // 3. Авторизуем в Supabase
     const email = `tg_${userData.id}@evaclub.tour`;
-    const password = crypto.createHmac('sha256', botToken).update(userData.id).digest('hex');
+    // ✅ ИСПРАВЛЕНИЕ: Пароль тоже генерируем на основе правильного токена
+    const password = crypto.createHmac('sha256', authBotToken).update(userData.id).digest('hex');
 
     // Клиент для установки сессии (cookies) в браузере
     const supabase = await createServerSupabaseClient();
