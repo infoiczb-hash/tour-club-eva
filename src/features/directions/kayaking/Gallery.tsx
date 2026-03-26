@@ -128,7 +128,7 @@ export default function Gallery() {
               fill
               className="object-contain"
               sizes="100vw"
-              quality={90}
+              quality={75}
               priority
             />
           </div>

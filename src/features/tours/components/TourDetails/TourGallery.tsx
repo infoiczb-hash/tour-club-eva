@@ -137,7 +137,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                className="object-contain" // Картинка впишется без черных полос и обрезки
                priority
                sizes="100vw"
-               quality={90}
+               quality={75}
              />
           </div>
 

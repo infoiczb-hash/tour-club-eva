@@ -1,9 +1,11 @@
 // src/lib/cloudinary-loader.ts
 //
-// Кастомный loader для next/image.
-// 1. Cloudinary Upload: f_auto,q_{quality},w_{width}
-// 2. Supabase: Пропускаем через Cloudinary Fetch API для бесплатного on-the-fly ресайза и WebP
-// 3. Остальное: возвращает src без изменений
+// ─── СТРАТЕГИЯ FREE TIER ────────────────────────────────────────────────
+//
+// Supabase: для динамических фото туров (бесплатные трансформации).
+// Cloudinary: только для статики (/upload/) и внешних URL (временно).
+// Экономим кредиты Cloudinary: q_auto:eco + сокращённые deviceSizes.
+// ───────────────────────────────────────────────────────────────────────
 
 type LoaderParams = {
   src: string;
@@ -11,27 +13,32 @@ type LoaderParams = {
   quality?: number;
 };
 
+const CLOUD_NAME = 'dwrei7k2z';
+
 export default function cloudinaryLoader({ src, width, quality }: LoaderParams): string {
   const q = quality ?? 75;
 
-  // --- 1. Cloudinary (Наши статические файлы) ---
+  // ── 1. Cloudinary Upload (статика) ───────────────────────────────
   if (src.includes('res.cloudinary.com') && src.includes('/upload/')) {
-    const transformation = `f_auto,q_${q},w_${width}`;
+    const transformation = `f_auto,q_auto:eco,w_${width}`;
     return src.replace('/upload/', `/upload/${transformation}/`);
   }
 
-  // --- 2. Supabase Storage (Динамические фото туров) ---
-  // Используем Cloudinary Fetch API как прокси-оптимизатор
-  if (src.includes('supabase.co')) {
-    const cloudName = 'dwrei7k2z'; // Твой Cloudinary cloud_name
-    const transformation = `f_auto,q_${q},w_${width}`;
-    
-    // ВАЖНО: Если URL Supabase содержит параметры (например, токены), 
-    // весь URL необходимо закодировать. Но в базовом варианте для Public бакетов работает и так.
-    // Если будут проблемы с загрузкой, используй encodeURIComponent(src)
-    return `https://res.cloudinary.com/${cloudName}/image/fetch/${transformation}/${src}`;
+  // ── 2. Supabase Storage (динамика) ───────────────────────────────
+  if (src.includes('supabase.co/storage/v1/object/public/')) {
+    const renderUrl = src.replace(
+      '/storage/v1/object/public/',
+      '/storage/v1/render/image/public/'
+    );
+    return `${renderUrl}?width=${width}&quality=${q}&resize=cover`;
   }
 
-  // --- 3. Всё остальное (Unsplash, YouTube и т.д.) ---
+  // ── 3. Внешние URL (например, Unsplash) ──────────────────────────
+  if (src.startsWith('https://') && !src.includes('cloudinary.com') && !src.includes('supabase.co')) {
+    const transformation = `f_auto,q_auto:eco,w_${width}`;
+    return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformation}/${encodeURIComponent(src)}`;
+  }
+
+  // ── 4. Фоллбек ───────────────────────────────────────────────────
   return src;
 }

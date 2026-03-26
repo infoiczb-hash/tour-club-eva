@@ -16,9 +16,12 @@ const serverSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY:               z.string().optional(),
   
-  // ✅ ДОБАВЛЕНО: Ключи для Upstash Redis
+  // Ключи для Upstash Redis
   UPSTASH_REDIS_REST_URL:       z.string().url('Некорректный URL Upstash Redis'),
   UPSTASH_REDIS_REST_TOKEN:     z.string().min(1, 'Отсутствует Token Upstash Redis'),
+
+  // ✅ ДОБАВЛЕНО: Ключ для работы Admin API Supabase (создание юзеров в обход email)
+  SUPABASE_SERVICE_ROLE_KEY:    z.string().min(1, 'Отсутствует Service Role Key Supabase'),
 });
 
 // Проверяем, где мы сейчас находимся: на сервере или в браузере
@@ -40,9 +43,11 @@ const parsedServer = isServer
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       OPENAI_API_KEY:                process.env.OPENAI_API_KEY,
       
-      // ✅ ДОБАВЛЕНО: Прокидываем ключи в парсер
       UPSTASH_REDIS_REST_URL:        process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN:      process.env.UPSTASH_REDIS_REST_TOKEN,
+
+      // ✅ ДОБАВЛЕНО: Прокидываем ключ в парсер
+      SUPABASE_SERVICE_ROLE_KEY:     process.env.SUPABASE_SERVICE_ROLE_KEY,
     }) 
   : {} as z.infer<typeof serverSchema>; // В браузере просто отдаем пустышку, чтобы не было ошибки
 

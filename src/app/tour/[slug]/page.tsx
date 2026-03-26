@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
-     alternates: {
+    alternates: {
       canonical: url, 
     },
     openGraph: {
@@ -86,32 +86,55 @@ export default async function TourPage({ params }: Props) {
   const decodedSlug = decodeURIComponent(slug);
 
   const tour = await getTourBySlug(decodedSlug);
-if (!tour) { notFound(); }
-if (tour.image) { ReactDOM.preload(tour.image, { as: 'image', fetchPriority: 'high' }); }
+  if (!tour) { notFound(); }
 
-// getSimilarTours и проверка сессии — независимы, запускаем параллельно
-const [similarTours, supabase] = await Promise.all([
-  getSimilarTours(tour.categoryId ?? null, tour.id, 3),
-  createServerSupabaseClient(),
-]);
+  // ✅ ПАТЧ: Адаптивный Preload LCP-изображения с imageSrcSet
+  if (tour.image) {
+    // Умная генерация URL для адаптивной предзагрузки
+    const generatePreloadUrl = (url: string, width: number) => {
+      // Если картинка отдается напрямую с Cloudinary, добавляем параметры трансформации
+      if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+        return url.replace('/upload/', `/upload/c_scale,w_${width},q_auto,f_auto/`);
+      }
+      // Фолбэк на дефолтный Next.js Image Optimizer
+      return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=75`;
+    };
 
-const { data: { user } } = await supabase.auth.getUser();
+    const mobileUrl = generatePreloadUrl(tour.image, 828);
+    const desktopUrl = generatePreloadUrl(tour.image, 1920);
 
-let isWished = false;
-if (user) {
-  // ✅ ИСПРАВЛЕНО: Честно получаем профиль из БД вместо удаления строк с ошибкой Cannot find name 'profile'
-  const profile = await prisma.memberProfile.findUnique({
-    where: { userId: user.id },
-    select: { id: true }
-  });
-
-  if (profile) {
-    const watch = await prisma.watchList.findFirst({
-      where: { memberId: profile.id, tourId: tour.id },
+    ReactDOM.preload(desktopUrl, { // desktopUrl выступает как fallback href
+      as: 'image',
+      imageSrcSet: `${mobileUrl} 828w, ${desktopUrl} 1920w`,
+      imageSizes: '100vw',
+      fetchPriority: 'high',
     });
-    isWished = !!watch;
   }
-}
+
+  // getSimilarTours и проверка сессии — независимы, запускаем параллельно
+  const [similarTours, supabase] = await Promise.all([
+    getSimilarTours(tour.categoryId ?? null, tour.id, 3),
+    createServerSupabaseClient(),
+  ]);
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let isWished = false;
+  if (user) {
+    // ✅ ИСПРАВЛЕНО: Честно получаем профиль из БД вместо удаления строк с ошибкой Cannot find name 'profile'
+    const profile = await prisma.memberProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true }
+    });
+
+    if (profile) {
+      const watch = await prisma.watchList.findFirst({
+        where: { memberId: profile.id, tourId: tour.id },
+      });
+      isWished = !!watch;
+    }
+  }
+
   const schemaImages = [
     tour.image,
     ...(tour.gallery || [])

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import AccountNav from '@/features/account/components/AccountNav';
 import OnboardingModal from '@/features/account/components/OnboardingModal';
 import type { Metadata } from 'next';
+import type { MemberProfile } from '@prisma/client';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -21,12 +22,15 @@ export default async function AccountLayout({
     redirect('/login?next=/account');
   }
 
-  let profile = await prisma.memberProfile.findUnique({
+  // 1. Пытаемся найти профиль
+  let profile: MemberProfile | null = await prisma.memberProfile.findUnique({
     where: { userId: user.id },
   });
 
+  // 2. Если профиля нет — это первый вход. Создаем профиль и привязываем данные.
   if (!profile) {
     const phone = user.phone ?? '';
+    
     profile = await prisma.memberProfile.create({
       data: {
         userId: user.id,
@@ -35,6 +39,7 @@ export default async function AccountLayout({
       },
     });
 
+    // Безопасно переносим старые брони только в момент регистрации
     if (phone) {
       await prisma.booking.updateMany({
         where: { phone, memberId: null },
@@ -47,7 +52,6 @@ export default async function AccountLayout({
 
   return (
     <div className="min-h-screen bg-slate-950 relative flex">
-
       <AccountNav
         profile={{
           name: profile.name,
@@ -56,20 +60,20 @@ export default async function AccountLayout({
         }}
       />
 
-      {/* Главный контент аккаунта с надёжным отступом от Header */}
+      {/* ✅ Главный контент с улучшенными, гибкими классами Tailwind */}
       <main 
         className="flex-1 w-full max-w-5xl mx-auto 
                    px-4 md:px-6 lg:px-8 
-                   pt-[88px] md:pt-[108px] lg:pt-[118px] 
+                   pt-24 md:pt-28 lg:pt-32 
                    pb-20 md:pb-12 
                    md:ml-64 
                    relative z-10 transition-all duration-300"
       >
         {children}
         
+        {/* Показываем онбординг только если нет телефона */}
         {needsOnboarding && <OnboardingModal />}
       </main>
-
     </div>
   );
 }

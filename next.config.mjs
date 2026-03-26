@@ -7,20 +7,21 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
+
   images: {
     loader: 'custom',
     loaderFile: './src/lib/cloudinary-loader.ts',
-    qualities: [55, 60, 65, 75, 85], // FIX: Добавили 55 и 60 в список допустимых quality
+    qualities: [55, 60, 65, 75, 85], // оптимизированный набор
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 5184000,
-    deviceSizes: [412, 640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 64, 96, 128, 256, 384, 436],
+    minimumCacheTTL: 5184000, // 60 дней кеша
+    deviceSizes: [640, 828, 1080, 1200, 1920], // сократили до 5 значений
+    imageSizes: [16, 32, 64, 96, 128, 256, 384], // оставили базовые
     remotePatterns: [
-      { protocol: 'https', hostname: '**.supabase.co', port: '' },
-      { protocol: 'https', hostname: 'images.unsplash.com', port: '' },
-      { protocol: 'https', hostname: 'res.cloudinary.com', port: '' },
-      { protocol: 'https', hostname: 'img.youtube.com', port: '' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      // временно: пока есть Unsplash
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'img.youtube.com' },
     ],
   },
 
