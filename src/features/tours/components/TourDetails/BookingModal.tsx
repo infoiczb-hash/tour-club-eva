@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
-  AlertCircle, Users, LifeBuoy 
+  AlertCircle, Users, LifeBuoy, CalendarDays 
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
@@ -20,13 +20,29 @@ interface BookingModalProps {
 
 const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL-5XL'];
 
-const formatDateForDropdown = (d: any) => {
+// ✅ Строгая типизация для дат (избавились от any)
+type DropdownDateInfo = {
+  id?: string;
+  start?: string | Date;
+  date?: string | Date;
+  time?: string | null;
+};
+
+const formatDateForDropdown = (d: DropdownDateInfo) => {
   const dateVal = d.start || d.date;
   if (!dateVal) return '';
   const dateObj = new Date(dateVal);
   const str = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   return `${str}${d.time ? ` в ${d.time}` : ''}`;
 };
+
+// ✅ Структура данных для каждого участника
+export interface GuestDetails {
+  name: string;
+  phone?: string;
+  age?: string;
+  jacket: string;
+}
 
 export default function BookingModal({ 
   isOpen, 
@@ -58,10 +74,11 @@ export default function BookingModal({
     family: 0 
   });
   
-  // Хранилище данных для каждого конкретного гостя
-  const [guestData, setGuestData] = useState<Record<string, {name: string, jacket: string}>>({});
+  // ✅ Типизированное хранилище данных для каждого конкретного гостя
+  const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
-  const isWaterTour = ['sup', 'kayaking', 'kayak', 'water'].includes(
+  // ✅ Расширенная проверка на водные туры (массив слагов)
+  const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
     tour.category?.slug?.toLowerCase() || ''
   );
 
@@ -150,10 +167,13 @@ export default function BookingModal({
     target.style.height = `${target.scrollHeight}px`;
   };
 
-  const handleGuestChange = (id: string, field: string, value: string) => {
+  const handleGuestChange = (id: string, field: keyof GuestDetails, value: string) => {
     setGuestData(prev => ({ 
       ...prev, 
-      [id]: { ...prev[id], [field]: value } 
+      [id]: { 
+        ...prev[id], 
+        [field]: value 
+      } as GuestDetails
     }));
   };
 
@@ -162,7 +182,7 @@ export default function BookingModal({
     setIsLoading(true);
     setErrorMsg(null);
 
-    // Собираем массив гостей для базы
+    // Собираем массив гостей для базы со всеми новыми полями
     const payloadGuests = expectedGuests.map((g, index) => {
         if (index === 0) {
             return {
@@ -177,6 +197,8 @@ export default function BookingModal({
             isMain: false,
             type: g.type,
             name: guestData[g.id]?.name?.trim() || '',
+            phone: guestData[g.id]?.phone?.trim() || undefined,
+            age: guestData[g.id]?.age?.trim() || undefined,
             jacket: guestData[g.id]?.jacket || ''
         };
     });
@@ -196,7 +218,7 @@ export default function BookingModal({
         ticketsChild:  tickets.child,
         ticketsMember: tickets.member,
         ticketsFamily: tickets.family, 
-        guests:        payloadGuests, // Отправляем массив
+        guests:        payloadGuests, // Отправляем полный массив
         totalPrice,
         currency:      tour.currency ?? 'MDL',
       });
@@ -391,78 +413,114 @@ export default function BookingModal({
                         <Users size={14} className="text-teal-500" /> Данные участников ({expectedGuests.length})
                     </label>
 
-                    {expectedGuests.map((guest, index) => (
-                        <div key={guest.id} className="bg-slate-950/50 border border-white/10 rounded-xl p-4 space-y-3">
-                            <div className="flex justify-between items-center mb-1">
-                               <span className="text-[10px] font-black uppercase text-teal-500 tracking-widest">
-                                 Участник {index + 1} {index === 0 && '(Вы)'}
-                               </span>
-                               <span className="text-[10px] text-slate-500 font-bold uppercase">
-                                 {guest.type}
-                               </span>
-                            </div>
+                    {expectedGuests.map((guest, index) => {
+                        const isChild = guest.type.includes('Дет');
 
-                            {index === 0 ? (
-                                // Заказчик (Участник 1)
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="relative">
-                                       <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input 
-                                         required 
-                                         type="text" 
-                                         placeholder="Имя Фамилия" 
-                                         value={formData.name} 
-                                         onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                       />
-                                    </div>
-                                    <div className="relative">
-                                       <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input 
-                                         required 
-                                         type="tel" 
-                                         value={formData.phone} 
-                                         onChange={(e) => setFormData({...formData, phone: e.target.value})} 
-                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                       />
-                                    </div>
-                                </div>
-                            ) : (
-                                // Дополнительные участники
-                                <div>
-                                    <div className="relative">
-                                       <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input 
-                                         required 
-                                         type="text" 
-                                         placeholder="Имя участника" 
-                                         value={guestData[guest.id]?.name || ''} 
-                                         onChange={(e) => handleGuestChange(guest.id, 'name', e.target.value)} 
-                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                       />
-                                    </div>
-                                </div>
-                            )}
+                        return (
+                          <div key={guest.id} className="bg-slate-950/50 border border-white/10 rounded-xl p-4 space-y-3">
+                              <div className="flex justify-between items-center mb-1">
+                                 <span className="text-[10px] font-black uppercase text-teal-500 tracking-widest">
+                                   Участник {index + 1} {index === 0 && '(Вы)'}
+                                 </span>
+                                 <span className="text-[10px] text-slate-500 font-bold uppercase">
+                                   {guest.type}
+                                 </span>
+                              </div>
 
-                            {/* Выбор жилета для воды */}
-                            {isWaterTour && (
-                                <div className="relative">
-                                    <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                    <select 
-                                      required 
-                                      value={guestData[guest.id]?.jacket || ''} 
-                                      onChange={(e) => handleGuestChange(guest.id, 'jacket', e.target.value)} 
-                                      className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none"
-                                    >
-                                        <option value="" disabled>Размер спасжилета...</option>
-                                        {JACKET_SIZES.map(size => (
-                                          <option key={size} value={size}>{size}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                              {index === 0 ? (
+                                  // Заказчик (Участник 1)
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      <div className="relative">
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                         <input 
+                                           required 
+                                           type="text" 
+                                           placeholder="Имя Фамилия" 
+                                           value={formData.name} 
+                                           onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                         />
+                                      </div>
+                                      <div className="relative">
+                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                         <input 
+                                           required 
+                                           type="tel" 
+                                           value={formData.phone} 
+                                           onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                         />
+                                      </div>
+                                  </div>
+                              ) : (
+                                  // Дополнительные участники
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      {/* Имя участника */}
+                                      <div className="relative">
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                         <input 
+                                           required 
+                                           type="text" 
+                                           placeholder="Имя Фамилия" 
+                                           value={guestData[guest.id]?.name || ''} 
+                                           onChange={(e) => handleGuestChange(guest.id, 'name', e.target.value)} 
+                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                         />
+                                      </div>
+
+                                      {/* Телефон или Возраст в зависимости от типа билета */}
+                                      {isChild ? (
+                                          <div className="relative">
+                                            <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                            <input 
+                                              required 
+                                              type="number" 
+                                              min="1"
+                                              max="17"
+                                              placeholder="Возраст" 
+                                              value={guestData[guest.id]?.age || ''} 
+                                              onChange={(e) => handleGuestChange(guest.id, 'age', e.target.value)} 
+                                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                            />
+                                          </div>
+                                      ) : (
+                                          <div className="relative">
+                                            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                            <input 
+                                              type="tel" 
+                                              placeholder="Телефон" 
+                                              value={guestData[guest.id]?.phone || ''} 
+                                              onChange={(e) => handleGuestChange(guest.id, 'phone', e.target.value)} 
+                                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                            />
+                                          </div>
+                                      )}
+                                  </div>
+                              )}
+
+                              {/* Выбор жилета для воды */}
+                              {isWaterTour && (
+                                  <div className="relative mt-3">
+                                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                      <select 
+                                        required 
+                                        value={guestData[guest.id]?.jacket || ''} 
+                                        onChange={(e) => handleGuestChange(guest.id, 'jacket', e.target.value)} 
+                                        className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none cursor-pointer"
+                                      >
+                                          <option value="" disabled>Размер спасжилета...</option>
+                                          {JACKET_SIZES.map(size => (
+                                            <option key={size} value={size}>{size}</option>
+                                          ))}
+                                      </select>
+                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
+                                        ▼
+                                      </div>
+                                  </div>
+                              )}
+                          </div>
+                        );
+                    })}
 
                     <div className="space-y-1.5 pt-2">
                       <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">

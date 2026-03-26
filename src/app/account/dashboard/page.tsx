@@ -273,7 +273,7 @@ return (
                 <div>
                   {/* Замени stats.totalNights на правильную переменную, если она называется иначе */}
                   <div className="text-3xl font-black text-white">{stats.totalNights || 0}</div>
-                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Ночей в лесу</div>
+                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Ночей</div>
                 </div>
               </div>
             </div>

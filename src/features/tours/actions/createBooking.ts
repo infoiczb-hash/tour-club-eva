@@ -9,6 +9,16 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
+// ✅ 1. Строгая схема для каждого гостя (вместо z.any)
+const GuestSchema = z.object({
+  isMain: z.boolean(),
+  type: z.string(),
+  name: z.string().optional(),
+  phone: z.string().optional(),
+  age: z.string().optional(),
+  jacket: z.string().optional(),
+});
+
 const BookingSchema = z.object({
   tourId: z.string().uuid('Неверный ID тура'),
   tourDateId: z.string().uuid('Пожалуйста, выберите конкретную дату').optional().nullable(),
@@ -27,7 +37,8 @@ const BookingSchema = z.object({
   ticketsFamily: z.number().int().min(0).default(0),
   ticketsMember: z.number().int().min(0).default(0),
 
-  guests: z.array(z.any()).optional(),
+  // ✅ 2. Применяем нашу схему к массиву гостей
+  guests: z.array(GuestSchema).optional(),
 
   totalPrice: z.number().int().min(0),
   currency: z.string().default('MDL'),
@@ -230,12 +241,16 @@ async function notifyTelegram(data: BookingInput, bookingId: string, coverImage?
   const familySpots = data.ticketsFamily * 3;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
 
+  // ✅ 3. Обновленный вывод гостей в Telegram с новыми данными
   const guestsList = (data.guests || []).map((g: any, i: number) => {
-    const jacketInfo = g.jacket ? ` | 🦺 Жилет: ${g.jacket}` : '';
+    const jacketInfo = g.jacket ? ` | 🦺 ${g.jacket}` : '';
+    const ageInfo = g.age ? ` | 👶 ${g.age} лет` : '';
+    const phoneInfo = (!g.isMain && g.phone) ? ` | 📞 ${g.phone}` : '';
+
     if (g.isMain) {
-      return `${i + 1}. 👤 <b>${escapeHtml(g.name)}</b> (Заказчик)${jacketInfo}`;
+      return `${i + 1}. 👤 <b>${escapeHtml(g.name || 'Заказчик')}</b> (Заказчик)${jacketInfo}`;
     }
-    return `${i + 1}. 👤 ${escapeHtml(g.name || 'Без имени')} (${g.type})${jacketInfo}`;
+    return `${i + 1}. 👤 ${escapeHtml(g.name || 'Без имени')} (${g.type})${ageInfo}${phoneInfo}${jacketInfo}`;
   }).join('\n');
 
   const lines = [
