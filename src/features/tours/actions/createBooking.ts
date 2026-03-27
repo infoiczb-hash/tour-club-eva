@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { env } from '@/lib/env';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -47,7 +48,16 @@ const BookingSchema = z.object({
 export type BookingInput = z.infer<typeof BookingSchema>;
 
 export type BookingResult =
-  | { success: true; bookingId: string }
+  | { 
+      success: true; 
+      bookingId: string;
+      // ✅ ДОБАВЛЕНЫ НОВЫЕ ПОЛЯ ДЛЯ ЭКРАНА УСПЕХА
+      shortId: number;
+      totalPrice: number;
+      biletpmrLink?: string | null;
+      apbQrLink?: string | null;
+      apbQrImage?: string | null;
+    }
   | { success: false; error: string; fields?: Record<string, string> };
 
 export async function createBookingAction(raw: BookingInput): Promise<BookingResult> {
@@ -82,9 +92,14 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
 
   const data = parsed.data;
 
-  if (data.website && data.website.length > 0) {
+if (data.website && data.website.length > 0) {
     console.warn('Bot detected via honeypot field');
-    return { success: true, bookingId: 'sp-checked' };
+    return { 
+      success: true, 
+      bookingId: 'sp-checked',
+      shortId: 0,       // ✅ Добавили для TypeScript
+      totalPrice: 0     // ✅ Добавили для TypeScript
+    };
   }
 
   const familySpots = data.ticketsFamily * 3;
@@ -162,17 +177,32 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         if (!tourExists) throw new Error('TOUR_UNAVAILABLE');
         throw new Error('SPOTS_GONE');
       }
+// ✅ 1. ГЕНЕРАЦИЯ УНИКАЛЬНОГО SHORT_ID
+      const lastBooking = await tx.booking.findFirst({
+        orderBy: { shortId: 'desc' },
+        select: { shortId: true }
+      });
+      // Если броней еще нет, начинаем с 1000
+      const newShortId = (lastBooking?.shortId ?? 999) + 1;
 
-      // Получаем slug и coverImage для revalidatePath и Telegram
+      // ✅ 2. ДОСТАЕМ РЕКВИЗИТЫ ОПЛАТЫ (расширяем запрос tour)
       const tour = await tx.tour.findUnique({
         where: { id: data.tourId },
-        select: { slug: true, coverImage: true },
+        select: { 
+          slug: true, 
+          coverImage: true,
+          // Добавляем наши новые поля:
+          biletpmrLink: true,
+          apbQrLink: true,
+          apbQrImage: true
+        },
       });
       tourSlug = tour?.slug ?? null;
       tourCoverImage = tour?.coverImage ?? null;
-
+      
       const newBooking = await tx.booking.create({
         data: {
+          shortId:       newShortId,
           tourId:        data.tourId,
           tourDateId:    data.tourDateId || null,
           memberId:      currentMemberId,
@@ -193,7 +223,17 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         },
       });
 
-      return { booking: newBooking, tourSlug, tourCoverImage };
+     return { 
+        booking: newBooking, 
+        tourSlug, 
+        tourCoverImage,
+        shortId: newShortId,
+        paymentLinks: {
+          biletpmrLink: tour?.biletpmrLink,
+          apbQrLink: tour?.apbQrLink,
+          apbQrImage: tour?.apbQrImage
+        }
+      };
     });
 
     try {
@@ -209,7 +249,15 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
     revalidatePath('/admin');
     revalidatePath('/account', 'layout');
 
-    return { success: true, bookingId: result.booking.id };
+  return { 
+      success: true, 
+      bookingId: result.booking.id,
+      shortId: result.shortId,
+      totalPrice: data.totalPrice,
+      biletpmrLink: result.paymentLinks.biletpmrLink,
+      apbQrLink: result.paymentLinks.apbQrLink,
+      apbQrImage: result.paymentLinks.apbQrImage
+    };
 
   } catch (error: any) {
     if (error.message === 'TOUR_UNAVAILABLE') {
@@ -230,8 +278,8 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
 }
 
 async function notifyTelegram(data: BookingInput, bookingId: string, coverImage?: string | null): Promise<void> {
-  const token  = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+ const token  = env.TELEGRAM_BOT_TOKEN;
+const chatId = env.TELEGRAM_ADMIN_CHAT_ID;
 
   if (!token || !chatId) {
     console.warn('Telegram credentials missing');

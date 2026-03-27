@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormInput, FormSelect } from '../ui/FormUI';
-import { CreditCard, Users, Crown, Baby } from 'lucide-react';
+import { CreditCard, Users, Crown, Baby, QrCode, Link } from 'lucide-react';
 
 export const Finance = () => {
   return (
@@ -68,6 +68,51 @@ export const Finance = () => {
         </div>
 
       </div>
+
+      {/* ✅ НОВЫЙ БЛОК: Реквизиты для оплаты */}
+      <div className="mt-8 pt-6 border-t border-slate-100">
+        <div className="flex items-center gap-2 mb-4">
+          <QrCode className="text-indigo-500" size={20} />
+          <h4 className="font-bold text-slate-700">Реквизиты для оплаты (Онлайн)</h4>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-indigo-50/30 p-5 rounded-2xl border border-indigo-100/50">
+          
+          <div className="space-y-4">
+            <h5 className="text-xs font-black uppercase text-indigo-400 flex items-center gap-1"><Link size={14}/> Bilet PMR</h5>
+            <FormInput 
+              name="biletpmrLink" 
+              label="Ссылка на покупку билета" 
+              type="text" 
+              placeholder="https://biletpmr.com/..." 
+              helperText="Оставьте пустым, если не продаете через этот сервис"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="text-xs font-black uppercase text-indigo-400 flex items-center gap-1"><Link size={14}/> Мобильный платеж APB</h5>
+            <FormInput 
+              name="apbQrLink" 
+              label="Ссылка на оплату в приложении" 
+              type="text" 
+              placeholder="https://qrpay.apb.online/..." 
+            />
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="text-xs font-black uppercase text-indigo-400 flex items-center gap-1"><QrCode size={14}/> QR-Код APB</h5>
+            <FormInput 
+              name="apbQrImage" 
+              label="Ссылка на картинку с QR-кодом" 
+              type="text" 
+              placeholder="https://.../qr-code.png" 
+              helperText="Эта картинка будет показана клиенту на экране успеха"
+            />
+          </div>
+
+        </div>
+      </div>
+
     </div>
   );
 };

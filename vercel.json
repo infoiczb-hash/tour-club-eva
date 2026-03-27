@@ -1,11 +1,12 @@
 {
-  "regions": [
-    "fra1"
-  ],
+  "regions": ["fra1"],
   "crons": [
     {
       "path": "/api/keep-alive",
       "schedule": "0 10 * * *"
     }
-  ]
+  ],
+  "env": {
+    "TELEGRAM_WEBHOOK_SECRET": true
+  }
 }

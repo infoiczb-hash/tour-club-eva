@@ -83,9 +83,10 @@ model Tour {
   priceFamily  Int?    @map("price_family")
   priceMember  Int?    @map("price_member")
 
-  // ✅ НОВЫЕ ПОЛЯ ДЛЯ ОПЛАТЫ
-  biletpmrLink String? @map("biletpmr_link")
-  apbQrLink    String? @map("apb_qr_link")
+  // НОВЫЕ ПОЛЯ ДЛЯ ОПЛАТЫ
+  biletpmrLink  String? @map("biletpmr_link") // Ссылка на Bilet PMR
+  apbQrLink     String? @map("apb_qr_link")   // Ссылка на мобильный платеж APB
+  apbQrImage    String? @map("apb_qr_image")
 
   coverImage String?  @map("cover_image")
   metaDesc   String?  @map("meta_desc")
@@ -153,8 +154,7 @@ model TourDate {
 model Booking {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   
-  // НОВОЕ ПОЛЕ: Короткий ID (например, 1024). Генерируется базой через sequence.
-  shortId Int @unique @default(autoincrement()) @map("short_id")
+  shortId     Int?    @unique @map("short_id")
 
   memberId String?        @map("member_id") @db.Uuid
   member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -184,7 +184,7 @@ model Booking {
   tourId      String  @map("tour_id") @db.Uuid
   tourDateId  String? @map("tour_date_id") @db.Uuid
   promoCodeId String? @map("promo_code_id") @db.Uuid
-
+ 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   tour      Tour       @relation(fields: [tourId], references: [id], onDelete: Cascade)

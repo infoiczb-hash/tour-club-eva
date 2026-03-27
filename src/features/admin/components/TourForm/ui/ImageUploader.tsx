@@ -102,12 +102,14 @@ export const ImageUploader = ({
       {/* 1. Если картинка уже есть -> Показываем PREVIEW */}
       {value && value.length > 0 ? (
   <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-100">
-    <Image 
-      src={value} 
-      alt="Preview" 
-      fill 
-      className="object-cover transition-transform duration-500 group-hover:scale-105"
-    />
+   <Image
+  src={value}
+  alt="Preview"
+  fill
+  sizes="(max-width: 768px) 100vw, 50vw"
+  quality={75}
+  className="object-cover ..."
+/>
           
           {/* Кнопка удаления */}
           <button

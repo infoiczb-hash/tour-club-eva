@@ -4,6 +4,13 @@ import { env } from '@/lib/env';
 
 export async function POST(req: Request) {
   try {
+    // ✅ Проверка секретного токена Telegram Webhook
+    const secretHeader = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
+    if (!secretHeader || secretHeader !== env.TELEGRAM_WEBHOOK_SECRET) {
+      console.warn('Unauthorized webhook attempt');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
 
     // 1. Проверяем, что это текстовое сообщение (игнорируем эдиты, картинки и т.д.)
@@ -31,7 +38,7 @@ export async function POST(req: Request) {
         // 4. Сохраняем chatId в существующее поле tgChatId
         await prisma.memberProfile.update({
           where: { id: profileId },
-          data: { tgChatId: chatId } // ✅ ИСПОЛЬЗУЕМ ТВОЕ ПОЛЕ
+          data: { tgChatId: chatId }
         });
 
         // 5. Радуем юзера успешной привязкой
@@ -55,7 +62,8 @@ export async function POST(req: Request) {
 
 // Вспомогательная функция для ответа юзеру
 async function sendMessage(chatId: string, text: string) {
-  const token = env.TELEGRAM_BOT_TOKEN;
+  // Используем токен бота авторизации (тот же, на который установлен webhook)
+  const token = env.TELEGRAM_AUTH_BOT;
   if (!token) return;
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

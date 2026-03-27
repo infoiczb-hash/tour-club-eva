@@ -101,6 +101,10 @@ export const RawTourSchema = z.object({
   meta_title: z.string().nullable().optional(),
   meta_desc: z.string().nullable().optional(),
 
+  biletpmrLink: z.string().optional().or(z.literal('')),
+  apbQrLink: z.string().optional().or(z.literal('')),
+  apbQrImage: z.string().optional().or(z.literal('')),
+  
   guide_id: z.string().nullable().optional(),
   guide: jsonHelper,
 }).passthrough();

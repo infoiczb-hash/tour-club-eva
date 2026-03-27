@@ -4,39 +4,38 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
-import { BookingStatus } from '@prisma/client'; // ✅ Используем тип из Prisma
+import { BookingStatus } from '@prisma/client';
+// ✅ Импортируем нашу новую универсальную функцию
+import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
 /**
  * Основной экшен для смены статуса брони в админке
  */
 export async function updateBookingStatusAction(bookingId: string, newStatus: BookingStatus) {
   try {
-    await requireAuth(); // ✅ Проверка прав админа
+    await requireAuth();
 
-    // 1. Загружаем бронь со всеми связями для формирования сообщения
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        member: true,   // чтобы достать tgChatId клиента
-        tour: true,     // ссылки на оплату и описание
-        tourDate: true  // место и время сбора
+        member: true,
+        tour: true,
+        tourDate: true
       }
     });
 
     if (!booking) throw new Error('Бронирование не найдено');
 
-    // 2. Обновляем статус в базе данных
     await prisma.booking.update({
       where: { id: bookingId },
       data: { status: newStatus }
     });
 
-    // 3. Если у пользователя привязан Telegram (через вход на сайте) — шлем уведомление
+    // Если у пользователя привязан Telegram — шлем уведомление
     if (booking.member?.tgChatId) {
-      await sendTelegramNotificationToClient(booking, newStatus);
+      await formatAndSendClientMessage(booking, newStatus);
     }
 
-    // 4. Инвалидируем кэш, чтобы админка и кабинет обновились мгновенно
     revalidatePath('/admin');
     revalidatePath('/account/bookings');
     
@@ -48,21 +47,19 @@ export async function updateBookingStatusAction(bookingId: string, newStatus: Bo
 }
 
 /**
- * Вспомогательная функция отправки сообщения в Telegram
+ * Вспомогательная функция, которая только собирает текст и кнопки, 
+ * а саму отправку делегирует в telegram.ts
  */
-async function sendTelegramNotificationToClient(booking: any, status: BookingStatus) {
-  const token = env.TELEGRAM_AUTH_BOT; // Используем бота @authevaclub_bot
+async function formatAndSendClientMessage(booking: any, status: BookingStatus) {
   const chatId = booking.member.tgChatId;
-
   let message = '';
-  const inlineButtons: any[] = [];
+  const inlineButtons: Array<Array<{ text: string; url: string }>> = [];
 
-  // ✅ Логика уведомления в зависимости от нового статуса
   switch (status) {
-    case 'pending': // "В ожидании" -> отправляем реквизиты
+   case 'pending': 
       message = `🏕 <b>Турклуб ЭВА</b>\n\n` +
         `Ваша заявка <b>#${booking.shortId}</b> на тур «${booking.tour.title}» подтверждена!\n\n` +
-        `💰 <b>К оплате:</b> ${booking.totalPrice} RUB\n\n` +
+        `💰 <b>К оплате:</b> ${booking.totalPrice} ${booking.tour.currency || 'RUB'}\n\n` + // 👈 ВАЖНО: здесь в конце должен быть плюс!
         `⚠️ <i>При оплате через мобильный платеж APB, пожалуйста, введите эту сумму вручную и укажите номер брони (#${booking.shortId}) в комментарии.</i>\n\n` +
         `Выберите удобный способ оплаты:`;
 
@@ -75,7 +72,7 @@ async function sendTelegramNotificationToClient(booking: any, status: BookingSta
       inlineButtons.push([{ text: '💬 Написать менеджеру', url: 'https://t.me/romansvtirase' }]);
       break;
 
-    case 'confirmed': // "Оплачено" -> отправляем явки и пароли
+    case 'confirmed': 
       const meetingInfo = booking.tourDate?.meetingPoint || booking.tour.meetingPoint || 'Будет уточнено гидом';
       const meetingTime = booking.tourDate?.meetingTime || booking.tourDate?.time || '08:30';
 
@@ -88,25 +85,13 @@ async function sendTelegramNotificationToClient(booking: any, status: BookingSta
       inlineButtons.push([{ text: '👤 В личный кабинет', url: `${env.NEXT_PUBLIC_SITE_URL}/account/bookings` }]);
       break;
 
-    case 'cancelled': // "Отменено"
+    case 'cancelled': 
       message = `🚫 <b>Бронирование #${booking.shortId} отменено.</b>\n\nЕсли у вас возникли вопросы, пожалуйста, свяжитесь с менеджером.`;
       break;
   }
 
   if (!message) return;
 
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: inlineButtons }
-      }),
-    });
-  } catch (e) {
-    console.error('Ошибка отправки сообщения клиенту в Telegram:', e);
-  }
+  // ✅ Вызываем единый сервис отправки (последний аргумент true = использовать @authevaclub_bot)
+  await sendToUserTelegramAdvanced(chatId, message, inlineButtons, true);
 }

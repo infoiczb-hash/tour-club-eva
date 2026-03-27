@@ -86,6 +86,10 @@ export interface Tour {
   priceFamily?: number | null;
   priceMember?: number | null;
 
+  biletpmrLink?: string | null;
+  apbQrLink?: string | null;
+  apbQrImage?: string | null;
+
   tourDates?: TourDateItem[];
 
   date: string | Date;            

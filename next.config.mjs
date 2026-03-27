@@ -9,19 +9,24 @@ const nextConfig = {
   reactStrictMode: true,
 
   images: {
+    // ── СТРАТЕГИЯ FREE TIER: Кастомный лоадер берет всё на себя ──
     loader: 'custom',
     loaderFile: './src/lib/cloudinary-loader.ts',
-    qualities: [55, 60, 65, 75, 85], // оптимизированный набор
+    
+    // Поддерживаемые форматы (используются браузером через Accept)
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 5184000, // 60 дней кеша
-    deviceSizes: [640, 828, 1080, 1200, 1920], // сократили до 5 значений
-    imageSizes: [16, 32, 64, 96, 128, 256, 384], // оставили базовые
+    
+    // ЭКОНОМИЯ КРЕДИТОВ: Строго ограничиваем количество генерируемых ширин в srcset.
+    // Чем меньше цифр в этих массивах, тем меньше уникальных трансформаций создает Cloudinary.
+    deviceSizes: [640, 1080, 1920], // Оставили только 3 главных брейкпоинта (мобилка, планшет, десктоп)
+    imageSizes: [64, 128, 256, 384], // Убрали микро-размеры (16, 32), браузер отлично ужмет 64px
+
+    // РАЗРЕШЕННЫЕ ДОМЕНЫ (Обязательно, чтобы Next.js не блокировал рендер <Image>)
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
-      // временно: пока есть Unsplash
-      { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' }, // ⚠️ Оставляем, пока в БД есть их ссылки!
     ],
   },
 

@@ -14,6 +14,7 @@ const serverSchema = z.object({
   TELEGRAM_AUTH_BOT:            z.string().min(1, 'TELEGRAM_AUTH_BOT не задан'), 
   TELEGRAM_ADMIN_CHAT_ID:       z.string().min(1, 'TELEGRAM_ADMIN_CHAT_ID не задан'),
   TELEGRAM_CHANNEL_ID:          z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET:      z.string().min(1, 'TELEGRAM_WEBHOOK_SECRET не задан'),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY:               z.string().optional(),
   

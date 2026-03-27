@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { env } from '@/lib/env';
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
 
 // Функция для отправки сообщения в ТГ
 async function sendTelegramMessage(chatId: string, text: string) {

@@ -45,6 +45,7 @@ import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
 
 import { upsertGuideAction } from '@/features/admin/actions/guides';
+import { updateBookingStatusAction } from '@/features/admin/actions/bookingStatus';
 import { 
   deleteGuideAction, 
   savePostAction, 
@@ -52,8 +53,8 @@ import {
   togglePostStatusAction, 
   SavePostPayload,        
   saveContentBlockAction, 
-  getRegistrationsAction, 
-  updateRegistrationStatus 
+  getRegistrationsAction
+  // updateRegistrationStatus <- убрали старый экшен
 } from '@/features/admin/actions';
 
 import {  
@@ -277,11 +278,19 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       const res = await sendToTelegram(msg);
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
-
-  const handleStatusChange = async (id: string, status: string) => {
-      await updateRegistrationStatus(id, status);
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
-      showToast('Статус обновлен', 'success');
+  
+const handleStatusChange = async (id: string, status: string) => {
+      showToast('Обновление и отправка уведомления...', 'info'); // Показываем лоадер
+      
+      const res = await updateBookingStatusAction(id, status as BookingStatus);
+      
+      if (res.success) {
+          // Обновляем статус в таблице только если сервер ответил успехом
+          setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
+          showToast('Статус обновлен, клиенту отправлено сообщение!', 'success');
+      } else {
+          showToast(`Ошибка: ${res.error}`, 'error');
+      }
   };
 
   const handleDelete = async (type: 'tour'|'post'|'guide'|'review', id: string) => {

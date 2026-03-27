@@ -9,6 +9,7 @@ import {
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
+import { SuccessScreen } from './SuccessScreen';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -63,6 +64,14 @@ export default function BookingModal({
     comment: '',
     website: '' 
   });
+
+  const [successData, setSuccessData] = useState<{
+    shortId: number;
+    totalPrice: number;
+    biletpmrLink?: string | null;
+    apbQrLink?: string | null;
+    apbQrImage?: string | null;
+  } | null>(null);
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
@@ -224,6 +233,15 @@ export default function BookingModal({
       });
 
       if (result.success) {
+        // ✅ ЛОВИМ ДАННЫЕ ОТ СЕРВЕРА И СОХРАНЯЕМ ИХ В СТЕЙТ
+        setSuccessData({
+          shortId: result.shortId,
+          totalPrice: result.totalPrice,
+          biletpmrLink: result.biletpmrLink,
+          apbQrLink: result.apbQrLink,
+          apbQrImage: result.apbQrImage
+        });
+        
         setStep('success');
       } else {
         // Умный вывод ошибок Zod
@@ -561,25 +579,18 @@ export default function BookingModal({
                 </p>
 
               </form>
-            ) : (
-              <div className="flex flex-col items-center text-center py-8">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-6 border border-emerald-500/20 animate-in zoom-in duration-500">
-                  <CheckCircle size={40} />
-                </div>
-                <h3 className="text-2xl font-black text-white uppercase mb-2">
-                  Заявка принята!
-                </h3>
-                <p className="text-slate-400 text-sm mb-8 leading-relaxed max-w-[260px]">
-                  Мы свяжемся с вами в ближайшее время по номеру <span className="text-white font-bold">{formData.phone}</span>.
-                </p>
-                <button 
-                  onClick={onClose} 
-                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold uppercase tracking-wide rounded-xl transition-colors"
-                >
-                  Закрыть окно
-                </button>
-              </div>
-            )}
+         ) : successData ? (
+               <SuccessScreen 
+                 shortId={successData.shortId}
+                 totalPrice={successData.totalPrice}
+                 currency={tour.currency ?? 'MDL'}
+                 phone={formData.phone}
+                 biletpmrLink={successData.biletpmrLink}
+                 apbQrLink={successData.apbQrLink}
+                 apbQrImage={successData.apbQrImage}
+                 onClose={onClose}
+               />
+            ) : null}
           </div>
         </div>
       </div>
