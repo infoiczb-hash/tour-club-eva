@@ -25,10 +25,9 @@ type AccountNavProps = {
 
 const NAV_LINKS = [
   { name: 'Дашборд', href: '/account/dashboard', icon: LayoutDashboard },
-  { name: 'Мои туры', href: '/account/bookings',  icon: Ticket },
-  { name: 'История', href: '/account/history',   icon: History },
+  // Удалили 'Мои туры' (/account/bookings)
+  { name: 'Мои поездки', href: '/account/history', icon: History }, // Переименовали
   { name: 'Вишлист', href: '/account/wishlist',  icon: Heart },
-  // ✅ ДОБАВЛЕНА ВКЛАДКА "ТЕСТЫ"
   { name: 'Мои тесты', href: '/account/tests',  icon: FlaskConical },
   { name: 'Настройки', href: '/account/settings',   icon: Settings }, 
 ];

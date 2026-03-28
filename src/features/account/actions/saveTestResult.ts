@@ -25,8 +25,6 @@ export async function saveTestResult(
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Не залогинен — возвращаем специальный флаг
-  // Клиент покажет: "Войди чтобы сохранить результат"
   if (!user) {
     return { success: false, error: 'Необходима авторизация', needsAuth: true };
   }
@@ -44,24 +42,54 @@ export async function saveTestResult(
     return { success: false, error: 'Профиль не найден', needsAuth: true };
   }
 
-  // Upsert — если тест уже пройден, перезаписываем результат
-  await prisma.testResult.upsert({
+  // ✅ Проверяем, сдавал ли пользователь этот тест ранее
+  const existingTest = await prisma.testResult.findUnique({
     where: {
       memberId_testSlug: {
         memberId: profile.id,
         testSlug,
       },
     },
-    create: {
-      memberId: profile.id,
-      testSlug,
-      result: result as any, // ✅ ИСПРАВЛЕНИЕ: кастуем в any для Prisma JSON
-    },
-    update: {
-      result: result as any, // ✅ ИСПРАВЛЕНИЕ: кастуем в any для Prisma JSON
-    },
   });
 
-  revalidatePath('/account/tests');
-  return { success: true };
+  const REWARD_FOR_TEST = 1;
+
+  try {
+    // Выполняем в транзакции: сохраняем результат + пополняем баланс (если впервые)
+    await prisma.$transaction(async (tx) => {
+      await tx.testResult.upsert({
+        where: {
+          memberId_testSlug: {
+            memberId: profile.id,
+            testSlug,
+          },
+        },
+        create: {
+          memberId: profile.id,
+          testSlug,
+          result: result as any,
+        },
+        update: {
+          result: result as any,
+        },
+      });
+
+      // Если теста в базе не было — начисляем баланс
+      if (!existingTest) {
+        await tx.memberProfile.update({
+          where: { id: profile.id },
+          data: { balance: { increment: REWARD_FOR_TEST } }
+        });
+      }
+    });
+
+    revalidatePath('/account/tests');
+    // ✅ Обновляем дашборд, чтобы свежий баланс сразу подтянулся в интерфейсе
+    revalidatePath('/account/dashboard');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Ошибка сохранения теста:', error);
+    return { success: false, error: 'Произошла ошибка при сохранении' };
+  }
 }

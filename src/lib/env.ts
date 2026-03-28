@@ -15,6 +15,7 @@ const serverSchema = z.object({
   TELEGRAM_ADMIN_CHAT_ID:       z.string().min(1, 'TELEGRAM_ADMIN_CHAT_ID не задан'),
   TELEGRAM_CHANNEL_ID:          z.string().optional(),
   TELEGRAM_WEBHOOK_SECRET:      z.string().min(1, 'TELEGRAM_WEBHOOK_SECRET не задан'),
+  CRON_SECRET:                  z.string().min(1),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY:               z.string().optional(),
   
@@ -43,6 +44,7 @@ const parsedServer = isServer
       TELEGRAM_AUTH_BOT:             process.env.TELEGRAM_AUTH_BOT, // ✅ Передаем в парсер
       TELEGRAM_ADMIN_CHAT_ID:        process.env.TELEGRAM_ADMIN_CHAT_ID,
       TELEGRAM_CHANNEL_ID:           process.env.TELEGRAM_CHANNEL_ID,
+      TELEGRAM_WEBHOOK_SECRET:       process.env.TELEGRAM_WEBHOOK_SECRET,
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       OPENAI_API_KEY:                process.env.OPENAI_API_KEY,
       

@@ -110,7 +110,7 @@ export default async function HistoryPage() {
 
      {/* Заголовок */}
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-white mb-1">История туров</h1>
+      <h1 className="text-2xl font-black text-white mb-1">Мои поездки</h1>
         <p className="text-sm text-slate-400">
           {stats.total > 0
             ? 'Ваша летопись приключений в цифрах и фактах'

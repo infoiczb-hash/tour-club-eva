@@ -6,6 +6,7 @@ import { QrCode, Crown, Mountain, Flame, Map, Compass, Info, X } from 'lucide-re
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import LevelsInfoModal from '@/components/modals/LevelsInfoModal'; // ✅ Подключаем новую модалку
+import MemberQrCode from '@/features/account/components/MemberQrCode';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -17,6 +18,9 @@ interface VirtualCardProps {
   totalTours: number;
   totalKm: number;
   memberId: string | null;
+  bookingShortId?: number | null;  // Booking.shortId — короткий номер
+  tourTitle?: string | null;       // Booking.tour.title
+  tourStartDate?: Date | null;     // Booking.tourDate.startDate
 }
 
 // 1. Внедрение четкой системы уровней и Визуальный апгрейд
@@ -29,7 +33,16 @@ const LEVELS_CONFIG = [
   { name: 'Легенда клуба', min: 30, max: 9999, color: 'text-amber-400', bg: 'from-amber-500 to-orange-900', border: 'border-amber-500/50', icon: Crown },
 ];
 
-export default function VirtualCard({ name, level: _level, totalTours, totalKm, memberId }: VirtualCardProps) {
+  export default function VirtualCard({
+    name,
+    level,
+    totalTours,
+    totalKm,
+    bookingShortId,
+    tourTitle,
+    tourStartDate,
+    memberId,
+  }: VirtualCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [transformStyle, setTransformStyle] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
@@ -158,9 +171,19 @@ export default function VirtualCard({ name, level: _level, totalTours, totalKm, 
               <X size={16} />
             </button>
 
-            <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
-              <QrCode size={80} className="text-slate-950" />
-            </div>
+<div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
+          {bookingShortId ? (
+            <MemberQrCode
+              bookingShortId={bookingShortId}
+              tourTitle={tourTitle ?? ''}
+              tourStartDate={tourStartDate ?? null}
+              size={140}
+            />
+          ) : (
+            // Нет активных броней — показываем иконку-заглушку lucide-react
+            <QrCode size={140} className="text-slate-950" />
+          )}
+        </div>
 
             <p className="text-slate-400 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}

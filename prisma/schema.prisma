@@ -35,7 +35,7 @@ model Blog {
   guide        Guide?         @relation(fields: [guideId], references: [id])
   blogCategory BlogCategory?  @relation(fields: [categoryId], references: [id])
   favoritedBy  FavoritePost[] // Связь с закладками пользователя
-
+ 
   @@index([isActive])
   @@index([categoryId])
   @@map("blog_posts")
@@ -319,21 +319,27 @@ model ContentBlock {
 }
 
 model Review {
-  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name     String
-  text     String
-  source   String  @default("tg")
-  avatar   String?
-  category String  @default("general")
-  isActive Boolean @default(true) @map("is_active")
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String   // Оставляем обязательным (для новых отзывов будем брать из профиля)
+  text       String
+  source     String   @default("tg") // "tg" для бота, "web" для личного кабинета
+  avatar     String?
+  category   String   @default("general")
+  isActive   Boolean  @default(true) @map("is_active") // Используем вместо isApproved
 
-  tourId String? @map("tour_id") @db.Uuid
-  tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: SetNull)
-  memberId String? @map("member_id") @db.Uuid
-  member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  // --- НОВЫЕ ПОЛЯ ДЛЯ ЛИЧНОГО КАБИНЕТА ---
+  rating     Int?     // Оценка 1-5 (опционально, т.к. у старых TG-отзывов её нет)
+  tags       String[] @default([]) // Теги: ["Вкусная еда", "Сложно"]
+  images     String[] @default([]) // Фотографии клиентов (UGC)
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tourId     String?  @map("tour_id") @db.Uuid
+  tour       Tour?    @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  
+  memberId   String?  @map("member_id") @db.Uuid
+  member     MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([isActive])
   @@map("reviews")

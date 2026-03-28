@@ -357,7 +357,10 @@ export default async function WishlistPage() {
         </p>
 
         {/* Рендерим наши новые минималистичные Pill-теги */}
-        <CategoryPills categories={allCategories} subscribedIds={subscribedCategoryIds} />
+      <CategoryPills
+categories={allCategories}
+subscribedIds={subscribedCategoryIds}
+memberId={profile.id}/>
 
         <p className="text-xs text-slate-600 mt-4">
           Уведомления приходят в Telegram. Убедитесь что вы подписаны на{' '}

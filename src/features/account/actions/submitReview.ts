@@ -7,10 +7,11 @@ import { revalidatePath } from 'next/cache';
 interface SubmitReviewInput {
   tourId: string;
   text: string;
+  rating: number; // ✅ ДОБАВИЛИ: Теперь мы принимаем оценку 1-5
 }
 
 type SubmitReviewResult =
-  | { success: true }
+  | { success: true; reward?: number } // ✅ ДОБАВИЛИ: Возвращаем сумму награды
   | { success: false; error: string };
 
 export async function submitReviewFromCabinet(
@@ -20,7 +21,7 @@ export async function submitReviewFromCabinet(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Необходима авторизация' };
 
-  const { tourId, text } = input;
+  const { tourId, text, rating } = input;
 
   if (!text || text.trim().length < 10) {
     return { success: false, error: 'Слишком короткий отзыв' };
@@ -48,18 +49,17 @@ export async function submitReviewFromCabinet(
     return { success: false, error: 'Отзыв можно оставить только на тур, в котором вы участвовали' };
   }
 
-  // Проверяем что отзыв ещё не оставлен
- const existing = await prisma.review.findFirst({
-  where: {
-    tourId,
-    // Добавляем запасной вариант "Участник", чтобы 100% была строка, а не null
-    name: profile.name ?? profile.phone ?? 'Участник',
-  },
-});
+  // Проверяем что отзыв ещё не оставлен (ищем по профилю и туру)
+  const existing = await prisma.review.findFirst({
+    where: {
+      tourId,
+      memberId: profile.id, // Надежная проверка по ID, а не по имени
+    },
+  });
 
-if (existing) {
-  return { success: false, error: 'Вы уже оставили отзыв на этот тур' };
-}
+  if (existing) {
+    return { success: false, error: 'Вы уже оставили отзыв на этот тур' };
+  }
 
   // Определяем категорию тура для отзыва
   const tour = await prisma.tour.findUnique({
@@ -68,20 +68,37 @@ if (existing) {
   });
   const reviewCategory = tour?.category?.slug ?? 'general';
 
-  // Создаём отзыв (isActive: false — пройдёт модерацию в админке)
-  await prisma.review.create({
-    data: {
-      name: profile.name ?? 'Участник клуба',
-      text: text.trim(),
-      source: 'website',
-      tourId,
-      category: reviewCategory,
-      isActive: false, // модерация
-    },
-  });
+  // ✅ НОВАЯ ЛОГИКА: Начисляем 10 рублей
+  const REWARD_AMOUNT = 10;
 
-  revalidatePath('/account/history');
-  revalidatePath(`/tour/${tour?.slug ?? ''}`);
+  try {
+    // Делаем транзакцию: сохраняем отзыв И обновляем баланс одновременно
+    await prisma.$transaction([
+      prisma.review.create({
+        data: {
+          name: profile.name ?? profile.phone ?? 'Участник клуба',
+          text: text.trim(),
+          rating: rating,
+          source: 'website',
+          tourId,
+          memberId: profile.id, // Привязываем к профилю
+          category: reviewCategory,
+          isActive: false, // ждет модерации
+        },
+      }),
+      prisma.memberProfile.update({
+        where: { id: profile.id },
+        data: { balance: { increment: REWARD_AMOUNT } }
+      })
+    ]);
 
-  return { success: true };
+    revalidatePath('/account/history');
+    revalidatePath(`/tour/${tour?.slug ?? ''}`);
+    revalidatePath('/account/dashboard'); // Обновляем баланс на главной
+
+    return { success: true, reward: REWARD_AMOUNT };
+  } catch (error) {
+    console.error('[submitReviewFromCabinet] Transaction error:', error);
+    return { success: false, error: 'Не удалось сохранить отзыв. Попробуйте позже.' };
+  }
 }

@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
-  AlertCircle, Users, LifeBuoy, CalendarDays 
+  AlertCircle, Users, LifeBuoy, CalendarDays,
+  CreditCard, Banknote, Globe, QrCode // ✅ Добавили иконки для оплат
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
@@ -21,7 +22,6 @@ interface BookingModalProps {
 
 const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL-5XL'];
 
-// ✅ Строгая типизация для дат (избавились от any)
 type DropdownDateInfo = {
   id?: string;
   start?: string | Date;
@@ -37,7 +37,6 @@ const formatDateForDropdown = (d: DropdownDateInfo) => {
   return `${str}${d.time ? ` в ${d.time}` : ''}`;
 };
 
-// ✅ Структура данных для каждого участника
 export interface GuestDetails {
   name: string;
   phone?: string;
@@ -57,6 +56,9 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // ✅ Стейт для способа оплаты (По умолчанию онлайн)
+  const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign'>('biletpmr');
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '+373 ',
@@ -71,6 +73,7 @@ export default function BookingModal({
     biletpmrLink?: string | null;
     apbQrLink?: string | null;
     apbQrImage?: string | null;
+    paymentMethod: string; // ✅ Добавили в стейт успеха
   } | null>(null);
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
@@ -83,20 +86,20 @@ export default function BookingModal({
     family: 0 
   });
   
-  // ✅ Типизированное хранилище данных для каждого конкретного гостя
   const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
-  // ✅ Расширенная проверка на водные туры (массив слагов)
+  // ✅ ПРИОРИТЕТ 2: Стейт баланса и галочки
+  const [balance, setBalance] = useState<number>(0);
+  const [useBonuses, setUseBonuses] = useState<boolean>(false);
+
   const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
     tour.category?.slug?.toLowerCase() || ''
   );
 
-  // 1. Инициализация (Фикс бага с пустой датой) + Профиль
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
-      // Инициализируем дату сразу
       if (initialDate && initialDateId) {
          setSelectedDateStr(initialDate);
          setSelectedDateId(initialDateId);
@@ -107,7 +110,6 @@ export default function BookingModal({
          setSelectedDateStr(new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }));
       }
 
-      // Подтягиваем профиль (Включая соцсети для админки)
       getMyProfileAction().then(profile => {
         if (profile) {
           setFormData(prev => ({
@@ -116,6 +118,8 @@ export default function BookingModal({
             phone: profile.phone || prev.phone,
             social: profile.telegram || profile.instagram || profile.email || prev.social
           }));
+          // ✅ Подтягиваем баланс
+          setBalance(profile.balance || 0);
         }
       });
     } else {
@@ -126,13 +130,14 @@ export default function BookingModal({
         setFormData({ name: '', phone: '+373 ', social: '', comment: '', website: '' });
         setTickets({ adult: 1, child: 0, member: 0, family: 0 });
         setGuestData({});
+        setPaymentMethod('biletpmr'); // Сбрасываем способ оплаты
+        setUseBonuses(false); // ✅ Сбрасываем бонусы
       }, 300);
       return () => clearTimeout(timer);
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen, initialDate, initialDateId, tour]);
 
-  // 2. Генерация списка ожидаемых гостей
   const expectedGuests = useMemo(() => {
     const list = [];
     for(let i=0; i<tickets.adult; i++) list.push({ type: 'Взрослый', id: `adult_${i}` });
@@ -146,8 +151,8 @@ export default function BookingModal({
     return list;
   }, [tickets]);
 
-  // Расчет итоговой цены
-  const totalPrice = useMemo(() => {
+  // ✅ ПРИОРИТЕТ 2: Переименовали в baseTotalPrice
+  const baseTotalPrice = useMemo(() => {
     let sum = tickets.adult * tour.price;
     if (tour.priceChild) sum += tickets.child * tour.priceChild;
     if (tour.priceMember) sum += tickets.member * tour.priceMember;
@@ -155,7 +160,11 @@ export default function BookingModal({
     return sum;
   }, [tickets, tour]);
 
-  // 3. Восстановленный умный плейсхолдер
+  // ✅ ПРИОРИТЕТ 2: Логика скидки 10%
+  const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
+  const availableBonusesToUse = Math.min(balance, maxBonusDiscount);
+  const finalPrice = useBonuses ? baseTotalPrice - availableBonusesToUse : baseTotalPrice;
+
   const getSmartPlaceholder = () => {
     const categorySlug = tour.category?.slug;
     if (categorySlug === 'water' || categorySlug === 'kayaking' || categorySlug === 'sup') {
@@ -191,13 +200,12 @@ export default function BookingModal({
     setIsLoading(true);
     setErrorMsg(null);
 
-    // Собираем массив гостей для базы со всеми новыми полями
     const payloadGuests = expectedGuests.map((g, index) => {
         if (index === 0) {
             return {
                 isMain: true,
                 type: g.type,
-                name: formData.name.trim(), // Главный заказчик
+                name: formData.name.trim(), 
                 phone: formData.phone.trim(),
                 jacket: guestData[g.id]?.jacket || ''
             };
@@ -227,24 +235,25 @@ export default function BookingModal({
         ticketsChild:  tickets.child,
         ticketsMember: tickets.member,
         ticketsFamily: tickets.family, 
-        guests:        payloadGuests, // Отправляем полный массив
-        totalPrice,
-        currency:      tour.currency ?? 'MDL',
+        guests:        payloadGuests, 
+        totalPrice:    baseTotalPrice, // Отправляем базовую, сервер сам вычтет
+        currency:      tour.currency ?? 'RUB',
+        paymentMethod: paymentMethod, 
+        useBonuses:    useBonuses, // ✅ Передаем флаг
       });
 
       if (result.success) {
-        // ✅ ЛОВИМ ДАННЫЕ ОТ СЕРВЕРА И СОХРАНЯЕМ ИХ В СТЕЙТ
         setSuccessData({
           shortId: result.shortId,
-          totalPrice: result.totalPrice,
+          totalPrice: result.totalPrice, // Сервер возвращает уже со скидкой
           biletpmrLink: result.biletpmrLink,
           apbQrLink: result.apbQrLink,
-          apbQrImage: result.apbQrImage
+          apbQrImage: result.apbQrImage,
+          paymentMethod: paymentMethod
         });
         
         setStep('success');
       } else {
-        // Умный вывод ошибок Zod
         if (result.fields && Object.keys(result.fields).length > 0) {
             const issues = Object.values(result.fields).join(' | ');
             setErrorMsg(`Исправьте ошибки: ${issues}`);
@@ -332,7 +341,6 @@ export default function BookingModal({
             {step === 'form' ? (
               <form onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* Honeypot поле для ботов */}
                 <input 
                   type="text" 
                   name="website" 
@@ -383,49 +391,63 @@ export default function BookingModal({
                 </div>
 
                 <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                    <Counter 
-                      label="Взрослый" 
-                      price={tour.price} 
-                      value={tickets.adult} 
-                      type="adult" 
-                    />
-                    
+                    <Counter label="Взрослый" price={tour.price} value={tickets.adult} type="adult" />
                     {tour.priceChild && tour.priceChild > 0 ? (
-                      <Counter 
-                        label="Детский" 
-                        price={tour.priceChild} 
-                        value={tickets.child} 
-                        type="child" 
-                      />
+                      <Counter label="Детский" price={tour.priceChild} value={tickets.child} type="child" />
                     ) : null}
-                    
                     {tour.priceFamily && tour.priceFamily > 0 ? (
-                      <Counter 
-                        label="Семейный (2 взр. + 1 реб.)" 
-                        price={tour.priceFamily} 
-                        value={tickets.family} 
-                        type="family" 
-                      />
+                      <Counter label="Семейный (2 взр. + 1 реб.)" price={tour.priceFamily} value={tickets.family} type="family" />
                     ) : null}
-                    
                     {tour.priceMember && tour.priceMember > 0 ? (
-                      <Counter 
-                        label="По клубной карте" 
-                        price={tour.priceMember} 
-                        value={tickets.member} 
-                        type="member" 
-                      />
+                      <Counter label="По клубной карте" price={tour.priceMember} value={tickets.member} type="member" />
                     ) : null}
                     
+                    {/* ✅ ПРИОРИТЕТ 2: БЛОК СПИСАНИЯ БОНУСОВ */}
+                    {balance > 0 && (
+                      <div className="pt-3 mt-1 border-t border-white/10">
+                        <label className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 transition-colors">
+                          <div className="relative flex items-center justify-center">
+                            <input 
+                              type="checkbox" 
+                              checked={useBonuses} 
+                              onChange={(e) => setUseBonuses(e.target.checked)} 
+                              className="peer sr-only" 
+                            />
+                            <div className="w-5 h-5 border-2 border-amber-500/50 rounded flex items-center justify-center bg-slate-950 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all">
+                              <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-amber-500">Списать бонусы</p>
+                            <p className="text-[10px] text-amber-500/70 uppercase tracking-widest font-bold mt-0.5">
+                              Доступно {balance} ₽ (макс. {maxBonusDiscount} ₽)
+                            </p>
+                          </div>
+                          {useBonuses && (
+                            <div className="text-sm font-black text-amber-500 shrink-0">
+                              -{availableBonusesToUse} ₽
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
                        <span className="text-xs font-bold text-slate-400 uppercase">Итого к оплате:</span>
-                       <span className="text-xl font-black text-teal-400">
-                         {totalPrice.toLocaleString()} {tour.currency}
-                       </span>
+                       <div className="text-right">
+                         {/* ✅ Зачеркнутая цена, если бонусы применены */}
+                         {useBonuses && (
+                           <div className="text-[10px] text-slate-500 line-through mb-0.5 font-bold uppercase tracking-widest">
+                             {baseTotalPrice.toLocaleString()} {tour.currency}
+                           </div>
+                         )}
+                         <span className="text-xl font-black text-teal-400">
+                           {finalPrice.toLocaleString()} {tour.currency}
+                         </span>
+                       </div>
                     </div>
                 </div>
 
-                {/* ДИНАМИЧЕСКИЙ СПИСОК ГОСТЕЙ */}
                 <div className="space-y-4 pt-2">
                     <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
                         <Users size={14} className="text-teal-500" /> Данные участников ({expectedGuests.length})
@@ -446,7 +468,6 @@ export default function BookingModal({
                               </div>
 
                               {index === 0 ? (
-                                  // Заказчик (Участник 1)
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div className="relative">
                                          <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
@@ -471,9 +492,7 @@ export default function BookingModal({
                                       </div>
                                   </div>
                               ) : (
-                                  // Дополнительные участники
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      {/* Имя участника */}
                                       <div className="relative">
                                          <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
                                          <input 
@@ -486,7 +505,6 @@ export default function BookingModal({
                                          />
                                       </div>
 
-                                      {/* Телефон или Возраст в зависимости от типа билета */}
                                       {isChild ? (
                                           <div className="relative">
                                             <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
@@ -516,7 +534,6 @@ export default function BookingModal({
                                   </div>
                               )}
 
-                              {/* Выбор жилета для воды */}
                               {isWaterTour && (
                                   <div className="relative mt-3">
                                       <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
@@ -555,6 +572,47 @@ export default function BookingModal({
                     </div>
                 </div>
 
+                {/* ✅ ВЫБОР СПОСОБА ОПЛАТЫ */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <CreditCard size={14} className="text-teal-500" /> Способ оплаты
+                  </label>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div onClick={() => setPaymentMethod('biletpmr')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
+                        <div className="flex items-center justify-between">
+                            <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>Онлайн</span>
+                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-500'} />
+                        </div>
+                        <span className="text-[10px] text-slate-500 leading-tight">Картой ПМР / Клевер</span>
+                    </div>
+
+                    <div onClick={() => setPaymentMethod('qr')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'qr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
+                        <div className="flex items-center justify-between">
+                            <span className={`text-sm font-bold ${paymentMethod === 'qr' ? 'text-teal-400' : 'text-slate-300'}`}>QR-код</span>
+                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-500'} />
+                        </div>
+                        <span className="text-[10px] text-slate-500 leading-tight">Агропромбанк</span>
+                    </div>
+
+                    <div onClick={() => setPaymentMethod('cash')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
+                        <div className="flex items-center justify-between">
+                            <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
+                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-500'} />
+                        </div>
+                        <span className="text-[10px] text-slate-500 leading-tight">Оплата гиду на месте</span>
+                    </div>
+
+                    <div onClick={() => setPaymentMethod('foreign')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
+                        <div className="flex items-center justify-between">
+                            <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
+                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-500'} />
+                        </div>
+                        <span className="text-[10px] text-slate-500 leading-tight">MIA / Переводы / Леи</span>
+                    </div>
+                  </div>
+                </div>
+
                 {errorMsg && (
                   <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-bold leading-snug">
                     <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -570,7 +628,7 @@ export default function BookingModal({
                   {isLoading ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    `Оформить за ${totalPrice.toLocaleString()} ${tour.currency}`
+                    `Оформить за ${finalPrice.toLocaleString()} ${tour.currency}`
                   )}
                 </button>
                 
@@ -582,12 +640,13 @@ export default function BookingModal({
          ) : successData ? (
                <SuccessScreen 
                  shortId={successData.shortId}
-                 totalPrice={successData.totalPrice}
-                 currency={tour.currency ?? 'MDL'}
+                 totalPrice={successData.totalPrice} // Передали финальную
+                 currency={tour.currency ?? 'RUB'}
                  phone={formData.phone}
                  biletpmrLink={successData.biletpmrLink}
                  apbQrLink={successData.apbQrLink}
                  apbQrImage={successData.apbQrImage}
+                 paymentMethod={successData.paymentMethod}
                  onClose={onClose}
                />
             ) : null}
