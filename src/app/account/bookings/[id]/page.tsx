@@ -99,9 +99,9 @@ export default async function BookingDetailsPage({ params }: { params: Promise<{
   const isConfirmed = booking.status.toUpperCase() === 'CONFIRMED' || booking.status.toUpperCase() === 'ПОДТВЕРЖДЕНО';
   
   // ✅ БЕЗОПАСНЫЙ ID ДЛЯ QR-КОДА
-  const displayId = (booking as any).shortId 
-    ? (booking as any).shortId.toUpperCase() 
-    : booking.id.slice(0, 8).toUpperCase();
+ const displayId = (booking as any).shortId 
+    ? String((booking as any).shortId).toUpperCase() 
+    : String(booking.id).slice(0, 8).toUpperCase();
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-12">

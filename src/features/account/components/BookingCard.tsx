@@ -56,7 +56,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
   const imageUrl = tour?.coverImage;
 
   // Безопасный фоллбэк: если это старая бронь без shortId, используем срез UUID
-  const displayId = shortId ? shortId.toUpperCase() : id.slice(0, 8).toUpperCase();
+  const displayId = shortId ? String(shortId).toUpperCase() : String(id).slice(0, 8).toUpperCase();
 
   return (
     <div className="relative flex flex-col md:flex-row bg-slate-900 rounded-3xl overflow-hidden border border-white/10 shadow-xl group transition-all hover:border-white/20 hover:shadow-2xl">
