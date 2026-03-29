@@ -1,67 +1,110 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Gift, Copy, CheckCircle2 } from 'lucide-react';
-import { useToast } from '@/shared/context/ToastContext';
+import { useState } from "react";
+import { Copy, Share2, Check, Gift } from "lucide-react";
 
 interface ReferralCardProps {
-  name: string | null;
-  userId: string;
+  promoCode: string;
+  rewardAmount?: number;
+  friendReward?: number;
 }
 
-export default function ReferralCard({ name, userId }: ReferralCardProps) {
+export default function ReferralCard({
+  promoCode, 
+  rewardAmount = 500,
+  friendReward = 500 
+}: ReferralCardProps) {
   const [copied, setCopied] = useState(false);
-  const { showToast } = useToast();
+  const [toastVisible, setToastVisible] = useState(false);
 
-  // Генерируем красивый код вида: EVA-ALEX-9F2A
-  const cleanName = name ? name.replace(/\s+/g, '').substring(0, 4).toUpperCase() : 'CLUB';
-  const shortId = userId.substring(0, 4).toUpperCase();
-  const promoCode = `EVA-${cleanName}-${shortId}`;
+  const shareText = `Присоединяйся к премиальному тур-клубу! Используй мой промокод ${promoCode} при бронировании и получи скидку ${friendReward} ₽ на первое приключение.`;
+
+  const showToast = () => {
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 3000);
+  };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(promoCode);
       setCopied(true);
-      showToast('Промокод скопирован!', 'success');
+      showToast();
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      showToast('Не удалось скопировать', 'error');
+      console.error("Не удалось скопировать промокод", err);
+    }
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Мой промокод Evatur",
+          text: shareText,
+        });
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          console.error("Ошибка при шаринге", err);
+        }
+      }
+    } else {
+      // Фолбэк, если Web Share API не поддерживается (например, десктоп без поддержки)
+      handleCopy();
     }
   };
 
   return (
-    <div className="bg-gradient-to-br from-violet-600/20 to-fuchsia-600/10 border border-violet-500/20 rounded-2xl p-5 relative overflow-hidden group">
-      {/* Декоративный фон */}
-      <div className="absolute -top-10 -right-10 w-32 h-32 bg-violet-500/20 blur-3xl rounded-full group-hover:bg-violet-500/30 transition-colors" />
+    <div className="relative overflow-hidden rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-white/10 p-6 md:p-8 shadow-2xl">
+      {/* Декоративный фоновый градиент */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
       
-      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
-            <Gift size={24} />
+      <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+        <div className="flex-1 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold uppercase tracking-wider mb-2">
+            <Gift size={14} />
+            Реферальная программа
           </div>
-          <div>
-            <h3 className="text-white font-bold text-sm mb-1">Подари приключение</h3>
-            <p className="text-xs text-slate-300 font-medium">
-              Поделись кодом с другом. Он получит скидку 5%, а ты — бонус от клуба!
-            </p>
-          </div>
+          <h3 className="text-xl md:text-2xl font-bold text-white">
+            Приглашайте друзей в первый тур с нами
+          </h3>
+          <p className="text-slate-400 text-sm leading-relaxed max-w-md">
+            Поделитесь промокодом. Друг получит скидку <span className="text-white font-medium">{friendReward} ₽</span> на первый тур, а мы начислим <span className="text-teal-400 font-medium">{rewardAmount} ₽</span> на ваш баланс после его поездки.
+          </p>
         </div>
 
-        <button
-          onClick={handleCopy}
-          className="w-full sm:w-auto flex items-center justify-between sm:justify-center gap-3 px-4 py-2.5 bg-slate-950/50 hover:bg-slate-950/80 border border-violet-500/30 rounded-xl transition-all shrink-0"
-        >
-          <span className="font-mono font-black text-violet-300 tracking-wider">
-            {promoCode}
-          </span>
-          {copied ? (
-            <CheckCircle2 size={16} className="text-green-400" />
-          ) : (
-            <Copy size={16} className="text-violet-400" />
-          )}
-        </button>
+        <div className="w-full md:w-auto bg-black/40 rounded-2xl p-4 border border-white/5 flex flex-col gap-3">
+          <div className="text-center">
+            <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Ваш промокод</p>
+            <p className="text-2xl font-mono font-bold text-white tracking-widest">{promoCode}</p>
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopy}
+              className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-2.5 px-4 rounded-xl text-sm font-medium transition-colors"
+            >
+              {copied ? <Check size={16} className="text-teal-400" /> : <Copy size={16} />}
+              {copied ? "Скопирован" : "Копировать"}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white py-2.5 px-4 rounded-xl text-sm font-medium transition-colors shadow-[0_0_15px_rgba(13,148,136,0.3)]"
+            >
+              <Share2 size={16} />
+              Поделиться
+            </button>
+          </div>
+        </div>
+      </div>
 
+      {/* Кастомный Toast (появляется снизу) */}
+      <div 
+        className={`absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg transition-all duration-300 ${
+          toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
+        }`}
+      >
+        <Check size={16} />
+        Ссылка скопирована! Другу +{friendReward} ₽
       </div>
     </div>
   );

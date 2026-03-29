@@ -188,10 +188,7 @@ const LEVELS_CONFIG = [
             <p className="text-slate-400 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}
             </p>
-            <p className="text-slate-500 text-[9px] mt-2 text-center max-w-[80%] uppercase tracking-widest">
-              Покажите этот код гиду на старте маршрута
-            </p>
-          </div>
+           </div>
         </motion.div>
       </div>
 

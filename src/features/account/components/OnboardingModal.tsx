@@ -1,113 +1,152 @@
-// src/features/account/components/OnboardingModal.tsx
 'use client';
 
-import React, { useState, useTransition } from 'react';
-import { Phone, ArrowRight, Loader2, Sparkles, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { savePhoneNumberAction } from '../actions/onboarding';
+import { User, Phone, CheckCircle2, ArrowRight, Settings, Loader2 } from 'lucide-react';
+import { saveOnboardingDataAction } from '@/features/account/actions/onboarding';
 
-export default function OnboardingModal() {
-  const [phone, setPhone] = useState('+373 ');
-  const [error, setError] = useState('');
-  const [isPending, startTransition] = useTransition();
-  const [successData, setSuccessData] = useState<{ linkedCount: number } | null>(null);
-  
+interface OnboardingModalProps {
+  initialName?: string; // Сюда можно передать никнейм из Google/Telegram, если он есть
+}
+
+export default function OnboardingModal({ initialName = '' }: OnboardingModalProps) {
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(true);
+  const [isPending, startTransition] = useTransition();
+
+  const [name, setName] = useState(initialName);
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (phone.replace(/\D/g, '').length < 10) {
-      setError('Введите корректный номер телефона');
+
+    if (name.trim().length < 2) {
+      setError('Пожалуйста, введите ваше реальное имя и фамилию.');
+      return;
+    }
+
+    const cleanedPhone = phone.replace(/[^\d+]/g, '');
+    if (cleanedPhone.length < 9) {
+      setError('Пожалуйста, введите корректный номер телефона.');
       return;
     }
 
     startTransition(async () => {
-      const res = await savePhoneNumberAction(phone);
-      
+      const res = await saveOnboardingDataAction(cleanedPhone, name);
       if (res.success) {
-        setSuccessData({ linkedCount: res.linkedCount || 0 });
-        // Даем пользователю прочитать сообщение об успехе и перезагружаем страницу
-        setTimeout(() => {
-          window.location.reload(); // Надежно очищаем кэш layout'а
-        }, 2500);
+        setIsSuccess(true);
       } else {
-        setError(res.error || 'Произошла ошибка');
+        setError(res.error || 'Произошла ошибка. Попробуйте еще раз.');
       }
     });
   };
 
+  const handleGoToSettings = () => {
+    setIsOpen(false);
+    router.push('/account/settings');
+    router.refresh();
+  };
+
+  const handleGoToDashboard = () => {
+    setIsOpen(false);
+    router.push('/account/dashboard');
+    router.refresh();
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-[2rem] shadow-2xl p-6 md:p-8 animate-in fade-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+      <div className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
         
-        {successData ? (
-          <div className="text-center py-6 animate-in zoom-in duration-500">
-            <div className="w-20 h-20 bg-teal-500/20 border border-teal-500/30 rounded-full flex items-center justify-center text-teal-400 mx-auto mb-6">
+        {/* Глоу-эффект на фоне */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+        {isSuccess ? (
+          <div className="text-center relative z-10 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto text-emerald-400 mb-6 shadow-inner border border-emerald-500/20">
               <CheckCircle2 size={40} />
             </div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
-              Профиль связан!
-            </h2>
-            <p className="text-slate-400 font-medium leading-relaxed">
-              {successData.linkedCount > 0 
-                ? `Мы нашли и прикрепили к вашему аккаунту ${successData.linkedCount} прошлых туров. Добро пожаловать!` 
-                : 'Номер успешно сохранен. Теперь ваши будущие брони будут привязаны к этому профилю.'}
+            
+            {/* Берем только первое слово (имя), если человек ввел "Иван Иванов" */}
+            <h2 className="text-2xl font-black text-white mb-3">Отлично, {name.split(' ')[0]}!</h2>
+            
+            <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+              Ваши прошлые поездки успешно найдены и привязаны к кабинету. <br /><br />
+              <span className="text-slate-300">Чтобы гиды могли подготовить для вас правильную еду и нужное снаряжение, заполните вашу походную карточку.</span>
             </p>
-            <p className="text-xs text-teal-500 mt-6 animate-pulse font-bold uppercase tracking-widest">
-              Открываем личный кабинет...
-            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleGoToSettings}
+                className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] active:scale-[0.98]"
+              >
+                <Settings size={18} /> Перейти в Настройки
+              </button>
+              <button
+                onClick={handleGoToDashboard}
+                className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-slate-400 hover:text-white font-bold py-3.5 rounded-xl transition-all"
+              >
+                Позже (На Дашборд) <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         ) : (
-          <>
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-500 mb-4 shadow-inner">
-                <Sparkles size={28} />
-              </div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
-                Финальный штрих
-              </h2>
-              <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                Вы успешно вошли! Оставьте свой номер телефона, чтобы мы могли связать этот аккаунт с вашими прошлыми и будущими походами.
-              </p>
-            </div>
+          <div className="relative z-10">
+            <h2 className="text-2xl font-black text-white mb-2">Давайте знакомиться!</h2>
+            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+              Введите ваше реальное имя (для списков группы) и номер телефона, чтобы мы нашли и привязали ваши предыдущие туры.
+            </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">
-                  Номер телефона (с кодом)
-                </label>
-                <div className="relative group">
-                  <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" />
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1.5 flex items-center gap-1.5">
+                    <User size={12} /> Имя и Фамилия
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Например: Иван Иванов"
+                    disabled={isPending}
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1.5 flex items-center gap-1.5">
+                    <Phone size={12} /> Ваш телефон
+                  </label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+373 777 00000"
                     disabled={isPending}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white font-medium focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all placeholder:text-slate-600"
-                    placeholder="+373 777 00 000"
-                    autoFocus
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs font-bold">
-                  <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
+                  <p className="text-xs text-rose-400 text-center font-medium">{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
-                disabled={isPending || phone.length < 10}
-                className="w-full mt-4 flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(20,184,166,0.3)] active:scale-[0.98]"
+                disabled={isPending}
+                className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] active:scale-[0.98] mt-2"
               >
-                {isPending ? <Loader2 size={18} className="animate-spin" /> : <><MapPin size={18} /> Сохранить и войти</>}
+                {isPending ? <Loader2 size={18} className="animate-spin" /> : 'Продолжить'}
               </button>
             </form>
-          </>
+          </div>
         )}
       </div>
     </div>
