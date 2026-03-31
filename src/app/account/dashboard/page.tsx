@@ -69,7 +69,8 @@ async function getDashboardData(userId: string) {
   const upcomingBookings = await prisma.booking.findMany({
     where: {
       memberId: profile.id,
-      status: { in: ['pending', 'confirmed'] },
+      // ✅ Теперь клиент видит бронь, даже если еще не оплатил или чек на проверке
+      status: { in: ['pending', 'confirmed', 'awaiting_payment', 'moderation'] },
       OR: [
         { tourDate: { startDate: { gte: now } } },
         { tourDateId: null } 
@@ -107,9 +108,10 @@ async function getDashboardData(userId: string) {
 
   // 3. Статистика (СИНХРОН С ИСТОРИЕЙ)
   const pastConfirmedBookings = await prisma.booking.findMany({
-    where: { 
+  where: { 
       memberId: profile.id, 
-      status: { not: 'cancelled' },
+      // ✅ Ачивки и КМ считаем только по реально посещенным (оплаченным) турам
+      status: 'confirmed',
       tourDate: { startDate: { lt: now } }
     },
     include: { 
@@ -229,7 +231,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalTours}</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-1.5">Туров</div>
+                    <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">Туров</div>
                   </div>
                 </div>
 
@@ -239,7 +241,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalKm}</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-1.5">Км</div>
+                    <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">Км</div>
                   </div>
                 </div>
 
@@ -249,7 +251,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalNights}</div>
-                    <div className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mt-1.5">Ночей</div>
+                    <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">Ночей</div>
                   </div>
                 </div>
               </div>
@@ -278,7 +280,7 @@ export default async function DashboardPage() {
                   <span className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
                     <Info size={14} /> Как получать бонусы?
                   </span>
-                  <ChevronDown size={16} className="text-slate-500 group-open:rotate-180 transition-transform duration-300" />
+                  <ChevronDown size={16} className="text-slate-400 group-open:rotate-180 transition-transform duration-300" />
                 </summary>
                 
                 <div className="px-4 pb-5 pt-1 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -367,7 +369,7 @@ export default async function DashboardPage() {
 
         {upcomingBookings.length === 0 ? (
           <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-8 text-center">
-            <p className="text-slate-400 text-sm mb-4">У вас пока нет запланированных туров</p>
+            <p className="text-slate-300 text-sm mb-4">У вас пока нет запланированных туров</p>
             <Link href="/tour" className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)]">
               Выбрать приключение <ArrowRight size={16} />
             </Link>

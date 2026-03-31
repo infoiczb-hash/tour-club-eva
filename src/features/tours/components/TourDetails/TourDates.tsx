@@ -63,7 +63,7 @@ export default function TourDates({ tour }: TourDatesProps) {
                 <div className="flex justify-between items-center md:w-1/3 mb-3 md:mb-0">
                    <div className="flex flex-col">
                        <span className={`text-lg md:text-xl font-black uppercase tracking-tight transition-colors ${
-                           isSoldOut ? 'text-slate-500' : 'text-white group-hover:text-teal-400'
+                           isSoldOut ? 'text-slate-400' : 'text-white group-hover:text-teal-400'
                        }`}>
                          {dateString}
                        </span>
@@ -103,10 +103,10 @@ export default function TourDates({ tour }: TourDatesProps) {
                            )}
                         </div>
                         <div>
-                           <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5 leading-none">
+                           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 leading-none">
                              Ведет группу
                            </h3>
-                           <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
+                           <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-400' : 'text-white'}`}>
                              {guideName}
                            </p>
                         </div>

@@ -201,7 +201,7 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
                    <span className="text-[12px] font-black uppercase text-blue-400 tracking-widest">Инвентарь</span>
                 </div>
                 <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Собери рюкзак</h3>
-                <p className="text-slate-400 text-sm">В рюкзак влезает ровно 7 предметов. Выбирай с умом!</p>
+                <p className="text-slate-300 text-sm">В рюкзак влезает ровно 7 предметов. Выбирай с умом!</p>
               </div>
 
               {/* Progress Bar */}

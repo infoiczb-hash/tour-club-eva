@@ -60,7 +60,7 @@ export default function AiModal({ isOpen, onClose, onApply }: Props) {
 
         {/* Body */}
         <div className="p-6 space-y-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-400 dark:text-slate-400">
             Опишите в двух словах, какой тур вы хотите создать (локация, сложность, фишки), и AI подготовит черновик.
           </p>
           

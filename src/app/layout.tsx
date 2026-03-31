@@ -12,18 +12,27 @@ import { Footer } from "@/components/layout/Footer";
 import PromoBlock from "@/components/layout/PromoBlock"; 
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import GlobalModals from "@/components/modals/GlobalModals"; 
-import dynamic from "next/dynamic";
-
-const AxeReporter = dynamic(() => import('@/components/AxeReporter'));
+import ModalsWrapper from "@/components/modals/ModalsWrapper";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   display: "swap",
   variable: "--font-inter",
-  weight: ["400", "600", "700"],
-  preload: true,        
-  adjustFontFallback: true, 
+  weight: ["400", "500", "700", "900"],
+  //  400 — text-base (обычный текст)
+  //  500 — font-medium (подписи, мелкий текст)
+  //  700 — font-bold (заголовки h3, кнопки)
+  //  900 — font-black (главные h1/h2, дизайн-акценты)
+  //
+  //  600 убрали — font-semibold в дизайне не используется.
+  //  Без нужного weight браузер синтезирует его искусственно
+  //  (browser font synthesis) → FOUT + лишний вес.
+  //
+  //  ЭКОНОМИЯ: Inter на Google Fonts отдаёт только запрошенные
+  //  начертания. 4 weight вместо 3 (но правильных) = тот же размер,
+  //  зато нет FOUT и font-synthesis артефактов.
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -147,8 +156,7 @@ export default async function RootLayout({
               {children}
             </MainLayoutWrapper>
           </ToastProvider>
-           <GlobalModals />
-        <AxeReporter />
+        <ModalsWrapper />
         <Analytics />
         <SpeedInsights />
       </body>

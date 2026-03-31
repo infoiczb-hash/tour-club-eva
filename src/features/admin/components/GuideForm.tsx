@@ -269,7 +269,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
                  </Button>
              </div>
              
-             {formData.stats.length === 0 && <p className="text-xs text-slate-500">Нет характеристик. Добавьте "Выносливость", "Кулинария" и т.д.</p>}
+             {formData.stats.length === 0 && <p className="text-xs text-slate-400">Нет характеристик. Добавьте "Выносливость", "Кулинария" и т.д.</p>}
 
              <div className="space-y-3">
                  {formData.stats.map((stat: StatItem, i: number) => (
@@ -288,7 +288,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
                           <input type="range" min="0" max="100" value={stat.value} onChange={(e) => handleStatChange(i, 'value', parseInt(e.target.value))} className="w-full accent-teal-500"/>
                           <span className="text-xs font-mono font-bold text-teal-400 w-8">{stat.value}%</span>
                        </div>
-                       <button type="button" onClick={() => removeStat(i)} className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                       <button type="button" onClick={() => removeStat(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                           <Trash2 size={16}/>
                        </button>
                     </div>

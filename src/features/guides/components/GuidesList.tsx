@@ -135,7 +135,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                         <span className="text-teal-500">.</span>
                     </h2>
                     
-                    <p className="text-slate-400 text-sm md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
+                    <p className="text-slate-300 text-sm md:text-base font-medium max-w-md leading-relaxed border-l-2 border-white/10 pl-4">
                         Профессионалы, с которыми безопасно и интересно в любой точке мира.
                         Знают каждый камень на маршруте.
                     </p>
@@ -365,7 +365,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
 
                         {/* БИОГРАФИЯ */}
                         <div className="mb-8">
-                            <h3 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Досье</h3>
+                            <h3 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3">Досье</h3>
                             <p className="text-sm text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
                                 {guide.fullBio || guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию."}
                             </p>
@@ -374,7 +374,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                         {/* ЦИТАТА */}
                         {guide.quotes && guide.quotes.length > 0 && (
                             <div className="mb-8 border-l-2 border-teal-500 pl-4 py-1">
-                                <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-3">Цитаты</h4> 
+                                <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3">Цитаты</h4> 
                                 <p className="text-lg md:text-xl font-medium text-white italic leading-snug">
                                     «{guide.quotes[0]}»
                                 </p>

@@ -30,7 +30,7 @@ export default function Fleet() {
               Наш <span className="text-teal-500">Флот</span>
             </h2>
           </div>
-          <p className="text-slate-400 text-sm md:text-base max-w-sm font-medium animate-in fade-in duration-700">
+          <p className="text-slate-300 text-sm md:text-base max-w-sm font-medium animate-in fade-in duration-700">
             Проверенные временем и сотнями километров байдарки. Каждая лодка проходит регулярное ТО.
           </p>
         </div>
@@ -74,7 +74,7 @@ export default function Fleet() {
             ))}
           </div>
           
-          <div className="md:hidden flex items-center justify-end gap-1.5 mt-2 pr-4 text-slate-500 pointer-events-none">
+          <div className="md:hidden flex items-center justify-end gap-1.5 mt-2 pr-4 text-slate-400 pointer-events-none">
             <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
             <ChevronRight size={14} className="text-teal-400 animate-pulse" />
           </div>

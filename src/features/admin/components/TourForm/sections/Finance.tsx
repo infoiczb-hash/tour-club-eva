@@ -40,7 +40,7 @@ export const Finance = () => {
 
         {/* Дополнительные тарифы */}
         <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-           <h4 className="text-xs font-black uppercase text-slate-500 mb-2">Спец. тарифы</h4>
+           <h4 className="text-xs font-black uppercase text-slate-400 mb-2">Спец. тарифы</h4>
            <div className="space-y-3">
              <div className="flex gap-2 items-end">
                 <Crown size={16} className="text-amber-500 mb-3" />
@@ -59,7 +59,7 @@ export const Finance = () => {
 
         {/* Места */}
         <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-          <h4 className="text-xs font-black uppercase text-slate-500 mb-2">Управление местами</h4>
+          <h4 className="text-xs font-black uppercase text-slate-400 mb-2">Управление местами</h4>
           <FormInput name="spots" label="Всего мест" type="number" />
           <FormInput name="spotsLeft" label="Осталось мест" type="number" />
           <p className="text-[10px] text-slate-400 leading-tight mt-2">

@@ -86,7 +86,7 @@ export default async function AllGuidesPage() {
           // ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ
           <GuidesEditorialList guides={guides} />
         ) : (
-          <div className="text-center text-slate-500 py-20">
+          <div className="text-center text-slate-400 py-20">
             Информация о команде обновляется...
           </div>
         )}

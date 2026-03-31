@@ -32,7 +32,7 @@ export default function Timeline() {
               Один день <br className="hidden md:block" />
               <span className="text-teal-500">из жизни сплава</span>
             </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium">
+            <p className="text-slate-300 text-sm md:text-base font-medium">
               Идеальный баланс между активной греблей и расслабленным отдыхом на природе.
             </p>
           </div>

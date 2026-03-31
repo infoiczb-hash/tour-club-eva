@@ -185,7 +185,7 @@ const LEVELS_CONFIG = [
           )}
         </div>
 
-            <p className="text-slate-400 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
+            <p className="text-slate-300 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}
             </p>
            </div>
@@ -198,7 +198,7 @@ const LEVELS_CONFIG = [
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between items-end">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Прогресс статуса</span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                 Еще {toursNeeded} {toursNeeded === 1 ? 'тур' : toursNeeded > 1 && toursNeeded < 5 ? 'тура' : 'туров'} до «{nextConfig.name}»
               </span>
             </div>

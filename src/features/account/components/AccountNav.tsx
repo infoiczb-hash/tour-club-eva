@@ -91,7 +91,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
         <div className="p-4 border-t border-white/5">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
             <LogOut size={18} />
             Выйти
@@ -113,7 +113,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
                 className={`snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl transition-all relative ${
                   isActive 
                     ? 'text-teal-400' 
-                    : 'text-slate-500 hover:text-slate-300'
+                    : 'text-slate-400 hover:text-slate-300'
                 }`}
               >
                 {isActive && (

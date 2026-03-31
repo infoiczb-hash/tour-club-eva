@@ -23,7 +23,7 @@ const TYPE_ICONS = {
 const STATUS_LABELS = {
   NEW: { label: 'Новое', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   WORK: { label: 'В работе', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  DONE: { label: 'Архив', color: 'bg-slate-500/10 text-slate-500 border-slate-500/20' },
+  DONE: { label: 'Архив', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
 };
 
 interface Props {
@@ -65,7 +65,7 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
       <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
          <h1 className="text-2xl font-black uppercase tracking-tight dark:text-white flex items-center gap-3">
             <MessageSquare className="text-teal-500"/> Обращения
-            <span className="text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-lg">
+            <span className="text-sm bg-slate-100 dark:bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
                 {inquiries.filter(i => i.status === 'NEW').length} новых
             </span>
          </h1>

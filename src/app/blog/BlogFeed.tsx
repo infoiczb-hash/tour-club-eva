@@ -162,7 +162,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
       </div>
 
       <div className="p-6 md:p-8 flex flex-col flex-grow">
-        <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
           <span>{formatDate(post.date || post.createdAt)}</span>
           <div className="flex items-center gap-1.5"><Clock size={12} /> {post.read_time} мин</div>
         </div>
@@ -178,7 +178,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-6">
             {post.tags.slice(0, 3).map((tag: string) => (
-              <span key={tag} className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              <span key={tag} className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 #{tag}
               </span>
             ))}
@@ -196,7 +196,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
                 sizes="40px" 
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={16} /></div>
+              <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={16} /></div>
             )}
           </div>
           <div>
@@ -279,7 +279,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         <div className="mb-16 md:mb-24">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl md:text-2xl font-bold uppercase tracking-tight text-slate-300 flex items-center gap-3">
-              <Sparkles size={20} className="text-slate-500" />
+              <Sparkles size={20} className="text-slate-400" />
               {activeCategory !== 'all'
                 ? (displayCategories.find(c => c.slug === activeCategory)?.label || 'Материалы')
                 : 'Все материалы'}
@@ -321,7 +321,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           {feedPosts.length === 0 && top3Posts.length === 0 && (
             <div className="text-center py-20 md:py-32 border border-dashed border-white/10 rounded-[3rem] bg-white/[0.02] mt-8">
               <BookOpen size={40} className="mx-auto text-slate-700 mb-4" />
-              <p className="text-slate-500 font-medium">В этой категории пока нет статей.</p>
+              <p className="text-slate-400 font-medium">В этой категории пока нет статей.</p>
               <button
                 onClick={() => handleCategoryClick('all')}
                 aria-label="Смотреть все материалы"

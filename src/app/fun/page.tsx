@@ -1,4 +1,3 @@
-import ReactDOM from 'react-dom';
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
@@ -32,27 +31,43 @@ export const metadata: Metadata = {
 };
 
 export default async function FunSectorPage() {
+  // 1. Детерминированная сортировка для стабильного LCP
   const tests = await prisma.funTest.findMany({
     where: { isActive: true },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { order: 'asc' }
   });
 
   const firstImage = tests[0]?.image;
-  if (firstImage) {
-    ReactDOM.preload(firstImage, {
-      as: 'image',
-      fetchPriority: 'high',
-      imageSizes: '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
-    });
-  }
+  
+  // Генерация srcSet, идентичного Next.js <Image> (качество 65 для priority)
+  // Это гарантирует 100% Cache-Hit в Cloudinary CDN
+  const imageSrcSet = firstImage 
+    ? `/_next/image?url=${encodeURIComponent(firstImage)}&w=640&q=65 640w, ` +
+      `/_next/image?url=${encodeURIComponent(firstImage)}&w=750&q=65 750w, ` +
+      `/_next/image?url=${encodeURIComponent(firstImage)}&w=828&q=65 828w, ` +
+      `/_next/image?url=${encodeURIComponent(firstImage)}&w=1080&q=65 1080w, ` +
+      `/_next/image?url=${encodeURIComponent(firstImage)}&w=1200&q=65 1200w`
+    : undefined;
 
-const serializedTests = JSON.parse(JSON.stringify(tests));
+  const serializedTests = JSON.parse(JSON.stringify(tests));
 
-return (
-  <main>
-    <Suspense fallback={null}>
-      <FunClient activeTests={serializedTests} />
-    </Suspense>
-  </main>
-);
+  return (
+    <main>
+      {/* 2. Нативный Preload с fetchpriority="high". React 18 поднимет его в <head> */}
+      {firstImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={`/_next/image?url=${encodeURIComponent(firstImage)}&w=1200&q=65`}
+          imageSrcSet={imageSrcSet}
+          imageSizes="(max-width: 768px) 92vw, (max-width: 1024px) 48vw, 400px"
+          fetchPriority="high"
+        />
+      )}
+      
+      <Suspense fallback={null}>
+        <FunClient activeTests={serializedTests} />
+      </Suspense>
+    </main>
+  );
 }

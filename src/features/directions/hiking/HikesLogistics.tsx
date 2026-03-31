@@ -44,7 +44,7 @@ export default function HikesLogistics() {
                                 В горах нет <br className="hidden md:block"/>
                                 <span className="text-teal-500">случайных людей</span>
                             </h2>
-                            <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium mb-8">
+                            <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium mb-8">
                                 «Тур в горы — это ваш личный отдых, а не испытание на прочность. Моя задача как гида — взять на себя всю логистику, чтобы вы могли просто идти, дышать и впитывать красоту вокруг. Мы всегда идем в среднем темпе комфортном для медленных и быстрых участников. Никто никого не бросает».
                             </p>
                             

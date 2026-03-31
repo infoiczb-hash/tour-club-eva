@@ -137,7 +137,7 @@ export default function PopularRoutes() {
             <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
               Другие <span className="text-amber-500">Форматы</span>
             </h3>
-            <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
+            <p className="text-slate-300 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
           </div>
           
           <div className="relative">
@@ -247,7 +247,7 @@ function PassportItem({ icon: Icon, label, value }: { icon: any; label: string; 
         <Icon size={14} strokeWidth={2.5} />
       </div>
       <div>
-        <span className="block text-[12px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">{label}</span>
+        <span className="block text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5">{label}</span>
         <span className="text-xs text-white font-bold leading-snug block">{value}</span>
       </div>
     </div>

@@ -62,7 +62,7 @@ export default function TourStats({ tour }: TourStatsProps) {
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-1">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none truncate">Сложность</span>
-              <Info size={10} className={showTooltip ? "text-teal-400" : "text-slate-500 group-hover:text-teal-400 transition-colors"} />
+              <Info size={10} className={showTooltip ? "text-teal-400" : "text-slate-400 group-hover:text-teal-400 transition-colors"} />
             </div>
             <span className="text-white font-black text-sm leading-none capitalize truncate">{difficultyLabel}</span>
           </div>

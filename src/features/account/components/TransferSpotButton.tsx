@@ -96,7 +96,7 @@ export default function TransferSpotButton({
             {/* Закрыть */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
             >
               <X size={16} />
             </button>

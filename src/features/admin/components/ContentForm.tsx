@@ -91,7 +91,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
                   {slug === 'hero' ? <Sparkles className="text-yellow-500" size={20}/> : <LinkIcon className="text-blue-500" size={20}/>}
                   {getTitle()}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Настройка контента сайта</p>
+              <p className="text-xs text-slate-400 dark:text-slate-400 font-medium">Настройка контента сайта</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition text-slate-400"><X size={20}/></button>
         </div>
@@ -105,7 +105,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
               {/* Заголовок с AI */}
               <div>
                 <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Заголовок (H1)</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Заголовок (H1)</label>
                     <button type="button" onClick={() => handleAiImprove('title')} disabled={aiLoading || !data.title} className="text-[10px] text-violet-600 hover:text-violet-700 flex items-center gap-1 font-bold disabled:opacity-50 transition-colors">
                         {aiLoading ? <Loader2 size={10} className="animate-spin"/> : <Wand2 size={10}/>} AI Rewrite
                     </button>
@@ -117,7 +117,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
 
               {/* Подзаголовок */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Подзаголовок</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Подзаголовок</label>
                 <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm dark:text-white h-20 resize-none transition-all"
                     value={data.subtitle || ''} onChange={e => handleChange('subtitle', e.target.value)} placeholder="Описание..."
                 />
@@ -125,7 +125,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
 
               {/* ФОН (Картинка) */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Фоновое изображение</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Фоновое изображение</label>
                 <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors relative group overflow-hidden">
                     {data.bg_image ? (
                         <div className="relative h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
@@ -143,7 +143,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
                     <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileUpload} accept="image/*" disabled={uploading} />
                 </div>
                 {/* Fallback input */}
-                <input className="w-full mt-2 p-2 text-xs bg-transparent border-b border-slate-200 dark:border-slate-800 outline-none text-slate-500 focus:border-violet-500 transition-colors"
+                <input className="w-full mt-2 p-2 text-xs bg-transparent border-b border-slate-200 dark:border-slate-800 outline-none text-slate-400 focus:border-violet-500 transition-colors"
                     placeholder="Или вставьте прямую ссылку на картинку..." value={data.bg_image || ''} onChange={e => handleChange('bg_image', e.target.value)}
                 />
               </div>
@@ -155,26 +155,26 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1 tracking-wider"><Mail size={12}/> Email</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1 tracking-wider"><Mail size={12}/> Email</label>
                     <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                         value={data.email || ''} onChange={e => handleChange('email', e.target.value)} placeholder="info@evatur.club"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1 tracking-wider"><Phone size={12}/> Телефон</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1 tracking-wider"><Phone size={12}/> Телефон</label>
                     <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                         value={data.phone || ''} onChange={e => handleChange('phone', e.target.value)} placeholder="+373 777 00000"
                     />
                   </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1 tracking-wider"><Instagram size={12}/> Instagram (ссылка)</label>
+                <label className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1 tracking-wider"><Instagram size={12}/> Instagram (ссылка)</label>
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                     value={data.instagram || ''} onChange={e => handleChange('instagram', e.target.value)} placeholder="https://instagram.com/..."
                 />
               </div>
                <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1 tracking-wider"><Send size={12}/> Telegram (ссылка)</label>
+                <label className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1 tracking-wider"><Send size={12}/> Telegram (ссылка)</label>
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                     value={data.telegram || ''} onChange={e => handleChange('telegram', e.target.value)} placeholder="https://t.me/..."
                 />

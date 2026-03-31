@@ -245,7 +245,7 @@ export default function SocialGrid() {
                 rel="noopener noreferrer"
                 className={cn(
                   "w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md flex items-center justify-center gap-2 transition-all duration-300",
-                  "text-slate-400 text-xs font-bold uppercase tracking-wider",
+                  "text-slate-300 text-xs font-bold uppercase tracking-wider",
                   social.color
                 )}
               >

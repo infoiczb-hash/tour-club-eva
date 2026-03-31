@@ -184,13 +184,13 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
                   <span className="text-rose-500 text-xs font-bold tracking-widest uppercase">Что говорит тело</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">Что происходит<br /><span className="text-rose-400">с тобой в туре?</span></h2>
-                <p className="text-slate-400 text-sm leading-relaxed font-medium">Выбери симптомы, которые ты замечаешь — и получи объяснение, почему это происходит и что делать.</p>
+                <p className="text-slate-300 text-sm leading-relaxed font-medium">Выбери симптомы, которые ты замечаешь — и получи объяснение, почему это происходит и что делать.</p>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
                 {(Object.entries(grouped) as [string, typeof SYMPTOMS][]).map(([cat, symptoms]) => (
                   <div key={cat} className="mb-6 last:mb-0">
-                    <div className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-3">{categoryLabel[cat]}</div>
+                    <div className="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-3">{categoryLabel[cat]}</div>
                     <div className="space-y-3">
                       {symptoms.map((s) => {
                         const isSel = selected.includes(s.key);
@@ -224,7 +224,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
                       Разобрать симптомы ({selected.length})
                     </button>
                  ) : (
-                    <div className="w-full bg-slate-800 text-slate-500 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
+                    <div className="w-full bg-slate-800 text-slate-400 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
                        Выбери хотя бы один симптом
                     </div>
                  )}
@@ -241,7 +241,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
               </div>
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
                 {viewingInfo.warning && (<div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 flex gap-3 items-start"><ShieldAlert className="text-amber-500 shrink-0" size={18}/><div><p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest mb-1">Обрати внимание</p><p className="text-amber-200/80 text-sm font-medium">Этот симптом требует контроля. При нарастании — обязательно сообщи гиду.</p></div></div>)}
-                <div className="border-l-2 border-slate-700 pl-5"><p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Почему это происходит</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.why}</p></div>
+                <div className="border-l-2 border-slate-700 pl-5"><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Почему это происходит</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.why}</p></div>
                 <div className="border-l-2 border-rose-500/50 pl-5 bg-rose-500/5 py-4 rounded-r-xl"><p className="text-rose-400 text-[10px] font-bold uppercase tracking-widest mb-2">Что делать сейчас</p><p className="text-white text-sm font-bold leading-relaxed">{viewingInfo.now}</p></div>
                 <div className="border-l-2 border-teal-500/50 pl-5"><p className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-2">Что изменить завтра</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.tomorrow}</p></div>
               </div>
@@ -281,7 +281,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(225,29,72,0.15)_0%,transparent_70%)] pointer-events-none" />
                   <Sparkles className="w-10 h-10 text-rose-400 mx-auto mb-4" />
                   <h3 className="text-xl font-black text-white mb-2">Глубокий разбор от AI-врача</h3>
-                  <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                  <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                     ИИ проанализирует эти симптомы в комплексе и <strong className="text-white">подберет безопасный тур</strong>, где твоему телу будет комфортно.
                   </p>
                   <button onClick={handleGetAiMagic} disabled={isLoading} className="w-full bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(225,29,72,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
@@ -291,7 +291,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
 
                 {/* SMART CTA ПОСЛЕ ИИ (Саммари этап) */}
                 <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       href="/directions"
@@ -366,7 +366,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
 
                         {/* SMART CTA ПОСЛЕ ИИ */}
                         <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Продолжить</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
                           <div className="flex flex-col sm:flex-row gap-3">
                             <Link
                               href="/directions"

@@ -51,7 +51,7 @@ export default function BlogTab({
             <FileText size={28} className="text-violet-500" />
             Блог
           </h2>
-          <p className="text-sm text-slate-500 font-medium mt-1">
+          <p className="text-sm text-slate-400 font-medium mt-1">
             Управление статьями и категориями
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function BlogTab({
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
                   activeView === 'posts' 
                   ? 'bg-white dark:bg-slate-900 text-violet-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
           >
               <FileText size={16} /> Статьи ({posts.length})
@@ -85,7 +85,7 @@ export default function BlogTab({
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
                   activeView === 'categories' 
                   ? 'bg-white dark:bg-slate-900 text-violet-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
           >
               <LayoutGrid size={16} /> Категории ({categories.length})
@@ -134,7 +134,7 @@ export default function BlogTab({
                           {(post as any).blogCategory?.title || post.category || 'Без категории'}
                         </span>
                       </td>
-                      <td className="p-5 text-xs font-bold text-slate-500">
+                      <td className="p-5 text-xs font-bold text-slate-400">
                         {post.author_name}
                       </td>
                       <td className="p-5 text-center">
@@ -160,7 +160,7 @@ export default function BlogTab({
                 })}
                 {posts.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-10 text-center text-slate-500 font-medium">Статей пока нет</td>
+                    <td colSpan={6} className="p-10 text-center text-slate-400 font-medium">Статей пока нет</td>
                   </tr>
                 )}
               </tbody>
@@ -192,7 +192,7 @@ export default function BlogTab({
                       </div>
                       <div className="flex justify-end gap-2 mt-2">
                         <button onClick={() => onToggleStatus(post, 'is_trending')} className={`p-2 rounded-lg ${post.is_trending ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-300 bg-slate-50 dark:bg-slate-800'}`}><Star size={16}/></button>
-                        <button onClick={() => onEdit(post)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500"><Edit size={16}/></button>
+                        <button onClick={() => onEdit(post)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-400"><Edit size={16}/></button>
                         <button onClick={() => onDelete(String(post.id))} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-lg"><Trash2 size={16}/></button>
                       </div>
                     </div>
@@ -230,11 +230,11 @@ export default function BlogTab({
                                   {cat.title}
                               </td>
                               <td className="p-5">
-                                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                                  <span className="font-mono text-xs text-slate-400 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
                                       {cat.slug}
                                   </span>
                               </td>
-                              <td className="p-5 text-center font-bold text-slate-500">
+                              <td className="p-5 text-center font-bold text-slate-400">
                                   {cat.sortOrder}
                               </td>
                               <td className="p-5 text-center">
@@ -259,7 +259,7 @@ export default function BlogTab({
                       ))}
                       {categories.length === 0 && (
                           <tr>
-                              <td colSpan={5} className="p-10 text-center text-slate-500 font-medium">Категории блога не найдены</td>
+                              <td colSpan={5} className="p-10 text-center text-slate-400 font-medium">Категории блога не найдены</td>
                           </tr>
                       )}
                   </tbody>

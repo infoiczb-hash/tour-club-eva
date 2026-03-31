@@ -62,7 +62,7 @@ export default function LoginPage() {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-slate-900 px-4 text-slate-500 uppercase tracking-widest font-bold">или</span>
+                  <span className="bg-slate-900 px-4 text-slate-400 uppercase tracking-widest font-bold">или</span>
                 </div>
               </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-500 mt-6 leading-relaxed">
+        <p className="text-center text-xs text-slate-400 mt-6 leading-relaxed">
           Входя в кабинет, вы соглашаетесь с условиями использования.
           <br />Мы не передаём ваши данные третьим лицам.
         </p>

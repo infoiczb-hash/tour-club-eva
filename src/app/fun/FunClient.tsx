@@ -12,7 +12,6 @@ import { twMerge } from "tailwind-merge";
 import type { FunTest } from "@prisma/client";
 import { useInView } from '@/hooks/useInView';
 import { useModalStore } from '@/shared/store/useModalStore';
-import { LazyMotion, domAnimation } from "framer-motion";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -81,7 +80,6 @@ function QuizModalManager() {
 
   if (!ActiveModal || !slug) return null;
 
-  // ←←← Как было раньше: просто рендерим сам компонент (он уже модалка)
   return (
     <ActiveModal
       isOpen={true}
@@ -97,7 +95,7 @@ function QuizModalManager() {
 export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();   // ←←← ОБЯЗАТЕЛЬНО
+  const searchParams = useSearchParams();
 
   const handleOpenQuiz = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -117,8 +115,6 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
 
   return (
     <div suppressHydrationWarning className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
-
-     
 
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
@@ -154,12 +150,10 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         })}
         <CtaBanner />
       </div>
-{/* СТАЛО: Добавляем LazyMotion вокруг Suspense */}
-      <LazyMotion features={domAnimation}>
-        <Suspense fallback={null}>
-          <QuizModalManager />
-        </Suspense>
-      </LazyMotion>
+
+      <Suspense fallback={null}>
+        <QuizModalManager />
+      </Suspense>
     </div>
   );
 }

@@ -1,15 +1,16 @@
 import React from 'react';
-import { CheckCircle, QrCode, Link as LinkIcon, Send, Globe, MessageCircle, Banknote, Bot } from 'lucide-react';
+import { CheckCircle, QrCode, Link as LinkIcon, Send, Globe, MessageCircle, Banknote } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 interface SuccessScreenProps {
+  bookingId: string; // ✅ Добавлено для формирования ссылки в кабинет
   shortId: number;
   totalPrice: number;
   currency: string;
   paymentMethod: string;
-  isGuest?: boolean; // Сделали опциональным, чтобы модалка не ругалась
-  phone?: string;    // ✅ Добавили телефон, чтобы принять его из модалки
+  isGuest?: boolean;
+  phone?: string;
   biletpmrLink?: string | null;
   apbQrLink?: string | null;
   apbQrImage?: string | null;
@@ -17,6 +18,7 @@ interface SuccessScreenProps {
 }
 
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({
+  bookingId, // ✅ Добавлено
   shortId,
   totalPrice,
   currency,
@@ -27,121 +29,138 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
   apbQrImage,
   onClose
 }) => {
+  // Настройки для Клевера (QR). Берем из пропсов тура или дефолтные из ENV
   const defaultApbImage = process.env.NEXT_PUBLIC_DEFAULT_APB_IMAGE || "/images/default-apb-qr.png";
   const finalApbImage = apbQrImage || defaultApbImage;
+  const finalApbLink = apbQrLink || process.env.NEXT_PUBLIC_DEFAULT_APB_LINK || "#";
   
-  // Ссылка на бота с зашитым номером брони (Deep Link)
+  // Ссылки для связи
   const botDeepLink = `https://t.me/authevaclub_bot?start=${shortId}`;
-  // Ссылка на живого менеджера (для иностранцев)
-  const managerLink = process.env.NEXT_PUBLIC_MANAGER_TG || "https://t.me/evaturclub";
-
-  // 🌍 СЦЕНАРИЙ 5: Иностранный гость (Молдова и др.)
-  if (paymentMethod === 'transfer_md') {
-    return (
-      <div className="flex flex-col items-center text-center py-6 px-2 animate-in fade-in zoom-in-95 duration-500">
-        <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 mb-4 border border-blue-500/20">
-          <Globe size={32} />
-        </div>
-        <h3 className="text-2xl font-black text-white uppercase mb-1">Рады приветствовать!</h3>
-        <p className="text-slate-400 text-sm mb-6">Бронь <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded">#{shortId}</span></p>
-        
-        <div className="w-full bg-slate-950/50 border border-blue-500/30 rounded-2xl p-5 mb-6 text-left">
-          <p className="text-sm text-slate-300 leading-relaxed mb-4">
-            Для гостей из других стран у нас индивидуальный подход. Наш менеджер свяжется с вами, чтобы подобрать удобный способ оплаты (в леях или другой валюте), а также ответит на все вопросы по границе и связи.
-          </p>
-          <Link href={managerLink} target="_blank" className="w-full py-3.5 bg-blue-500 hover:bg-blue-400 text-white text-sm font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20">
-            <MessageCircle size={18} /> Связаться с менеджером
-          </Link>
-        </div>
-        <button onClick={onClose} className="text-slate-500 text-sm hover:text-white transition-colors underline underline-offset-4">Закрыть окно</button>
-      </div>
-    );
-  }
-
-  // 🤖 СЦЕНАРИЙ 1: ГОСТЬ (Не привязан Telegram)
-  if (isGuest) {
-    return (
-      <div className="flex flex-col items-center text-center py-6 px-2 animate-in fade-in zoom-in-95 duration-500">
-        <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center text-teal-500 mb-4 border border-teal-500/20">
-          <CheckCircle size={32} />
-        </div>
-        <h3 className="text-2xl font-black text-white uppercase mb-1">Заявка создана!</h3>
-        <p className="text-slate-400 text-sm mb-6">Бронь <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded">#{shortId}</span></p>
-        
-        <div className="w-full bg-slate-950/50 border border-teal-500/30 rounded-2xl p-6 mb-6">
-          <Bot size={40} className="text-teal-500 mx-auto mb-4 opacity-80" />
-          <p className="text-sm text-slate-300 leading-relaxed mb-6">
-            Ваш аккаунт еще не активирован. Чтобы получить билет, узнать реквизиты для оплаты и логистическую информацию, <strong>обязательно запустите нашего бота</strong>.
-          </p>
-          <Link href={botDeepLink} target="_blank" className="w-full py-4 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 animate-pulse">
-            <Send size={18} /> Получить билет в Telegram
-          </Link>
-        </div>
-        <button onClick={onClose} className="text-slate-500 text-sm hover:text-white transition-colors underline underline-offset-4">Закрыть окно</button>
-      </div>
-    );
-  }
-
-  // 👇 ДАЛЬШЕ ИДУТ СЦЕНАРИИ ДЛЯ АВТОРИЗОВАННЫХ (СВОИХ)
+  const managerLink = `https://t.me/romansvtirase`;
 
   return (
-    <div className="flex flex-col items-center text-center py-6 px-2 animate-in fade-in duration-500">
-      <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-4 border border-emerald-500/20">
-        <CheckCircle size={32} />
+    <div className="flex flex-col items-center text-center p-2 sm:p-4">
+      <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+        <CheckCircle className="text-emerald-400 w-8 h-8" />
       </div>
-      <h3 className="text-2xl font-black text-white uppercase mb-1">Места забронированы!</h3>
-      <p className="text-slate-400 text-sm mb-4">Бронь <span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded">#{shortId}</span></p>
+      
+      <h2 className="text-2xl font-bold text-white mb-2">Заявка #{shortId} принята!</h2>
+      <p className="text-slate-400 mb-6 sm:mb-8 text-sm sm:text-base">Места за вами зарезервированы.</p>
 
-      {/* 🧾 СЦЕНАРИЙ 2: QR АГРОПРОМБАНК */}
-      {paymentMethod === 'qr' && (
-        <div className="w-full bg-slate-950/50 border border-indigo-500/30 rounded-2xl p-5 mb-6">
-          <p className="text-xs text-slate-400 uppercase font-bold mb-2">К оплате:</p>
-          <p className="text-3xl font-black text-indigo-400 mb-4">{totalPrice} {currency}</p>
-          <div className="bg-white p-2 rounded-xl mb-4 inline-block">
-            <Image src={finalApbImage} alt="QR Code APB" width={140} height={140} className="rounded-lg" unoptimized />
+      {/* 💳 СЦЕНАРИЙ 1: BILETPMR */}
+      {paymentMethod === 'biletpmr' && (
+        <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <Globe className="text-blue-400 w-6 h-6" />
+            <h3 className="text-lg font-semibold text-white">Оплата онлайн (BiletPMR)</h3>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed mb-4">
-            Отсканируйте QR в приложении АПБ. После перевода нажмите кнопку ниже, чтобы прикрепить скриншот чека.
+          <p className="text-sm text-slate-300 leading-relaxed mb-6">
+            Если Вам удобно оплатить на biletpmr, можно перейти по ссылке. Цена может отличаться (не применяются бонусные оплаты и промокод), так как это сторонний сервис оплаты. После оплаты вы можете отправить нам билет сюда, или ожидайте, пока мы проверим вручную.
           </p>
-          <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
-             <QrCode size={18} /> Я оплатил (Отправить чек)
+          
+          <div className="flex flex-col gap-3">
+            {biletpmrLink ? (
+              <Link href={biletpmrLink} target="_blank" className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
+                <LinkIcon size={18} /> Перейти к оплате
+              </Link>
+            ) : (
+              <p className="text-sm text-red-400 font-bold mb-2 text-center bg-red-500/10 py-2 rounded-lg border border-red-500/20">
+                Ссылка на оплату временно недоступна
+              </p>
+            )}
+            <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
+              <Send size={18} /> Отправить билет в Telegram
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* 📱 СЦЕНАРИЙ 2: QR КЛЕВЕР */}
+      {paymentMethod === 'qr' && (
+        <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <QrCode className="text-emerald-400 w-6 h-6" />
+            <h3 className="text-lg font-semibold text-white">Оплата Клевер (QR)</h3>
+          </div>
+          <p className="text-sm text-slate-300 leading-relaxed mb-4">
+            К оплате: <strong className="text-emerald-400 text-base">{totalPrice} {currency}</strong><br/>
+            Отсканируйте QR-код через приложение вашего банка или перейдите по ссылке ниже. После оплаты <strong className="text-white">обязательно отправьте скриншот чека</strong> в нашего Telegram-бота!
+          </p>
+          
+          <div className="flex flex-col items-center bg-white p-3 rounded-xl mb-5 w-fit mx-auto">
+            <Image 
+              src={finalApbImage} 
+              alt="QR код Клевер" 
+              width={180} 
+              height={180} 
+              className="rounded-lg object-contain" 
+            />
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <Link href={finalApbLink} target="_blank" className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
+              <LinkIcon size={18} /> Ссылка на оплату (Клевер)
+            </Link>
+            <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors shadow-[0_0_15px_rgba(42,171,238,0.3)]">
+              <Send size={18} /> Отправить скриншот в Telegram
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* 💵 СЦЕНАРИЙ 3: НАЛИЧНЫЕ / ТЕРМИНАЛ */}
+      {paymentMethod === 'cash' && (
+        <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <Banknote className="text-emerald-400 w-6 h-6" />
+            <h3 className="text-lg font-semibold text-white">Оплата наличными</h3>
+          </div>
+          <p className="text-sm text-slate-300 leading-relaxed mb-6">
+            Договорились! Подготовьте <strong className="text-white">{totalPrice} {currency}</strong> без сдачи к дню тура (оплата гиду на месте).<br/><br/>
+            За 3 дня и за сутки до выезда бот пришлет вам запрос на подтверждение участия — не пропустите! Рекомендуем выбрать другой способ оплаты или оплатить через платежные терминалы АПБ. Выберите там ТурКлуб &quot;Эва&quot;. Квитанцию отправьте нам в бот.
+          </p>
+          
+          <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <Send size={18} /> Отправить квитанцию из терминала
           </Link>
         </div>
       )}
 
-      {/* 💳 СЦЕНАРИЙ 3: BILET PMR */}
-      {paymentMethod === 'biletpmr' && (
-        <div className="w-full bg-slate-950/50 border border-[#E30613]/30 rounded-2xl p-5 mb-6">
-          <p className="text-xs text-slate-400 uppercase font-bold mb-2">К оплате:</p>
-          <p className="text-3xl font-black text-[#E30613] mb-4">{totalPrice} {currency}</p>
-          <p className="text-xs text-slate-300 leading-relaxed mb-4">
-            Оплатите билеты онлайн. Как только транзакция пройдет, статус билета в боте автоматически изменится на «Оплачено».
+      {/* 🌍 СЦЕНАРИЙ 4: INTERNATIONAL */}
+      {paymentMethod === 'foreign' && (
+        <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <Globe className="text-blue-400 w-6 h-6" />
+            <h3 className="text-lg font-semibold text-white">Из других стран</h3>
+          </div>
+          <p className="text-sm text-slate-300 leading-relaxed mb-6">
+            Для оплаты свяжитесь напрямую с менеджерами. Мы поможем подобрать удобный способ перевода.
           </p>
-          {biletpmrLink ? (
-             <Link href={biletpmrLink} target="_blank" className="w-full py-3.5 bg-[#E30613] hover:bg-[#E30613]/80 text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
-               <LinkIcon size={18} /> Перейти к оплате
-             </Link>
-          ) : (
-             <p className="text-sm text-red-400 font-bold">Ссылка на оплату временно недоступна</p>
-          )}
+          
+          <Link href={managerLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <MessageCircle size={18} /> Написать менеджеру (Telegram)
+          </Link>
         </div>
       )}
 
-      {/* 💵 СЦЕНАРИЙ 4: НАЛИЧНЫЕ */}
-      {paymentMethod === 'cash' && (
-        <div className="w-full bg-slate-950/50 border border-emerald-500/30 rounded-2xl p-5 mb-6">
-          <Banknote size={40} className="text-emerald-500 mx-auto mb-4 opacity-80" />
-          <p className="text-sm text-slate-300 leading-relaxed mb-4">
-            Договорились! Подготовьте <strong>{totalPrice} {currency}</strong> без сдачи к дню тура (оплата гиду на месте). 
-            <br/><br/>
-            За сутки до выезда бот пришлет вам запрос на подтверждение участия — не пропустите!
-          </p>
-        </div>
-      )}
+     <div className="w-full flex flex-col gap-2 mt-2">
+        {/* ✅ Кнопка Изменить способ оплаты (Только для не-гостей) */}
+        {!isGuest && (
+          <Link 
+            href={`/account/bookings/${bookingId}`}
+            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-widest rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+          >
+            <Banknote size={16} className="text-teal-500" /> Изменить способ оплаты
+          </Link>
+        )}
 
-      <button onClick={onClose} className="w-full py-3 bg-white/5 hover:bg-white/10 text-white text-sm font-bold uppercase rounded-xl transition-colors">
-        Понятно, закрыть
-      </button>
+        <button 
+          onClick={onClose}
+          className="w-full py-3 text-slate-500 hover:text-slate-300 font-bold transition-colors text-[10px] uppercase tracking-[0.2em]"
+        >
+          Закрыть и вернуться к туру
+        </button>
+      </div>
     </div>
   );
 };

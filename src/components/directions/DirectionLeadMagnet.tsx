@@ -90,7 +90,7 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
                         </button>
                     </form>
 
-                    <div className="mt-6 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    <div className="mt-6 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                         <Sparkles size={12} style={{ color: theme.hex }} />
                         <span>Первым записавшимся — бонус от гида</span>
                     </div>

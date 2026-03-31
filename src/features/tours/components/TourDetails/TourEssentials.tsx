@@ -29,7 +29,7 @@ const renderSafeListItem = (item: any): React.ReactNode => {
       <div className="flex flex-col gap-1 w-full">
         {title && <strong className="text-white font-bold">{title}</strong>}
         {itemsList.length > 0 && (
-          <div className="text-slate-400 text-sm">
+          <div className="text-slate-300 text-sm">
             {/* Если внутри старые строки - выводим как раньше. Если новые объекты - рендерим списком */}
             {typeof itemsList[0] === 'string' ? (
               itemsList.join(', ')
@@ -221,7 +221,7 @@ export default function TourEssentials({
               {checklist}
             </div>
           ) : (
-            <p className="text-slate-400 text-sm italic">
+            <p className="text-slate-300 text-sm italic">
               Специальное снаряжение не требуется. Достаточно удобной одежды по погоде.
             </p>
           )}
@@ -247,7 +247,7 @@ export default function TourEssentials({
                       <FileText size={16} aria-hidden="true" />
                     </div>
                     <div className="flex flex-col overflow-hidden">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Файл</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Файл</span>
                       <span className="text-sm font-bold text-slate-200 truncate group-hover:text-white transition-colors">
                         {doc.title || `Документ ${i + 1}`}
                       </span>
@@ -258,7 +258,7 @@ export default function TourEssentials({
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 text-sm italic">
+            <p className="text-slate-300 text-sm italic">
               Для этого тура специальные документы не требуются.
             </p>
           )}

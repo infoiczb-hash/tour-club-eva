@@ -204,7 +204,7 @@ export default async function GuidePage({ params }: Props) {
             {/* 2. Шкалы навыков */}
             {stats.length > 0 && (
               <div className="bg-slate-900/50 border border-white/5 p-6 md:p-8 rounded-[2rem]">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6 md:mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 md:mb-8">
                   Навыки и специализация
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 md:gap-y-8">

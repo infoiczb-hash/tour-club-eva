@@ -161,7 +161,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                           isSelected
                             ? 'bg-teal-500/20 border-teal-500 text-teal-400'
-                            : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-300'
                         }`}
                       >
                         <item.icon size={24} strokeWidth={isSelected ? 2.5 : 2} />
@@ -208,7 +208,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
                   placeholder="0"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-teal-500 outline-none"
                 />
-                <p className="text-[11px] text-slate-500">Меньше цифра = выше в списке</p>
+                <p className="text-[11px] text-slate-400">Меньше цифра = выше в списке</p>
               </div>
 
               <div className="flex items-center mt-6">

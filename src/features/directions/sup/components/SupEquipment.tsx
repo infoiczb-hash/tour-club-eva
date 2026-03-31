@@ -63,17 +63,6 @@ export default function SupEquipment() {
     return (
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
-            {/* CSS для плавной парящей доски (замена Framer Motion animate={{y: ...}}) */}
-            <style dangerouslySetInnerHTML={{__html: `
-                @keyframes float-sup {
-                    0%, 100% { transform: translateY(-10px); }
-                    50% { transform: translateY(10px); }
-                }
-                .animate-float-sup {
-                    animation: float-sup 6s ease-in-out infinite;
-                }
-            `}} />
-
             {/* Фоновые свечения для кинематографичности */}
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 md:blur-[120px] rounded-full pointer-events-none" />
 
@@ -116,7 +105,7 @@ export default function SupEquipment() {
                                 fill 
                                 sizes="(max-width: 768px) 120vw, 1200px"
                                 className="object-contain drop-shadow-[0_20px_40px_rgba(20,184,166,0.15)]"
-                                priority
+                                // priority удален для оптимизации LCP
                             />
                         </div>
                     </div>

@@ -51,7 +51,7 @@ export default function SafetyRegulations() {
             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4">
               Кодекс <span className="text-rose-500"> на сплаве</span>
             </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl mx-auto leading-relaxed">
+            <p className="text-slate-300 text-sm md:text-base font-medium max-w-2xl mx-auto leading-relaxed">
               Соблюдение этих правил обязательно для всех. Инструктор несет ответственность за группу, а вы — за выполнение его команд и сохранность имущества.
             </p>
           </div>

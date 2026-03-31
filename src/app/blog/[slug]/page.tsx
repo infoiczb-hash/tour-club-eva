@@ -387,7 +387,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                             </div>
                         ) : (
                             <div className="p-6 border border-dashed border-white/10 rounded-2xl text-center">
-                                <p className="text-slate-500 text-sm font-medium">Нет других статей</p>
+                                <p className="text-slate-300 text-sm font-medium">Нет других статей</p>
                             </div>
                         )}
 

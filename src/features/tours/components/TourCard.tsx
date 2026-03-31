@@ -96,8 +96,10 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             alt={title}
             fill
             priority={priority}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={65}
+            // ✅ ИСПРАВЛЕНО: Более точные sizes для Supabase Image Transformation
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+            // ✅ ИСПРАВЛЕНО: Снижено quality (под градиентом разницы нет, а вес меньше)
+            quality={55}
             className="object-cover transition-transform duration-1000 group-hover:scale-105"
           />
           {/* Легкий градиент снизу для плавного перехода в темный блок */}
@@ -197,7 +199,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {/* Подвал с ценой и кнопкой */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Стоимость</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Стоимость</span>
               <div className="flex items-baseline gap-1.5">
                 {(priceOld ?? 0) > Number(price) && (
                   <span className="text-xs font-bold text-rose-400/80 line-through decoration-rose-400/50 mr-1">{priceOld}</span>

@@ -69,15 +69,19 @@ export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'b
 
 interface BookingItem {
   id: string;
+  short_id?: number;
   user_name: string;
   user_phone: string;
   status: BookingStatus;
   created_at: Date | string;
-  
+
   tickets_adult: number;
   tickets_child: number;
   tickets_family: number; // <-- ДОБАВЛЕНО
   tickets_member: number;
+  guests: any[]; 
+  payment_method: string;
+  discount: number;
   
   total_price: number;
   amount_paid: number;    // <-- ДОБАВЛЕНО
@@ -85,7 +89,8 @@ interface BookingItem {
   
   comment?: string | null;
   social?: string | null;
-  event_id: string;
+  tourId: string;
+  tourDateId?: string;
   tour?: { title: string; date: Date | string };
 }
 
@@ -227,7 +232,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   };
 
   // --- STATS ---
-  const stats = useMemo(() => {
+ const stats = useMemo(() => {
     const newBookings = bookings.filter(b => b.status === 'pending').length;
     const newInquiries = inquiries.filter(i => i.status === 'NEW').length;
     const totalTours = tours.length;
@@ -235,20 +240,21 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     const finishedTours = tours.filter(t => new Date(t.date) < new Date()).length;
     
     const now = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(now.getDate() + 7);
+    const nextMonth = new Date();
+    nextMonth.setDate(now.getDate() + 30); // ✅ Окно планирования 30 дней
     
-    const toursThisWeek = tours
+    const toursThisMonth = tours
         .filter(t => {
             const d = new Date(t.date);
-            return d >= now && d <= nextWeek && t.isActive;
+            return d >= now && d <= nextMonth && t.isActive;
         })
         .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return { 
         newBookings, newInquiries, totalTours, activeTours, finishedTours, 
         totalPosts: posts.length, totalGuides: guides.length,
-        toursThisWeek 
+        toursThisMonth, // ✅ Передаем туры на месяц
+        allBookings: bookings // ✅ Прокидываем все брони для "светофора" и финансов
     };
   }, [bookings, inquiries, tours, posts, guides]);
 
@@ -267,13 +273,22 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
     }
   };
 
-  const handleSendTg = async (tourId: string, title: string) => {
-      const list = bookings.filter(b => b.event_id === tourId && b.status !== 'cancelled');
+const handleSendTg = async (tourId: string, title: string) => {
+      // ✅ Теперь корректно ищет по tourId
+      const list = bookings.filter(b => b.tourId === tourId && b.status !== 'cancelled');
       if (list.length === 0) return showToast('Список пуст', 'error');
       
       let msg = `📋 <b>Список группы: ${title}</b>\n\n`;
-      list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
-      msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
+      
+      list.forEach((b, i) => {
+        // ✅ Считаем все типы билетов (Семейный = 3 человека)
+        const total = (b.tickets_adult || 0) + (b.tickets_child || 0) + (b.tickets_member || 0) + ((b.tickets_family || 0) * 3);
+        msg += `${i+1}. ${b.user_name} (${total} чел.)\n📞 ${b.user_phone}\n\n`;
+      });
+
+      // ✅ Считаем общую сумму по всем участникам со всеми тарифами
+      const totalGroup = list.reduce((acc, b) => acc + (b.tickets_adult || 0) + (b.tickets_child || 0) + (b.tickets_member || 0) + ((b.tickets_family || 0) * 3), 0);
+      msg += `\n👥 <b>Всего: ${totalGroup} чел.</b>`;
       
       const res = await sendToTelegram(msg);
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
@@ -436,7 +451,7 @@ const handleStatusChange = async (id: string, status: string) => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
-                <p className="text-sm text-slate-500 mt-1">Управляй карточками тестов на сайте</p>
+                <p className="text-sm text-slate-400 mt-1">Управляй карточками тестов на сайте</p>
               </div>
               <button
                 onClick={() => {

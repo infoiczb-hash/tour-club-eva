@@ -428,7 +428,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
           {/* 2. TEXT CONTENT & TIPTAP */}
           <div className="space-y-6">
               <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Preview (Lead)</label>
+                  <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Preview (Lead)</label>
                   <textarea 
                     className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm leading-relaxed outline-none focus:ring-2 focus:ring-violet-500/20 transition-all resize-none dark:text-white placeholder:text-slate-400 h-28" 
                     value={formData.excerpt} onChange={(e) => setFormData({...formData, excerpt: e.target.value})} placeholder="Short description for the card..." 
@@ -436,7 +436,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
               </div>
 
               <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Content</label>
+                  <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Content</label>
                   <TiptapEditor 
                     content={formData.content} 
                     onChange={handleContentChange} 
@@ -450,7 +450,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
           {/* 3. COVER IMAGE */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cover Image</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cover Image</label>
                 <button type="button" onClick={handleAiImage} disabled={isImageGenerating || !formData.title} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 disabled:opacity-50">
                     {isImageGenerating ? <Loader2 size={12} className="animate-spin"/> : <Palette size={12}/>} Generate AI
                 </button>

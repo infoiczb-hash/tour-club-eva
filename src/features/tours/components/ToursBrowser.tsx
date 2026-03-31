@@ -334,7 +334,7 @@ export default function ToursBrowser({
                             </div>
                             
                             {/* Подсказка для свайпа на мобилках */}
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-500 pointer-events-none">
+                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-400 pointer-events-none">
                                 <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
                                 <ArrowRight size={14} className="text-teal-500 animate-pulse" />
                             </div>
@@ -375,7 +375,7 @@ export default function ToursBrowser({
                                 ))}
                             </div>
                             
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-500 pointer-events-none">
+                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-400 pointer-events-none">
                                 <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
                                 <ArrowRight size={14} className="text-teal-500 animate-pulse" />
                             </div>

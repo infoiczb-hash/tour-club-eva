@@ -244,7 +244,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
                 <HeartPulse size={36} />
               </div>
               <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-4 tracking-tight uppercase">Оценка<br /><span className="text-cyan-400">физической формы</span></h2>
-              <p className="text-slate-400 text-sm leading-relaxed font-medium mb-10 max-w-md mx-auto">
+              <p className="text-slate-300 text-sm leading-relaxed font-medium mb-10 max-w-md mx-auto">
                 Давай честно оценим твои силы. Это нужно не для соревнований, а чтобы подобрать маршрут, от которого ты получишь кайф, а не травмы.
               </p>
               <button onClick={() => setStep("questions")} className="w-full sm:w-auto px-10 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider mx-auto transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-95">
@@ -270,7 +270,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 space-y-3">
                 {currentQuestion.options.map((opt) => (
                     <button key={opt.value} onClick={() => handleAnswer(opt.value)} className="w-full text-left px-5 py-4 rounded-2xl border border-white/5 bg-slate-800/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 flex items-center gap-4 group">
-                        <div className="text-slate-500 group-hover:text-cyan-400 transition-colors shrink-0">{opt.icon}</div>
+                        <div className="text-slate-400 group-hover:text-cyan-400 transition-colors shrink-0">{opt.icon}</div>
                         <div className="text-[15px] md:text-base font-bold text-slate-300 group-hover:text-white transition-colors">{opt.text}</div>
                     </button>
                 ))}
@@ -278,7 +278,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
               {currentQ > 0 && (
                 <div className="shrink-0 pt-4 border-t border-white/5 mt-2">
-                   <button onClick={() => setCurrentQ(q => q - 1)} className="flex items-center gap-2 text-slate-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"><ArrowLeft size={16} /> Назад</button>
+                   <button onClick={() => setCurrentQ(q => q - 1)} className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"><ArrowLeft size={16} /> Назад</button>
                 </div>
               )}
             </motion.div>
@@ -306,7 +306,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.15)_0%,transparent_70%)] pointer-events-none" />
                   <Flame className="w-10 h-10 text-cyan-400 mx-auto mb-4" />
                   <h3 className="text-xl font-black text-white mb-2">Персональный AI-тренер</h3>
-                  <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                  <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                     ИИ проанализирует твои суставы и кардио, даст советы по подготовке и <strong className="text-white">подберет идеальный тур по силам</strong>.
                   </p>
                   <button onClick={handleGetAiMagic} disabled={isLoading} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
@@ -316,7 +316,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
                 {/* SMART CTA ПОСЛЕ САММАРИ */}
                 <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       href="/directions"
@@ -391,7 +391,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
                         {/* SMART CTA ПОСЛЕ ИИ */}
                         <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Продолжить</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
                           <div className="flex flex-col sm:flex-row gap-3">
                             <Link
                               href="/directions"

@@ -182,7 +182,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                 <span className="text-teal-500">.</span>
             </h2>
             
-            <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
+            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
                 <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
                 <span>Создано из отзывов и оценочных форм туров</span>
             </div>

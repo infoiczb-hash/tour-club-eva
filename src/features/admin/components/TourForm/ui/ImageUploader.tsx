@@ -95,7 +95,7 @@ export const ImageUploader = ({
 
   return (
     <div className={clsx("w-full", className)}>
-      <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">
+      <label className="text-xs font-bold uppercase text-slate-400 mb-2 block">
         {label}
       </label>
 

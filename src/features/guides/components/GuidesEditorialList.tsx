@@ -178,7 +178,7 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
 
                 <div className="flex flex-wrap gap-2 mb-8">
                     {guide.tags && guide.tags.map((tag, idx) => (
-                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
+                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg">
                             #{tag}
                         </span>
                     ))}

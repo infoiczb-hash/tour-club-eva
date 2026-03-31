@@ -16,7 +16,7 @@ export default function ContentTab({ onEdit }: ContentTabProps) {
         >
           <LayoutTemplate size={40} className="text-slate-300 mb-4 group-hover:text-teal-500 transition-colors"/>
           <h3 className="text-xl font-bold dark:text-white">Главный экран (Hero)</h3>
-          <p className="text-sm text-slate-500 mt-2">Заголовок, подзаголовок и видео на главной</p>
+          <p className="text-sm text-slate-400 mt-2">Заголовок, подзаголовок и видео на главной</p>
         </div>
         <div 
           onClick={() => onEdit('footer')} 
@@ -24,7 +24,7 @@ export default function ContentTab({ onEdit }: ContentTabProps) {
         >
           <MessageSquare size={40} className="text-slate-300 mb-4 group-hover:text-teal-500 transition-colors"/>
           <h3 className="text-xl font-bold dark:text-white">Футер и Контакты</h3>
-          <p className="text-sm text-slate-500 mt-2">Ссылки на соцсети, телефоны</p>
+          <p className="text-sm text-slate-400 mt-2">Ссылки на соцсети, телефоны</p>
         </div>
       </div>
     </div>

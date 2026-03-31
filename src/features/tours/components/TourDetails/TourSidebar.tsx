@@ -132,7 +132,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
                 <ShieldCheck size={10} className="text-teal-500"/> Без предоплаты
               </p>
               <p className="text-[12px] text-slate-400 uppercase font-bold flex items-center gap-1">
-                <Check size={10} className="text-teal-500"/> Мгновенное подтверждение
+                <Check size={10} className="text-teal-500"/>Автоматическое подтверждение
               </p>
           </div>
         )}

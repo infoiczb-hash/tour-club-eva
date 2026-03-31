@@ -147,7 +147,7 @@ export default function Philosophy() {
                       "w-12 h-12 xl:w-14 xl:h-14 rounded-full border flex items-center justify-center transition-all duration-300",
                       canScrollLeft
                         ? "bg-slate-900 border-white/10 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] active:scale-95"
-                        : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-500"
+                        : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-400"
                     )}
                   >
                     <ChevronLeft size={20} />
@@ -160,7 +160,7 @@ export default function Philosophy() {
                       "w-12 h-12 xl:w-14 xl:h-14 rounded-full border flex items-center justify-center transition-all duration-300",
                       canScrollRight
                         ? "bg-slate-900 border-white/10 text-white hover:bg-teal-500 hover:text-slate-900 hover:border-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] active:scale-95"
-                        : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-500"
+                        : "bg-transparent border-white/5 opacity-30 cursor-not-allowed text-slate-400"
                     )}
                   >
                     <ChevronRight size={20} />

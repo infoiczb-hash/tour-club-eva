@@ -312,7 +312,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
 
                 <div className="shrink-0 mt-4 pt-2 border-t border-transparent h-12">
                   {step > 0 && (
-                      <button onClick={handleBack} className="text-sm font-bold text-slate-500 hover:text-white flex items-center gap-3 transition-colors w-fit">
+                      <button onClick={handleBack} className="text-sm font-bold text-slate-400 hover:text-white flex items-center gap-3 transition-colors w-fit">
                       <ArrowLeft size={16} /> Назад
                       </button>
                   )}
@@ -360,7 +360,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
                   </div>
 
                   <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-6 mb-6">
-                    <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои характеристики:</h4>
+                    <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-4">Твои характеристики:</h4>
                     <div className="space-y-3">
                       {finalResult.characteristics.map((char, i) => (
                         <div key={i} className="flex items-center gap-3 text-slate-200 bg-white/5 p-3 rounded-xl border border-white/5">
@@ -382,7 +382,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
 
                   {/* SMART CTA (Теперь внутри скролла для UX/Mobile) */}
                   <div className="pt-6 mt-4 border-t border-white/10 text-center">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
                         Мы рекомендуем Вам
                     </p>
                     <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", finalResult.theme.color)}>

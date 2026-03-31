@@ -234,7 +234,7 @@ export default function ActiveRestClient() {
               Непризнанное государство с серпом и молотом на флаге, советской архитектурой на проспектах
               и диким Днестром за городом. В 90 минутах от Кишинёва. В другом измерении.
             </p>
-            <p className="animate-hero-subtitle text-sm text-slate-500 mb-10">Для местных и иностранных туристов · Без визы · Апрель — октябрь</p>
+            <p className="animate-hero-subtitle text-sm text-slate-400 mb-10">Для местных и иностранных туристов · Без визы · Апрель — октябрь</p>
 
             <div className="animate-hero-subtitle flex flex-col sm:flex-row gap-4">
               <a
@@ -257,7 +257,7 @@ export default function ActiveRestClient() {
       {/* 2. ЧТО ТАКОЕ ПМР */}
       <div className="bg-slate-900 border-y border-white/5">
         <div className="container mx-auto px-5 max-w-6xl py-8">
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-6 text-center">Приднестровская Молдавская Республика</p>
+          <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mb-6 text-center">Приднестровская Молдавская Республика</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {PMR_FACTS.map((f, i) => (
               <FadeIn
@@ -268,7 +268,7 @@ export default function ActiveRestClient() {
               >
                 <f.icon size={20} className="text-teal-400" />
                 <div className="text-2xl font-black text-white leading-none">{f.value}</div>
-                <div className="text-slate-500 text-xs leading-snug">{f.label}</div>
+                <div className="text-slate-300 text-xs leading-snug">{f.label}</div>
               </FadeIn>
             ))}
           </div>
@@ -293,7 +293,7 @@ export default function ActiveRestClient() {
                   <c.icon size={22} className="text-teal-400" />
                 </div>
                 <h3 className="text-base font-bold text-white mb-2">{c.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{c.desc}</p>
+                <p className="text-slate-300 text-sm leading-relaxed">{c.desc}</p>
               </FadeIn>
             ))}
           </div>
@@ -331,7 +331,7 @@ export default function ActiveRestClient() {
                     {s.tag}
                   </span>
                   <h3 className="text-sm font-black text-white mb-1.5">{s.name}</h3>
-                  <p className="text-slate-400 text-xs leading-relaxed">{s.desc}</p>
+                  <p className="text-slate-300 text-xs leading-relaxed">{s.desc}</p>
                 </FadeIn>
               ))}
             </div>
@@ -362,7 +362,7 @@ export default function ActiveRestClient() {
                     {p.tag}
                   </span>
                 </div>
-                <p className="text-slate-400 text-xs leading-relaxed flex-1 mb-4">{p.desc}</p>
+                <p className="text-slate-300 text-xs leading-relaxed flex-1 mb-4">{p.desc}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-600 font-medium">{p.activity}</span>
                   <Link
@@ -411,7 +411,7 @@ export default function ActiveRestClient() {
                 <div className="p-5">
                   <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: act.accent }}>{act.subtitle}</p>
                   <h3 className="text-lg font-black text-white mb-2">{act.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">{act.desc}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4">{act.desc}</p>
                   <Link
                     href={act.href}
                     className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors group/link"
@@ -466,7 +466,7 @@ export default function ActiveRestClient() {
                       </span>
                     </div>
                     <h3 className="text-base font-black text-white mb-2">{layer.title}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{layer.desc}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed">{layer.desc}</p>
                   </div>
                 </FadeIn>
               ))}
@@ -498,7 +498,7 @@ export default function ActiveRestClient() {
                 <p className="text-slate-300 text-sm leading-relaxed flex-1 italic">«{v.quote}»</p>
                 <div>
                   <p className="text-white text-sm font-bold">{v.name}</p>
-                  <p className="text-slate-500 text-xs">{v.role}</p>
+                  <p className="text-slate-300 text-xs">{v.role}</p>
                 </div>
               </FadeIn>
             ))}
@@ -529,7 +529,7 @@ export default function ActiveRestClient() {
                 <h3 className="text-sm font-black text-white uppercase tracking-wide mb-3">{block.title}</h3>
                 <ul className="space-y-2">
                   {block.items.map((item, j) => (
-                    <li key={j} className="flex items-start gap-2 text-slate-400 text-xs leading-relaxed">
+                    <li key={j} className="flex items-start gap-2 text-slate-300 text-xs leading-relaxed">
                       <span
                         className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
                         style={{ background: block.color }}
@@ -563,10 +563,10 @@ export default function ActiveRestClient() {
                     : 'bg-slate-900/50 border border-slate-800'
                 )}
               >
-                <MapPin size={20} className={cn('mb-4', d.highlight ? 'text-teal-400' : 'text-slate-500')} />
+                <MapPin size={20} className={cn('mb-4', d.highlight ? 'text-teal-400' : 'text-slate-400')} />
                 <h3 className="text-lg font-black text-white uppercase tracking-tight mb-1">Из {d.from}</h3>
                 <p className="text-xs font-bold text-teal-400 mb-3">{d.time}</p>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">{d.detail}</p>
+                <p className="text-slate-300 text-sm leading-relaxed mb-4">{d.detail}</p>
                 <span className={cn('text-xs font-bold', d.highlight ? 'text-teal-400' : 'text-slate-600')}>
                   {d.badge}
                 </span>
@@ -599,7 +599,7 @@ export default function ActiveRestClient() {
                       : s.score === 4 ? '#0f766e' : '#1e3a38',
                   }}
                 />
-                <span className="text-xs font-bold text-slate-500">{s.month}</span>
+                <span className="text-xs font-bold text-slate-400">{s.month}</span>
               </ScaleYIn>
             ))}
           </div>
@@ -647,7 +647,7 @@ export default function ActiveRestClient() {
                 <h3 className="text-2xl font-black uppercase tracking-tighter mb-3 text-white relative z-10">
                   Остались<br /><span className="text-teal-400">вопросы?</span>
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-6 relative z-10">
+                <p className="text-slate-300 text-sm leading-relaxed mb-6 relative z-10">
                   Расскажем о маршрутах, поможем спланировать поездку под ваш запрос — один день или неделя. Отвечаем быстро.
                 </p>
                 <div className="flex flex-col gap-3 relative z-10">

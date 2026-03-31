@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-4xl font-black text-white tracking-tighter">ЭВА</div>
-          <p className="text-slate-400 text-sm mt-1">Панель управления</p>
+          <p className="text-slate-300 text-sm mt-1">Панель управления</p>
         </div>
 
         <div className="bg-slate-900 border border-white/10 rounded-2xl p-6">
@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="email"
                   required
@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type={showPass ? 'text' : 'password'}
                   required
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
                   placeholder="••••••••••••"
                 />
                 <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>

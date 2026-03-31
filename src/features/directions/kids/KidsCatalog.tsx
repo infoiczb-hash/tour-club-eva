@@ -127,7 +127,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                 >
                     <Map size={14} className="text-amber-500" />
                     <span>Все туры</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-500"/>
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-400"/>
                 </Link>
             </div>
         </div>

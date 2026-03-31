@@ -143,7 +143,7 @@ export default function KidsFormats() {
                 <FadeBlock startY={30} className="pt-8 border-t border-white/5">
                     <div className="text-left mb-6 md:mb-10 max-w-3xl">
                         <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter mb-3">
-                            Другие <span className="text-slate-500">Форматы</span>
+                            Другие <span className="text-slate-400">Форматы</span>
                         </h3>
                         <p className="text-slate-400 font-medium text-[14px] md:text-base">
                             Мы также организуем индивидуальные и групповые туры под ваш запрос.
@@ -166,7 +166,7 @@ export default function KidsFormats() {
                                             <h4 className="text-white font-bold text-[15px] md:text-base leading-tight mb-1 group-hover:text-amber-100 transition-colors">
                                                 {item.title}
                                             </h4>
-                                            <p className="text-[14px] text-slate-500 font-medium leading-snug line-clamp-2">
+                                            <p className="text-[14px] text-slate-400 font-medium leading-snug line-clamp-2">
                                                 {item.desc}
                                             </p>
                                         </div>

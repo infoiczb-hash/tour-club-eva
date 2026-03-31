@@ -180,7 +180,7 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
                       <Lock size={12} className="text-slate-600" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     Цель: {tier.min} {activeModalData.unit}
                   </p>
                 </div>

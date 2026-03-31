@@ -28,7 +28,7 @@ export const Footer = () => {
               <h2 className="text-xl font-black text-white uppercase tracking-wider mb-2">
                 Турклуб «Эва»
               </h2>
-              <p className="text-slate-400 text-sm leading-snug max-w-sm">
+              <p className="text-slate-300 text-sm leading-snug max-w-sm">
                 Создаем маршруты, в которые хочется возвращаться. <br className="hidden md:block"/>
                 Походы, где важны не километры, а люди рядом.
               </p>

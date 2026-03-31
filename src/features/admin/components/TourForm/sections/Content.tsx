@@ -61,7 +61,7 @@ export const Content = () => {
               <button type="button" onClick={() => removeHigh(index)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
             </div>
           ))}
-          {highFields.length === 0 && <div className="col-span-full text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm">Нет впечатлений</div>}
+          {highFields.length === 0 && <div className="col-span-full text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-300 text-sm">Нет впечатлений</div>}
         </div>
       </div>
 

@@ -100,7 +100,7 @@ const ScoreBar = ({ typeKey, score, max = 20 }: { typeKey: TypeKey; score: numbe
       <div className="flex-1 h-[4px] rounded-full bg-slate-800 relative overflow-hidden">
         <motion.div className="absolute left-0 top-0 h-full rounded-full" style={{ background: t.accent }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }} />
       </div>
-      <div className="text-slate-500 font-bold text-xs w-8 shrink-0">{score}</div>
+      <div className="text-slate-400 font-bold text-xs w-8 shrink-0">{score}</div>
     </div>
   );
 };
@@ -215,7 +215,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                     Кто ты<br /><span className="text-purple-400">в горах?</span>
                   </h1>
 
-                  <p className="text-slate-400 text-sm md:text-base font-medium leading-relaxed mb-10 max-w-md">
+                  <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed mb-10 max-w-md">
                     Тест основан на психологии групповой динамики. Нет правильных и неправильных ответов — только честные.
                   </p>
 
@@ -227,10 +227,10 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                       { icon: <CheckCircle2 size={16} />, label: "Без правильных ответов", sub: "Результат сохранится в профиле" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-4 px-5 py-4 border-b border-white/5 last:border-0">
-                        <div className="mt-0.5 text-slate-500 shrink-0">{item.icon}</div>
+                        <div className="mt-0.5 text-slate-400 shrink-0">{item.icon}</div>
                         <div>
                           <p className="text-slate-200 text-sm font-bold leading-tight mb-1">{item.label}</p>
-                          <p className="text-slate-500 text-xs leading-snug font-medium">{item.sub}</p>
+                          <p className="text-slate-300 text-xs leading-snug font-medium">{item.sub}</p>
                         </div>
                       </div>
                     ))}
@@ -263,7 +263,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                       <BookOpen size={24} />
                     </div>
                     <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">Как отвечать?</h2>
-                    <p className="text-slate-400 text-sm font-medium">Оценивай утверждения по своим первым ощущениям, используя эту шкалу:</p>
+                    <p className="text-slate-300 text-sm font-medium">Оценивай утверждения по своим первым ощущениям, используя эту шкалу:</p>
                   </div>
 
                   <div className="space-y-3 mb-8">
@@ -280,7 +280,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                         </div>
                         <div>
                           <p className="text-white text-sm font-bold uppercase tracking-wider mb-1 leading-tight">{item.title}</p>
-                          <p className="text-slate-500 text-xs font-medium leading-snug">{item.desc}</p>
+                          <p className="text-slate-300 text-xs font-medium leading-snug">{item.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -308,7 +308,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                 className="flex-1 flex flex-col h-full overflow-hidden p-6 md:p-10"
               >
                 <div className="shrink-0 flex items-center justify-between mb-8 pr-12">
-                  <span className="font-bold text-xs text-slate-500 uppercase tracking-widest">
+                  <span className="font-bold text-xs text-slate-400 uppercase tracking-widest">
                     Вопрос {current + 1} / {TOTAL}
                   </span>
                 </div>
@@ -341,10 +341,10 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                     </div>
 
                     <div className="flex justify-between px-1">
-                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-tight max-w-[90px]">
+                      <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight max-w-[90px]">
                         {SCALE_LABELS[0]}
                       </span>
-                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-tight max-w-[90px] text-right">
+                      <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight max-w-[90px] text-right">
                         {SCALE_LABELS[4]}
                       </span>
                     </div>
@@ -398,13 +398,13 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                   {/* Слепое пятно */}
                   <div className="border-l-2 pl-5 mb-6" style={{ borderColor: primaryType.accent }}>
                     <p className={clsx("font-bold text-xs uppercase tracking-widest mb-2", primaryType.color)}>Точка роста</p>
-                    <p className="text-slate-400 text-sm leading-relaxed font-medium">{primaryType.blind}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed font-medium">{primaryType.blind}</p>
                   </div>
 
                   {/* Идеальный напарник */}
                   <div className="border-l-2 pl-5 mb-8" style={{ borderColor: primaryType.accent }}>
                     <p className={clsx("font-bold text-xs uppercase tracking-widest mb-2", primaryType.color)}>В связке</p>
-                    <p className="text-slate-400 text-sm leading-relaxed font-medium">{primaryType.pair}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed font-medium">{primaryType.pair}</p>
                   </div>
 
                   {/* Вторичный тип */}
@@ -414,14 +414,14 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                            {secondaryType.icon}
                         </div>
                         <div>
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Скрытый резерв</p>
+                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Скрытый резерв</p>
                            <p className="text-sm text-slate-300 font-medium leading-snug">В критических ситуациях в тебе просыпается <strong className={secondaryType.color}>{secondaryType.name}</strong>.</p>
                         </div>
                      </div>
                   )}
 
                   <div className="mb-6 mt-6">
-                    <p className="font-bold text-[10px] text-slate-500 uppercase tracking-widest mb-5 border-b border-white/5 pb-2">Все архетипы</p>
+                    <p className="font-bold text-[10px] text-slate-400 uppercase tracking-widest mb-5 border-b border-white/5 pb-2">Все архетипы</p>
                     <div className="space-y-3">
                       {(Object.entries(scores) as [TypeKey, number][]).sort((a, b) => b[1] - a[1]).map(([key, score]) => (
                         <ScoreBar key={key} typeKey={key} score={score} />
@@ -457,7 +457,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
 
                     <button
                       onClick={() => { setStep("intro"); setCurrent(0); setAnswers({}); setSelectedValue(null); }}
-                      className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-widest transition-colors"
+                      className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-300 text-xs font-bold uppercase tracking-widest transition-colors"
                     >
                       <RotateCcw size={14} /> Пройти заново
                     </button>

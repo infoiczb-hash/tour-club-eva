@@ -151,7 +151,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {/* --- COMMON FIELDS --- */}
                        <div className="space-y-4">
                            <div className="relative group">
-                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors"/>
                                <input required placeholder="Ваше имя" 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                    value={formData.name || ''} onChange={e => updateField('name', e.target.value)}
@@ -160,21 +160,21 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                            
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="relative group">
-                                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors"/>
                                    <input placeholder="+373..." 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.phone || ''} onChange={e => updateField('phone', e.target.value)}
                                    />
                                </div>
                                <div className="relative group">
-                                   <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors"/>
                                    <input placeholder="Telegram / Insta" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.social || ''} onChange={e => updateField('social', e.target.value)}
                                    />
                                </div>
                            </div>
-                           <p className="text-[12px] text-slate-500 ml-2">* Укажите хотя бы один контакт для связи</p>
+                           <p className="text-[12px] text-slate-400 ml-2">* Укажите хотя бы один контакт для связи</p>
                        </div>
 
                        {/* --- DYNAMIC FIELDS --- */}
@@ -236,7 +236,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {activeTab === 'B2B' && (
                            <div className="space-y-4 animate-in fade-in">
                                <div className="relative group">
-                                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors"/>
                                    <input placeholder="Название компании (необязательно)" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.company || ''} onChange={e => updateField('company', e.target.value)}
@@ -300,7 +300,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                          href="https://t.me/romansvtirase" 
                          target="_blank" 
                          rel="noopener noreferrer" 
-                         className="text-xs md:text-sm font-bold text-slate-500 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mb-2" 
+                         className="text-xs md:text-sm font-bold text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mb-2" 
                          aria-label="Наш Telegram"
                        >
                           <MessageSquare size={16}/> Срочно? Написать в Telegram

@@ -182,7 +182,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
               <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-4 tracking-tight pr-8 shrink-0">
                 Что открыл<br /><span className="text-violet-400">этот поход?</span>
               </h2>
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-8 font-medium shrink-0">
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-8 font-medium shrink-0">
                 Структурированная рефлексия опыта. 9 вопросов — про тело, голову и группу. Отвечай честно. В конце AI-консультант составит твой персональный психологический разбор.
               </p>
 
@@ -190,7 +190,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                 {(Object.entries(BLOCK_META) as [BlockKey, typeof BLOCK_META[BlockKey]][]).map(([key, meta]) => (
                   <div key={key} className={cn("flex-1 border border-white/5 rounded-xl p-3 text-center", meta.bg)}>
                     <div className={cn("text-xs font-bold uppercase tracking-widest mb-1", meta.color)}>{meta.label}</div>
-                    <div className="text-slate-500 text-[10px] font-medium">3 вопроса</div>
+                    <div className="text-slate-400 text-[10px] font-medium">3 вопроса</div>
                   </div>
                 ))}
               </div>
@@ -199,7 +199,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                 <button onClick={() => setStep("test")} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] active:scale-95">
                   Начать рефлексию <ChevronRight size={18} />
                 </button>
-                <p className="text-slate-500 text-[11px] text-center mt-4">
+                <p className="text-slate-400 text-[11px] text-center mt-4">
                   Пропускать вопросы можно — отвечай только там, где есть что сказать.
                 </p>
               </div>
@@ -214,7 +214,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                     <span className={cn("px-3 py-1 rounded-full border", blockMeta.bg, blockMeta.border, blockMeta.color)}>
                         {blockMeta.label}
                     </span>
-                    <span className="text-slate-500">{current + 1} / {QUESTIONS.length}</span>
+                    <span className="text-slate-400">{current + 1} / {QUESTIONS.length}</span>
                  </div>
                  <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                     <motion.div className={cn("h-full", blockMeta.bg.replace('/10', ''))} initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
@@ -263,7 +263,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                 {answeredCount === 0 ? (
                    <div className="border border-slate-700 bg-slate-800/30 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden h-full flex flex-col justify-center">
                      <h3 className="text-xl font-black text-white mb-2">Тишина — тоже ответ</h3>
-                     <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                     <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                        Похоже, тебе пока не хочется делиться мыслями. И это абсолютно нормально! Иногда лучший инсайт — это просто побыть в тишине после похода.
                      </p>
                      <div className="flex flex-col gap-3 relative z-10 w-full max-w-sm mx-auto">
@@ -277,7 +277,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                    </div>
                 ) : (
                   <>
-                    <p className="text-slate-400 text-sm leading-relaxed mb-6 font-medium">
+                    <p className="text-slate-300 text-sm leading-relaxed mb-6 font-medium">
                       Твои ответы зафиксированы. Прочитай их еще раз или отправь ИИ-психологу для глубокого анализа.
                     </p>
                     <div className="space-y-4">
@@ -286,7 +286,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                           <div className={cn("text-[10px] font-bold uppercase tracking-widest mb-2", BLOCK_META[q.block].color)}>
                             {BLOCK_META[q.block].label}
                           </div>
-                          <p className="text-slate-500 text-xs mb-2 font-medium">{q.text}</p>
+                          <p className="text-slate-300 text-xs mb-2 font-medium">{q.text}</p>
                           <p className="text-white text-sm leading-relaxed italic border-l-2 border-slate-600 pl-3">
                             «{answers[q.id]}»
                           </p>
@@ -298,7 +298,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.15)_0%,transparent_70%)] pointer-events-none" />
                       <Sparkles className="w-10 h-10 text-violet-400 mx-auto mb-4" />
                       <h3 className="text-xl font-black text-white mb-2">Разбор и Следующий Шаг</h3>
-                      <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                      <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                         ИИ проанализирует твои ответы, выделит скрытые смыслы и <strong className="text-white">подберет идеальный тур</strong> для следующего приключения на основе твоих инсайтов.
                       </p>
                       <button onClick={handleGetAiMagic} disabled={isLoading} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
@@ -308,7 +308,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
 
                     {/* Смарт CTA для тех, кто не хочет ждать ИИ */}
                     <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Link
                           href="/directions"
@@ -385,13 +385,13 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                           </div>
                       ) : (
                           <div className="mt-8 p-6 bg-slate-800/50 rounded-2xl text-center border border-white/5">
-                              <p className="text-slate-400 text-sm mb-4">На основе рефлексии мы не нашли 100% совпадения в базе, но ты всегда можешь выбрать тур самостоятельно в каталоге.</p>
+                              <p className="text-slate-300 text-sm mb-4">На основе рефлексии мы не нашли 100% совпадения в базе, но ты всегда можешь выбрать тур самостоятельно в каталоге.</p>
                           </div>
                       )}
 
                       {/* SMART CTA ПОСЛЕ ИИ */}
                       <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Продолжить</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Link
                             href="/directions"

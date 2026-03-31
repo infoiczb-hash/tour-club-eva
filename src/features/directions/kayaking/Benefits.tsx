@@ -45,7 +45,7 @@ export default function Benefits() {
             Идеальный отдых <br className="hidden md:block" />
             <span className="text-teal-500">на воде</span>
           </h2>
-          <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl">
+          <p className="text-slate-300 text-sm md:text-base font-medium max-w-xl">
             Мы берем на себя всю рутину, логистику и безопасность. Вам остается только грести, загорать и наслаждаться видами.
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function Benefits() {
             <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">
               Надежный тыл: <br className="md:hidden" /><span className="text-amber-500">Профи на борту</span>
             </h3>
-            <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl">
+            <p className="text-slate-300 text-sm md:text-base font-medium max-w-2xl">
               Ваш поход сопровождает инструктор. Он берет на себя все технические вопросы, чтобы вы могли просто расслабиться.
             </p>
           </div>

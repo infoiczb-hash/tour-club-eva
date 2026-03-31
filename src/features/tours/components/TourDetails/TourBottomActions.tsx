@@ -73,7 +73,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
               onClick={() => setShowHint(false)}
               aria-label="Закрыть список тарифов"
             >
-              <X size={14} className="text-slate-500 hover:text-white transition-colors" aria-hidden="true" />
+              <X size={14} className="text-slate-400 hover:text-white transition-colors" aria-hidden="true" />
             </button>
           </div>
           
@@ -129,7 +129,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
               // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
               "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg active:scale-95 transition whitespace-nowrap",
               isSoldOut
-                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                ? "bg-slate-800 text-slate-400 cursor-not-allowed"
                 : "bg-teal-500 text-slate-900 shadow-teal-500/20"
             )}
           >

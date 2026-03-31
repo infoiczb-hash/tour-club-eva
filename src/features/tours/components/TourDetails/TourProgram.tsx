@@ -53,7 +53,7 @@ export default function TourProgram({ program }: TourProgramProps) {
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase break-words">Программа тура</h2>
           {/* ✅ ИСПРАВЛЕНИЕ: Умный рендер подзаголовка с учетом количества дней */}
-          <p className="text-slate-400 text-sm md:text-lg font-medium truncate">
+          <p className="text-slate-300 text-sm md:text-lg font-medium truncate">
             {days.length === 1 
               ? 'Однодневная программа' 
               : `Маршрут разбит на ${days.length} ${plural(days.length, 'день', 'дня', 'дней')}`

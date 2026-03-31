@@ -168,11 +168,11 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
       )}>
         <div className="w-16 sm:w-24 shrink-0 rounded-xl bg-slate-950/50 border border-white/5 flex flex-col items-center justify-center py-3 shadow-inner group-hover:bg-teal-500/10 group-hover:border-teal-500/20 transition-colors">
           {isTba ? (
-            <Clock size={24} className="text-slate-500 group-hover:text-teal-400 transition-colors" />
+            <Clock size={24} className="text-slate-400 group-hover:text-teal-400 transition-colors" />
           ) : (
             <>
               <span className="text-2xl sm:text-4xl font-black leading-none text-white group-hover:text-teal-400 transition-colors">{dayNumber}</span>
-              <span className="text-[12px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 mt-1">{weekDay}</span>
+              <span className="text-[12px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">{weekDay}</span>
             </>
           )}
         </div>
@@ -190,7 +190,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
             )}
             {tour.duration && <span className="flex items-center text-slate-400">{tour.duration}</span>}
             {isMultiDay && endDateObj && (
-              <span className="flex items-center text-slate-500 before:content-['•'] before:mx-1.5 before:text-slate-700">до {endDateObj.getDate()} числа</span>
+              <span className="flex items-center text-slate-400 before:content-['•'] before:mx-1.5 before:text-slate-700">до {endDateObj.getDate()} числа</span>
             )}
           </div>
           
@@ -206,7 +206,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
 
         <div className="flex items-center justify-end gap-3 sm:gap-6 shrink-0 pl-1 sm:pl-4">
           <div className="hidden sm:flex flex-col items-end justify-center pr-5 border-r border-white/10 h-full">
-            <span className="text-[12px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">Билет от</span>
+            <span className="text-[12px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Билет от</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-black text-white leading-none tracking-tight">{Number(displayPrice).toLocaleString()}</span>
               <span className="text-xs font-bold text-teal-500">{tour.currency || 'MDL'}</span>

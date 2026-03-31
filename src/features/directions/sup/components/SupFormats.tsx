@@ -69,7 +69,7 @@ export default function SupFormats() {
             })}
           </div>
           
-          <div className="md:hidden flex items-center justify-end gap-1.5 mt-4 pr-4 text-slate-500 pointer-events-none">
+          <div className="md:hidden flex items-center justify-end gap-1.5 mt-4 pr-4 text-slate-400 pointer-events-none">
               <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
               <ArrowRight size={14} className="text-teal-500 animate-pulse" />
           </div>

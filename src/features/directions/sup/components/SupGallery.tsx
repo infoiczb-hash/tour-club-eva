@@ -15,8 +15,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 const PHOTOS = [
     { 
         src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg", 
-        className: "md:col-span-2 md:row-span-2",
-        priority: true
+        className: "md:col-span-2 md:row-span-2"
+        // priority удален, так как галерея ниже fold-линии
     },
     { 
         src: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771609706/photo_2026-02-20_15-27-17_afgjtz.jpg", 
@@ -95,7 +95,7 @@ export default function SupGallery() {
                                     fill 
                                     className="object-cover transition-transform duration-1000 ease-out group-hover:scale-110" 
                                     sizes={idx === 0 ? "(max-width: 768px) 85vw, 66vw" : "(max-width: 768px) 85vw, 33vw"}
-                                    priority={photo.priority}
+                                    // Проп priority удален
                                 />
                                 
                                 {/* Затемнение при наведении (эффект погружения) */}

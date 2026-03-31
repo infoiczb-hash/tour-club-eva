@@ -178,12 +178,15 @@ model Booking {
   paymentMethod String?   @map("payment_method")
   source        String    @default("website")
 
-  status     BookingStatus @default(pending)
+  status BookingStatus @default(pending)
   bookedDate DateTime?     @map("booked_date")
 
   tourId      String  @map("tour_id") @db.Uuid
   tourDateId  String? @map("tour_date_id") @db.Uuid
   promoCodeId String? @map("promo_code_id") @db.Uuid
+  receiptUrl      String? @map("receipt_url")
+  payerTgChatId   String? @map("payer_tg_chat_id")
+  rejectReason    String? @map("reject_reason") 
  
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
@@ -196,6 +199,7 @@ model Booking {
   @@index([memberId])
   @@index([shortId]) // Индекс для быстрого поиска по номеру брони
   @@map("bookings")
+  @@index([phone, tourDateId])
 }
 
 model Waitlist {
@@ -373,6 +377,7 @@ model FunTest {
   category    String  @default("general")
   isActive    Boolean @default(false)
   passCount   Int     @default(0)
+  order       Int      @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -491,7 +496,10 @@ enum PostFormat {
 
 enum BookingStatus {
   pending
+  awaiting_payment
+  moderation
   confirmed
+  rejected
   cancelled
 }
 

@@ -82,7 +82,7 @@ export const FormSwitch = ({ name, label }: { name: string; label: string }) => 
         <div className={clsx("w-11 h-6 rounded-full transition-colors shadow-inner", checked ? "bg-teal-500" : "bg-slate-300 group-hover:bg-slate-400")} />
         <div className={clsx("absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200", checked ? "translate-x-5" : "translate-x-0")} />
       </div>
-      <span className={clsx("text-sm font-bold", checked ? "text-slate-800" : "text-slate-500")}>
+      <span className={clsx("text-sm font-bold", checked ? "text-slate-800" : "text-slate-400")}>
         {label}
       </span>
     </label>
@@ -105,7 +105,7 @@ export const FormSelect = ({ name, label, options }: { name: string, label: stri
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        <div className="absolute right-3 top-3.5 pointer-events-none text-slate-500">
+        <div className="absolute right-3 top-3.5 pointer-events-none text-slate-400">
            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </div>

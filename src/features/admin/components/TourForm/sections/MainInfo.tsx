@@ -91,7 +91,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
                    name="slug" 
                    label="URL (Slug)" 
                    placeholder="auto-generated"
-                   className="font-mono text-xs text-slate-500"
+                   className="font-mono text-xs text-slate-400"
                    helperText="Уникальная ссылка на страницу тура"
                  />
              </div>
@@ -126,7 +126,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
           </div>
 
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
-             <h4 className="text-xs font-black uppercase text-slate-500 mb-2">Детализация для карточки</h4>
+             <h4 className="text-xs font-black uppercase text-slate-400 mb-2">Детализация для карточки</h4>
              
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <FormInput 

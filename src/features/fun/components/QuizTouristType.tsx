@@ -261,7 +261,7 @@ export default function QuizTouristType({ open, onClose }: Props) {
 
                 <div className="shrink-0 mt-4 pt-2 border-t border-transparent h-12">
                   {step > 0 && (
-                      <button onClick={handleBack} className="text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2 transition-colors w-fit">
+                      <button onClick={handleBack} className="text-sm font-bold text-slate-400 hover:text-slate-300 flex items-center gap-2 transition-colors w-fit">
                         <ArrowLeft size={16} /> Назад
                       </button>
                   )}
@@ -298,7 +298,7 @@ function ResultScreen({ result, onClose, theme }: { result: Result; onClose: () 
         </div>
 
         <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-6 mb-6">
-          <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои ценности:</h4>
+          <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-4">Твои ценности:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {result.values.map((val, i) => (
               <div key={i} className={clsx("flex items-center gap-2 text-slate-200 text-sm font-bold bg-white/5 border p-3 rounded-xl justify-center transition-colors", theme.border)}>

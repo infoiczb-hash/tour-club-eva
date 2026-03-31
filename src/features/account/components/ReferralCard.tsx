@@ -67,14 +67,14 @@ export default function ReferralCard({
           <h3 className="text-xl md:text-2xl font-bold text-white">
             Приглашайте друзей в первый тур с нами
           </h3>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-md">
+          <p className="text-slate-300 text-sm leading-relaxed max-w-md">
             Поделитесь промокодом. Друг получит скидку <span className="text-white font-medium">{friendReward} ₽</span> на первый тур, а мы начислим <span className="text-teal-400 font-medium">{rewardAmount} ₽</span> на ваш баланс после его поездки.
           </p>
         </div>
 
         <div className="w-full md:w-auto bg-black/40 rounded-2xl p-4 border border-white/5 flex flex-col gap-3">
           <div className="text-center">
-            <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Ваш промокод</p>
+            <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Ваш промокод</p>
             <p className="text-2xl font-mono font-bold text-white tracking-widest">{promoCode}</p>
           </div>
           

@@ -174,7 +174,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                 <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3 tracking-tight">
                   Что тебя <span className="text-blue-400">останавливает?</span>
                 </h2>
-                <p className="text-slate-400 text-sm leading-relaxed font-medium">Выбери всё, что резонирует. Здесь нет неправильных ответов.</p>
+                <p className="text-slate-300 text-sm leading-relaxed font-medium">Выбери всё, что резонирует. Здесь нет неправильных ответов.</p>
               </div>
               
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 space-y-3">
@@ -188,7 +188,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                        <button onClick={() => toggleFear(fear.key)} className={cn("flex-1 text-left px-5 py-4 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 group", isSel ? "border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]" : "border-white/5 bg-slate-800/50 hover:bg-slate-800")}>
                           <div>
                              <div className={cn("text-[15px] md:text-base font-bold transition-colors leading-snug", isSel ? "text-white" : "text-slate-300 group-hover:text-white")}>{fear.label}</div>
-                             <div className="text-slate-500 text-xs md:text-sm font-medium mt-1 leading-snug">{fear.sublabel}</div>
+                             <div className="text-slate-300 text-xs md:text-sm font-medium mt-1 leading-snug">{fear.sublabel}</div>
                           </div>
                           <div className={cn("w-6 h-6 rounded-full border flex items-center justify-center shrink-0 transition-all", isSel ? "bg-blue-500 border-blue-500" : "border-slate-600 group-hover:border-blue-500/50")}>
                             {isSel && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
@@ -205,7 +205,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                       Разобрать мои страхи ({selected.length})
                     </button>
                  ) : (
-                    <div className="w-full bg-slate-800 text-slate-500 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
+                    <div className="w-full bg-slate-800 text-slate-400 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
                        Выбери хотя бы один страх
                     </div>
                  )}
@@ -221,7 +221,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                  <h2 className="text-2xl md:text-3xl font-black text-white leading-tight">{viewingFear.label}</h2>
               </div>
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
-                <div className="border-l-2 border-slate-700 pl-5"><p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Честно</p><p className="text-slate-300 text-sm leading-relaxed font-medium">{viewingInfo.honest}</p></div>
+                <div className="border-l-2 border-slate-700 pl-5"><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Честно</p><p className="text-slate-300 text-sm leading-relaxed font-medium">{viewingInfo.honest}</p></div>
                 <div className="border-l-2 border-blue-500/50 pl-5 bg-blue-500/5 py-4 rounded-r-xl"><p className="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-2">В реальности</p><p className="text-slate-300 text-sm leading-relaxed font-medium">{viewingInfo.reality}</p></div>
                 <div className="border-l-2 border-teal-500/80 pl-5"><p className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-2">Первый шаг</p><p className="text-white text-sm leading-relaxed font-bold">{viewingInfo.step}</p></div>
               </div>
@@ -261,7 +261,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.15)_0%,transparent_70%)] pointer-events-none" />
                   <Sparkles className="w-10 h-10 text-indigo-400 mx-auto mb-4" />
                   <h3 className="text-xl font-black text-white mb-2">Глубокий разбор от AI</h3>
-                  <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                  <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                     ИИ проанализирует связку твоих страхов, даст терапевтичный ответ и <strong className="text-white">подберет 1 идеальный тур</strong>.
                   </p>
                   <button onClick={handleGetAiMagic} disabled={isLoading} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] active:scale-95 relative z-10 disabled:opacity-70">
@@ -271,7 +271,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
 
                 {/* SMART CTA (Альтернатива для тех, кто не хочет ждать ИИ) */}
                 <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       href="/directions"
@@ -344,7 +344,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
 
                       {/* SMART CTA ПОСЛЕ ИИ (Если тур не подошел) */}
                       <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Продолжить</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Link
                             href="/directions"

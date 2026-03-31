@@ -110,7 +110,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                         Живые <span style={{ color: theme.hex }}>Эмоции</span>
                     </h2>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 animate-in fade-in duration-700 fill-mode-both">
+                <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 animate-in fade-in duration-700 fill-mode-both">
                     <span className="w-8 h-px bg-slate-700" />
                     Листайте
                     <span className="w-8 h-px bg-slate-700" />

@@ -69,7 +69,7 @@ export default function LegalNav({ currentPage }: LegalNavProps) {
                   <div className="text-white font-bold text-sm md:text-base leading-tight mb-1 group-hover:text-teal-400 transition-colors">
                     {link.title}
                   </div>
-                  <div className="text-slate-500 text-xs md:text-sm font-medium">
+                  <div className="text-slate-300 text-xs md:text-sm font-medium">
                     {link.description}
                   </div>
                 </div>

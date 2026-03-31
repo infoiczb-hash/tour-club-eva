@@ -197,7 +197,7 @@ export default async function TestsPage() {
                     </div>
                     <div>
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{config.title}</h3>
-                      <p className="text-[10px] text-slate-500">{formatDate(result.createdAt)}</p>
+                      <p className="text-[10px] text-slate-400">{formatDate(result.createdAt)}</p>
                     </div>
                   </div>
 
@@ -275,7 +275,7 @@ export default async function TestsPage() {
                     <p className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors truncate">
                       {config.title}
                     </p>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                    <p className="text-xs text-slate-400 truncate mt-0.5">
                       {config.description}
                     </p>
                   </div>

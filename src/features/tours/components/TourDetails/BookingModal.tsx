@@ -5,7 +5,7 @@ import {
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
   AlertCircle, Users, LifeBuoy, CalendarDays,
-  CreditCard, Banknote, Globe, QrCode // ✅ Добавили иконки для оплат
+  CreditCard, Banknote, Globe, QrCode, Tag
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
@@ -56,7 +56,7 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // ✅ Стейт для способа оплаты (По умолчанию онлайн)
+  // Стейт для способа оплаты (По умолчанию онлайн)
   const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign'>('biletpmr');
 
   const [formData, setFormData] = useState({
@@ -68,12 +68,13 @@ export default function BookingModal({
   });
 
   const [successData, setSuccessData] = useState<{
+   bookingId: string;
     shortId: number;
     totalPrice: number;
     biletpmrLink?: string | null;
     apbQrLink?: string | null;
     apbQrImage?: string | null;
-    paymentMethod: string; // ✅ Добавили в стейт успеха
+    paymentMethod: string;
   } | null>(null);
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
@@ -88,9 +89,10 @@ export default function BookingModal({
   
   const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
-  // ✅ ПРИОРИТЕТ 2: Стейт баланса и галочки
+  // Стейты баланса, бонусов и промокодов
   const [balance, setBalance] = useState<number>(0);
   const [useBonuses, setUseBonuses] = useState<boolean>(false);
+  const [promoCode, setPromoCode] = useState<string>('');
 
   const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
     tour.category?.slug?.toLowerCase() || ''
@@ -100,14 +102,17 @@ export default function BookingModal({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
+      // ✅ БАГ 8 ИСПРАВЛЕН: Убрана фантомная проверка tour.date
       if (initialDate && initialDateId) {
          setSelectedDateStr(initialDate);
          setSelectedDateId(initialDateId);
       } else if (tour.dates && tour.dates.length > 0) {
          setSelectedDateId(tour.dates[0].id || null);
          setSelectedDateStr(formatDateForDropdown(tour.dates[0]));
-      } else if (tour.date) {
-         setSelectedDateStr(new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }));
+      } else {
+         // Заглушка, если дат еще нет (предотвращает краш Invalid Date)
+         setSelectedDateStr('Открытая дата (по согласованию)');
+         setSelectedDateId(null);
       }
 
       getMyProfileAction().then(profile => {
@@ -118,7 +123,6 @@ export default function BookingModal({
             phone: profile.phone || prev.phone,
             social: profile.telegram || profile.instagram || profile.email || prev.social
           }));
-          // ✅ Подтягиваем баланс
           setBalance(profile.balance || 0);
         }
       });
@@ -130,8 +134,9 @@ export default function BookingModal({
         setFormData({ name: '', phone: '+373 ', social: '', comment: '', website: '' });
         setTickets({ adult: 1, child: 0, member: 0, family: 0 });
         setGuestData({});
-        setPaymentMethod('biletpmr'); // Сбрасываем способ оплаты
-        setUseBonuses(false); // ✅ Сбрасываем бонусы
+        setPaymentMethod('biletpmr'); 
+        setUseBonuses(false);
+        setPromoCode('');
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -151,7 +156,6 @@ export default function BookingModal({
     return list;
   }, [tickets]);
 
-  // ✅ ПРИОРИТЕТ 2: Переименовали в baseTotalPrice
   const baseTotalPrice = useMemo(() => {
     let sum = tickets.adult * tour.price;
     if (tour.priceChild) sum += tickets.child * tour.priceChild;
@@ -160,7 +164,7 @@ export default function BookingModal({
     return sum;
   }, [tickets, tour]);
 
-  // ✅ ПРИОРИТЕТ 2: Логика скидки 10%
+  // Логика скидки из баланса (Промокод посчитается на сервере)
   const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
   const availableBonusesToUse = Math.min(balance, maxBonusDiscount);
   const finalPrice = useBonuses ? baseTotalPrice - availableBonusesToUse : baseTotalPrice;
@@ -236,16 +240,19 @@ export default function BookingModal({
         ticketsMember: tickets.member,
         ticketsFamily: tickets.family, 
         guests:        payloadGuests, 
-        totalPrice:    baseTotalPrice, // Отправляем базовую, сервер сам вычтет
+        totalPrice:    baseTotalPrice,
         currency:      tour.currency ?? 'RUB',
         paymentMethod: paymentMethod, 
-        useBonuses:    useBonuses, // ✅ Передаем флаг
+        useBonuses:    useBonuses,
+        expectedPrice: finalPrice, // ✅ БАГ 6 ИСПРАВЛЕН: Передаем ожидаемую цену
+        promoCode:     promoCode.trim() || undefined, // ✅ Передаем промокод
       });
 
       if (result.success) {
         setSuccessData({
+          bookingId: result.bookingId,
           shortId: result.shortId,
-          totalPrice: result.totalPrice, // Сервер возвращает уже со скидкой
+          totalPrice: result.totalPrice, // Цена с учетом всех серверных скидок (бонусы/промо)
           biletpmrLink: result.biletpmrLink,
           apbQrLink: result.apbQrLink,
           apbQrImage: result.apbQrImage,
@@ -253,12 +260,13 @@ export default function BookingModal({
         });
         
         setStep('success');
-      } else {
+     } else {
         if (result.fields && Object.keys(result.fields).length > 0) {
             const issues = Object.values(result.fields).join(' | ');
-            setErrorMsg(`Исправьте ошибки: ${issues}`);
+            setErrorMsg(`Ошибка в полях: ${issues}`);
         } else {
-            setErrorMsg(result.error ?? 'Что-то пошло не так. Попробуйте ещё раз.');
+            // ✅ Если это наша ошибка о дубликате (Анти-спам), она будет в result.error
+            setErrorMsg(result.error || 'Произошла ошибка при бронировании. Попробуйте позже.');
         }
       }
     } catch {
@@ -378,13 +386,13 @@ export default function BookingModal({
                               </option>
                             ))}
                           </select>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                             ▼
                           </div>
                         </div>
                       ) : (
                          <div className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-300">
-                            {new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+                            {selectedDateStr}
                          </div>
                       )
                    )}
@@ -402,8 +410,8 @@ export default function BookingModal({
                       <Counter label="По клубной карте" price={tour.priceMember} value={tickets.member} type="member" />
                     ) : null}
                     
-                    {/* ✅ ПРИОРИТЕТ 2: БЛОК СПИСАНИЯ БОНУСОВ */}
-                    {balance > 0 && (
+                    {/* ✅ ЛОГИКА: Бонусы ИЛИ Промокод */}
+                    {balance > 0 ? (
                       <div className="pt-3 mt-1 border-t border-white/10">
                         <label className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 transition-colors">
                           <div className="relative flex items-center justify-center">
@@ -430,14 +438,31 @@ export default function BookingModal({
                           )}
                         </label>
                       </div>
+                    ) : (
+                      <div className="pt-3 mt-1 border-t border-white/10">
+                        <div className="relative">
+                          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input 
+                            type="text" 
+                            placeholder="У меня есть промокод" 
+                            value={promoCode} 
+                            onChange={(e) => setPromoCode(e.target.value)} 
+                            className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-500" 
+                          />
+                        </div>
+                        {promoCode && (
+                          <p className="text-[10px] text-teal-400 mt-1.5 ml-1 font-bold">
+                            * Скидка будет рассчитана и применена при оформлении заявки
+                          </p>
+                        )}
+                      </div>
                     )}
 
                     <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
                        <span className="text-xs font-bold text-slate-400 uppercase">Итого к оплате:</span>
                        <div className="text-right">
-                         {/* ✅ Зачеркнутая цена, если бонусы применены */}
                          {useBonuses && (
-                           <div className="text-[10px] text-slate-500 line-through mb-0.5 font-bold uppercase tracking-widest">
+                           <div className="text-[10px] text-slate-400 line-through mb-0.5 font-bold uppercase tracking-widest">
                              {baseTotalPrice.toLocaleString()} {tour.currency}
                            </div>
                          )}
@@ -462,7 +487,7 @@ export default function BookingModal({
                                  <span className="text-[10px] font-black uppercase text-teal-500 tracking-widest">
                                    Участник {index + 1} {index === 0 && '(Вы)'}
                                  </span>
-                                 <span className="text-[10px] text-slate-500 font-bold uppercase">
+                                 <span className="text-[10px] text-slate-400 font-bold uppercase">
                                    {guest.type}
                                  </span>
                               </div>
@@ -470,7 +495,7 @@ export default function BookingModal({
                               {index === 0 ? (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div className="relative">
-                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                                          <input 
                                            required 
                                            type="text" 
@@ -481,7 +506,7 @@ export default function BookingModal({
                                          />
                                       </div>
                                       <div className="relative">
-                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                                          <input 
                                            required 
                                            type="tel" 
@@ -494,7 +519,7 @@ export default function BookingModal({
                               ) : (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div className="relative">
-                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                                          <input 
                                            required 
                                            type="text" 
@@ -507,7 +532,7 @@ export default function BookingModal({
 
                                       {isChild ? (
                                           <div className="relative">
-                                            <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                            <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                                             <input 
                                               required 
                                               type="number" 
@@ -521,7 +546,7 @@ export default function BookingModal({
                                           </div>
                                       ) : (
                                           <div className="relative">
-                                            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                                             <input 
                                               type="tel" 
                                               placeholder="Телефон" 
@@ -536,7 +561,7 @@ export default function BookingModal({
 
                               {isWaterTour && (
                                   <div className="relative mt-3">
-                                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
+                                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                                       <select 
                                         required 
                                         value={guestData[guest.id]?.jacket || ''} 
@@ -548,7 +573,7 @@ export default function BookingModal({
                                             <option key={size} value={size}>{size}</option>
                                           ))}
                                       </select>
-                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
+                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300 text-xs">
                                         ▼
                                       </div>
                                   </div>
@@ -572,44 +597,68 @@ export default function BookingModal({
                     </div>
                 </div>
 
-                {/* ✅ ВЫБОР СПОСОБА ОПЛАТЫ */}
+                {/* ✅ БАГ 7 ИСПРАВЛЕН: Доступность оплат (button role="radio") */}
                 <div className="space-y-3 pt-2">
                   <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
                     <CreditCard size={14} className="text-teal-500" /> Способ оплаты
                   </label>
                   
-                  <div className="grid grid-cols-2 gap-3">
-                    <div onClick={() => setPaymentMethod('biletpmr')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
-                        <div className="flex items-center justify-between">
+                  <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'biletpmr'}
+                      onClick={() => setPaymentMethod('biletpmr')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>Онлайн</span>
-                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-500'} />
+                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-400'} />
                         </div>
-                        <span className="text-[10px] text-slate-500 leading-tight">Картой ПМР / Клевер</span>
-                    </div>
+                        <span className="text-[10px] text-slate-400 leading-tight">BILETPMR/другой сервис</span>
+                    </button>
 
-                    <div onClick={() => setPaymentMethod('qr')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'qr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
-                        <div className="flex items-center justify-between">
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'qr'}
+                      onClick={() => setPaymentMethod('qr')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'qr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'qr' ? 'text-teal-400' : 'text-slate-300'}`}>QR-код</span>
-                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-500'} />
+                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-400'} />
                         </div>
-                        <span className="text-[10px] text-slate-500 leading-tight">Агропромбанк</span>
-                    </div>
+                        <span className="text-[10px] text-slate-400 leading-tight"> Система КЛЕВЕР/Наш совет</span>
+                    </button>
 
-                    <div onClick={() => setPaymentMethod('cash')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
-                        <div className="flex items-center justify-between">
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'cash'}
+                      onClick={() => setPaymentMethod('cash')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
-                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-500'} />
+                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-400'} />
                         </div>
-                        <span className="text-[10px] text-slate-500 leading-tight">Оплата гиду на месте</span>
-                    </div>
+                        <span className="text-[10px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+                    </button>
 
-                    <div onClick={() => setPaymentMethod('foreign')} className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}>
-                        <div className="flex items-center justify-between">
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'foreign'}
+                      onClick={() => setPaymentMethod('foreign')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
-                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-500'} />
+                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-400'} />
                         </div>
-                        <span className="text-[10px] text-slate-500 leading-tight">MIA / Переводы / Леи</span>
-                    </div>
+                        <span className="text-[10px] text-slate-400 leading-tight">MIA / Переводы / Леи</span>
+                    </button>
                   </div>
                 </div>
 
@@ -632,15 +681,16 @@ export default function BookingModal({
                   )}
                 </button>
                 
-                <p className="text-sm text-slate-500 text-center leading-tight">
+                <p className="text-sm text-slate-400 text-center leading-tight">
                   Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
                 </p>
 
               </form>
          ) : successData ? (
-               <SuccessScreen 
+               <SuccessScreen
+                 bookingId={successData.bookingId} 
                  shortId={successData.shortId}
-                 totalPrice={successData.totalPrice} // Передали финальную
+                 totalPrice={successData.totalPrice} 
                  currency={tour.currency ?? 'RUB'}
                  phone={formData.phone}
                  biletpmrLink={successData.biletpmrLink}

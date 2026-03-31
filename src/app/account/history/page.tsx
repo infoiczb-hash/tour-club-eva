@@ -134,7 +134,7 @@ export default async function HistoryPage() {
                       </span>
                     )}
                     {season && booking.tourDate && (
-                      <span className="text-xs text-slate-500 shrink-0">
+                      <span className="text-xs text-slate-400 shrink-0">
                         {season.emoji} {formatDate(booking.tourDate.startDate)}
                       </span>
                     )}
@@ -145,7 +145,7 @@ export default async function HistoryPage() {
                   </Link>
 
                   {booking.tour.location && (
-                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <span className="flex items-center gap-1 text-xs text-slate-400">
                       <MapPin size={12} /> {booking.tour.location}
                     </span>
                   )}

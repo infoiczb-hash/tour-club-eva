@@ -101,7 +101,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
 
             <div className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1 block">Имя и Фамилия *</label>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1 block">Имя и Фамилия *</label>
                 <input 
                   {...register("name")}
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
@@ -110,19 +110,19 @@ export default function SettingsForm({ profile }: { profile: any }) {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1 flex items-center gap-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1 flex items-center gap-1.5">
                   <Phone size={12} /> Ваш логин (Телефон)
                 </label>
                 <input 
                   value={profile.phone || "Не указан"}
                   disabled
-                  className="w-full bg-slate-950/50 border border-transparent rounded-xl px-4 py-3 text-slate-500 text-sm cursor-not-allowed"
+                  className="w-full bg-slate-950/50 border border-transparent rounded-xl px-4 py-3 text-slate-300 text-sm cursor-not-allowed"
                   title="Телефон нельзя изменить, так как он используется для входа"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1 flex items-center gap-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1 flex items-center gap-1.5">
                   <Mail size={12} /> Email
                 </label>
                 <input 
@@ -135,12 +135,12 @@ export default function SettingsForm({ profile }: { profile: any }) {
 
               {/* Соцсети */}
               <div className="pt-4 mt-2 border-t border-white/5">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-3 block">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-3 block">
                     Соцсети (Для чатов групп)
                 </label>
                 <div className="space-y-3">
                     <div className="relative group">
-                        <Send size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
+                        <Send size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-400 transition-colors" />
                         <input 
                             {...register("telegram")}
                             placeholder="@username в Telegram"
@@ -148,7 +148,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
                         />
                     </div>
                     <div className="relative group">
-                        <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-pink-400 transition-colors" />
+                        <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-400 transition-colors" />
                         <input 
                             {...register("instagram")}
                             placeholder="@username в Instagram"
@@ -156,7 +156,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
                         />
                     </div>
                     <div className="relative group">
-                        <MessageCircle size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
+                        <MessageCircle size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-400 transition-colors" />
                         <input 
                             {...register("viber")}
                             placeholder="Номер в Viber (если отличается)"
@@ -225,7 +225,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1 flex items-center gap-1.5"><Shirt size={12}/> Размер одежды</label>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1 flex items-center gap-1.5"><Shirt size={12}/> Размер одежды</label>
                   <div className="relative">
                     <select {...register("clothesSize")} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none appearance-none cursor-pointer">
                       <option value="">Не указан</option>
@@ -235,7 +235,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1 flex items-center gap-1.5"><LifeBuoy size={12}/> Спасжилет</label>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1 flex items-center gap-1.5"><LifeBuoy size={12}/> Спасжилет</label>
                   <div className="relative">
                     <select {...register("lifeJacketSize")} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none appearance-none cursor-pointer">
                       <option value="">Не указан</option>
@@ -246,7 +246,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1 flex items-center gap-1.5"><Footprints size={12}/> Размер обуви</label>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1 flex items-center gap-1.5"><Footprints size={12}/> Размер обуви</label>
                 <div className="relative">
                   <select {...register("shoeSize")} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none appearance-none cursor-pointer">
                     <option value="">Не указан</option>
@@ -270,7 +270,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
             </div>
 
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-2 block">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-2 block">
                 Диета и аллергии
               </label>
               {/* ✅ Убрали лишний текст снизу, сделали поле аккуратным */}
@@ -323,7 +323,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] active:scale-[0.98]"
+          className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-400 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] active:scale-[0.98]"
         >
           {isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           <span>{isPending ? "Сохранение..." : "Сохранить настройки"}</span>

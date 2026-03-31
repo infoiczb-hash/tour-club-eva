@@ -115,7 +115,7 @@ export default function SupCatalog() {
                         <Clock size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Время</p>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Время</p>
                         <p className="text-[14px] md:text-lg text-white font-black">{data.duration}</p>
                     </div>
                 </div>
@@ -125,7 +125,7 @@ export default function SupCatalog() {
                         <Users size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Особенности</p>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Особенности</p>
                         <p className="text-[13px] md:text-sm text-white font-bold leading-snug">{data.format}</p>
                     </div>
                 </div>

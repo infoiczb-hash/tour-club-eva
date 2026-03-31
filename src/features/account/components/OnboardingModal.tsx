@@ -104,7 +104,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1.5 flex items-center gap-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1.5 flex items-center gap-1.5">
                     <User size={12} /> Имя и Фамилия
                   </label>
                   <input
@@ -118,7 +118,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1 mb-1.5 flex items-center gap-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1.5 flex items-center gap-1.5">
                     <Phone size={12} /> Ваш телефон
                   </label>
                   <input
@@ -141,7 +141,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] active:scale-[0.98] mt-2"
+                className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-400 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] active:scale-[0.98] mt-2"
               >
                 {isPending ? <Loader2 size={18} className="animate-spin" /> : 'Продолжить'}
               </button>

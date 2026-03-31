@@ -57,7 +57,7 @@ export default function OrgContact() {
               <h3 className="text-2xl font-black text-white mb-3 tracking-tight">
                 Оставить заявку
               </h3>
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium mb-8">
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium mb-8">
                 Опишите кратко вашу идею, количество человек и примерные даты. Мы свяжемся с вами и подготовим коммерческое предложение.
               </p>
             </div>
@@ -88,14 +88,14 @@ export default function OrgContact() {
                 </div>
                 <div>
                   <div className="text-white font-bold text-lg leading-tight">Роман Санду</div>
-                  <div className="text-slate-400 text-xs uppercase tracking-widest mt-1 font-bold">Основатель клуба</div>
+                  <div className="text-slate-300 text-xs uppercase tracking-widest mt-1 font-bold">Основатель клуба</div>
                 </div>
               </div>
 
               <h3 className="text-2xl font-black text-white mb-3 tracking-tight">
                 Прямая связь
               </h3>
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium mb-8">
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium mb-8">
                 Есть срочный вопрос, нестандартная идея или нужен корпоратив «уже в эту пятницу»? Напишите мне напрямую в Telegram, обсудим лично.
               </p>
             </div>

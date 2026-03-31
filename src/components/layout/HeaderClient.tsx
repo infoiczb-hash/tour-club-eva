@@ -185,7 +185,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             className="w-full py-4 bg-slate-900 border border-white/5 text-white font-bold uppercase tracking-widest text-sm text-center rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             {user ? 'Личный кабинет' : 'Войти в кабинет'}
-            <ArrowRight size={18} className="text-slate-500" />
+            <ArrowRight size={18} className="text-slate-400" />
           </Link>
 
           <button

@@ -270,3 +270,11 @@
     --header-height: 112px;  /* lg и выше — небольшой запас */
   }
 }
+/* Анимация SUP-доски */
+@keyframes float-sup {
+  0%, 100% { transform: translateY(-10px); }
+  50% { transform: translateY(10px); }
+}
+.animate-float-sup {
+  animation: float-sup 6s ease-in-out infinite;
+}

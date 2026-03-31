@@ -104,7 +104,7 @@ export default function FAQ() {
                 Частые <br className="hidden lg:block" />
                 <span className="text-teal-500">Вопросы</span>
               </h2>
-              <p className="text-slate-400 text-sm md:text-base font-medium">
+              <p className="text-slate-300 text-sm md:text-base font-medium">
                 Собрали самое важное для тех, кто идет на воду впервые. Узнайте всё о безопасности, экипировке и правилах.
               </p>
             </div>
@@ -134,7 +134,7 @@ export default function FAQ() {
                     <span className={cn("text-base md:text-lg font-bold transition-colors tracking-tight pr-4", isOpen ? "text-white" : "text-slate-300 group-hover:text-white")}>
                       {faq.q}
                     </span>
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-teal-500/10 text-teal-400" : "bg-white/5 text-slate-500 group-hover:text-white")}>
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-teal-500/10 text-teal-400" : "bg-white/5 text-slate-400 group-hover:text-white")}>
                       <ChevronDown className={cn("transition-transform duration-300", isOpen && "rotate-180")} size={18} />
                     </div>
                   </button>

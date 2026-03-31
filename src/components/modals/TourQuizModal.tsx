@@ -192,7 +192,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
                  <h3 id="modal-quiz-title" className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
                     {currentQ.question}
                  </h3>
-                 <p className="text-slate-400 text-sm md:text-base mb-8 font-medium">
+                 <p className="text-slate-300 text-sm md:text-base mb-8 font-medium">
                     {currentQ.hint}
                  </p>
 
@@ -278,7 +278,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
                      <span className="text-[14px] font-black uppercase text-teal-400 tracking-widest">AI подбор завершен</span>
                   </div>
                   <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Идеально для вас</h3>
-                  <p className="text-slate-400 text-sm font-medium">Мы подобрали направления с наивысшим процентом совпадения.</p>
+                  <p className="text-slate-300 text-sm font-medium">Мы подобрали направления с наивысшим процентом совпадения.</p>
               </div>
               
               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
@@ -338,7 +338,7 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
                     <span className={clsx("block font-black text-2xl leading-none", isBest ? "text-teal-400" : "text-white")}>
                         {direction.match}%
                     </span>
-                    <span className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
+                    <span className="text-[12px] text-slate-400 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
                 </div>
             </div>
 

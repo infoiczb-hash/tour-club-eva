@@ -22,10 +22,10 @@ export async function GET(req: Request) {
     const tomorrowEnd = new Date(tomorrowStart);
     tomorrowEnd.setHours(23, 59, 59, 999);
 
-    const bookings = await prisma.booking.findMany({
+   const bookings = await prisma.booking.findMany({
       where: {
         paymentMethod: 'cash',
-        status: BookingStatus.confirmed,
+        status: { in: ['pending', 'confirmed'] }, // ✅ Берем оба статуса
       },
       include: {
         tour: true,

@@ -65,7 +65,7 @@ export default function ReviewsTab({ reviews, onAdd, onEdit, onDelete, onToggleS
                 <tr key={review.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors duration-200">
                   <td className="p-5 font-bold text-slate-800 dark:text-white">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-black text-slate-500 shrink-0 uppercase">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-black text-slate-400 shrink-0 uppercase">
                             {review.name[0]}
                         </div>
                         <span className="truncate max-w-[120px]">{review.name}</span>
@@ -74,7 +74,7 @@ export default function ReviewsTab({ reviews, onAdd, onEdit, onDelete, onToggleS
                   <td className="p-5">
                     <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 w-fit bg-slate-50 dark:bg-slate-800/50">
                       {getSourceIcon(review.source)} 
-                      <span className="text-[10px] font-bold uppercase text-slate-500">{review.source}</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400">{review.source}</span>
                     </div>
                   </td>
                   <td className="p-5">
@@ -93,7 +93,7 @@ export default function ReviewsTab({ reviews, onAdd, onEdit, onDelete, onToggleS
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${
                         review.isActive 
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/20' 
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       {review.isActive ? <CheckCircle2 size={12}/> : <Circle size={12}/>}
@@ -152,7 +152,7 @@ export default function ReviewsTab({ reviews, onAdd, onEdit, onDelete, onToggleS
                 </p>
                 
                 <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <button onClick={() => onEdit(review)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 text-xs font-bold flex items-center gap-2 active:scale-95 transition-transform">
+                    <button onClick={() => onEdit(review)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 dark:text-slate-300 text-xs font-bold flex items-center gap-2 active:scale-95 transition-transform">
                         <Edit size={14}/> Править
                     </button>
                     <button onClick={() => onDelete(review.id)} className="px-4 py-2 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-xl text-xs font-bold flex items-center gap-2 active:scale-95 transition-transform">

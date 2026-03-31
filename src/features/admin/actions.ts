@@ -80,27 +80,35 @@ export async function getRegistrationsAction() {
       // ✅ ИСПРАВЛЕНИЕ: Определяем самую точную дату выезда для заявки
       const actualDate = item.tourDate?.startDate || item.bookedDate || firstLegacyDate;
 
-      return {
+     return {
         id: item.id,
         user_name: item.name,
         user_phone: item.phone,
         status: item.status || 'pending',
         created_at: item.createdAt,
         
-        // ✅ ИСПРАВЛЕНИЕ: Берем билеты из новых плоских колонок
         tickets_adult: item.ticketsAdult,
         tickets_child: item.ticketsChild,
         tickets_family: item.ticketsFamily,
         tickets_member: item.ticketsMember,
         
-        // ✅ ИСПРАВЛЕНИЕ: Новые поля CRM
+        short_id: item.shortId ?? undefined, // ✅ Исправлен баг TS (null -> undefined)
+        
+        guests: item.guests || [],
+        
+        // ✅ ВОЗВРАЩЕНО: Новые поля CRM, без которых не работает админка
+        payment_method: item.paymentMethod || 'cash', 
+        discount: item.discount || 0,
         amount_paid: item.amountPaid,
         source: item.source,
         total_price: item.totalPrice,
         
+        // ✅ ВОЗВРАЩЕНО: ID для точной группировки списков гида
+        tourId: item.tourId,
+        tourDateId: item.tourDateId || undefined,
+        
         comment: item.comment || '',
         social: item.social || item.email || '',
-        event_id: item.tourId,
         tour: item.tour
           ? { title: item.tour.title, date: actualDate }
           : undefined,
@@ -120,20 +128,79 @@ export async function updateRegistrationStatus(id: string, status: string) {
   try {
     await requireAuth(); 
 
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: { status: status as BookingStatus },
-      include: { 
-        tour: { select: { title: true, slug: true } },
-        member: { select: { tgChatId: true } } // Достаем ID телеграма
+    const booking = await prisma.$transaction(async (tx) => {
+      const current = await tx.booking.findUnique({
+        where: { id },
+        select: { status: true, tourId: true, tourDateId: true, ticketsAdult: true, ticketsChild: true, ticketsMember: true, ticketsFamily: true }
+      });
+
+      if (!current) throw new Error('Booking not found');
+
+      const totalTickets = current.ticketsAdult + current.ticketsChild + current.ticketsMember + (current.ticketsFamily * 3);
+
+      // 1. ОТМЕНА: Если статус меняется на cancelled -> Возвращаем места в продажу (increment)
+      if (status === 'cancelled' && current.status !== 'cancelled') {
+        if (current.tourDateId) {
+          await tx.tourDate.update({
+            where: { id: current.tourDateId },
+            data: { spotsLeft: { increment: totalTickets } }
+          });
+        } else {
+          await tx.tour.update({
+            where: { id: current.tourId },
+            data: { spotsLeft: { increment: totalTickets } }
+          });
+        }
+      } 
+      // 2. ВОССТАНОВЛЕНИЕ: Если восстанавливаем из cancelled -> Забираем места обратно (decrement)
+      else if (current.status === 'cancelled' && status !== 'cancelled') {
+        if (current.tourDateId) {
+          await tx.tourDate.update({
+            where: { id: current.tourDateId },
+            data: { spotsLeft: { decrement: totalTickets } }
+          });
+        } else {
+          await tx.tour.update({
+            where: { id: current.tourId },
+            data: { spotsLeft: { decrement: totalTickets } }
+          });
+        }
       }
+
+      return await tx.booking.update({
+        where: { id },
+        data: { status: status as BookingStatus },
+        include: { 
+          tour: { select: { title: true, slug: true } },
+          member: { select: { tgChatId: true } }
+        }
+      });
     });
 
     // 🔥 ТРИГГЕР: Отправляем пуш юзеру, если статус стал "confirmed" (Оплачено)
-    if (status === 'confirmed' && (booking.member as any)?.tgChatId) {
-        const msg = `✅ <b>Оплата получена!</b>\n\nВаше участие в туре <b>${booking.tour.title}</b> успешно подтверждено.\nВся информация и билет уже ждут вас в личном кабинете.`;
-        const link = `${process.env.NEXT_PUBLIC_SITE_URL}/account/bookings`;
-        await sendToUserTelegram((booking.member as any).tgChatId, msg, link);
+   if ((booking.member as any)?.tgChatId) {
+        const chatId = (booking.member as any).tgChatId;
+        const link = `${process.env.NEXT_PUBLIC_SITE_URL}/account/bookings/${booking.id}`;
+        let msg = '';
+
+        switch (status) {
+            case 'confirmed':
+                msg = `✅ <b>Оплата получена!</b>\n\nВаше участие в туре <b>${booking.tour.title}</b> успешно подтверждено.`;
+                break;
+            case 'moderation':
+                msg = `⏳ <b>Чек на проверке</b>\n\nМы получили ваш скриншот об оплате тура <b>${booking.tour.title}</b>. Менеджер проверит его в ближайшее время.`;
+                break;
+            case 'rejected':
+                msg = `❌ <b>Ошибка оплаты</b>\n\nК сожалению, мы не смогли подтвердить вашу оплату для тура <b>${booking.tour.title}</b>. Пожалуйста, проверьте чек и загрузите его заново.`;
+                break;
+            case 'cancelled':
+                msg = `🗑 <b>Бронь отменена</b>\n\nВаша заявка на тур <b>${booking.tour.title}</b> была отменена менеджером.`;
+                break;
+        }
+
+        if (msg) {
+            await sendToUserTelegram(chatId, msg, link);
+        }
     }
 
     revalidatePath('/admin');
@@ -141,9 +208,9 @@ export async function updateRegistrationStatus(id: string, status: string) {
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    console.error('Update Status Error:', error);
-    return { error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
+    if (err.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
+    console.error('[Action] Update Status Error:', error);
+    return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
   }
 }
 
@@ -364,5 +431,23 @@ export async function saveContentBlockAction(slug: string, content: Prisma.Input
     // 🛡️ Защита от утечки
     console.error('Content Save Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при сохранении блока' };
+  }
+}
+
+// ==========================================
+// 6. ОБНОВЛЕНИЕ КОММЕНТАРИЕВ В CRM
+// ==========================================
+export async function updateBookingCommentAction(id: string, comment: string) {
+  try {
+    await requireAuth(); 
+    await prisma.booking.update({ 
+      where: { id }, 
+      data: { comment } 
+    });
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    console.error('Update Comment Error:', error);
+    return { success: false, error: 'Ошибка сохранения комментария' };
   }
 }

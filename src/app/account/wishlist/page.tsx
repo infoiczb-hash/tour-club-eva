@@ -205,7 +205,7 @@ export default async function WishlistPage() {
         {tourWishlist.length === 0 ? (
           <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-8 text-center">
             <Heart size={32} className="text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm mb-2">Нет сохранённых туров</p>
+            <p className="text-slate-300 text-sm mb-2">Нет сохранённых туров</p>
             <p className="text-xs text-slate-600 mb-4">Нажмите ♡ на странице тура чтобы добавить в вишлист</p>
             <Link href="/tour" className="inline-flex items-center gap-2 text-sm font-bold text-teal-400 hover:text-teal-300 transition-colors">
               Смотреть туры <ArrowRight size={14} />
@@ -251,7 +251,7 @@ export default async function WishlistPage() {
                       {tour.title}
                     </Link>
 
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-2">
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-400 mb-2">
                       {tour.location && <span className="flex items-center gap-1"><MapPin size={10} /> {tour.location}</span>}
                       {tour.duration && <span className="flex items-center gap-1"><Clock size={10} /> {tour.duration}</span>}
                       {tour.distance && <span className="flex items-center gap-1"><TrendingUp size={10} /> {tour.distance} км</span>}
@@ -301,7 +301,7 @@ export default async function WishlistPage() {
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
                   <p className="text-sm font-bold text-slate-200 group-hover:text-white line-clamp-2 transition-colors leading-snug">{sp.post.title}</p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1.5">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
                     {sp.post.read_time ? `${sp.post.read_time} мин чтения` : 'Статья'}
                   </p>
                 </div>
@@ -320,7 +320,7 @@ export default async function WishlistPage() {
           </h2>
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-slate-400 leading-relaxed">
           Мы пришлём уведомление, когда появятся новые даты в выбранных категориях.
         </p>
 

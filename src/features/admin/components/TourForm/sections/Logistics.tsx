@@ -89,7 +89,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                   <FormInput name={`dates.${index}.time`} label="Время" placeholder="09:00" />
                 </div>
                 <div className="md:col-span-4">
-                   <label className="text-xs font-bold uppercase text-slate-500 mb-1.5 block">
+                   <label className="text-xs font-bold uppercase text-slate-400 mb-1.5 block">
                       Гид на выезд
                    </label>
                    <div className="relative">
@@ -138,7 +138,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
 
           {fields.length === 0 && (
             <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-              <p className="text-slate-400 text-sm font-medium">Даты выездов еще не добавлены</p>
+              <p className="text-slate-300 text-sm font-medium">Даты выездов еще не добавлены</p>
               <button 
                 type="button"
                 onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}

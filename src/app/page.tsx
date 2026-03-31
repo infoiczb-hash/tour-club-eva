@@ -86,14 +86,17 @@ const [guides, posts, allReviews, bCatRes, funRes] = await Promise.all([
   const blogCategories = bCatRes.success ? bCatRes.data : [];
   const activeTests = funRes?.success && funRes.data ? funRes.data.filter(t => t.isActive) : [];
 
-  const activeReviews = allReviews.filter(r => r.isActive).map(r => ({
-    id: r.id,
-    name: r.name,
-    text: r.text,
-    source: r.source,
-    category: r.category,
-    createdAt: r.createdAt.toISOString(), 
-    avatar: r.avatar
+  const activeReviews = allReviews
+    .filter(r => r.isActive)
+    .slice(0, 12) // ✅ ИСПРАВЛЕНО: Ограничили до 12 отзывов для спасения DOM и снижения TBT
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      text: r.text,
+      source: r.source,
+      category: r.category,
+      createdAt: r.createdAt.toISOString(), 
+      avatar: r.avatar
   }));
   
   // ✅ ДОБАВЛЕНО: Микроразметка WebSite + SearchAction для Google

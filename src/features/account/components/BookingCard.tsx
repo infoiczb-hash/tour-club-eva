@@ -8,7 +8,7 @@ import { ru } from 'date-fns/locale';
 import { 
   Calendar, MapPin, Users, CreditCard, 
   ChevronRight, CheckCircle2, Clock,
-  AlertCircle, Gift
+  AlertCircle, Gift, X,  Hourglass 
 } from 'lucide-react'; // 👈 Убрали фейковый QrCode, добавили Gift для бонусов
 import { clsx } from 'clsx';
 import cloudinaryLoader from '@/lib/cloudinary-loader';
@@ -19,16 +19,19 @@ interface BookingCardProps {
 }
 
 const STATUS_MAP = {
-  pending: { label: 'В обработке', color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/30', icon: Clock },
-  confirmed: { label: 'Подтвержден', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', icon: CheckCircle2 },
-  cancelled: { label: 'Отменен', color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-400/30', icon: AlertCircle },
+  pending: { label: 'Новая', color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/30', icon: Clock },
+  awaiting_payment: { label: 'Ждет оплаты', color: 'text-sky-400', bg: 'bg-sky-400/10', border: 'border-sky-400/30', icon: CreditCard },
+  moderation: { label: 'Проверка чека', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: Hourglass },
+  confirmed: { label: 'Оплачено', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', icon: CheckCircle2 },
+  rejected: { label: 'Отклонено', color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/30', icon: AlertCircle },
+  cancelled: { label: 'Отменено', color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/30', icon: X },
 };
 
 const PAYMENT_METHOD_MAP: Record<string, string> = {
-  'cash': 'Наличные гиду',
-  'qr': 'Перевод (QR)',
-  'biletpmr': 'Онлайн (BiletPMR)',
-  'foreign': 'Зарубежный перевод'
+  'cash': 'Наличными гиду',
+  'qr': 'Клевер QR',
+  'biletpmr': 'BiletPMR',
+  'foreign': 'Другие страны'
 };
 
 export default function BookingCard({ booking }: BookingCardProps) {
@@ -36,7 +39,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
   const { 
     tour, status, totalPrice, guestsCount, 
     id, shortId, tourDate, 
-    appliedBonuses, finalPrice, paymentMethod 
+    appliedBonuses, finalPrice, paymentMethod  
   } = booking;
   
   const statusInfo = STATUS_MAP[status as keyof typeof STATUS_MAP] || STATUS_MAP.pending;
@@ -56,7 +59,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
   const imageUrl = tour?.coverImage;
 
   // Безопасный фоллбэк: если это старая бронь без shortId, используем срез UUID
-  const displayId = shortId ? String(shortId).toUpperCase() : String(id).slice(0, 8).toUpperCase();
+const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
 
   return (
     <div className="relative flex flex-col md:flex-row bg-slate-900 rounded-3xl overflow-hidden border border-white/10 shadow-xl group transition-all hover:border-white/20 hover:shadow-2xl">
@@ -117,29 +120,29 @@ export default function BookingCard({ booking }: BookingCardProps) {
 
           <div className="grid grid-cols-2 gap-y-3 gap-x-4">
             <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Дата и Время</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Дата и Время</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <Calendar size={16} className="text-slate-500 shrink-0" />
+                <Calendar size={16} className="text-slate-400 shrink-0" />
                 <span className="truncate">{formattedDate}, {time}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Места</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Места</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <Users size={16} className="text-slate-500 shrink-0" />
+                <Users size={16} className="text-slate-400 shrink-0" />
                 <span>{guestsCount} чел.</span>
               </div>
             </div>
             
             <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Сумма</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Сумма</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <CreditCard size={16} className="text-slate-500 shrink-0" />
+                <CreditCard size={16} className="text-slate-400 shrink-0" />
                 {/* ✅ Если есть скидка, показываем зачеркнутую старую цену */}
                 {appliedBonuses > 0 ? (
                   <span>
-                    <span className="line-through text-slate-500 text-xs mr-2">{totalPrice}</span>
+                    <span className="line-through text-slate-300 text-xs mr-2">{totalPrice}</span>
                     <span className="text-emerald-400 font-bold">{finalPrice || totalPrice - appliedBonuses} {tour?.currency || 'MDL'}</span>
                   </span>
                 ) : (
@@ -150,7 +153,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
 
             {/* ✅ Метод оплаты */}
             <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Оплата</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Оплата</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
                 <span className="text-xs">{paymentLabel}</span>
               </div>
@@ -195,7 +198,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
 
         <div className="w-full flex md:flex-col justify-between items-center">
           <div className="text-left md:text-center mb-0 md:mb-4">
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Booking Ref</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Booking Ref</p>
             {/* ✅ Реальный ID билета */}
             <p className="text-sm font-mono text-slate-300 font-bold tracking-wider">#{displayId}</p>
           </div>

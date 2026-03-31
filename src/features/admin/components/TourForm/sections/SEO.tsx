@@ -47,13 +47,13 @@ export const SEO = () => {
 
         {/* Превью (Как это видит клиент в Google) */}
         <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-           <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex gap-2 items-center">
+           <h4 className="text-xs font-bold uppercase text-slate-400 mb-4 flex gap-2 items-center">
              <Globe size={14}/> Предпросмотр в Google
            </h4>
            
            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 mb-1">
-                 <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500">Logo</div>
+                 <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-400">Logo</div>
                  <div className="flex flex-col">
                     <span className="text-[10px] text-slate-800 font-bold">Ваш Сайт</span>
                     <span className="text-[10px] text-slate-400">https://vash-site.com/tours/...</span>
