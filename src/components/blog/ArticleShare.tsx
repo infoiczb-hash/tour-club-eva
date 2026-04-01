@@ -42,7 +42,7 @@ export default function ArticleShare({ title, slug }: ArticleShareProps) {
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-6 border-t border-white/10 mt-8">
-      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+      <span className="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
         <Share2 size={16} aria-hidden="true" /> Поделиться:
       </span>
 
@@ -72,7 +72,7 @@ export default function ArticleShare({ title, slug }: ArticleShareProps) {
           className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border ${
             copied
               ? "bg-green-500 text-white border-green-500"
-              : "bg-slate-800 text-slate-400 border-white/10 hover:bg-slate-700 hover:text-white"
+              : "bg-slate-800 text-slate-300 border-white/10 hover:bg-slate-700 hover:text-white"
           }`}
         >
           {copied

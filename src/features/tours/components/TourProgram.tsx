@@ -51,7 +51,7 @@ function ProgramDayCard({ item, idx }: { item: TourProgramDay; idx: number }) {
                   {/* Время */}
                   {act.time && (
                     <div className="shrink-0 pt-0.5">
-                       <span className="text-xs font-mono font-bold text-slate-400 bg-white dark:bg-slate-900 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
+                       <span className="text-xs font-mono font-bold text-slate-300 bg-white dark:bg-slate-900 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                           {act.time}
                        </span>
                     </div>
@@ -72,7 +72,7 @@ function ProgramDayCard({ item, idx }: { item: TourProgramDay; idx: number }) {
                      
                      {/* Описание активности */}
                      {act.description && (
-                       <p className="text-xs md:text-sm text-slate-400 dark:text-slate-400 leading-relaxed">
+                       <p className="text-xs md:text-sm text-slate-300 dark:text-slate-300 leading-relaxed">
                          {act.description}
                        </p>
                      )}
@@ -83,7 +83,7 @@ function ProgramDayCard({ item, idx }: { item: TourProgramDay; idx: number }) {
           ) : (
             // FALLBACK: Если нет активностей, выводим description
             item.description && (
-              <div className="prose prose-sm dark:prose-invert text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+              <div className="prose prose-sm dark:prose-invert text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                 {item.description}
               </div>
             )

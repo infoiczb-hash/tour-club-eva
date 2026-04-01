@@ -230,7 +230,7 @@ export default function SocialGrid() {
             </div>
             {/* Title */}
             <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-                <span className="font-light text-slate-400 block md:inline">Ловим </span>
+                <span className="font-light text-slate-300 block md:inline">Ловим </span>
                 <span className="font-black text-white">Моменты</span>
                 <span className="text-teal-500">.</span>
             </h2>
@@ -277,7 +277,7 @@ export default function SocialGrid() {
             </div>
             
             {/* SWIPE HINT (Mobile only, bottom right) */}
-          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

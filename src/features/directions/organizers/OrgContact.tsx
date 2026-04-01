@@ -26,7 +26,7 @@ export default function OrgContact() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-900/20 mb-6">
             <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+            <span className="text-[12px] font-bold uppercase tracking-widest text-indigo-300">
               Открыты к сотрудничеству
             </span>
           </div>
@@ -35,7 +35,7 @@ export default function OrgContact() {
             ДАВАЙТЕ ОБСУДИМ <br className="hidden md:block" />
             <span className="text-indigo-500">ВАШУ ЗАДАЧУ</span>
           </h2>
-          <p className="text-slate-400 font-medium text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-slate-300 font-medium text-lg max-w-2xl mx-auto leading-relaxed">
             Мы не продаем готовые пакеты. Мы слушаем вас и рассчитываем смету индивидуально под запрос вашей команды.
           </p>
         </div>

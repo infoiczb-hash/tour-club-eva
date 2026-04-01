@@ -82,7 +82,7 @@ export default function KidsParents() {
 </h2>
                     
                     <div className="border-l-4 border-amber-500 pl-5 md:pl-8 py-2">
-                        <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-snug tracking-tight">
+                        <p className="text-[16px] md:text-2xl font-medium text-slate-300 leading-snug tracking-tight">
                             Детский и подростковый туризм — это возможность расти <span className="text-white font-bold">сильнее и счастливее</span>. Природа учит смелости, любознательности и <span className="text-white font-bold">уважению к другим</span>. Каждый маршрут — маленькое приключение, которое <span className="text-white font-bold">остаётся в памяти навсегда</span>.
                         </p>
                     </div>
@@ -161,7 +161,7 @@ export default function KidsParents() {
                                         <h4 className="text-lg md:text-xl font-bold text-white mb-2 tracking-tight transition-colors">
                                             {item.title}
                                         </h4>
-                                        <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
+                                        <p className="text-[14px] text-slate-300 leading-relaxed font-medium">
                                             {item.desc}
                                         </p>
                                     </div>
@@ -170,7 +170,7 @@ export default function KidsParents() {
                         })}
                     </div>
 
-                     <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                     <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                                     <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                                     <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                                                 </div>

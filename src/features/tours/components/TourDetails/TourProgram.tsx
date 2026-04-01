@@ -77,7 +77,7 @@ export default function TourProgram({ program }: TourProgramProps) {
                     "absolute left-0 top-0 w-10 h-10 rounded-full border-4 flex items-center justify-center z-10 transition duration-300 print:border-slate-300 print:bg-white print:text-black shrink-0",
                     isOpen && !isPrinting
                       ? "bg-teal-500 text-slate-900 border-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.5)] scale-110"
-                      : "bg-slate-800 text-slate-400 border-slate-950 hover:bg-teal-500 hover:text-slate-900"
+                      : "bg-slate-800 text-slate-300 border-slate-950 hover:bg-teal-500 hover:text-slate-900"
                   )}
                 >
                   {isLast ? <Flag size={14} strokeWidth={3} className="print:text-black" /> : <span className="text-xs font-black">{index + 1}</span>}
@@ -95,12 +95,12 @@ export default function TourProgram({ program }: TourProgramProps) {
                         {day.title || `День ${index + 1}`}
                       </h3>
                       {day.location && (
-                        <div className="flex items-center gap-2 text-[14px] font-bold text-slate-400 uppercase print:text-slate-600 min-w-0">
+                        <div className="flex items-center gap-2 text-[14px] font-bold text-slate-300 uppercase print:text-slate-600 min-w-0">
                           <Navigation size={10} className="shrink-0" /> <span className="truncate">{day.location}</span>
                         </div>
                       )}
                     </div>
-                    <ChevronDown size={18} className={clsx("shrink-0 text-slate-400 transition-transform duration-300 print:hidden mt-1 md:mt-0", isOpen && "rotate-180 text-teal-500")} />
+                    <ChevronDown size={18} className={clsx("shrink-0 text-slate-300 transition-transform duration-300 print:hidden mt-1 md:mt-0", isOpen && "rotate-180 text-teal-500")} />
                   </div>
 
                   <div className={clsx(
@@ -116,7 +116,7 @@ export default function TourProgram({ program }: TourProgramProps) {
                             <div className="mt-4 space-y-2 bg-black/20 p-3 rounded-xl border border-white/5 print:bg-slate-50 print:border-slate-200 min-w-0">
                               {day.activities.map((act: any, i: number) => (
                                 <div key={i} className="flex items-start gap-2 text-xs md:text-sm print:text-black min-w-0">
-                                  <CircleDot size={12} className="text-teal-500 mt-1 shrink-0 print:text-slate-400" />
+                                  <CircleDot size={12} className="text-teal-500 mt-1 shrink-0 print:text-slate-300" />
                                   <span className="text-slate-200 print:text-black min-w-0 flex-1 break-words">
                                     {typeof act === 'string' ? act : (
                                       <>

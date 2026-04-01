@@ -32,11 +32,11 @@ export default function ProLogistics() {
                                 <span>Защита от солнца (головной убор, кепка, очки <b>на шнурке</b> (иначе утонут), SPF если активное солнце).</span>
                             </li>
                             <li className="flex gap-3 items-start p-3.5 rounded-xl bg-white/5 border border-white/5">
-                                <div className="mt-0.5 shrink-0"><Shirt size={18} className="text-slate-400"/></div> 
+                                <div className="mt-0.5 shrink-0"><Shirt size={18} className="text-slate-300"/></div> 
                                 <span>Комплект сухой одежды (если захочется переодеться после воды).</span>
                             </li>
                             <li className="flex gap-3 items-start p-3.5 rounded-xl bg-white/5 border border-white/5">
-                                <div className="mt-0.5 shrink-0"><Footprints size={18} className="text-slate-400"/></div> 
+                                <div className="mt-0.5 shrink-0"><Footprints size={18} className="text-slate-300"/></div> 
                                 <span>Тапочки или аквашузы.</span>
                             </li>
                             <li className="flex gap-3 items-start p-3.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-50">
@@ -67,11 +67,11 @@ export default function ProLogistics() {
                                 <span>Мощный крем SPF 50+, кепка и очки обязательно <b>на шнурке</b> (иначе утонут).</span>
                             </li>
                             <li className="flex gap-3 items-start p-3.5 rounded-xl bg-white/5 border border-white/5">
-                                <div className="mt-0.5 shrink-0"><Footprints size={18} className="text-slate-400"/></div> 
+                                <div className="mt-0.5 shrink-0"><Footprints size={18} className="text-slate-300"/></div> 
                                 <span>Удобная обувь для воды (аквашузы или сандалии для остановок на берегах).</span>
                             </li>
                             <li className="flex gap-3 items-start p-3.5 rounded-xl bg-white/5 border border-white/5">
-                                <div className="mt-0.5 shrink-0"><Shirt size={18} className="text-slate-400"/></div> 
+                                <div className="mt-0.5 shrink-0"><Shirt size={18} className="text-slate-300"/></div> 
                                 <span>Сменная одежда и обувь.</span>
                             </li>
                             <li className="flex gap-3 items-start p-3.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-50">
@@ -94,7 +94,7 @@ export default function ProLogistics() {
                                 А если у меня свой SUP?
                             </h3>
                         </div>
-                        <p className="text-[14px] md:text-base text-slate-400 font-medium md:max-w-md lg:max-w-lg">
+                        <p className="text-[14px] md:text-base text-slate-300 font-medium md:max-w-md lg:max-w-lg">
                             Присоединяйтесь к нашим маршрутам на своем сапборде. Оплачивается 50% от стоимости сплава/тура.
                         </p>
                     </div>

@@ -35,7 +35,7 @@ export default function NotFound() {
           Мы сбились с <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">тропы</span>
         </h1>
         
-        <p className="text-slate-400 text-lg md:text-xl mb-10 leading-relaxed">
+        <p className="text-slate-300 text-lg md:text-xl mb-10 leading-relaxed">
           Кажется, этой страницы не существует или она была перемещена ветром. 
           Здесь красиво, но одиноко. Давайте вернем вас к цивилизации.
         </p>

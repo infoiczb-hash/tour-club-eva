@@ -198,7 +198,7 @@ export default async function DashboardPage() {
     <div className="w-full max-w-7xl mx-auto space-y-8 pb-10">
       <div className="px-2 md:px-0">
         <h1 className="text-3xl font-black text-white tracking-tight uppercase">Личный кабинет</h1>
-        <p className="text-slate-400 mt-2">Управляйте своими путешествиями и привилегиями</p>
+        <p className="text-slate-300 mt-2">Управляйте своими путешествиями и привилегиями</p>
       </div>
 
       <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 items-start">
@@ -220,7 +220,7 @@ export default async function DashboardPage() {
           
           <div className="order-1 xl:order-2 px-2 md:px-0">
             <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-5 sm:p-6 shadow-lg">
-              <h3 className="text-slate-400 font-bold text-xs sm:text-sm mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-slate-300 font-bold text-xs sm:text-sm mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
                 <Mountain size={16} className="text-teal-500" /> Вы прошли с нами
               </h3>
               
@@ -231,7 +231,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalTours}</div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">Туров</div>
+                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Туров</div>
                   </div>
                 </div>
 
@@ -241,7 +241,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalKm}</div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">Км</div>
+                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Км</div>
                   </div>
                 </div>
 
@@ -251,7 +251,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalNights}</div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">Ночей</div>
+                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Ночей</div>
                   </div>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export default async function DashboardPage() {
                     <Wallet size={24} />
                   </div>
                   <div>
-                    <h3 className="text-amber-500/80 font-bold text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Ваш баланс</h3>
+                    <h3 className="text-amber-500/80 font-bold text-[12px] sm:text-xs uppercase tracking-widest mb-0.5">Ваш баланс</h3>
                     <div className="text-2xl sm:text-3xl font-black text-white flex items-baseline gap-1.5">
                       {stats.balance} <span className="text-sm sm:text-base font-bold text-amber-500/50">₽</span>
                     </div>
@@ -280,7 +280,7 @@ export default async function DashboardPage() {
                   <span className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
                     <Info size={14} /> Как получать бонусы?
                   </span>
-                  <ChevronDown size={16} className="text-slate-400 group-open:rotate-180 transition-transform duration-300" />
+                  <ChevronDown size={16} className="text-slate-300 group-open:rotate-180 transition-transform duration-300" />
                 </summary>
                 
                 <div className="px-4 pb-5 pt-1 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -289,7 +289,7 @@ export default async function DashboardPage() {
                     <Star size={18} className="text-amber-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-white mb-0.5">Отзывы о турах</p>
-                      <p className="text-xs text-slate-400 leading-snug">Получите +10 ₽ за честный отзыв на сайте после прохождения маршрута.</p>
+                      <p className="text-xs text-slate-300 leading-snug">Получите +10 ₽ за честный отзыв на сайте после прохождения маршрута.</p>
                     </div>
                   </div>
 
@@ -297,7 +297,7 @@ export default async function DashboardPage() {
                     <FlaskConical size={18} className="text-purple-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-white mb-0.5">Fan-сектор</p>
-                      <p className="text-xs text-slate-400 leading-snug">Проходите веселые тесты в личном кабинете и получайте +1 ₽ за каждый.</p>
+                      <p className="text-xs text-slate-300 leading-snug">Проходите веселые тесты в личном кабинете и получайте +1 ₽ за каждый.</p>
                     </div>
                   </div>
 
@@ -305,12 +305,12 @@ export default async function DashboardPage() {
                     <Gift size={18} className="text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-white mb-0.5">Пригласить друга</p>
-                      <p className="text-xs text-slate-400 leading-snug">Дайте другу промокод на 5% скидку. После его первой поездки вы получите бонус!</p>
+                      <p className="text-xs text-slate-300 leading-snug">Дайте другу промокод на 5% скидку. После его первой поездки вы получите бонус!</p>
                     </div>
                   </div>
 
                   <div className="mt-4 text-center">
-                    <span className="inline-block px-3 py-1 bg-amber-500/10 text-amber-500/80 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-amber-500/20">
+                    <span className="inline-block px-3 py-1 bg-amber-500/10 text-amber-500/80 text-[12px] font-bold uppercase tracking-widest rounded-lg border border-amber-500/20">
                       Оплачивайте до 10% от стоимости тура
                     </span>
                   </div>
@@ -363,7 +363,7 @@ export default async function DashboardPage() {
       )}
 
       <section className="space-y-6 pt-4 border-t border-white/5 px-2 md:px-0">
-        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
           Предстоящие поездки
         </h2>
 

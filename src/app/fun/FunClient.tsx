@@ -129,7 +129,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
         <h1 className="animate-hero-title text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
           Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
         </h1>
-        <p className="animate-hero-subtitle text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+        <p className="animate-hero-subtitle text-lg md:text-xl text-slate-300 max-w-2xl mx-auto font-medium">
           Узнай какой ты турист, проработай страхи, кто ты в туристической группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
         </p>
       </section>
@@ -221,7 +221,7 @@ function CtaBanner() {
             <span className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center"><Trophy size={20} /></span>
             <span>Готов к практике?</span>
           </h3>
-          <p className="text-slate-400 max-w-lg text-lg">Теория — это отлично. Но настоящие ответы ждут тебя на маршруте.</p>
+          <p className="text-slate-300 max-w-lg text-lg">Теория — это отлично. Но настоящие ответы ждут тебя на маршруте.</p>
         </div>
         <Link href="/tour" className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 hover:scale-105 transition-[background-color,transform] shadow-[0_0_20px_rgba(20,184,166,0.3)] whitespace-nowrap">
           Смотреть все туры
@@ -281,7 +281,7 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
       {badge && (
         <div className="absolute top-6 right-6 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-1.5 shadow-lg z-20">
           <Sparkles size={12} className={activeColor.split(" ")[2]} />
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{badge}</span>
+          <span className="text-[12px] font-bold text-white uppercase tracking-widest">{badge}</span>
         </div>
       )}
 

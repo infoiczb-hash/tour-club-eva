@@ -234,7 +234,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             </Link>
 
             <div className="flex items-center gap-3 mb-4 md:mb-5">
-                <span className="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <span className="text-[11px] md:text-xs font-bold text-slate-300 uppercase tracking-widest">
                     Рубрика:
                 </span>
                 <span className="inline-block px-3 py-1 bg-teal-500 text-slate-950 text-[11px] md:text-[13px] font-black uppercase tracking-widest rounded md:rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.4)]">
@@ -264,14 +264,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                             sizes="48px" 
                          />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
                                 <User size={20}/>
                             </div>
                         )}
                     </div>
                     <div>
                         <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">{post.author_name}</div>
-                        <div className="text-slate-400 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
+                        <div className="text-slate-300 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
                     </div>
                 </div>
 
@@ -375,7 +375,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                                             <Image src={relPost.image || '/placeholder.jpg'} alt={relPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, 100px" />
                                         </div>
                                         <div className="py-1">
-                                            <span className="text-[10px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">
+                                            <span className="text-[12px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">
                                                 {(relPost as any).blogCategory?.title || relPost.category}
                                             </span>
                                             <h3 className="text-sm font-bold text-slate-200 leading-snug group-hover:text-teal-400 transition-colors line-clamp-3">   

@@ -102,7 +102,7 @@ export default function Benefits() {
                       <h3 className="text-[15px] sm:text-base md:text-xl font-black text-white uppercase tracking-tight mb-1 md:mb-3 group-hover:text-amber-400 transition-colors leading-tight">
                         {role.title}
                       </h3>
-                      <p className="text-[14px] md:text-sm text-slate-400 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
+                      <p className="text-[14px] md:text-sm text-slate-300 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
                         {role.desc}
                       </p>
                     </div>
@@ -135,7 +135,7 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
         </div>
         <div className="flex-1">
           <h3 className="text-[15px] sm:text-base font-black text-white uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors mb-1">{item.title}</h3>
-          <p className="text-[14px] text-slate-400 font-medium leading-snug line-clamp-3">{item.desc}</p>
+          <p className="text-[14px] text-slate-300 font-medium leading-snug line-clamp-3">{item.desc}</p>
         </div>
       </div>
     );
@@ -164,7 +164,7 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
           </h3>
         </div>
       </div>
-      <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">{item.desc}</p>
+      <p className="text-[14px] md:text-base text-slate-300 font-medium leading-relaxed">{item.desc}</p>
       {item.features && (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mt-6 pt-6 border-t border-white/10">
           {item.features.map((feat: string) => (

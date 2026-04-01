@@ -56,7 +56,7 @@ export default function SupSafety() {
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4">
     На воде <span className="text-blue-500">как дома</span>
 </h2>
-                     <p className="text-slate-400 mt-2 text-[14px] md:text-base font-medium leading-relaxed">
+                     <p className="text-slate-300 mt-2 text-[14px] md:text-base font-medium leading-relaxed">
                         Ваша единственная задача — расслабиться и получать удовольствие. Все риски, организацию и контроль мы берем на себя.
                      </p>
                  </div>
@@ -81,7 +81,7 @@ export default function SupSafety() {
                                      {/* Квадратная иконка слева */}
                                      <div className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 mr-4 md:mr-5">
                                          <div className="absolute inset-0 bg-blue-500/20 rounded-2xl blur-md group-hover:blur-xl transition-all duration-500 opacity-0 group-hover:opacity-100" />
-                                         <div className="relative w-full h-full bg-slate-900 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-blue-500/50 group-hover:bg-blue-500 transition-colors duration-500 z-10 shadow-lg text-slate-400 group-hover:text-slate-900">
+                                         <div className="relative w-full h-full bg-slate-900 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-blue-500/50 group-hover:bg-blue-500 transition-colors duration-500 z-10 shadow-lg text-slate-300 group-hover:text-slate-900">
                                              <Icon size={24} strokeWidth={1.5} className="transition-colors duration-300" />
                                          </div>
                                      </div>
@@ -90,7 +90,7 @@ export default function SupSafety() {
                                          <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-blue-300 transition-colors leading-tight">
                                              {item.title}
                                          </h3>
-                                         <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
+                                         <p className="text-[14px] text-slate-300 leading-relaxed font-medium">
                                              {item.desc}
                                          </p>
                                      </div>
@@ -99,7 +99,7 @@ export default function SupSafety() {
                          })}
                      </div>
 
-                     <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                     <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

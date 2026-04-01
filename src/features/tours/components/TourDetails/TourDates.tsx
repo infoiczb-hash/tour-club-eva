@@ -63,12 +63,12 @@ export default function TourDates({ tour }: TourDatesProps) {
                 <div className="flex justify-between items-center md:w-1/3 mb-3 md:mb-0">
                    <div className="flex flex-col">
                        <span className={`text-lg md:text-xl font-black uppercase tracking-tight transition-colors ${
-                           isSoldOut ? 'text-slate-400' : 'text-white group-hover:text-teal-400'
+                           isSoldOut ? 'text-slate-300' : 'text-white group-hover:text-teal-400'
                        }`}>
                          {dateString}
                        </span>
                        {item.time && (
-                          <span className="text-xs text-slate-400 mt-0.5 font-bold uppercase tracking-wider">
+                          <span className="text-xs text-slate-300 mt-0.5 font-bold uppercase tracking-wider">
                               Старт в {item.time}
                           </span>
                        )}
@@ -76,7 +76,7 @@ export default function TourDates({ tour }: TourDatesProps) {
                    
                    <div className="md:hidden shrink-0">
                         {!isSoldOut && (
-                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
                                 <ChevronRight size={18} strokeWidth={2.5} />
                             </div>
                         )}
@@ -103,10 +103,10 @@ export default function TourDates({ tour }: TourDatesProps) {
                            )}
                         </div>
                         <div>
-                           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 leading-none">
+                           <h3 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-0.5 leading-none">
                              Ведет группу
                            </h3>
-                           <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-400' : 'text-white'}`}>
+                           <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-300' : 'text-white'}`}>
                              {guideName}
                            </p>
                         </div>
@@ -128,7 +128,7 @@ export default function TourDates({ tour }: TourDatesProps) {
                         )}
 
                         {!isSoldOut && (
-                            <div className="hidden md:flex w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-white/5 items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-slate-900 group-hover:translate-x-1 transition-all duration-300">
+                            <div className="hidden md:flex w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-white/5 items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:text-slate-900 group-hover:translate-x-1 transition-all duration-300">
                                 <ChevronRight size={20} strokeWidth={2.5} />
                             </div>
                         )}

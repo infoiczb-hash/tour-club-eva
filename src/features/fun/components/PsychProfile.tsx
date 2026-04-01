@@ -71,7 +71,7 @@ const TYPES: Record<TypeKey, ProfileType> = {
   keeper: { key: "keeper", name: "Хранитель", tagline: "Без тебя группа дойдёт до вершины. С тобой — вернётся командой", icon: <Users className="w-6 h-6" />, color: "text-emerald-500", colorDim: "text-emerald-500/20", accent: "#10b981", desc: `Ты видишь людей. Не маршрут, не погоду, не высоту — людей. Ты замечаешь что Маша молчит уже час, что у Антона изменилась походка, что общая энергия группы падает раньше чем кто-то это признает.\n\nЭто редкий и недооценённый талант. Группы без Хранителя технически доходят до цели — но рассыпаются по дороге или после. Именно ты создаёшь то что потом называют «атмосферой» или «химией группы» — хотя сам этого не замечаешь.`, blind: `Ты отдаёшь больше чем берёшь. К концу сложного похода у тебя может не остаться ресурса на себя. Научись замечать собственное состояние с той же внимательностью с которой замечаешь чужое — это не эгоизм, это устойчивость.`, pair: `Тебе важно перед походом найти человека который будет следить за тобой так же как ты следишь за другими. Лучший партнёр — Ведущий с достаточным самосознанием.`, directionSlug: "kayaking", directionName: "Сплавы на байдарках" },
   analyst: { key: "analyst", name: "Аналитик", tagline: "Ты видишь то чего не видят другие — потому что смотришь дольше", icon: <Search className="w-6 h-6" />, color: "text-sky-500", colorDim: "text-sky-500/20", accent: "#0ea5e9", desc: `Там где другие действуют, ты наблюдаешь. Там где другие торопятся, ты ждёшь. Это не нерешительность — это другой способ обработки реальности, и в горах он спасает жизни.\n\nТы замечаешь изменение погоды раньше остальных. Ты помнишь детали маршрута. Ты задаёшь вопросы которые кажутся лишними пока не оказываются ключевыми. Твоя ценность особенно видна в ретроспективе — когда группа понимает что именно твоя осторожность предотвратила проблему.`, blind: `Скорость. Есть ситуации где нужно действовать за секунды, и твой процесс анализа становится роскошью. Стоит заранее выработать личные протоколы для таких моментов — что ты делаешь когда времени думать нет.`, pair: `Лучшее место в группе для тебя — правая рука Ведущего. Ты думаешь, он действует. Вместе вы принимаете решения быстрее и точнее чем любой из вас по отдельности.`, directionSlug: "local", directionName: "Локальные туры" },
   explorer: { key: "explorer", name: "Исследователь", tagline: "Ты идёшь не по маршруту — ты идёшь навстречу неизвестному", icon: <Compass className="w-6 h-6" />, color: "text-violet-500", colorDim: "text-violet-500/20", accent: "#8b5cf6", desc: `Стандартный маршрут для тебя — минимальная программа. Настоящий поход начинается там где план заканчивается. Тебя тянет за следующий перевал, к той точке на карте без названия, к разговору с местным которого никто не заметил.\n\nТы привносишь в группу то что нельзя запланировать — живость, открытость, ощущение что происходит что-то настоящее. Группы с Исследователем возвращаются с историями. Именно ты превращаешь поход из физического упражнения в опыт.`, blind: `Оценка риска. Любопытство может уводить в сторону от безопасного решения. Тебе важен партнёр рядом — Аналитик или Хранитель — который мягко возвращает к реальности когда авантюра становится опасностью.`, pair: `Твоя суперсила раскрывается в многодневных походах где есть пространство для отклонений. Лучший партнёр — Аналитик: он не гасит твой порыв, но задаёт правильные вопросы.`, directionSlug: "hiking", directionName: "Горы и Походы" },
-  soloist: { key: "soloist", name: "Одиночка", tagline: "Тебе не нужна тишина от людей — тебе нужна тишина для себя", icon: <TreePine className="w-6 h-6" />, color: "text-slate-400", colorDim: "text-slate-400/20", accent: "#94a3b8", desc: `Это не про интроверсию в бытовом смысле. В походе ты полноценный участник — разговариваешь, помогаешь, присутствуешь. Но ты знаешь: если провести слишком долго в плотном групповом режиме без паузы, что-то внутри начинает садиться как телефон.\n\nОдиночество для тебя — не изоляция, а зарядка. Именно в тишине ты обрабатываешь опыт, принимаешь решения и понимаешь зачем ты вообще здесь. Твоя наблюдательность и глубина восприятия — прямое следствие этой потребности.`, blind: `Группа может воспринимать твою потребность в пространстве как холодность или недовольство. Стоит говорить об этом заранее — «мне нужно время в тишине, это не про вас». Одна фраза снимает много напряжения.`, pair: `Лучший формат для тебя — небольшие группы с культурой уважения к личному ритму. Идеальный партнёр — Хранитель: он понимает людей и не давит.`, directionSlug: "sup", directionName: "SUP-прогулки" },
+  soloist: { key: "soloist", name: "Одиночка", tagline: "Тебе не нужна тишина от людей — тебе нужна тишина для себя", icon: <TreePine className="w-6 h-6" />, color: "text-slate-300", colorDim: "text-slate-300/20", accent: "#94a3b8", desc: `Это не про интроверсию в бытовом смысле. В походе ты полноценный участник — разговариваешь, помогаешь, присутствуешь. Но ты знаешь: если провести слишком долго в плотном групповом режиме без паузы, что-то внутри начинает садиться как телефон.\n\nОдиночество для тебя — не изоляция, а зарядка. Именно в тишине ты обрабатываешь опыт, принимаешь решения и понимаешь зачем ты вообще здесь. Твоя наблюдательность и глубина восприятия — прямое следствие этой потребности.`, blind: `Группа может воспринимать твою потребность в пространстве как холодность или недовольство. Стоит говорить об этом заранее — «мне нужно время в тишине, это не про вас». Одна фраза снимает много напряжения.`, pair: `Лучший формат для тебя — небольшие группы с культурой уважения к личному ритму. Идеальный партнёр — Хранитель: он понимает людей и не давит.`, directionSlug: "sup", directionName: "SUP-прогулки" },
   adapter: { key: "adapter", name: "Адаптер", tagline: "Ты не ищешь свою роль — ты занимаешь нужную", icon: <Zap className="w-6 h-6" />, color: "text-rose-500", colorDim: "text-rose-500/20", accent: "#f43f5e", desc: `Это самый редкий и самый ценный тип в походной команде. Ты не привязан к одной роли — ты читаешь ситуацию и становишься тем кто сейчас нужен. Когда лидера нет — берёшь управление. Когда кому-то плохо — становишься Хранителем. Когда нужна пауза — даёшь группе воздух.\n\nЭто требует высокого самосознания и отсутствия эго привязанного к конкретной роли. Не все на это способны. Ты — клей который удерживает разные личности в одной команде.`, blind: `Тебя сложно «прочитать» — и это иногда создаёт недоверие. Люди любят понимать на кого они могут рассчитывать и в каком качестве. Иногда полезно явно назвать свою роль в конкретный момент — даже если для тебя это очевидно.`, pair: `Ты особенно ценен в смешанных группах где нужен баланс между сильными личностями. Лучшее место — между Ведущим и Аналитиком.`, directionSlug: "kayaking", directionName: "Сплавы на байдарках" },
 };
 
@@ -100,7 +100,7 @@ const ScoreBar = ({ typeKey, score, max = 20 }: { typeKey: TypeKey; score: numbe
       <div className="flex-1 h-[4px] rounded-full bg-slate-800 relative overflow-hidden">
         <motion.div className="absolute left-0 top-0 h-full rounded-full" style={{ background: t.accent }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }} />
       </div>
-      <div className="text-slate-400 font-bold text-xs w-8 shrink-0">{score}</div>
+      <div className="text-slate-300 font-bold text-xs w-8 shrink-0">{score}</div>
     </div>
   );
 };
@@ -191,7 +191,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
 
           <button 
             onClick={onClose} 
-            className="absolute top-5 right-5 z-50 p-3 text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full"
+            className="absolute top-5 right-5 z-50 p-3 text-slate-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full"
           >
             <X size={20} />
           </button>
@@ -227,7 +227,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                       { icon: <CheckCircle2 size={16} />, label: "Без правильных ответов", sub: "Результат сохранится в профиле" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-4 px-5 py-4 border-b border-white/5 last:border-0">
-                        <div className="mt-0.5 text-slate-400 shrink-0">{item.icon}</div>
+                        <div className="mt-0.5 text-slate-300 shrink-0">{item.icon}</div>
                         <div>
                           <p className="text-slate-200 text-sm font-bold leading-tight mb-1">{item.label}</p>
                           <p className="text-slate-300 text-xs leading-snug font-medium">{item.sub}</p>
@@ -308,7 +308,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                 className="flex-1 flex flex-col h-full overflow-hidden p-6 md:p-10"
               >
                 <div className="shrink-0 flex items-center justify-between mb-8 pr-12">
-                  <span className="font-bold text-xs text-slate-400 uppercase tracking-widest">
+                  <span className="font-bold text-xs text-slate-300 uppercase tracking-widest">
                     Вопрос {current + 1} / {TOTAL}
                   </span>
                 </div>
@@ -331,7 +331,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                               "flex-1 h-14 sm:h-16 flex flex-col items-center justify-center rounded-2xl border transition-all duration-200",
                               isSelected
                                 ? "border-teal-500 bg-teal-500 text-slate-900 scale-105 shadow-[0_0_15px_rgba(20,184,166,0.4)]"
-                                : "border-white/10 bg-slate-800/50 hover:bg-slate-800 hover:border-white/20 text-slate-400"
+                                : "border-white/10 bg-slate-800/50 hover:bg-slate-800 hover:border-white/20 text-slate-300"
                             )}
                           >
                             <span className="text-lg font-black">{val}</span>
@@ -341,10 +341,10 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                     </div>
 
                     <div className="flex justify-between px-1">
-                      <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight max-w-[90px]">
+                      <span className="text-slate-300 text-[12px] font-bold uppercase tracking-widest leading-tight max-w-[90px]">
                         {SCALE_LABELS[0]}
                       </span>
-                      <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight max-w-[90px] text-right">
+                      <span className="text-slate-300 text-[12px] font-bold uppercase tracking-widest leading-tight max-w-[90px] text-right">
                         {SCALE_LABELS[4]}
                       </span>
                     </div>
@@ -355,7 +355,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                   <button
                     onClick={() => current > 0 && setCurrent(c => c - 1)}
                     disabled={current === 0 || selectedValue !== null}
-                    className="flex items-center gap-2 text-slate-400 hover:text-white disabled:opacity-0 transition-colors text-xs font-bold uppercase tracking-widest"
+                    className="flex items-center gap-2 text-slate-300 hover:text-white disabled:opacity-0 transition-colors text-xs font-bold uppercase tracking-widest"
                   >
                     <ChevronLeft size={16} /> Назад
                   </button>
@@ -414,14 +414,14 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                            {secondaryType.icon}
                         </div>
                         <div>
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Скрытый резерв</p>
+                           <p className="text-[12px] font-bold uppercase tracking-widest text-slate-300 mb-1">Скрытый резерв</p>
                            <p className="text-sm text-slate-300 font-medium leading-snug">В критических ситуациях в тебе просыпается <strong className={secondaryType.color}>{secondaryType.name}</strong>.</p>
                         </div>
                      </div>
                   )}
 
                   <div className="mb-6 mt-6">
-                    <p className="font-bold text-[10px] text-slate-400 uppercase tracking-widest mb-5 border-b border-white/5 pb-2">Все архетипы</p>
+                    <p className="font-bold text-[12px] text-slate-300 uppercase tracking-widest mb-5 border-b border-white/5 pb-2">Все архетипы</p>
                     <div className="space-y-3">
                       {(Object.entries(scores) as [TypeKey, number][]).sort((a, b) => b[1] - a[1]).map(([key, score]) => (
                         <ScoreBar key={key} typeKey={key} score={score} />
@@ -431,7 +431,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
 
                   {/* SMART CTA */}
                   <div className="pt-8 mt-6 border-t border-white/10 text-center">
-                    <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", primaryType.color)}>
+                    <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", primaryType.color)}>
                       Мы рекомендуем Вам
                     </p>
                     <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", primaryType.color)}>
@@ -457,7 +457,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
 
                     <button
                       onClick={() => { setStep("intro"); setCurrent(0); setAnswers({}); setSelectedValue(null); }}
-                      className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-300 text-xs font-bold uppercase tracking-widest transition-colors"
+                      className="inline-flex items-center gap-2 text-slate-300 hover:text-slate-300 text-xs font-bold uppercase tracking-widest transition-colors"
                     >
                       <RotateCcw size={14} /> Пройти заново
                     </button>

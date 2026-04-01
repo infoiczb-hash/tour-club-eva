@@ -39,7 +39,7 @@ export default function PreparationCTA() {
               onClick={() => openContactModal('Сплавы на байдарках', 'TOUR')}
               className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-wider text-sm rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2"
             >
-              <MessageCircle size={18} className="text-slate-400" />
+              <MessageCircle size={18} className="text-slate-300" />
               <span>Остались сомнения? Напишите нам</span>
             </button>
           </div>

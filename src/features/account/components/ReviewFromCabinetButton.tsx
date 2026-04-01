@@ -78,7 +78,7 @@ export default function ReviewFromCabinetButton({
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={handleClose} />
 
           <div className="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <button onClick={handleClose} className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+            <button onClick={handleClose} className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors">
               <X size={16} />
             </button>
 
@@ -89,7 +89,7 @@ export default function ReviewFromCabinetButton({
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-white">Отзыв на проверке</h3>
-                  <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+                  <p className="text-sm text-slate-300 mt-2 leading-relaxed">
                     Спасибо за ваше мнение! Мы опубликуем отзыв после быстрой модерации, и бонус <span className="text-amber-400 font-bold">+10 ₽</span> будет зачислен на ваш баланс.
                   </p>
                 </div>
@@ -101,7 +101,7 @@ export default function ReviewFromCabinetButton({
                     <Star size={16} className="text-amber-400" />
                     <h3 className="text-base font-black text-white">Оцените тур</h3>
                   </div>
-                  <p className="text-xs text-slate-400 leading-tight truncate">{tourTitle}</p>
+                  <p className="text-xs text-slate-300 leading-tight truncate">{tourTitle}</p>
                 </div>
 
                 <div className="flex justify-center gap-2 py-2">
@@ -127,7 +127,7 @@ export default function ReviewFromCabinetButton({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Ваш отзыв</label>
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">Ваш отзыв</label>
                   <textarea
                     value={text}
                     onChange={e => setText(e.target.value)}
@@ -138,7 +138,7 @@ export default function ReviewFromCabinetButton({
                   />
                   <div className="flex items-center justify-between mt-1">
                     {error && <p className="text-xs text-red-400">{error}</p>}
-                    <span className="text-[10px] text-slate-600 ml-auto">{text.length}/500</span>
+                    <span className="text-[12px] text-slate-600 ml-auto">{text.length}/500</span>
                   </div>
                 </div>
 

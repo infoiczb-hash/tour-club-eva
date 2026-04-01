@@ -117,7 +117,7 @@ const LEVELS_CONFIG = [
 
             <div className="relative z-10 flex justify-between items-start">
               <div className="flex flex-col">
-                <span className="text-white/80 text-[10px] font-bold uppercase tracking-[0.3em]">Турклуб</span>
+                <span className="text-white/80 text-[12px] font-bold uppercase tracking-[0.3em]">Турклуб</span>
                 <span className="text-white text-xl font-black tracking-tighter leading-none">ЭВА</span>
               </div>
 
@@ -143,7 +143,7 @@ const LEVELS_CONFIG = [
 
             <div className="relative z-10 flex justify-between items-end gap-4">
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-white/50 text-[10px] uppercase font-bold tracking-widest">Участник</span>
+                <span className="text-white/50 text-[12px] uppercase font-bold tracking-widest">Участник</span>
                 {/* ✅ ИСПРАВЛЕНО: Имя переносится на две строки (text-balance) и не обрезается (truncate убран) */}
                 <span className="text-white text-lg md:text-xl font-black uppercase tracking-widest drop-shadow-md line-clamp-2 text-balance break-words leading-tight">
                   {name || 'ТУРИСТ'}
@@ -166,7 +166,7 @@ const LEVELS_CONFIG = [
 
             <button
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
-              className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white z-20"
+              className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-slate-300 hover:text-white z-20"
             >
               <X size={16} />
             </button>
@@ -197,8 +197,8 @@ const LEVELS_CONFIG = [
         {nextConfig ? (
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between items-end">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Прогресс статуса</span>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+              <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Прогресс статуса</span>
+              <span className="text-[12px] text-slate-300 font-bold uppercase tracking-widest">
                 Еще {toursNeeded} {toursNeeded === 1 ? 'тур' : toursNeeded > 1 && toursNeeded < 5 ? 'тура' : 'туров'} до «{nextConfig.name}»
               </span>
             </div>

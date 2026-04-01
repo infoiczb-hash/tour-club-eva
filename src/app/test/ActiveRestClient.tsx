@@ -159,7 +159,7 @@ function FaqAccordion() {
             </span>
             <div className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300',
-              open === i ? 'rotate-180 bg-teal-900/30 text-teal-400' : 'bg-slate-800 text-slate-400'
+              open === i ? 'rotate-180 bg-teal-900/30 text-teal-400' : 'bg-slate-800 text-slate-300'
             )}>
               <ChevronDown size={18} />
             </div>
@@ -170,7 +170,7 @@ function FaqAccordion() {
               open === i ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
           )}>
             <div className="overflow-hidden">
-              <p className="px-5 py-4 text-sm md:text-base text-slate-400 leading-relaxed border-t border-slate-800/50">{item.a}</p>
+              <p className="px-5 py-4 text-sm md:text-base text-slate-300 leading-relaxed border-t border-slate-800/50">{item.a}</p>
             </div>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function ActiveRestClient() {
               Непризнанное государство с серпом и молотом на флаге, советской архитектурой на проспектах
               и диким Днестром за городом. В 90 минутах от Кишинёва. В другом измерении.
             </p>
-            <p className="animate-hero-subtitle text-sm text-slate-400 mb-10">Для местных и иностранных туристов · Без визы · Апрель — октябрь</p>
+            <p className="animate-hero-subtitle text-sm text-slate-300 mb-10">Для местных и иностранных туристов · Без визы · Апрель — октябрь</p>
 
             <div className="animate-hero-subtitle flex flex-col sm:flex-row gap-4">
               <a
@@ -309,10 +309,10 @@ export default function ActiveRestClient() {
               <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[1.05] mb-6">
                 Тирасполь —<br /><span className="text-teal-400">как Берлин в 1988,<br />но живой</span>
               </h2>
-              <p className="text-slate-400 leading-relaxed mb-4">
+              <p className="text-slate-300 leading-relaxed mb-4">
                 Город основан Суворовым в 1792 году. Сегодня здесь 230 тысяч человек, советские проспекты, работающие заводы и рынок, которому 220 лет.
               </p>
-              <p className="text-slate-400 leading-relaxed">
+              <p className="text-slate-300 leading-relaxed">
                 Это не тематический парк и не музей. Люди живут — ходят на работу, пьют кофе, играют в футбол. Именно это и интересно.
               </p>
             </FadeIn>
@@ -325,7 +325,7 @@ export default function ActiveRestClient() {
                   className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 hover:border-slate-700 transition-colors"
                 >
                   <span
-                    className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-3 inline-block"
+                    className="text-[12px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-3 inline-block"
                     style={{ color: s.color, background: `${s.color}18`, border: `1px solid ${s.color}30` }}
                   >
                     {s.tag}
@@ -563,7 +563,7 @@ export default function ActiveRestClient() {
                     : 'bg-slate-900/50 border border-slate-800'
                 )}
               >
-                <MapPin size={20} className={cn('mb-4', d.highlight ? 'text-teal-400' : 'text-slate-400')} />
+                <MapPin size={20} className={cn('mb-4', d.highlight ? 'text-teal-400' : 'text-slate-300')} />
                 <h3 className="text-lg font-black text-white uppercase tracking-tight mb-1">Из {d.from}</h3>
                 <p className="text-xs font-bold text-teal-400 mb-3">{d.time}</p>
                 <p className="text-slate-300 text-sm leading-relaxed mb-4">{d.detail}</p>
@@ -599,7 +599,7 @@ export default function ActiveRestClient() {
                       : s.score === 4 ? '#0f766e' : '#1e3a38',
                   }}
                 />
-                <span className="text-xs font-bold text-slate-400">{s.month}</span>
+                <span className="text-xs font-bold text-slate-300">{s.month}</span>
               </ScaleYIn>
             ))}
           </div>
@@ -678,7 +678,7 @@ export default function ActiveRestClient() {
             <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">
               Турклуб «ЭВА» организует<br /><span className="text-teal-400">маршруты по Приднестровью</span>
             </h2>
-            <p className="text-slate-400 leading-relaxed mb-8 max-w-xl mx-auto">
+            <p className="text-slate-300 leading-relaxed mb-8 max-w-xl mx-auto">
               Сплавы по Днестру, пешие маршруты, детские лагеря и экскурсии по региону — с инструктором, снаряжением и трансфером от Тирасполя.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

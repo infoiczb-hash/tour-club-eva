@@ -189,7 +189,7 @@ export default function ToursBrowser({
                     onClick={() => { setViewMode('grid'); setIsMobileFiltersOpen(false); }}
                     className={cn(
                         "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all",
-                        viewMode === 'grid' ? "bg-teal-500 text-slate-900 shadow-md" : "bg-transparent text-slate-400 active:bg-white/10"
+                        viewMode === 'grid' ? "bg-teal-500 text-slate-900 shadow-md" : "bg-transparent text-slate-300 active:bg-white/10"
                     )}
                 >
                     <LayoutGrid size={15} strokeWidth={2.5} />
@@ -200,7 +200,7 @@ export default function ToursBrowser({
                     onClick={() => { setViewMode('calendar'); setIsMobileFiltersOpen(false); }}
                     className={cn(
                         "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all",
-                        viewMode === 'calendar' ? "bg-teal-500 text-slate-900 shadow-md" : "bg-transparent text-slate-400 active:bg-white/10"
+                        viewMode === 'calendar' ? "bg-teal-500 text-slate-900 shadow-md" : "bg-transparent text-slate-300 active:bg-white/10"
                     )}
                 >
                     <CalendarIcon size={15} strokeWidth={2.5} />
@@ -211,7 +211,7 @@ export default function ToursBrowser({
                     onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
                     className={cn(
                         "flex items-center justify-center gap-1.5 py-2.5 rounded-full transition-all border",
-                        isMobileFiltersOpen ? "bg-slate-800 text-white border-teal-500/50" : "bg-transparent border-transparent text-slate-400 active:bg-white/10"
+                        isMobileFiltersOpen ? "bg-slate-800 text-white border-teal-500/50" : "bg-transparent border-transparent text-slate-300 active:bg-white/10"
                     )}
                 >
                     {isMobileFiltersOpen ? <X size={15} strokeWidth={2.5}/> : <Filter size={15} strokeWidth={2.5} />}
@@ -222,7 +222,7 @@ export default function ToursBrowser({
             {isMobileFiltersOpen && (
                 <div className="overflow-hidden mt-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-4">
-                        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">Категории туров:</span>
+                        <span className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3 block">Категории туров:</span>
                         <div className="flex flex-wrap gap-2">
                             {displayCategories.map(cat => (
                                 <button
@@ -255,7 +255,7 @@ export default function ToursBrowser({
                         onClick={() => setViewMode('grid')}
                         className={cn(
                             "flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase transition-all h-full",
-                            viewMode === 'grid' ? "bg-teal-500 text-slate-900 shadow-lg" : "text-slate-400 hover:text-white"
+                            viewMode === 'grid' ? "bg-teal-500 text-slate-900 shadow-lg" : "text-slate-300 hover:text-white"
                         )}
                     >
                         <LayoutGrid size={16}/> <span>Сетка</span>
@@ -264,7 +264,7 @@ export default function ToursBrowser({
                         onClick={() => setViewMode('calendar')}
                         className={cn(
                             "flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase transition-all h-full",
-                            viewMode === 'calendar' ? "bg-teal-500 text-slate-900 shadow-lg" : "text-slate-400 hover:text-white"
+                            viewMode === 'calendar' ? "bg-teal-500 text-slate-900 shadow-lg" : "text-slate-300 hover:text-white"
                         )}
                     >
                         <CalendarIcon size={16}/> <span>Календарь</span>
@@ -282,7 +282,7 @@ export default function ToursBrowser({
                                 "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border border-transparent",
                                 activeCategory === cat.slug
                                     ? "text-teal-400 bg-teal-500/10 border-teal-500/20" 
-                                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                                    : "text-slate-300 hover:text-white hover:bg-white/5"
                             )}
                         >
                             {cat.icon} {cat.label}
@@ -334,8 +334,8 @@ export default function ToursBrowser({
                             </div>
                             
                             {/* Подсказка для свайпа на мобилках */}
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-400 pointer-events-none">
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
+                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
+                                <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
                                 <ArrowRight size={14} className="text-teal-500 animate-pulse" />
                             </div>
                         </div>
@@ -359,8 +359,8 @@ export default function ToursBrowser({
                 {tbaTours.length > 0 && (
                     <section aria-labelledby="soon-tours-heading">
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
-                            <Sparkles size={18} className="text-slate-400" />
-                            <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-400">
+                            <Sparkles size={18} className="text-slate-300" />
+                            <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-300">
                                 Планируй заранее (Анонсы)
                             </h3>
                         </div>
@@ -375,8 +375,8 @@ export default function ToursBrowser({
                                 ))}
                             </div>
                             
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-400 pointer-events-none">
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
+                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
+                                <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
                                 <ArrowRight size={14} className="text-teal-500 animate-pulse" />
                             </div>
                         </div>
@@ -396,7 +396,7 @@ export default function ToursBrowser({
                             <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">
                                 Расписание формируется
                             </h3>
-                            <p className="text-sm md:text-base text-slate-400 font-medium mb-8 max-w-md mx-auto leading-relaxed">
+                            <p className="text-sm md:text-base text-slate-300 font-medium mb-8 max-w-md mx-auto leading-relaxed">
                                 Мы готовим новые даты в эту категорию. Хотите узнать о них первыми или заказать индивидуальный корпоративный сплав?
                             </p>
                             

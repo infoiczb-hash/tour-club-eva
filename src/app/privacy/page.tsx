@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         
         {/* Header */}
         <div className="mb-8 md:mb-12">
-            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
+            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-300 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
                 <ArrowLeft size={16} /> На главную
             </Link>
             

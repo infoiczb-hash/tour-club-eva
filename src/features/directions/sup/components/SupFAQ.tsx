@@ -36,14 +36,14 @@ export default function SupFAQ() {
                 <div className="text-center mb-10 md:mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 md:mb-6 backdrop-blur-md">
                         <MessageCircle className="w-4 h-4 text-teal-400" />
-                        <span className="text-[10px] font-bold tracking-widest text-teal-300 uppercase">
+                        <span className="text-[12px] font-bold tracking-widest text-teal-300 uppercase">
                             База знаний
                         </span>
                     </div>
                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                       Частые <span className="text-teal-500">Вопросы</span>
                    </h2>
-                   <p className="text-sm md:text-base font-medium text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                   <p className="text-sm md:text-base font-medium text-slate-300 max-w-2xl mx-auto leading-relaxed">
                       Собрали ответы на самые популярные вопросы от новичков. Если не нашли то, что искали — напишите нам.
                    </p>
                 </div>
@@ -65,7 +65,7 @@ export default function SupFAQ() {
                                     <span className="font-bold pr-4 text-[14px] md:text-lg text-slate-200 group-hover:text-white transition-colors leading-tight">
                                         {item.q}
                                     </span>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isOpen ? 'rotate-180 bg-teal-500/10 text-teal-400' : 'bg-white/5 text-slate-400 group-hover:bg-white/10'}`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isOpen ? 'rotate-180 bg-teal-500/10 text-teal-400' : 'bg-white/5 text-slate-300 group-hover:bg-white/10'}`}>
                                         <ChevronDown size={18} />
                                     </div>
                                 </button>
@@ -75,7 +75,7 @@ export default function SupFAQ() {
                                     className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
                                 >
                                     <div className="overflow-hidden">
-                                        <div className="px-5 md:px-6 pb-5 md:pb-6 text-[14px] md:text-base text-slate-400 border-t border-white/5 pt-4 font-medium leading-relaxed">
+                                        <div className="px-5 md:px-6 pb-5 md:pb-6 text-[14px] md:text-base text-slate-300 border-t border-white/5 pt-4 font-medium leading-relaxed">
                                             {item.a}
                                         </div>
                                     </div>

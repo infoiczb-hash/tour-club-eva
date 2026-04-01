@@ -48,8 +48,8 @@ export default function AboutPage() {
         
        {/* Бейдж статуса */}
         <div className="animate-hero-subtitle inline-flex items-center gap-2 px-4 py-2 bg-slate-900/80 border border-white/10 backdrop-blur-md rounded-full mb-8 shadow-xl">
-          <Hammer className="w-4 h-4 text-slate-400" />
-          <span className="text-[10px] md:text-xs font-bold tracking-[0.15em] text-slate-300 uppercase">
+          <Hammer className="w-4 h-4 text-slate-300" />
+          <span className="text-[12px] md:text-xs font-bold tracking-[0.15em] text-slate-300 uppercase">
             Страница в разработке
           </span>
         </div>
@@ -74,7 +74,7 @@ export default function AboutPage() {
           
           <div className="opacity-0 animate-fade-in-up [animation-delay:450ms]">
               <div className="w-16 h-px bg-white/10 mx-auto my-8" />
-              <p className="text-slate-400">
+              <p className="text-slate-300">
                 Если вы уже с нами — <span className="text-teal-400">спасибо, что идёте рядом</span>.<br />
                 Если только присматриваетесь — оставайтесь. Самое интересное впереди.
               </p>

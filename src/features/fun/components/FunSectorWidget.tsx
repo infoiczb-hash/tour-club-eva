@@ -90,7 +90,7 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
             </div>
             <h2 className="text-2xl md:text-4xl uppercase tracking-tighter leading-[0.9] text-white font-black">Тесты и квизы</h2>
           </div>
-          <Link href="/fun" className="hidden md:flex group items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+          <Link href="/fun" className="hidden md:flex group items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white transition-colors">
             <span>Все тесты и квизы</span>
             <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-violet-500 group-hover:border-violet-500 group-hover:text-white transition-all">
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -148,7 +148,7 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
           <Icon size={22} className={visual.iconColor} />
         </div>
         <div className="flex-1 lg:mt-6 w-full">
-          <div className="hidden lg:block text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">{quiz.category}</div>
+          <div className="hidden lg:block text-[9px] font-bold uppercase tracking-widest text-slate-300 mb-2">{quiz.category}</div>
           
           {/* ✅ БЕЗОПАСНЫЙ НАТИВНЫЙ РЕНДЕР БЕЗ SANITIZE-HTML */}
           <h3 className="font-black text-white uppercase text-sm md:text-lg lg:text-xl leading-tight mb-1 lg:mb-2 drop-shadow-md">

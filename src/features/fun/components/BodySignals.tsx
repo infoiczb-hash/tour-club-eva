@@ -170,7 +170,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]" onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-300 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
@@ -190,14 +190,14 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
                 {(Object.entries(grouped) as [string, typeof SYMPTOMS][]).map(([cat, symptoms]) => (
                   <div key={cat} className="mb-6 last:mb-0">
-                    <div className="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-3">{categoryLabel[cat]}</div>
+                    <div className="text-slate-300 text-[12px] font-bold tracking-widest uppercase mb-3">{categoryLabel[cat]}</div>
                     <div className="space-y-3">
                       {symptoms.map((s) => {
                         const isSel = selected.includes(s.key);
                         const hasWarning = SYMPTOM_INFO[s.key].warning;
                         return (
                           <div key={s.key} className="flex gap-3 items-stretch">
-                             <button onClick={() => { setViewing(s.key); setStep("detail"); }} className={cn("w-14 rounded-2xl border flex flex-col items-center justify-center transition-all shrink-0 group", "bg-slate-800/50 border-white/5 hover:border-rose-500/30 text-slate-400 hover:bg-slate-800 hover:text-rose-400")} title="Узнать подробнее">
+                             <button onClick={() => { setViewing(s.key); setStep("detail"); }} className={cn("w-14 rounded-2xl border flex flex-col items-center justify-center transition-all shrink-0 group", "bg-slate-800/50 border-white/5 hover:border-rose-500/30 text-slate-300 hover:bg-slate-800 hover:text-rose-400")} title="Узнать подробнее">
                                 <HelpCircle size={22} className="transition-colors" />
                              </button>
                              <button onClick={() => toggleSymptom(s.key)} className={cn("flex-1 text-left px-5 py-4 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 group", isSel ? "border-rose-500/50 bg-rose-500/10 shadow-[0_0_15px_rgba(225,29,72,0.15)]" : "border-white/5 bg-slate-800/50 hover:bg-slate-800")}>
@@ -224,7 +224,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
                       Разобрать симптомы ({selected.length})
                     </button>
                  ) : (
-                    <div className="w-full bg-slate-800 text-slate-400 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
+                    <div className="w-full bg-slate-800 text-slate-300 rounded-xl py-4 text-sm font-bold uppercase tracking-wider text-center cursor-not-allowed">
                        Выбери хотя бы один симптом
                     </div>
                  )}
@@ -236,14 +236,14 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
           {step === "detail" && viewingInfo && viewingSymptom && (
             <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full overflow-hidden p-6 md:p-10 pb-6">
               <div className="shrink-0 mb-6">
-                 <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors"><ArrowLeft size={16} /> Назад</button>
+                 <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors"><ArrowLeft size={16} /> Назад</button>
                  <h2 className="text-2xl md:text-3xl font-black text-white leading-tight flex items-center gap-3"><span className="text-rose-400">{viewingSymptom.icon}</span>{viewingSymptom.label}</h2>
               </div>
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
-                {viewingInfo.warning && (<div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 flex gap-3 items-start"><ShieldAlert className="text-amber-500 shrink-0" size={18}/><div><p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest mb-1">Обрати внимание</p><p className="text-amber-200/80 text-sm font-medium">Этот симптом требует контроля. При нарастании — обязательно сообщи гиду.</p></div></div>)}
-                <div className="border-l-2 border-slate-700 pl-5"><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Почему это происходит</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.why}</p></div>
-                <div className="border-l-2 border-rose-500/50 pl-5 bg-rose-500/5 py-4 rounded-r-xl"><p className="text-rose-400 text-[10px] font-bold uppercase tracking-widest mb-2">Что делать сейчас</p><p className="text-white text-sm font-bold leading-relaxed">{viewingInfo.now}</p></div>
-                <div className="border-l-2 border-teal-500/50 pl-5"><p className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-2">Что изменить завтра</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.tomorrow}</p></div>
+                {viewingInfo.warning && (<div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 flex gap-3 items-start"><ShieldAlert className="text-amber-500 shrink-0" size={18}/><div><p className="text-amber-400 text-[12px] font-bold uppercase tracking-widest mb-1">Обрати внимание</p><p className="text-amber-200/80 text-sm font-medium">Этот симптом требует контроля. При нарастании — обязательно сообщи гиду.</p></div></div>)}
+                <div className="border-l-2 border-slate-700 pl-5"><p className="text-slate-300 text-[12px] font-bold uppercase tracking-widest mb-2">Почему это происходит</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.why}</p></div>
+                <div className="border-l-2 border-rose-500/50 pl-5 bg-rose-500/5 py-4 rounded-r-xl"><p className="text-rose-400 text-[12px] font-bold uppercase tracking-widest mb-2">Что делать сейчас</p><p className="text-white text-sm font-bold leading-relaxed">{viewingInfo.now}</p></div>
+                <div className="border-l-2 border-teal-500/50 pl-5"><p className="text-teal-500 text-[12px] font-bold uppercase tracking-widest mb-2">Что изменить завтра</p><p className="text-slate-300 text-sm font-medium leading-relaxed">{viewingInfo.tomorrow}</p></div>
               </div>
               <div className="shrink-0 mt-6 pt-4 border-t border-white/10">
                 <button onClick={() => { if (!selected.includes(viewingSymptom.key)) toggleSymptom(viewingSymptom.key); setStep("select"); }} className={cn("w-full rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all", selected.includes(viewingSymptom.key) ? "bg-slate-800 text-white hover:bg-slate-700" : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20")}>
@@ -258,7 +258,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
             <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full overflow-hidden p-6 md:p-10 pb-6">
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
                 <div className="shrink-0 mb-6">
-                  <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors">
+                  <button onClick={() => setStep("select")} className="flex items-center gap-3 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors">
                     <ArrowLeft size={16} /> Назад
                   </button>
                   <h2 className="text-3xl font-black text-white tracking-tight">Твои симптомы</h2>
@@ -271,7 +271,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
                     return (
                       <div key={key} className="border border-white/10 rounded-2xl p-5 bg-slate-800/30">
                         <div className="flex items-center gap-3 mb-3"><div className="text-rose-400">{s.icon}</div><span className="text-white font-bold">{s.label}</span>{info.warning && <ShieldAlert size={16} className="text-amber-500 ml-auto" />}</div>
-                        <div className="bg-slate-900 rounded-xl p-4"><span className="text-teal-500 text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Решение:</span><p className="text-slate-300 text-sm font-medium leading-relaxed">{info.now}</p></div>
+                        <div className="bg-slate-900 rounded-xl p-4"><span className="text-teal-500 text-[12px] font-bold uppercase tracking-widest mb-1.5 block">Решение:</span><p className="text-slate-300 text-sm font-medium leading-relaxed">{info.now}</p></div>
                       </div>
                     );
                   })}
@@ -291,7 +291,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
 
                 {/* SMART CTA ПОСЛЕ ИИ (Саммари этап) */}
                 <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                  <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       href="/directions"
@@ -366,7 +366,7 @@ export default function BodySignalsModal({ isOpen, onClose }: Props) {
 
                         {/* SMART CTA ПОСЛЕ ИИ */}
                         <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
+                          <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Продолжить</p>
                           <div className="flex flex-col sm:flex-row gap-3">
                             <Link
                               href="/directions"

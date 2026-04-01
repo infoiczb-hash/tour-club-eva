@@ -77,7 +77,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                   isActive 
                     ? 'bg-teal-500/10 text-teal-400' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <Icon size={18} />
@@ -91,7 +91,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
         <div className="p-4 border-t border-white/5">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
             <LogOut size={18} />
             Выйти
@@ -113,14 +113,14 @@ export default function AccountNav({ profile }: AccountNavProps) {
                 className={`snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl transition-all relative ${
                   isActive 
                     ? 'text-teal-400' 
-                    : 'text-slate-400 hover:text-slate-300'
+                    : 'text-slate-300 hover:text-slate-300'
                 }`}
               >
                 {isActive && (
                   <div className="absolute inset-0 bg-teal-500/10 rounded-2xl -z-10 animate-in fade-in zoom-in duration-300" />
                 )}
                 <Icon size={20} className={isActive ? 'mb-1' : 'mb-1 opacity-80'} />
-                <span className="text-[10px] font-bold tracking-wide">
+                <span className="text-[12px] font-bold tracking-wide">
                   {link.name}
                 </span>
               </Link>
@@ -134,7 +134,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
             className="snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl text-slate-600 hover:text-red-400 transition-colors"
           >
             <LogOut size={20} className="mb-1" />
-            <span className="text-[10px] font-bold tracking-wide">
+            <span className="text-[12px] font-bold tracking-wide">
               Выход
             </span>
           </button>

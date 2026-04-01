@@ -98,7 +98,7 @@ export default function KidsTransformation() {
                                      </div>
 
                                      <div className="flex items-center justify-center gap-3 text-lg md:text-xl font-black tracking-tight mb-3 md:mb-4 w-full">
-                                         <span className="text-slate-400 line-through decoration-red-500/30 decoration-2">
+                                         <span className="text-slate-300 line-through decoration-red-500/30 decoration-2">
                                              {item.from}
                                          </span>
                                          <ArrowRight size={16} className="text-slate-600" />
@@ -107,7 +107,7 @@ export default function KidsTransformation() {
                                          </span>
                                      </div>
 
-                                     <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
+                                     <p className="text-[14px] text-slate-300 leading-relaxed font-medium">
                                          {item.desc}
                                      </p>
                                  </FadeBlock>
@@ -115,7 +115,7 @@ export default function KidsTransformation() {
                          })}
                      </div>
 
-                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

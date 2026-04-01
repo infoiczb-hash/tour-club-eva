@@ -71,7 +71,7 @@ export default function Hero() {
         <div className="animate-hero-subtitle bg-slate-900/80 p-1.5 rounded-2xl border border-white/10 inline-flex flex-col sm:flex-row gap-1 w-full sm:w-auto shadow-2xl backdrop-blur-md">
           <button
             onClick={() => setActiveTab("newbie")}
-            className={`relative px-8 py-4 md:py-5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "newbie" ? "bg-teal-500 text-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.4)]" : "bg-transparent text-slate-400 hover:text-white"}`}
+            className={`relative px-8 py-4 md:py-5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "newbie" ? "bg-teal-500 text-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.4)]" : "bg-transparent text-slate-300 hover:text-white"}`}
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <Compass size={18} /> Хочу на сплав
@@ -80,7 +80,7 @@ export default function Hero() {
 
           <button
             onClick={() => setActiveTab("participant")}
-            className={`relative px-8 py-4 md:py-5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "participant" ? "bg-teal-500 text-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.4)]" : "bg-transparent text-slate-400 hover:text-white"}`}
+            className={`relative px-8 py-4 md:py-5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 ${activeTab === "participant" ? "bg-teal-500 text-slate-950 shadow-[0_0_20px_rgba(20,184,166,0.4)]" : "bg-transparent text-slate-300 hover:text-white"}`}
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <CheckCircle2 size={18} /> Я участник
@@ -91,7 +91,7 @@ export default function Hero() {
 
       {/* SCROLL INDICATOR */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none animate-in fade-in duration-1000 delay-500 fill-mode-both">
-        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.2em]">Вниз</span>
+        <span className="text-[12px] font-bold text-slate-300 uppercase tracking-[0.2em]">Вниз</span>
         <div className="w-6 h-10 border-2 border-slate-500 rounded-full flex justify-center p-1">
           <div className="w-1 h-2 bg-teal-500 rounded-full animate-bounce" />
         </div>

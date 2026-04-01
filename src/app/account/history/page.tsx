@@ -85,7 +85,7 @@ export default async function HistoryPage() {
      {/* Заголовок */}
       <div className="mb-6 px-2 md:px-0">
         <h1 className="text-2xl font-black text-white mb-1">Архив поездок</h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-300">
           {bookings.length > 0
             ? 'Ваши прошедшие туры и воспоминания'
             : 'Здесь появятся ваши прошедшие туры'}
@@ -96,7 +96,7 @@ export default async function HistoryPage() {
         <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-10 text-center mx-2 md:mx-0">
           <p className="text-4xl mb-4">🗺️</p>
           <p className="text-white font-bold mb-2">Ваша история пока пуста</p>
-          <p className="text-sm text-slate-400 mb-6">
+          <p className="text-sm text-slate-300 mb-6">
             После прохождения первого тура здесь появится ваша летопись приключений
           </p>
           <Link
@@ -129,12 +129,12 @@ export default async function HistoryPage() {
                 <div className="flex-1 min-w-0 py-1">
                   <div className="flex items-center gap-2 mb-1">
                     {booking.tour.category && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${catStyle}`}>
+                      <span className={`text-[12px] font-bold px-2 py-0.5 rounded-md ${catStyle}`}>
                         {booking.tour.category.title}
                       </span>
                     )}
                     {season && booking.tourDate && (
-                      <span className="text-xs text-slate-400 shrink-0">
+                      <span className="text-xs text-slate-300 shrink-0">
                         {season.emoji} {formatDate(booking.tourDate.startDate)}
                       </span>
                     )}
@@ -145,7 +145,7 @@ export default async function HistoryPage() {
                   </Link>
 
                   {booking.tour.location && (
-                    <span className="flex items-center gap-1 text-xs text-slate-400">
+                    <span className="flex items-center gap-1 text-xs text-slate-300">
                       <MapPin size={12} /> {booking.tour.location}
                     </span>
                   )}
@@ -160,12 +160,12 @@ export default async function HistoryPage() {
                       memberName={profile.name ?? ''}
                     />
                   ) : review.isActive ? (
-                    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                    <div className="flex items-center gap-1.5 text-[12px] sm:text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-emerald-500/20">
                       <Star size={12} className="fill-emerald-400" />
                       Опубликован
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-amber-400 font-bold bg-amber-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-amber-500/20" title="Ждет проверки модератором">
+                    <div className="flex items-center gap-1.5 text-[12px] sm:text-xs text-amber-400 font-bold bg-amber-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-amber-500/20" title="Ждет проверки модератором">
                       <Hourglass size={12} className="animate-pulse" />
                       На модерации
                     </div>

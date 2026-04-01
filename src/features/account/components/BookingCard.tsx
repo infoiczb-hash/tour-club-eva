@@ -46,7 +46,7 @@ const STATUS_MAP = {
   moderation: { label: 'Проверка чека', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: Hourglass },
   confirmed: { label: 'Оплачено', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', icon: CheckCircle2 },
   rejected: { label: 'Отклонено', color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/30', icon: AlertCircle },
-  cancelled: { label: 'Отменено', color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/30', icon: X },
+  cancelled: { label: 'Отменено', color: 'text-slate-300', bg: 'bg-slate-400/10', border: 'border-slate-400/30', icon: X },
 };
 
 const PAYMENT_METHOD_MAP: Record<string, string> = {
@@ -127,7 +127,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
             </div>
             
             {appliedBonuses > 0 && (
-              <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
+              <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-[12px] font-bold uppercase tracking-wider">
                 <Gift size={12} /> Скидка {appliedBonuses} ₽
               </div>
             )}
@@ -142,25 +142,25 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
 
           <div className="grid grid-cols-2 gap-y-3 gap-x-4">
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Дата и Время</p>
+              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Дата и Время</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <Calendar size={16} className="text-slate-400 shrink-0" />
+                <Calendar size={16} className="text-slate-300 shrink-0" />
                 <span className="truncate">{formattedDate}, {time}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Места</p>
+              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Места</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <Users size={16} className="text-slate-400 shrink-0" />
+                <Users size={16} className="text-slate-300 shrink-0" />
                 <span>{guestsCount} чел.</span>
               </div>
             </div>
             
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Сумма</p>
+              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Сумма</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <CreditCard size={16} className="text-slate-400 shrink-0" />
+                <CreditCard size={16} className="text-slate-300 shrink-0" />
                 {appliedBonuses > 0 ? (
                   <span>
                     <span className="line-through text-slate-300 text-xs mr-2">{totalPrice}</span>
@@ -173,7 +173,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
             </div>
 
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Оплата</p>
+              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Оплата</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
                 <span className="text-xs">{paymentLabel}</span>
               </div>
@@ -217,7 +217,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
 
         <div className="w-full flex md:flex-col justify-between items-center">
           <div className="text-left md:text-center mb-0 md:mb-4">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Booking Ref</p>
+            <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Booking Ref</p>
             <p className="text-sm font-mono text-slate-300 font-bold tracking-wider">#{displayId}</p>
           </div>
 

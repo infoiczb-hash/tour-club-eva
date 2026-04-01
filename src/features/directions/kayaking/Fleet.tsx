@@ -59,7 +59,7 @@ export default function Fleet() {
                   />
                 </div>
 
-                <span className="inline-block mb-4 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] md:text-xs font-black uppercase text-teal-400 tracking-widest relative z-10">
+                <span className="inline-block mb-4 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[12px] md:text-xs font-black uppercase text-teal-400 tracking-widest relative z-10">
                   {boat.tag}
                 </span>
 
@@ -67,15 +67,15 @@ export default function Fleet() {
                   {boat.title}
                 </h3>
 
-                <p className="text-[13px] md:text-sm text-slate-400 font-medium leading-relaxed relative z-10 px-2 mt-auto">
+                <p className="text-[13px] md:text-sm text-slate-300 font-medium leading-relaxed relative z-10 px-2 mt-auto">
                   {boat.desc}
                 </p>
               </div>
             ))}
           </div>
           
-          <div className="md:hidden flex items-center justify-end gap-1.5 mt-2 pr-4 text-slate-400 pointer-events-none">
-            <span className="text-[10px] font-bold uppercase tracking-widest">Мотай</span>
+          <div className="md:hidden flex items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
+            <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
             <ChevronRight size={14} className="text-teal-400 animate-pulse" />
           </div>
         </div>

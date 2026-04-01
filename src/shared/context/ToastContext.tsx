@@ -71,12 +71,12 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
               <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">
                 {toast.type === 'success' ? 'Успешно' : toast.type === 'error' ? 'Ошибка' : 'Информация'}
               </p>
-              <p className="text-sm text-slate-400 leading-snug">{toast.message}</p>
+              <p className="text-sm text-slate-300 leading-snug">{toast.message}</p>
             </div>
 
             <button
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/10"
+              className="shrink-0 text-slate-300 hover:text-slate-600 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/10"
             >
               <X size={16} />
             </button>

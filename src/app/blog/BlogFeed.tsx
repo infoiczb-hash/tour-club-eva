@@ -156,13 +156,13 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
-        <div className="absolute top-4 left-4 px-2.5 py-1 bg-slate-900/80 backdrop-blur-md rounded-lg text-[10px] font-black text-white uppercase tracking-widest border border-white/10">
+        <div className="absolute top-4 left-4 px-2.5 py-1 bg-slate-900/80 backdrop-blur-md rounded-lg text-[12px] font-black text-white uppercase tracking-widest border border-white/10">
           {getLabel(post)}
         </div>
       </div>
 
       <div className="p-6 md:p-8 flex flex-col flex-grow">
-        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+        <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-4">
           <span>{formatDate(post.date || post.createdAt)}</span>
           <div className="flex items-center gap-1.5"><Clock size={12} /> {post.read_time} мин</div>
         </div>
@@ -171,14 +171,14 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           {post.title}
         </h3>
 
-        <p className="text-sm text-slate-400 font-medium leading-relaxed mb-6 flex-grow">
+        <p className="text-sm text-slate-300 font-medium leading-relaxed mb-6 flex-grow">
           {post.excerpt}
         </p>
 
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-6">
             {post.tags.slice(0, 3).map((tag: string) => (
-              <span key={tag} className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span key={tag} className="text-[12px] font-bold uppercase tracking-widest text-slate-300">
                 #{tag}
               </span>
             ))}
@@ -196,12 +196,12 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
                 sizes="40px" 
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={16} /></div>
+              <div className="w-full h-full flex items-center justify-center text-slate-300"><User size={16} /></div>
             )}
           </div>
           <div>
             <div className="text-[13px] md:text-sm font-bold text-white leading-none">{post.author_name}</div>
-            <div className="text-[10px] text-teal-500 font-black uppercase tracking-widest mt-1">Автор клуба</div>
+            <div className="text-[12px] text-teal-500 font-black uppercase tracking-widest mt-1">Автор клуба</div>
           </div>
         </div>
       </div>
@@ -247,7 +247,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
                   'px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border shrink-0',
                   activeCategory === cat.slug
                     ? 'bg-teal-400 text-slate-900 border-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.3)]'
-                    : 'bg-slate-800/50 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800'
+                    : 'bg-slate-800/50 border-white/5 text-slate-300 hover:text-white hover:bg-slate-800'
                 )}
               >
                 {cat.label}
@@ -279,7 +279,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         <div className="mb-16 md:mb-24">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl md:text-2xl font-bold uppercase tracking-tight text-slate-300 flex items-center gap-3">
-              <Sparkles size={20} className="text-slate-400" />
+              <Sparkles size={20} className="text-slate-300" />
               {activeCategory !== 'all'
                 ? (displayCategories.find(c => c.slug === activeCategory)?.label || 'Материалы')
                 : 'Все материалы'}
@@ -287,7 +287,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
             
             {/* Фильтр по автору */}
             <div className="relative group shrink-0 hidden md:block">
-              <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-400 hover:border-teal-500/30 transition-colors">
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-300 hover:border-teal-500/30 transition-colors">
                 <Filter size={12} />
                 <select
                   aria-label="Выберите автора"
@@ -321,7 +321,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           {feedPosts.length === 0 && top3Posts.length === 0 && (
             <div className="text-center py-20 md:py-32 border border-dashed border-white/10 rounded-[3rem] bg-white/[0.02] mt-8">
               <BookOpen size={40} className="mx-auto text-slate-700 mb-4" />
-              <p className="text-slate-400 font-medium">В этой категории пока нет статей.</p>
+              <p className="text-slate-300 font-medium">В этой категории пока нет статей.</p>
               <button
                 onClick={() => handleCategoryClick('all')}
                 aria-label="Смотреть все материалы"
@@ -357,7 +357,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
                 <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
                   У вас есть тематическая статья?
                 </h3>
-                <p className="text-sm md:text-base text-slate-400 font-medium">
+                <p className="text-sm md:text-base text-slate-300 font-medium">
                   Станьте автором полевого журнала и поделитесь опытом с нашим клубом.
                 </p>
               </div>

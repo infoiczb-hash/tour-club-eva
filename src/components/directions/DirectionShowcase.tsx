@@ -49,7 +49,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                     <span className="w-2 h-2 rounded-full shadow-[0_0_15px_currentColor]" style={{ backgroundColor: theme.hex, color: theme.hex }} />
                 </h2>
                 <p 
-                    className="text-slate-400 font-medium max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both [animation-delay:100ms]"
+                    className="text-slate-300 font-medium max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both [animation-delay:100ms]"
                 >
                     Мы используем только надежное, проверенное оборудование, чтобы вы чувствовали себя уверенно.
                 </p>
@@ -87,7 +87,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                             <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 transition-colors" style={{ color: theme.hex }}>
                                 {item.name}
                             </h3>
-                            <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                            <p className="text-sm text-slate-300 font-medium leading-relaxed">
                                 {item.desc}
                             </p>
                         </div>
@@ -110,7 +110,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                         Живые <span style={{ color: theme.hex }}>Эмоции</span>
                     </h2>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 animate-in fade-in duration-700 fill-mode-both">
+                <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-300 animate-in fade-in duration-700 fill-mode-both">
                     <span className="w-8 h-px bg-slate-700" />
                     Листайте
                     <span className="w-8 h-px bg-slate-700" />

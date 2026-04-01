@@ -60,7 +60,7 @@ export const Lists = () => {
         <button
           type="button"
           onClick={() => append({ label: '', price: '' })}
-          className="text-[10px] font-black uppercase text-teal-600 hover:text-teal-700 flex items-center gap-1 mt-1"
+          className="text-[12px] font-black uppercase text-teal-600 hover:text-teal-700 flex items-center gap-1 mt-1"
         >
           <Plus size={12}/> Добавить подпункт
         </button>
@@ -194,7 +194,7 @@ export const Lists = () => {
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {docFields.map((field, index) => (
               <div key={field.id} className="bg-white p-4 rounded-xl border border-slate-200 relative group flex gap-3 items-start">
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-400">
+                <div className="bg-slate-100 p-2 rounded-lg text-slate-300">
                    <FileText size={24} />
                 </div>
                 <div className="flex-1 space-y-2">

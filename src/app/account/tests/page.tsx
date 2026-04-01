@@ -163,7 +163,7 @@ export default async function TestsPage() {
       {/* Заголовок */}
       <div>
         <h1 className="text-2xl font-black text-white mb-1">ДНК Туриста</h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-300">
           {results.length > 0
             ? `Открыто ${results.length} из ${Object.keys(QUIZ_CONFIG).length} граней вашей личности`
             : 'Пройдите тесты в Fan-секторе, чтобы собрать свой профиль'}
@@ -196,8 +196,8 @@ export default async function TestsPage() {
                       <Icon size={20} />
                     </div>
                     <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{config.title}</h3>
-                      <p className="text-[10px] text-slate-400">{formatDate(result.createdAt)}</p>
+                      <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">{config.title}</h3>
+                      <p className="text-[12px] text-slate-300">{formatDate(result.createdAt)}</p>
                     </div>
                   </div>
 
@@ -221,8 +221,8 @@ export default async function TestsPage() {
                         .slice(0, 6)
                         .map(([key, value]) => (
                           <div key={key} className="space-y-1.5">
-                            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
-                              <span className="text-slate-400 truncate pr-2">{key}</span>
+                            <div className="flex items-center justify-between text-[12px] font-bold uppercase tracking-wider">
+                              <span className="text-slate-300 truncate pr-2">{key}</span>
                               <span className={config.color}>{value}%</span>
                             </div>
                             <div className="h-1.5 bg-slate-950 rounded-full overflow-hidden shadow-inner">
@@ -255,7 +255,7 @@ export default async function TestsPage() {
       {/* ── Непройденные квизы ───────────────────────────────────── */}
       {unpassedQuizzes.length > 0 && (
         <section className="space-y-4 pt-4 border-t border-white/5">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
             {results.length > 0 ? 'Ещё не пройдены' : 'Доступные тесты'}
           </h2>
 
@@ -275,7 +275,7 @@ export default async function TestsPage() {
                     <p className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors truncate">
                       {config.title}
                     </p>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                    <p className="text-xs text-slate-300 truncate mt-0.5">
                       {config.description}
                     </p>
                   </div>
@@ -299,7 +299,7 @@ export default async function TestsPage() {
           <p className="text-lg font-black text-white mb-2">
             Узнай свой туристический профиль
           </p>
-          <p className="text-sm text-slate-400 mb-6 max-w-sm">
+          <p className="text-sm text-slate-300 mb-6 max-w-sm">
             Пройди тесты в Fan-секторе — результаты автоматически сохранятся здесь в виде красивой статистики.
           </p>
           <Link

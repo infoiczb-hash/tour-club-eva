@@ -137,7 +137,7 @@ export default async function WishlistPage() {
       {/* ── Заголовок ── */}
       <div>
         <h1 className="text-2xl font-black text-white mb-1">Мои желания</h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-300">
           Туры и статьи, за которыми вы следите, и ваши листы ожидания.
         </p>
       </div>
@@ -188,11 +188,11 @@ export default async function WishlistPage() {
       {/* ── СОХРАНЁННЫЕ ТУРЫ ── */}
       <section className="space-y-3">
         <div className="flex items-center justify-between border-b border-white/5 pb-2">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
             <Heart size={14} className="text-rose-400" />
             Туры
             {tourWishlist.length > 0 && (
-              <span className="text-xs font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">
                 {tourWishlist.length}
               </span>
             )}
@@ -235,7 +235,7 @@ export default async function WishlistPage() {
                   <div className="flex-1 p-4 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       {tour.category && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text}`}>
+                        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text}`}>
                           {tour.category.title}
                         </span>
                       )}
@@ -251,7 +251,7 @@ export default async function WishlistPage() {
                       {tour.title}
                     </Link>
 
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-400 mb-2">
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-300 mb-2">
                       {tour.location && <span className="flex items-center gap-1"><MapPin size={10} /> {tour.location}</span>}
                       {tour.duration && <span className="flex items-center gap-1"><Clock size={10} /> {tour.duration}</span>}
                       {tour.distance && <span className="flex items-center gap-1"><TrendingUp size={10} /> {tour.distance} км</span>}
@@ -262,7 +262,7 @@ export default async function WishlistPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-teal-400 font-medium">{formatDate(nextDate.startDate)}</span>
                           {isLowSpots && (
-                            <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
+                            <span className="text-[12px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
                               Осталось {nextDate.spotsLeft} мест
                             </span>
                           )}
@@ -301,7 +301,7 @@ export default async function WishlistPage() {
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
                   <p className="text-sm font-bold text-slate-200 group-hover:text-white line-clamp-2 transition-colors leading-snug">{sp.post.title}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+                  <p className="text-[12px] text-slate-300 font-bold uppercase tracking-wider mt-1.5">
                     {sp.post.read_time ? `${sp.post.read_time} мин чтения` : 'Статья'}
                   </p>
                 </div>
@@ -315,12 +315,12 @@ export default async function WishlistPage() {
       <section className="space-y-4 pt-4 border-t border-white/5">
         <div className="flex items-center gap-2">
           <Bell size={14} className="text-teal-400" />
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
             Направления (Подписки)
           </h2>
         </div>
 
-        <p className="text-xs text-slate-400 leading-relaxed">
+        <p className="text-xs text-slate-300 leading-relaxed">
           Мы пришлём уведомление, когда появятся новые даты в выбранных категориях.
         </p>
 

@@ -44,7 +44,7 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
         disabled={!editor.can().chain().focus().toggleBold().run()}
-        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('bold') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}
+        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('bold') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}
       >
         <Bold size={16} />
       </button>
@@ -52,7 +52,7 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
         type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
         disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('italic') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}
+        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('italic') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}
       >
         <Italic size={16} />
       </button>
@@ -62,14 +62,14 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('heading', { level: 2 }) ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}
+        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('heading', { level: 2 }) ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}
       >
         <Heading1 size={16} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('heading', { level: 3 }) ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}
+        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('heading', { level: 3 }) ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}
       >
         <Heading2 size={16} />
       </button>
@@ -79,27 +79,27 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('bulletList') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}
+        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('bulletList') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}
       >
         <List size={16} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('orderedList') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}
+        className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('orderedList') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}
       >
         <ListOrdered size={16} />
       </button>
 
       <div className="w-px h-6 bg-slate-300 dark:bg-slate-700 mx-1 self-center" />
 
-      <button type="button" onClick={setLink} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('link') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}>
+      <button type="button" onClick={setLink} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('link') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}>
         <LinkIcon size={16} />
       </button>
-      <button type="button" onClick={addImage} className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition text-slate-400">
+      <button type="button" onClick={addImage} className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition text-slate-300">
         <ImageIcon size={16} />
       </button>
-      <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('blockquote') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-400'}`}>
+      <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition ${editor.isActive('blockquote') ? 'bg-white dark:bg-slate-800 text-violet-500 shadow-sm' : 'text-slate-300'}`}>
         <Quote size={16} />
       </button>
     </div>

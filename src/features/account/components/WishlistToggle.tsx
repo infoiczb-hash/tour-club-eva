@@ -29,7 +29,7 @@ export default function WishlistToggle({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className="shrink-0 p-1 text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-50"
+      className="shrink-0 p-1 text-slate-300 hover:text-rose-400 transition-colors disabled:opacity-50"
       title={inWishlist ? 'Убрать из вишлиста' : 'Добавить в вишлист'}
     >
       {isPending ? (

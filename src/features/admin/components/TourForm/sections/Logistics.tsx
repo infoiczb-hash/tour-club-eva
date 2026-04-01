@@ -72,7 +72,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
               <button 
                 type="button" 
                 onClick={() => remove(index)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors z-10"
+                className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors z-10"
                 title="Удалить дату"
               >
                 <Trash2 size={18} />
@@ -89,7 +89,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                   <FormInput name={`dates.${index}.time`} label="Время" placeholder="09:00" />
                 </div>
                 <div className="md:col-span-4">
-                   <label className="text-xs font-bold uppercase text-slate-400 mb-1.5 block">
+                   <label className="text-xs font-bold uppercase text-slate-300 mb-1.5 block">
                       Гид на выезд
                    </label>
                    <div className="relative">
@@ -102,7 +102,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                          <option key={g.id} value={g.id}>{g.name}</option>
                        ))}
                      </select>
-                     <User className="absolute right-3 top-3 text-slate-400 pointer-events-none" size={14} />
+                     <User className="absolute right-3 top-3 text-slate-300 pointer-events-none" size={14} />
                    </div>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
             </div>
           )}
         </div>
-        <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1">
+        <p className="text-[12px] text-slate-300 mt-3 flex items-center gap-1">
           <DollarSign size={12} /> Если оставить "Свою цену" пустой, будет использоваться базовая цена из вкладки "Финансы".
         </p>
       </div>

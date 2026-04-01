@@ -252,7 +252,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
           className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors z-20 p-3 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 text-slate-300 hover:text-white transition-colors z-20 p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
@@ -300,7 +300,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
                         className="w-full p-4 rounded-2xl text-left bg-slate-800/50 border border-white/5 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all flex items-center gap-4 group relative overflow-hidden"
                       >
                         <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center border border-white/5 group-hover:border-orange-500/30 transition-colors z-10 shadow-sm">
-                            <OptionIcon size={24} className="text-slate-400 group-hover:text-orange-400 transition-colors" strokeWidth={1.5} />
+                            <OptionIcon size={24} className="text-slate-300 group-hover:text-orange-400 transition-colors" strokeWidth={1.5} />
                         </div>
                         <span className="flex-1 font-medium text-slate-300 group-hover:text-white transition-colors z-10">
                           {option.text}
@@ -312,7 +312,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
 
                 <div className="shrink-0 mt-4 pt-2 border-t border-transparent h-12">
                   {step > 0 && (
-                      <button onClick={handleBack} className="text-sm font-bold text-slate-400 hover:text-white flex items-center gap-3 transition-colors w-fit">
+                      <button onClick={handleBack} className="text-sm font-bold text-slate-300 hover:text-white flex items-center gap-3 transition-colors w-fit">
                       <ArrowLeft size={16} /> Назад
                       </button>
                   )}
@@ -329,7 +329,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
               >
                   <Map className="w-16 h-16 text-orange-500 mb-6 animate-pulse" strokeWidth={1} />
                   <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-2">Анализ ответов</h3>
-                  <p className="text-sm text-slate-400 font-mono">Вычисление шансов на выживание...</p>
+                  <p className="text-sm text-slate-300 font-mono">Вычисление шансов на выживание...</p>
               </motion.div>
             )}
 
@@ -360,7 +360,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
                   </div>
 
                   <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-6 mb-6">
-                    <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-4">Твои характеристики:</h4>
+                    <h4 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-4">Твои характеристики:</h4>
                     <div className="space-y-3">
                       {finalResult.characteristics.map((char, i) => (
                         <div key={i} className="flex items-center gap-3 text-slate-200 bg-white/5 p-3 rounded-xl border border-white/5">
@@ -382,7 +382,7 @@ export default function QuizSurvival({ open, onClose }: Props) {
 
                   {/* SMART CTA (Теперь внутри скролла для UX/Mobile) */}
                   <div className="pt-6 mt-4 border-t border-white/10 text-center">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+                    <p className="text-[12px] font-bold uppercase tracking-widest text-slate-300 mb-1">
                         Мы рекомендуем Вам
                     </p>
                     <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", finalResult.theme.color)}>

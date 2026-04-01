@@ -56,9 +56,9 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
               <FileDown className="text-blue-600" size={20}/> 
               Импорт тура
             </h3>
-            <p className="text-xs text-slate-400 font-medium">Вставьте любой текст (пост, PDF, сообщение)</p>
+            <p className="text-xs text-slate-300 font-medium">Вставьте любой текст (пост, PDF, сообщение)</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <button onClick={onClose} className="text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition">
             <X size={24} />
           </button>
         </div>
@@ -69,7 +69,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="w-full h-64 p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none dark:text-white placeholder:text-slate-400 transition-all"
+              className="w-full h-64 p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none dark:text-white placeholder:text-slate-300 transition-all"
               placeholder="Вставьте сюда описание тура:
 — Название
 — Даты

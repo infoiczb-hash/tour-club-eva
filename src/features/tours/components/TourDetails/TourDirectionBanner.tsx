@@ -88,7 +88,7 @@ export default function TourDirectionBanner({ categorySlug }: TourDirectionBanne
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <div className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border mb-2 ${styles.badge}`}>
+          <div className={`inline-flex items-center gap-1.5 text-[12px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border mb-2 ${styles.badge}`}>
             Направление клуба
           </div>
           <h3 className="text-white font-black text-lg leading-tight mb-1">

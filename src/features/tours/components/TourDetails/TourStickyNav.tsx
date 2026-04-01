@@ -65,7 +65,7 @@ export default function TourStickyNav() {
               key={item.id}
               onClick={() => scrollToSection(item.id)}
               // ✅ transition-colors вместо transition-all
-              className="text-xs font-bold text-slate-400 hover:text-teal-400 hover:bg-white/5 px-3 py-2 rounded-lg transition-colors uppercase tracking-wide"
+              className="text-xs font-bold text-slate-300 hover:text-teal-400 hover:bg-white/5 px-3 py-2 rounded-lg transition-colors uppercase tracking-wide"
             >
               {item.label}
             </button>
@@ -96,7 +96,7 @@ export default function TourStickyNav() {
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
                 // ✅ transition-colors вместо transition-all
-                className="text-sm font-bold text-slate-400 hover:text-teal-400 hover:bg-white/5 px-3 py-3 rounded-lg transition-colors uppercase tracking-wide text-left"
+                className="text-sm font-bold text-slate-300 hover:text-teal-400 hover:bg-white/5 px-3 py-3 rounded-lg transition-colors uppercase tracking-wide text-left"
               >
                 {item.label}
               </button>

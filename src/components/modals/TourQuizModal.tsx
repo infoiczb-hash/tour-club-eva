@@ -164,7 +164,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
         role="dialog" aria-modal="true" aria-labelledby="modal-quiz-title" 
         className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300"         
       >
-        <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
+        <button onClick={onClose} className="absolute top-5 right-5 z-20 text-slate-300 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
            <X size={20} />
         </button>
 
@@ -173,7 +173,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
            <div className="p-6 md:p-10 flex flex-col h-full overflow-y-auto custom-scrollbar">
               
               <div className="mb-8">
-                 <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                 <div className="flex justify-between text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">
                     <span>Шаг {step + 1} / {questions.length}</span>
                     <span>{Math.round(progress)}%</span>
                  </div>
@@ -223,7 +223,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
                                <div className={clsx("font-bold text-base mb-0.5 transition-colors", isSelected ? "text-teal-400" : "text-white")}>
                                    {opt.label}
                                </div>
-                               <div className="text-xs text-slate-400 font-medium">{opt.hint}</div>
+                               <div className="text-xs text-slate-300 font-medium">{opt.hint}</div>
                             </div>
                             
                             {isSelected && <Check className="text-teal-500 shrink-0" />}
@@ -235,7 +235,7 @@ export default function TourQuizModal({ isOpen, onClose }: Props) {
 
               <div className="mt-8 flex items-center justify-between">
                  {step > 0 ? (
-                    <button onClick={handleBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
+                    <button onClick={handleBack} className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
                        <ArrowLeft size={14}/> Назад
                     </button>
                  ) : <div/>}
@@ -325,20 +325,20 @@ function ResultCard({ direction, rank, onClose }: { direction: DirectionResult, 
                 <div className="flex items-center gap-4">
                     <div className={clsx(
                         "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                        isBest ? "bg-teal-500/20 text-teal-400" : "bg-white/5 text-slate-400"
+                        isBest ? "bg-teal-500/20 text-teal-400" : "bg-white/5 text-slate-300"
                     )}>
                         <Icon size={24} />
                     </div>
                     <div>
                         <h4 className="font-black text-white text-xl tracking-tight leading-none mb-1.5">{direction.title}</h4>
-                        <p className="text-xs text-slate-400 font-medium">{direction.description}</p>
+                        <p className="text-xs text-slate-300 font-medium">{direction.description}</p>
                     </div>
                 </div>
                 <div className="text-right shrink-0 ml-4">
                     <span className={clsx("block font-black text-2xl leading-none", isBest ? "text-teal-400" : "text-white")}>
                         {direction.match}%
                     </span>
-                    <span className="text-[12px] text-slate-400 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
+                    <span className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mt-1 block">Совпадение</span>
                 </div>
             </div>
 

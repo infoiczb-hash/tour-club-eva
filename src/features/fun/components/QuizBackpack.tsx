@@ -188,7 +188,7 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
         >
           <button 
             onClick={handleReset} 
-            className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full"
+            className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full"
           >
             <X size={20} />
           </button>
@@ -206,7 +206,7 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
 
               {/* Progress Bar */}
               <div className="shrink-0 flex justify-between items-center bg-slate-950/50 p-3 rounded-2xl border border-white/5 mb-6">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">Места занято:</span>
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider pl-2">Места занято:</span>
                   <div className="flex gap-1.5 pr-1">
                     {[...Array(7)].map((_, i) => (
                       <motion.div 
@@ -243,7 +243,7 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
                         "aspect-square p-3 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all relative group",
                         isSelected 
                           ? "bg-blue-500/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)] text-blue-400" 
-                          : "bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/20 hover:text-white hover:bg-slate-800",
+                          : "bg-slate-800/50 border-white/5 text-slate-300 hover:border-white/20 hover:text-white hover:bg-slate-800",
                         !isSelected && selected.length >= 7 && "opacity-30 cursor-not-allowed grayscale hover:scale-100"
                       )}
                     >
@@ -339,7 +339,7 @@ function ResultScreen({ result, selected, onClose }: { result: Result; selected:
 
         {/* SMART CTA (Теперь внутри скролла для UX/Mobile) */}
         <div className="pt-6 mt-4 border-t border-white/10 text-center">
-          <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", result.iconColor)}>
+          <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", result.iconColor)}>
               Мы рекомендуем Вам
           </p>
           <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", result.iconColor)}>

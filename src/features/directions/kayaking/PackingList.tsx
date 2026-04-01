@@ -33,13 +33,13 @@ export default function PackingList() {
             <div className="inline-flex max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
                 <button 
                     onClick={() => setActiveDuration("one-day")}
-                    className={`shrink-0 px-5 md:px-6 py-2.5 rounded-xl text-[12px] md:text-xs font-bold uppercase tracking-widest transition-all ${activeDuration === 'one-day' ? 'bg-teal-500 text-slate-950 shadow-[0_0_15px_rgba(20,184,166,0.4)]' : 'bg-transparent text-slate-400 hover:text-white'}`}
+                    className={`shrink-0 px-5 md:px-6 py-2.5 rounded-xl text-[12px] md:text-xs font-bold uppercase tracking-widest transition-all ${activeDuration === 'one-day' ? 'bg-teal-500 text-slate-950 shadow-[0_0_15px_rgba(20,184,166,0.4)]' : 'bg-transparent text-slate-300 hover:text-white'}`}
                 >
                     Однодневный сплав
                 </button>
                 <button 
                     onClick={() => setActiveDuration("two-days")}
-                    className={`shrink-0 px-5 md:px-6 py-2.5 rounded-xl text-[12px] md:text-xs font-bold uppercase tracking-widest transition-all ${activeDuration === 'two-days' ? 'bg-teal-500 text-slate-950 shadow-[0_0_15px_rgba(20,184,166,0.4)]' : 'bg-transparent text-slate-400 hover:text-white'}`}
+                    className={`shrink-0 px-5 md:px-6 py-2.5 rounded-xl text-[12px] md:text-xs font-bold uppercase tracking-widest transition-all ${activeDuration === 'two-days' ? 'bg-teal-500 text-slate-950 shadow-[0_0_15px_rgba(20,184,166,0.4)]' : 'bg-transparent text-slate-300 hover:text-white'}`}
                 >
                     С ночевкой
                 </button>
@@ -102,8 +102,8 @@ export default function PackingList() {
 
             {/* Теги внизу */}
             <div className="mt-6 flex flex-wrap gap-2 md:gap-3 justify-center">
-                <span className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-400"><Thermometer size={14} className="text-teal-500"/> Учитывайте прогноз погоды</span>
-                <span className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-400"><Dog size={14} className="text-teal-500"/> Собаки по согласованию с гидом</span>
+                <span className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-300"><Thermometer size={14} className="text-teal-500"/> Учитывайте прогноз погоды</span>
+                <span className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-300"><Dog size={14} className="text-teal-500"/> Собаки по согласованию с гидом</span>
             </div>
         </div>
 

@@ -77,13 +77,13 @@ export default function SupCatalog() {
                 
                 <button 
                     onClick={() => setActiveTab('lessons')}
-                    className={`relative z-10 flex-1 sm:flex-none px-4 md:px-8 py-3 rounded-xl text-[12px] md:text-sm font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'lessons' ? "text-slate-950" : "text-slate-400 hover:text-white"}`}
+                    className={`relative z-10 flex-1 sm:flex-none px-4 md:px-8 py-3 rounded-xl text-[12px] md:text-sm font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'lessons' ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
                 >
                     ПРОГУЛКИ
                 </button>
                 <button 
                     onClick={() => setActiveTab('tours')}
-                    className={`relative z-10 flex-1 sm:flex-none px-4 md:px-8 py-3 rounded-xl text-[12px] md:text-sm font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'tours' ? "text-slate-950" : "text-slate-400 hover:text-white"}`}
+                    className={`relative z-10 flex-1 sm:flex-none px-4 md:px-8 py-3 rounded-xl text-[12px] md:text-sm font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'tours' ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
                 >
                     СПЛАВЫ
                 </button>
@@ -97,13 +97,13 @@ export default function SupCatalog() {
         >
             {/* 1. Бейдж и Заголовок */}
             <div className="mb-6 md:mb-8">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-3 md:mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 text-[12px] font-bold uppercase tracking-widest mb-3 md:mb-4">
                     {data.badge}
                 </div>
                 <h3 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-3 md:mb-4 leading-none">
                     {data.title}
                 </h3>
-                <p className="text-[14px] md:text-lg text-slate-400 leading-relaxed font-medium max-w-3xl">
+                <p className="text-[14px] md:text-lg text-slate-300 leading-relaxed font-medium max-w-3xl">
                     {data.description}
                 </p>
             </div>
@@ -115,7 +115,7 @@ export default function SupCatalog() {
                         <Clock size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Время</p>
+                        <p className="text-[12px] uppercase font-bold text-slate-300 tracking-widest mb-1">Время</p>
                         <p className="text-[14px] md:text-lg text-white font-black">{data.duration}</p>
                     </div>
                 </div>
@@ -125,7 +125,7 @@ export default function SupCatalog() {
                         <Users size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Особенности</p>
+                        <p className="text-[12px] uppercase font-bold text-slate-300 tracking-widest mb-1">Особенности</p>
                         <p className="text-[13px] md:text-sm text-white font-bold leading-snug">{data.format}</p>
                     </div>
                 </div>
@@ -157,7 +157,7 @@ export default function SupCatalog() {
                         : data.routes?.map(route => (
                             <div key={route.name} className="shrink-0 snap-center w-[75vw] md:w-auto flex flex-col p-4 bg-slate-900 rounded-xl border border-white/5 hover:border-teal-500/30 transition-colors md:min-w-[180px] shadow-sm">
                                 <span className="text-[14px] md:text-sm font-black text-white mb-1.5">{route.name}</span>
-                                <span className="text-[11px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">
+                                <span className="text-[11px] md:text-xs text-slate-300 uppercase tracking-widest font-bold">
                                     {route.dist} <span className="text-teal-500 mx-1.5">•</span> {route.time}
                                 </span>
                             </div>
@@ -166,7 +166,7 @@ export default function SupCatalog() {
                 </div>
 
                 {activeTab === 'tours' && (
-                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

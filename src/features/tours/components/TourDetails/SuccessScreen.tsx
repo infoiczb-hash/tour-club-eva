@@ -45,7 +45,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
       </div>
       
       <h2 className="text-2xl font-bold text-white mb-2">Заявка #{shortId} принята!</h2>
-      <p className="text-slate-400 mb-6 sm:mb-8 text-sm sm:text-base">Места за вами зарезервированы.</p>
+      <p className="text-slate-300 mb-6 sm:mb-8 text-sm sm:text-base">Места за вами зарезервированы.</p>
 
       {/* 💳 СЦЕНАРИЙ 1: BILETPMR */}
       {paymentMethod === 'biletpmr' && (
@@ -156,7 +156,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
 
         <button 
           onClick={onClose}
-          className="w-full py-3 text-slate-500 hover:text-slate-300 font-bold transition-colors text-[10px] uppercase tracking-[0.2em]"
+          className="w-full py-3 text-slate-400 hover:text-slate-300 font-bold transition-colors text-[12px] uppercase tracking-[0.2em]"
         >
           Закрыть и вернуться к туру
         </button>

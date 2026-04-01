@@ -14,7 +14,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 // ✅ СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
 const COLOR_THEMES: Record<string, string> = {
-  slate:   "bg-slate-500/10 border-slate-500/20 text-slate-400",
+  slate:   "bg-slate-500/10 border-slate-500/20 text-slate-300",
   teal:    "bg-teal-500/10 border-teal-500/20 text-teal-400",
   emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
   sky:     "bg-sky-500/10 border-sky-500/20 text-sky-400",
@@ -104,7 +104,7 @@ export default function CalendarView({ events }: CalendarViewProps) {
           <CalendarIcon size={32} className="text-teal-500/50" />
         </div>
         <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Актуальных туров пока нет</h3>
-        <p className="text-slate-400 font-medium max-w-sm mx-auto">Но мы уже готовим новое расписание. Следите за анонсами!</p>
+        <p className="text-slate-300 font-medium max-w-sm mx-auto">Но мы уже готовим новое расписание. Следите за анонсами!</p>
       </div>
     );
   }
@@ -132,7 +132,7 @@ export default function CalendarView({ events }: CalendarViewProps) {
           <div className="flex items-center gap-4 my-8 sticky top-20 z-30">
             <div className="h-px bg-gradient-to-r from-transparent to-white/10 flex-1" />
             <div className="px-5 py-2 rounded-full bg-slate-900/95 border border-white/10 backdrop-blur-md shadow-2xl flex items-center gap-2 opacity-80">
-              <Sparkles size={14} className="text-slate-400" />
+              <Sparkles size={14} className="text-slate-300" />
               <span className="text-xs sm:text-sm font-black text-slate-300 uppercase tracking-[0.2em]">Скоро (Анонсы)</span>
             </div>
             <div className="h-px bg-gradient-to-l from-transparent to-white/10 flex-1" />
@@ -168,11 +168,11 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
       )}>
         <div className="w-16 sm:w-24 shrink-0 rounded-xl bg-slate-950/50 border border-white/5 flex flex-col items-center justify-center py-3 shadow-inner group-hover:bg-teal-500/10 group-hover:border-teal-500/20 transition-colors">
           {isTba ? (
-            <Clock size={24} className="text-slate-400 group-hover:text-teal-400 transition-colors" />
+            <Clock size={24} className="text-slate-300 group-hover:text-teal-400 transition-colors" />
           ) : (
             <>
               <span className="text-2xl sm:text-4xl font-black leading-none text-white group-hover:text-teal-400 transition-colors">{dayNumber}</span>
-              <span className="text-[12px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">{weekDay}</span>
+              <span className="text-[12px] sm:text-xs font-bold uppercase tracking-widest text-slate-300 mt-1">{weekDay}</span>
             </>
           )}
         </div>
@@ -182,15 +182,15 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
         </div>
 
         <div className="flex flex-col justify-center flex-1 min-w-0 py-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
             {badgeLabel && (
               <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px]", badgeStyle)}>
                 {badgeLabel}
               </span>
             )}
-            {tour.duration && <span className="flex items-center text-slate-400">{tour.duration}</span>}
+            {tour.duration && <span className="flex items-center text-slate-300">{tour.duration}</span>}
             {isMultiDay && endDateObj && (
-              <span className="flex items-center text-slate-400 before:content-['•'] before:mx-1.5 before:text-slate-700">до {endDateObj.getDate()} числа</span>
+              <span className="flex items-center text-slate-300 before:content-['•'] before:mx-1.5 before:text-slate-700">до {endDateObj.getDate()} числа</span>
             )}
           </div>
           
@@ -198,7 +198,7 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
             {tour.title}
           </h4>
           
-          <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-400 font-medium">
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-300 font-medium">
             <MapPin size={14} className="shrink-0 text-teal-500/60" strokeWidth={2.5} />
             <span className="truncate">{tour.location}</span>
           </div>
@@ -206,13 +206,13 @@ function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: bool
 
         <div className="flex items-center justify-end gap-3 sm:gap-6 shrink-0 pl-1 sm:pl-4">
           <div className="hidden sm:flex flex-col items-end justify-center pr-5 border-r border-white/10 h-full">
-            <span className="text-[12px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Билет от</span>
+            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest mb-0.5">Билет от</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-black text-white leading-none tracking-tight">{Number(displayPrice).toLocaleString()}</span>
               <span className="text-xs font-bold text-teal-500">{tour.currency || 'MDL'}</span>
             </div>
           </div>
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:border-teal-400 group-hover:text-slate-900 transition-all duration-300 shadow-sm">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:border-teal-400 group-hover:text-slate-900 transition-all duration-300 shadow-sm">
             <ChevronRight size={20} strokeWidth={2.5} className="group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>

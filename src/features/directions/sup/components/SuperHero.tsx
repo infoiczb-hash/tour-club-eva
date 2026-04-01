@@ -40,7 +40,7 @@ export default function SupHero() {
 
       {/* SCROLL INDICATOR */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none animate-in fade-in duration-1000 delay-500">
-        <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Вниз</span>
+        <span className="text-[12px] font-bold text-white/50 uppercase tracking-widest">Вниз</span>
         <div className="w-px h-12 bg-gradient-to-b from-white/20 to-transparent" />
       </div>
     </section>

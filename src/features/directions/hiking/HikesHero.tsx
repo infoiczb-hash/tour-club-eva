@@ -9,7 +9,7 @@ export default function HikesHero() {
       <div
         className="relative z-10 container mx-auto px-4 text-center flex flex-col items-center justify-center transition-opacity duration-500"
       >
-     <div className="animate-hero-subtitle inline-block px-4 md:px-5 py-2 mb-8 text-[10px] md:text-sm font-bold tracking-widest text-teal-200 border border-teal-800/50 rounded-full backdrop-blur-md uppercase bg-teal-950/30">
+     <div className="animate-hero-subtitle inline-block px-4 md:px-5 py-2 mb-8 text-[12px] md:text-sm font-bold tracking-widest text-teal-200 border border-teal-800/50 rounded-full backdrop-blur-md uppercase bg-teal-950/30">
           Туры по горам Румынии и не только.
         </div>
 

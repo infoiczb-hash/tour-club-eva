@@ -348,7 +348,7 @@ export default function QuizTotem({ open, onClose }: Props) {
 
                       {/* SMART CTA */}
                       <div className="pt-6 mt-4 border-t border-white/10">
-                        <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", finalResult.colorClass)}>
+                        <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", finalResult.colorClass)}>
                           Мы рекомендуем Вам
                         </p>
                         <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", finalResult.colorClass)}>

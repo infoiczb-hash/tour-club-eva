@@ -57,7 +57,7 @@ export default function LevelsInfoModal() {
           <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Уровни лояльности</h2>
           <button 
             onClick={() => setIsOpen(false)}
-            className="p-2 -mr-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 -mr-2 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
@@ -72,7 +72,7 @@ export default function LevelsInfoModal() {
                   <div className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br ${level.colorMode} shadow-sm`} />
                   <h3 className="font-bold text-white text-lg">{level.name}</h3>
                 </div>
-                <span className="text-xs font-bold tracking-widest px-3 py-1.5 rounded-lg bg-slate-950/50 text-slate-400 border border-white/5">
+                <span className="text-xs font-bold tracking-widest px-3 py-1.5 rounded-lg bg-slate-950/50 text-slate-300 border border-white/5">
                   {level.toursRequired}
                 </span>
               </div>
@@ -96,7 +96,7 @@ export default function LevelsInfoModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="mt-4 flex items-center justify-center w-full gap-2 py-3.5 px-4 rounded-xl bg-slate-800/40 hover:bg-slate-800 transition-colors border border-white/5 text-sm font-bold tracking-wide text-slate-400 hover:text-white"
+        className="mt-4 flex items-center justify-center w-full gap-2 py-3.5 px-4 rounded-xl bg-slate-800/40 hover:bg-slate-800 transition-colors border border-white/5 text-sm font-bold tracking-wide text-slate-300 hover:text-white"
       >
         <Info size={16} />
         <span>Система уровней и привилегии</span>

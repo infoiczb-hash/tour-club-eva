@@ -198,7 +198,7 @@
   }
 
   .admin-label {
-    @apply block text-[14px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest;
+    @apply block text-[14px] font-black text-slate-300 uppercase mb-2 ml-1 tracking-widest;
   }
 
   .admin-section-title {
@@ -206,7 +206,7 @@
   }
 
   .ai-badge-violet {
-    @apply flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-violet-200 hover:scale-105 transition-all active:scale-95;
+    @apply flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-[12px] font-black uppercase shadow-lg shadow-violet-200 hover:scale-105 transition-all active:scale-95;
   }
 }
 

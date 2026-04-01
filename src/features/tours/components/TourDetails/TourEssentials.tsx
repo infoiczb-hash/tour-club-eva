@@ -39,7 +39,7 @@ const renderSafeListItem = (item: any): React.ReactNode => {
                   <div key={idx} className="flex justify-between items-start gap-4">
                     <span className="text-slate-300 leading-snug">{subItem.label}</span>
                     {subItem.price && (
-                      <span className="text-[10px] font-black text-slate-400 whitespace-nowrap bg-slate-950 px-2 py-0.5 rounded border border-white/5 shrink-0 mt-0.5 shadow-sm">
+                      <span className="text-[12px] font-black text-slate-300 whitespace-nowrap bg-slate-950 px-2 py-0.5 rounded border border-white/5 shrink-0 mt-0.5 shadow-sm">
                         {subItem.price}
                       </span>
                     )}
@@ -111,7 +111,7 @@ export default function TourEssentials({
             <h3 className="text-emerald-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2">
               <CheckCircle size={16} aria-hidden="true" />
               Что включено
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px]">
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[12px]">
                 {Array.isArray(finalIncluded) ? finalIncluded.length : 0}
               </span>
             </h3>
@@ -160,7 +160,7 @@ export default function TourEssentials({
             <h3 className="text-rose-400 font-black uppercase tracking-widest text-[13px] flex items-center gap-2">
               <XCircle size={16} aria-hidden="true" />
               Дополнительно
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[10px]">
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[12px]">
                 {Array.isArray(finalExcluded) ? finalExcluded.length : 0}
               </span>
             </h3>
@@ -243,11 +243,11 @@ export default function TourEssentials({
                   className="group flex items-center justify-between p-3 bg-white/5 hover:bg-teal-500/10 border border-white/5 hover:border-teal-500/30 rounded-xl transition-all"
                 >
                   <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-teal-400 transition-colors shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 group-hover:text-teal-400 transition-colors shrink-0">
                       <FileText size={16} aria-hidden="true" />
                     </div>
                     <div className="flex flex-col overflow-hidden">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Файл</span>
+                      <span className="text-[12px] font-bold text-slate-300 uppercase tracking-widest">Файл</span>
                       <span className="text-sm font-bold text-slate-200 truncate group-hover:text-white transition-colors">
                         {doc.title || `Документ ${i + 1}`}
                       </span>

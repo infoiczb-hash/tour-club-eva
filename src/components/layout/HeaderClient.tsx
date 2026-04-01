@@ -91,7 +91,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
               <span className="font-black text-xl md:text-2xl tracking-tighter text-white group-hover:text-teal-400 transition-colors">
                 ЭВА
               </span>
-              <span className="text-[9px] md:text-[10px] font-bold tracking-[0.3em] text-white/50 uppercase group-hover:text-white/80 transition-colors">
+              <span className="text-[9px] md:text-[12px] font-bold tracking-[0.3em] text-white/50 uppercase group-hover:text-white/80 transition-colors">
                 Турклуб
               </span>
             </div>
@@ -118,7 +118,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
 
             {user ? (
                <Link href="/account" className="flex items-center gap-2.5 group">
-                 <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[10px] font-black">
+                 <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[12px] font-black">
                     {initials}
                  </div>
                  <span className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors">Кабинет</span>
@@ -133,7 +133,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
           {/* БУРГЕР */}
           <div className="md:hidden flex items-center gap-4 relative z-50">
             {user && (
-              <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[10px] font-black">
+              <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[12px] font-black">
                 {initials}
               </Link>
             )}
@@ -185,7 +185,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             className="w-full py-4 bg-slate-900 border border-white/5 text-white font-bold uppercase tracking-widest text-sm text-center rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             {user ? 'Личный кабинет' : 'Войти в кабинет'}
-            <ArrowRight size={18} className="text-slate-400" />
+            <ArrowRight size={18} className="text-slate-300" />
           </Link>
 
           <button
@@ -202,19 +202,19 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
 
           <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-1">
             <div className="flex flex-col gap-2">
-              <a href="tel:+37377770141" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+              <a href="tel:+37377770141" className="text-sm text-slate-300 hover:text-white transition-colors flex items-center gap-2">
                 <Phone size={14} /> +373 777 70141
               </a>
-              <a href="mailto:info@evatur.club" className="text-sm text-slate-400 hover:text-white transition-colors">
+              <a href="mailto:info@evatur.club" className="text-sm text-slate-300 hover:text-white transition-colors">
                 info@evatur.club
               </a>
             </div>
 
             <div className="flex gap-3">
-              <a href="https://t.me/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
+              <a href="https://t.me/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-300 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
                 <Send size={16} className="-ml-0.5" />
               </a>
-              <a href="https://instagram.com/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
+              <a href="https://instagram.com/evaturclub" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-300 hover:text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
                 <Instagram size={16} />
               </a>
             </div>

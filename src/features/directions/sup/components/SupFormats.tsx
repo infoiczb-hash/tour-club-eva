@@ -58,10 +58,10 @@ export default function SupFormats() {
                   <div className="absolute -bottom-10 w-24 h-24 bg-teal-500/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                   <div className="relative z-10 w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-teal-500/20 group-hover:-translate-y-1 transition-all duration-300 border border-white/5 group-hover:border-teal-500/30">
-                    <Icon className="text-slate-400 group-hover:text-teal-400 transition-colors duration-300" size={26} strokeWidth={1.5} />
+                    <Icon className="text-slate-300 group-hover:text-teal-400 transition-colors duration-300" size={26} strokeWidth={1.5} />
                   </div>
                   
-                  <span className="relative z-10 text-xs md:text-sm font-bold text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors duration-300 text-center px-2">
+                  <span className="relative z-10 text-xs md:text-sm font-bold text-slate-300 group-hover:text-white uppercase tracking-widest transition-colors duration-300 text-center px-2">
                     {format.label}
                   </span>
                 </div>
@@ -69,8 +69,8 @@ export default function SupFormats() {
             })}
           </div>
           
-          <div className="md:hidden flex items-center justify-end gap-1.5 mt-4 pr-4 text-slate-400 pointer-events-none">
-              <span className="text-[10px] font-bold uppercase tracking-widest">Листай вбок</span>
+          <div className="md:hidden flex items-center justify-end gap-1.5 mt-4 pr-4 text-slate-300 pointer-events-none">
+              <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
               <ArrowRight size={14} className="text-teal-500 animate-pulse" />
           </div>
         </div>

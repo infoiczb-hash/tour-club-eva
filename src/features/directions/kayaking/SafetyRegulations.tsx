@@ -46,7 +46,7 @@ export default function SafetyRegulations() {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-950/30 backdrop-blur-md mb-4 md:mb-6">
               <AlertCircle size={14} className="text-rose-400" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400">Техника безопасности</span>
+              <span className="text-[12px] font-bold uppercase tracking-widest text-rose-400">Техника безопасности</span>
             </div>
             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4">
               Кодекс <span className="text-rose-500"> на сплаве</span>
@@ -77,14 +77,14 @@ export default function SafetyRegulations() {
                   className="w-full p-5 md:p-6 flex justify-between items-center text-left group"
                 >
                   <div className="flex items-center gap-4 pr-4">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-400 group-hover:text-slate-300")}>
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-300 group-hover:text-slate-300")}>
                       <Icon size={20} strokeWidth={1.5} />
                     </div>
                     <span className={cn("text-base md:text-lg font-black transition-colors tracking-tight uppercase", isOpen ? "text-white" : "text-slate-300 group-hover:text-white")}>
                       {idx + 1}. {section.title}
                     </span>
                   </div>
-                  <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white")}>
+                  <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300", isOpen ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-slate-300 group-hover:bg-white/10 group-hover:text-white")}>
                     <ChevronDown className={cn("transition-transform duration-300", isOpen && "rotate-180")} size={18} />
                   </div>
                 </button>
@@ -98,7 +98,7 @@ export default function SafetyRegulations() {
                         <div className="px-5 md:px-6 pb-6 pt-2 ml-0 md:ml-14">
                           <ul className="space-y-3">
                             {section.items.map((item, i) => (
-                              <li key={i} className="flex items-start gap-3 text-sm md:text-base text-slate-400 font-medium leading-relaxed">
+                              <li key={i} className="flex items-start gap-3 text-sm md:text-base text-slate-300 font-medium leading-relaxed">
                                 <span className="text-rose-500/50 font-bold mt-0.5">{idx + 1}.{i + 1}</span>
                                 <span>{item}</span>
                               </li>

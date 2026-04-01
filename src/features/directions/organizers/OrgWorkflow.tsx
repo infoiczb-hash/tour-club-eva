@@ -52,7 +52,7 @@ function StepCard({ step, index }: { step: typeof STEPS[number]; index: number }
       <h3 className="text-2xl font-black text-white mb-4 tracking-tight group-hover:text-indigo-400 transition-colors">
         {step.title}
       </h3>
-      <p className="text-slate-400 leading-relaxed text-sm md:text-base mb-6 font-medium">
+      <p className="text-slate-300 leading-relaxed text-sm md:text-base mb-6 font-medium">
         {step.desc}
       </p>
 
@@ -80,7 +80,7 @@ export default function OrgWorkflow() {
           <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
             Как мы <span className="text-indigo-500">Работаем</span>
           </h2>
-          <p className="text-slate-400 font-medium text-lg max-w-2xl mx-auto">
+          <p className="text-slate-300 font-medium text-lg max-w-2xl mx-auto">
             Мы ценим ваше время, поэтому согласование проходит максимально быстро.
           </p>
         </div>

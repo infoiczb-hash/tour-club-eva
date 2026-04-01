@@ -74,7 +74,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
             {/* Берем только первое слово (имя), если человек ввел "Иван Иванов" */}
             <h2 className="text-2xl font-black text-white mb-3">Отлично, {name.split(' ')[0]}!</h2>
             
-            <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+            <p className="text-sm text-slate-300 mb-8 leading-relaxed">
               Ваши прошлые поездки успешно найдены и привязаны к кабинету. <br /><br />
               <span className="text-slate-300">Чтобы гиды могли подготовить для вас правильную еду и нужное снаряжение, заполните вашу походную карточку.</span>
             </p>
@@ -88,7 +88,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
               </button>
               <button
                 onClick={handleGoToDashboard}
-                className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-slate-400 hover:text-white font-bold py-3.5 rounded-xl transition-all"
+                className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-slate-300 hover:text-white font-bold py-3.5 rounded-xl transition-all"
               >
                 Позже (На Дашборд) <ArrowRight size={16} />
               </button>
@@ -97,14 +97,14 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
         ) : (
           <div className="relative z-10">
             <h2 className="text-2xl font-black text-white mb-2">Давайте знакомиться!</h2>
-            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
               Введите ваше реальное имя (для списков группы) и номер телефона, чтобы мы нашли и привязали ваши предыдущие туры.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1.5 flex items-center gap-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1.5 flex items-center gap-1.5">
                     <User size={12} /> Имя и Фамилия
                   </label>
                   <input
@@ -118,7 +118,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-1.5 flex items-center gap-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1.5 flex items-center gap-1.5">
                     <Phone size={12} /> Ваш телефон
                   </label>
                   <input
@@ -141,7 +141,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-400 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] active:scale-[0.98] mt-2"
+                className="w-full flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-300 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] active:scale-[0.98] mt-2"
               >
                 {isPending ? <Loader2 size={18} className="animate-spin" /> : 'Продолжить'}
               </button>

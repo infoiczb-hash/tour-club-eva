@@ -83,7 +83,7 @@ export default function SupEquipment() {
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                             Наш <span className="text-teal-500">Арсенал</span>
                         </h2>
-                        <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
+                        <p className="text-[14px] md:text-base text-slate-300 font-medium leading-relaxed">
                             Мы продумали каждую деталь, чтобы на воде вы чувствовали себя так же уверенно, как на суше.
                         </p>
                     </div>
@@ -124,11 +124,11 @@ export default function SupEquipment() {
                                         <span className="text-xl md:text-2xl font-black text-white tracking-tighter">
                                             {stat.value}
                                         </span>
-                                        <span className="text-[10px] md:text-[12px] uppercase font-bold text-teal-500 tracking-[0.1em]">
+                                        <span className="text-[12px] md:text-[12px] uppercase font-bold text-teal-500 tracking-[0.1em]">
                                             {stat.label}
                                         </span>
                                     </div>
-                                    <p className="mt-2 text-[12px] md:text-[14px] text-slate-400 font-medium leading-snug">
+                                    <p className="mt-2 text-[12px] md:text-[14px] text-slate-300 font-medium leading-snug">
                                         {stat.desc}
                                     </p>
                                 </div>
@@ -166,7 +166,7 @@ export default function SupEquipment() {
                         <h4 className="text-[15px] sm:text-base font-black text-white mb-1 tracking-tight group-hover:text-teal-300 transition-colors leading-tight">
                             {item.title}
                         </h4>
-                        <p className="text-[14px] text-slate-400 leading-snug font-medium">
+                        <p className="text-[14px] text-slate-300 leading-snug font-medium">
                             {item.desc}
                         </p>
                     </div>
@@ -174,7 +174,7 @@ export default function SupEquipment() {
             );
         })}
     </div>
-                       <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                       <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

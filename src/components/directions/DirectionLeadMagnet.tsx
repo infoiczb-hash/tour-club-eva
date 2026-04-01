@@ -51,14 +51,14 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
                     
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6">
                         <BellRing size={14} style={{ color: theme.hex }} className="animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Расписание формируется</span>
+                        <span className="text-[12px] font-black uppercase tracking-widest text-slate-300">Расписание формируется</span>
                     </div>
 
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-tight mb-4">
                         Будьте первыми в <span style={{ color: theme.hex }}>очереди</span>
                     </h2>
                     
-                    <p className="text-sm md:text-base text-slate-400 font-medium max-w-md mb-8 leading-relaxed">
+                    <p className="text-sm md:text-base text-slate-300 font-medium max-w-md mb-8 leading-relaxed">
                         Оставьте свой Telegram или Email. Мы пришлем секретную ссылку на бронирование за 24 часа до официального старта продаж.
                     </p>
 
@@ -90,7 +90,7 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
                         </button>
                     </form>
 
-                    <div className="mt-6 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <div className="mt-6 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-widest text-slate-300">
                         <Sparkles size={12} style={{ color: theme.hex }} />
                         <span>Первым записавшимся — бонус от гида</span>
                     </div>
@@ -110,7 +110,7 @@ export default function DirectionLeadMagnet({ data }: DirectionLeadMagnetProps) 
                     <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">
                         Контакт принят!
                     </h3>
-                    <p className="text-slate-400 font-medium max-w-sm">
+                    <p className="text-slate-300 font-medium max-w-sm">
                         Вы в секретном списке. Как только мы утвердим даты, вы узнаете об этом первыми.
                     </p>
                 </div>

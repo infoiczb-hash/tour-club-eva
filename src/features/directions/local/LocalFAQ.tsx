@@ -44,7 +44,7 @@ export default function LocalFAQ() {
                                 className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
                             >
                                 <span className="text-white font-bold pr-4">{item.q}</span>
-                                <div className={`w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0 transition-transform ${openIndex === index ? 'rotate-180 bg-emerald-500/20 text-emerald-400' : 'text-slate-400'}`}>
+                                <div className={`w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0 transition-transform ${openIndex === index ? 'rotate-180 bg-emerald-500/20 text-emerald-400' : 'text-slate-300'}`}>
                                     <ChevronDown size={18} />
                                 </div>
                             </button>

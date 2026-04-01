@@ -233,7 +233,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]" onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-300 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
@@ -270,7 +270,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 space-y-3">
                 {currentQuestion.options.map((opt) => (
                     <button key={opt.value} onClick={() => handleAnswer(opt.value)} className="w-full text-left px-5 py-4 rounded-2xl border border-white/5 bg-slate-800/50 hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 flex items-center gap-4 group">
-                        <div className="text-slate-400 group-hover:text-cyan-400 transition-colors shrink-0">{opt.icon}</div>
+                        <div className="text-slate-300 group-hover:text-cyan-400 transition-colors shrink-0">{opt.icon}</div>
                         <div className="text-[15px] md:text-base font-bold text-slate-300 group-hover:text-white transition-colors">{opt.text}</div>
                     </button>
                 ))}
@@ -278,7 +278,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
               {currentQ > 0 && (
                 <div className="shrink-0 pt-4 border-t border-white/5 mt-2">
-                   <button onClick={() => setCurrentQ(q => q - 1)} className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"><ArrowLeft size={16} /> Назад</button>
+                   <button onClick={() => setCurrentQ(q => q - 1)} className="flex items-center gap-2 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"><ArrowLeft size={16} /> Назад</button>
                 </div>
               )}
             </motion.div>
@@ -289,7 +289,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
             <motion.div key="summary" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full overflow-hidden p-6 md:p-10 pb-6">
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
                 <div className="shrink-0 mb-8">
-                  <button onClick={() => { setStep("questions"); setCurrentQ(QUESTIONS.length - 1); }} className="flex items-center gap-3 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors">
+                  <button onClick={() => { setStep("questions"); setCurrentQ(QUESTIONS.length - 1); }} className="flex items-center gap-3 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-widest mb-6 transition-colors">
                     <ArrowLeft size={16} /> Назад
                   </button>
                   <h2 className="text-3xl font-black text-white tracking-tight mb-2">Твой уровень:</h2>
@@ -316,7 +316,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
                 {/* SMART CTA ПОСЛЕ САММАРИ */}
                 <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                  <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       href="/directions"
@@ -391,7 +391,7 @@ export default function PhysicalReadinessModal({ isOpen, onClose }: Props) {
 
                         {/* SMART CTA ПОСЛЕ ИИ */}
                         <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
+                          <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Продолжить</p>
                           <div className="flex flex-col sm:flex-row gap-3">
                             <Link
                               href="/directions"

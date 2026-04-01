@@ -60,7 +60,7 @@ export default function SupGallery() {
                     className="text-left mb-8 md:mb-12 max-w-3xl"
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 md:mb-6 backdrop-blur-md">
-                        <Camera className="w-4 h-4 text-slate-400" />
+                        <Camera className="w-4 h-4 text-slate-300" />
                         <span className="text-[12px] md:text-[14px] font-bold tracking-widest text-slate-300 uppercase">
                             Без фильтров и постановки
                         </span>
@@ -68,7 +68,7 @@ export default function SupGallery() {
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
                         Живые <span className="text-teal-500">Эмоции</span>
                     </h2>
-                    <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
+                    <p className="text-[14px] md:text-base text-slate-300 font-medium leading-relaxed">
                         Посмотрите, как проходят наши маршруты. Улыбки гостей — наша главная гордость.
                     </p>
                 </div>
@@ -111,7 +111,7 @@ export default function SupGallery() {
                         ))}
                     </div>
 
-                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

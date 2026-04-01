@@ -72,7 +72,7 @@ export const BookingTicketEmail = ({
             </Section>
 
             <Section className="bg-slate-50 rounded-xl p-6 my-6 border border-slate-100">
-              <Text className="m-0 mb-2 text-sm text-slate-400 font-bold uppercase tracking-widest">
+              <Text className="m-0 mb-2 text-sm text-slate-300 font-bold uppercase tracking-widest">
                 Детали брони
               </Text>
               <Text className="m-0 mb-1 text-base"><strong>Дата:</strong> {tourDate}</Text>
@@ -92,7 +92,7 @@ export const BookingTicketEmail = ({
             <Hr className="border-slate-200 my-6" />
 
             <Section>
-              <Text className="text-xs text-slate-400 text-center leading-relaxed">
+              <Text className="text-xs text-slate-300 text-center leading-relaxed">
                 Если у вас изменились планы, пожалуйста, предупредите нас заранее. <br />
                 До встречи на маршруте! 🏕️
               </Text>

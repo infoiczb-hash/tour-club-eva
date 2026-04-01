@@ -77,7 +77,7 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => {
     return (
         <div className="mb-2">
            <div className="flex justify-between items-end mb-2">
-              <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-slate-400">
+              <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-slate-300">
                  <Icon size={14} className={colorClass} />
                  <span>{label}</span>
               </div>
@@ -130,7 +130,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                     </div>
                     
                     <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-                        <span className="font-light text-slate-400 block md:inline">Команда </span>
+                        <span className="font-light text-slate-300 block md:inline">Команда </span>
                         <span className="font-black text-white">Клуба</span>
                         <span className="text-teal-500">.</span>
                     </h2>
@@ -180,10 +180,10 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
                 )}
             >
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <Zap size={28} className="text-slate-400 group-hover:text-teal-400 transition-colors" />
+                    <Zap size={28} className="text-slate-300 group-hover:text-teal-400 transition-colors" />
                 </div>
                 <h3 className="text-xl md:text-2xl font-black uppercase text-white mb-3">Ты?</h3>
-                <p className="text-xs text-slate-400 font-medium mb-8 max-w-[220px] leading-relaxed">
+                <p className="text-xs text-slate-300 font-medium mb-8 max-w-[220px] leading-relaxed">
                     Хочешь водить группы или стать частью команды? Нам нужны гиды, ассистенты, повара и просто хорошие люди.
                 </p>
                 <span className="px-5 py-2 rounded-full border border-teal-500/30 text-[12px] font-bold uppercase tracking-widest text-teal-400 flex items-center gap-2 group-hover:bg-teal-500 group-hover:text-slate-900 transition-all">
@@ -339,7 +339,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                                 </span>
                              )}
                              {guide.tags && guide.tags.map((tag, idx) => (
-                                 <span key={idx} className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider rounded">
+                                 <span key={idx} className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 text-[12px] font-bold uppercase tracking-wider rounded">
                                      {tag}
                                  </span>
                              ))}
@@ -365,7 +365,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
 
                         {/* БИОГРАФИЯ */}
                         <div className="mb-8">
-                            <h3 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3">Досье</h3>
+                            <h3 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Досье</h3>
                             <p className="text-sm text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
                                 {guide.fullBio || guide.bio || "Опытный путешественник, который ценит безопасность и хорошую компанию."}
                             </p>
@@ -374,7 +374,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                         {/* ЦИТАТА */}
                         {guide.quotes && guide.quotes.length > 0 && (
                             <div className="mb-8 border-l-2 border-teal-500 pl-4 py-1">
-                                <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3">Цитаты</h4> 
+                                <h4 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Цитаты</h4> 
                                 <p className="text-lg md:text-xl font-medium text-white italic leading-snug">
                                     «{guide.quotes[0]}»
                                 </p>
@@ -407,7 +407,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
 
 function SocialBtn({ href, icon: Icon }: any) {
    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 transition-all hover:text-white hover:border-white/30">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition-all hover:text-white hover:border-white/30">
          <Icon size={18} />
       </a>
    )

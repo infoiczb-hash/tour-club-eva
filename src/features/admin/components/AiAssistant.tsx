@@ -98,7 +98,7 @@ export default function AiAssistant() {
               </div>
               <div>
                   <h3 className="font-bold text-sm leading-none">EVA AI</h3>
-                  <p className="text-[10px] text-violet-200 font-medium opacity-80 mt-0.5">Brain Mode</p>
+                  <p className="text-[12px] text-violet-200 font-medium opacity-80 mt-0.5">Brain Mode</p>
               </div>
             </div>
             
@@ -118,7 +118,7 @@ export default function AiAssistant() {
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-violet-600 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none'}`}>
                   {msg.role === 'assistant' && (
-                      <div className="flex items-center gap-1.5 mb-1 opacity-50 text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                      <div className="flex items-center gap-1.5 mb-1 opacity-50 text-[12px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
                           <Sparkles size={10}/> AI Thinking
                       </div>
                   )}
@@ -145,7 +145,7 @@ export default function AiAssistant() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Спроси меня о чем угодно..."
-              className="flex-1 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all placeholder:text-slate-400"
+              className="flex-1 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all placeholder:text-slate-300"
             />
             <button 
               onClick={handleSend}

@@ -27,7 +27,7 @@ export default function KayakRules() {
               Правила обращения <br className="hidden md:block" />
               <span className="text-amber-500">с байдаркой</span>
             </h2>
-            <p className="text-slate-400 font-medium text-[14px] md:text-base leading-relaxed">
+            <p className="text-slate-300 font-medium text-[14px] md:text-base leading-relaxed">
               Байдарка — надежное, но деликатное судно. Соблюдайте эти простые правила, чтобы ваш поход не превратился в ремонтные работы посреди реки.
             </p>
           </div>
@@ -61,7 +61,7 @@ export default function KayakRules() {
                   <h3 className="text-base md:text-lg font-black text-white uppercase tracking-tight mb-2 group-hover:text-amber-400 transition-colors leading-tight">
                     {rule.title}
                   </h3>
-                  <p className="text-[14px] text-slate-400 leading-relaxed font-medium">{rule.desc}</p>
+                  <p className="text-[14px] text-slate-300 leading-relaxed font-medium">{rule.desc}</p>
                 </div>
               </div>
             ))}

@@ -147,7 +147,7 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
                             <MapPin size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Локация">Локация</p>
+                            <p className="text-[12px] uppercase text-slate-300 font-bold tracking-widest mb-0.5 truncate" title="Локация">Локация</p>
                             <p className="font-bold text-sm md:text-base leading-none truncate" title={tour.location}>{tour.location}</p>
                         </div>
                     </div>
@@ -157,7 +157,7 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
                             <Calendar size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Даты">Даты</p>
+                            <p className="text-[12px] uppercase text-slate-300 font-bold tracking-widest mb-0.5 truncate" title="Даты">Даты</p>
                             <p className="font-bold text-sm md:text-base leading-none capitalize truncate" title={renderDateRange()}>{renderDateRange()}</p>
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
                             <Clock size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Длительность">Длительность</p>
+                            <p className="text-[12px] uppercase text-slate-300 font-bold tracking-widest mb-0.5 truncate" title="Длительность">Длительность</p>
                             <p className="font-bold text-sm md:text-base leading-none truncate" title={getDuration()}>{getDuration()}</p>
                         </div>
                     </div>
@@ -179,7 +179,7 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
                             <Tent size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-[12px] uppercase text-slate-400 font-bold tracking-widest mb-0.5 truncate" title="Проживание">Проживание</p>
+                            <p className="text-[12px] uppercase text-slate-300 font-bold tracking-widest mb-0.5 truncate" title="Проживание">Проживание</p>
                             <p className="font-bold text-sm md:text-base leading-none truncate" title={tour.accommodation || 'Без проживания'}>
                               {tour.accommodation || 'Без проживания'}
                             </p>

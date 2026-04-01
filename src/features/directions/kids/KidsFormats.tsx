@@ -84,7 +84,7 @@ export default function KidsFormats() {
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 uppercase tracking-tighter">
                         Наши <span className="text-amber-500">Форматы</span>
                     </h2>
-                    <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
+                    <p className="text-slate-300 text-[14px] md:text-base font-medium leading-relaxed">
                         Мы не просто продаем туры, мы создаем опыт. Выберите формат, который идеально подойдет вашему ребенку по возрасту и уровню подготовки.
                     </p>
                 </FadeBlock>
@@ -126,7 +126,7 @@ export default function KidsFormats() {
                                   <h3 className="text-xl md:text-2xl font-black text-white mb-3 tracking-tight group-hover:text-amber-400 transition-colors leading-tight">
                                       {format.title}
                                   </h3>
-                                  <p className="text-[14px] md:text-base text-slate-400 leading-relaxed font-medium">
+                                  <p className="text-[14px] md:text-base text-slate-300 leading-relaxed font-medium">
                                       {format.desc}
                                   </p>
                               </div>
@@ -134,7 +134,7 @@ export default function KidsFormats() {
                       ))}
                     </div>
 
-                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>
@@ -143,9 +143,9 @@ export default function KidsFormats() {
                 <FadeBlock startY={30} className="pt-8 border-t border-white/5">
                     <div className="text-left mb-6 md:mb-10 max-w-3xl">
                         <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter mb-3">
-                            Другие <span className="text-slate-400">Форматы</span>
+                            Другие <span className="text-slate-300">Форматы</span>
                         </h3>
-                        <p className="text-slate-400 font-medium text-[14px] md:text-base">
+                        <p className="text-slate-300 font-medium text-[14px] md:text-base">
                             Мы также организуем индивидуальные и групповые туры под ваш запрос.
                         </p>
                     </div>
@@ -160,13 +160,13 @@ export default function KidsFormats() {
                                         className="snap-center flex items-center gap-4 p-5 rounded-[1.5rem] bg-slate-900/40 border border-white/5 hover:border-amber-500/20 hover:bg-slate-900 transition-all group h-full"
                                     >
                                         <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-slate-950 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-amber-500/30 transition-colors shadow-lg">
-                                            <Icon size={22} strokeWidth={1.5} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
+                                            <Icon size={22} strokeWidth={1.5} className="text-slate-300 group-hover:text-amber-500 transition-colors" />
                                         </div>
                                         <div>
                                             <h4 className="text-white font-bold text-[15px] md:text-base leading-tight mb-1 group-hover:text-amber-100 transition-colors">
                                                 {item.title}
                                             </h4>
-                                            <p className="text-[14px] text-slate-400 font-medium leading-snug line-clamp-2">
+                                            <p className="text-[14px] text-slate-300 font-medium leading-snug line-clamp-2">
                                                 {item.desc}
                                             </p>
                                         </div>
@@ -174,7 +174,7 @@ export default function KidsFormats() {
                                 )
                             })}
                         </div>
-   <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+   <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

@@ -41,7 +41,7 @@ export default function FullProfileModal({ isOpen, onClose }: { isOpen: boolean;
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <motion.div role="dialog" aria-modal="true" aria-labelledby="modal-fullprofile-title" className="relative w-full max-w-3xl bg-slate-900/50 border border-indigo-500/20 rounded-[3rem] p-8 md:p-12 shadow-[0_0_50px_rgba(99,102,241,0.1)] overflow-y-auto max-h-[90vh] custom-scrollbar">
-          <button onClick={onClose} aria-label="Закрыть" className="absolute top-8 right-8 text-slate-400 hover:text-white transition-colors z-20">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-8 right-8 text-slate-300 hover:text-white transition-colors z-20">
             <X size={24} />
           </button>
 
@@ -54,7 +54,7 @@ export default function FullProfileModal({ isOpen, onClose }: { isOpen: boolean;
               <h2 id="modal-fullprofile-title" className="text-4xl font-black text-white uppercase mb-4">
                 Все части пазла <span className="text-indigo-400">собраны</span>
               </h2>
-              <p className="text-slate-400 text-lg mb-10 max-w-md mx-auto">
+              <p className="text-slate-300 text-lg mb-10 max-w-md mx-auto">
                 Ты прошел основные этапы. Теперь мы готовы объединить твои страхи, физику и симптомы в единую карту твоей личности.
               </p>
               
@@ -96,7 +96,7 @@ export default function FullProfileModal({ isOpen, onClose }: { isOpen: boolean;
                       "{object.mainInsight || "Формируем главный инсайт..."}"
                     </div>
                   </div>
-                  <div className="text-slate-400 leading-relaxed text-justify text-sm">
+                  <div className="text-slate-300 leading-relaxed text-justify text-sm">
                     {object.psychologicalPortrait}
                   </div>
                 </div>

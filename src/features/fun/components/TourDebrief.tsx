@@ -168,7 +168,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
           className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]" onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-400 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} aria-label="Закрыть" className="absolute top-5 right-5 z-20 text-slate-300 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
@@ -190,7 +190,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                 {(Object.entries(BLOCK_META) as [BlockKey, typeof BLOCK_META[BlockKey]][]).map(([key, meta]) => (
                   <div key={key} className={cn("flex-1 border border-white/5 rounded-xl p-3 text-center", meta.bg)}>
                     <div className={cn("text-xs font-bold uppercase tracking-widest mb-1", meta.color)}>{meta.label}</div>
-                    <div className="text-slate-400 text-[10px] font-medium">3 вопроса</div>
+                    <div className="text-slate-300 text-[12px] font-medium">3 вопроса</div>
                   </div>
                 ))}
               </div>
@@ -199,7 +199,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                 <button onClick={() => setStep("test")} className="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] active:scale-95">
                   Начать рефлексию <ChevronRight size={18} />
                 </button>
-                <p className="text-slate-400 text-[11px] text-center mt-4">
+                <p className="text-slate-300 text-[11px] text-center mt-4">
                   Пропускать вопросы можно — отвечай только там, где есть что сказать.
                 </p>
               </div>
@@ -214,7 +214,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                     <span className={cn("px-3 py-1 rounded-full border", blockMeta.bg, blockMeta.border, blockMeta.color)}>
                         {blockMeta.label}
                     </span>
-                    <span className="text-slate-400">{current + 1} / {QUESTIONS.length}</span>
+                    <span className="text-slate-300">{current + 1} / {QUESTIONS.length}</span>
                  </div>
                  <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                     <motion.div className={cn("h-full", blockMeta.bg.replace('/10', ''))} initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
@@ -237,7 +237,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                   {current + 1 === QUESTIONS.length ? "Завершить" : "Далее"} <ChevronRight size={16} />
                 </button>
                 {!answers[q.id]?.trim() && (
-                  <button onClick={handleNext} className="border border-white/10 text-slate-400 hover:text-white rounded-xl px-6 text-sm font-bold uppercase tracking-wider transition-colors">
+                  <button onClick={handleNext} className="border border-white/10 text-slate-300 hover:text-white rounded-xl px-6 text-sm font-bold uppercase tracking-wider transition-colors">
                     Пропуск
                   </button>
                 )}
@@ -283,7 +283,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                     <div className="space-y-4">
                       {QUESTIONS.filter((q) => answers[q.id]?.trim()).map((q) => (
                         <div key={q.id} className="bg-slate-800/30 border border-white/5 rounded-2xl p-5">
-                          <div className={cn("text-[10px] font-bold uppercase tracking-widest mb-2", BLOCK_META[q.block].color)}>
+                          <div className={cn("text-[12px] font-bold uppercase tracking-widest mb-2", BLOCK_META[q.block].color)}>
                             {BLOCK_META[q.block].label}
                           </div>
                           <p className="text-slate-300 text-xs mb-2 font-medium">{q.text}</p>
@@ -308,7 +308,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
 
                     {/* Смарт CTA для тех, кто не хочет ждать ИИ */}
                     <div className="pt-6 mt-6 border-t border-white/10 text-center">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Или переходи к выбору</p>
+                      <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Или переходи к выбору</p>
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Link
                           href="/directions"
@@ -376,7 +376,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
                                   <Compass className="text-violet-400" size={24} />
                                   <div>
                                     <h3 className="text-lg font-black text-white uppercase tracking-wide leading-none">Твой следующий уровень</h3>
-                                    <p className="text-xs text-slate-400 mt-1">Тур, который идеально подойдет для закрепления опыта</p>
+                                    <p className="text-xs text-slate-300 mt-1">Тур, который идеально подойдет для закрепления опыта</p>
                                   </div>
                               </div>
                               <div className="w-full">
@@ -391,7 +391,7 @@ export default function TourDebriefModal({ isOpen, onClose }: Props) {
 
                       {/* SMART CTA ПОСЛЕ ИИ */}
                       <div className="pt-8 mt-6 border-t border-white/10 text-center animate-in fade-in duration-500">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Продолжить</p>
+                        <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-3">Продолжить</p>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Link
                             href="/directions"

@@ -141,9 +141,9 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
         <div className="flex items-center justify-between p-5 border-b border-white/5 bg-slate-900/95">
           <div>
             <h2 className="text-lg font-black text-white tracking-tight">{activeModalData.title}</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Ваш прогресс: {Math.floor(activeModalData.currentVal)} {activeModalData.unit}</p>
+            <p className="text-xs text-slate-300 mt-0.5">Ваш прогресс: {Math.floor(activeModalData.currentVal)} {activeModalData.unit}</p>
           </div>
-          <button onClick={() => setSelectedCategory(null)} className="p-2 -mr-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+          <button onClick={() => setSelectedCategory(null)} className="p-2 -mr-2 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -173,14 +173,14 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
 
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
-                    <h4 className={cn("text-sm font-bold", isTierUnlocked ? "text-white" : "text-slate-400")}>{tier.name}</h4>
+                    <h4 className={cn("text-sm font-bold", isTierUnlocked ? "text-white" : "text-slate-300")}>{tier.name}</h4>
                     {isTierUnlocked ? (
                       <CheckCircle2 size={14} className="text-teal-500" />
                     ) : (
                       <Lock size={12} className="text-slate-600" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-300">
                     Цель: {tier.min} {activeModalData.unit}
                   </p>
                 </div>
@@ -202,7 +202,7 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
           <h3 className="text-white font-bold tracking-wider flex items-center gap-2">
             Достижения
           </h3>
-          <p className="text-sm text-slate-400 mt-0.5">Собрано {unlockedCount} из {CATEGORIES.length}</p>
+          <p className="text-sm text-slate-300 mt-0.5">Собрано {unlockedCount} из {CATEGORIES.length}</p>
         </div>
         <ChevronRight size={20} className="text-slate-600 md:hidden" />
       </div>
@@ -240,7 +240,7 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
               </div>
               
               {/* Название */}
-              <h4 className={cn("text-xs font-bold text-center mb-1 w-full truncate", badge.isUnlocked ? "text-white" : "text-slate-400")}>
+              <h4 className={cn("text-xs font-bold text-center mb-1 w-full truncate", badge.isUnlocked ? "text-white" : "text-slate-300")}>
                 {badge.activeTier.name}
               </h4>
               

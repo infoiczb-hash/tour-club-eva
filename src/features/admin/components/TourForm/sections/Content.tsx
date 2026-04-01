@@ -96,7 +96,7 @@ export const Content = () => {
           <input 
             type="text" 
             placeholder="Введите тег и нажмите Enter..." 
-            className="w-full outline-none text-sm font-medium text-slate-700 placeholder:text-slate-400"
+            className="w-full outline-none text-sm font-medium text-slate-700 placeholder:text-slate-300"
             onKeyDown={handleAddTag}
           />
         </div>

@@ -65,7 +65,7 @@ export default function Timeline() {
                     <h3 className="text-lg md:text-xl font-black text-white mb-2 uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-[14px] text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                    <p className="text-[14px] text-slate-300 leading-relaxed font-medium">{item.desc}</p>
                   </div>
 
                   {/* Стрелка между карточками (только десктоп) */}

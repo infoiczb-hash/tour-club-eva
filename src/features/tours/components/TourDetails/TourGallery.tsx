@@ -94,8 +94,8 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                 fill 
                 // ✅ ФОКУС: object-[center_20%] держит фокус на лицах (верхняя часть) при любой обрезке
                 className="object-cover object-[center_20%] transition-transform duration-700 group-hover:scale-105"
-                loading={isMain ? "eager" : "lazy"}
-                fetchPriority={isMain ? "high" : "auto"}
+               loading={isMain ? "eager" : "lazy"}
+fetchPriority={isMain ? "low" : "auto"}
                 sizes={
                   isMain 
                     ? "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 640px" 

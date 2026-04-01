@@ -64,7 +64,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
         {/* БЛОК 1: Цена и Места */}
         <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
           <div>
-            <p className="text-slate-400 text-[14px] font-bold uppercase tracking-wider mb-1">Стоимость участия</p>
+            <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Стоимость участия</p>
             <div className="flex items-baseline gap-1.5">
               <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
                 {currentPrice.toLocaleString('ru-RU')}
@@ -74,7 +74,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
             
             {hasDiscount && (
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-slate-400 line-through text-xs font-medium decoration-rose-500/50">
+                <span className="text-slate-300 line-through text-xs font-medium decoration-rose-500/50">
                   {oldPriceVal.toLocaleString('ru-RU')}
                 </span>
                 <span className="bg-rose-500/10 text-rose-500 text-[14px] font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
@@ -85,7 +85,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
           </div>
           
           <div className="text-right">
-              <p className="text-slate-400 text-[14px] font-bold uppercase tracking-wider mb-1">Свободных мест</p>
+              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Свободных мест</p>
               <div className={clsx("text-2xl font-black tabular-nums", isSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-500" : "text-teal-400"))}>
                 {isSoldOut ? "0" : left}
               </div>
@@ -98,11 +98,11 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
         {/* БЛОК 2: Доступные тарифы (если они есть) */}
         {((priceMember || 0) > 0 || (priceChild || 0) > 0 || (priceFamily || 0) > 0) && (
           <div className="space-y-3 mb-6">
-            <p className="text-slate-400 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
+            <p className="text-slate-300 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
             
             <div className="flex justify-between items-center text-sm">
                <div className="flex items-center gap-2 text-slate-300">
-                 <Ticket size={14} className="text-slate-400"/>
+                 <Ticket size={14} className="text-slate-300"/>
                  <span>Взрослый</span>
                </div>
                <span className="font-bold text-white">{currentPrice.toLocaleString()} {currency}</span>
@@ -181,7 +181,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
             <button
               type="button"
               onClick={() => setShowWaitlistForm(false)}
-              className="w-full text-xs text-slate-500 hover:text-slate-300 transition-colors font-bold uppercase tracking-wider py-1"
+              className="w-full text-xs text-slate-300 hover:text-slate-300 transition-colors font-bold uppercase tracking-wider py-1"
             >
               Отмена
             </button>
@@ -198,10 +198,10 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
         {/* БЛОК 4: Гарантии */}
         {!isSoldOut && (
           <div className="mt-4 flex items-center justify-center gap-4 opacity-60">
-              <p className="text-[12px] text-slate-400 uppercase font-bold flex items-center gap-1">
+              <p className="text-[12px] text-slate-300 uppercase font-bold flex items-center gap-1">
                 <ShieldCheck size={10} className="text-teal-500"/> Без предоплаты
               </p>
-              <p className="text-[12px] text-slate-400 uppercase font-bold flex items-center gap-1">
+              <p className="text-[12px] text-slate-300 uppercase font-bold flex items-center gap-1">
                 <Check size={10} className="text-teal-500"/>Автоматическое подтверждение в ТГ
               </p>
           </div>

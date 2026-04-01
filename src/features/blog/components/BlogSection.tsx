@@ -112,7 +112,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
               <span className="text-[16px] font-bold uppercase tracking-widest text-teal-400">Блог клуба</span>
             </div>
             <h2 className="text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-              <span className="font-light text-slate-400 block md:inline">Полевой </span>
+              <span className="font-light text-slate-300 block md:inline">Полевой </span>
               <span className="font-black text-white">Журнал</span>
               <span className="text-teal-500">.</span>
             </h2>
@@ -127,7 +127,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   className={`px-4 py-2 rounded-xl text-[14px] md:text-xs font-bold uppercase whitespace-nowrap transition-all border ${
                     activeCategory === cat.slug
                       ? 'bg-teal-400 text-slate-900 border-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.3)]'
-                      : 'bg-slate-900 border-white/10 text-slate-400 hover:border-teal-500/50 hover:text-white'
+                      : 'bg-slate-900 border-white/10 text-slate-300 hover:border-teal-500/50 hover:text-white'
                   }`}
                 >
                   {cat.label}
@@ -135,7 +135,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
               ))}
             </div>
             <div className="relative group shrink-0 hidden md:block">
-              <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-400 hover:border-teal-500/30 transition-colors">
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-300 hover:border-teal-500/30 transition-colors">
                 <Filter size={12} />
                 <select
                   aria-label="Выберите автора"
@@ -199,7 +199,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[12px] font-black text-white uppercase tracking-wider mb-0.5">{featuredPost.author_name}</span>
-                      <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium">
+                      <div className="flex items-center gap-2 text-[12px] text-slate-300 font-medium">
                         <span>{formatDate(featuredPost.date || featuredPost.createdAt)}</span>
                         <span className="w-1 h-1 bg-slate-600 rounded-full" />
                         <span>{featuredPost.read_time} мин</span>
@@ -232,10 +232,10 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   </div>
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-1.5 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-[10px] font-bold text-teal-400 uppercase tracking-widest">
+                      <span className="px-1.5 py-0.5 rounded bg-teal-500/10 border border-teal-500/20 text-[12px] font-bold text-teal-400 uppercase tracking-widest">
                         {getLabel(post)}
                       </span>
-                      <span className="text-[10px] text-slate-300 font-mono">{formatDate(post.date || post.createdAt)}</span>
+                      <span className="text-[12px] text-slate-300 font-mono">{formatDate(post.date || post.createdAt)}</span>
                     </div>
                    <h4 className="font-bold text-slate-200 text-sm md:text-base leading-snug group-hover:text-teal-400 transition-colors">
   {post.title}

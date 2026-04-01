@@ -64,7 +64,7 @@ export default function CategoryPills({
               ${
                 isSubscribed
                   ? "bg-teal-500/10 text-teal-400 border border-teal-500/30 shadow-[0_0_15px_rgba(20,184,166,0.15)]"
-                  : "bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:bg-slate-800 hover:text-slate-300 hover:border-slate-600"
+                  : "bg-slate-800/50 text-slate-300 border border-slate-700/50 hover:bg-slate-800 hover:text-slate-300 hover:border-slate-600"
               }
             `}
           >

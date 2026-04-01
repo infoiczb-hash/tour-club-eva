@@ -37,7 +37,7 @@ export default function OfferPage() {
         
         {/* Header */}
         <div className="mb-8 md:mb-12">
-            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
+            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-300 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
                 <ArrowLeft size={16} /> На главную
             </Link>
             
@@ -120,7 +120,7 @@ export default function OfferPage() {
             </section>
     
             {/* Реквизиты */}
-            <div className="mt-12 md:mt-16 p-6 bg-slate-900/50 border border-white/5 rounded-2xl text-sm md:text-base text-slate-400">
+            <div className="mt-12 md:mt-16 p-6 bg-slate-900/50 border border-white/5 rounded-2xl text-sm md:text-base text-slate-300">
                 <h2 className="!text-white uppercase !mt-0 !mb-5 text-xl">8. Реквизиты Организатора</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-1.5">

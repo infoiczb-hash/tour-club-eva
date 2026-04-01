@@ -348,13 +348,13 @@ export default function BookingModal({
     <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
       <div>
         <div className="text-sm font-bold text-white">{label}</div>
-        <div className="text-xs text-slate-400">{price} {tour.currency}</div>
+        <div className="text-xs text-slate-300">{price} {tour.currency}</div>
       </div>
       <div className="flex items-center gap-3 bg-slate-950 rounded-lg p-1 border border-white/10">
         <button 
           type="button" 
           onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(type === 'adult' ? 1 : 0, prev[type] - 1) }))} 
-          className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors"
         >
           <Minus size={16} />
         </button>
@@ -397,7 +397,7 @@ export default function BookingModal({
             </div>
             <button 
               onClick={onClose} 
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
             >
               <X size={18} />
             </button>
@@ -417,7 +417,7 @@ export default function BookingModal({
                 />
 
                 <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
+                   <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-1.5">
                      <Calendar size={12} /> Дата и время
                    </label>
                    
@@ -444,7 +444,7 @@ export default function BookingModal({
                               </option>
                             ))}
                           </select>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
                             ▼
                           </div>
                         </div>
@@ -485,7 +485,7 @@ export default function BookingModal({
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-bold text-amber-500">Списать бонусы</p>
-                            <p className="text-[10px] text-amber-500/70 uppercase tracking-widest font-bold mt-0.5">
+                            <p className="text-[12px] text-amber-500/70 uppercase tracking-widest font-bold mt-0.5">
                               Доступно {balance} ₽ (макс. {maxBonusDiscount} ₽)
                             </p>
                           </div>
@@ -500,7 +500,7 @@ export default function BookingModal({
                       <div className="pt-3 mt-1 border-t border-white/10">
                         <div className="flex gap-2">
                           <div className="relative flex-1">
-                            <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
                             <input 
                               type="text" 
                               placeholder="У меня есть промокод" 
@@ -514,7 +514,7 @@ export default function BookingModal({
                                 setPromoError(null);
                               }} 
                               disabled={promoSuccess || isCheckingPromo}
-                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-500 disabled:opacity-50" 
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-400 disabled:opacity-50" 
                             />
                           </div>
                           {!promoSuccess ? (
@@ -541,12 +541,12 @@ export default function BookingModal({
                           )}
                         </div>
                         {promoError && (
-                          <p className="text-[10px] text-rose-400 mt-1.5 ml-1 font-bold">
+                          <p className="text-[12px] text-rose-400 mt-1.5 ml-1 font-bold">
                             {promoError}
                           </p>
                         )}
                         {promoSuccess && (
-                          <p className="text-[10px] text-teal-400 mt-1.5 ml-1 font-bold">
+                          <p className="text-[12px] text-teal-400 mt-1.5 ml-1 font-bold">
                             ✅ Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
                           </p>
                         )}
@@ -554,10 +554,10 @@ export default function BookingModal({
                     )}
 
                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
-                       <span className="text-xs font-bold text-slate-400 uppercase">Итого к оплате:</span>
+                       <span className="text-xs font-bold text-slate-300 uppercase">Итого к оплате:</span>
                        <div className="text-right flex items-center gap-2 justify-end">
                          {(useBonuses || promoSuccess) && (
-                           <div className="text-[10px] text-slate-400 line-through font-bold uppercase tracking-widest">
+                           <div className="text-[12px] text-slate-300 line-through font-bold uppercase tracking-widest">
                              {baseTotalPrice.toLocaleString()} {tour.currency}
                            </div>
                          )}
@@ -569,7 +569,7 @@ export default function BookingModal({
                 </div>
 
                 <div className="space-y-4 pt-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
                         <Users size={14} className="text-teal-500" /> Данные участников ({expectedGuests.length})
                     </label>
 
@@ -579,10 +579,10 @@ export default function BookingModal({
                         return (
                           <div key={guest.id} className="bg-slate-950/50 border border-white/10 rounded-xl p-4 space-y-3">
                               <div className="flex justify-between items-center mb-1">
-                                 <span className="text-[10px] font-black uppercase text-teal-500 tracking-widest">
+                                 <span className="text-[12px] font-black uppercase text-teal-500 tracking-widest">
                                    Участник {index + 1} {index === 0 && '(Вы)'}
                                  </span>
-                                 <span className="text-[10px] text-slate-400 font-bold uppercase">
+                                 <span className="text-[12px] text-slate-300 font-bold uppercase">
                                    {guest.type}
                                  </span>
                               </div>
@@ -590,7 +590,7 @@ export default function BookingModal({
                               {index === 0 ? (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div className="relative">
-                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                          <input 
                                            required 
                                            type="text" 
@@ -601,7 +601,7 @@ export default function BookingModal({
                                          />
                                       </div>
                                       <div className="relative">
-                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                          <input 
                                            required 
                                            type="tel" 
@@ -614,7 +614,7 @@ export default function BookingModal({
                               ) : (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div className="relative">
-                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                          <input 
                                            required 
                                            type="text" 
@@ -627,7 +627,7 @@ export default function BookingModal({
 
                                       {isChild ? (
                                           <div className="relative">
-                                            <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                                            <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                             <input 
                                               required 
                                               type="number" 
@@ -641,7 +641,7 @@ export default function BookingModal({
                                           </div>
                                       ) : (
                                           <div className="relative">
-                                            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                                            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                             <input 
                                               type="tel" 
                                               placeholder="Телефон" 
@@ -656,7 +656,7 @@ export default function BookingModal({
 
                               {isWaterTour && (
                                   <div className="relative mt-3">
-                                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                       <select 
                                         required 
                                         value={guestData[guest.id]?.jacket || ''} 
@@ -678,7 +678,7 @@ export default function BookingModal({
                     })}
 
                     <div className="space-y-1.5 pt-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
+                      <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5">
                         <MessageSquare size={12} /> Комментарий / Пожелания
                       </label>
                       <textarea 
@@ -694,7 +694,7 @@ export default function BookingModal({
 
                 {/* ✅ БАГ 7 ИСПРАВЛЕН: Доступность оплат (button role="radio") */}
                 <div className="space-y-3 pt-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
+                  <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
                     <CreditCard size={14} className="text-teal-500" /> Способ оплаты
                   </label>
                   
@@ -708,9 +708,9 @@ export default function BookingModal({
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
-                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-400'} />
+                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[10px] text-slate-400 leading-tight">BILETPMR/другой сервис</span>
+                        <span className="text-[12px] text-slate-300 leading-tight">BILETPMR/другой сервис</span>
                     </button>
 
                     <button 
@@ -722,9 +722,9 @@ export default function BookingModal({
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'qr' ? 'text-teal-400' : 'text-slate-300'}`}>QR-код</span>
-                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-400'} />
+                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[10px] text-slate-400 leading-tight"> Система КЛЕВЕР/Наш совет</span>
+                        <span className="text-[12px] text-slate-300 leading-tight"> Система КЛЕВЕР/Наш совет</span>
                     </button>
 
                     <button 
@@ -736,9 +736,9 @@ export default function BookingModal({
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
-                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-400'} />
+                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[10px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+                        <span className="text-[12px] text-slate-300 leading-tight">Оплата гиду на месте</span>
                     </button>
 
                     <button 
@@ -750,9 +750,9 @@ export default function BookingModal({
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
-                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-400'} />
+                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[10px] text-slate-400 leading-tight">MIA / Переводы / Леи</span>
+                        <span className="text-[12px] text-slate-300 leading-tight">MIA / Переводы / Леи</span>
                     </button>
                   </div>
                 </div>
@@ -776,7 +776,7 @@ export default function BookingModal({
                   )}
                 </button>
                 
-                <p className="text-sm text-slate-400 text-center leading-tight">
+                <p className="text-sm text-slate-300 text-center leading-tight">
                   Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
                 </p>
 

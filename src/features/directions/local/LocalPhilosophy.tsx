@@ -54,7 +54,7 @@ export default function LocalPhilosophy() {
                     </h2>
                     
                     <div className="border-l-4 border-emerald-500 pl-5 md:pl-8 py-2">
-                        <p className="text-[16px] md:text-2xl font-medium text-slate-400 leading-snug tracking-tight">
+                        <p className="text-[16px] md:text-2xl font-medium text-slate-300 leading-snug tracking-tight">
                             Мы привыкли искать красоту за <span className="text-white font-bold">сотни километров</span>. Но настоящая красота не требует билета на самолет. Нужно лишь <span className="text-white font-bold">правильное настроение</span>. Да и любовь к родине измеряется пройденными <span className="text-white font-bold">киллометрами по ней</span>.
                         </p>
                     </div>
@@ -88,7 +88,7 @@ export default function LocalPhilosophy() {
                                     <h4 className="text-lg md:text-xl font-bold text-white mb-2 tracking-tight group-hover:text-emerald-400 transition-colors">
                                         {item.title}
                                     </h4>
-                                    <p className="text-[14px] md:text-[15px] text-slate-400 leading-relaxed font-medium">
+                                    <p className="text-[14px] md:text-[15px] text-slate-300 leading-relaxed font-medium">
                                         {item.desc}
                                     </p>
                                 </div>
