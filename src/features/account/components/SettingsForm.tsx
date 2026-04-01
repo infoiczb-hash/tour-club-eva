@@ -86,14 +86,56 @@ export default function SettingsForm({ profile }: { profile: any }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pb-28 md:pb-12">
       
-      {/* ── НОВАЯ СМАРТ-СЕТКА: Две независимые колонки ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
-        {/* ЛЕВАЯ КОЛОНКА (Связь и Антропометрия) */}
-        <div className="space-y-6 flex flex-col">
-          
-          {/* БЛОК 1: Контакты */}
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
+        {/* ── СТРОКА 1: TELEGRAM BOT (НА ВСЮ ШИРИНУ) ── */}
+        <div className="lg:col-span-2">
+          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            {isTelegramConnected && (
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
+            )}
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className={clsx(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
+                  isTelegramConnected ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-[#2AABEE]/10 border border-[#2AABEE]/20 text-[#2AABEE]"
+                )}>
+                  {isTelegramConnected ? <CheckCircle2 size={24} /> : <Send size={24} className="-ml-1" />}
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider">Telegram Бот</h2>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+                    {isTelegramConnected 
+                      ? 'Персональный помощник успешно подключен' 
+                      : 'Мгновенные уведомления о статусе брони и новых турах'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0">
+                {isTelegramConnected ? (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-sm">
+                    <CheckCircle2 size={18} /> Подключен
+                  </div>
+                ) : (
+                  <a 
+                    href={`https://t.me/authevaclub_bot?start=user_${profile.id}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center justify-center gap-2 w-full md:w-auto bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(42,171,238,0.2)]"
+                  >
+                    <Send size={18} className="-ml-1" /> Подключить бота
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── СТРОКА 2: ЛЕВАЯ КОЛОНКА (КОНТАКТЫ) ── */}
+        <div className="space-y-6">
+          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl h-full">
             <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
               <User className="text-teal-500" size={20} />
               <h2 className="text-lg font-black text-white uppercase tracking-wider">Контакты</h2>
@@ -167,55 +209,29 @@ export default function SettingsForm({ profile }: { profile: any }) {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ✅ НОВЫЙ БЛОК: ИНТЕГРАЦИЯ С TELEGRAM */}
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-            {isTelegramConnected && (
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
-            )}
-            
-            <div className="flex items-center gap-3 mb-4 relative z-10">
-              <div className={clsx(
-                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner",
-                isTelegramConnected ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-[#2AABEE]/10 border border-[#2AABEE]/20 text-[#2AABEE]"
-              )}>
-                {isTelegramConnected ? <CheckCircle2 size={20} /> : <Send size={20} className="-ml-0.5" />}
-              </div>
-              <div>
-                <h2 className="text-sm font-black text-white uppercase tracking-wider">Telegram Бот</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {isTelegramConnected ? 'Персональный помощник' : 'Уведомления и подписки'}
-                </p>
-              </div>
+        {/* ── СТРОКА 2: ПРАВАЯ КОЛОНКА (ПИТАНИЕ + АНТРОПОМЕТРИЯ) ── */}
+        <div className="space-y-6">
+          
+          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
+            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+              <Apple className="text-emerald-500" size={20} />
+              <h2 className="text-lg font-black text-white uppercase tracking-wider">Питание</h2>
             </div>
 
-            <div className="relative z-10">
-              {isTelegramConnected ? (
-                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                  <CheckCircle2 size={16} className="text-emerald-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-emerald-400/90 font-medium leading-relaxed">
-                    Бот успешно подключен! Теперь вы будете моментально узнавать о новых турах и местах из листа ожидания.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Подключите бота, чтобы получать мгновенные уведомления о статусе брони и освободившихся местах.
-                  </p>
-                  <a 
-                    href={`https://t.me/authevaclub_bot?start=user_${profile.id}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="flex items-center justify-center gap-2 w-full bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(42,171,238,0.2)]"
-                  >
-                    <Send size={16} className="-ml-1" /> Подключить @authevaclub_bot
-                  </a>
-                </div>
-              )}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-2 block">
+                Диета и аллергии
+              </label>
+              <textarea 
+                {...register("foodPref")}
+                placeholder="Например: вегетарианец, не ем лук, аллергия на орехи. Если особенностей нет — оставьте поле пустым."
+                className="w-full min-h-[140px] bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all resize-none"
+              />
             </div>
           </div>
 
-          {/* БЛОК 3: Антропометрия */}
           <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
             <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
               <Shirt className="text-blue-500" size={20} />
@@ -259,31 +275,9 @@ export default function SettingsForm({ profile }: { profile: any }) {
 
         </div>
 
-        {/* ПРАВАЯ КОЛОНКА (Питание и Инвентарь) */}
-        <div className="space-y-6 flex flex-col">
-          
-          {/* БЛОК 2: Питание */}
+        {/* ── СТРОКА 3: ИНВЕНТАРЬ (НА ВСЮ ШИРИНУ) ── */}
+        <div className="lg:col-span-2">
           <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-              <Apple className="text-emerald-500" size={20} />
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Питание</h2>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1 mb-2 block">
-                Диета и аллергии
-              </label>
-              {/* ✅ Убрали лишний текст снизу, сделали поле аккуратным */}
-              <textarea 
-                {...register("foodPref")}
-                placeholder="Например: вегетарианец, не ем лук, аллергия на орехи. Если особенностей нет — оставьте поле пустым."
-                className="w-full min-h-[140px] bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all resize-none"
-              />
-            </div>
-          </div>
-
-          {/* БЛОК 4: Инвентарь */}
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl flex-1">
             <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
               <Backpack className="text-amber-500" size={20} />
               <h2 className="text-lg font-black text-white uppercase tracking-wider">Мой инвентарь</h2>
@@ -314,11 +308,11 @@ export default function SettingsForm({ profile }: { profile: any }) {
               })}
             </div>
           </div>
-
         </div>
+
       </div>
 
-      {/* ✅ КНОПКА СОХРАНЕНИЯ (Теперь статичная, в конце формы, над мобильным меню) */}
+      {/* ── КНОПКА СОХРАНЕНИЯ ── */}
       <div className="pt-6 flex justify-end">
         <button
           type="submit"

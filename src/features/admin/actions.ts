@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BookingStatus, Prisma } from '@prisma/client';
-import { sendToUserTelegram } from '@/features/admin/actions/telegram';
+import { sendToUserTelegram, publishPostToChannel } from '@/features/admin/actions/telegram';
 
 // ==========================================
 // TYPES
@@ -63,7 +63,6 @@ export async function getRegistrationsAction() {
   try {
     await requireAuth(); 
 
-    // ✅ ИСПРАВЛЕНИЕ: Подтягиваем новую связь tourDate
     const rawData = await prisma.booking.findMany({
       include: {
         tour: { select: { title: true, dates: true } },
@@ -73,11 +72,8 @@ export async function getRegistrationsAction() {
     });
 
     const data = rawData.map((item) => {
-      // Фолбэк для старых JSON-дат (если тур был создан до обновы)
       const legacyDates = (item.tour?.dates as TourDatesJson[]) || [];
       const firstLegacyDate = legacyDates[0]?.start ? new Date(legacyDates[0].start) : null;
-      
-      // ✅ ИСПРАВЛЕНИЕ: Определяем самую точную дату выезда для заявки
       const actualDate = item.tourDate?.startDate || item.bookedDate || firstLegacyDate;
 
      return {
@@ -92,23 +88,27 @@ export async function getRegistrationsAction() {
         tickets_family: item.ticketsFamily,
         tickets_member: item.ticketsMember,
         
-        short_id: item.shortId ?? undefined, // ✅ Исправлен баг TS (null -> undefined)
+        short_id: item.shortId ?? undefined, 
         
+        // ✅ ТЕПЕРЬ ФРОНТЕНД ПОЛУЧИТ ЭТИ ДАННЫЕ:
         guests: item.guests || [],
-        
-        // ✅ ВОЗВРАЩЕНО: Новые поля CRM, без которых не работает админка
         payment_method: item.paymentMethod || 'cash', 
         discount: item.discount || 0,
         amount_paid: item.amountPaid,
         source: item.source,
         total_price: item.totalPrice,
         
-        // ✅ ВОЗВРАЩЕНО: ID для точной группировки списков гида
         tourId: item.tourId,
         tourDateId: item.tourDateId || undefined,
-        
         comment: item.comment || '',
         social: item.social || item.email || '',
+
+        // ✅ НОВЫЕ ПОЛЯ ДЛЯ ЧЕКОВ (ЭТАП 2)
+        payment_proof_url: item.paymentProofUrl || null,
+        receipt_url: item.receiptUrl || null,
+        confirmed_by: item.confirmedBy || null,
+        confirmed_at: item.confirmedAt || null,
+
         tour: item.tour
           ? { title: item.tour.title, date: actualDate }
           : undefined,
@@ -119,11 +119,11 @@ export async function getRegistrationsAction() {
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === 'Unauthorized') return { error: 'Unauthorized', data: [] };
-    // 🛡️ Защита от утечки
     console.error('Get Registrations Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при загрузке бронирований', data: [] };
   }
 }
+
 export async function updateRegistrationStatus(id: string, status: string) {
   try {
     await requireAuth(); 
@@ -331,6 +331,14 @@ export async function savePostAction(data: SavePostPayload) {
     revalidatePath('/admin');
     revalidatePath('/blog');
     revalidatePath('/');
+     if (!id && formattedData.isActive) {
+      publishPostToChannel({
+        title:   formattedData.title,
+        excerpt: formattedData.excerpt,
+        slug:    slug!,
+        image:   formattedData.image,
+      }).catch(console.error);
+    }
     return { success: true };
   } catch (error: unknown) {
     const err = error as { message?: string, code?: string };
@@ -346,10 +354,39 @@ export async function savePostAction(data: SavePostPayload) {
 export async function togglePostStatusAction(id: string, field: 'isActive' | 'is_trending', value: boolean) {
   try {
     await requireAuth();
-    await prisma.blog.update({
+
+    // Читаем текущий статус ДО обновления — только для поля isActive
+    const existing = field === 'isActive'
+      ? await prisma.blog.findUnique({
+          where: { id },
+          select: { isActive: true },
+        })
+      : null;
+
+    const post = await prisma.blog.update({
       where: { id },
-      data: { [field]: value }
+      data: { [field]: value },
+      select: {
+        title: true,
+        excerpt: true,
+        slug: true,
+        image: true,
+        isActive: true,
+      },
     });
+
+    // Публикуем в канал только при первом переходе в isActive=true
+    const isFirstPublish = field === 'isActive' && !existing?.isActive && value;
+
+    if (isFirstPublish) {
+      publishPostToChannel({
+        title:   post.title,
+        excerpt: post.excerpt,
+        slug:    post.slug,
+        image:   post.image,
+      }).catch(console.error);
+    }
+
     revalidatePath('/admin');
     revalidatePath('/blog');
     revalidatePath('/');

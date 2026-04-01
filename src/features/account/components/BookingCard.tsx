@@ -8,14 +8,36 @@ import { ru } from 'date-fns/locale';
 import { 
   Calendar, MapPin, Users, CreditCard, 
   ChevronRight, CheckCircle2, Clock,
-  AlertCircle, Gift, X,  Hourglass 
-} from 'lucide-react'; // 👈 Убрали фейковый QrCode, добавили Gift для бонусов
+  AlertCircle, Gift, X, Hourglass 
+} from 'lucide-react'; 
 import { clsx } from 'clsx';
 import cloudinaryLoader from '@/lib/cloudinary-loader';
-import QRCode from "react-qr-code"; // 👈 Используем настоящий генератор
+import QRCode from "react-qr-code"; 
 
 interface BookingCardProps {
-  booking: any; 
+  bookingId: string;
+  booking: {
+    id: string;
+    shortId: number | null;
+    status: string;
+    totalPrice: number;
+    finalPrice?: number | null;
+    discount?: number; // ✅ Исправили на discount (как в БД) и сделали необязательным
+    paymentMethod?: string | null;
+    guestsCount: number;
+    tourDate?: {
+      startDate: Date | null;
+      time: string | null;
+    } | null;
+    tour?: {
+      title: string;
+      slug: string | null;
+      location: string | null;
+      meetingPoint: string | null;
+      coverImage: string | null;
+      currency: string | null;
+    } | null;
+  };
 }
 
 const STATUS_MAP = {
@@ -34,19 +56,20 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
   'foreign': 'Другие страны'
 };
 
-export default function BookingCard({ booking }: BookingCardProps) {
-  // ✅ 1. Вытаскиваем новые поля из базы (shortId, бонусы, финал.цена, метод оплаты)
+export default function BookingCard({ bookingId, booking }: BookingCardProps) {
   const { 
     tour, status, totalPrice, guestsCount, 
-    id, shortId, tourDate, 
-    appliedBonuses, finalPrice, paymentMethod  
+    shortId, tourDate,
+    discount, finalPrice, paymentMethod  
   } = booking;
+  
+  // ✅ Переводим discount из БД в переменную для верстки
+  const appliedBonuses = discount || 0;
   
   const statusInfo = STATUS_MAP[status as keyof typeof STATUS_MAP] || STATUS_MAP.pending;
   const StatusIcon = statusInfo.icon;
   const paymentLabel = paymentMethod ? PAYMENT_METHOD_MAP[paymentMethod] || paymentMethod : 'Не выбран';
 
-  // 2. БЕЗОПАСНАЯ ОБРАБОТКА ДАТЫ
   let formattedDate = 'Открытая дата';
   let time = '—';
   
@@ -57,18 +80,19 @@ export default function BookingCard({ booking }: BookingCardProps) {
   }
 
   const imageUrl = tour?.coverImage;
-
-  // Безопасный фоллбэк: если это старая бронь без shortId, используем срез UUID
-const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
+  const displayId = shortId ? String(shortId) : bookingId.substring(0, 5).toUpperCase();
 
   return (
     <div className="relative flex flex-col md:flex-row bg-slate-900 rounded-3xl overflow-hidden border border-white/10 shadow-xl group transition-all hover:border-white/20 hover:shadow-2xl">
       
+      {/* ✅ ГЛАВНАЯ ССЫЛКА НА БИЛЕТ (Растянута на всю карточку) */}
+      <Link href={`/account/bookings/${bookingId}`} className="absolute inset-0 z-0 focus:outline-none" aria-hidden="true" />
+
       {/* ─── ЛЕВАЯ ЧАСТЬ (Инфо о туре) ─────────────────────────────────── */}
-      <div className="flex-1 flex flex-col sm:flex-row p-4 sm:p-6 gap-6">
+      <div className="flex-1 flex flex-col sm:flex-row p-4 sm:p-6 gap-6 relative z-10 pointer-events-none">
         
         {/* Изображение */}
-        <div className="w-full sm:w-48 h-48 sm:h-auto rounded-2xl overflow-hidden relative shrink-0 bg-slate-800 flex items-center justify-center">
+        <div className="w-full sm:w-48 h-48 sm:h-auto rounded-2xl overflow-hidden relative shrink-0 bg-slate-800 flex items-center justify-center pointer-events-auto">
           {imageUrl ? (
             <Image
               loader={cloudinaryLoader}
@@ -96,24 +120,22 @@ const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
 
         {/* Детали */}
         <div className="flex flex-col justify-center flex-1">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 pointer-events-auto">
             <div className="flex items-center gap-2 text-teal-400">
               <MapPin size={16} />
-              <span className="text-xs font-bold uppercase tracking-widest">{tour?.location || 'Молдова'}</span>
+              <span className="text-xs font-bold uppercase tracking-widest">{tour?.meetingPoint || tour?.location || 'Место старта'}</span>
             </div>
             
-            {/* ✅ Плашка лояльности: Если списаны бонусы */}
             {appliedBonuses > 0 && (
               <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                <Gift size={12} />
-                Скидка {appliedBonuses} ₽
+                <Gift size={12} /> Скидка {appliedBonuses} ₽
               </div>
             )}
           </div>
           
-          <h3 className="text-xl sm:text-2xl font-black text-white leading-tight mb-4 group-hover:text-teal-400 transition-colors line-clamp-2">
-            <Link href={`/tour/${tour?.slug}`} className="focus:outline-none">
-               <span className="absolute inset-0" aria-hidden="true" />
+          {/* ✅ ССЫЛКА НА ТУР (Локальная, работает только при точном клике на текст) */}
+          <h3 className="text-xl sm:text-2xl font-black text-white leading-tight mb-4 pointer-events-auto w-fit">
+            <Link href={`/tour/${tour?.slug}`} className="hover:text-teal-400 transition-colors relative z-20">
                {tour?.title || 'Название тура'}
             </Link>
           </h3>
@@ -139,7 +161,6 @@ const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Сумма</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
                 <CreditCard size={16} className="text-slate-400 shrink-0" />
-                {/* ✅ Если есть скидка, показываем зачеркнутую старую цену */}
                 {appliedBonuses > 0 ? (
                   <span>
                     <span className="line-through text-slate-300 text-xs mr-2">{totalPrice}</span>
@@ -151,7 +172,6 @@ const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
               </div>
             </div>
 
-            {/* ✅ Метод оплаты */}
             <div>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Оплата</p>
               <div className="flex items-center gap-2 text-slate-300 font-medium">
@@ -173,10 +193,9 @@ const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
          <div className="absolute -right-3 -top-[13px] w-6 h-6 bg-slate-950 rounded-full border border-white/10" />
       </div>
 
-      {/* ─── ПРАВАЯ ЧАСТЬ (Контрольный талон / Boarding Pass) ──────────── */}
-      <div className="w-full md:w-64 bg-slate-800/20 p-6 flex flex-col justify-between items-center text-center relative z-10">
+      {/* ─── ПРАВАЯ ЧАСТЬ (Контрольный талон) ──────────── */}
+      <div className="w-full md:w-64 bg-slate-800/20 p-6 flex flex-col justify-between items-center text-center relative z-10 pointer-events-none">
         
-        {/* Статус (на десктопе) */}
         <div className="hidden md:flex flex-col items-center mb-6 w-full">
           <div className={clsx("flex justify-center items-center gap-2 px-4 py-2 w-full rounded-xl border", statusInfo.bg, statusInfo.border)}>
             <StatusIcon size={16} className={statusInfo.color} />
@@ -187,29 +206,26 @@ const displayId = shortId ? String(shortId) : id.substring(0, 5).toUpperCase();
         </div>
 
         {/* ✅ НАСТОЯЩИЙ QR Code */}
-        <div className="p-2 bg-white rounded-xl mb-6 shadow-inner hidden md:block opacity-90 hover:opacity-100 transition-all duration-300">
+        <div className="p-2 bg-white rounded-xl mb-6 shadow-inner hidden md:block opacity-90 transition-all duration-300">
            <QRCode 
              size={90} 
              value={`https://evatur.club/admin/scan?id=${displayId}`} 
              viewBox={`0 0 90 90`} 
-             level="M" // Оптимальный уровень коррекции ошибок
+             level="M" 
            />
         </div>
 
         <div className="w-full flex md:flex-col justify-between items-center">
           <div className="text-left md:text-center mb-0 md:mb-4">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Booking Ref</p>
-            {/* ✅ Реальный ID билета */}
             <p className="text-sm font-mono text-slate-300 font-bold tracking-wider">#{displayId}</p>
           </div>
 
-          <Link 
-            href={`/account/bookings/${id}`}
-            className="flex items-center gap-2 text-teal-400 hover:text-teal-300 text-xs font-bold uppercase tracking-widest group/link transition-colors relative z-20"
-          >
+          {/* Визуальная кнопка "Подробнее" */}
+          <div className="flex items-center gap-2 text-teal-400 text-xs font-bold uppercase tracking-widest group-hover:text-teal-300 transition-colors pointer-events-auto">
             Подробнее 
-            <ChevronRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
-          </Link>
+            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </div>
         </div>
       </div>
 

@@ -37,3 +37,65 @@ export async function cancelWaitlistAction(waitlistId: string) {
     return { success: false, error: 'Внутренняя ошибка сервера' };
   }
 }
+
+export async function joinWaitlistAction({
+  tourId,
+  tourDateId,
+  name,
+  phone,
+  social,
+}: {
+  tourId:      string;
+  tourDateId?: string;
+  name:        string;
+  phone?:      string;
+  social?:     string;
+}) {
+  try {
+    // Пробуем получить авторизованного пользователя (необязательно)
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    let memberId: string | null = null;
+
+    if (user) {
+      const profile = await prisma.memberProfile.findUnique({
+        where: { userId: user.id },
+        select: { id: true, phone: true, name: true },
+      });
+      if (profile) {
+        memberId = profile.id;
+        // Подставляем данные профиля если не переданы
+        name  = name  || profile.name  || '';
+        phone = phone || profile.phone || undefined;
+      }
+    }
+
+    // Защита от дублей — один телефон на один тур
+    if (phone) {
+      const existing = await prisma.waitlist.findFirst({
+        where: { tourId, phone },
+      });
+      if (existing) {
+        return { success: false, error: 'Вы уже в списке ожидания на этот тур' };
+      }
+    }
+
+    await prisma.waitlist.create({
+      data: {
+        tourId,
+        tourDateId: tourDateId || null,
+        memberId:   memberId   || null,
+        name,
+        phone:      phone  || null,
+        social:     social || null,
+      },
+    });
+
+    revalidatePath(`/tour`);
+    return { success: true };
+  } catch (error) {
+    console.error('Join Waitlist Error:', error);
+    return { success: false, error: 'Внутренняя ошибка сервера' };
+  }
+}

@@ -5,8 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
-// 👇 ДОБАВЛЕНО: Импорты для работы с Telegram
-import { publishToTelegram, sendToUserTelegram } from '@/features/admin/actions/telegram';
+import { publishToTelegram, publishTourToChannel, sendToUserTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
 import { tourFormSchema, type TourFormValues } from '@/features/admin/components/TourForm/schema';
@@ -64,6 +63,7 @@ export async function saveTour(formData: SaveTourPayload) {
       endDate: d.end ? new Date(d.end) : null,
       time: d.time || null,
       guideId: d.guide_id || null,
+      groupChatUrl: d.groupChatUrl || null, 
       spots: data.spots,
       spotsLeft: data.spotsLeft,
     }));
@@ -109,6 +109,9 @@ export async function saveTour(formData: SaveTourPayload) {
       importantInfo: data.importantInfo ?? null,
       includedDetailed: data.includedDetailed ? (data.includedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
       excludedDetailed: data.excludedDetailed ? (data.excludedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
+      biletpmrLink: formData.biletpmrLink as string | undefined ?? null,
+      apbQrLink: formData.apbQrLink as string | undefined ?? null,
+      apbQrImage: formData.apbQrImage as string | undefined ?? null,
       metaTitle: data.metaTitle ?? null,
       metaDesc: data.metaDesc ?? null,
     };
@@ -178,22 +181,17 @@ export async function saveTour(formData: SaveTourPayload) {
 
     // Отправка в общий паблик
     if (!formData.id && data.isActive) {
-      const caption = [
-        `🏕 <b>${data.title}</b>`,
-        data.subtitle ? `<i>${data.subtitle}</i>` : null,
-        ``,
-        `📍 ${data.location}`,
-        data.duration ? `⏱ ${data.duration}` : null,
-        `💰 от ${data.price} ${data.currency}`,
-      ].filter(Boolean).join('\n');
-
-      publishToTelegram(
-        caption,
-        data.coverImage ?? undefined,
-        `${env.NEXT_PUBLIC_SITE_URL}/tour/${slug}`,
-        true
-      ).catch(console.error);
-    }
+  publishTourToChannel({
+    title:      data.title,
+    subtitle:   data.subtitle,
+    location:   data.location,
+    duration:   data.duration ?? '',
+    price:      data.price,
+    currency:   data.currency,
+    slug:       slug,
+    coverImage: data.coverImage,
+  }).catch(console.error);
+}
 
     return { success: true };
   } catch (error: unknown) {
@@ -259,7 +257,12 @@ export async function updateTourStatus(id: string, isActive: boolean) {
   try {
     await requireAuth();
 
-    // 1. Обновляем статус и запрашиваем нужные поля для ТГ-рассылки
+    // Читаем текущий статус ДО обновления — чтобы понять первая ли это публикация
+    const existing = await prisma.tour.findUnique({
+      where: { id },
+      select: { isActive: true },
+    });
+
     const tour = await prisma.tour.update({
       where: { id },
       data: { isActive },
@@ -267,16 +270,23 @@ export async function updateTourStatus(id: string, isActive: boolean) {
         id: true,
         slug: true, 
         title: true,
+        subtitle: true,
+        location: true,
+        duration: true,
+        price: true,
+        currency: true,
+        coverImage: true,
         categoryId: true,
-        isActive: true
+        isActive: true,
       },
     });
 
-    // 2. НАШ ТРИГГЕР: Если тур только что активировали (опубликовали) — запускаем рассылку
-    if (tour.isActive) {
+    // Тур только что перешёл из черновика в активный — первая публикация
+    const isFirstPublish = !existing?.isActive && isActive;
+
+    if (isFirstPublish) {
+      // Рассылка подписчикам
       try {
-        // Убедись, что функция импортирована в начале файла:
-        // import { notifySubscribersOnNewDates } from "@/lib/telegram/notify";
         await notifySubscribersOnNewDates(
           tour.id,
           tour.categoryId,
@@ -285,8 +295,19 @@ export async function updateTourStatus(id: string, isActive: boolean) {
         );
       } catch (notifyError) {
         console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
-        // Мы только логируем ошибку, чтобы она не сломала админу обновление статуса
       }
+
+      // Публикация в публичный канал @evaturclub
+      publishTourToChannel({
+        title:      tour.title,
+        subtitle:   tour.subtitle,
+        location:   tour.location,
+        duration:   tour.duration ?? '',
+        price:      tour.price,
+        currency:   tour.currency,
+        slug:       tour.slug,
+        coverImage: tour.coverImage,
+      }).catch(console.error);
     }
 
     revalidatePath('/admin');

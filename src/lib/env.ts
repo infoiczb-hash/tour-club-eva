@@ -13,6 +13,7 @@ const serverSchema = z.object({
   // ✅ ДОБАВЛЕНО: Токен для бота авторизации
   TELEGRAM_AUTH_BOT:            z.string().min(1, 'TELEGRAM_AUTH_BOT не задан'), 
   TELEGRAM_ADMIN_CHAT_ID:       z.string().min(1, 'TELEGRAM_ADMIN_CHAT_ID не задан'),
+  TELEGRAM_PUBLIC_BOT_TOKEN:    z.string().min(1, 'TELEGRAM_PUBLIC_BOT_TOKEN не задан'),
   TELEGRAM_CHANNEL_ID:          z.string().optional(),
   TELEGRAM_WEBHOOK_SECRET:      z.string().min(1, 'TELEGRAM_WEBHOOK_SECRET не задан'),
   CRON_SECRET:                  z.string().min(1),
@@ -44,6 +45,7 @@ const parsedServer = isServer
       TELEGRAM_AUTH_BOT:             process.env.TELEGRAM_AUTH_BOT, // ✅ Передаем в парсер
       TELEGRAM_ADMIN_CHAT_ID:        process.env.TELEGRAM_ADMIN_CHAT_ID,
       TELEGRAM_CHANNEL_ID:           process.env.TELEGRAM_CHANNEL_ID,
+      TELEGRAM_PUBLIC_BOT_TOKEN:     process.env.TELEGRAM_PUBLIC_BOT_TOKEN,
       TELEGRAM_WEBHOOK_SECRET:       process.env.TELEGRAM_WEBHOOK_SECRET,
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       OPENAI_API_KEY:                process.env.OPENAI_API_KEY,

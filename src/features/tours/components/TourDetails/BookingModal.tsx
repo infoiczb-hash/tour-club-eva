@@ -11,6 +11,7 @@ import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
 import { SuccessScreen } from './SuccessScreen';
+import { validatePromoCodeAction } from '@/features/tours/actions/validatePromo'; 
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -90,9 +91,15 @@ export default function BookingModal({
   const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
   // Стейты баланса, бонусов и промокодов
-  const [balance, setBalance] = useState<number>(0);
+ const [balance, setBalance] = useState<number>(0);
   const [useBonuses, setUseBonuses] = useState<boolean>(false);
+  
   const [promoCode, setPromoCode] = useState<string>('');
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [promoType, setPromoType] = useState<string>('fixed');
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoSuccess, setPromoSuccess] = useState<boolean>(false);
+  const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false);
 
   const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
     tour.category?.slug?.toLowerCase() || ''
@@ -115,17 +122,34 @@ export default function BookingModal({
          setSelectedDateId(null);
       }
 
-      getMyProfileAction().then(profile => {
-        if (profile) {
-          setFormData(prev => ({
+     getMyProfileAction().then((profile) => {
+        if (!profile) return;
+
+        // 1. Контакты заказчика
+        setFormData((prev) => ({
+          ...prev,
+          name: profile.name || prev.name,
+          phone: profile.phone || prev.phone,
+          social: profile.telegram || profile.instagram || profile.email || prev.social,
+        }));
+
+        setBalance(profile.balance || 0);
+
+        // 2. Данные первого билета (он же заказчик)
+        setGuestData((prev) => {
+          const firstGuest = prev['adult_0'] || { name: '', jacket: '' }; 
+
+          return {
             ...prev,
-            name: profile.name || prev.name,
-            phone: profile.phone || prev.phone,
-            social: profile.telegram || profile.instagram || profile.email || prev.social
-          }));
-          setBalance(profile.balance || 0);
-        }
+            'adult_0': {
+              ...firstGuest,
+              name: profile.name || firstGuest.name || '',
+              jacket: profile.lifeJacketSize || firstGuest.jacket || '', // ✅ Используем правильный ключ jacket
+            },
+          };
+        });
       });
+      
     } else {
       document.body.style.overflow = '';
       const timer = setTimeout(() => {
@@ -165,9 +189,43 @@ export default function BookingModal({
   }, [tickets, tour]);
 
   // Логика скидки из баланса (Промокод посчитается на сервере)
+// ✅ Функция проверки промокода
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setIsCheckingPromo(true);
+    setPromoError(null);
+    setPromoSuccess(false);
+    setPromoDiscount(0);
+
+    try {
+      const res = await validatePromoCodeAction(promoCode);
+      if (res.success) {
+        setPromoSuccess(true);
+        setPromoDiscount(res.discount!);
+        setPromoType(res.type!);
+      } else {
+        setPromoError(res.error || 'Ошибка проверки кода');
+      }
+    } catch (e) {
+      setPromoError('Ошибка соединения');
+    } finally {
+      setIsCheckingPromo(false);
+    }
+  };
+
+  // ✅ Умный пересчет цены (Бонусы ИЛИ Промокод)
   const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
   const availableBonusesToUse = Math.min(balance, maxBonusDiscount);
-  const finalPrice = useBonuses ? baseTotalPrice - availableBonusesToUse : baseTotalPrice;
+  
+  let appliedDiscount = 0;
+  if (useBonuses && balance > 0) {
+    appliedDiscount = availableBonusesToUse;
+  } else if (promoSuccess) {
+    appliedDiscount = promoType === 'percent' 
+      ? Math.floor(baseTotalPrice * (promoDiscount / 100)) 
+      : promoDiscount;
+  }
+  const finalPrice = Math.max(0, baseTotalPrice - appliedDiscount);
 
   const getSmartPlaceholder = () => {
     const categorySlug = tour.category?.slug;
@@ -438,31 +496,68 @@ export default function BookingModal({
                           )}
                         </label>
                       </div>
-                    ) : (
+                   ) : (
                       <div className="pt-3 mt-1 border-t border-white/10">
-                        <div className="relative">
-                          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                          <input 
-                            type="text" 
-                            placeholder="У меня есть промокод" 
-                            value={promoCode} 
-                            onChange={(e) => setPromoCode(e.target.value)} 
-                            className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-500" 
-                          />
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input 
+                              type="text" 
+                              placeholder="У меня есть промокод" 
+                              value={promoCode} 
+                              onChange={(e) => {
+                                setPromoCode(e.target.value);
+                                if (promoSuccess) {
+                                  setPromoSuccess(false);
+                                  setPromoDiscount(0);
+                                }
+                                setPromoError(null);
+                              }} 
+                              disabled={promoSuccess || isCheckingPromo}
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-500 disabled:opacity-50" 
+                            />
+                          </div>
+                          {!promoSuccess ? (
+                              <button
+                                type="button"
+                                onClick={handleApplyPromo}
+                                disabled={!promoCode.trim() || isCheckingPromo}
+                                className="px-4 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-teal-500/20 disabled:opacity-50 transition-colors flex items-center justify-center min-w-[100px]"
+                              >
+                                {isCheckingPromo ? <Loader2 size={14} className="animate-spin" /> : 'Применить'}
+                              </button>
+                          ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPromoSuccess(false);
+                                  setPromoCode('');
+                                  setPromoDiscount(0);
+                                }}
+                                className="px-4 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-500/20 transition-colors flex items-center justify-center min-w-[100px]"
+                              >
+                                Отменить
+                              </button>
+                          )}
                         </div>
-                        {promoCode && (
+                        {promoError && (
+                          <p className="text-[10px] text-rose-400 mt-1.5 ml-1 font-bold">
+                            {promoError}
+                          </p>
+                        )}
+                        {promoSuccess && (
                           <p className="text-[10px] text-teal-400 mt-1.5 ml-1 font-bold">
-                            * Скидка будет рассчитана и применена при оформлении заявки
+                            ✅ Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
                           </p>
                         )}
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
+                   <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
                        <span className="text-xs font-bold text-slate-400 uppercase">Итого к оплате:</span>
-                       <div className="text-right">
-                         {useBonuses && (
-                           <div className="text-[10px] text-slate-400 line-through mb-0.5 font-bold uppercase tracking-widest">
+                       <div className="text-right flex items-center gap-2 justify-end">
+                         {(useBonuses || promoSuccess) && (
+                           <div className="text-[10px] text-slate-400 line-through font-bold uppercase tracking-widest">
                              {baseTotalPrice.toLocaleString()} {tour.currency}
                            </div>
                          )}
@@ -612,7 +707,7 @@ export default function BookingModal({
                       className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                     >
                         <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>Онлайн</span>
+                            <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
                             <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-400'} />
                         </div>
                         <span className="text-[10px] text-slate-400 leading-tight">BILETPMR/другой сервис</span>

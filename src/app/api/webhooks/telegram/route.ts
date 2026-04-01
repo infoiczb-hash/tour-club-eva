@@ -16,27 +16,31 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    // ==========================================\
-    // СЦЕНАРИЙ 3: АДМИН НАЖАЛ КНОПКУ (МОДЕРАЦИЯ)
-    // ==========================================\
+    // ==========================================
+    // СЦЕНАРИЙ 3: АДМИН НАЖАЛ КНОПКУ В ТГ (МОДЕРАЦИЯ)
+    // ==========================================
     if (body.callback_query) {
       const callbackData = body.callback_query.data;
       const adminChatId = String(body.callback_query.message.chat.id);
       const messageId = body.callback_query.message.message_id;
+      // Вытягиваем имя админа, который нажал кнопку (для логов)
+      const adminName = body.callback_query.from.username ? `@${body.callback_query.from.username}` : (body.callback_query.from.first_name || 'Admin');
 
       if (callbackData.startsWith('confirm_')) {
         const bookingId = callbackData.replace('confirm_', '');
 
-        // Обновляем статус на confirmed
+        // ✅ ИСПРАВЛЕНИЕ: Пишем логи подтверждения
         const booking = await prisma.booking.update({
           where: { id: bookingId },
-          data: { status: 'confirmed' }
+          data: { 
+            status: 'confirmed',
+            confirmedBy: adminName,
+            confirmedAt: new Date()
+          }
         });
 
-        // Меняем сообщение в админке
-        await editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>`);
+        await editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`);
 
-        // Уведомляем клиента, если он привязан
         if (booking.payerTgChatId) {
           await sendMessage(
             booking.payerTgChatId,
@@ -46,38 +50,34 @@ export async function POST(req: Request) {
       } else if (callbackData.startsWith('reject_')) {
         const bookingId = callbackData.replace('reject_', '');
 
-        // Откатываем статус обратно к awaiting_payment, удаляем неверный чек
+        // ✅ ИСПРАВЛЕНИЕ: Откатываем статус и удаляем неверный скрин
         const booking = await prisma.booking.update({
           where: { id: bookingId },
-          data: { status: 'awaiting_payment', receiptUrl: null }
+          data: { status: 'awaiting_payment', paymentProofUrl: null }
         });
 
-        // Меняем сообщение в админке
-        await editAdminMessage(adminChatId, messageId, `❌ <b>ОТКЛОНЕНО (Бронь #${booking.shortId})</b>`);
+        await editAdminMessage(adminChatId, messageId, `❌ <b>ОТКЛОНЕНО (Бронь #${booking.shortId})</b>\nОтклонил: ${adminName}`);
 
-        // Уведомляем клиента
         if (booking.payerTgChatId) {
           await sendMessage(
             booking.payerTgChatId,
-            `⚠️ К сожалению, администратор не смог подтвердить чек для заявки <b>#${booking.shortId}</b>.\nВозможно, скриншот обрезан, размыт или перевод не прошел.\nПожалуйста, проверьте данные и <b>отправьте фото чека еще раз</b> прямо в этот чат.`
+            `⚠️ К сожалению, мы не смогли подтвердить чек для заявки <b>#${booking.shortId}</b>.\nВозможно, скриншот обрезан, размыт или перевод не прошел.\nПожалуйста, проверьте данные и <b>отправьте фото чека еще раз</b> прямо в этот чат.`
           );
         }
       }
 
-      // Обязательно отвечаем на callback_query, чтобы у админа не висели часики на кнопке
       await answerCallbackQuery(body.callback_query.id);
       return ok();
     }
 
-    // Если это не сообщение, игнорируем
     if (!body.message) return ok();
 
     const chatId = String(body.message.chat.id);
     const text = body.message.text || '';
 
-    // ==========================================\
+    // ==========================================
     // СЦЕНАРИЙ 1: КЛИЕНТ ПЕРЕШЕЛ ПО ДИПЛИНКУ (/start {id})
-    // ==========================================\
+    // ==========================================
     if (text.startsWith('/start ')) {
       const shortIdStr = text.replace('/start ', '').trim();
       const shortId = parseInt(shortIdStr, 10);
@@ -97,13 +97,12 @@ export async function POST(req: Request) {
           return ok();
         }
 
-        // Привязываем текущий чат к этой брони
         await prisma.booking.update({
           where: { id: booking.id },
           data: { payerTgChatId: chatId }
         });
 
-        if (booking.status === 'awaiting_payment') {
+        if (booking.status === 'awaiting_payment' || booking.status === 'pending') {
           await sendMessage(
             chatId, 
             `Вы оформляете оплату для заявки <b>#${shortId}</b>.\n\n📸 <b>Пожалуйста, отправьте скриншот чека об оплате (или купленный билет) прямо в этот чат картинкой.</b>\nМы проверим его и подтвердим вашу бронь.`
@@ -115,13 +114,18 @@ export async function POST(req: Request) {
       return ok();
     }
 
-    // ==========================================\
-    // СЦЕНАРИЙ 2: КЛИЕНТ ПРИСЛАЛ ФОТО (ЧЕК)
-    // ==========================================\
-    if (body.message.photo) {
-      // Ищем активную заявку пользователя, которая ждет чек
+    // ==========================================
+    // СЦЕНАРИЙ 2: КЛИЕНТ ПРИСЛАЛ ФОТО ИЛИ ФАЙЛ (ЧЕК)
+    // ==========================================
+    // ✅ ИСПРАВЛЕНИЕ: Ловим и photo, и document (когда шлют файл без сжатия или PDF)
+    if (body.message.photo || body.message.document) {
+      
+      // Ищем заявку, которая ждет чек (pending или awaiting_payment)
       const booking = await prisma.booking.findFirst({
-        where: { payerTgChatId: chatId, status: 'awaiting_payment' },
+        where: { 
+            payerTgChatId: chatId, 
+            status: { in: ['awaiting_payment', 'pending', 'rejected'] } 
+        },
         orderBy: { createdAt: 'desc' }
       });
 
@@ -130,35 +134,32 @@ export async function POST(req: Request) {
         return ok();
       }
 
-      // Берем фото в самом высоком качестве (последнее в массиве)
-      const bestPhoto = body.message.photo[body.message.photo.length - 1];
-      const fileId = bestPhoto.file_id;
+      let fileId = '';
+      if (body.message.photo) {
+          fileId = body.message.photo[body.message.photo.length - 1].file_id;
+      } else if (body.message.document) {
+          fileId = body.message.document.file_id;
+      }
 
       try {
-        // 1. Получаем прямую ссылку на файл от Telegram
         const fileUrl = await getTelegramFileUrl(fileId);
-        
-        // 2. Грузим в Cloudinary (если настроено, иначе сохраняем URL телеграма)
         const receiptUrl = await uploadToCloudinary(fileUrl);
 
-        // 3. Обновляем статус брони на moderation
+        // ✅ ИСПРАВЛЕНИЕ: Пишем ссылку именно в paymentProofUrl
         await prisma.booking.update({
           where: { id: booking.id },
-          data: { status: 'moderation', receiptUrl }
+          data: { status: 'moderation', paymentProofUrl: receiptUrl }
         });
 
-      // 4. Отправляем чек админам на проверку через МЕНЕДЖЕРСКИЙ бот
-        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n💳 Способ: <b>${booking.paymentMethod}</b>\n💰 Сумма: <b>${booking.totalPrice}</b>\n\nПодтверждаете получение средств?`;
+        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} MDL</b>\n\nПодтверждаете получение средств?`;
         
-        // ВАЖНО: Передаем receiptUrl (ссылку), а не fileId, потому что fileId не сработает в другом боте
         await sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id);
 
-        // 5. Уведомляем клиента
         await sendMessage(chatId, `✅ Фото чека получено!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`);
         
       } catch (e) {
         console.error('Ошибка обработки фото чека:', e);
-        await sendMessage(chatId, 'Произошла ошибка при сохранении чека. Пожалуйста, попробуйте отправить фото еще раз.');
+        await sendMessage(chatId, 'Произошла ошибка при сохранении чека. Пожалуйста, попробуйте отправить фото еще раз чуть позже.');
       }
       return ok();
     }
@@ -167,7 +168,7 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('Telegram Webhook Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 200 }); // 200 чтобы ТГ не спамил
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 200 }); 
   }
 }
 
@@ -176,21 +177,15 @@ export async function POST(req: Request) {
 // ==========================================
 
 async function sendMessage(chatId: string, text: string) {
-  // КЛИЕНТСКИЙ БОТ (отвечаем пользователю)
   const token = env.TELEGRAM_AUTH_BOT; 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      chat_id: chatId, 
-      text, 
-      parse_mode: 'HTML' 
-    })
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
   });
 }
 
 async function editAdminMessage(chatId: string, messageId: number, newText: string) {
-  // АДМИНСКИЙ БОТ (редактируем сообщение в чате менеджеров)
   const token = env.TELEGRAM_BOT_TOKEN;
   await fetch(`https://api.telegram.org/bot${token}/editMessageCaption`, {
     method: 'POST',
@@ -206,14 +201,13 @@ async function editAdminMessage(chatId: string, messageId: number, newText: stri
 }
 
 async function sendModerationRequest(adminChatId: string, imageUrl: string, caption: string, bookingId: string) {
-  // АДМИНСКИЙ БОТ (кидаем чек на проверку)
   const token = env.TELEGRAM_BOT_TOKEN; 
   await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ 
       chat_id: adminChatId, 
-      photo: imageUrl, // Передаем URL картинки из Cloudinary
+      photo: imageUrl, 
       caption, 
       parse_mode: 'HTML',
       reply_markup: {
@@ -227,7 +221,6 @@ async function sendModerationRequest(adminChatId: string, imageUrl: string, capt
 }
 
 async function answerCallbackQuery(callbackQueryId: string) {
-  // АДМИНСКИЙ БОТ (т.к. админ нажал кнопку под сообщением админского бота)
   const token = env.TELEGRAM_BOT_TOKEN;
   await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
     method: 'POST',
@@ -237,7 +230,6 @@ async function answerCallbackQuery(callbackQueryId: string) {
 }
 
 async function getTelegramFileUrl(fileId: string): Promise<string> {
-  // КЛИЕНТСКИЙ БОТ (т.к. клиент прислал фото именно туда)
   const token = env.TELEGRAM_AUTH_BOT;
   const res = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
   const data = await res.json();

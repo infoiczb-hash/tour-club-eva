@@ -11,8 +11,8 @@ interface ReferralCardProps {
 
 export default function ReferralCard({
   promoCode, 
-  rewardAmount = 500,
-  friendReward = 500 
+  rewardAmount = 10,
+  friendReward = 10 
 }: ReferralCardProps) {
   const [copied, setCopied] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);

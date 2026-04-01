@@ -58,7 +58,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           </div>
           <button 
             type="button" 
-            onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
+           onClick={() => append({ start: '', end: '', guide_id: '', groupChatUrl: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
             className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-500 bg-teal-50 px-3 py-1.5 rounded-lg transition-colors"
           >
             <Plus size={14} /> Добавить дату
@@ -107,10 +107,12 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200/60">
-                 <FormInput name={`dates.${index}.spots`} label="Всего мест на дату" type="number" placeholder="По умолчанию тура" />
-                 <FormInput name={`dates.${index}.spotsLeft`} label="Осталось мест" type="number" placeholder="По умолчанию тура" />
-                 <FormInput name={`dates.${index}.basePrice`} label="Своя цена (Переопределение)" type="number" placeholder="В валюте тура" />
+          {/* ✅ ИСПРАВЛЕНИЕ: Сделали 4 колонки и добавили поле для чата */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pb-4 border-b border-slate-200/60">
+                 <FormInput name={`dates.${index}.spots`} label="Всего мест" type="number" placeholder="По умолчанию" />
+                 <FormInput name={`dates.${index}.spotsLeft`} label="Осталось мест" type="number" placeholder="По умолчанию" />
+                 <FormInput name={`dates.${index}.basePrice`} label="Своя цена" type="number" placeholder="В валюте тура" />
+                 <FormInput name={`dates.${index}.groupChatUrl`} label="Ссылка на ТГ-чат" type="text" placeholder="https://t.me/+" />
               </div>
 
               <div className="pt-4">
@@ -141,7 +143,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
               <p className="text-slate-300 text-sm font-medium">Даты выездов еще не добавлены</p>
               <button 
                 type="button"
-                onClick={() => append({ start: '', end: '', guide_id: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
+               onClick={() => append({ start: '', end: '', guide_id: '', groupChatUrl: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
                 className="text-teal-600 font-bold text-sm mt-3 hover:text-teal-500 hover:underline flex items-center justify-center gap-1 mx-auto"
               >
                 <Plus size={16} /> Создать первый выезд

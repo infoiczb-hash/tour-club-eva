@@ -64,23 +64,32 @@ export async function submitReviewFromCabinet(
   });
   const reviewCategory = tour?.category?.slug ?? 'general';
 
-  try {
-    // ПРОСТО СОХРАНЯЕМ ОТЗЫВ (Без начисления денег!)
-    await prisma.review.create({
-      data: {
-        name: profile.name ?? profile.phone ?? 'Участник клуба',
-        text: text.trim(),
-        rating: rating,
-        source: 'website',
-        tourId,
-        memberId: profile.id, 
-        category: reviewCategory,
-        isActive: false, // ждет модерации админом
-      },
+try {
+    // ✅ Выполняем в транзакции: сохраняем отзыв + пополняем баланс на 10 MDL
+    await prisma.$transaction(async (tx) => {
+      await tx.review.create({
+        data: {
+          name: profile.name ?? profile.phone ?? 'Участник клуба',
+          text: text.trim(),
+          rating: rating,
+          source: 'website',
+          tourId,
+          memberId: profile.id, 
+          category: reviewCategory,
+          isActive: false, // ждет модерации админом
+        },
+      });
+
+      // ✅ Начисляем бонусы за честный отзыв
+      await tx.memberProfile.update({
+        where: { id: profile.id },
+        data: { balance: { increment: 10 } }
+      });
     });
 
     revalidatePath('/account/history');
     revalidatePath(`/tour/${tour?.slug ?? ''}`);
+    revalidatePath('/account/dashboard'); // ✅ Обновляем кэш дашборда, чтобы юзер сразу увидел деньги
 
     return { success: true };
   } catch (error) {

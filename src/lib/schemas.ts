@@ -168,7 +168,9 @@ export const TourSchema = RawTourSchema.transform((data) => {
 
     included: data.included || [],
     additionalExpenses: data.additional_expenses || [],
-
+    biletpmrLink: data.biletpmrLink || null,
+    apbQrLink: data.apbQrLink || null,
+    apbQrImage: data.apbQrImage || null,
     meta_title: data.meta_title,
     meta_desc: data.meta_desc,
 

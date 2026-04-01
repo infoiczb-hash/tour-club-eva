@@ -228,18 +228,49 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         tourCoverImage = tour?.coverImage ?? null;
         
       // 4. Логика скидок: Бонусы (Авторизованные) ИЛИ Промокод (Гости)
-        let appliedDiscount = 0;
-        let usedPromoCodeId: string | null = null;
+     let appliedDiscount = 0;
+        let usedPromoCodeId: string | null = null; // ✅ СТАЛО: Сохраняем ID
 
-        if (currentMemberId && data.useBonuses) {
-          // Сценарий А: Авторизованный пользователь использует баланс
+        if (!currentMemberId && data.promoCode) {
+          const promoCodeRaw = data.promoCode.trim().toUpperCase();
+          const promo = await tx.promoCode.findUnique({
+            where: { code: promoCodeRaw }
+          });
+
+          if (!promo || !promo.isActive) throw new Error('PROMO_INVALID');
+          if (promo.validUntil && promo.validUntil < new Date()) throw new Error('PROMO_EXPIRED');
+
+          if (promo.type === 'percent') {
+            appliedDiscount = Math.floor(data.totalPrice * (promo.discount / 100));
+          } else {
+            appliedDiscount = promo.discount; 
+          }
+          
+          usedPromoCodeId = promo.id;
+
+          // 1. Увеличиваем счетчик использований постоянного кода
+          await tx.promoCode.update({
+            where: { id: promo.id },
+            data: { usageCount: { increment: 1 } }
+          });
+
+          // 2. Начисляем 10 баллов владельцу кода (Амбассадору)
+          if (promo.memberId) {
+            await tx.memberProfile.update({
+              where: { id: promo.memberId },
+              data: { balance: { increment: 10 } } // Жестко даем 10, как договорились
+            });
+          }
+
+        } else if (currentMemberId && data.useBonuses) {
+          // Сценарий Б: Авторизованный пользователь использует свой баланс
           const profile = await tx.memberProfile.findUnique({
             where: { id: currentMemberId },
             select: { balance: true }
           });
 
           if (profile && profile.balance > 0) {
-            const maxDiscount = Math.floor(data.totalPrice * 0.1);
+            const maxDiscount = Math.floor(data.totalPrice * 0.1); // Максимум 10% оплаты бонусами
             appliedDiscount = Math.min(profile.balance, maxDiscount);
 
             if (appliedDiscount > 0) {
@@ -249,44 +280,17 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
               });
             }
           }
-        } else if (!currentMemberId && data.promoCode) {
-          // Сценарий Б: Гость применяет промокод
-          const promo = await tx.promoCode.findUnique({
-            where: { code: data.promoCode.trim().toUpperCase() }
-          });
-
-          if (promo && promo.isActive) {
-            const isExpired = promo.validUntil && promo.validUntil < new Date();
-            
-            if (!isExpired) {
-              appliedDiscount = promo.discount;
-              usedPromoCodeId = promo.id;
-
-              // 1. Увеличиваем счетчик использований промокода
-              await tx.promoCode.update({
-                where: { id: promo.id },
-                data: { usageCount: { increment: 1 } }
-              });
-
-              // 2. Начисляем награду (reward) владельцу промокода на баланс
-              if (promo.memberId) {
-                await tx.memberProfile.update({
-                  where: { id: promo.memberId },
-                  data: { balance: { increment: promo.reward } }
-                });
-              }
-            }
-          }
         }
 
         // Защита от отрицательной цены
         const finalPrice = Math.max(0, data.totalPrice - appliedDiscount);
 
-        // ✅ БАГ 6: Паттерн "Ожидаемая цена" (Защита от рассинхрона)
-        if (finalPrice > data.expectedPrice){
+        // ✅ Защита от рассинхрона фронта и бэка
+        if (finalPrice !== data.expectedPrice){
           throw new Error('PRICE_MISMATCH');
         }
 
+        
         // 5. ОПРЕДЕЛЯЕМ НАЧАЛЬНЫЙ СТАТУС В ЗАВИСИМОСТИ ОТ МЕТОДА ОПЛАТЫ
         let initialStatus: 'pending' | 'awaiting_payment' = 'pending';
         if (['biletpmr', 'qr', 'foreign'].includes(data.paymentMethod)) {
@@ -294,8 +298,8 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
         } else if (data.paymentMethod === 'cash') {
           initialStatus = 'pending'; 
         }
-
-        const newBooking = await tx.booking.create({
+        
+const newBooking = await tx.booking.create({
           data: {
             shortId:       newShortId,
             tourId:        data.tourId,
@@ -312,7 +316,8 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
             guests:        (data.guests || []) as Prisma.InputJsonValue,
             comment:       data.comment || null,
             totalPrice:    finalPrice,
-            discount: appliedDiscount,
+            discount:      appliedDiscount,
+            promoCodeId:   usedPromoCodeId, 
             source:        'website',
             status:        initialStatus,
             bookedDate:    new Date(),
@@ -377,9 +382,8 @@ export async function createBookingAction(raw: BookingInput): Promise<BookingRes
 
   // Рассылка уведомлений вне транзакции
   try {
-    // 1. Уведомление АДМИНУ
-    await notifyTelegram(data, transactionResult.booking.id, transactionResult.tourCoverImage, transactionResult.appliedDiscount, transactionResult.finalPrice);
-
+    // 1. Уведомление АДМИНУ (Отправляем undefined вместо картинки, чтобы текст был сухим и коротким)
+    await notifyTelegram(data, transactionResult.booking.id, undefined, transactionResult.appliedDiscount, transactionResult.finalPrice);
     // 2. Уведомление КЛИЕНТУ (если привязан ТГ)
     if (currentMemberId) {
       const profile = await prisma.memberProfile.findUnique({
@@ -494,7 +498,7 @@ async function notifyTelegram(
   }).join('\n');
 
   const paymentLabels: Record<string, string> = {
-    biletpmr: '💳 Онлайн (BiletPMR)',
+    biletpmr: '💳 BiletPMR',
     qr: '📱 Клевер (QR)',
     cash: '💵 Наличными / Терминал',
     foreign: '🌍 Из других стран'

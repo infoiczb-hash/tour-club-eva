@@ -78,12 +78,12 @@ async function getDashboardData(userId: string) {
     },
     orderBy: { tourDate: { startDate: 'asc' } },
     include: {
-      tour: {
+     tour: {
         select: {
-          title: true, slug: true, location: true, coverImage: true,
+          title: true, slug: true, location: true, meetingPoint: true, coverImage: true, // ✅ ДОБАВИЛИ meetingPoint
           difficulty: true, duration: true, checklist: true, documents: true, currency: true
         },
-      },
+            },
       tourDate: {
         select: {
           startDate: true, endDate: true, time: true,
@@ -367,7 +367,7 @@ export default async function DashboardPage() {
           Предстоящие поездки
         </h2>
 
-        {upcomingBookings.length === 0 ? (
+     {upcomingBookings.length === 0 ? (
           <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-8 text-center">
             <p className="text-slate-300 text-sm mb-4">У вас пока нет запланированных туров</p>
             <Link href="/tour" className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)]">
@@ -378,7 +378,13 @@ export default async function DashboardPage() {
           <div className="space-y-6">
             {upcomingBookings.map(booking => {
               const guestsCount = booking.ticketsAdult + booking.ticketsChild + booking.ticketsMember + (booking.ticketsFamily * 3);
-              return <BookingCard key={booking.id} booking={{ ...booking, guestsCount }} />;
+              return (
+                <BookingCard 
+                  key={booking.id} 
+                  bookingId={booking.id} // ✅ Теперь ID брони передается железобетонно
+                  booking={{ ...booking, guestsCount }} 
+                />
+              );
             })}
           </div>
         )}

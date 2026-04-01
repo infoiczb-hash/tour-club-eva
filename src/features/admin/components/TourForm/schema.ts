@@ -39,6 +39,7 @@ export const tourFormSchema = z.object({
     end: z.string().optional().nullable(),
     time: z.string().optional().nullable(),
     guide_id: z.string().uuid().optional().nullable(),
+    groupChatUrl: z.string().optional().nullable(), 
     
     // ✅ Лимиты для конкретной даты
     spots: z.coerce.number().optional(),
@@ -59,7 +60,9 @@ export const tourFormSchema = z.object({
   priceChild: z.coerce.number().optional().nullable(),
   priceFamily: z.coerce.number().optional().nullable(),
   priceMember: z.coerce.number().optional().nullable(),
-
+  biletpmrLink: z.string().optional().nullable(),
+  apbQrLink: z.string().optional().nullable(),
+  apbQrImage: z.string().optional().nullable(),
   spots: z.coerce.number().default(15),
   spotsLeft: z.coerce.number().default(15),
 

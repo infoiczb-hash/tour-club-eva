@@ -3,17 +3,15 @@ import { env } from '@/lib/env';
 
 const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
 
-// Функция для отправки сообщения в ТГ
 async function sendTelegramMessage(chatId: string, text: string) {
   if (!BOT_TOKEN) return;
-  
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: text,
+        text,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
       }),
@@ -23,11 +21,10 @@ async function sendTelegramMessage(chatId: string, text: string) {
   }
 }
 
-// Главный триггер, который мы вызовем из админки
 export async function notifySubscribersOnNewDates(
-  tourId: string, 
-  categoryId: string | null, 
-  tourTitle: string, 
+  tourId: string,
+  categoryId: string | null,
+  tourTitle: string,
   tourSlug: string
 ) {
   if (!BOT_TOKEN) {
@@ -36,31 +33,32 @@ export async function notifySubscribersOnNewDates(
   }
 
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
-  const tourUrl = `${BASE_URL}/tour/${tourSlug}`;
+  const tourUrl  = `${BASE_URL}/tour/${tourSlug}`;
 
-  // 1. Собираем Ждунов (Waitlist)
+  // 1. Ждуны (Waitlist) — notified не проверяем, они всегда новые
   const waitlistUsers = await prisma.waitlist.findMany({
     where: { tourId },
-    include: { member: true }
+    include: { member: true },
   });
 
-  // 2. Собираем Избранное (лайкнули тур)
+  // 2. Избранное (WatchList по туру) — только ещё не уведомлённые
   const favoritedUsers = await prisma.watchList.findMany({
-    where: { tourId },
-    include: { member: true }
+    where: { tourId, notified: false },
+    include: { member: true },
   });
 
-  // 3. Собираем Подписчиков категории
-  const categoryUsers = categoryId ? await prisma.watchList.findMany({
-    where: { categoryId },
-    include: { member: true }
-  }) : [];
+  // 3. Подписчики категории — только ещё не уведомлённые
+  const categoryUsers = categoryId
+    ? await prisma.watchList.findMany({
+        where: { categoryId, notified: false },
+        include: { member: true },
+      })
+    : [];
 
-  // Создаем Set для уникальных Chat ID и мапу для связи Chat ID -> Member ID (для листа ожидания)
-  const uniqueChatIds = new Set<string>();
-  const waitlistChatIds = new Set<string>(); // Чтобы потом почистить именно их
+  // Уникальные chatId для Telegram
+  const uniqueChatIds  = new Set<string>();
+  const waitlistChatIds = new Set<string>();
 
-  // Функция-помощник для добавления юзеров
   const addUsers = (users: any[], isWaitlist = false) => {
     for (const u of users) {
       const chatId = u.member?.tgChatId;
@@ -75,9 +73,17 @@ export async function notifySubscribersOnNewDates(
   addUsers(favoritedUsers);
   addUsers(categoryUsers);
 
-  if (uniqueChatIds.size === 0) return; // Некому отправлять
+  // Уникальные memberId для in-app уведомлений
+  const allMembers = [
+    ...waitlistUsers.map(u => u.member),
+    ...favoritedUsers.map(u => u.member),
+    ...categoryUsers.map(u => u.member),
+  ].filter(Boolean);
 
-  // Формируем красивое сообщение
+  const uniqueMemberIds = [...new Set(allMembers.map(m => m!.id))];
+
+  if (uniqueChatIds.size === 0 && uniqueMemberIds.length === 0) return;
+
   const message = `
 🔥 <b>Открыта запись на тур!</b>
 
@@ -88,15 +94,43 @@ export async function notifySubscribersOnNewDates(
 👉 <a href="${tourUrl}">Посмотреть даты и забронировать</a>
   `.trim();
 
-  // Рассылаем всем уникальным пользователям
-  const sendPromises = Array.from(uniqueChatIds).map(chatId => 
-    sendTelegramMessage(chatId, message)
-  );
+  // Telegram рассылка
+  if (uniqueChatIds.size > 0) {
+    await Promise.all(
+      Array.from(uniqueChatIds).map(chatId => sendTelegramMessage(chatId, message))
+    );
+  }
 
-  await Promise.all(sendPromises);
+  // In-app уведомления
+  if (uniqueMemberIds.length > 0) {
+    await prisma.notification.createMany({
+      data: uniqueMemberIds.map(memberId => ({
+        memberId,
+        type:    'info',
+        title:   '🔥 Открыта запись на тур!',
+        message: `Появились новые даты для маршрута «${tourTitle}». Места разбирают быстро!`,
+        link:    tourUrl,
+        isRead:  false,
+      })),
+      skipDuplicates: true,
+    });
+  }
 
-  // ОЧИСТКА: Удаляем из Waitlist только тех, кому реально отправили (у кого был ТГ)
-  // Те, у кого только телефон, останутся висеть в БД для ручного прозвона админом
+  // Помечаем WatchList как уведомлённые — защита от повторного спама
+  const watchlistIdsToMark = [
+    ...favoritedUsers.filter(w => w.member?.tgChatId).map(w => w.id),
+    ...categoryUsers.filter(w => w.member?.tgChatId).map(w => w.id),
+  ];
+
+  if (watchlistIdsToMark.length > 0) {
+    await prisma.watchList.updateMany({
+      where: { id: { in: watchlistIdsToMark } },
+      data:  { notified: true },
+    });
+  }
+
+  // Удаляем из Waitlist только тех кому отправили ТГ
+  // Без ТГ — остаются для ручного прозвона админом
   if (waitlistUsers.length > 0) {
     const waitlistIdsToDelete = waitlistUsers
       .filter(w => w.member?.tgChatId && waitlistChatIds.has(w.member.tgChatId))
@@ -104,10 +138,10 @@ export async function notifySubscribersOnNewDates(
 
     if (waitlistIdsToDelete.length > 0) {
       await prisma.waitlist.deleteMany({
-        where: { id: { in: waitlistIdsToDelete } }
+        where: { id: { in: waitlistIdsToDelete } },
       });
     }
   }
 
-  console.log(`Успешно разослано ${uniqueChatIds.size} уведомлений о туре ${tourTitle}`);
+  console.log(`Успешно разослано ${uniqueChatIds.size} ТГ уведомлений и ${uniqueMemberIds.length} in-app для тура «${tourTitle}»`);
 }
