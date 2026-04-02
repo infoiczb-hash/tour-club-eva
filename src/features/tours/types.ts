@@ -181,3 +181,15 @@ export interface TourGuide {
   image?: string | null;
   instagram?: string | null;
 }
+
+// ==========================================
+// 5. DTO ДЛЯ КАРТОЧЕК (Облегченный тип без тяжелых текстов)
+// ==========================================
+export type TourPreview = Pick<Tour,
+  | 'id' | 'slug' | 'title' | 'subtitle' | 'price' | 'currency' | 'priceOld'
+  | 'priceMember' | 'priceChild' | 'tags' // ✅ ДОБАВИЛИ ЭТИ ПОЛЯ
+  | 'date' | 'endDate' | 'dates' | 'image' | 'label' | 'categoryId' | 'category'
+  | 'difficulty' | 'location' | 'duration' | 'spots' | 'spotsLeft' | 'isActive'
+  | 'guide'
+>;
+

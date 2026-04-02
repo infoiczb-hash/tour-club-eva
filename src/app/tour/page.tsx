@@ -14,13 +14,6 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Расписание Туров 2026 — Сплавы, ТУРЫ и SUP | Турклуб «Эва»',
   description: 'Афиша приключений 2026. Сплавы по Днестру, горные походы, SUP. Группы до 12 чел., с гидами. Бронируй место на ближайший тур.',
-  keywords: [
-    'туры Приднестровье 2026',
-    'расписание туров',
-    'байдарки и SUP на Днестре',
-    'туры в Румынию',
-    'активный отдых выходного дня'
-  ],
   openGraph: {
     title: 'Туры и Походы в Приднестровье 2026 — Расписание | Турклуб «Эва»',
     description: 'Расписание туров 2026: сплавы на байдарках по Днестру, пешие походы, SUP и детские программы. Активный отдых в Приднестровье и Молдове каждые выходные.',
@@ -48,10 +41,7 @@ export default async function AllToursPage() {
       className="pt-24 pb-8 md:pt-32 md:pb-24 bg-slate-950 min-h-screen relative overflow-hidden" 
       id="tours"
     >
-      {/* Suspense позволяет показать скелетон загрузки, пока ToursBrowserWrapper 
-        выполняет запросы к базе данных на стороне сервера.
-      */}
-      <Suspense fallback={<TourSkeleton />}>
+         <Suspense fallback={<TourSkeleton />}>
         <ToursBrowserWrapper
           title="Все Приключения"
           subtitle="Полный каталог 2026"

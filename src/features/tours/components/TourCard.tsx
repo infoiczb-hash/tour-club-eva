@@ -8,7 +8,7 @@ import {
   ArrowRight, Flame, Sparkles, Percent, Star, Hash,
   type LucideIcon
 } from 'lucide-react';
-import { Tour } from '@/features/tours/types';
+import { TourPreview } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -38,7 +38,7 @@ const COLOR_THEMES: Record<string, { bg: string, border: string, text: string }>
 };
 
 export interface TourCardProps {
-  tour: Tour;
+  tour: TourPreview;
   isHot?: boolean;
   priority?: boolean;
 }
@@ -113,7 +113,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             <span className={cn("text-[12px] sm:text-xs font-black uppercase tracking-wider", typeStyle.text)}>
               {displayLabel}
             </span>
-          </div>
+          </div> 
 
           {/* Плашка "Хит/Новинка" */}
           {label && (

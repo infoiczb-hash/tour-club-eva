@@ -1,7 +1,8 @@
 // src/features/guides/api.ts
 "use server";
-import { prisma } from '@/lib/prisma';
 import { cache } from 'react';
+import { prisma } from '@/lib/prisma';
+
 
 // ─── Для AdminDashboard / TourForm — минимальный select ──────────────────────
 export async function getGuides() {
@@ -15,7 +16,7 @@ export async function getGuides() {
       image: true,
       superpower: true,
       experience: true,
-      instagram: true,
+      instagram: true, 
       telegram: true,
       order: true,
     },

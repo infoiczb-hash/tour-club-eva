@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { getToursByCategory } from '@/features/tours/api';
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
+
 export const revalidate = 3600; 
 
 export const metadata: Metadata = {

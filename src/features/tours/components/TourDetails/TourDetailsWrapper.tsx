@@ -1,6 +1,6 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Tour } from '@/features/tours/types';
+import { Tour, TourPreview } from '@/features/tours/types';
 
 // ✅ Above-fold (Первый экран) — статические импорты (попадают в initial bundle)
 import TourStickyNav from './TourStickyNav';
@@ -23,9 +23,9 @@ const TourActionButtons = dynamic(() => import('./TourActionButtons'));
 const SimilarTours      = dynamic(() => import('./SimilarTours'));
 
 interface TourDetailsWrapperProps {
-  tour: Tour;
-  similarTours?: Tour[];
-  isWished?: boolean; // ✅ ДОБАВИЛИ: новый пропс для вишлиста
+  tour: Tour; // Основной тур остается полным (он нужен для страницы)
+  similarTours: TourPreview[]; // ✅ ИЗМЕНЕНО: Похожие туры теперь легкие
+  isWished: boolean;
 }
 
 // ✅ ДОБАВИЛИ: достаем isWished (по умолчанию false)

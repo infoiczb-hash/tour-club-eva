@@ -10,7 +10,7 @@ import {
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import TourCard from "@/features/tours/components/TourCard";
-import { Tour } from "@/features/tours/types";
+import { TourPreview} from "@/features/tours/types";
 import { useProfile } from "@/hooks/useProfile"; 
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 import { getToursForQuizAction } from "@/features/fun/actions";
@@ -62,7 +62,7 @@ export default function FearDebriefModal({ isOpen, onClose }: Props) {
   const { updateProfile } = useProfile();
   const { saveResult } = useSaveTest();
   
-  const [allTours, setAllTours] = useState<Tour[]>([]);
+  const [allTours, setAllTours] = useState<TourPreview[]>([]);
   const [loadingStep, setLoadingStep] = useState(0);
 
   // === ОФИЦИАЛЬНЫЙ ХУК VERCEL AI SDK ===

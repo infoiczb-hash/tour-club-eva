@@ -1,21 +1,24 @@
 'use server';
 
+import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth';
 
-// Публичный — отзывы читают все
-export async function getReviews() {
+// ✅ ИЗМЕНЕНО: Возвращаем полные объекты для админки, но отсекаем скрытые для клиента (onlyActive)
+export const getReviews = cache(async (onlyActive: boolean = false) => {
   try {
     const reviews = await prisma.review.findMany({
+      where: onlyActive ? { isActive: true } : undefined,
       orderBy: { createdAt: 'desc' },
     });
+    
     return reviews;
   } catch (error) {
     console.error('Ошибка получения отзывов:', error);
     return [];
   }
-}
+});
 
 export async function upsertReview(data: any) {
   try {

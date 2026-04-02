@@ -14,39 +14,36 @@ import { twMerge } from "tailwind-merge";
 import TourCard from '@/features/tours/components/TourCard'; 
 import CalendarView from '@/features/tours/components/CalendarView'; 
 import { useModalStore } from '@/shared/store/useModalStore'; 
-import { Tour } from '@/features/tours/types'; 
+import { TourPreview } from '@/features/tours/types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
 interface KidsCatalogProps {
-  tours?: Tour[];
+  tours?: TourPreview[];
 }
 
 export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  // --- SMART FEED LOGIC (Как в вашем ToursBrowser) ---
+  // --- SMART FEED LOGIC ---
   const { hotTours, comingSoonTours, allFilteredTours } = useMemo(() => {
-    // Если в компонент не передали туры, используем пустой массив
     const safeTours = tours || [];
     
-    // Сортировка по дате
     const sorted = safeTours.sort((a, b) => {
         const dateA = a.date ? new Date(a.date).getTime() : Infinity;
         const dateB = b.date ? new Date(b.date).getTime() : Infinity;
         return dateA - dateB;
     });
 
-    // Разделение на группы (Горящие и Анонсы)
     const now = new Date();
     const twoWeeksLater = new Date();
     twoWeeksLater.setDate(now.getDate() + 14);
 
-    const hot: Tour[] = [];
-    const soon: Tour[] = [];
+    // ✅ ИСПРАВЛЕНО: Теперь используем правильный легкий тип TourPreview
+    const hot: TourPreview[] = [];
+    const soon: TourPreview[] = [];
 
     sorted.forEach(t => {
         if (!t.date) {
@@ -61,7 +58,6 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
         }
     });
 
-    // Балансировка (если мало горящих)
     if (hot.length < 3 && soon.length > 0) {
         const needed = 3 - hot.length;
         const toMove = soon.splice(0, needed);

@@ -19,8 +19,8 @@ interface BlogCategory {
   sortOrder: number;
 }
 
-interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
-  content?: string | null;
+// ✅ НОВЫЙ ИНТЕРФЕЙС: Легкий DTO-тип без поля content
+export interface BlogPreview extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
   tags?: string[];
   categoryId?: string | null;
   blogCategory?: { 
@@ -41,7 +41,7 @@ interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
 }
 
 interface BlogFeedProps {
-  initialPosts: ExtendedBlog[];
+  initialPosts: BlogPreview[]; // ✅ ИЗМЕНЕНО: Ожидаем легкие карточки
   categories?: BlogCategory[];
 }
 
@@ -88,7 +88,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   };
 
   // Лейбл категории берётся только из БД.
-  const getLabel = (post: ExtendedBlog): string => {
+  const getLabel = (post: BlogPreview): string => {
     if (post.categoryId) {
       const cat = categories.find(c => c.id === post.categoryId);
       if (cat) return cat.title;
@@ -124,8 +124,8 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   const trendingPosts = sortedPosts.filter(post => post.is_trending);
   const regularPosts = sortedPosts.filter(post => !post.is_trending);
 
-  let top3Posts: ExtendedBlog[] = [];
-  let feedPosts: ExtendedBlog[] = [];
+  let top3Posts: BlogPreview[] = [];
+  let feedPosts: BlogPreview[] = [];
 
   if (isDefaultView) {
     if (trendingPosts.length >= 3) {
@@ -142,7 +142,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
 
   // ─── Карточка статьи ─────────────────────────────────────────────────────
 
-  const PostCard = ({ post, priority = false }: { post: ExtendedBlog; priority?: boolean }) => (
+  const PostCard = ({ post, priority = false }: { post: BlogPreview; priority?: boolean }) => (
     <Link
       href={`/blog/${post.slug}`}
       className="group flex flex-col bg-slate-900/40 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-500"

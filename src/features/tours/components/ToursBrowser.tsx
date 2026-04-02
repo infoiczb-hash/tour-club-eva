@@ -9,7 +9,7 @@ import {
   TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby // ✅ ВСЕ ИКОНКИ НА МЕСТЕ
 } from 'lucide-react';
 import Link from 'next/link';
-import { Tour } from '@/features/tours/types'; 
+import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 import TourCard from './TourCard';
 import { useModalStore } from '@/shared/store/useModalStore'; 
@@ -33,7 +33,7 @@ const getIconComponent = (iconName: string, size = 14) => {
 };
 
 interface ToursBrowserProps {
-  tours: Tour[];
+  tours: TourPreview[];
   categories?: any[]; 
   title?: string;
   subtitle?: string;
@@ -136,8 +136,8 @@ export default function ToursBrowser({
     });
 
     // 3. Разделение на "С датами" (scheduled) и "Без дат / Анонсы" (tba)
-    const scheduled: Tour[] = [];
-    const tba: Tour[] = [];
+    const scheduled: TourPreview[] = []; // ✅ ИЗМЕНЕНО: TourPreview
+    const tba: TourPreview[] = []; // ✅ ИЗМЕНЕНО: TourPreview
 
     sorted.forEach(t => {
         // Если у тура нет даты или пустой массив дат — это анонс

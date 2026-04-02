@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { Tour } from "@/features/tours/types";
+import { TourPreview } from '@/features/tours/types';
 import { KayakingTabProvider, KayakingTabContent } from "./KayakingTabProvider";
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
 
@@ -43,7 +43,7 @@ const PreparationCTA = dynamic(() => import('./PreparationCTA'), {
   loading: () => <div className="min-h-[160px] bg-slate-950" />,
 });
 
-export default function KayakingLanding({ tours }: { tours: Tour[] }) {
+export default function KayakingLanding({ tours }: { tours: TourPreview[] }) {
   return (
     <div className="bg-slate-950 min-h-screen selection:bg-teal-500/30">
       <KayakingTabProvider>

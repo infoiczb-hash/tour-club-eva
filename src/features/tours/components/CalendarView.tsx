@@ -4,9 +4,9 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Clock, ChevronRight, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
-import { Tour } from '@/features/tours/types';
+import { TourPreview } from '@/features/tours/types';
 import { clsx } from 'clsx';
-import { twMerge } from "tailwind-merge";
+import { twMerge } from "tailwind-merge"; 
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -27,7 +27,7 @@ const COLOR_THEMES: Record<string, string> = {
 };
 
 // ✅ ИСПРАВЛЕНО: Добавлен currentPrice для динамического ценообразования дат
-type CalendarTour = Omit<Tour, 'date'> & {
+type CalendarTour = Omit<TourPreview, 'date'> & { // ✅ ИЗМЕНЕНО: Omit из TourPreview
   uniqueId: string; 
   originalId: string;
   date: string | null; 
@@ -36,8 +36,7 @@ type CalendarTour = Omit<Tour, 'date'> & {
   currentPrice?: number | null; 
 };
 
-interface CalendarViewProps { events: Tour[]; }
-
+interface CalendarViewProps { events: TourPreview[]; }
 export default function CalendarView({ events }: CalendarViewProps) {
   const { groupedTours, tbaTours } = useMemo(() => {
     const today = new Date();
