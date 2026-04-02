@@ -20,7 +20,7 @@ export default function SupHero() {
         </div>
 
         <h1 className="animate-hero-title text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.85] drop-shadow-2xl">
-          СВОБОДА <br className="hidden md:block" />
+          СКОЛЬЗИ <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">ПО ВОДЕ</span>
         </h1>
 

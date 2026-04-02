@@ -331,7 +331,7 @@ export default async function WishlistPage() {
         />
 
         {/* ✅ ВЕРНУЛИ ТВОЮ ФРАЗУ ПРО КАНАЛ */}
-        <p className="text-xs text-slate-600 mt-5">
+        <p className="text-xs text-slate-400 mt-5">
           Уведомления о новых турах и постах приходят в наш Telegram канал. Убедитесь что вы подписаны на{' '}
           <a
             href="https://t.me/evaturclub"

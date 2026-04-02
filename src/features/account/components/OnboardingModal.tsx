@@ -76,7 +76,7 @@ export default function OnboardingModal({ initialName = '' }: OnboardingModalPro
             
             <p className="text-sm text-slate-300 mb-8 leading-relaxed">
               Ваши прошлые поездки успешно найдены и привязаны к кабинету. <br /><br />
-              <span className="text-slate-300">Чтобы гиды могли подготовить для вас правильную еду и нужное снаряжение, заполните вашу походную карточку.</span>
+              <span className="text-slate-300">Чтобы гиды могли подготовить для вас  нужное снаряжение, заполните вашу клубную карточку в настройках.</span>
             </p>
 
             <div className="space-y-3">

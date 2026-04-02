@@ -284,7 +284,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
             </div>
 
             <p className="text-sm text-slate-300 mb-5 leading-relaxed">
-              Отметьте снаряжение, которое у вас уже есть. Мы не будем предлагать вам его в аренду перед выездами.
+              Отметьте снаряжение, которое у вас уже есть.
             </p>
 
             <div className="flex flex-wrap gap-2.5">
