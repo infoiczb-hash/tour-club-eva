@@ -98,7 +98,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
         <div className="p-5 md:p-6 border-b border-white/5 bg-slate-900 z-10 shrink-0">
            <div className="flex justify-between items-center">
               <h3 id="modal-contact-title" className="text-white font-black text-2xl md:text-3xl tracking-tight">Центр связи</h3>
-              <button onClick={onClose} aria-label="Закрыть" className="p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={onClose} aria-label="Закрыть" className="p-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
                   <X size={20}/>
               </button>
            </div>
@@ -112,7 +112,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        <CheckCircle2 size={40}/>
                    </div>
                    <h3 className="text-2xl md:text-3xl font-black text-white mb-3">Успешно!</h3>
-                   <p className="text-slate-400 text-base md:text-lg">Сообщение отправлено, мы скоро с вами свяжемся.</p>
+                   <p className="text-slate-300 text-base md:text-lg">Сообщение отправлено, мы скоро с вами свяжемся.</p>
                </div>
            ) : (
                <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -130,7 +130,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                                     "flex items-center gap-2 px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide transition-all border",
                                     isActive 
                                         ? "bg-teal-500 border-teal-500 text-slate-900 shadow-lg shadow-teal-500/20" 
-                                        : "bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                                        : "bg-slate-800/50 border-white/5 text-slate-300 hover:border-white/20 hover:text-white"
                                 )}
                               >
                                   <tab.icon size={16} strokeWidth={isActive ? 2.5 : 2}/> {tab.label}
@@ -151,7 +151,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {/* --- COMMON FIELDS --- */}
                        <div className="space-y-4">
                            <div className="relative group">
-                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
                                <input required placeholder="Ваше имя" 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                    value={formData.name || ''} onChange={e => updateField('name', e.target.value)}
@@ -160,21 +160,21 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                            
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="relative group">
-                                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
                                    <input placeholder="+373..." 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.phone || ''} onChange={e => updateField('phone', e.target.value)}
                                    />
                                </div>
                                <div className="relative group">
-                                   <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
                                    <input placeholder="Telegram / Insta" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.social || ''} onChange={e => updateField('social', e.target.value)}
                                    />
                                </div>
                            </div>
-                           <p className="text-[12px] text-slate-500 ml-2">* Укажите хотя бы один контакт для связи</p>
+                           <p className="text-[12px] text-slate-300 ml-2">* Укажите хотя бы один контакт для связи</p>
                        </div>
 
                        {/* --- DYNAMIC FIELDS --- */}
@@ -217,7 +217,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                                <div className="flex gap-2 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
                                    {['idea', 'text'].map(type => (
                                        <button key={type} type="button" onClick={() => updateField('format', type)} 
-                                           className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider rounded-xl transition-colors ${formData.format === type ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                                           className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider rounded-xl transition-colors ${formData.format === type ? 'bg-teal-600 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
                                        >
                                            {type === 'idea' ? 'Есть идея' : 'Готовый текст'}
                                        </button>
@@ -236,7 +236,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {activeTab === 'B2B' && (
                            <div className="space-y-4 animate-in fade-in">
                                <div className="relative group">
-                                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors"/>
+                                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
                                    <input placeholder="Название компании (необязательно)" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.company || ''} onChange={e => updateField('company', e.target.value)}
@@ -300,7 +300,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                          href="https://t.me/romansvtirase" 
                          target="_blank" 
                          rel="noopener noreferrer" 
-                         className="text-xs md:text-sm font-bold text-slate-500 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mb-2" 
+                         className="text-xs md:text-sm font-bold text-slate-300 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mb-2" 
                          aria-label="Наш Telegram"
                        >
                           <MessageSquare size={16}/> Срочно? Написать в Telegram

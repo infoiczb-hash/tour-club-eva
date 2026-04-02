@@ -11,7 +11,7 @@ export default function Loading() {
         <h2 className="text-2xl font-condensed font-bold text-white uppercase tracking-widest mb-2">
           Собираем рюкзак...
         </h2>
-        <p className="text-slate-400 text-sm">
+        <p className="text-slate-300 text-sm">
           Загружаем лучшие маршруты для тебя
         </p>
       </div>

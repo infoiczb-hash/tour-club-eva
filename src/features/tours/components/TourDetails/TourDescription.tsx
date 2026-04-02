@@ -79,7 +79,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
                     {item.title}
                   </div>
                   {(item.description || item.desc) && (
-                    <div className="text-sm md:text-base text-slate-400 leading-relaxed font-medium">
+                    <div className="text-sm md:text-base text-slate-300 leading-relaxed font-medium">
                       {item.description || item.desc}
                     </div>
                   )}

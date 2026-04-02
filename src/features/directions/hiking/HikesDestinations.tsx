@@ -86,7 +86,7 @@ export default function HikesDestinations() {
                       <Icon size={24} strokeWidth={1.5} />
                     </div>
 
-                    <div className="text-teal-400 font-bold text-[10px] md:text-xs tracking-widest uppercase mb-2">
+                    <div className="text-teal-400 font-bold text-[12px] md:text-xs tracking-widest uppercase mb-2">
                       {dest.title}
                     </div>
                     <h3 className="text-xl md:text-2xl font-black text-stone-100 uppercase tracking-tight mb-3">
@@ -110,7 +110,7 @@ export default function HikesDestinations() {
             })}
           </div>
 
-          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

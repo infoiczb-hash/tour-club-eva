@@ -48,7 +48,7 @@ interface Guide {
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     <div className="mb-2">
        <div className="flex justify-between items-end mb-2">
-          <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-slate-300">
              <Icon size={14} className={colorClass} />
              <span>{label}</span>
           </div>
@@ -94,7 +94,7 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 leading-none">
                             Хочешь к нам  <br className="hidden md:block"/><span className="text-teal-500">в команду?</span>
                         </h2>
-                        <p className="text-slate-400 font-medium text-base md:text-lg max-w-2xl leading-relaxed mb-10">
+                        <p className="text-slate-300 font-medium text-base md:text-lg max-w-2xl leading-relaxed mb-10">
                             Мы всегда в поиске людей, влюбленных в природу: гидов, водителей, фотографов, поваров и технических помощников. 
                         </p>
                         <button
@@ -172,13 +172,13 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     {guide.name}
                 </h2>
 
-                <div className="text-base md:text-lg text-slate-400 leading-relaxed mb-6 font-medium whitespace-pre-wrap">
+                <div className="text-base md:text-lg text-slate-300 leading-relaxed mb-6 font-medium whitespace-pre-wrap">
                     {guide.bio || guide.fullBio}
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-8">
                     {guide.tags && guide.tags.map((tag, idx) => (
-                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold uppercase tracking-wider rounded-lg">
+                        <span key={idx} className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg">
                             #{tag}
                         </span>
                     ))}
@@ -213,12 +213,12 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     {(guide.instagram || guide.telegram) && (
                         <div className="flex gap-3 justify-center w-full sm:w-auto">
                             {guide.instagram && (
-                                <a href={guide.instagram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-400 hover:text-teal-400 transition-all shadow-sm">
+                                <a href={guide.instagram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 transition-all shadow-sm">
                                     <Instagram size={20} />
                                 </a>
                             )}
                             {guide.telegram && (
-                                <a href={guide.telegram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-400 hover:text-teal-400 transition-all shadow-sm">
+                                <a href={guide.telegram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 transition-all shadow-sm">
                                     <Send size={20} className="ml-[-2px]" />
                                 </a>
                             )}

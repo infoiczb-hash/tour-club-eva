@@ -5,13 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   Heart, Bell, MapPin, Clock, TrendingUp, ArrowRight,
-  Hourglass, Send, BookOpen, CheckCircle2 
+  Hourglass, BookOpen 
 } from 'lucide-react';
 import WishlistToggle from '@/features/account/components/WishlistToggle';
-import CategoryPills from './components/CategoryPills';
+import CategoryPills from '@/components/account/CategoryPills';
 import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton';
-
-const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'evaturclub_bot';
 
 // ─── загрузка данных ─────────────────────────────────────────────────
 async function getWishlistData(userId: string) {
@@ -20,7 +18,7 @@ async function getWishlistData(userId: string) {
   });
   if (!profile) return null;
 
-  // 1. Лист ожидания (Waitlist) - ТЕПЕРЬ УМНЫЙ (по memberId и phone)
+  // 1. Лист ожидания (Waitlist)
   const waitlists = await prisma.waitlist.findMany({
     where: {
       OR: [
@@ -35,7 +33,7 @@ async function getWishlistData(userId: string) {
     orderBy: { createdAt: 'desc' },
   });
 
-  // 2. Вишлист туров (ОРИГИНАЛ - с подтягиванием ближайшей даты и мест)
+  // 2. Вишлист туров
   const tourWishlist = await prisma.watchList.findMany({
     where: { memberId: profile.id, tourId: { not: null } },
     orderBy: { createdAt: 'desc' },
@@ -101,7 +99,7 @@ function formatDate(d: Date) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
 
-// ─── цвета категорий (ОРИГИНАЛ) ──────────────────────────────────────
+// ─── цвета категорий ──────────────────────────────────────
 const CAT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   teal:   { bg: 'bg-teal-500/10',   text: 'text-teal-400',   border: 'border-teal-500/20'   },
   blue:   { bg: 'bg-blue-500/10',   text: 'text-blue-400',   border: 'border-blue-500/20'   },
@@ -133,56 +131,26 @@ export default async function WishlistPage() {
     subscribedCategoryIds,
   } = data;
 
-  const isTelegramConnected = Boolean(profile.tgChatId);
-  const telegramLink = `https://t.me/${BOT_USERNAME}?start=user_${profile.id}`;
-
   return (
     <div className="space-y-8 max-w-4xl pb-10">
 
       {/* ── Заголовок ── */}
       <div>
         <h1 className="text-2xl font-black text-white mb-1">Мои желания</h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-300">
           Туры и статьи, за которыми вы следите, и ваши листы ожидания.
         </p>
       </div>
 
-      {/* ── УМНЫЙ TELEGRAM БАННЕР ── */}
-      <div className={`relative overflow-hidden rounded-2xl border p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 transition-colors ${
-        isTelegramConnected 
-          ? 'bg-emerald-950/30 border-emerald-500/20' 
-          : 'bg-slate-900 border-teal-500/20'
-      }`}>
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-teal-500/10 blur-3xl rounded-full pointer-events-none" />
-        
-        <div className="flex items-start gap-4 relative z-10">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
-            isTelegramConnected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-teal-500/20 text-teal-400'
-          }`}>
-            {isTelegramConnected ? <CheckCircle2 size={24} /> : <Send size={24} className="-ml-1" />}
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white mb-1">
-              {isTelegramConnected ? 'Telegram подключен' : 'Уведомления в Telegram'}
-            </h3>
-            <p className="text-sm text-slate-400 max-w-md">
-              {isTelegramConnected 
-                ? 'Вы первыми узнаете о новых датах для туров из вашего листа ожидания.'
-                : 'Подключите бота, чтобы мгновенно узнавать, когда открывается запись на тур из листа ожидания.'}
-            </p>
-          </div>
-        </div>
-
-        {!isTelegramConnected && (
-          <a 
-            href={telegramLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative z-10 shrink-0 w-full sm:w-auto text-center px-6 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
-          >
-            Подключить
-          </a>
-        )}
+      {/* ── ТЕКСТОВАЯ ПОДСКАЗКА PRO TELEGRAM ── */}
+      <div className="flex items-start gap-3 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
+        <Bell size={18} className="text-teal-500 shrink-0 mt-0.5" />
+        <p className="text-sm text-slate-300 leading-relaxed">
+          Уведомления об освободившихся местах и новых датах туров приходят в Telegram. 
+          <Link href="/account/settings" className="text-teal-400 hover:text-teal-300 font-bold ml-1.5 transition-colors whitespace-nowrap">
+            Настроить →
+          </Link>
+        </p>
       </div>
 
       {/* ── ЛИСТ ОЖИДАНИЯ ── */}
@@ -217,14 +185,14 @@ export default async function WishlistPage() {
         </section>
       )}
 
-      {/* ── СОХРАНЁННЫЕ ТУРЫ (Оригинал) ── */}
+      {/* ── СОХРАНЁННЫЕ ТУРЫ ── */}
       <section className="space-y-3">
         <div className="flex items-center justify-between border-b border-white/5 pb-2">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
             <Heart size={14} className="text-rose-400" />
             Туры
             {tourWishlist.length > 0 && (
-              <span className="text-xs font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">
                 {tourWishlist.length}
               </span>
             )}
@@ -237,7 +205,7 @@ export default async function WishlistPage() {
         {tourWishlist.length === 0 ? (
           <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-8 text-center">
             <Heart size={32} className="text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm mb-2">Нет сохранённых туров</p>
+            <p className="text-slate-300 text-sm mb-2">Нет сохранённых туров</p>
             <p className="text-xs text-slate-600 mb-4">Нажмите ♡ на странице тура чтобы добавить в вишлист</p>
             <Link href="/tour" className="inline-flex items-center gap-2 text-sm font-bold text-teal-400 hover:text-teal-300 transition-colors">
               Смотреть туры <ArrowRight size={14} />
@@ -267,7 +235,7 @@ export default async function WishlistPage() {
                   <div className="flex-1 p-4 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       {tour.category && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text}`}>
+                        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text}`}>
                           {tour.category.title}
                         </span>
                       )}
@@ -283,7 +251,7 @@ export default async function WishlistPage() {
                       {tour.title}
                     </Link>
 
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-2">
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-300 mb-2">
                       {tour.location && <span className="flex items-center gap-1"><MapPin size={10} /> {tour.location}</span>}
                       {tour.duration && <span className="flex items-center gap-1"><Clock size={10} /> {tour.duration}</span>}
                       {tour.distance && <span className="flex items-center gap-1"><TrendingUp size={10} /> {tour.distance} км</span>}
@@ -294,7 +262,7 @@ export default async function WishlistPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-teal-400 font-medium">{formatDate(nextDate.startDate)}</span>
                           {isLowSpots && (
-                            <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
+                            <span className="text-[12px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
                               Осталось {nextDate.spotsLeft} мест
                             </span>
                           )}
@@ -333,7 +301,7 @@ export default async function WishlistPage() {
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
                   <p className="text-sm font-bold text-slate-200 group-hover:text-white line-clamp-2 transition-colors leading-snug">{sp.post.title}</p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1.5">
+                  <p className="text-[12px] text-slate-300 font-bold uppercase tracking-wider mt-1.5">
                     {sp.post.read_time ? `${sp.post.read_time} мин чтения` : 'Статья'}
                   </p>
                 </div>
@@ -343,29 +311,33 @@ export default async function WishlistPage() {
         </section>
       )}
 
-      {/* ── ПОДПИСКИ НА КАТЕГОРИИ (Чистый UI с Pill-тегами) ── */}
+    {/* ── ПОДПИСКИ НА КАТЕГОРИИ ── */}
       <section className="space-y-4 pt-4 border-t border-white/5">
         <div className="flex items-center gap-2">
           <Bell size={14} className="text-teal-400" />
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
             Направления (Подписки)
           </h2>
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Мы пришлём уведомление в Telegram когда появятся новые даты в выбранных категориях.
+        <p className="text-xs text-slate-300 leading-relaxed">
+          Мы пришлём уведомление, когда появятся новые даты в выбранных категориях.
         </p>
 
-        {/* Рендерим наши новые минималистичные Pill-теги */}
-        <CategoryPills categories={allCategories} subscribedIds={subscribedCategoryIds} />
+        <CategoryPills
+          categories={allCategories}
+          subscribedIds={subscribedCategoryIds}
+          memberId={profile.id}
+        />
 
-        <p className="text-xs text-slate-600 mt-4">
-          Уведомления приходят в Telegram. Убедитесь что вы подписаны на{' '}
+        {/* ✅ ВЕРНУЛИ ТВОЮ ФРАЗУ ПРО КАНАЛ */}
+        <p className="text-xs text-slate-400 mt-5">
+          Уведомления о новых турах и постах приходят в наш Telegram канал. Убедитесь что вы подписаны на{' '}
           <a
             href="https://t.me/evaturclub"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-teal-500 hover:text-teal-400 transition-colors"
+            className="text-teal-500 hover:text-teal-400 font-medium transition-colors"
           >
             @evaturclub
           </a>

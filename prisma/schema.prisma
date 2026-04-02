@@ -34,8 +34,8 @@ model Blog {
 
   guide        Guide?         @relation(fields: [guideId], references: [id])
   blogCategory BlogCategory?  @relation(fields: [categoryId], references: [id])
-  favoritedBy  FavoritePost[] // Связь с закладками пользователя
-
+  favoritedBy  FavoritePost[] 
+ 
   @@index([isActive])
   @@index([categoryId])
   @@map("blog_posts")
@@ -77,11 +77,17 @@ model Tour {
   distance     String?
   meetingPoint String? @map("meeting_point")
   route        String?
+
   price        Int     @default(0)
   priceOld     Int?    @map("price_old")
   priceChild   Int?    @map("price_child")
   priceFamily  Int?    @map("price_family")
   priceMember  Int?    @map("price_member")
+
+  // ✅ ПРОВЕРЕНО И ОСТАВЛЕНО: ССЫЛКИ НА ОПЛАТУ
+  biletpmrLink  String? @map("biletpmr_link") 
+  apbQrLink     String? @map("apb_qr_link")   
+  apbQrImage    String? @map("apb_qr_image")
 
   coverImage String?  @map("cover_image")
   metaDesc   String?  @map("meta_desc")
@@ -93,15 +99,15 @@ model Tour {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  guideId  String?       @map("guide_id") @db.Uuid
-  guide    Guide?        @relation(fields: [guideId], references: [id])
-  category TourCategory? @relation(fields: [categoryId], references: [id])
+  guideId  String?        @map("guide_id") @db.Uuid
+  guide    Guide?         @relation(fields: [guideId], references: [id])
+  category TourCategory?  @relation(fields: [categoryId], references: [id])
 
   bookings   Booking[]
   tourDates  TourDate[]
   waitlists  Waitlist[]
   reviews    Review[]
-  watchLists WatchList[] // Связь избранного
+  watchLists WatchList[] 
 
   @@index([isActive])
   @@index([categoryId])
@@ -116,6 +122,12 @@ model TourDate {
   startDate DateTime  @map("start_date") @db.Date
   endDate   DateTime? @map("end_date") @db.Date
   time      String?
+  meetingTime  String? @map("meeting_time")
+  meetingPoint String? @map("meeting_point_override")
+  
+  // ✅ НОВОЕ ПОЛЕ: Секретный чат (v2.0)
+  groupChatUrl String? @map("group_chat_url")
+  
   spots     Int       @default(15)
   spotsLeft Int       @default(15) @map("spots_left")
 
@@ -143,6 +155,8 @@ model TourDate {
 
 model Booking {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  shortId     Int? @unique @map("short_id")
 
   memberId String?        @map("member_id") @db.Uuid
   member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -152,27 +166,36 @@ model Booking {
   email  String?
   social String?
 
-  ticketsAdult  Int     @default(0) @map("tickets_adult")
-  ticketsChild  Int     @default(0) @map("tickets_child")
-  ticketsFamily Int     @default(0) @map("tickets_family")
-  ticketsMember Int     @default(0) @map("tickets_member")
+  ticketsAdult  Int       @default(0) @map("tickets_adult")
+  ticketsChild  Int       @default(0) @map("tickets_child")
+  ticketsFamily Int       @default(0) @map("tickets_family")
+  ticketsMember Int       @default(0) @map("tickets_member")
 
-  guests        Json?   @default("[]")
-
+  guests        Json?     @default("[]")
   comment       String?
-  totalPrice    Int     @map("total_price")
-  amountPaid    Int     @default(0) @map("amount_paid")
-  discount      Int     @default(0)
-  paymentMethod String? @map("payment_method")
-  source        String  @default("website")
 
-  status     BookingStatus @default(pending)
-  bookedDate DateTime?     @map("booked_date")
+  totalPrice    Int       @map("total_price")
+  amountPaid    Int       @default(0) @map("amount_paid")
+  discount      Int       @default(0)
+  paymentMethod String?   @map("payment_method")
+  source        String    @default("website")
+
+  status BookingStatus @default(pending)
+  bookedDate DateTime? @map("booked_date")
 
   tourId      String  @map("tour_id") @db.Uuid
   tourDateId  String? @map("tour_date_id") @db.Uuid
   promoCodeId String? @map("promo_code_id") @db.Uuid
+  
+  // ✅ НОВЫЕ ПОЛЯ: Модерация чеков и логи (v2.0)
+  paymentProofUrl String?   @map("payment_proof_url") // Скриншот чека из TG бота
+  receiptUrl      String?   @map("receipt_url")       // Официальный чек (если есть)
+  confirmedBy     String?   @map("confirmed_by")      // Кто из админов проверил
+  confirmedAt     DateTime? @map("confirmed_at")      // Когда проверили
 
+  payerTgChatId   String? @map("payer_tg_chat_id")
+  rejectReason    String? @map("reject_reason") 
+ 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   tour      Tour       @relation(fields: [tourId], references: [id], onDelete: Cascade)
@@ -182,6 +205,8 @@ model Booking {
   @@index([tourId])
   @@index([status])
   @@index([memberId])
+  @@index([shortId]) 
+  @@index([phone, tourDateId])
   @@map("bookings")
 }
 
@@ -190,26 +215,23 @@ model Waitlist {
   tourId     String  @map("tour_id") @db.Uuid
   tourDateId String? @map("tour_date_id") @db.Uuid
   
-  // ✅ ИЗМЕНЕНИЯ ЗДЕСЬ: Интеграция с MemberProfile
   memberId   String? @map("member_id") @db.Uuid
   name       String
-  phone      String? // Телефон теперь не обязателен, если есть memberId
+  phone      String?
   social     String?
-  
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   tour       Tour           @relation(fields: [tourId], references: [id], onDelete: Cascade)
   tourDate   TourDate?      @relation(fields: [tourDateId], references: [id], onDelete: Cascade)
-  member     MemberProfile? @relation(fields: [memberId], references: [id], onDelete: Cascade) // Связь
+  member     MemberProfile? @relation(fields: [memberId], references: [id], onDelete: Cascade) 
 
   @@index([tourId])
   @@index([tourDateId])
-  @@index([memberId]) // Индекс для быстрого поиска
+  @@index([memberId]) 
   @@map("waitlists")
 }
 
 model PromoCode {
-
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code        String    @unique
   discount    Int       @default(100) 
@@ -306,21 +328,26 @@ model ContentBlock {
 }
 
 model Review {
-  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name     String
-  text     String
-  source   String  @default("tg")
-  avatar   String?
-  category String  @default("general")
-  isActive Boolean @default(true) @map("is_active")
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String  
+  text       String
+  source     String   @default("tg") 
+  avatar     String?
+  category   String   @default("general")
+  isActive   Boolean  @default(true) @map("is_active") 
 
-  tourId String? @map("tour_id") @db.Uuid
-  tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: SetNull)
-  memberId String? @map("member_id") @db.Uuid
-  member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  rating     Int?
+  tags       String[] @default([]) 
+  images     String[] @default([]) 
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tourId     String?  @map("tour_id") @db.Uuid
+  tour       Tour?    @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  
+  memberId   String?  @map("member_id") @db.Uuid
+  member     MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([isActive])
   @@map("reviews")
@@ -354,6 +381,7 @@ model FunTest {
   category    String  @default("general")
   isActive    Boolean @default(false)
   passCount   Int     @default(0)
+  order       Int      @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -371,7 +399,7 @@ model MemberProfile {
   email      String?
   avatarUrl  String? @map("avatar_url")
   telegram       String?
-  tgChatId      String?   @unique @map("tg_chat_id")
+  tgChatId      String? @unique @map("tg_chat_id")
   instagram      String?
   viber          String?
   
@@ -392,16 +420,38 @@ model MemberProfile {
   watchLists    WatchList[]
   testResults   TestResult[]
   favoritePosts FavoritePost[] 
-  waitlists     Waitlist[]     // ✅ ИЗМЕНЕНИЯ ЗДЕСЬ: Обратная связь с листом ожидания
+  waitlists     Waitlist[]     
   reviews       Review[]
+  notifications Notification[] // ✅ НОВОЕ ПОЛЕ: Связь с таблицей логов/уведомлений
 
-  balance       Int       @default(0)
+  // ✅ НОВОЕ ПОЛЕ: Баланс для кэшбэка и рефералки (v2.0)
+  balance       Int       @default(0) 
+  
   invitedByCode String?
   promoCode     PromoCode?
 
   @@index([phone])
   @@index([userId])
   @@map("member_profiles")
+}
+
+// ✅ НОВАЯ ТАБЛИЦА: Центр Уведомлений / Логи (v2.0)
+model Notification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  member    MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  type      String   @default("info") // info, booking, bonus, system
+  title     String?
+  message   String
+  link      String?  // Ссылка для перехода (например, /account/bookings/123)
+  
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([memberId])
+  @@index([isRead])
+  @@map("notifications")
 }
 
 model WatchList {
@@ -413,7 +463,7 @@ model WatchList {
   tourId String? @map("tour_id") @db.Uuid
   tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
-  categoryId String?       @map("category_id") @db.Uuid
+  categoryId String? @map("category_id") @db.Uuid
   category   TourCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
   guideId String? @map("guide_id") @db.Uuid
@@ -472,7 +522,10 @@ enum PostFormat {
 
 enum BookingStatus {
   pending
+  awaiting_payment
+  moderation
   confirmed
+  rejected
   cancelled
 }
 

@@ -95,7 +95,7 @@ export default function DirectionHero({ data }: DirectionHeroProps) {
           }}
         >
           <span
-            className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]"
+            className="text-[12px] sm:text-xs font-black uppercase tracking-[0.2em]"
             style={{ color: theme.hex }}
           >
             {data.hero.badge}

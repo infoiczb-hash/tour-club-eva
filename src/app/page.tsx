@@ -10,6 +10,7 @@ import { getReviews } from '@/features/reviews/actions';
 import { getTourCategoriesAction, getBlogCategoriesAction } from '@/features/admin/actions/categories';
 // ✅ ДОБАВЛЕНО: Экшен для тестов (чтобы убрать Waterfall-фетч с клиента)
 import { getFunTestsAction } from '@/features/admin/actions/fun';
+import { getGuidesForLanding } from '@/features/guides/api';
 
 import Hero from '@/features/landing/components/Hero';
 import LazySocialGrid from '@/features/landing/components/LazySocialGrid';
@@ -73,53 +74,31 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // ✅ ДОБАВИЛИ ЗАПРОС КАТЕГОРИЙ БЛОГА В PROMISE.ALL
-const [rawGuides, posts, allReviews, bCatRes, funRes] = await Promise.all([
-    prisma.guide.findMany({ 
-      where: { isActive: true },
-      orderBy: { order: 'asc' } 
-    }),
+const [guides, posts, allReviews, bCatRes, funRes] = await Promise.all([
+    getGuidesForLanding(),
     getBlogPosts(),
     getReviews(),
     getBlogCategoriesAction(),
-    getFunTestsAction(), // ✅ Грузим тесты сразу на сервере
+    getFunTestsAction(),
   ]);
 
   // ✅ ИЗВЛЕКАЕМ КАТЕГОРИИ БЛОГА
   const blogCategories = bCatRes.success ? bCatRes.data : [];
   const activeTests = funRes?.success && funRes.data ? funRes.data.filter(t => t.isActive) : [];
 
-  const activeReviews = allReviews.filter(r => r.isActive).map(r => ({
-    id: r.id,
-    name: r.name,
-    text: r.text,
-    source: r.source,
-    category: r.category,
-    createdAt: r.createdAt.toISOString(), 
-    avatar: r.avatar
+  const activeReviews = allReviews
+    .filter(r => r.isActive)
+    .slice(0, 12) // ✅ ИСПРАВЛЕНО: Ограничили до 12 отзывов для спасения DOM и снижения TBT
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      text: r.text,
+      source: r.source,
+      category: r.category,
+      createdAt: r.createdAt.toISOString(), 
+      avatar: r.avatar
   }));
   
-  const guides = rawGuides.map((guide) => ({
-    id: String(guide.id),
-    slug: guide.slug || "",
-    name: guide.name,
-    role: guide.role,
-    image: guide.image,           
-    actionImage: guide.actionImage, 
-    bio: guide.bio, 
-    fullBio: guide.fullBio,
-    superpower: guide.superpower, 
-    experience: guide.experience,
-    achievements: guide.achievements || [],
-    tags: guide.tags || [],
-    quotes: guide.quotes || [],
-    stats: guide.stats, 
-    instagram: guide.instagram,
-    telegram: guide.telegram,
-    contact: guide.contact,       
-    order: guide.order,
-    isActive: guide.isActive
-  }));
-
   // ✅ ДОБАВЛЕНО: Микроразметка WebSite + SearchAction для Google
   const websiteSchema = {
     '@context': 'https://schema.org',

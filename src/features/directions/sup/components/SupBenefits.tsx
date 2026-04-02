@@ -56,7 +56,7 @@ export default function SupBenefits() {
             <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-4">
                 Почему стоит выбрать <span className="text-teal-500">SUP</span>
             </h2>
-            <p className="text-slate-400 text-[14px] md:text-base font-medium leading-relaxed">
+            <p className="text-slate-300 text-[14px] md:text-base font-medium leading-relaxed">
                 Продуманный до мелочей сервис, где ваша единственная задача — наслаждаться моментом.
             </p>
         </div>
@@ -81,7 +81,7 @@ export default function SupBenefits() {
                       <h3 className="text-lg md:text-xl font-black text-white mb-2 uppercase tracking-tight group-hover:text-teal-400 transition-colors leading-tight">
                         {b.title}
                       </h3>
-                      <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
+                      <p className="text-[14px] text-slate-300 leading-relaxed font-medium">
                         {b.text}
                       </p>
                   </div>
@@ -90,7 +90,7 @@ export default function SupBenefits() {
             </div>
 
             {/* Подсказка "Мотай" */}
-               <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+               <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                               <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                               <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                                           </div>

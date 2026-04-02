@@ -37,7 +37,7 @@ export default function OfferPage() {
         
         {/* Header */}
         <div className="mb-8 md:mb-12">
-            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
+            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-300 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
                 <ArrowLeft size={16} /> На главную
             </Link>
             
@@ -45,7 +45,7 @@ export default function OfferPage() {
               Публичная <span className="text-teal-500">Оферта</span>
             </h1>
             
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-slate-400 text-sm md:text-sm font-medium bg-slate-900/50 p-4 md:p-5 rounded-xl border border-white/5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-slate-300 text-sm md:text-sm font-medium bg-slate-900/50 p-4 md:p-5 rounded-xl border border-white/5">
                 <div className="flex items-center gap-2">
                     <FileText size={18} className="text-teal-500 shrink-0" />
                     <span>Редакция от 14.02.2026</span>
@@ -120,7 +120,7 @@ export default function OfferPage() {
             </section>
     
             {/* Реквизиты */}
-            <div className="mt-12 md:mt-16 p-6 bg-slate-900/50 border border-white/5 rounded-2xl text-sm md:text-base text-slate-400">
+            <div className="mt-12 md:mt-16 p-6 bg-slate-900/50 border border-white/5 rounded-2xl text-sm md:text-base text-slate-300">
                 <h2 className="!text-white uppercase !mt-0 !mb-5 text-xl">8. Реквизиты Организатора</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
@@ -143,7 +143,7 @@ export default function OfferPage() {
         <div className="mt-8 md:mt-12 p-5 md:p-6 bg-slate-900/80 border border-white/5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
             <div>
                 <h3 className="text-white font-black text-lg md:text-xl uppercase tracking-tight mb-1.5">Остались вопросы?</h3>
-                <p className="text-slate-400 text-sm md:text-sm max-w-md">Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!</p>
+                <p className="text-slate-300 text-sm md:text-sm max-w-md">Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!</p>
             </div>
             
             {/* 👇 НАШ НОВЫЙ КЛИЕНТСКИЙ ОСТРОВОК */}

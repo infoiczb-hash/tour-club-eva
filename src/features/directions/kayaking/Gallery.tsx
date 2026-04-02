@@ -63,7 +63,7 @@ export default function Gallery() {
             <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4">
               Живые <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">Эмоции</span>
             </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl leading-relaxed">
+            <p className="text-slate-300 text-sm md:text-base font-medium max-w-xl leading-relaxed">
               Лучше один раз увидеть, чем сто раз прочитать. Наши походы — это тысячи счастливых улыбок и гигабайты контента.
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function Gallery() {
               fill
               className="object-contain"
               sizes="100vw"
-              quality={90}
+              quality={75}
               priority
             />
           </div>

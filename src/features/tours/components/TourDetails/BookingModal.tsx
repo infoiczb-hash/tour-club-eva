@@ -4,11 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
-  AlertCircle, Users, LifeBuoy 
+  AlertCircle, Users, LifeBuoy, CalendarDays,
+  CreditCard, Banknote, Globe, QrCode, Tag
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
+import { SuccessScreen } from './SuccessScreen';
+import { validatePromoCodeAction } from '@/features/tours/actions/validatePromo'; 
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -20,13 +23,27 @@ interface BookingModalProps {
 
 const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL-5XL'];
 
-const formatDateForDropdown = (d: any) => {
+type DropdownDateInfo = {
+  id?: string;
+  start?: string | Date;
+  date?: string | Date;
+  time?: string | null;
+};
+
+const formatDateForDropdown = (d: DropdownDateInfo) => {
   const dateVal = d.start || d.date;
   if (!dateVal) return '';
   const dateObj = new Date(dateVal);
   const str = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   return `${str}${d.time ? ` в ${d.time}` : ''}`;
 };
+
+export interface GuestDetails {
+  name: string;
+  phone?: string;
+  age?: string;
+  jacket: string;
+}
 
 export default function BookingModal({ 
   isOpen, 
@@ -40,6 +57,9 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Стейт для способа оплаты (По умолчанию онлайн)
+  const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign'>('biletpmr');
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '+373 ',
@@ -47,6 +67,16 @@ export default function BookingModal({
     comment: '',
     website: '' 
   });
+
+  const [successData, setSuccessData] = useState<{
+   bookingId: string;
+    shortId: number;
+    totalPrice: number;
+    biletpmrLink?: string | null;
+    apbQrLink?: string | null;
+    apbQrImage?: string | null;
+    paymentMethod: string;
+  } | null>(null);
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
@@ -58,40 +88,68 @@ export default function BookingModal({
     family: 0 
   });
   
-  // Хранилище данных для каждого конкретного гостя
-  const [guestData, setGuestData] = useState<Record<string, {name: string, jacket: string}>>({});
+  const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
-  const isWaterTour = ['sup', 'kayaking', 'kayak', 'water'].includes(
+  // Стейты баланса, бонусов и промокодов
+ const [balance, setBalance] = useState<number>(0);
+  const [useBonuses, setUseBonuses] = useState<boolean>(false);
+  
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [promoType, setPromoType] = useState<string>('fixed');
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoSuccess, setPromoSuccess] = useState<boolean>(false);
+  const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false);
+
+  const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
     tour.category?.slug?.toLowerCase() || ''
   );
 
-  // 1. Инициализация (Фикс бага с пустой датой) + Профиль
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
-      // Инициализируем дату сразу
+      // ✅ БАГ 8 ИСПРАВЛЕН: Убрана фантомная проверка tour.date
       if (initialDate && initialDateId) {
          setSelectedDateStr(initialDate);
          setSelectedDateId(initialDateId);
       } else if (tour.dates && tour.dates.length > 0) {
          setSelectedDateId(tour.dates[0].id || null);
          setSelectedDateStr(formatDateForDropdown(tour.dates[0]));
-      } else if (tour.date) {
-         setSelectedDateStr(new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }));
+      } else {
+         // Заглушка, если дат еще нет (предотвращает краш Invalid Date)
+         setSelectedDateStr('Открытая дата (по согласованию)');
+         setSelectedDateId(null);
       }
 
-      // Подтягиваем профиль (Включая соцсети для админки)
-      getMyProfileAction().then(profile => {
-        if (profile) {
-          setFormData(prev => ({
+     getMyProfileAction().then((profile) => {
+        if (!profile) return;
+
+        // 1. Контакты заказчика
+        setFormData((prev) => ({
+          ...prev,
+          name: profile.name || prev.name,
+          phone: profile.phone || prev.phone,
+          social: profile.telegram || profile.instagram || profile.email || prev.social,
+        }));
+
+        setBalance(profile.balance || 0);
+
+        // 2. Данные первого билета (он же заказчик)
+        setGuestData((prev) => {
+          const firstGuest = prev['adult_0'] || { name: '', jacket: '' }; 
+
+          return {
             ...prev,
-            name: profile.name || prev.name,
-            phone: profile.phone || prev.phone,
-            social: profile.telegram || profile.instagram || profile.email || prev.social
-          }));
-        }
+            'adult_0': {
+              ...firstGuest,
+              name: profile.name || firstGuest.name || '',
+              jacket: profile.lifeJacketSize || firstGuest.jacket || '', // ✅ Используем правильный ключ jacket
+            },
+          };
+        });
       });
+      
     } else {
       document.body.style.overflow = '';
       const timer = setTimeout(() => {
@@ -100,13 +158,15 @@ export default function BookingModal({
         setFormData({ name: '', phone: '+373 ', social: '', comment: '', website: '' });
         setTickets({ adult: 1, child: 0, member: 0, family: 0 });
         setGuestData({});
+        setPaymentMethod('biletpmr'); 
+        setUseBonuses(false);
+        setPromoCode('');
       }, 300);
       return () => clearTimeout(timer);
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen, initialDate, initialDateId, tour]);
 
-  // 2. Генерация списка ожидаемых гостей
   const expectedGuests = useMemo(() => {
     const list = [];
     for(let i=0; i<tickets.adult; i++) list.push({ type: 'Взрослый', id: `adult_${i}` });
@@ -120,8 +180,7 @@ export default function BookingModal({
     return list;
   }, [tickets]);
 
-  // Расчет итоговой цены
-  const totalPrice = useMemo(() => {
+  const baseTotalPrice = useMemo(() => {
     let sum = tickets.adult * tour.price;
     if (tour.priceChild) sum += tickets.child * tour.priceChild;
     if (tour.priceMember) sum += tickets.member * tour.priceMember;
@@ -129,7 +188,45 @@ export default function BookingModal({
     return sum;
   }, [tickets, tour]);
 
-  // 3. Восстановленный умный плейсхолдер
+  // Логика скидки из баланса (Промокод посчитается на сервере)
+// ✅ Функция проверки промокода
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setIsCheckingPromo(true);
+    setPromoError(null);
+    setPromoSuccess(false);
+    setPromoDiscount(0);
+
+    try {
+      const res = await validatePromoCodeAction(promoCode);
+      if (res.success) {
+        setPromoSuccess(true);
+        setPromoDiscount(res.discount!);
+        setPromoType(res.type!);
+      } else {
+        setPromoError(res.error || 'Ошибка проверки кода');
+      }
+    } catch (e) {
+      setPromoError('Ошибка соединения');
+    } finally {
+      setIsCheckingPromo(false);
+    }
+  };
+
+  // ✅ Умный пересчет цены (Бонусы ИЛИ Промокод)
+  const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
+  const availableBonusesToUse = Math.min(balance, maxBonusDiscount);
+  
+  let appliedDiscount = 0;
+  if (useBonuses && balance > 0) {
+    appliedDiscount = availableBonusesToUse;
+  } else if (promoSuccess) {
+    appliedDiscount = promoType === 'percent' 
+      ? Math.floor(baseTotalPrice * (promoDiscount / 100)) 
+      : promoDiscount;
+  }
+  const finalPrice = Math.max(0, baseTotalPrice - appliedDiscount);
+
   const getSmartPlaceholder = () => {
     const categorySlug = tour.category?.slug;
     if (categorySlug === 'water' || categorySlug === 'kayaking' || categorySlug === 'sup') {
@@ -150,10 +247,13 @@ export default function BookingModal({
     target.style.height = `${target.scrollHeight}px`;
   };
 
-  const handleGuestChange = (id: string, field: string, value: string) => {
+  const handleGuestChange = (id: string, field: keyof GuestDetails, value: string) => {
     setGuestData(prev => ({ 
       ...prev, 
-      [id]: { ...prev[id], [field]: value } 
+      [id]: { 
+        ...prev[id], 
+        [field]: value 
+      } as GuestDetails
     }));
   };
 
@@ -162,13 +262,12 @@ export default function BookingModal({
     setIsLoading(true);
     setErrorMsg(null);
 
-    // Собираем массив гостей для базы
     const payloadGuests = expectedGuests.map((g, index) => {
         if (index === 0) {
             return {
                 isMain: true,
                 type: g.type,
-                name: formData.name.trim(), // Главный заказчик
+                name: formData.name.trim(), 
                 phone: formData.phone.trim(),
                 jacket: guestData[g.id]?.jacket || ''
             };
@@ -177,6 +276,8 @@ export default function BookingModal({
             isMain: false,
             type: g.type,
             name: guestData[g.id]?.name?.trim() || '',
+            phone: guestData[g.id]?.phone?.trim() || undefined,
+            age: guestData[g.id]?.age?.trim() || undefined,
             jacket: guestData[g.id]?.jacket || ''
         };
     });
@@ -196,20 +297,34 @@ export default function BookingModal({
         ticketsChild:  tickets.child,
         ticketsMember: tickets.member,
         ticketsFamily: tickets.family, 
-        guests:        payloadGuests, // Отправляем массив
-        totalPrice,
-        currency:      tour.currency ?? 'MDL',
+        guests:        payloadGuests, 
+        totalPrice:    baseTotalPrice,
+        currency:      tour.currency ?? 'RUB',
+        paymentMethod: paymentMethod, 
+        useBonuses:    useBonuses,
+        expectedPrice: finalPrice, // ✅ БАГ 6 ИСПРАВЛЕН: Передаем ожидаемую цену
+        promoCode:     promoCode.trim() || undefined, // ✅ Передаем промокод
       });
 
       if (result.success) {
+        setSuccessData({
+          bookingId: result.bookingId,
+          shortId: result.shortId,
+          totalPrice: result.totalPrice, // Цена с учетом всех серверных скидок (бонусы/промо)
+          biletpmrLink: result.biletpmrLink,
+          apbQrLink: result.apbQrLink,
+          apbQrImage: result.apbQrImage,
+          paymentMethod: paymentMethod
+        });
+        
         setStep('success');
-      } else {
-        // Умный вывод ошибок Zod
+     } else {
         if (result.fields && Object.keys(result.fields).length > 0) {
             const issues = Object.values(result.fields).join(' | ');
-            setErrorMsg(`Исправьте ошибки: ${issues}`);
+            setErrorMsg(`Ошибка в полях: ${issues}`);
         } else {
-            setErrorMsg(result.error ?? 'Что-то пошло не так. Попробуйте ещё раз.');
+            // ✅ Если это наша ошибка о дубликате (Анти-спам), она будет в result.error
+            setErrorMsg(result.error || 'Произошла ошибка при бронировании. Попробуйте позже.');
         }
       }
     } catch {
@@ -233,13 +348,13 @@ export default function BookingModal({
     <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
       <div>
         <div className="text-sm font-bold text-white">{label}</div>
-        <div className="text-xs text-slate-400">{price} {tour.currency}</div>
+        <div className="text-xs text-slate-300">{price} {tour.currency}</div>
       </div>
       <div className="flex items-center gap-3 bg-slate-950 rounded-lg p-1 border border-white/10">
         <button 
           type="button" 
           onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(type === 'adult' ? 1 : 0, prev[type] - 1) }))} 
-          className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors"
         >
           <Minus size={16} />
         </button>
@@ -282,7 +397,7 @@ export default function BookingModal({
             </div>
             <button 
               onClick={onClose} 
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
             >
               <X size={18} />
             </button>
@@ -292,7 +407,6 @@ export default function BookingModal({
             {step === 'form' ? (
               <form onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* Honeypot поле для ботов */}
                 <input 
                   type="text" 
                   name="website" 
@@ -303,7 +417,7 @@ export default function BookingModal({
                 />
 
                 <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
+                   <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-1.5">
                      <Calendar size={12} /> Дата и время
                    </label>
                    
@@ -330,142 +444,241 @@ export default function BookingModal({
                               </option>
                             ))}
                           </select>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
                             ▼
                           </div>
                         </div>
                       ) : (
                          <div className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-slate-300">
-                            {new Date(tour.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+                            {selectedDateStr}
                          </div>
                       )
                    )}
                 </div>
 
                 <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                    <Counter 
-                      label="Взрослый" 
-                      price={tour.price} 
-                      value={tickets.adult} 
-                      type="adult" 
-                    />
-                    
+                    <Counter label="Взрослый" price={tour.price} value={tickets.adult} type="adult" />
                     {tour.priceChild && tour.priceChild > 0 ? (
-                      <Counter 
-                        label="Детский" 
-                        price={tour.priceChild} 
-                        value={tickets.child} 
-                        type="child" 
-                      />
+                      <Counter label="Детский" price={tour.priceChild} value={tickets.child} type="child" />
                     ) : null}
-                    
                     {tour.priceFamily && tour.priceFamily > 0 ? (
-                      <Counter 
-                        label="Семейный (2 взр. + 1 реб.)" 
-                        price={tour.priceFamily} 
-                        value={tickets.family} 
-                        type="family" 
-                      />
+                      <Counter label="Семейный (2 взр. + 1 реб.)" price={tour.priceFamily} value={tickets.family} type="family" />
                     ) : null}
-                    
                     {tour.priceMember && tour.priceMember > 0 ? (
-                      <Counter 
-                        label="По клубной карте" 
-                        price={tour.priceMember} 
-                        value={tickets.member} 
-                        type="member" 
-                      />
+                      <Counter label="По клубной карте" price={tour.priceMember} value={tickets.member} type="member" />
                     ) : null}
                     
-                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
-                       <span className="text-xs font-bold text-slate-400 uppercase">Итого к оплате:</span>
-                       <span className="text-xl font-black text-teal-400">
-                         {totalPrice.toLocaleString()} {tour.currency}
-                       </span>
+                    {/* ✅ ЛОГИКА: Бонусы ИЛИ Промокод */}
+                    {balance > 0 ? (
+                      <div className="pt-3 mt-1 border-t border-white/10">
+                        <label className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 transition-colors">
+                          <div className="relative flex items-center justify-center">
+                            <input 
+                              type="checkbox" 
+                              checked={useBonuses} 
+                              onChange={(e) => setUseBonuses(e.target.checked)} 
+                              className="peer sr-only" 
+                            />
+                            <div className="w-5 h-5 border-2 border-amber-500/50 rounded flex items-center justify-center bg-slate-950 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all">
+                              <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-amber-500">Списать бонусы</p>
+                            <p className="text-[12px] text-amber-500/70 uppercase tracking-widest font-bold mt-0.5">
+                              Доступно {balance} ₽ (макс. {maxBonusDiscount} ₽)
+                            </p>
+                          </div>
+                          {useBonuses && (
+                            <div className="text-sm font-black text-amber-500 shrink-0">
+                              -{availableBonusesToUse} ₽
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                   ) : (
+                      <div className="pt-3 mt-1 border-t border-white/10">
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                            <input 
+                              type="text" 
+                              placeholder="У меня есть промокод" 
+                              value={promoCode} 
+                              onChange={(e) => {
+                                setPromoCode(e.target.value);
+                                if (promoSuccess) {
+                                  setPromoSuccess(false);
+                                  setPromoDiscount(0);
+                                }
+                                setPromoError(null);
+                              }} 
+                              disabled={promoSuccess || isCheckingPromo}
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-400 disabled:opacity-50" 
+                            />
+                          </div>
+                          {!promoSuccess ? (
+                              <button
+                                type="button"
+                                onClick={handleApplyPromo}
+                                disabled={!promoCode.trim() || isCheckingPromo}
+                                className="px-4 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-teal-500/20 disabled:opacity-50 transition-colors flex items-center justify-center min-w-[100px]"
+                              >
+                                {isCheckingPromo ? <Loader2 size={14} className="animate-spin" /> : 'Применить'}
+                              </button>
+                          ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPromoSuccess(false);
+                                  setPromoCode('');
+                                  setPromoDiscount(0);
+                                }}
+                                className="px-4 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-500/20 transition-colors flex items-center justify-center min-w-[100px]"
+                              >
+                                Отменить
+                              </button>
+                          )}
+                        </div>
+                        {promoError && (
+                          <p className="text-[12px] text-rose-400 mt-1.5 ml-1 font-bold">
+                            {promoError}
+                          </p>
+                        )}
+                        {promoSuccess && (
+                          <p className="text-[12px] text-teal-400 mt-1.5 ml-1 font-bold">
+                            ✅ Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                   <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
+                       <span className="text-xs font-bold text-slate-300 uppercase">Итого к оплате:</span>
+                       <div className="text-right flex items-center gap-2 justify-end">
+                         {(useBonuses || promoSuccess) && (
+                           <div className="text-[12px] text-slate-300 line-through font-bold uppercase tracking-widest">
+                             {baseTotalPrice.toLocaleString()} {tour.currency}
+                           </div>
+                         )}
+                         <span className="text-xl font-black text-teal-400">
+                           {finalPrice.toLocaleString()} {tour.currency}
+                         </span>
+                       </div>
                     </div>
                 </div>
 
-                {/* ДИНАМИЧЕСКИЙ СПИСОК ГОСТЕЙ */}
                 <div className="space-y-4 pt-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
                         <Users size={14} className="text-teal-500" /> Данные участников ({expectedGuests.length})
                     </label>
 
-                    {expectedGuests.map((guest, index) => (
-                        <div key={guest.id} className="bg-slate-950/50 border border-white/10 rounded-xl p-4 space-y-3">
-                            <div className="flex justify-between items-center mb-1">
-                               <span className="text-[10px] font-black uppercase text-teal-500 tracking-widest">
-                                 Участник {index + 1} {index === 0 && '(Вы)'}
-                               </span>
-                               <span className="text-[10px] text-slate-500 font-bold uppercase">
-                                 {guest.type}
-                               </span>
-                            </div>
+                    {expectedGuests.map((guest, index) => {
+                        const isChild = guest.type.includes('Дет');
 
-                            {index === 0 ? (
-                                // Заказчик (Участник 1)
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="relative">
-                                       <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input 
-                                         required 
-                                         type="text" 
-                                         placeholder="Имя Фамилия" 
-                                         value={formData.name} 
-                                         onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                       />
-                                    </div>
-                                    <div className="relative">
-                                       <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input 
-                                         required 
-                                         type="tel" 
-                                         value={formData.phone} 
-                                         onChange={(e) => setFormData({...formData, phone: e.target.value})} 
-                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                       />
-                                    </div>
-                                </div>
-                            ) : (
-                                // Дополнительные участники
-                                <div>
-                                    <div className="relative">
-                                       <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                       <input 
-                                         required 
-                                         type="text" 
-                                         placeholder="Имя участника" 
-                                         value={guestData[guest.id]?.name || ''} 
-                                         onChange={(e) => handleGuestChange(guest.id, 'name', e.target.value)} 
-                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                       />
-                                    </div>
-                                </div>
-                            )}
+                        return (
+                          <div key={guest.id} className="bg-slate-950/50 border border-white/10 rounded-xl p-4 space-y-3">
+                              <div className="flex justify-between items-center mb-1">
+                                 <span className="text-[12px] font-black uppercase text-teal-500 tracking-widest">
+                                   Участник {index + 1} {index === 0 && '(Вы)'}
+                                 </span>
+                                 <span className="text-[12px] text-slate-300 font-bold uppercase">
+                                   {guest.type}
+                                 </span>
+                              </div>
 
-                            {/* Выбор жилета для воды */}
-                            {isWaterTour && (
-                                <div className="relative">
-                                    <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"/>
-                                    <select 
-                                      required 
-                                      value={guestData[guest.id]?.jacket || ''} 
-                                      onChange={(e) => handleGuestChange(guest.id, 'jacket', e.target.value)} 
-                                      className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none"
-                                    >
-                                        <option value="" disabled>Размер спасжилета...</option>
-                                        {JACKET_SIZES.map(size => (
-                                          <option key={size} value={size}>{size}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                              {index === 0 ? (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      <div className="relative">
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                         <input 
+                                           required 
+                                           type="text" 
+                                           placeholder="Имя Фамилия" 
+                                           value={formData.name} 
+                                           onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                         />
+                                      </div>
+                                      <div className="relative">
+                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                         <input 
+                                           required 
+                                           type="tel" 
+                                           value={formData.phone} 
+                                           onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                         />
+                                      </div>
+                                  </div>
+                              ) : (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      <div className="relative">
+                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                         <input 
+                                           required 
+                                           type="text" 
+                                           placeholder="Имя Фамилия" 
+                                           value={guestData[guest.id]?.name || ''} 
+                                           onChange={(e) => handleGuestChange(guest.id, 'name', e.target.value)} 
+                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                         />
+                                      </div>
+
+                                      {isChild ? (
+                                          <div className="relative">
+                                            <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                            <input 
+                                              required 
+                                              type="number" 
+                                              min="1"
+                                              max="17"
+                                              placeholder="Возраст" 
+                                              value={guestData[guest.id]?.age || ''} 
+                                              onChange={(e) => handleGuestChange(guest.id, 'age', e.target.value)} 
+                                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                            />
+                                          </div>
+                                      ) : (
+                                          <div className="relative">
+                                            <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                            <input 
+                                              type="tel" 
+                                              placeholder="Телефон" 
+                                              value={guestData[guest.id]?.phone || ''} 
+                                              onChange={(e) => handleGuestChange(guest.id, 'phone', e.target.value)} 
+                                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                            />
+                                          </div>
+                                      )}
+                                  </div>
+                              )}
+
+                              {isWaterTour && (
+                                  <div className="relative mt-3">
+                                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                      <select 
+                                        required 
+                                        value={guestData[guest.id]?.jacket || ''} 
+                                        onChange={(e) => handleGuestChange(guest.id, 'jacket', e.target.value)} 
+                                        className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none cursor-pointer"
+                                      >
+                                          <option value="" disabled>Размер спасжилета...</option>
+                                          {JACKET_SIZES.map(size => (
+                                            <option key={size} value={size}>{size}</option>
+                                          ))}
+                                      </select>
+                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300 text-xs">
+                                        ▼
+                                      </div>
+                                  </div>
+                              )}
+                          </div>
+                        );
+                    })}
 
                     <div className="space-y-1.5 pt-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1.5">
+                      <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5">
                         <MessageSquare size={12} /> Комментарий / Пожелания
                       </label>
                       <textarea 
@@ -477,6 +690,71 @@ export default function BookingModal({
                         className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all resize-none min-h-[50px]"
                       />
                     </div>
+                </div>
+
+                {/* ✅ БАГ 7 ИСПРАВЛЕН: Доступность оплат (button role="radio") */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <CreditCard size={14} className="text-teal-500" /> Способ оплаты
+                  </label>
+                  
+                  <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'biletpmr'}
+                      onClick={() => setPaymentMethod('biletpmr')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
+                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} />
+                        </div>
+                        <span className="text-[12px] text-slate-300 leading-tight">BILETPMR/другой сервис</span>
+                    </button>
+
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'qr'}
+                      onClick={() => setPaymentMethod('qr')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'qr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <span className={`text-sm font-bold ${paymentMethod === 'qr' ? 'text-teal-400' : 'text-slate-300'}`}>QR-код</span>
+                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-300'} />
+                        </div>
+                        <span className="text-[12px] text-slate-300 leading-tight"> Система КЛЕВЕР/Наш совет</span>
+                    </button>
+
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'cash'}
+                      onClick={() => setPaymentMethod('cash')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
+                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
+                        </div>
+                        <span className="text-[12px] text-slate-300 leading-tight">Оплата гиду на месте</span>
+                    </button>
+
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'foreign'}
+                      onClick={() => setPaymentMethod('foreign')} 
+                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
+                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
+                        </div>
+                        <span className="text-[12px] text-slate-300 leading-tight">MIA / Переводы / Леи</span>
+                    </button>
+                  </div>
                 </div>
 
                 {errorMsg && (
@@ -494,34 +772,29 @@ export default function BookingModal({
                   {isLoading ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    `Оформить за ${totalPrice.toLocaleString()} ${tour.currency}`
+                    `Оформить за ${finalPrice.toLocaleString()} ${tour.currency}`
                   )}
                 </button>
                 
-                <p className="text-sm text-slate-500 text-center leading-tight">
+                <p className="text-sm text-slate-300 text-center leading-tight">
                   Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
                 </p>
 
               </form>
-            ) : (
-              <div className="flex flex-col items-center text-center py-8">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-6 border border-emerald-500/20 animate-in zoom-in duration-500">
-                  <CheckCircle size={40} />
-                </div>
-                <h3 className="text-2xl font-black text-white uppercase mb-2">
-                  Заявка принята!
-                </h3>
-                <p className="text-slate-400 text-sm mb-8 leading-relaxed max-w-[260px]">
-                  Мы свяжемся с вами в ближайшее время по номеру <span className="text-white font-bold">{formData.phone}</span>.
-                </p>
-                <button 
-                  onClick={onClose} 
-                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold uppercase tracking-wide rounded-xl transition-colors"
-                >
-                  Закрыть окно
-                </button>
-              </div>
-            )}
+         ) : successData ? (
+               <SuccessScreen
+                 bookingId={successData.bookingId} 
+                 shortId={successData.shortId}
+                 totalPrice={successData.totalPrice} 
+                 currency={tour.currency ?? 'RUB'}
+                 phone={formData.phone}
+                 biletpmrLink={successData.biletpmrLink}
+                 apbQrLink={successData.apbQrLink}
+                 apbQrImage={successData.apbQrImage}
+                 paymentMethod={successData.paymentMethod}
+                 onClose={onClose}
+               />
+            ) : null}
           </div>
         </div>
       </div>

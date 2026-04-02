@@ -91,14 +91,14 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
                    name="slug" 
                    label="URL (Slug)" 
                    placeholder="auto-generated"
-                   className="font-mono text-xs text-slate-500"
+                   className="font-mono text-xs text-slate-300"
                    helperText="Уникальная ссылка на страницу тура"
                  />
              </div>
              <button 
                 type="button" 
                 onClick={handleRegenerateSlug} 
-                className="h-[44px] px-3 bg-slate-100 hover:bg-teal-50 text-slate-400 hover:text-teal-600 rounded-xl border border-slate-200 transition-colors flex items-center justify-center mb-6" 
+                className="h-[44px] px-3 bg-slate-100 hover:bg-teal-50 text-slate-300 hover:text-teal-600 rounded-xl border border-slate-200 transition-colors flex items-center justify-center mb-6" 
                 title="Сгенерировать из названия"
              >
                <RefreshCw size={18} />
@@ -126,7 +126,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
           </div>
 
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
-             <h4 className="text-xs font-black uppercase text-slate-500 mb-2">Детализация для карточки</h4>
+             <h4 className="text-xs font-black uppercase text-slate-300 mb-2">Детализация для карточки</h4>
              
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <FormInput 
@@ -177,7 +177,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
                     </button>
                   </div>
                 ))}
-                <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-400 hover:text-teal-600">
+                <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-300 hover:text-teal-600">
                   <Plus size={24} />
                   <span className="text-[12px] font-bold uppercase mt-1">Добавить</span>
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />

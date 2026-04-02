@@ -44,17 +44,17 @@ export default function HikesLogistics() {
                                 В горах нет <br className="hidden md:block"/>
                                 <span className="text-teal-500">случайных людей</span>
                             </h2>
-                            <p className="text-slate-400 text-sm md:text-base leading-relaxed font-medium mb-8">
+                            <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium mb-8">
                                 «Тур в горы — это ваш личный отдых, а не испытание на прочность. Моя задача как гида — взять на себя всю логистику, чтобы вы могли просто идти, дышать и впитывать красоту вокруг. Мы всегда идем в среднем темпе комфортном для медленных и быстрых участников. Никто никого не бросает».
                             </p>
                             
                             <div className="flex items-center gap-4 pt-6 border-t border-white/10 w-full md:w-max">
                                 <div className="w-12 h-12 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center shrink-0">
-                                    <span className="text-lg font-black text-slate-400">Р</span>
+                                    <span className="text-lg font-black text-slate-300">Р</span>
                                 </div>
                                 <div>
                                     <div className="text-white font-bold text-sm md:text-base">Роман Санду</div>
-                                    <div className="text-teal-500 text-[10px] md:text-xs font-bold uppercase tracking-widest">Туристический гид</div>
+                                    <div className="text-teal-500 text-[12px] md:text-xs font-bold uppercase tracking-widest">Туристический гид</div>
                                 </div>
                             </div>
                         </div>
@@ -63,7 +63,7 @@ export default function HikesLogistics() {
 
                 {/* --- 2. КАРТОЧКИ ЛОГИСТИКИ --- */}
                 <div ref={cardsView.ref}>
-                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                         <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                         <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                     </div>
@@ -82,7 +82,7 @@ export default function HikesLogistics() {
                                         <Icon className="text-teal-500" size={24} strokeWidth={1.5} />
                                     </div>
                                     <h3 className="text-xl font-black text-white mb-4">{item.title}</h3>
-                                    <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                                    <p className="text-sm text-slate-300 leading-relaxed font-medium">
                                         {item.desc}
                                     </p>
                                 </div>

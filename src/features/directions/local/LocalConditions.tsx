@@ -65,7 +65,7 @@ export default function LocalConditions() {
                             );
                         })}
                     </div>
-   <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+   <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

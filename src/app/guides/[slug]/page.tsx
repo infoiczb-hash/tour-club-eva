@@ -154,7 +154,7 @@ export default async function GuidePage({ params }: Props) {
 
           {/* BOTTOM: Text block (прижат к низу через mt-auto) */}
           <div className="mt-auto max-w-4xl pt-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full bg-teal-500 text-slate-950 mb-4 md:mb-5 font-black uppercase tracking-widest text-[10px] md:text-xs shadow-[0_0_20px_rgba(20,184,166,0.4)]">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full bg-teal-500 text-slate-950 mb-4 md:mb-5 font-black uppercase tracking-widest text-[12px] md:text-xs shadow-[0_0_20px_rgba(20,184,166,0.4)]">
               {guide.role}
             </div>
             
@@ -204,7 +204,7 @@ export default async function GuidePage({ params }: Props) {
             {/* 2. Шкалы навыков */}
             {stats.length > 0 && (
               <div className="bg-slate-900/50 border border-white/5 p-6 md:p-8 rounded-[2rem]">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6 md:mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-6 md:mb-8">
                   Навыки и специализация
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 md:gap-y-8">
@@ -242,7 +242,7 @@ export default async function GuidePage({ params }: Props) {
               <div>
                 <div className="flex items-center gap-2 mb-5">
                   <Trophy size={18} className="text-amber-400" />
-                  <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">
+                  <h2 className="text-sm font-black uppercase tracking-widest text-slate-300">
                     Достижения
                   </h2>
                 </div>
@@ -278,7 +278,7 @@ export default async function GuidePage({ params }: Props) {
               <div>
                 <div className="flex items-center gap-2 mb-6">
                   <Quote size={18} className="text-teal-400" />
-                  <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">
+                  <h2 className="text-sm font-black uppercase tracking-widest text-slate-300">
                     Цитаты гида
                   </h2>
                 </div>
@@ -335,7 +335,7 @@ export default async function GuidePage({ params }: Props) {
                     href={guide.instagram}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-all shadow-lg"
+                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all shadow-lg"
                   >
                     <Instagram size={24} />
                   </a>
@@ -345,7 +345,7 @@ export default async function GuidePage({ params }: Props) {
                     href={guide.telegram}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-all shadow-lg"
+                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all shadow-lg"
                   >
                     <Send size={24} className="ml-[-2px]" />
                   </a>

@@ -115,7 +115,7 @@ export default function HikesGallery() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-50" />
 
                                 <div className="absolute bottom-0 left-0 w-full p-6 z-10">
-                                    <div className="text-teal-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1.5">
+                                    <div className="text-teal-400 font-bold uppercase tracking-widest text-[12px] md:text-xs mb-1.5">
                                         {item.title}
                                     </div>
                                     <div className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-md">
@@ -126,7 +126,7 @@ export default function HikesGallery() {
                         ))}
                     </div>
 
-                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                                      <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                                      <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                                                  </div>

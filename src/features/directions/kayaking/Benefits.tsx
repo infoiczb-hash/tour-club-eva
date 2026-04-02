@@ -45,7 +45,7 @@ export default function Benefits() {
             Идеальный отдых <br className="hidden md:block" />
             <span className="text-teal-500">на воде</span>
           </h2>
-          <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl">
+          <p className="text-slate-300 text-sm md:text-base font-medium max-w-xl">
             Мы берем на себя всю рутину, логистику и безопасность. Вам остается только грести, загорать и наслаждаться видами.
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function Benefits() {
             <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4">
               Надежный тыл: <br className="md:hidden" /><span className="text-amber-500">Профи на борту</span>
             </h3>
-            <p className="text-slate-400 text-sm md:text-base font-medium max-w-2xl">
+            <p className="text-slate-300 text-sm md:text-base font-medium max-w-2xl">
               Ваш поход сопровождает инструктор. Он берет на себя все технические вопросы, чтобы вы могли просто расслабиться.
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function Benefits() {
                       <h3 className="text-[15px] sm:text-base md:text-xl font-black text-white uppercase tracking-tight mb-1 md:mb-3 group-hover:text-amber-400 transition-colors leading-tight">
                         {role.title}
                       </h3>
-                      <p className="text-[14px] md:text-sm text-slate-400 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
+                      <p className="text-[14px] md:text-sm text-slate-300 font-medium leading-relaxed line-clamp-3 md:line-clamp-none">
                         {role.desc}
                       </p>
                     </div>
@@ -135,7 +135,7 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
         </div>
         <div className="flex-1">
           <h3 className="text-[15px] sm:text-base font-black text-white uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors mb-1">{item.title}</h3>
-          <p className="text-[14px] text-slate-400 font-medium leading-snug line-clamp-3">{item.desc}</p>
+          <p className="text-[14px] text-slate-300 font-medium leading-snug line-clamp-3">{item.desc}</p>
         </div>
       </div>
     );
@@ -164,7 +164,7 @@ function BenefitCard({ item, idx, isDesktop = false, isSwipeable = false }: any)
           </h3>
         </div>
       </div>
-      <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">{item.desc}</p>
+      <p className="text-[14px] md:text-base text-slate-300 font-medium leading-relaxed">{item.desc}</p>
       {item.features && (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mt-6 pt-6 border-t border-white/10">
           {item.features.map((feat: string) => (

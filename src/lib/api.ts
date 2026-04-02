@@ -9,7 +9,7 @@ export async function getContentBlock(slug: string): Promise<Record<string, unkn
     .from('content_blocks')
     .select('content')
     .eq('slug', slug)
-    .single();
+    .maybeSingle(); // 👈 было .single()
 
   if (error || !data) return null;
   return data.content as Record<string, unknown>;

@@ -6,6 +6,7 @@ import { QrCode, Crown, Mountain, Flame, Map, Compass, Info, X } from 'lucide-re
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import LevelsInfoModal from '@/components/modals/LevelsInfoModal'; // ✅ Подключаем новую модалку
+import MemberQrCode from '@/features/account/components/MemberQrCode';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -17,6 +18,9 @@ interface VirtualCardProps {
   totalTours: number;
   totalKm: number;
   memberId: string | null;
+  bookingShortId?: number | null;  // Booking.shortId — короткий номер
+  tourTitle?: string | null;       // Booking.tour.title
+  tourStartDate?: Date | null;     // Booking.tourDate.startDate
 }
 
 // 1. Внедрение четкой системы уровней и Визуальный апгрейд
@@ -29,7 +33,16 @@ const LEVELS_CONFIG = [
   { name: 'Легенда клуба', min: 30, max: 9999, color: 'text-amber-400', bg: 'from-amber-500 to-orange-900', border: 'border-amber-500/50', icon: Crown },
 ];
 
-export default function VirtualCard({ name, level: _level, totalTours, totalKm, memberId }: VirtualCardProps) {
+  export default function VirtualCard({
+    name,
+    level,
+    totalTours,
+    totalKm,
+    bookingShortId,
+    tourTitle,
+    tourStartDate,
+    memberId,
+  }: VirtualCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [transformStyle, setTransformStyle] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,7 +117,7 @@ export default function VirtualCard({ name, level: _level, totalTours, totalKm, 
 
             <div className="relative z-10 flex justify-between items-start">
               <div className="flex flex-col">
-                <span className="text-white/80 text-[10px] font-bold uppercase tracking-[0.3em]">Турклуб</span>
+                <span className="text-white/80 text-[12px] font-bold uppercase tracking-[0.3em]">Турклуб</span>
                 <span className="text-white text-xl font-black tracking-tighter leading-none">ЭВА</span>
               </div>
 
@@ -130,7 +143,7 @@ export default function VirtualCard({ name, level: _level, totalTours, totalKm, 
 
             <div className="relative z-10 flex justify-between items-end gap-4">
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-white/50 text-[10px] uppercase font-bold tracking-widest">Участник</span>
+                <span className="text-white/50 text-[12px] uppercase font-bold tracking-widest">Участник</span>
                 {/* ✅ ИСПРАВЛЕНО: Имя переносится на две строки (text-balance) и не обрезается (truncate убран) */}
                 <span className="text-white text-lg md:text-xl font-black uppercase tracking-widest drop-shadow-md line-clamp-2 text-balance break-words leading-tight">
                   {name || 'ТУРИСТ'}
@@ -153,22 +166,29 @@ export default function VirtualCard({ name, level: _level, totalTours, totalKm, 
 
             <button
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
-              className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white z-20"
+              className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-slate-300 hover:text-white z-20"
             >
               <X size={16} />
             </button>
 
-            <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
-              <QrCode size={80} className="text-slate-950" />
-            </div>
+<div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
+          {bookingShortId ? (
+            <MemberQrCode
+              bookingShortId={bookingShortId}
+              tourTitle={tourTitle ?? ''}
+              tourStartDate={tourStartDate ?? null}
+              size={140}
+            />
+          ) : (
+            // Нет активных броней — показываем иконку-заглушку lucide-react
+            <QrCode size={140} className="text-slate-950" />
+          )}
+        </div>
 
-            <p className="text-slate-400 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
+            <p className="text-slate-300 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}
             </p>
-            <p className="text-slate-500 text-[9px] mt-2 text-center max-w-[80%] uppercase tracking-widest">
-              Покажите этот код гиду на старте маршрута
-            </p>
-          </div>
+           </div>
         </motion.div>
       </div>
 
@@ -177,8 +197,8 @@ export default function VirtualCard({ name, level: _level, totalTours, totalKm, 
         {nextConfig ? (
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between items-end">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Прогресс статуса</span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+              <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Прогресс статуса</span>
+              <span className="text-[12px] text-slate-300 font-bold uppercase tracking-widest">
                 Еще {toursNeeded} {toursNeeded === 1 ? 'тур' : toursNeeded > 1 && toursNeeded < 5 ? 'тура' : 'туров'} до «{nextConfig.name}»
               </span>
             </div>

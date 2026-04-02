@@ -223,7 +223,7 @@ export default function QuizTouristType({ open, onClose }: Props) {
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
         <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full">
             <X size={20} />
           </button>
 
@@ -249,7 +249,7 @@ export default function QuizTouristType({ open, onClose }: Props) {
                     return (
                       <motion.button key={option.value} variants={itemVariants} whileHover={{ scale: 1.02, x: 4 }} whileTap={{ scale: 0.98 }} onClick={() => handleAnswer(option.value)} className="w-full p-4 rounded-2xl text-left bg-slate-800/50 border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all flex items-center gap-4 group">
                         <div className="w-12 h-12 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/30 transition-colors shadow-sm shrink-0">
-                            <OptionIcon size={24} className="text-slate-400 group-hover:text-emerald-400 transition-colors" strokeWidth={1.5} />
+                            <OptionIcon size={24} className="text-slate-300 group-hover:text-emerald-400 transition-colors" strokeWidth={1.5} />
                         </div>
                         <span className="flex-1 font-medium text-slate-300 group-hover:text-white transition-colors">
                           {option.text}
@@ -261,7 +261,7 @@ export default function QuizTouristType({ open, onClose }: Props) {
 
                 <div className="shrink-0 mt-4 pt-2 border-t border-transparent h-12">
                   {step > 0 && (
-                      <button onClick={handleBack} className="text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2 transition-colors w-fit">
+                      <button onClick={handleBack} className="text-sm font-bold text-slate-300 hover:text-slate-300 flex items-center gap-2 transition-colors w-fit">
                         <ArrowLeft size={16} /> Назад
                       </button>
                   )}
@@ -292,13 +292,13 @@ function ResultScreen({ result, onClose, theme }: { result: Result; onClose: () 
               <ResultIcon className={clsx("w-12 h-12", theme.text)} strokeWidth={1.5} />
           </div>
           <h3 className="text-2xl md:text-3xl font-black text-white mb-3 uppercase tracking-tight">{result.title}</h3>
-          <p className="text-sm text-slate-400 leading-relaxed font-medium max-w-[90%] mx-auto">
+          <p className="text-sm text-slate-300 leading-relaxed font-medium max-w-[90%] mx-auto">
             {result.description}
           </p>
         </div>
 
         <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-6 mb-6">
-          <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-4">Твои ценности:</h4>
+          <h4 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-4">Твои ценности:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {result.values.map((val, i) => (
               <div key={i} className={clsx("flex items-center gap-2 text-slate-200 text-sm font-bold bg-white/5 border p-3 rounded-xl justify-center transition-colors", theme.border)}>
@@ -311,7 +311,7 @@ function ResultScreen({ result, onClose, theme }: { result: Result; onClose: () 
 
         {/* SMART CTA */}
         <div className="pt-6 mt-4 border-t border-white/10 text-center">
-          <p className={clsx("text-[10px] font-bold uppercase tracking-widest mb-1", theme.text)}>
+          <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", theme.text)}>
             Мы рекомендуем Вам
           </p>
           <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", theme.text)}>

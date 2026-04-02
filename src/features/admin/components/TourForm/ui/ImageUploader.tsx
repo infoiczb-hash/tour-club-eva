@@ -95,19 +95,21 @@ export const ImageUploader = ({
 
   return (
     <div className={clsx("w-full", className)}>
-      <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">
+      <label className="text-xs font-bold uppercase text-slate-300 mb-2 block">
         {label}
       </label>
 
       {/* 1. Если картинка уже есть -> Показываем PREVIEW */}
       {value && value.length > 0 ? (
   <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-100">
-    <Image 
-      src={value} 
-      alt="Preview" 
-      fill 
-      className="object-cover transition-transform duration-500 group-hover:scale-105"
-    />
+   <Image
+  src={value}
+  alt="Preview"
+  fill
+  sizes="(max-width: 768px) 100vw, 50vw"
+  quality={75}
+  className="object-cover ..."
+/>
           
           {/* Кнопка удаления */}
           <button
@@ -121,7 +123,7 @@ export const ImageUploader = ({
             <X size={16} />
           </button>
           
-          <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-[10px] rounded backdrop-blur-md">
+          <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-[12px] rounded backdrop-blur-md">
             Загружено
           </div>
         </div>
@@ -152,7 +154,7 @@ export const ImageUploader = ({
               <span className="text-sm font-bold">Загрузка...</span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-400">
+            <div className="flex flex-col items-center gap-2 text-slate-300">
               <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                 <UploadCloud size={24} />
               </div>

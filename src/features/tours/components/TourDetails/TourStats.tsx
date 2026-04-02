@@ -48,7 +48,7 @@ export default function TourStats({ tour }: TourStatsProps) {
         <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors flex-1 min-w-0">
           <div className="text-teal-500 shrink-0"><Ruler size={18} strokeWidth={2.5} /></div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none mb-1 truncate" title="Дистанция">Дистанция</span>
+            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1 truncate" title="Дистанция">Дистанция</span>
             <span className="text-white font-black text-sm leading-none truncate" title={tour.distance || '—'}>{tour.distance || '—'}</span>
           </div>
         </div>
@@ -61,8 +61,8 @@ export default function TourStats({ tour }: TourStatsProps) {
           <div className="text-teal-500 shrink-0"><Signal size={18} strokeWidth={2.5} /></div>
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none truncate">Сложность</span>
-              <Info size={10} className={showTooltip ? "text-teal-400" : "text-slate-500 group-hover:text-teal-400 transition-colors"} />
+              <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none truncate">Сложность</span>
+              <Info size={10} className={showTooltip ? "text-teal-400" : "text-slate-300 group-hover:text-teal-400 transition-colors"} />
             </div>
             <span className="text-white font-black text-sm leading-none capitalize truncate">{difficultyLabel}</span>
           </div>
@@ -79,10 +79,10 @@ export default function TourStats({ tour }: TourStatsProps) {
                 onClick={(e) => e.stopPropagation()} // Клик внутри тултипа его не закрывает
               >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-black uppercase text-teal-400 tracking-wider">О сложности</span>
+                  <span className="text-[12px] font-black uppercase text-teal-400 tracking-wider">О сложности</span>
                   <X 
                     size={16} 
-                    className="text-slate-400 cursor-pointer hover:text-white transition-colors" 
+                    className="text-slate-300 cursor-pointer hover:text-white transition-colors" 
                     onClick={() => setShowTooltip(false)} 
                   />
                 </div>
@@ -100,7 +100,7 @@ export default function TourStats({ tour }: TourStatsProps) {
         <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors col-span-2 md:col-span-1 min-w-0">
           <div className="text-teal-500 shrink-0"><Backpack size={18} strokeWidth={2.5} /></div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none mb-1 truncate" title="Формат">Формат</span>
+            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1 truncate" title="Формат">Формат</span>
             <span className="text-white font-black text-sm leading-none truncate capitalize" title={formatLabel}>{formatLabel}</span>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function TourStats({ tour }: TourStatsProps) {
       <div className="flex items-start gap-4 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-5 py-4 hover:bg-slate-800/80 transition-colors w-full">
         <div className="text-teal-500 shrink-0 mt-0.5"><Users size={20} strokeWidth={2.5} /></div>
         <div className="flex flex-col min-w-0">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none mb-1.5" title="Группа">
+          <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1.5" title="Группа">
             Информация о группе
           </span>
           <span className="text-white font-bold text-sm leading-snug break-words">

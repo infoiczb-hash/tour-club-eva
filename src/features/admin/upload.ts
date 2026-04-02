@@ -3,15 +3,11 @@
 import { requireAuth } from '@/lib/auth';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-/**
- * Универсальная функция загрузки файлов (Server Action)
- * @param formData - Данные формы, содержащие 'file' и опционально 'folder'
- */
-export const uploadFile = async (formData: FormData): Promise<{ url: string | null; error?: string }> => {
+export const uploadFile = async (
+  formData: FormData
+): Promise<{ url: string | null; error?: string }> => {
   try {
-    // 1. Проверка авторизации на сервере
-    // Бросает исключение, если пользователь не вошел в админку
-    await requireAuth(); // 
+    await requireAuth();
 
     const file = formData.get('file') as File;
     const folder = (formData.get('folder') as string) || 'tours';
@@ -20,56 +16,62 @@ export const uploadFile = async (formData: FormData): Promise<{ url: string | nu
       return { url: null, error: 'Файл не найден в запросе' };
     }
 
-    // 2. Валидация размера (Max 5MB)
-    const MAX_SIZE = 5 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      return { url: null, error: 'Файл слишком большой (макс. 5Мб)' };
+    // ── Валидация типа ──
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return { url: null, error: 'Разрешены только JPG, PNG, WebP, GIF' };
     }
 
-    // 3. Генерация безопасного имени файла
-    const fileExt = file.name.split('.').pop();
+    // ── Валидация размера ──
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return { url: null, error: 'Файл слишком большой (макс. 5МБ)' };
+    }
+
+    // ── Генерация имени файла ──
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const safeName = file.name
-      .replace(/\.[^/.]+$/, "") // убираем расширение
-      .replace(/[^a-zA-Z0-9]/g, "_"); // заменяем спецсимволы на _
-    
-    const fileName = `${Date.now()}_${safeName}.${fileExt}`;
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .substring(0, 40);
+
+    const fileName = `${Date.now()}_${crypto.randomUUID()}_${safeName}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
-    // 4. Инициализация серверного клиента Supabase
-    const supabase = await createServerSupabaseClient(); // 
-
-    // 5. Загрузка в бакет 'tours-images'
-    // На сервере мы используем ArrayBuffer для загрузки
+    // ── Загрузка в Supabase Storage ──
+    const supabase = await createServerSupabaseClient();
     const fileBuffer = await file.arrayBuffer();
 
     const { error: uploadError } = await supabase.storage
-      .from('tours-images') 
+      .from('tours-images')
       .upload(filePath, fileBuffer, {
-        upsert: true,
-        cacheControl: '31536000',
-        contentType: file.type // сохраняем MIME-тип
+        upsert: false,
+        contentType: file.type,
+        cacheControl: '31536000', // 1 год кеша
       });
 
     if (uploadError) {
       console.error('Supabase Upload Error:', uploadError);
-      return { url: null, error: 'Ошибка хранилища при загрузке' };
+      return { url: null, error: `Ошибка хранилища: ${uploadError.message}` };
     }
 
-    // 6. Получение публичной ссылки
-    const { data } = supabase.storage
-      .from('tours-images')
-      .getPublicUrl(filePath);
+    // ── Получение render URL ──
+    const { data } = supabase.storage.from('tours-images').getPublicUrl(filePath);
+    const renderUrl = data.publicUrl.replace(
+      '/storage/v1/object/public/',
+      '/storage/v1/render/image/public/'
+    );
 
-    return { url: data.publicUrl };
+    return { url: renderUrl };
 
   } catch (error: unknown) {
     const err = error as Error;
-    console.error('Global Upload Action Error:', err);
-    
+    console.error('Upload Action Error:', err);
+
     if (err.message === 'Unauthorized') {
-        return { url: null, error: 'Доступ запрещен' };
+      return { url: null, error: 'Доступ запрещён' };
     }
-    
+
     return { url: null, error: 'Внутренняя ошибка сервера при загрузке' };
   }
 };

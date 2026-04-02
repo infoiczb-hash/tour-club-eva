@@ -7,20 +7,27 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
+
   images: {
+    // ── СТРАТЕГИЯ FREE TIER: Кастомный лоадер берет всё на себя ──
     loader: 'custom',
     loaderFile: './src/lib/cloudinary-loader.ts',
-    qualities: [55, 60, 65, 75, 85], // FIX: Добавили 55 и 60 в список допустимых quality
+    
+    // Поддерживаемые форматы (используются браузером через Accept)
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 5184000,
-    deviceSizes: [412, 640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 64, 96, 128, 256, 384, 436],
+    
+    // ЭКОНОМИЯ КРЕДИТОВ: Строго ограничиваем количество генерируемых ширин в srcset.
+    // Чем меньше цифр в этих массивах, тем меньше уникальных трансформаций создает Cloudinary.
+    deviceSizes: [640, 1080, 1920], // Оставили только 3 главных брейкпоинта (мобилка, планшет, десктоп)
+    imageSizes: [64, 128, 256, 384], // Убрали микро-размеры (16, 32), браузер отлично ужмет 64px
+    
+
+    // РАЗРЕШЕННЫЕ ДОМЕНЫ (Обязательно, чтобы Next.js не блокировал рендер <Image>)
     remotePatterns: [
-      { protocol: 'https', hostname: '**.supabase.co', port: '' },
-      { protocol: 'https', hostname: 'images.unsplash.com', port: '' },
-      { protocol: 'https', hostname: 'res.cloudinary.com', port: '' },
-      { protocol: 'https', hostname: 'img.youtube.com', port: '' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' }, // ⚠️ Оставляем, пока в БД есть их ссылки!
     ],
   },
 

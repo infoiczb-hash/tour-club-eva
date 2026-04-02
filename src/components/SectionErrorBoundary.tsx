@@ -37,7 +37,7 @@ function SectionFallback({
       style={{ minHeight: minHeight ?? "200px" }}
       aria-label={label ? `Ошибка секции: ${label}` : "Ошибка секции"}
     >
-      <p className="text-slate-400 text-sm font-medium text-center max-w-xs">
+      <p className="text-slate-300 text-sm font-medium text-center max-w-xs">
         Эта секция временно недоступна. Попробуйте обновить страницу.
       </p>
       <button

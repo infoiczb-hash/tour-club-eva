@@ -54,7 +54,7 @@ export default function FAQ() {
           <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2 group-hover:text-teal-300 transition-colors">
             Подготовка к сплаву
           </h3>
-          <p className="text-sm text-slate-400 font-medium mb-6 line-clamp-2">
+          <p className="text-sm text-slate-300 font-medium mb-6 line-clamp-2">
             Полный гайд: что надеть, что взять с собой и как вести себя на воде.
           </p>
           <div className="flex items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-teal-500 group-hover:text-teal-400 transition-colors">
@@ -68,7 +68,7 @@ export default function FAQ() {
       <div className="p-6 md:p-8 bg-slate-900/40 border border-white/5 rounded-[2rem] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-xl">
         <div>
           <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">Остались вопросы?</h3>
-          <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-[250px]">
+          <p className="text-sm text-slate-300 font-medium leading-relaxed max-w-[250px]">
             Напишите нам. Мы на связи, чтобы помочь подобрать маршрут или развеять страхи.
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function FAQ() {
                 Частые <br className="hidden lg:block" />
                 <span className="text-teal-500">Вопросы</span>
               </h2>
-              <p className="text-slate-400 text-sm md:text-base font-medium">
+              <p className="text-slate-300 text-sm md:text-base font-medium">
                 Собрали самое важное для тех, кто идет на воду впервые. Узнайте всё о безопасности, экипировке и правилах.
               </p>
             </div>
@@ -134,7 +134,7 @@ export default function FAQ() {
                     <span className={cn("text-base md:text-lg font-bold transition-colors tracking-tight pr-4", isOpen ? "text-white" : "text-slate-300 group-hover:text-white")}>
                       {faq.q}
                     </span>
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-teal-500/10 text-teal-400" : "bg-white/5 text-slate-500 group-hover:text-white")}>
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300", isOpen ? "bg-teal-500/10 text-teal-400" : "bg-white/5 text-slate-300 group-hover:text-white")}>
                       <ChevronDown className={cn("transition-transform duration-300", isOpen && "rotate-180")} size={18} />
                     </div>
                   </button>
@@ -145,7 +145,7 @@ export default function FAQ() {
                       isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                   )}>
                       <div className="overflow-hidden">
-                        <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-400 leading-relaxed text-sm md:text-base font-medium">
+                        <p className="px-5 md:px-6 pb-5 md:pb-6 text-slate-300 leading-relaxed text-sm md:text-base font-medium">
                           {faq.a}
                         </p>
                       </div>

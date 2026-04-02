@@ -89,7 +89,7 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                 <div className={clsx(
                   // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
                   "w-8 h-8 rounded-full flex items-center justify-center transition duration-300 shrink-0 print:hidden",
-                  isOpen && !isPrinting ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
+                  isOpen && !isPrinting ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-300 group-hover:bg-white/10 group-hover:text-white"
                 )}>
                   {isOpen ? <Minus size={18} /> : <Plus size={18} />}
                 </div>

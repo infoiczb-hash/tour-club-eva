@@ -24,7 +24,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             <MapPin size={20} />
          </div>
          <div className="min-w-0 flex-1">
-            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1 truncate" title="Место сбора">
+            <h3 className="text-[14px] font-bold text-slate-300 uppercase tracking-widest mb-1 truncate" title="Место сбора">
                Место сбора
             </h3>
             <p className="text-white font-bold text-sm leading-snug break-words">
@@ -51,7 +51,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
          </div>
          
          <div className="min-w-0 flex-1">
-            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1 break-words">
+            <h3 className="text-[14px] font-bold text-slate-300 uppercase tracking-widest mb-1 break-words">
                {guideRole}
             </h3>
             <p className="text-white font-bold text-sm leading-snug break-words">
@@ -66,7 +66,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             <Navigation size={20} />
          </div>
          <div className="min-w-0 flex-1">
-            <h3 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mb-1 truncate" title="Нить маршрута">
+            <h3 className="text-[14px] font-bold text-slate-300 uppercase tracking-widest mb-1 truncate" title="Нить маршрута">
                Нить маршрута
             </h3>
             <p className="text-white font-medium text-sm leading-snug break-words">

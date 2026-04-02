@@ -90,7 +90,7 @@ export default function PopularRoutes() {
               >
                 <div className="absolute top-4 right-4 z-20 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="flex items-center gap-1.5 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-xl">
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Подробнее</span>
+                    <span className="text-[12px] font-bold uppercase tracking-widest">Подробнее</span>
                     <ArrowUpRight size={14} className="text-teal-400" />
                   </div>
                 </div>
@@ -108,10 +108,10 @@ export default function PopularRoutes() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                 <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
                   <div className="flex gap-2 mb-4 opacity-100 md:opacity-0 md:-translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                    <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
+                    <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[12px] font-bold uppercase tracking-widest text-white border border-white/10">
                       <Clock size={12} className="text-teal-400" /> {route.details.duration}
                     </span>
-                    <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
+                    <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[12px] font-bold uppercase tracking-widest text-white border border-white/10">
                       <Navigation size={12} className="text-teal-400" /> {route.details.level}
                     </span>
                   </div>
@@ -137,7 +137,7 @@ export default function PopularRoutes() {
             <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
               Другие <span className="text-amber-500">Форматы</span>
             </h3>
-            <p className="text-slate-400 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
+            <p className="text-slate-300 text-sm md:text-base mt-2 font-medium">Соберем маршрут под вашу компанию.</p>
           </div>
           
           <div className="relative">
@@ -151,7 +151,7 @@ export default function PopularRoutes() {
                     </div>
                     <div>
                       <h4 className="font-bold text-white text-[15px] leading-tight mb-1.5 group-hover:text-amber-400 transition-colors">{format.title}</h4>
-                      <p className="text-[12px] md:text-[13px] text-slate-400 font-medium leading-snug">{format.desc}</p>
+                      <p className="text-[12px] md:text-[13px] text-slate-300 font-medium leading-snug">{format.desc}</p>
                     </div>
                   </div>
                 );
@@ -213,9 +213,9 @@ export default function PopularRoutes() {
 
             <div className="w-full md:w-7/12 flex flex-col h-[65vh] md:h-auto overflow-y-auto bg-slate-900 [&::-webkit-scrollbar]:hidden">
               <div className="p-6 md:p-10 flex-1">
-                <div className="text-[10px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Паспорт маршрута</div>
+                <div className="text-[12px] font-mono text-teal-500 uppercase tracking-widest mb-2 opacity-60">Паспорт маршрута</div>
                 <h3 className="text-3xl md:text-4xl font-black text-white uppercase mb-4 leading-tight">{selectedRoute.title}</h3>
-                <p className="text-sm text-slate-400 mb-8 leading-relaxed font-medium">{selectedRoute.desc}</p>
+                <p className="text-sm text-slate-300 mb-8 leading-relaxed font-medium">{selectedRoute.desc}</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-5 p-5 md:p-6 rounded-3xl bg-white/5 border border-white/5">
                   <PassportItem icon={Navigation} label="Сложность" value={selectedRoute.details.level} />
                   <PassportItem icon={Ruler} label="Километраж" value={selectedRoute.details.distance} />
@@ -247,7 +247,7 @@ function PassportItem({ icon: Icon, label, value }: { icon: any; label: string; 
         <Icon size={14} strokeWidth={2.5} />
       </div>
       <div>
-        <span className="block text-[12px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">{label}</span>
+        <span className="block text-[12px] uppercase text-slate-300 font-bold tracking-widest mb-0.5">{label}</span>
         <span className="text-xs text-white font-bold leading-snug block">{value}</span>
       </div>
     </div>

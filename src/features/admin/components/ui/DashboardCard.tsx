@@ -11,7 +11,7 @@ interface DashboardCardProps {
 export const DashboardCard = ({ label, value, sub, icon, color }: DashboardCardProps) => (
   <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
     <div className="flex items-start justify-between mb-2">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+      <span className="text-[12px] font-bold text-slate-300 uppercase tracking-wider">
         {label}
       </span>
       <div className={`p-2 rounded-lg ${color}`}>
@@ -22,7 +22,7 @@ export const DashboardCard = ({ label, value, sub, icon, color }: DashboardCardP
       {value}
     </div>
     {sub && (
-      <div className="text-[10px] text-slate-400 font-bold mt-1">
+      <div className="text-[12px] text-slate-300 font-bold mt-1">
         {sub}
       </div>
     )}

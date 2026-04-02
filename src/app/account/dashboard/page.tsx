@@ -1,63 +1,23 @@
-// src/app/account/dashboard/page.tsx
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
-  MapPin, Clock, TrendingUp,
-  ChevronRight, Calendar, ArrowRight,
-  Star, Flame, Timer, Backpack, 
-  FileText, Download, Wallet, Tent, Map, Moon
+  ArrowRight, Wallet, Tent, Map, Moon, Hourglass, 
+  Info, ChevronDown, Star, FlaskConical, Gift, Mountain
 } from 'lucide-react';
+
 import VirtualCard from '@/features/account/components/VirtualCard';
+import BookingCard from '@/features/account/components/BookingCard';
+import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton';
+import AchievementsBox from '@/features/account/components/AchievementsBox';
 import ReferralCard from '@/features/account/components/ReferralCard';
 
-// ─── уровни ─────────────────────────────────────────────────────────
-const LEVELS = [
-  { name: 'Первопроходец', min: 0,  max: 2  },
-  { name: 'Походник',      min: 3,  max: 6  },
-  { name: 'Бывалый',       min: 7,  max: 14 },
-  { name: 'Ветеран',       min: 15, max: 29 },
-  { name: 'Легенда клуба', min: 30, max: 9999 }, // Увеличили max для последнего уровня, чтобы не ломался расчет
-];
-
-const LEVEL_STYLES: Record<string, { bar: string; badge: string; glow: string }> = {
-  'Первопроходец': { bar: 'bg-teal-500',   badge: 'text-teal-400 bg-teal-400/10 border-teal-400/20',   glow: 'shadow-teal-500/20'   },
-  'Походник':      { bar: 'bg-green-500',  badge: 'text-green-400 bg-green-400/10 border-green-400/20', glow: 'shadow-green-500/20'  },
-  'Бывалый':       { bar: 'bg-blue-500',   badge: 'text-blue-400 bg-blue-400/10 border-blue-400/20',   glow: 'shadow-blue-500/20'   },
-  'Ветеран':       { bar: 'bg-purple-500', badge: 'text-purple-400 bg-purple-400/10 border-purple-400/20', glow: 'shadow-purple-500/20' },
-  'Легенда клуба': { bar: 'bg-amber-500',  badge: 'text-amber-400 bg-amber-400/10 border-amber-400/20', glow: 'shadow-amber-500/20'  },
-};
+// ✅ ОТКЛЮЧАЕМ КЭШИРОВАНИЕ, ЧТОБЫ ДАННЫЕ ВСЕГДА БЫЛИ СВЕЖИМИ
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // ─── вспомогательные функции ─────────────────────────────────────────
-
-function getDaysLeft(targetDate: Date) {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const target = new Date(targetDate);
-  target.setHours(0, 0, 0, 0);
-  const diffTime = target.getTime() - now.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-function pluralDays(n: number) {
-  const abs = Math.abs(n) % 100;
-  const mod = abs % 10;
-  if (abs >= 11 && abs <= 19) return 'дней';
-  if (mod === 1) return 'день';
-  if (mod >= 2 && mod <= 4) return 'дня';
-  return 'дней';
-}
-
-function pluralThings(n: number) {
-  const abs = Math.abs(n) % 100;
-  const mod = abs % 10;
-  if (abs >= 11 && abs <= 19) return 'вещей';
-  if (mod === 1) return 'вещь';
-  if (mod >= 2 && mod <= 4) return 'вещи';
-  return 'вещей';
-}
 
 function formatDate(d: Date) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
@@ -65,19 +25,52 @@ function formatDate(d: Date) {
 
 // ─── загрузка данных ─────────────────────────────────────────────────
 async function getDashboardData(userId: string) {
+  // ✅ ДОБАВЛЕНО: Подтягиваем promoCode вместе с профилем
   const profile = await prisma.memberProfile.findUnique({
     where: { userId },
+    include: { promoCode: true }
   });
 
   if (!profile) return null;
 
+  // ✅ ЛОГИКА АВТОГЕНЕРАЦИИ ПРОМОКОДА
+  let promoCode = profile.promoCode;
+  
+  if (!promoCode) {
+    const cleanName = profile.name ? profile.name.replace(/\s+/g, '').substring(0, 4).toUpperCase() : 'CLUB';
+    const shortId = profile.id.substring(0, 4).toUpperCase();
+    const baseCode = `EVA-${cleanName}-${shortId}`;
+
+    try {
+      promoCode = await prisma.promoCode.create({
+        data: {
+          code: baseCode,
+          memberId: profile.id,
+          discount: 10, // Скидка другу (можно менять)
+          reward: 10,   // Бонус владельцу
+        }
+      });
+    } catch (e) {
+      // Фолбэк: если такой код случайно уже существует, добавляем рандомные цифры
+      promoCode = await prisma.promoCode.create({
+        data: {
+          code: `${baseCode}-${Math.floor(Math.random() * 1000)}`,
+          memberId: profile.id,
+          discount: 500,
+          reward: 500,
+        }
+      });
+    }
+  }
+
   const now = new Date();
 
-  // 1. Ближайший предстоящий тур (confirmed или pending)
-  const upcomingBooking = await prisma.booking.findFirst({
+  // 1. Все предстоящие брони
+  const upcomingBookings = await prisma.booking.findMany({
     where: {
       memberId: profile.id,
-      status: { in: ['pending', 'confirmed'] },
+      // ✅ Теперь клиент видит бронь, даже если еще не оплатил или чек на проверке
+      status: { in: ['pending', 'confirmed', 'awaiting_payment', 'moderation'] },
       OR: [
         { tourDate: { startDate: { gte: now } } },
         { tourDateId: null } 
@@ -85,55 +78,61 @@ async function getDashboardData(userId: string) {
     },
     orderBy: { tourDate: { startDate: 'asc' } },
     include: {
-      tour: {
+     tour: {
         select: {
-          title: true,
-          slug: true,
-          location: true,
-          coverImage: true,
-          difficulty: true,
-          duration: true,
-          checklist: true,
-          documents: true,
+          title: true, slug: true, location: true, meetingPoint: true, coverImage: true, // ✅ ДОБАВИЛИ meetingPoint
+          difficulty: true, duration: true, checklist: true, documents: true, currency: true
         },
-      },
+            },
       tourDate: {
         select: {
-          startDate: true,
-          endDate: true,
-          time: true,
-          guide: {
-            select: { name: true, image: true },
-          },
+          startDate: true, endDate: true, time: true,
+          guide: { select: { name: true, image: true } },
         },
       },
     },
   });
 
-  // 2. 🔥 ЧЕСТНАЯ ИСТОРИЯ: ТОЛЬКО 'confirmed' и ТОЛЬКО прошедшие
+  // 2. Лист ожидания
+  let waitlists: any[] = [];
+  if (profile.phone) {
+    waitlists = await prisma.waitlist.findMany({
+      where: { phone: profile.phone },
+      include: {
+        tour: { select: { title: true, slug: true, coverImage: true, location: true } },
+        tourDate: { select: { startDate: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // 3. Статистика (СИНХРОН С ИСТОРИЕЙ)
   const pastConfirmedBookings = await prisma.booking.findMany({
-    where: { 
+  where: { 
       memberId: profile.id, 
+      // ✅ Ачивки и КМ считаем только по реально посещенным (оплаченным) турам
       status: 'confirmed',
       tourDate: { startDate: { lt: now } }
     },
     include: { 
-      tour: { select: { distance: true, duration: true } },
+      tour: { select: { title: true, location: true, distance: true, duration: true } },
       tourDate: { select: { startDate: true, endDate: true } }
     },
   });
 
-  // 3. 🔥 АГРЕГАЦИЯ ЧЕСТНОЙ СТАТИСТИКИ
+  // 4. Агрегация статистики и Ачивок
   let totalKm = 0;
   let totalNights = 0;
   const totalTours = pastConfirmedBookings.length;
 
+  let waterTours = 0;
+  let winterTours = 0;
+  let pmrTours = 0;
+
   for (const b of pastConfirmedBookings) {
-    // Считаем километры
     const km = parseFloat(b.tour?.distance ?? '0');
     totalKm += isNaN(km) ? 0 : km;
 
-    // Считаем ночевки: Приоритет реальным датам, фолбэк на текстовое поле duration
     if (b.tourDate?.startDate && b.tourDate?.endDate) {
       const diffTime = Math.abs(b.tourDate.endDate.getTime() - b.tourDate.startDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -142,31 +141,42 @@ async function getDashboardData(userId: string) {
       const d = parseInt(b.tour.duration) - 1;
       totalNights += (isNaN(d) || d < 0 ? 0 : d);
     }
-  }
 
-  // 4. Последние 3 брони (для ленты внизу дашборда)
-  const recentBookings = await prisma.booking.findMany({
-    where: { memberId: profile.id, status: { not: 'cancelled' } },
-    orderBy: { createdAt: 'desc' },
-    take: 3,
-    include: {
-      tour: {
-        select: { title: true, slug: true, coverImage: true, location: true },
-      },
-      tourDate: { select: { startDate: true } },
-    },
-  });
+    const title = b.tour?.title?.toLowerCase() || '';
+    const location = b.tour?.location?.toLowerCase() || '';
+    
+    if (title.includes('сплав') || title.includes('байдарк') || title.includes('сап') || title.includes('sup')) {
+      waterTours++;
+    }
+    if (location.includes('приднестровь') || location.includes('тирасполь') || location.includes('дубоссар') || location.includes('строенцы') || location.includes('рашков')) {
+      pmrTours++;
+    }
+    if (b.tourDate?.startDate) {
+      const month = b.tourDate.startDate.getMonth();
+      if (month === 11 || month === 0 || month === 1) { 
+        winterTours++;
+      }
+    }
+  }
 
   return {
     profile,
-    upcomingBooking,
+    promoCode, // Возвращаем реальный промокод из БД
+    upcomingBookings,
+    waitlists,
     stats: {
       totalTours,
       totalKm: Math.round(totalKm),
       balance: profile.balance || 0, 
       totalNights,
     },
-    recentBookings,
+    achievements: {
+      waterTours,
+      winterTours,
+      pmrTours,
+      totalKm: Math.round(totalKm),
+      totalNights
+    }
   };
 }
 
@@ -179,360 +189,206 @@ export default async function DashboardPage() {
   const data = await getDashboardData(user.id);
   if (!data) redirect('/login?next=/account/dashboard');
 
-  const { profile, upcomingBooking, stats, recentBookings } = data;
+  const { profile, promoCode, upcomingBookings, waitlists, stats, achievements } = data;
   const displayName = profile.name ?? 'Участник';
-  const inventoryCount = profile.inventory?.length || 0;
 
-  // 🔥 РАСЧЕТ ПРОГРЕССА ДО СЛЕДУЮЩЕГО УРОВНЯ
-  const currentLevelIndex = LEVELS.findIndex(l => stats.totalTours >= l.min && stats.totalTours <= l.max);
-  const safeIndex = currentLevelIndex !== -1 ? currentLevelIndex : (stats.totalTours >= LEVELS[LEVELS.length - 1].max ? LEVELS.length - 1 : 0);
-  const currentConfig = LEVELS[safeIndex];
-  const nextConfig = LEVELS[safeIndex + 1];
+  const nearestBooking = upcomingBookings.length > 0 ? upcomingBookings[0] : null;
 
-  const toursNeeded = nextConfig ? nextConfig.min - stats.totalTours : 0;
-  const progressPercent = nextConfig 
-    ? Math.max(0, Math.min(100, ((stats.totalTours - currentConfig.min) / (nextConfig.min - currentConfig.min)) * 100))
-    : 100;
-
-return (
-    <div className="w-full max-w-7xl mx-auto space-y-8">
-      <div>
+  return (
+    <div className="w-full max-w-7xl mx-auto space-y-8 pb-10">
+      <div className="px-2 md:px-0">
         <h1 className="text-3xl font-black text-white tracking-tight uppercase">Личный кабинет</h1>
-        <p className="text-slate-400 mt-2">Управляйте своими путешествиями и привилегиями</p>
+        <p className="text-slate-300 mt-2">Управляйте своими путешествиями и привилегиями</p>
       </div>
 
-      {/* Основная сетка Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+      <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 items-start">
         
-        {/* ЛЕВАЯ КОЛОНКА: Карточка (Прогресс и Модалка уже внутри нее) */}
-        {/* На мобилке идет ВТОРОЙ (order-2), на десктопе ПЕРВОЙ (xl:order-1) */}
-        <div className="xl:col-span-5 flex flex-col gap-4 order-2 xl:order-1">
-          <div className="w-full max-w-md mx-auto xl:mx-0">
-            {/* Твои переменные могут немного отличаться названиями (например, profile.name), 
-                оставляй те, которые получаешь из Prisma */}
-            <VirtualCard 
-              name={displayName} 
-              level={profile.level} 
-              totalTours={stats.totalTours}
-              totalKm={stats.totalKm}      
-              memberId={profile.id}
-            />
-          </div>
+        <div className="w-full xl:w-5/12 order-1 shrink-0 px-2 md:px-0">
+          <VirtualCard 
+            name={displayName} 
+            level={profile.level} 
+            totalTours={stats.totalTours}
+            totalKm={stats.totalKm}      
+            memberId={profile.id}
+            bookingShortId={nearestBooking?.shortId ?? null}
+            tourTitle={nearestBooking?.tour?.title ?? null}
+            tourStartDate={nearestBooking?.tourDate?.startDate ?? null}
+          />
         </div>
 
-        {/* ПРАВАЯ КОЛОНКА: Статистика и Баланс */}
-        {/* На мобилке идет ПЕРВОЙ (order-1), на десктопе ВТОРОЙ (xl:order-2) */}
-        <div className="xl:col-span-7 flex flex-col gap-6 order-1 xl:order-2">
+        <div className="w-full xl:w-7/12 flex flex-col gap-6 order-2">
           
-          {/* Блок: Ваш баланс (Выделен визуально) */}
-          <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/10 border border-amber-500/20 rounded-3xl p-6 relative overflow-hidden shadow-lg">
-            <div className="absolute top-0 right-0 p-6 opacity-20 pointer-events-none">
-              <Wallet size={80} className="text-amber-500" />
+          <div className="order-1 xl:order-2 px-2 md:px-0">
+            <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-5 sm:p-6 shadow-lg">
+              <h3 className="text-slate-300 font-bold text-xs sm:text-sm mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
+                <Mountain size={16} className="text-teal-500" /> Вы прошли с нами
+              </h3>
+              
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
+                    <Tent size={20} className="sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalTours}</div>
+                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Туров</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-inner">
+                    <Map size={20} className="sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalKm}</div>
+                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Км</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
+                    <Moon size={20} className="sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalNights}</div>
+                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Ночей</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h3 className="text-amber-500/80 font-medium text-sm mb-1 uppercase tracking-wider">Ваш баланс</h3>
-            <div className="text-4xl font-black text-white flex items-baseline gap-2">
-              {profile.balance || 0} <span className="text-xl font-medium text-amber-500/50">₽</span>
-            </div>
-            <p className="text-sm text-amber-500/60 mt-3 max-w-[80%]">
-              Используйте баланс для оплаты до 50% стоимости следующих приключений.
-            </p>
           </div>
 
-          {/* Блок: Статистика походов */}
-          <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 shadow-lg">
-            <h3 className="text-slate-400 font-medium text-sm mb-6 uppercase tracking-wider">Вы прошли с нами</h3>
-            
-            <div className="grid grid-cols-3 gap-4">
-              {/* Туры */}
-              <div className="flex flex-col gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-inner">
-                  <Tent size={24} />
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-white">{stats.totalTours || 0}</div>
-                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Туров</div>
-                </div>
-              </div>
-
-              {/* Километры */}
-              <div className="flex flex-col gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-inner">
-                  <Map size={24} />
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-white">{Math.floor(stats.totalKm || 0)}</div>
-                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Километров</div>
+          <div className="order-2 xl:order-1 px-2 md:px-0">
+            <div className="bg-slate-900 border border-amber-500/20 rounded-3xl overflow-hidden shadow-lg">
+              
+              <div className="p-5 flex items-center justify-between bg-gradient-to-r from-amber-500/10 to-transparent">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 shadow-inner">
+                    <Wallet size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-amber-500/80 font-bold text-[12px] sm:text-xs uppercase tracking-widest mb-0.5">Ваш баланс</h3>
+                    <div className="text-2xl sm:text-3xl font-black text-white flex items-baseline gap-1.5">
+                      {stats.balance} <span className="text-sm sm:text-base font-bold text-amber-500/50">₽</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Ночи (если переменной totalNights пока нет, временно будет 0) */}
-              <div className="flex flex-col gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
-                  <Moon size={24} />
+              <details className="group border-t border-amber-500/10">
+                <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors list-none [&::-webkit-details-marker]:hidden">
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                    <Info size={14} /> Как получать бонусы?
+                  </span>
+                  <ChevronDown size={16} className="text-slate-300 group-open:rotate-180 transition-transform duration-300" />
+                </summary>
+                
+                <div className="px-4 pb-5 pt-1 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                  
+                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5">
+                    <Star size={18} className="text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-white mb-0.5">Отзывы о турах</p>
+                      <p className="text-xs text-slate-300 leading-snug">Получите +10 ₽ за честный отзыв на сайте после прохождения маршрута.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5">
+                    <FlaskConical size={18} className="text-purple-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-white mb-0.5">Fan-сектор</p>
+                      <p className="text-xs text-slate-300 leading-snug">Проходите веселые тесты в личном кабинете и получайте +1 ₽ за каждый.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5">
+                    <Gift size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-white mb-0.5">Пригласить друга</p>
+                      <p className="text-xs text-slate-300 leading-snug">Дайте другу промокод на 5% скидку. После его первой поездки вы получите бонус!</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <span className="inline-block px-3 py-1 bg-amber-500/10 text-amber-500/80 text-[12px] font-bold uppercase tracking-widest rounded-lg border border-amber-500/20">
+                      Оплачивайте до 10% от стоимости тура
+                    </span>
+                  </div>
+
                 </div>
-                <div>
-                  {/* Замени stats.totalNights на правильную переменную, если она называется иначе */}
-                  <div className="text-3xl font-black text-white">{stats.totalNights || 0}</div>
-                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Ночей в лесу</div>
-                </div>
-              </div>
+              </details>
             </div>
           </div>
 
         </div>
       </div>
-      
-     );
 
-      {/* ── Ближайший тур ───────────────────────────────────────── */}
-      {upcomingBooking ? (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-              Ближайший тур
+      <section className="pt-2">
+        <AchievementsBox stats={achievements} />
+      </section>
+
+      {/* ✅ ПЕРЕДАЕМ РЕАЛЬНЫЕ ДАННЫЕ В КАРТОЧКУ */}
+      <section className="pt-2 px-2 md:px-0">
+        <ReferralCard 
+          promoCode={promoCode.code} 
+          rewardAmount={promoCode.reward} 
+          friendReward={promoCode.discount} 
+        />
+      </section>
+
+      {waitlists.length > 0 && (
+        <section className="space-y-4 pt-4 border-t border-white/5 px-2 md:px-0">
+          <div className="flex items-center gap-2 mb-2">
+            <Hourglass size={18} className="text-amber-500 animate-pulse" />
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+              Лист ожидания
             </h2>
-            <Link
-              href="/account/bookings"
-              className="text-xs text-teal-400 hover:text-teal-300 transition-colors flex items-center gap-1"
-            >
-              Все брони <ChevronRight size={12} />
-            </Link>
           </div>
-
-          <div className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden">
-            {/* Фото */}
-            {upcomingBooking.tour.coverImage && (
-              <div className="relative h-40 w-full">
-                <Image
-                  src={upcomingBooking.tour.coverImage}
-                  alt={upcomingBooking.tour.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 700px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
-                
-                {/* Плашка обратного отсчета */}
-                {upcomingBooking.tourDate && getDaysLeft(upcomingBooking.tourDate.startDate) >= 0 && (
-                  <div className="absolute top-4 right-4 bg-teal-500 text-slate-950 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(20,184,166,0.5)] flex items-center gap-1.5 z-10">
-                    <Timer size={14} className="animate-pulse" />
-                    {getDaysLeft(upcomingBooking.tourDate.startDate) === 0
-                      ? 'Тур уже сегодня!'
-                      : `Через ${getDaysLeft(upcomingBooking.tourDate.startDate)} ${pluralDays(getDaysLeft(upcomingBooking.tourDate.startDate))}`}
-                  </div>
-                )}
-
-                {/* Дата поверх фото */}
-                {upcomingBooking.tourDate && (
-                  <div className="absolute bottom-3 left-4 flex items-center gap-2">
-                    <Calendar size={14} className="text-teal-400" />
-                    <span className="text-sm font-bold text-white">
-                      {formatDate(upcomingBooking.tourDate.startDate)}
-                      {upcomingBooking.tourDate.time && ` · ${upcomingBooking.tourDate.time}`}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="p-4 space-y-3">
-              <h3 className="text-lg font-black text-white leading-tight">
-                {upcomingBooking.tour.title}
-              </h3>
-
-              <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-                {upcomingBooking.tour.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={12} /> {upcomingBooking.tour.location}
-                  </span>
-                )}
-                {upcomingBooking.tour.duration && (
-                  <span className="flex items-center gap-1">
-                    <Clock size={12} /> {upcomingBooking.tour.duration}
-                  </span>
-                )}
-              </div>
-
-              {upcomingBooking.tourDate?.guide && (
-                <div className="flex items-center gap-2 pt-1">
-                  {upcomingBooking.tourDate.guide.image ? (
-                    <Image
-                      src={upcomingBooking.tourDate.guide.image}
-                      alt={upcomingBooking.tourDate.guide.name}
-                      width={28}
-                      height={28}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center">
-                      <span className="text-xs font-bold text-teal-400">
-                        {upcomingBooking.tourDate.guide.name[0]}
-                      </span>
-                    </div>
-                  )}
-                  <span className="text-xs text-slate-400">
-                    Гид: <span className="text-white font-medium">
-                      {upcomingBooking.tourDate.guide.name}
-                    </span>
-                  </span>
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-1">
-                <Link
-                  href={`/tour/${upcomingBooking.tour.slug}`}
-                  className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold py-2.5 rounded-xl transition-all"
-                >
-                  О туре <ArrowRight size={14} />
-                </Link>
-                <Link
-                  href="/account/bookings"
-                  className="px-4 flex items-center justify-center text-sm font-medium text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 rounded-xl transition-all"
-                >
-                  Управление
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Умный чек-лист снаряжения */}
-          <div className="mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0">
-                <Backpack size={24} />
-              </div>
-              <div>
-                <h3 className="text-white font-bold text-sm mb-1">Снаряжение для тура</h3>
-                {inventoryCount > 0 ? (
-                  <p className="text-xs text-slate-400 font-medium">
-                    В вашем базовом инвентаре <strong className="text-teal-400">{inventoryCount} {pluralThings(inventoryCount)}</strong>. Сверьтесь со списком тура!
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-400 font-medium">
-                    Ваш базовый инвентарь пуст. Обязательно проверьте, что нужно взять с собой!
-                  </p>
-                )}
-              </div>
-            </div>
-            <Link
-              href={`/tour/${upcomingBooking.tour.slug}#essentials`}
-              className="w-full md:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/5 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors text-center shrink-0"
-            >
-              Смотреть список
-            </Link>
-          </div>
-
-          {/* Документы тура */}
-          {(() => {
-            interface TourDoc { title?: string; url?: string; }
-            const docs = upcomingBooking.tour.documents as unknown as TourDoc[] | null;
-
-            if (!Array.isArray(docs) || docs.length === 0) return null;
-
-            return (
-              <div className="mt-4 bg-slate-900/60 border border-white/5 rounded-2xl p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText size={18} className="text-blue-400" />
-                  <h3 className="text-white font-bold text-sm">Материалы для скачивания</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {docs.map((doc, idx) => {
-                    if (!doc.url) return null;
-                    return (
-                      <a
-                        key={idx}
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-white/5 transition-all group"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
-                          <Download size={14} className="group-hover:-translate-y-0.5 transition-transform" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-white truncate">
-                            {doc.title || 'Документ к туру'}
-                          </p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">
-                            Открыть файл
-                          </p>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-        </section>
-      ) : (
-        /* Нет предстоящих туров */
-        <section className="bg-slate-900/60 border border-white/5 rounded-2xl p-6 text-center">
-          <p className="text-slate-400 text-sm mb-4">Нет предстоящих туров</p>
-          <Link
-            href="/tour"
-            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
-          >
-            Найти тур <ArrowRight size={14} />
-          </Link>
-        </section>
-      )}
-
-      {/* ── Последние туры ──────────────────────────────────────── */}
-      {recentBookings.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-              История туров
-            </h2>
-            <Link
-              href="/account/history"
-              className="text-xs text-teal-400 hover:text-teal-300 transition-colors flex items-center gap-1"
-            >
-              Все туры <ChevronRight size={12} />
-            </Link>
-          </div>
-
-          <div className="space-y-2">
-            {recentBookings.map(booking => (
-              <Link
-                key={booking.id}
-                href={`/tour/${booking.tour.slug}`}
-                className="flex items-center gap-3 bg-slate-900/60 border border-white/5 hover:border-white/10 rounded-xl p-3 transition-all group"
-              >
-                {/* Миниатюра */}
-                <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-800">
-                  {booking.tour.coverImage && (
-                    <Image
-                      src={booking.tour.coverImage}
-                      alt={booking.tour.title}
-                      fill
-                      className="object-cover"
-                      sizes="48px"
-                    />
-                  )}
-                </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {waitlists.map((w: any) => (
+              <div key={w.id} className="flex items-center gap-4 bg-slate-900/60 border border-amber-500/20 rounded-2xl p-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate group-hover:text-teal-400 transition-colors">
-                    {booking.tour.title}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {booking.tourDate
-                      ? formatDate(booking.tourDate.startDate)
-                      : 'Дата не указана'
-                    }
-                    {booking.tour.location && ` · ${booking.tour.location}`}
+                  <p className="text-sm font-bold text-white truncate">{w.tour.title}</p>
+                  <p className="text-xs text-amber-400/80 font-medium mt-1">
+                    {w.tourDate ? formatDate(w.tourDate.startDate) : 'Жду новые даты'}
                   </p>
                 </div>
-
-                <ChevronRight size={14} className="text-slate-600 group-hover:text-teal-400 transition-colors shrink-0" />
-              </Link>
+                <div className="shrink-0">
+                  <CancelWaitlistButton id={w.id} />
+                </div>
+              </div>
             ))}
           </div>
         </section>
       )}
+
+      <section className="space-y-6 pt-4 border-t border-white/5 px-2 md:px-0">
+        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+          Предстоящие поездки
+        </h2>
+
+     {upcomingBookings.length === 0 ? (
+          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-8 text-center">
+            <p className="text-slate-300 text-sm mb-4">У вас пока нет запланированных туров</p>
+            <Link href="/tour" className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)]">
+              Выбрать приключение <ArrowRight size={16} />
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {upcomingBookings.map(booking => {
+              const guestsCount = booking.ticketsAdult + booking.ticketsChild + booking.ticketsMember + (booking.ticketsFamily * 3);
+              return (
+                <BookingCard 
+                  key={booking.id} 
+                  bookingId={booking.id} // ✅ Теперь ID брони передается железобетонно
+                  booking={{ ...booking, guestsCount }} 
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
 
     </div>
   );

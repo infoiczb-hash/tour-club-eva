@@ -81,14 +81,14 @@ function FormatCard({ format, index }: { format: typeof FORMATS[number]; index: 
         <h3 className="text-2xl md:text-4xl font-black text-white mb-6 tracking-tight">
           {format.title}
         </h3>
-        <p className="text-slate-400 text-base md:text-lg leading-relaxed font-medium">
+        <p className="text-slate-300 text-base md:text-lg leading-relaxed font-medium">
           {format.desc}
         </p>
       </div>
 
       {/* Правая колонка: Чеклист */}
       <div className="lg:w-72 shrink-0 flex flex-col justify-center">
-        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Что входит в базу:</div>
+        <div className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-4">Что входит в базу:</div>
         <ul className="space-y-3">
           {format.features.map((feature, i) => (
             <li key={i} className="flex items-start gap-3">
@@ -121,7 +121,7 @@ export default function OrgFormats() {
           <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter mb-6">
             Что мы можем предложить <span className="text-indigo-500">Вам</span>
           </h2>
-          <p className="text-slate-400 font-medium text-lg max-w-2xl">
+          <p className="text-slate-300 font-medium text-lg max-w-2xl">
             Вы можете выбрать любой наш тур или формат (SUP, байдарки, местную программу или тур в горы) или мы создадим тур или мероприятие под ваш запрос: от шумного сплава до тихой медитации.
           </p>
         </div>

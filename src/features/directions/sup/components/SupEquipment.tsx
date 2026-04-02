@@ -63,17 +63,6 @@ export default function SupEquipment() {
     return (
         <section className="py-8 md:py-16 bg-slate-950 relative overflow-hidden border-t border-white/5">
             
-            {/* CSS для плавной парящей доски (замена Framer Motion animate={{y: ...}}) */}
-            <style dangerouslySetInnerHTML={{__html: `
-                @keyframes float-sup {
-                    0%, 100% { transform: translateY(-10px); }
-                    50% { transform: translateY(10px); }
-                }
-                .animate-float-sup {
-                    animation: float-sup 6s ease-in-out infinite;
-                }
-            `}} />
-
             {/* Фоновые свечения для кинематографичности */}
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/10 md:blur-[120px] rounded-full pointer-events-none" />
 
@@ -94,7 +83,7 @@ export default function SupEquipment() {
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                             Наш <span className="text-teal-500">Арсенал</span>
                         </h2>
-                        <p className="text-[14px] md:text-base text-slate-400 font-medium leading-relaxed">
+                        <p className="text-[14px] md:text-base text-slate-300 font-medium leading-relaxed">
                             Мы продумали каждую деталь, чтобы на воде вы чувствовали себя так же уверенно, как на суше.
                         </p>
                     </div>
@@ -116,7 +105,7 @@ export default function SupEquipment() {
                                 fill 
                                 sizes="(max-width: 768px) 120vw, 1200px"
                                 className="object-contain drop-shadow-[0_20px_40px_rgba(20,184,166,0.15)]"
-                                priority
+                                // priority удален для оптимизации LCP
                             />
                         </div>
                     </div>
@@ -135,11 +124,11 @@ export default function SupEquipment() {
                                         <span className="text-xl md:text-2xl font-black text-white tracking-tighter">
                                             {stat.value}
                                         </span>
-                                        <span className="text-[10px] md:text-[12px] uppercase font-bold text-teal-500 tracking-[0.1em]">
+                                        <span className="text-[12px] md:text-[12px] uppercase font-bold text-teal-500 tracking-[0.1em]">
                                             {stat.label}
                                         </span>
                                     </div>
-                                    <p className="mt-2 text-[12px] md:text-[14px] text-slate-400 font-medium leading-snug">
+                                    <p className="mt-2 text-[12px] md:text-[14px] text-slate-300 font-medium leading-snug">
                                         {stat.desc}
                                     </p>
                                 </div>
@@ -177,7 +166,7 @@ export default function SupEquipment() {
                         <h4 className="text-[15px] sm:text-base font-black text-white mb-1 tracking-tight group-hover:text-teal-300 transition-colors leading-tight">
                             {item.title}
                         </h4>
-                        <p className="text-[14px] text-slate-400 leading-snug font-medium">
+                        <p className="text-[14px] text-slate-300 leading-snug font-medium">
                             {item.desc}
                         </p>
                     </div>
@@ -185,7 +174,7 @@ export default function SupEquipment() {
             );
         })}
     </div>
-                       <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                       <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

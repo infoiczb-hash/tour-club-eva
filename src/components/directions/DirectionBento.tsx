@@ -46,7 +46,7 @@ export default function DirectionBento({ data }: DirectionBentoProps) {
           </h2>
           <p
             className={cn(
-              'text-slate-400 text-base md:text-lg font-medium transition-all duration-500 ease-out delay-100',
+              'text-slate-300 text-base md:text-lg font-medium transition-all duration-500 ease-out delay-100',
               headerInView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-5'
             )}
           >
@@ -129,7 +129,7 @@ export default function DirectionBento({ data }: DirectionBentoProps) {
                       <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-3 transition-colors group-hover:text-white">
                         {feat.title}
                       </h3>
-                      <p className="text-sm md:text-base text-slate-400 font-medium leading-relaxed group-hover:text-slate-300 transition-colors">
+                      <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed group-hover:text-slate-300 transition-colors">
                         {feat.description}
                       </p>
                     </div>

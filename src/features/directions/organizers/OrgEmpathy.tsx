@@ -43,7 +43,7 @@ export default function OrgEmpathy() {
         вы должны быть <span className="text-indigo-500">Лидером</span>, <br className="hidden md:block" />
         а не завхозом.
       </h2>
-      <p className="text-[15px] md:text-lg text-slate-400 leading-[1.25] md:leading-[1.3] font-medium max-w-3xl">
+      <p className="text-[15px] md:text-lg text-slate-300 leading-[1.25] md:leading-[1.3] font-medium max-w-3xl">
         Мы знаем, как важно выдохнуть. В ТурКлубе «Эва» мы становимся вашими невидимыми помощниками. Мы берем на себя всю головную боль по логистике и организации, чтобы вы могли полностью посвятить время людям.
       </p>
     </div>
@@ -56,7 +56,7 @@ export default function OrgEmpathy() {
             <div className="p-8 bg-slate-900/60 rounded-[2rem] border border-white/5 h-full hover:border-indigo-500/30 transition-colors">
               <ShieldCheck className="w-12 h-12 text-indigo-400 mb-6" strokeWidth={1.5} />
               <h3 className="text-xl font-bold text-white mb-4">Безопасность и Тыл</h3>
-              <p className="text-slate-400 leading-relaxed text-sm md:text-base">
+              <p className="text-slate-300 leading-relaxed text-sm md:text-base">
                 Проверенные маршруты, гиды-инструкторы. Решаем любые (ну почти) форс-мажоры незаметно для группы.
               </p>
             </div>
@@ -66,7 +66,7 @@ export default function OrgEmpathy() {
             <div className="p-8 bg-slate-900/60 rounded-[2rem] border border-white/5 h-full hover:border-indigo-500/30 transition-colors">
               <Tent className="w-12 h-12 text-emerald-400 mb-6" strokeWidth={1.5} />
               <h3 className="text-xl font-bold text-white mb-4">Снаряжение под ключ</h3>
-              <p className="text-slate-400 leading-relaxed text-sm md:text-base">
+              <p className="text-slate-300 leading-relaxed text-sm md:text-base">
                 Вам не нужно искать снаряжение. Мы предоставляем снаряжение для сплавов, туров и для кемпинга. В рамках имеющегося стока.
               </p>
             </div>
@@ -76,7 +76,7 @@ export default function OrgEmpathy() {
             <div className="p-8 bg-slate-900/60 rounded-[2rem] border border-white/5 h-full hover:border-indigo-500/30 transition-colors">
               <Utensils className="w-12 h-12 text-amber-400 mb-6" strokeWidth={1.5} />
               <h3 className="text-xl font-bold text-white mb-4">Полевая Гастрономия</h3>
-              <p className="text-slate-400 leading-relaxed text-sm md:text-base">
+              <p className="text-slate-300 leading-relaxed text-sm md:text-base">
                 Учитываем особенности питания: накормим и веганов, и мясоедов.
               </p>
             </div>

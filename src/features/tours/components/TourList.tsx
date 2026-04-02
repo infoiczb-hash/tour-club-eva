@@ -35,7 +35,7 @@ export default function TourList({ tours, t, viewMode }: TourListProps) {
         <h3 className="text-2xl font-black text-slate-900 mb-2 font-condensed uppercase">
           Здесь пока тихо...
         </h3>
-        <p className="text-slate-400 max-w-md mx-auto text-lg">
+        <p className="text-slate-300 max-w-md mx-auto text-lg">
           Туров в этой категории пока нет, но мы уже готовим новые маршруты. Попробуйте выбрать другую категорию.
         </p>
       </div>
@@ -82,7 +82,7 @@ export default function TourList({ tours, t, viewMode }: TourListProps) {
            
            {/* UX 2026: Прогресс просмотра (Feedback) */}
            <div className="flex flex-col items-center w-full max-w-xs mb-6">
-               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+               <p className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-3">
                   Показано {visibleTours.length} из {tours.length}
                </p>
                

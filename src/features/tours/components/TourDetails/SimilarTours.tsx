@@ -27,7 +27,7 @@ export default function SimilarTours({ tours }: SimilarToursProps) {
                 Похожие маршруты
               </h2>
             </div>
-            <p className="text-slate-400 font-medium">
+            <p className="text-slate-300 font-medium">
               Возможно, вам также понравятся эти приключения
             </p>
           </div>

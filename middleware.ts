@@ -34,6 +34,8 @@ export async function middleware(request: NextRequest) {
   if (!isAuthRoute) {
     const response = NextResponse.next();
     response.headers.set('Content-Security-Policy', cspHeader);
+    // ПАТЧ: Preconnect к Cloudinary для ускорения загрузки изображений (экономия 150-300мс)
+    response.headers.append('Link', '<https://res.cloudinary.com>; rel=preconnect');
     return response;
   }
 
@@ -76,13 +78,28 @@ export async function middleware(request: NextRequest) {
   // ── /admin ───────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
     if (!user && pathname !== '/admin/login') {
+      // Неавторизованных гостей отправляем на логин админки
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/admin/login';
       supabaseResponse = NextResponse.redirect(loginUrl);
-    } else if (user && pathname === '/admin/login') {
-      const adminUrl = request.nextUrl.clone();
-      adminUrl.pathname = '/admin';
-      supabaseResponse = NextResponse.redirect(adminUrl);
+    } else if (user) {
+      // ✅ ПРОВЕРКА РОЛИ АДМИНА
+      // Проверяем наличие роли 'admin' в метадате пользователя
+      const isAdmin = user.user_metadata?.role === 'admin';
+
+      if (!isAdmin) {
+        // Залогинен, но не админ? Выкидываем в обычный кабинет пользователя
+        const accountUrl = request.nextUrl.clone();
+        accountUrl.pathname = '/account/dashboard';
+        return NextResponse.redirect(accountUrl);
+      }
+
+      // Если админ пытается зайти на страницу логина — пускаем его сразу внутрь
+      if (pathname === '/admin/login') {
+        const adminUrl = request.nextUrl.clone();
+        adminUrl.pathname = '/admin';
+        supabaseResponse = NextResponse.redirect(adminUrl);
+      }
     }
   }
 
@@ -109,6 +126,9 @@ export async function middleware(request: NextRequest) {
   }
 
   supabaseResponse.headers.set('Content-Security-Policy', cspHeader);
+  // ПАТЧ: Preconnect к Cloudinary для авторизованных страниц
+  supabaseResponse.headers.append('Link', '<https://res.cloudinary.com>; rel=preconnect');
+  
   return supabaseResponse;
 }
 

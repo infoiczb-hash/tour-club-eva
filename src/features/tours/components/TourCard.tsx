@@ -96,8 +96,10 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             alt={title}
             fill
             priority={priority}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={75}
+            // ✅ ИСПРАВЛЕНО: Более точные sizes для Supabase Image Transformation
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+            // ✅ ИСПРАВЛЕНО: Снижено quality (под градиентом разницы нет, а вес меньше)
+            quality={55}
             className="object-cover transition-transform duration-1000 group-hover:scale-105"
           />
           {/* Легкий градиент снизу для плавного перехода в темный блок */}
@@ -108,7 +110,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             "absolute top-4 left-4 flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm",
             typeStyle.bg, typeStyle.border
           )}>
-            <span className={cn("text-[10px] sm:text-xs font-black uppercase tracking-wider", typeStyle.text)}>
+            <span className={cn("text-[12px] sm:text-xs font-black uppercase tracking-wider", typeStyle.text)}>
               {displayLabel}
             </span>
           </div>
@@ -119,7 +121,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
               {!label.includes('🔥') && !label.includes('✨') && (
                 <Flame size={14} strokeWidth={2.5} />
               )}
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">{label}</span>
+              <span className="text-[12px] sm:text-xs font-black uppercase tracking-wider">{label}</span>
             </div>
           )}
 
@@ -134,12 +136,12 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
               <Calendar size={14} strokeWidth={2.5} />
               <span suppressHydrationWarning className={cn(
                   "text-[12px] sm:text-sm font-black uppercase tracking-wider",
-                  isPast && "text-slate-400"
+                  isPast && "text-slate-300"
               )}>
                  {isPast ? "Завершен" : dateStr}
               </span>
               {hasMoreDates && !isPast && (
-                <span className="text-[10px] sm:text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
+                <span className="text-[12px] sm:text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
               )}
             </div>
           </div>
@@ -149,7 +151,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
         <div className="p-5 sm:p-6 flex flex-col flex-grow bg-[#0d131a]">
           
           {/* Локация и длительность */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">
             <div className="flex items-center gap-1.5">
               <MapPin size={12} className="text-teal-600" strokeWidth={2.5} />
               <span className="truncate max-w-[140px] sm:max-w-full text-slate-300">{location}</span>
@@ -168,7 +170,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-5">
               {tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="flex items-center gap-1 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                <span key={i} className="flex items-center gap-1 text-[12px] sm:text-[11px] font-black uppercase tracking-widest text-slate-300 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
                   <Hash size={10} strokeWidth={4} /> {tag}
                 </span>
               ))}
@@ -177,16 +179,16 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
 
           {/* Тарифы */}
           <div className={cn("flex flex-wrap gap-2 mb-6 mt-auto", (!tags || tags.length === 0) && "mt-auto")}>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/5 text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/5 text-[12px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider">
               Стандарт
             </span>
             {(priceMember ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider">
                 <Crown size={12} strokeWidth={2.5} /> Клубная
               </span>
             )}
             {(priceChild ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20 text-[10px] sm:text-[11px] font-bold text-pink-400 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20 text-[12px] sm:text-[11px] font-bold text-pink-400 uppercase tracking-wider">
                 <Baby size={12} strokeWidth={2.5} /> Детский
               </span>
             )}
@@ -197,7 +199,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {/* Подвал с ценой и кнопкой */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Стоимость</span>
+              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Стоимость</span>
               <div className="flex items-baseline gap-1.5">
                 {(priceOld ?? 0) > Number(price) && (
                   <span className="text-xs font-bold text-rose-400/80 line-through decoration-rose-400/50 mr-1">{priceOld}</span>
@@ -205,7 +207,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
                 <span className="text-2xl sm:text-3xl font-black text-white leading-none tracking-tighter drop-shadow-md">
                   {Number(price).toLocaleString()}
                 </span>
-                <span className="text-[10px] sm:text-xs font-bold text-teal-400 uppercase tracking-wider">{currency || 'RUB'}</span>
+                <span className="text-[12px] sm:text-xs font-bold text-teal-400 uppercase tracking-wider">{currency || 'RUB'}</span>
               </div>
             </div>
             

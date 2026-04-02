@@ -74,7 +74,7 @@ export default function KidsFAQ() {
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4">
                         Частые <span className="text-amber-500">Вопросы</span>
                     </h2>
-                    <p className="text-slate-400 text-[14px] md:text-base font-medium leading-tight md:leading-tight">
+                    <p className="text-slate-300 text-[14px] md:text-base font-medium leading-tight md:leading-tight">
                         Отвечаем на то, что больше всего волнует родителей перед первой поездкой.
                     </p>
                 </FadeBlock>
@@ -110,7 +110,7 @@ export default function KidsFAQ() {
                                             isOpen ? "bg-amber-500/10 border-amber-500/30" : "bg-slate-800 border-transparent group-hover:bg-slate-700"
                                         )}
                                     >
-                                        <ChevronDown size={18} className={cn("transition-transform duration-300", isOpen ? "rotate-180 text-amber-400" : "text-slate-400")} />
+                                        <ChevronDown size={18} className={cn("transition-transform duration-300", isOpen ? "rotate-180 text-amber-400" : "text-slate-300")} />
                                     </div>
                                 </button>
 
@@ -119,7 +119,7 @@ export default function KidsFAQ() {
                                     isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                                 )}>
                                     <div className="overflow-hidden">
-                                        <div className="p-5 md:p-6 pt-0 text-slate-400 text-[14px] md:text-base leading-tight md:leading-tight font-medium border-t border-white/5 mt-2">
+                                        <div className="p-5 md:p-6 pt-0 text-slate-300 text-[14px] md:text-base leading-tight md:leading-tight font-medium border-t border-white/5 mt-2">
                                             {item.a}
                                         </div>
                                     </div>
@@ -151,7 +151,7 @@ export default function KidsFAQ() {
     </div>
     <div className="text-left">
         <div className="text-white font-bold text-base md:text-lg">Роман Санду</div>
-        <div className="text-amber-500 text-[10px] md:text-xs uppercase font-bold tracking-widest mt-0.5">Основатель ТурКлуба</div>
+        <div className="text-amber-500 text-[12px] md:text-xs uppercase font-bold tracking-widest mt-0.5">Основатель ТурКлуба</div>
     </div>
 
                         </div>

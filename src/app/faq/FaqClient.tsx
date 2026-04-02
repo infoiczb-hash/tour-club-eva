@@ -135,7 +135,7 @@ function AccordionItem({ item, isOpen, onClick }: { item: any, isOpen: boolean, 
           </span>
         </div>
         <ChevronDown 
-          className={`shrink-0 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-teal-500' : ''}`} 
+          className={`shrink-0 text-slate-300 transition-transform duration-300 ${isOpen ? 'rotate-180 text-teal-500' : ''}`} 
           size={18}
         />
       </button>
@@ -147,7 +147,7 @@ function AccordionItem({ item, isOpen, onClick }: { item: any, isOpen: boolean, 
         className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
       >
         <div className="overflow-hidden">
-          <div className="px-4 md:px-5 pb-4 md:pb-5 pl-[3.25rem] md:pl-[4.5rem] text-slate-400 leading-relaxed text-base md:text-lg">
+          <div className="px-4 md:px-5 pb-4 md:pb-5 pl-[3.25rem] md:pl-[4.5rem] text-slate-300 leading-relaxed text-base md:text-lg">
              {item.answer}
           </div>
         </div>
@@ -181,14 +181,14 @@ export default function FAQPage() {
           
           {/* Header */}
           <div className="mb-8 md:mb-12 text-center md:text-left">
-              <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-4 md:mb-6 text-[14px] md:text-s font-bold uppercase tracking-wider">
+              <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-300 hover:text-teal-400 transition-colors mb-4 md:mb-6 text-[14px] md:text-s font-bold uppercase tracking-wider">
                   <ArrowLeft size={16} /> На главную
               </Link>
               
               <h1 className="text-3xl md:text-5xl font-black text-white mb-3 md:mb-4 uppercase tracking-tight leading-none">
                 Правила <span className="text-teal-500">& FAQ</span>
               </h1>
-              <p className="text-slate-400 text-s md:text-lg">
+              <p className="text-slate-300 text-s md:text-lg">
                   Всё, что нужно знать перед тем, как отправиться в приключение с клубом «Эва».
               </p>
           </div>
@@ -209,7 +209,7 @@ export default function FAQPage() {
           <div className="mt-8 md:mt-12 p-5 md:p-6 bg-slate-900/80 border border-white/5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
               <div>
                   <h2 className="text-white font-black text-lg md:text-xl uppercase tracking-tight mb-1.5"> Остались вопросы? </h2>
-                <p className="text-slate-400 text-sm md:text-base max-w-md mt-2">
+                <p className="text-slate-300 text-sm md:text-base max-w-md mt-2">
                   Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!
                 </p>
               </div>

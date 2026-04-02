@@ -83,7 +83,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
         <div className="mb-8 md:mb-12 animate-in fade-in slide-in-from-left-8 duration-700 fill-mode-both">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 mb-4">
                <CalendarIcon size={14} className="text-amber-400" />
-               <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Ближайшие даты</span>
+               <span className="text-[12px] font-bold uppercase tracking-widest text-amber-400">Ближайшие даты</span>
             </div>
             <h2 className="text-3xl md:text-5xl uppercase tracking-tighter leading-[0.9] text-white font-black">
                 Детские <span className="text-amber-500">Приключения</span>
@@ -102,7 +102,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                         onClick={() => setViewMode('grid')}
                         className={cn(
                             "flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase transition-all",
-                            viewMode === 'grid' ? "bg-amber-500 text-slate-900 shadow-lg" : "text-slate-400 hover:text-white"
+                            viewMode === 'grid' ? "bg-amber-500 text-slate-900 shadow-lg" : "text-slate-300 hover:text-white"
                         )}
                     >
                         <LayoutGrid size={16}/> <span>Сетка</span>
@@ -111,7 +111,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                         onClick={() => setViewMode('calendar')}
                         className={cn(
                             "flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase transition-all",
-                            viewMode === 'calendar' ? "bg-amber-500 text-slate-900 shadow-lg" : "text-slate-400 hover:text-white"
+                            viewMode === 'calendar' ? "bg-amber-500 text-slate-900 shadow-lg" : "text-slate-300 hover:text-white"
                         )}
                     >
                         <CalendarIcon size={16}/> <span>Календарь</span>
@@ -127,7 +127,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                 >
                     <Map size={14} className="text-amber-500" />
                     <span>Все туры</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-500"/>
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-300"/>
                 </Link>
             </div>
         </div>
@@ -195,7 +195,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
                             <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">
                                 Расписание формируется
                             </h3>
-                            <p className="text-sm md:text-base text-slate-400 font-medium mb-8 max-w-md mx-auto leading-relaxed">
+                            <p className="text-sm md:text-base text-slate-300 font-medium mb-8 max-w-md mx-auto leading-relaxed">
                                 Мы готовим новые даты детских туров. Хотите узнать о них первыми или заказать тур для целого класса?
                             </p>
                             

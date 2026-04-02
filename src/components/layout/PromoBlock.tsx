@@ -61,7 +61,7 @@ export default function PromoBlock() {
             {/* Текст */}
             <div className="mt-4 md:mt-8 mb-4">
                 <h3 className="text-sm md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-3">Подобрать тур</h3>
-                <p className="text-sm text-slate-400 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                <p className="text-sm text-slate-300 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
                     Пройди тест и получи нашу рекомендацию для первого тура.
                 </p>
             </div>
@@ -90,15 +90,15 @@ export default function PromoBlock() {
             {/* Текст */}
             <div className="mt-4 md:mt-8 mb-4">
                 <h3 className="text-sm md:text-2xl font-black uppercase text-white leading-tight mb-1 md:mb-3">Полевой дневник</h3>
-                <p className="text-sm text-slate-400 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                <p className="text-sm text-slate-300 leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
                     Размышления, лайфхаки и походные истории из первых уст.
                 </p>
             </div>
 
             {/* Кнопка */}
             <div className="flex items-center gap-3 mt-auto">
-                <span className="hidden md:block text-xs font-bold text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors">Читать статьи</span>
-                <div className="w-6 h-6 md:w-10 md:h-10 rounded-full border border-white/10 text-slate-400 flex items-center justify-center group-hover:bg-amber-400 group-hover:text-slate-900 group-hover:translate-x-2 transition-all">
+                <span className="hidden md:block text-xs font-bold text-slate-300 group-hover:text-white uppercase tracking-widest transition-colors">Читать статьи</span>
+                <div className="w-6 h-6 md:w-10 md:h-10 rounded-full border border-white/10 text-slate-300 flex items-center justify-center group-hover:bg-amber-400 group-hover:text-slate-900 group-hover:translate-x-2 transition-all">
                     <ChevronRight size={14} className="md:w-5 md:h-5" />
                 </div>
             </div>

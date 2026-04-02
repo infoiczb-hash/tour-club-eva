@@ -69,12 +69,12 @@ export default async function AllGuidesPage() {
           </div>
           
           <h1 className="animate-hero-title text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-                <span className="font-light text-slate-400 block md:inline">Команда </span>
+                <span className="font-light text-slate-300 block md:inline">Команда </span>
                 <span className="font-black text-white">Клуба</span>
                 <span className="text-teal-500">.</span>
           </h1>
           
-          <p className="animate-hero-subtitle text-base md:text-xl text-slate-400 font-medium max-w-2xl leading-relaxed">
+          <p className="animate-hero-subtitle text-base md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed">
             Наши гиды — это не просто проводники. Это люди, влюбленные в природу, с которыми безопасно, весело и душевно.
           </p>
         </div>
@@ -86,7 +86,7 @@ export default async function AllGuidesPage() {
           // ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ
           <GuidesEditorialList guides={guides} />
         ) : (
-          <div className="text-center text-slate-500 py-20">
+          <div className="text-center text-slate-300 py-20">
             Информация о команде обновляется...
           </div>
         )}

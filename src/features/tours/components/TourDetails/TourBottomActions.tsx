@@ -67,13 +67,13 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
           )}
         >
           <div className="bg-slate-950/50 p-3 border-b border-white/5 flex justify-between items-center">
-            <span className="text-[12px] font-bold uppercase text-slate-400 tracking-wider">Все тарифы</span>
+            <span className="text-[12px] font-bold uppercase text-slate-300 tracking-wider">Все тарифы</span>
             {/* Кнопка закрытия тултипа — aria-label обязателен, т.к. только иконка */}
             <button
               onClick={() => setShowHint(false)}
               aria-label="Закрыть список тарифов"
             >
-              <X size={14} className="text-slate-500 hover:text-white transition-colors" aria-hidden="true" />
+              <X size={14} className="text-slate-300 hover:text-white transition-colors" aria-hidden="true" />
             </button>
           </div>
           
@@ -93,10 +93,10 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
         <div className="flex items-center gap-4">
           
           <div className="flex-grow">
-            <p className="text-[12px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Стоимость участия</p>
+            <p className="text-[12px] text-slate-300 uppercase font-bold tracking-wider mb-0.5">Стоимость участия</p>
             <div className="flex items-center gap-2">
               <div className="flex items-baseline gap-1">
-                {hasMultiplePrices && <span className="text-sm text-slate-400 font-medium">от</span>}
+                {hasMultiplePrices && <span className="text-sm text-slate-300 font-medium">от</span>}
                 <span className="text-2xl font-black text-white">{minPrice.toLocaleString()}</span>
                 <span className="text-xs font-bold text-teal-500">{tour.currency || 'RUB'}</span>
               </div>
@@ -112,7 +112,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                     "w-6 h-6 rounded-full flex items-center justify-center border transition-colors",
                     showHint
                       ? "bg-teal-500 text-slate-900 border-teal-500"
-                      : "bg-white/5 text-slate-400 border-white/10 hover:bg-white/10"
+                      : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
                   )}
                 >
                   <Info size={14} aria-hidden="true" />
@@ -129,7 +129,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
               // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
               "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg active:scale-95 transition whitespace-nowrap",
               isSoldOut
-                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                ? "bg-slate-800 text-slate-300 cursor-not-allowed"
                 : "bg-teal-500 text-slate-900 shadow-teal-500/20"
             )}
           >

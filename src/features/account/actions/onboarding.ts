@@ -1,20 +1,19 @@
-// src/features/account/actions/onboarding.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-// Функция расчета уровня (как при регистрации)
+// Функция расчета уровня (Синхронизирована с новым LevelsInfoModal)
 function getLevel(tourCount: number): string {
-  if (tourCount >= 30) return 'Легенда клуба';
-  if (tourCount >= 15) return 'Ветеран';
-  if (tourCount >= 7)  return 'Бывалый';
-  if (tourCount >= 3)  return 'Походник';
+  if (tourCount >= 21) return 'Легенда';
+  if (tourCount >= 11) return 'Мастер троп';
+  if (tourCount >= 6)  return 'Следопыт';
+  if (tourCount >= 3)  return 'Искатель';
   return 'Первопроходец';
 }
 
-export async function savePhoneNumberAction(phoneRaw: string) {
+export async function saveOnboardingDataAction(phoneRaw: string, name: string) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Не авторизован' };
@@ -26,21 +25,29 @@ export async function savePhoneNumberAction(phoneRaw: string) {
     return { success: false, error: 'Введен некорректный номер телефона' };
   }
 
+  // ✅ НОВОЕ: Валидация имени
+  if (!name || name.trim().length < 2) {
+    return { success: false, error: 'Пожалуйста, введите ваше реальное имя' };
+  }
+
   try {
-    // 1. Проверяем, не занят ли этот номер кем-то другим
+    // 1. ЗАЩИТА ОТ УГОНА: Проверяем, не занят ли этот номер кем-то другим
     const existing = await prisma.memberProfile.findUnique({ where: { phone } });
     if (existing && existing.userId !== user.id) {
       return { success: false, error: 'Этот номер уже привязан к другому аккаунту' };
     }
 
-    // 2. Сохраняем телефон юзеру
+    // 2. Сохраняем телефон и ИМЯ юзеру
     const profile = await prisma.memberProfile.update({
       where: { userId: user.id },
-      data: { phone }
+      data: { 
+        phone,
+        name: name.trim() // ✅ Добавили сохранение имени
+      }
     });
 
     // 3. МАГИЯ: Ищем все исторические брони по этому номеру, у которых еще нет memberId
-    const linked = await prisma.booking.updateMany({
+    const linkedBookings = await prisma.booking.updateMany({
       where: { 
         phone: phone, 
         memberId: null 
@@ -48,8 +55,17 @@ export async function savePhoneNumberAction(phoneRaw: string) {
       data: { memberId: profile.id },
     });
 
-    // 4. Если нашли старые брони — пересчитываем статусы и километраж
-    if (linked.count > 0) {
+    // ✅ НОВОЕ: Привязываем Листы ожидания (раз мы сделали это на дашборде)
+    await prisma.waitlist.updateMany({
+      where: { 
+        phone: phone, 
+        memberId: null 
+      },
+      data: { memberId: profile.id },
+    });
+
+    // 4. ПЕРЕСЧЕТ: Если нашли старые брони — пересчитываем статусы и километраж
+    if (linkedBookings.count > 0) {
       const stats = await prisma.booking.aggregate({
         where: { memberId: profile.id, status: { not: 'cancelled' } },
         _count: { id: true },
@@ -77,10 +93,10 @@ export async function savePhoneNumberAction(phoneRaw: string) {
     }
 
     revalidatePath('/account', 'layout'); // Сбрасываем кэш всего ЛК
-    return { success: true, linkedCount: linked.count };
+    return { success: true, linkedCount: linkedBookings.count };
     
   } catch (error) {
     console.error('Onboarding Action Error:', error);
-    return { success: false, error: 'Произошла ошибка при сохранении номера' };
+    return { success: false, error: 'Произошла ошибка при сохранении данных' };
   }
 }

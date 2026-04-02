@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createServerSupabaseClient } from '@/lib/supabase/server'; // Проверь правильность пути к твоему серверному клиенту
-import { env } from '@/lib/env'; // 👈 ДОБАВЛЕНО: Безопасный импорт переменных
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { env } from '@/lib/env';
+import { createClient } from '@supabase/supabase-js'; 
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
-  try { // 👈 ДОБАВЛЕНО: Оборачиваем в try/catch от падения сервера
+  try { 
     const { searchParams, origin } = new URL(request.url);
     const data = Object.fromEntries(searchParams.entries());
 
@@ -15,13 +17,13 @@ export async function GET(request: Request) {
     }
 
     // 2. Проверяем подлинность данных (магия криптографии Telegram)
-    // 👈 ИСПРАВЛЕНО: Берем токен из env.ts, а не process.env
-    const botToken = env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) {
-      throw new Error('TELEGRAM_BOT_TOKEN is not defined in .env');
+    // ✅ ИСПРАВЛЕНИЕ: Используем токен от бота авторизации, а не от бота уведомлений
+    const authBotToken = env.TELEGRAM_AUTH_BOT;
+    if (!authBotToken) {
+      throw new Error('TELEGRAM_AUTH_BOT is not defined in .env');
     }
 
-    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+    const secretKey = crypto.createHash('sha256').update(authBotToken).digest();
     const dataCheckString = Object.keys(userData)
       .filter(key => userData[key] !== undefined && userData[key] !== 'undefined')
       .sort()
@@ -37,44 +39,99 @@ export async function GET(request: Request) {
     }
 
     // 3. Авторизуем в Supabase
-    // Генерируем уникальный "технический" email и надежный пароль для этого Telegram-аккаунта
     const email = `tg_${userData.id}@evaclub.tour`;
-    const password = crypto.createHmac('sha256', botToken).update(userData.id).digest('hex');
+    // ✅ ИСПРАВЛЕНИЕ: Пароль тоже генерируем на основе правильного токена
+    const password = crypto.createHmac('sha256', authBotToken).update(userData.id).digest('hex');
 
+    // Клиент для установки сессии (cookies) в браузере
     const supabase = await createServerSupabaseClient();
 
-    // Пытаемся войти
-    let { error: signInError } = await supabase.auth.signInWithPassword({
+    // Пытаемся войти (если юзер уже существует)
+    let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    // Если такого пользователя еще нет (первый вход) — регистрируем его
+    let userId = signInData?.user?.id;
+
+    // Если такого пользователя еще нет — регистрируем его через Admin API
     if (signInError && signInError.message.includes('Invalid login credentials')) {
-      const { error: signUpError } = await supabase.auth.signUp({
+      
+      const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!serviceRoleKey) {
+        throw new Error('SUPABASE_SERVICE_ROLE_KEY is not defined in .env');
+      }
+
+      // Инициализируем админский клиент для обхода email-подтверждений
+      const supabaseAdmin = createClient(
+        env.NEXT_PUBLIC_SUPABASE_URL,
+        serviceRoleKey,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // Создаем пользователя с автоподтвержденным email
+      const { data: adminData, error: adminError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: {
-            full_name: [userData.first_name, userData.last_name].filter(Boolean).join(' '),
-            avatar_url: userData.photo_url,
-            telegram_id: userData.id,
-            telegram_username: userData.username,
-          }
+        email_confirm: true,
+        user_metadata: {
+          full_name: [userData.first_name, userData.last_name].filter(Boolean).join(' '),
+          avatar_url: userData.photo_url,
+          telegram_id: userData.id,
+          telegram_username: userData.username,
         }
       });
-      
-      if (signUpError) {
-        console.error('Telegram Signup Error:', signUpError);
+
+      if (adminError || !adminData.user) {
+        console.error('Admin API Create User Error:', adminError);
         return NextResponse.redirect(`${origin}/login?error=signup_failed`);
       }
+
+      userId = adminData.user.id;
+
+      // Теперь логиним его обычным клиентом, чтобы установились cookies сессии
+      const { error: retrySignInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (retrySignInError) {
+        console.error('Retry Sign In Error:', retrySignInError);
+        return NextResponse.redirect(`${origin}/login?error=session_failed`);
+      }
+    } else if (signInError) {
+      console.error('SignIn Error:', signInError);
+      return NextResponse.redirect(`${origin}/login?error=signin_failed`);
     }
 
-    // 4. Успех! Перенаправляем в личный кабинет
+    // 4. Синхронизация профиля с Prisma (Создаем или обновляем MemberProfile)
+    if (userId) {
+      const fullName = [userData.first_name, userData.last_name].filter(Boolean).join(' ');
+      const tgUsername = userData.username ? `@${userData.username}` : null;
+
+      await prisma.memberProfile.upsert({
+        where: { userId: userId },
+        update: {
+          name: fullName || undefined, 
+          avatarUrl: userData.photo_url || undefined,
+          telegram: tgUsername || undefined,
+          tgChatId: userData.id, 
+        },
+        create: {
+          userId: userId,
+          name: fullName || null,
+          avatarUrl: userData.photo_url || null,
+          telegram: tgUsername,
+          tgChatId: userData.id,
+          level: 'Первопроходец',
+        }
+      });
+    }
+
+    // 5. Успех! Перенаправляем в личный кабинет
     return NextResponse.redirect(`${origin}/account/dashboard`);
 
   } catch (error) {
-    // 👈 ДОБАВЛЕНО: Если что-то упало (например crypto), ловим и мягко редиректим
     console.error('Telegram Auth 500 Error:', error);
     const { origin } = new URL(request.url);
     return NextResponse.redirect(`${origin}/login?error=server_error`);

@@ -32,7 +32,7 @@ export default function Timeline() {
               Один день <br className="hidden md:block" />
               <span className="text-teal-500">из жизни сплава</span>
             </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium">
+            <p className="text-slate-300 text-sm md:text-base font-medium">
               Идеальный баланс между активной греблей и расслабленным отдыхом на природе.
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function Timeline() {
                     <h3 className="text-lg md:text-xl font-black text-white mb-2 uppercase tracking-tight leading-tight group-hover:text-teal-300 transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-[14px] text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                    <p className="text-[14px] text-slate-300 leading-relaxed font-medium">{item.desc}</p>
                   </div>
 
                   {/* Стрелка между карточками (только десктоп) */}

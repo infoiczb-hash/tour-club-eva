@@ -66,6 +66,10 @@ export async function createTour(data: Partial<Tour>) {
 
       metaTitle: data.metaTitle ?? null,
       metaDesc:  data.metaDesc  ?? null,
+
+      biletpmrLink: data.biletpmrLink ?? null,
+      apbQrLink:    data.apbQrLink ?? null,
+      apbQrImage:   data.apbQrImage ?? null,
     };
 
     const tour = await prisma.tour.create({ data: payload });
@@ -142,6 +146,10 @@ export async function updateTour(id: string, data: Partial<Tour>) {
 
     if (data.metaTitle !== undefined) payload.metaTitle = data.metaTitle;
     if (data.metaDesc  !== undefined) payload.metaDesc  = data.metaDesc;
+
+    if (data.biletpmrLink !== undefined) payload.biletpmrLink = data.biletpmrLink;
+    if (data.apbQrLink    !== undefined) payload.apbQrLink    = data.apbQrLink;
+    if (data.apbQrImage   !== undefined) payload.apbQrImage   = data.apbQrImage;
 
     const tour = await prisma.tour.update({ where: { id }, data: payload });
 

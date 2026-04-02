@@ -28,7 +28,7 @@ export const Footer = () => {
               <h2 className="text-xl font-black text-white uppercase tracking-wider mb-2">
                 Турклуб «Эва»
               </h2>
-              <p className="text-slate-400 text-sm leading-snug max-w-sm">
+              <p className="text-slate-300 text-sm leading-snug max-w-sm">
                 Создаем маршруты, в которые хочется возвращаться. <br className="hidden md:block"/>
                 Походы, где важны не километры, а люди рядом.
               </p>
@@ -42,7 +42,7 @@ export const Footer = () => {
               </a>
 
               <a href="mailto:info@evatur.club" className="inline-flex items-center gap-3 text-white hover:text-teal-400 transition-colors text-sm font-medium group">
-                 <Mail size={18} className="text-slate-400 group-hover:text-teal-400 shrink-0 transition-colors" />
+                 <Mail size={18} className="text-slate-300 group-hover:text-teal-400 shrink-0 transition-colors" />
                  <span>info@evatur.club</span>
               </a>
             </div>

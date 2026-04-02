@@ -92,7 +92,7 @@ export default function ToursTab({
                     <MapIcon size={28} className="text-teal-500" />
                     База туров
                 </h1>
-                <p className="text-sm text-slate-500 font-medium mt-1">
+                <p className="text-sm text-slate-300 font-medium mt-1">
                     Управление расписанием и категориями
                 </p>
             </div>
@@ -116,7 +116,7 @@ export default function ToursTab({
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
                     activeView === 'tours' 
                     ? 'bg-white dark:bg-slate-900 text-teal-600 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    : 'text-slate-300 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
             >
                 <MapIcon size={16} /> Расписание ({tours.length})
@@ -126,7 +126,7 @@ export default function ToursTab({
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
                     activeView === 'categories' 
                     ? 'bg-white dark:bg-slate-900 text-teal-600 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    : 'text-slate-300 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
             >
                 <LayoutGrid size={16} /> Категории ({categories.length})
@@ -150,10 +150,10 @@ export default function ToursTab({
                     ))}
                 </div>
                 <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16}/>
                     <input 
                       placeholder="Поиск тура по названию..." 
-                      className="w-full h-full pl-9 pr-4 bg-transparent text-sm font-medium outline-none text-slate-900 dark:text-white placeholder:text-slate-400" 
+                      className="w-full h-full pl-9 pr-4 bg-transparent text-sm font-medium outline-none text-slate-900 dark:text-white placeholder:text-slate-300" 
                       value={searchTerm} 
                       onChange={e => setSearchTerm(e.target.value)} 
                     />
@@ -163,7 +163,7 @@ export default function ToursTab({
             {/* DESKTOP TABLE */}
             <div className="hidden md:block bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 font-black uppercase text-[10px] tracking-widest border-b border-slate-200 dark:border-slate-800">
+                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-300 font-black uppercase text-[12px] tracking-widest border-b border-slate-200 dark:border-slate-800">
                         <tr>
                             <th className="p-5">Тур</th>
                             <th className="p-5">Даты</th>
@@ -193,16 +193,16 @@ export default function ToursTab({
                                                     className="font-bold text-slate-800 dark:text-white line-clamp-1 hover:text-teal-600 hover:underline flex items-center gap-1 group/link"
                                                 >
                                                     {tour.title}
-                                                    <ExternalLink size={10} className="opacity-0 group-hover/link:opacity-100 transition-opacity text-slate-400"/>
+                                                    <ExternalLink size={10} className="opacity-0 group-hover/link:opacity-100 transition-opacity text-slate-300"/>
                                                 </Link>
                                                 
                                                 <div className="flex flex-col gap-0.5 mt-1">
                                                     {!tour.isActive && (
-                                                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                                        <span className="text-[12px] font-bold text-slate-300 flex items-center gap-1">
                                                             <EyeOff size={10} /> Черновик
                                                         </span>
                                                     )}
-                                                    <div className="text-[10px] font-bold text-teal-600 uppercase flex items-center gap-1">
+                                                    <div className="text-[12px] font-bold text-teal-600 uppercase flex items-center gap-1">
                                                         <MapPin size={10}/> {tour.location}
                                                     </div>
                                                 </div>
@@ -211,18 +211,18 @@ export default function ToursTab({
                                     </td>
                                     <td className="p-5 font-medium">
                                         <div className="text-slate-900 dark:text-slate-200">{new Date(tour.date).toLocaleDateString()}</div>
-                                        <div className="text-xs text-slate-400 font-bold">{tour.duration} дн.</div>
+                                        <div className="text-xs text-slate-300 font-bold">{tour.duration} дн.</div>
                                     </td>
                                     <td className="p-5">
-                                        <div className="flex justify-between text-[10px] font-black mb-1.5">
-                                            <span className={percent >= 100 ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}>{booked} / {tour.spots}</span>
-                                            <span className="text-slate-500 dark:text-slate-400">{Math.round(percent)}%</span>
+                                        <div className="flex justify-between text-[12px] font-black mb-1.5">
+                                            <span className={percent >= 100 ? 'text-rose-500' : 'text-slate-300 dark:text-slate-300'}>{booked} / {tour.spots}</span>
+                                            <span className="text-slate-300 dark:text-slate-300">{Math.round(percent)}%</span>
                                         </div>
                                         <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <div className={`h-full rounded-full transition-all duration-1000 ${percent >= 100 ? 'bg-rose-500' : 'bg-teal-500'}`} style={{ width: `${percent}%` }} />
                                         </div>
                                     </td>
-                                    <td className="p-5 font-black text-slate-900 dark:text-white">{tour.price} <span className="text-xs text-slate-400 font-bold">{tour.currency}</span></td>
+                                    <td className="p-5 font-black text-slate-900 dark:text-white">{tour.price} <span className="text-xs text-slate-300 font-bold">{tour.currency}</span></td>
                                     <td className="p-5 text-center">
                                         <StatusSwitch active={tour.isActive || false} onClick={() => onToggleStatus(tour)} labelOn="Опубликован" labelOff="Черновик" />
                                     </td>
@@ -237,7 +237,7 @@ export default function ToursTab({
                         })}
                         {filteredTours.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="p-10 text-center text-slate-500 font-medium">Туров не найдено</td>
+                                <td colSpan={6} className="p-10 text-center text-slate-300 font-medium">Туров не найдено</td>
                             </tr>
                         )}
                     </tbody>
@@ -260,11 +260,11 @@ export default function ToursTab({
                                         className="font-bold text-slate-900 dark:text-white truncate pr-2 hover:text-teal-600 hover:underline flex items-center gap-1"
                                      >
                                          {tour.title}
-                                         <ExternalLink size={10} className="text-slate-400 shrink-0"/>
+                                         <ExternalLink size={10} className="text-slate-300 shrink-0"/>
                                      </Link>
                                      <StatusSwitch active={tour.isActive || false} onClick={() => onToggleStatus(tour)} />
                                  </div>
-                                 <p className="text-xs text-slate-400 font-medium mb-2">{new Date(tour.date).toLocaleDateString()} • {tour.duration} дн.</p>
+                                 <p className="text-xs text-slate-300 font-medium mb-2">{new Date(tour.date).toLocaleDateString()} • {tour.duration} дн.</p>
                                  <div className="font-black text-teal-600">{tour.price} <span className="text-xs font-bold opacity-70">{tour.currency}</span></div>
                              </div>
                          </div>
@@ -297,7 +297,7 @@ export default function ToursTab({
           <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 font-black uppercase text-[10px] tracking-widest border-b border-slate-200 dark:border-slate-800">
+                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-300 font-black uppercase text-[12px] tracking-widest border-b border-slate-200 dark:border-slate-800">
                         <tr>
                             <th className="p-5 w-16">Иконка</th>
                             <th className="p-5">Название</th>
@@ -311,7 +311,7 @@ export default function ToursTab({
                         {categories.map((cat) => (
                             <tr key={cat.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                 <td className="p-5">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-300">
                                         {/* Если иконки нет в маппере, показываем дефолтную (LayoutGrid) */}
                                         <LayoutGrid size={20} />
                                     </div>
@@ -320,11 +320,11 @@ export default function ToursTab({
                                     {cat.title}
                                 </td>
                                 <td className="p-5">
-                                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                                    <span className="font-mono text-xs text-slate-300 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
                                         {cat.slug}
                                     </span>
                                 </td>
-                                <td className="p-5 text-center font-bold text-slate-500">
+                                <td className="p-5 text-center font-bold text-slate-300">
                                     {cat.sortOrder}
                                 </td>
                                 <td className="p-5 text-center">
@@ -349,7 +349,7 @@ export default function ToursTab({
                         ))}
                         {categories.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="p-10 text-center text-slate-500 font-medium">Категории не найдены</td>
+                                <td colSpan={6} className="p-10 text-center text-slate-300 font-medium">Категории не найдены</td>
                             </tr>
                         )}
                     </tbody>

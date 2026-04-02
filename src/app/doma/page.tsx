@@ -495,7 +495,7 @@ function AmenityTabs({ tabs }: { tabs: typeof HOUSE.amenityTabs }) {
               'px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 flex-shrink-0',
               active === tab.id
                 ? 'bg-amber-500 text-slate-900 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             )}
           >
             {tab.label}
@@ -569,12 +569,12 @@ export default function HousePage() {
       ══════════════════════════════════════════ */}
       <div className="container mx-auto px-4 max-w-7xl pt-6 pb-4">
         {/* Хлебные крошки */}
-        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mb-5">
+        <div className="flex items-center gap-2 text-xs text-slate-300 font-medium mb-5">
           <Link href="/" className="hover:text-white transition-colors">Главная</Link>
           <ChevronRight size={12} />
           <Link href="/houses" className="hover:text-white transition-colors">Каталог домов</Link>
           <ChevronRight size={12} />
-          <span className="text-slate-400 truncate">{HOUSE.title}</span>
+          <span className="text-slate-300 truncate">{HOUSE.title}</span>
         </div>
 
         {/* Заголовок + мета */}
@@ -594,11 +594,11 @@ export default function HousePage() {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight leading-[1.05] mb-3">
               {HOUSE.title}
             </h1>
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <MapPin size={14} className="text-slate-500" />
+            <div className="flex items-center gap-2 text-sm text-slate-300">
+              <MapPin size={14} className="text-slate-300" />
               {HOUSE.location.district}, {HOUSE.location.village}
               <span className="text-slate-600">·</span>
-              <span className="text-slate-500">{HOUSE.location.distanceMin}</span>
+              <span className="text-slate-300">{HOUSE.location.distanceMin}</span>
             </div>
           </div>
         </div>
@@ -628,7 +628,7 @@ export default function HousePage() {
                 <div key={i} className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-2 hover:border-amber-500/20 transition-colors">
                   <s.icon size={20} className="text-amber-500" />
                   <div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{s.label}</div>
+                    <div className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-0.5">{s.label}</div>
                     <div className="text-base font-black text-white">{s.value}</div>
                   </div>
                 </div>
@@ -639,11 +639,11 @@ export default function HousePage() {
 
             {/* Атмосфера места */}
             <div className="bg-gradient-to-br from-slate-900/80 to-slate-900/40 border border-white/8 rounded-2xl p-6 md:p-8">
-              <div className="text-[10px] font-black text-amber-500 uppercase tracking-[0.15em] mb-4">Атмосфера места</div>
+              <div className="text-[12px] font-black text-amber-500 uppercase tracking-[0.15em] mb-4">Атмосфера места</div>
               <blockquote className="text-slate-200 text-base md:text-lg leading-relaxed font-medium italic border-l-2 border-amber-500/40 pl-5">
                 {HOUSE.atmosphere}
               </blockquote>
-              <div className="mt-4 text-slate-500 text-xs">— {HOUSE.hosts.names}, хозяева</div>
+              <div className="mt-4 text-slate-300 text-xs">— {HOUSE.hosts.names}, хозяева</div>
             </div>
 
             {/* Идеально для */}
@@ -654,7 +654,7 @@ export default function HousePage() {
                   <div key={i} className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 text-center hover:border-amber-500/20 hover:bg-amber-500/5 transition-all">
                     <div className="text-2xl mb-3">{item.emoji}</div>
                     <div className="text-white font-bold text-sm mb-1.5">{item.title}</div>
-                    <div className="text-slate-500 text-xs leading-snug">{item.sub}</div>
+                    <div className="text-slate-300 text-xs leading-snug">{item.sub}</div>
                   </div>
                 ))}
               </div>
@@ -676,7 +676,7 @@ export default function HousePage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {HOUSE.floorPlan.map((plan, i) => (
                   <div key={i} className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-colors">
-                    <div className="inline-block px-2.5 py-1 bg-amber-500/15 rounded-lg text-[10px] font-black uppercase tracking-widest text-amber-400 mb-3">
+                    <div className="inline-block px-2.5 py-1 bg-amber-500/15 rounded-lg text-[12px] font-black uppercase tracking-widest text-amber-400 mb-3">
                       {plan.floor}
                     </div>
                     <p className="text-sm text-slate-300 leading-relaxed">{plan.desc}</p>
@@ -741,10 +741,10 @@ export default function HousePage() {
                     </div>
                     <div className="min-w-0">
                       <div className="font-bold text-white text-sm mb-0.5">{place.name}</div>
-                      <div className="text-xs text-slate-400 mb-1">{place.desc}</div>
+                      <div className="text-xs text-slate-300 mb-1">{place.desc}</div>
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-amber-400 font-bold">{place.distance}</span>
-                        {place.time && <><span className="text-slate-600">·</span><span className="text-slate-500">{place.time}</span></>}
+                        {place.time && <><span className="text-slate-600">·</span><span className="text-slate-300">{place.time}</span></>}
                       </div>
                     </div>
                   </div>
@@ -766,13 +766,13 @@ export default function HousePage() {
                       </div>
                       <div>
                         <div className="font-bold text-white text-sm mb-1">Питание под заказ</div>
-                        <p className="text-slate-400 text-sm leading-relaxed">{HOUSE.food.desc}</p>
+                        <p className="text-slate-300 text-sm leading-relaxed">{HOUSE.food.desc}</p>
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-3 p-4 rounded-2xl bg-slate-900/40 border border-white/5">
-                    <MapPin size={16} className="text-slate-500 shrink-0 mt-0.5" />
-                    <p className="text-slate-400 text-sm">{HOUSE.food.shop}</p>
+                    <MapPin size={16} className="text-slate-300 shrink-0 mt-0.5" />
+                    <p className="text-slate-300 text-sm">{HOUSE.food.shop}</p>
                   </div>
                 </div>
                 <Divider />
@@ -792,7 +792,7 @@ export default function HousePage() {
                       i === 0 && 'bg-amber-500/8'
                     )}
                   >
-                    <span className={cn('font-medium', i === 0 ? 'text-white font-bold' : 'text-slate-400')}>
+                    <span className={cn('font-medium', i === 0 ? 'text-white font-bold' : 'text-slate-300')}>
                       {row.label}
                     </span>
                     <span className={cn('font-black', i === 0 ? 'text-amber-400 text-base' : 'text-white')}>
@@ -817,7 +817,7 @@ export default function HousePage() {
                       i !== HOUSE.rules.length - 1 && 'border-b border-white/5'
                     )}
                   >
-                    <span className="text-slate-400 font-medium flex items-center gap-2">
+                    <span className="text-slate-300 font-medium flex items-center gap-2">
                       <Info size={13} className="text-slate-600" />
                       {rule.label}
                     </span>
@@ -848,7 +848,7 @@ export default function HousePage() {
                     </div>
                     <div>
                       <div className="font-bold text-white text-sm mb-1">{item.title}</div>
-                      <p className="text-slate-400 text-xs leading-relaxed">{item.text}</p>
+                      <p className="text-slate-300 text-xs leading-relaxed">{item.text}</p>
                     </div>
                   </div>
                 ))}
@@ -870,7 +870,7 @@ export default function HousePage() {
                     <item.icon size={20} className="text-amber-500 shrink-0 mt-0.5" />
                     <div>
                       <div className="font-bold text-white text-sm mb-1">{item.title}</div>
-                      <div className="text-sm text-slate-400">{item.text}</div>
+                      <div className="text-sm text-slate-300">{item.text}</div>
                     </div>
                   </div>
                 ))}
@@ -890,7 +890,7 @@ export default function HousePage() {
 
                 {/* Цена */}
                 <div className="mb-5 pb-5 border-b border-white/5">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Стоимость аренды</div>
+                  <div className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-2">Стоимость аренды</div>
                   <div className="flex items-end gap-2 mb-1">
                     <span className="text-4xl font-black text-white leading-none">
                       {HOUSE.price.weekday.toLocaleString()}
@@ -899,7 +899,7 @@ export default function HousePage() {
                       руб / {HOUSE.price.unit}
                     </span>
                   </div>
-                  <div className="text-slate-400 text-sm">
+                  <div className="text-slate-300 text-sm">
                     Выходные (Пт–Вс):{' '}
                     <span className="text-white font-bold">{HOUSE.price.weekend.toLocaleString()} руб</span>
                   </div>
@@ -911,11 +911,11 @@ export default function HousePage() {
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     {HOUSE.hosts.season}
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-slate-400">
+                  <div className="flex items-center gap-2.5 text-sm text-slate-300">
                     <Clock size={14} className="text-slate-600 shrink-0" />
                     Звонки: {HOUSE.hosts.hours}
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-slate-400">
+                  <div className="flex items-center gap-2.5 text-sm text-slate-300">
                     <MessageCircle size={14} className="text-slate-600 shrink-0" />
                     {HOUSE.hosts.responseTime}
                   </div>
@@ -958,19 +958,19 @@ export default function HousePage() {
                   </div>
                   <div>
                     <div className="text-white text-sm font-bold">Хозяева: {HOUSE.hosts.names}</div>
-                    <div className="text-slate-500 text-xs">Прямое бронирование</div>
+                    <div className="text-slate-300 text-xs">Прямое бронирование</div>
                   </div>
                 </div>
               </div>
 
               {/* Карта / навигация */}
               <div className="bg-slate-900 border border-white/10 rounded-[1.75rem] p-5">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Как добраться</div>
+                <div className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-3">Как добраться</div>
                 <div className="flex items-start gap-3 mb-4">
                   <MapPin size={16} className="text-amber-400 shrink-0 mt-0.5" />
                   <div>
                     <div className="text-white text-sm font-bold">{HOUSE.location.village}</div>
-                    <div className="text-slate-400 text-xs">{HOUSE.location.distanceCity} · {HOUSE.location.distanceMin}</div>
+                    <div className="text-slate-300 text-xs">{HOUSE.location.distanceCity} · {HOUSE.location.distanceMin}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -1010,7 +1010,7 @@ export default function HousePage() {
               <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
                 Отзывы гостей
               </h2>
-              <p className="text-slate-500 text-sm mt-1">Реальные впечатления — без фильтров</p>
+              <p className="text-slate-300 text-sm mt-1">Реальные впечатления — без фильтров</p>
             </div>
           </div>
 
@@ -1035,7 +1035,7 @@ export default function HousePage() {
                   </div>
                   <div>
                     <div className="text-white text-sm font-bold">{r.name}</div>
-                    <div className="text-slate-500 text-xs">{r.city} · {r.date}</div>
+                    <div className="text-slate-300 text-xs">{r.city} · {r.date}</div>
                   </div>
                 </div>
               </div>
@@ -1051,7 +1051,7 @@ export default function HousePage() {
             </div>
             <div className="flex-1">
               <div className="text-white font-bold text-base mb-1">Вы здесь останавливались?</div>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <p className="text-slate-300 text-sm leading-relaxed">
                 Напишите нам в Telegram — мы пришлём персональную ссылку для отзыва.
                 Занимает 2 минуты, помогает другим путешественникам.
               </p>
@@ -1113,10 +1113,10 @@ export default function HousePage() {
                     )}
                   </div>
                   <div className="p-4">
-                    <div className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-1">{h.type}</div>
+                    <div className="text-[12px] font-bold text-amber-500 uppercase tracking-widest mb-1">{h.type}</div>
                     <div className="font-black text-white text-base mb-1">{h.title}</div>
                     <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1.5 text-slate-400">
+                      <div className="flex items-center gap-1.5 text-slate-300">
                         <MapPin size={12} />
                         <span>{h.location}</span>
                         <span className="text-slate-600">·</span>
@@ -1125,7 +1125,7 @@ export default function HousePage() {
                       </div>
                       <div className="font-black text-white">
                         {h.price.toLocaleString()}
-                        <span className="text-slate-500 font-normal text-xs"> руб</span>
+                        <span className="text-slate-300 font-normal text-xs"> руб</span>
                       </div>
                     </div>
                   </div>
@@ -1145,7 +1145,7 @@ export default function HousePage() {
           <div className="text-white font-black text-xl leading-none">
             {HOUSE.price.weekday.toLocaleString()} <span className="text-amber-400 text-sm font-bold">руб</span>
           </div>
-          <div className="text-slate-500 text-xs">будни / сутки</div>
+          <div className="text-slate-300 text-xs">будни / сутки</div>
         </div>
         <a
           href={HOUSE.hosts.telegram}

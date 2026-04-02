@@ -29,7 +29,7 @@ export default function KidsHero() {
          {/* Бейдж */}
           <div className="animate-hero-subtitle inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 backdrop-blur-md rounded-full mb-8">
             <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
-            <span className="text-[10px] md:text-xs font-bold tracking-widest text-amber-400 uppercase">
+            <span className="text-[12px] md:text-xs font-bold tracking-widest text-amber-400 uppercase">
               Детское направление
             </span>
           </div>

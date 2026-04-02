@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Clock, ChevronRight, TrendingUp } from 'lucide-react';
+import { MapPin, Hourglass, Star } from 'lucide-react';
 import ReviewFromCabinetButton from '@/features/account/components/ReviewFromCabinetButton';
 
 // ─── утилиты ─────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ async function getHistory(userId: string) {
 
   const now = new Date();
 
-  // Все прошедшие брони, отсортированные от новых к старым
+  // Все прошедшие брони
   const bookings = await prisma.booking.findMany({
     where: {
       memberId: profile.id,
@@ -44,54 +44,28 @@ async function getHistory(userId: string) {
           slug: true,
           location: true,
           coverImage: true,
-          duration: true,
-          distance: true,
           category: { select: { title: true, color: true } },
         },
       },
       tourDate: {
-        select: {
-          startDate: true,
-          guide: { select: { name: true, image: true } },
-        },
+        select: { startDate: true },
       },
     },
   });
 
-  // Проверяем какие туры уже имеют отзыв от этого участника
-const tourIdsWithReview = await prisma.review.findMany({
+  // Достаем отзывы с их статусами (isActive)
+  const userReviews = await prisma.review.findMany({
     where: {
       tourId: { in: bookings.map(b => b.tourId) },
-      // ✅ ИСПРАВЛЕНО: Ищем строго по ID профиля, а не по имени
       memberId: profile.id, 
-    } as any, // as any на случай если TS еще не обновил типы Prisma
-    select: { tourId: true },
-  });
-  const reviewedTourIds = new Set(tourIdsWithReview.map(r => r.tourId));
-
-  // Агрегированная статистика
-  const totalKm = bookings.reduce((sum, b) => {
-    const km = parseFloat(b.tour.distance ?? '0');
-    return sum + (isNaN(km) ? 0 : km);
-  }, 0);
-
-  // Уникальные сезоны
-  const seasons = new Set(
-    bookings
-      .filter(b => b.tourDate)
-      .map(b => `${getSeason(b.tourDate!.startDate).label} ${b.tourDate!.startDate.getFullYear()}`)
-  );
-
-  return {
-    profile,
-    bookings,
-    reviewedTourIds,
-    stats: {
-      total: bookings.length,
-      totalKm: Math.round(totalKm),
-      seasons: seasons.size,
     },
-  };
+    select: { tourId: true, isActive: true, rating: true },
+  });
+  
+  // Делаем удобную мапу для быстрого поиска статуса
+  const reviewsMap = new Map(userReviews.map(r => [r.tourId, r]));
+
+  return { profile, bookings, reviewsMap };
 }
 
 // ─── страница ────────────────────────────────────────────────────────
@@ -103,45 +77,26 @@ export default async function HistoryPage() {
   const data = await getHistory(user.id);
   if (!data) redirect('/login?next=/account/history');
 
-  const { bookings, reviewedTourIds, stats, profile } = data;
+  const { bookings, reviewsMap, profile } = data;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl">
 
      {/* Заголовок */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-white mb-1">История туров</h1>
-        <p className="text-sm text-slate-400">
-          {stats.total > 0
-            ? 'Ваша летопись приключений в цифрах и фактах'
+      <div className="mb-6 px-2 md:px-0">
+        <h1 className="text-2xl font-black text-white mb-1">Архив поездок</h1>
+        <p className="text-sm text-slate-300">
+          {bookings.length > 0
+            ? 'Ваши прошедшие туры и воспоминания'
             : 'Здесь появятся ваши прошедшие туры'}
         </p>
       </div>
 
-      {/* 🔥 НОВЫЙ БЛОК СТАТИСТИКИ (Выводится только если есть туры) */}
-      {stats.total > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1">
-              <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest">Всего туров</span>
-              <p className="text-2xl sm:text-3xl font-black text-white">{stats.total}</p>
-          </div>
-          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1">
-              <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest">Километраж</span>
-              <p className="text-2xl sm:text-3xl font-black text-white">{stats.totalKm} <span className="text-sm text-slate-400 font-medium">км</span></p>
-          </div>
-          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-1">
-              <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest">Сезонов</span>
-              <p className="text-2xl sm:text-3xl font-black text-white">{stats.seasons}</p>
-          </div>
-        </div>
-      )}
-
       {bookings.length === 0 ? (
-        /* Твое оригинальное пустое состояние — ничего не тронуто! */
-        <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-10 text-center">
+        <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-10 text-center mx-2 md:mx-0">
           <p className="text-4xl mb-4">🗺️</p>
           <p className="text-white font-bold mb-2">Ваша история пока пуста</p>
-          <p className="text-sm text-slate-400 mb-6">
+          <p className="text-sm text-slate-300 mb-6">
             После прохождения первого тура здесь появится ваша летопись приключений
           </p>
           <Link
@@ -152,167 +107,75 @@ export default async function HistoryPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {bookings.map((booking, idx) => {
-            const isFirst = idx === bookings.length - 1;
-            const hasReview = reviewedTourIds.has(booking.tourId);
+        <div className="space-y-3 px-2 md:px-0">
+          {bookings.map((booking) => {
+            const review = reviewsMap.get(booking.tourId);
             const season = booking.tourDate ? getSeason(booking.tourDate.startDate) : null;
-            const categoryColor: Record<string, string> = {
-              teal:    'bg-teal-500/20 text-teal-400',
-              blue:    'bg-blue-500/20 text-blue-400',
-              green:   'bg-green-500/20 text-green-400',
-              orange:  'bg-orange-500/20 text-orange-400',
-              purple:  'bg-purple-500/20 text-purple-400',
-            };
-            const catStyle = categoryColor[booking.tour.category?.color ?? 'teal']
-              ?? 'bg-teal-500/20 text-teal-400';
+            const catStyle = booking.tour.category?.color === 'teal' ? 'bg-teal-500/20 text-teal-400' : 'bg-blue-500/20 text-blue-400';
 
             return (
               <div
                 key={booking.id}
-                className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden"
+                className="bg-slate-900/60 border border-white/5 rounded-2xl p-3 flex gap-4 items-center transition-colors hover:bg-slate-900/80"
               >
-                <div className="flex gap-0">
+                {/* Компактное квадратное фото */}
+                <Link href={`/tour/${booking.tour.slug}`} className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-slate-800 hidden sm:block">
+                  {booking.tour.coverImage && (
+                    <Image src={booking.tour.coverImage} alt={booking.tour.title} fill className="object-cover" sizes="80px" />
+                  )}
+                </Link>
 
-                  {/* Миниатюра */}
-                  <div className="relative w-24 sm:w-32 shrink-0">
-                    {booking.tour.coverImage ? (
-                      <Image
-                        src={booking.tour.coverImage}
-                        alt={booking.tour.title}
-                        fill
-                        className="object-cover"
-                        sizes="128px"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-slate-800" />
+                {/* Контент */}
+                <div className="flex-1 min-w-0 py-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    {booking.tour.category && (
+                      <span className={`text-[12px] font-bold px-2 py-0.5 rounded-md ${catStyle}`}>
+                        {booking.tour.category.title}
+                      </span>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/20" />
-
-                    {/* Метка "Начало пути" */}
-                    {isFirst && (
-                      <div className="absolute top-2 left-0 right-0 flex justify-center">
-                        <span className="text-[10px] font-black bg-teal-500 text-white px-1.5 py-0.5 rounded-full">
-                          Старт
-                        </span>
-                      </div>
+                    {season && booking.tourDate && (
+                      <span className="text-xs text-slate-300 shrink-0">
+                        {season.emoji} {formatDate(booking.tourDate.startDate)}
+                      </span>
                     )}
                   </div>
 
-                  {/* Контент */}
-                  <div className="flex-1 p-4 min-w-0">
+                  <Link href={`/tour/${booking.tour.slug}`} className="block text-sm sm:text-base font-black text-white hover:text-teal-400 transition-colors truncate mb-1">
+                    {booking.tour.title}
+                  </Link>
 
-                    {/* Верхняя строка: категория + дата */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      {booking.tour.category && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catStyle}`}>
-                          {booking.tour.category.title}
-                        </span>
-                      )}
-                      {season && booking.tourDate && (
-                        <span className="text-xs text-slate-500 shrink-0">
-                          {season.emoji} {formatDate(booking.tourDate.startDate)}
-                        </span>
-                      )}
+                  {booking.tour.location && (
+                    <span className="flex items-center gap-1 text-xs text-slate-300">
+                      <MapPin size={12} /> {booking.tour.location}
+                    </span>
+                  )}
+                </div>
+
+                {/* Блок отзыва (Кнопка или Статус) */}
+                <div className="shrink-0 flex flex-col items-end gap-2">
+                  {!review ? (
+                    <ReviewFromCabinetButton
+                      tourId={booking.tourId}
+                      tourTitle={booking.tour.title}
+                      memberName={profile.name ?? ''}
+                    />
+                  ) : review.isActive ? (
+                    <div className="flex items-center gap-1.5 text-[12px] sm:text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                      <Star size={12} className="fill-emerald-400" />
+                      Опубликован
                     </div>
-
-                    {/* Название */}
-                    <Link
-                      href={`/tour/${booking.tour.slug}`}
-                      className="block text-sm font-black text-white hover:text-teal-400 transition-colors truncate mb-2"
-                    >
-                      {booking.tour.title}
-                    </Link>
-
-                    {/* Мета */}
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-3">
-                      {booking.tour.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin size={10} /> {booking.tour.location}
-                        </span>
-                      )}
-                      {booking.tour.distance && (
-                        <span className="flex items-center gap-1">
-                          <TrendingUp size={10} /> {booking.tour.distance} км
-                        </span>
-                      )}
-                      {booking.tour.duration && (
-                        <span className="flex items-center gap-1">
-                          <Clock size={10} /> {booking.tour.duration}
-                        </span>
-                      )}
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-[12px] sm:text-xs text-amber-400 font-bold bg-amber-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-amber-500/20" title="Ждет проверки модератором">
+                      <Hourglass size={12} className="animate-pulse" />
+                      На модерации
                     </div>
-
-                    {/* Гид + кнопки */}
-                    <div className="flex items-center justify-between gap-2">
-                      {/* Гид */}
-                      {booking.tourDate?.guide ? (
-                        <div className="flex items-center gap-1.5">
-                          {booking.tourDate.guide.image ? (
-                            <Image
-                              src={booking.tourDate.guide.image}
-                              alt={booking.tourDate.guide.name}
-                              width={20}
-                              height={20}
-                              className="rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-teal-500/20 flex items-center justify-center">
-                              <span className="text-[9px] font-bold text-teal-400">
-                                {booking.tourDate.guide.name[0]}
-                              </span>
-                            </div>
-                          )}
-                          <span className="text-xs text-slate-500">
-                            {booking.tourDate.guide.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <div />
-                      )}
-
-                      {/* Кнопки */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        {/* Кнопка отзыва */}
-                        {!hasReview ? (
-                          <ReviewFromCabinetButton
-                            tourId={booking.tourId}
-                            tourTitle={booking.tour.title}
-                            memberName={profile.name ?? ''}
-                          />
-                        ) : (
-                          <span className="text-xs text-teal-400/60 flex items-center gap-1">
-                            ✓ Отзыв
-                          </span>
-                        )}
-
-                        <Link
-                          href={`/tour/${booking.tour.slug}`}
-                          className="text-slate-600 hover:text-slate-300 transition-colors"
-                        >
-                          <ChevronRight size={16} />
-                        </Link>
-                      </div>
-                    </div>
-
-                  </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       )}
-
     </div>
   );
-}
-
-// ─── склонение ───────────────────────────────────────────────────────
-function plural(n: number, one: string, few: string, many: string) {
-  const abs = Math.abs(n) % 100;
-  const mod = abs % 10;
-  if (abs >= 11 && abs <= 19) return many;
-  if (mod === 1) return one;
-  if (mod >= 2 && mod <= 4) return few;
-  return many;
 }

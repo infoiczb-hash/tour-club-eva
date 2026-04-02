@@ -95,7 +95,7 @@ export default function DirectionsClient() {
         
         {/* --- HEADER --- */}
         <div className="mb-12 md:mb-16">
-            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-400 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
+            <Link href="/" className="inline-flex items-center gap-1.5 md:gap-2 text-slate-300 hover:text-teal-400 transition-colors mb-6 text-[14px] md:text-sm font-bold uppercase tracking-wider">
                 <ArrowLeft size={16} /> На главную
             </Link>
             
@@ -106,7 +106,7 @@ export default function DirectionsClient() {
               </span>
             </h1>
             
-            <p className="text-slate-400 text-s md:text-lg max-w-2xl font-medium leading-relaxed">
+            <p className="text-slate-300 text-s md:text-lg max-w-2xl font-medium leading-relaxed">
               Мы не ограничиваемся одним видом приключений. ТурКлуб «Эва» — это экосистема направлений, где каждый найдет свой формат: от суровых восхождений до релакса на сапбордах.
             </p>
         </div>

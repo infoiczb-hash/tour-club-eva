@@ -30,7 +30,7 @@ const SOURCE_CONFIG: Record<string, any> = {
 };
 
 const CATEGORY_MAP: Record<string, { label: string, colorClass: string }> = {
-    general: { label: 'Местное', colorClass: 'text-slate-400 bg-slate-800/50 border-slate-700/50' },
+    general: { label: 'Местное', colorClass: 'text-slate-300 bg-slate-800/50 border-slate-700/50' },
     kayak: { label: 'Сплавы', colorClass: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
     sup: { label: 'SUP-туры', colorClass: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
     mountains: { label: 'Туры в горы', colorClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
@@ -85,7 +85,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
             <span className="text-sm font-bold text-white leading-none">{review.name}</span>
             <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300", config.iconColor)}>
                {config.icon}
-               <span className="text-[10px] font-bold uppercase tracking-wider">{config.label}</span>
+               <span className="text-[12px] font-bold uppercase tracking-wider">{config.label}</span>
             </div>
           </div>
         </div>
@@ -104,7 +104,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
       {/* FOOTER */}
       <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-        <span className="text-[11px] font-mono text-slate-400 transition-colors">
+        <span className="text-[11px] font-mono text-slate-300 transition-colors">
             {time}
         </span>
         
@@ -177,12 +177,12 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
             </div>
 
             <h2 className="text-4xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
-                <span className="font-light text-slate-400 block md:inline">Отзывы </span>
+                <span className="font-light text-slate-300 block md:inline">Отзывы </span>
                 <span className="font-black text-white">Участников</span>
                 <span className="text-teal-500">.</span>
             </h2>
             
-            <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
+            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
                 <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
                 <span>Создано из отзывов и оценочных форм туров</span>
             </div>
@@ -199,7 +199,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                             "px-6 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border shadow-sm",
                             activeCategory === 'all' 
                                 ? "bg-teal-700 text-white border-teal-600 shadow-teal-900/20" 
-                                : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
+                                : "bg-slate-900/50 text-slate-300 border-white/5 hover:bg-slate-800 hover:text-white"
                         )}
                     >
                         Все отзывы
@@ -218,7 +218,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                                     "shrink-0 snap-center px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wider transition-all border shadow-sm",
                                     activeCategory === catId 
                                         ? "bg-teal-600 text-white border-teal-500 shadow-teal-900/20" 
-                                        : "bg-slate-900/50 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"
+                                        : "bg-slate-900/50 text-slate-300 border-white/5 hover:bg-slate-800 hover:text-white"
                                 )}
                             >
                                 {catInfo.label}
@@ -260,7 +260,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
               </div>
 
            {/* ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
-          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                         <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                         <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                     </div>

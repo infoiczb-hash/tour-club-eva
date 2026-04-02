@@ -1,9 +1,8 @@
 import React from 'react';
 import { Metadata, Viewport } from 'next';
-import { getTours } from '@/features/tours/api';
-import SupLandingClient from '@/features/directions/sup/SupLanding';
+import SupLanding from '@/features/directions/sup/SupLanding';
 
-export const revalidate = 3600; // Страница будет кэшироваться на 60 секунд
+export const revalidate = 3600; // Страница будет кэшироваться на 1 час
 
 export const viewport: Viewport = {
   themeColor: '#020817',
@@ -16,18 +15,15 @@ export const metadata: Metadata = {
     'SUP Приднестровье',
     "SUP Днестр Тирасполь",
     'сапборд Тирасполь',
-     "SUP прогулка для начинающих",
+    "SUP прогулка для начинающих",
     'SUP Днестр',
     'сплавы на SUP',
     'SUP йога Приднестровье',
     "рассвет SUP Тирасполь",
-      "SUP Днестр Тирасполь",
-       "Обучение детей и подростков SUP",
- 
-
+    "Обучение детей и подростков SUP",
   ],
   alternates: {
-    canonical: '/directions/sup', // Защита от дублей
+    canonical: '/directions/sup',
   },
   openGraph: {
     title: 'SUP-прогулки на Днестре — Приднестровье и Молдова | Турклуб «Эва»',
@@ -36,7 +32,7 @@ export const metadata: Metadata = {
     siteName: 'Турклуб «Эва»',
     images: [
       {
-        url: '/og-default.jpg', // Красивая обложка в соцсетях
+        url: '/og-default.jpg',
         width: 1200,
         height: 630,
         alt: 'SUP-прогулки по Днестру с турклубом Эва',
@@ -56,14 +52,16 @@ export const metadata: Metadata = {
 export default function SupPage() {
   return (
     <main className="bg-slate-950 min-h-screen">
-      {/* preload hero — браузер начинает грузить до гидрации JS */}
+      {/* Идеальный preload — 100% cache-hit с Cloudinary */}
       <link
         rel="preload"
         as="image"
         href="https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_75,w_828/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg"
         fetchPriority="high"
+        imageSrcSet="https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_75,w_640/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg 640w, https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_75,w_1080/v1771609707/photo_2026-02-20_15-28-30_nuci5x.jpg 1080w"
+        imageSizes="100vw"
       />
-      <SupLandingClient />
+      <SupLanding />
     </main>
   );
 }

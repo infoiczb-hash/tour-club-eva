@@ -250,13 +250,13 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-950/80 backdrop-blur z-10">
           <div>
             <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">{initialData ? '✏️ Edit Post' : '📝 New Post'}</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">CONTENT MANAGER</p>
+            <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">CONTENT MANAGER</p>
           </div>
           <div className="flex gap-2">
              <button type="button" onClick={handleAiText} disabled={isAiGenerating} className="hidden sm:flex bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-100 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800 px-3 py-2 rounded-xl text-xs font-bold items-center gap-2 transition shadow-sm">
                 {isAiGenerating ? <Loader2 className="animate-spin" size={16}/> : <Sparkles size={16}/>} AI Generator
              </button>
-             <button type="button" onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition text-slate-400"><X size={24}/></button>
+             <button type="button" onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition text-slate-300"><X size={24}/></button>
           </div>
         </div>
 
@@ -270,7 +270,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                 {/* TITLE & SLUG GROUP */}
                 <div className="space-y-3">
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Title (Заголовок)</label>
+                        <label className="block text-[12px] font-bold text-slate-300 dark:text-slate-300 uppercase mb-1.5 ml-1 tracking-wider">Title (Заголовок)</label>
                         <input className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-lg font-bold transition-all dark:text-white" 
                             value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Ex: Top 5 places..." autoFocus 
                         />
@@ -279,17 +279,17 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                     {/* SLUG FIELD */}
                     <div className="flex gap-2 items-end">
                         <div className="flex-1">
-                             <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
+                             <label className="block text-[12px] font-bold text-slate-300 dark:text-slate-300 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
                                 <LinkIcon size={10}/> URL Slug
                              </label>
-                             <input className="w-full p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-violet-500/20 outline-none" 
+                             <input className="w-full p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-violet-500/20 outline-none" 
                                 value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} placeholder="my-awesome-post" 
                              />
                         </div>
                         <button 
                             type="button" 
                             onClick={() => setFormData({...formData, slug: slugify(formData.title)})}
-                            className="p-2 h-[34px] bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                            className="p-2 h-[34px] bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-300 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
                             title="Regenerate Slug from Title"
                         >
                             <RefreshCw size={14} />
@@ -299,7 +299,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Tag size={10}/> Category</label>
+                        <label className="block text-[12px] font-bold text-slate-300 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Tag size={10}/> Category</label>
                         <select className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white appearance-none cursor-pointer" 
                             value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
                             <option value="">-- Выберите категорию --</option>
@@ -309,18 +309,18 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                         </select>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Clock size={10}/> Read Time (min)</label>
+                        <label className="block text-[12px] font-bold text-slate-300 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1"><Clock size={10}/> Read Time (min)</label>
                         <div className="relative">
                             <input type="number" className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white" 
                                 value={formData.read_time} onChange={e => setFormData({...formData, read_time: e.target.value})} 
                             />
-                            <div className="absolute right-3 top-3 text-[10px] text-slate-400 font-bold uppercase pointer-events-none">Auto-calc</div>
+                            <div className="absolute right-3 top-3 text-[12px] text-slate-300 font-bold uppercase pointer-events-none">Auto-calc</div>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
+                    <label className="block text-[12px] font-bold text-slate-300 uppercase mb-1.5 ml-1 tracking-wider flex items-center gap-1">
                         <Tag size={10}/> Tags (Теги статьи)
                     </label>
                     <div className="flex flex-wrap gap-2 mb-2">
@@ -335,7 +335,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                     </div>
                     <input 
                         type="text" 
-                        className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white transition-all placeholder:text-slate-400 placeholder:font-normal" 
+                        className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm font-bold dark:text-white transition-all placeholder:text-slate-300 placeholder:font-normal" 
                         placeholder="Введите тег и нажмите Enter (или запятую)..." 
                         value={tagInput}
                         onChange={e => setTagInput(e.target.value)}
@@ -360,20 +360,20 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                     </div>
                     <div>
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                            <TrendingUp size={14} className={formData.is_trending ? "text-orange-500" : "text-slate-400"}/> 
+                            <TrendingUp size={14} className={formData.is_trending ? "text-orange-500" : "text-slate-300"}/> 
                             Trending (Топ новость)
                         </span>
-                        <p className="text-[10px] text-slate-400">Показывать в блоке "Сейчас читают"</p>
+                        <p className="text-[12px] text-slate-300">Показывать в блоке "Сейчас читают"</p>
                     </div>
                 </div>
               </div>
 
               {/* RIGHT COLUMN: AUTHOR */}
               <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 h-fit">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={12}/> Author Details</h3>
+                  <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={12}/> Author Details</h3>
                   
                   <div className="mb-4 relative">
-                      <label className="text-[12px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select from Team</label>
+                      <label className="text-[12px] font-bold text-slate-300 uppercase ml-1 mb-1 block">Select from Team</label>
                       <div className="relative">
                           <select 
                             className="w-full p-2 pl-3 pr-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white appearance-none cursor-pointer focus:ring-2 focus:ring-violet-500/20 outline-none"
@@ -385,7 +385,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                                <option key={g.id} value={g.id}>{g.name}</option>
                              ))}
                           </select>
-                          <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
+                          <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none"/>
                       </div>
                   </div>
 
@@ -403,18 +403,18 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                           </div>
                           <input type="file" onChange={(e) => handleFile(e, 'author_image')} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
                       </div>
-                      <p className="text-[12px] text-slate-400 font-bold uppercase">Author Photo</p>
+                      <p className="text-[12px] text-slate-300 font-bold uppercase">Author Photo</p>
                   </div>
 
                   <div className="space-y-3">
                       <div>
-                          <label className="text-[12px] font-bold text-slate-400 uppercase ml-1">Name</label>
+                          <label className="text-[12px] font-bold text-slate-300 uppercase ml-1">Name</label>
                           <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white" 
                              value={formData.author_name} onChange={e => setFormData({...formData, author_name: e.target.value})} placeholder="Roman Sandu"
                           />
                       </div>
                       <div>
-                          <label className="text-[12px] font-bold text-slate-400 uppercase ml-1">Role</label>
+                          <label className="text-[12px] font-bold text-slate-300 uppercase ml-1">Role</label>
                           <input className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold dark:text-white" 
                              value={formData.author_role} onChange={e => setFormData({...formData, author_role: e.target.value})} placeholder="Guide Club"
                           />
@@ -428,15 +428,15 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
           {/* 2. TEXT CONTENT & TIPTAP */}
           <div className="space-y-6">
               <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Preview (Lead)</label>
+                  <label className="block text-[12px] font-bold text-slate-300 dark:text-slate-300 uppercase mb-1.5 ml-1 tracking-wider">Preview (Lead)</label>
                   <textarea 
-                    className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm leading-relaxed outline-none focus:ring-2 focus:ring-violet-500/20 transition-all resize-none dark:text-white placeholder:text-slate-400 h-28" 
+                    className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm leading-relaxed outline-none focus:ring-2 focus:ring-violet-500/20 transition-all resize-none dark:text-white placeholder:text-slate-300 h-28" 
                     value={formData.excerpt} onChange={(e) => setFormData({...formData, excerpt: e.target.value})} placeholder="Short description for the card..." 
                   />
               </div>
 
               <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Content</label>
+                  <label className="block text-[12px] font-bold text-slate-300 dark:text-slate-300 uppercase mb-1.5 ml-1 tracking-wider">Content</label>
                   <TiptapEditor 
                     content={formData.content} 
                     onChange={handleContentChange} 
@@ -450,8 +450,8 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
           {/* 3. COVER IMAGE */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cover Image</label>
-                <button type="button" onClick={handleAiImage} disabled={isImageGenerating || !formData.title} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 disabled:opacity-50">
+                <label className="block text-[12px] font-bold text-slate-300 uppercase tracking-wider">Cover Image</label>
+                <button type="button" onClick={handleAiImage} disabled={isImageGenerating || !formData.title} className="text-[12px] font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 disabled:opacity-50">
                     {isImageGenerating ? <Loader2 size={12} className="animate-spin"/> : <Palette size={12}/>} Generate AI
                 </button>
             </div>
@@ -464,7 +464,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
                                 <button type="button" onClick={() => setFormData({...formData, image: ''})} className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center"><span className="bg-white/20 p-2 rounded-full text-white backdrop-blur"><X size={20}/></span></button>
                             </>
                         ) : (
-                            <div className="text-slate-400 flex flex-col items-center">
+                            <div className="text-slate-300 flex flex-col items-center">
                                 {loadingField === 'image' ? (
                                     <Loader2 size={32} className="mb-2 animate-spin text-violet-500"/>
                                 ) : (
@@ -490,13 +490,13 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
 
           {/* SMM GENERATOR */}
           <div className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 p-6 rounded-3xl border border-pink-100 dark:border-pink-900/30 flex flex-col sm:flex-row justify-between items-center gap-4">
-             <div><h4 className="text-xs font-black text-pink-700 dark:text-pink-400 uppercase flex items-center gap-2 mb-1"><Share2 size={14}/> SMM Announce</h4><p className="text-[10px] text-pink-600/70 dark:text-pink-400/70 font-medium">Generate social media posts</p></div>
+             <div><h4 className="text-xs font-black text-pink-700 dark:text-pink-400 uppercase flex items-center gap-2 mb-1"><Share2 size={14}/> SMM Announce</h4><p className="text-[12px] text-pink-600/70 dark:text-pink-400/70 font-medium">Generate social media posts</p></div>
              <div className="flex gap-2 w-full sm:w-auto">
-                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[10px] flex-1" onClick={async () => {
+                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
                      const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' });
                      if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
                  }}><Instagram size={14} className="mr-2 text-pink-600"/> Instagram</Button>
-                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[10px] flex-1" onClick={async () => {
+                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
                      const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' });
                      if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
                  }}><Send size={14} className="mr-2 text-sky-500"/> Telegram</Button>

@@ -60,7 +60,7 @@ export default function LocalRoutes() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent opacity-90" />
                                 
                                 <div className="relative z-10 p-6 md:p-8">
-                                    <span className="text-emerald-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 block">
+                                    <span className="text-emerald-400 text-[12px] md:text-xs font-bold uppercase tracking-widest mb-2 block">
                                         {route.subtitle}
                                     </span>
                                     <h3 className="text-xl md:text-2xl font-black text-white mb-3 leading-tight">
@@ -75,7 +75,7 @@ export default function LocalRoutes() {
                         ))}
                     </div>
 
-                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-1">
+                      <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
                                   <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
                               </div>

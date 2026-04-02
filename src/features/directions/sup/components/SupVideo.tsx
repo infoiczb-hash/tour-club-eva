@@ -34,7 +34,7 @@ export default function SupVideo() {
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full mb-6 backdrop-blur-md">
                         <Video className="w-4 h-4 text-teal-400" />
-                        <span className="text-[10px] font-bold tracking-widest text-teal-300 uppercase">
+                        <span className="text-[12px] font-bold tracking-widest text-teal-300 uppercase">
                             Живые кадры
                         </span>
                     </div>

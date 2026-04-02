@@ -1,9 +1,11 @@
 // src/lib/cloudinary-loader.ts
 //
-// Кастомный loader для next/image.
-// 1. Cloudinary Upload: f_auto,q_{quality},w_{width}
-// 2. Supabase: Пропускаем через Cloudinary Fetch API для бесплатного on-the-fly ресайза и WebP
-// 3. Остальное: возвращает src без изменений
+// ─── СТРАТЕГИЯ FREE TIER (Максимальная экономия кредитов) ───────────────
+//
+// 1. Supabase Storage — используем на 100% (у них щедрый лимит на трансформации).
+// 2. Cloudinary Upload — ограничиваем ширину (защита от утечки bandwidth).
+// 3. Внешние изображения — отдаем "как есть" (не тратим кредиты на чужие картинки).
+// ───────────────────────────────────────────────────────────────────────
 
 type LoaderParams = {
   src: string;
@@ -14,24 +16,33 @@ type LoaderParams = {
 export default function cloudinaryLoader({ src, width, quality }: LoaderParams): string {
   const q = quality ?? 75;
 
-  // --- 1. Cloudinary (Наши статические файлы) ---
+  // ── 1. Supabase Storage (БЕСПЛАТНЫЕ трансформации) ─────────────────────
+  if (src.includes('supabase.co/storage/v1/object/public/')) {
+    const renderUrl = src.replace(
+      '/storage/v1/object/public/',
+      '/storage/v1/render/image/public/'
+    );
+    // Next.js (через Accept headers) сам запросит WebP/AVIF, параметры format не нужны
+    return `${renderUrl}?width=${width}&quality=${q}&resize=cover`;
+  }
+
+  // ── 2. Cloudinary Upload (статика) — лёгкая трансформация с лимитом ─────
   if (src.includes('res.cloudinary.com') && src.includes('/upload/')) {
-    const transformation = `f_auto,q_${q},w_${width}`;
+    // Хард-лимит ширины. Даже если Next.js запросит 3840w, мы отдадим максимум 1200w.
+    // Это спасет твой лимит Bandwidth в Cloudinary.
+    const safeWidth = Math.min(width, 1200);
+    const transformation = `f_auto,q_auto:eco,w_${safeWidth}`;
+    
     return src.replace('/upload/', `/upload/${transformation}/`);
   }
 
-  // --- 2. Supabase Storage (Динамические фото туров) ---
-  // Используем Cloudinary Fetch API как прокси-оптимизатор
-  if (src.includes('supabase.co')) {
-    const cloudName = 'dwrei7k2z'; // Твой Cloudinary cloud_name
-    const transformation = `f_auto,q_${q},w_${width}`;
-    
-    // ВАЖНО: Если URL Supabase содержит параметры (например, токены), 
-    // весь URL необходимо закодировать. Но в базовом варианте для Public бакетов работает и так.
-    // Если будут проблемы с загрузкой, используй encodeURIComponent(src)
-    return `https://res.cloudinary.com/${cloudName}/image/fetch/${transformation}/${src}`;
+  // ── 3. Внешние URL (Unsplash, Google и т.д.) ───────────────────────────
+  if (src.startsWith('https://') && !src.includes('cloudinary.com') && !src.includes('supabase.co')) {
+    // СЕНЬОРСКОЕ ПРАВИЛО: На Free-тиере НИКОГДА не проксируй чужой трафик через свой Cloudinary.
+    // Пусть отдаются оригиналы, трафик оплачивает их CDN.
+    return src;
   }
 
-  // --- 3. Всё остальное (Unsplash, YouTube и т.д.) ---
+  // ── 4. Фоллбек (локальные файлы, blob и т.д.) ──────────────────────────
   return src;
 }

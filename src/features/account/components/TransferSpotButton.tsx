@@ -74,7 +74,7 @@ export default function TransferSpotButton({
       {/* Кнопка передачи */}
       <button
         onClick={handleOpen}
-        className="px-3 flex items-center justify-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 rounded-xl transition-all"
+        className="px-3 flex items-center justify-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 rounded-xl transition-all"
         title="Передать место"
       >
         <ArrowLeftRight size={13} />
@@ -96,7 +96,7 @@ export default function TransferSpotButton({
             {/* Закрыть */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors"
             >
               <X size={16} />
             </button>
@@ -106,7 +106,7 @@ export default function TransferSpotButton({
               <div className="text-center py-4">
                 <CheckCircle size={40} className="text-green-400 mx-auto mb-3" />
                 <p className="text-white font-bold">Место передано!</p>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-slate-300 mt-1">
                   Новый участник получит подтверждение.
                 </p>
               </div>
@@ -117,14 +117,14 @@ export default function TransferSpotButton({
                   <h3 className="text-base font-black text-white mb-1">
                     Передать место
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-300">
                     {tourTitle} · {dateFormatted}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
                       Имя нового участника
                     </label>
                     <input
@@ -139,7 +139,7 @@ export default function TransferSpotButton({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
                       Телефон нового участника
                     </label>
                     <input

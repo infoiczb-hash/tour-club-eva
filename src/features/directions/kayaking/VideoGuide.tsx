@@ -22,7 +22,7 @@ export default function VideoGuide() {
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-4 leading-none">
             Теория <br className="hidden md:block" /><span className="text-teal-500">на практике</span>
           </h2>
-          <p className="text-slate-400 text-[14px] md:text-base leading-relaxed font-medium">
+          <p className="text-slate-300 text-[14px] md:text-base leading-relaxed font-medium">
             Посмотрите наш короткий инструктаж. Мы наглядно показываем, как правильно садиться в байдарку, держать весло и уверенно чувствовать себя на воде.
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function VideoGuide() {
                 </div>
               </div>
               <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 flex flex-col items-start z-10 pointer-events-none">
-                <span className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 text-white text-[10px] md:text-[12px] font-bold uppercase tracking-widest rounded-lg mb-2 md:mb-3">
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 text-white text-[12px] md:text-[12px] font-bold uppercase tracking-widest rounded-lg mb-2 md:mb-3">
                   Основы управления
                 </span>
                 <h3 className="text-xl md:text-3xl font-black text-white drop-shadow-lg tracking-tight leading-tight">

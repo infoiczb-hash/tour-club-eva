@@ -107,7 +107,7 @@ export default function AdminNavigation({
          <div className="p-4 border-t border-slate-100 dark:border-slate-800">
             <button 
               onClick={onLogout} 
-              className="flex items-center gap-3 text-slate-400 hover:text-red-500 transition px-3 py-2 text-sm font-bold w-full rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              className="flex items-center gap-3 text-slate-300 hover:text-red-500 transition px-3 py-2 text-sm font-bold w-full rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
             >
                 <LogOut size={18}/> Выйти
             </button>
