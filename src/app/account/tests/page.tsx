@@ -1,3 +1,5 @@
+// src/app/account/tests/page.tsx
+
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
@@ -7,7 +9,6 @@ import {
   Compass, Brain, PawPrint, Tent, Backpack, 
   Activity, ShieldAlert, Dumbbell, HeartPulse, BookOpen 
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 // ─── Строгие типы для JSON из БД ────────────────────────────────────
 interface TestResultData {
@@ -120,19 +121,15 @@ const QUIZ_CONFIG: Record<string, {
   },
 };
 
-// ─── загрузка данных ─────────────────────────────────────────────────
+// ─── загрузка данных (ОПТИМИЗИРОВАНО) ────────────────────────────────
 async function getTestResults(userId: string) {
-  const profile = await prisma.memberProfile.findUnique({
-    where: { userId },
-  });
-  if (!profile) return null;
-
+  // 🔥 SENIOR OPTIMIZATION: Ищем результаты напрямую, минуя запрос профиля!
   const results = await prisma.testResult.findMany({
-    where: { memberId: profile.id },
+    where: { member: { userId } },
     orderBy: { createdAt: 'desc' },
   });
 
-  return { profile, results };
+  return results;
 }
 
 function formatDate(d: Date) {
@@ -147,10 +144,8 @@ export default async function TestsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login?next=/account/tests');
 
-  const data = await getTestResults(user.id);
-  if (!data) redirect('/login?next=/account/tests');
-
-  const { results } = data;
+  // Теперь возвращается только готовый массив результатов
+  const results = await getTestResults(user.id);
 
   const passedSlugs = new Set(results.map(r => r.testSlug));
   const unpassedQuizzes = Object.entries(QUIZ_CONFIG).filter(

@@ -21,7 +21,7 @@ export async function getContentBlock(slug: string): Promise<Record<string, unkn
 // ==========================================
 export async function uploadImage(file: File, folder: string = ''): Promise<string | null> {
     try {
-        // ✅ ФАЗА 3: Жёсткий лимит размера файла (5 MB)
+        // ✅ ФАЗА 1: Жёсткий лимит размера файла (5 MB)
         const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
         if (file.size > MAX_FILE_SIZE) {
             alert(`Файл слишком большой! Максимальный размер 5 МБ. Размер вашего файла: ${(file.size / 1024 / 1024).toFixed(2)} МБ.`);
@@ -29,20 +29,33 @@ export async function uploadImage(file: File, folder: string = ''): Promise<stri
         }
 
         const supabase = createClient();
-        const bucket = 'tours-images'; // 👈 Жестко зафиксировали корзину
-        
+
+        // ✅ ФАЗА 2: Базовая проверка авторизации (чтобы не делать лишний запрос в хранилище)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            alert('Ошибка: Вы не авторизованы. Только администраторы могут загружать файлы.');
+            return null;
+        }
+
+        const bucket = 'tours-images';
         const fileExt = file.name.split('.').pop();
-        // Уникальное имя файла
         const safeName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
         const fileName = `${Date.now()}-${safeName}.${fileExt}`;
         
-        // 👈 Склеиваем путь: если передали папку 'blog', получится 'blog/12345.jpg'
+        // Склеиваем путь
         const filePath = folder ? `${folder}/${fileName}` : fileName; 
         
+        // ✅ ФАЗА 3: Загрузка в Supabase (Здесь отработает наша RLS политика)
         const { error } = await supabase.storage.from(bucket).upload(filePath, file);
         
         if (error) {
             console.error("Supabase Upload Error:", error);
+            // Перехватываем ошибку RLS и выдаем понятный текст
+            if (error.message.includes('row-level security') || error.message.includes('Unauthorized')) {
+                 alert('Доступ запрещен: У вас нет прав администратора для загрузки файлов в хранилище!');
+            } else {
+                 alert('Ошибка при загрузке картинки: ' + error.message);
+            }
             return null;
         }
         

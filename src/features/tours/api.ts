@@ -231,7 +231,7 @@ function isTourRelevant(tour: Tour): boolean {
 // ─────────────────────────────────────────────
 
 // ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
-export const getTours = cache(async (): Promise<TourPreview[]> => {
+export const getTours = cache(async (cursor?: string): Promise<TourPreview[]> => {
   try {
     const now = today();
     const tours = await prisma.tour.findMany({
@@ -244,7 +244,8 @@ export const getTours = cache(async (): Promise<TourPreview[]> => {
           { tourDates: { none: {} } }
         ]
       },
-      take: 100,
+      take: 50,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: { createdAt: 'desc' },
       include: { 
         guide: true, 
@@ -348,11 +349,13 @@ export const getSimilarTours = cache(async (
 });
 
 // Админка — все туры без фильтрации по датам и isActive (Остается без изменений)
-export async function getAllTours(): Promise<Tour[]> {
+export async function getAllTours(skip: number = 0, take: number = 50): Promise<Tour[]> {
   try {
     const tours = await prisma.tour.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take,
       include: { 
         guide: true, 
         category: true,

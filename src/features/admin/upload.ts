@@ -1,14 +1,12 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ БРОНИ
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-export const uploadFile = async (
+export const uploadFile = withAdminAuth(async (
   formData: FormData
 ): Promise<{ url: string | null; error?: string }> => {
   try {
-    await requireAuth();
-
     const file = formData.get('file') as File;
     const folder = (formData.get('folder') as string) || 'tours';
 
@@ -65,13 +63,7 @@ export const uploadFile = async (
     return { url: renderUrl };
 
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error('Upload Action Error:', err);
-
-    if (err.message === 'Unauthorized') {
-      return { url: null, error: 'Доступ запрещён' };
-    }
-
+    console.error('Upload Action Error:', error);
     return { url: null, error: 'Внутренняя ошибка сервера при загрузке' };
   }
-};
+});

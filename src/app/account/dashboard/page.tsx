@@ -25,7 +25,7 @@ function formatDate(d: Date) {
 
 // ─── загрузка данных ─────────────────────────────────────────────────
 async function getDashboardData(userId: string) {
-  // ✅ ДОБАВЛЕНО: Подтягиваем promoCode вместе с профилем
+  // 1. Подтягиваем профиль и промокод
   const profile = await prisma.memberProfile.findUnique({
     where: { userId },
     include: { promoCode: true }
@@ -33,7 +33,7 @@ async function getDashboardData(userId: string) {
 
   if (!profile) return null;
 
-  // ✅ ЛОГИКА АВТОГЕНЕРАЦИИ ПРОМОКОДА
+  // 2. ЛОГИКА АВТОГЕНЕРАЦИИ ПРОМОКОДА
   let promoCode = profile.promoCode;
   
   if (!promoCode) {
@@ -46,12 +46,11 @@ async function getDashboardData(userId: string) {
         data: {
           code: baseCode,
           memberId: profile.id,
-          discount: 10, // Скидка другу (можно менять)
-          reward: 10,   // Бонус владельцу
+          discount: 10,
+          reward: 10,
         }
       });
     } catch (e) {
-      // Фолбэк: если такой код случайно уже существует, добавляем рандомные цифры
       promoCode = await prisma.promoCode.create({
         data: {
           code: `${baseCode}-${Math.floor(Math.random() * 1000)}`,
@@ -65,62 +64,60 @@ async function getDashboardData(userId: string) {
 
   const now = new Date();
 
-  // 1. Все предстоящие брони
-  const upcomingBookings = await prisma.booking.findMany({
-    where: {
-      memberId: profile.id,
-      // ✅ Теперь клиент видит бронь, даже если еще не оплатил или чек на проверке
-      status: { in: ['pending', 'confirmed', 'awaiting_payment', 'moderation'] },
-      OR: [
-        { tourDate: { startDate: { gte: now } } },
-        { tourDateId: null } 
-      ]
-    },
-    orderBy: { tourDate: { startDate: 'asc' } },
-    include: {
-     tour: {
-        select: {
-          title: true, slug: true, location: true, meetingPoint: true, coverImage: true, // ✅ ДОБАВИЛИ meetingPoint
-          difficulty: true, duration: true, checklist: true, documents: true, currency: true
+  // 🚀 3. ТУРБО-РЕЖИМ: Параллельный запуск тяжелых запросов
+  const [upcomingBookings, waitlists, pastConfirmedBookings] = await Promise.all([
+    // Предстоящие брони
+    prisma.booking.findMany({
+      where: {
+        memberId: profile.id,
+        status: { in: ['pending', 'confirmed', 'awaiting_payment', 'moderation'] },
+        OR: [
+          { tourDate: { startDate: { gte: now } } },
+          { tourDateId: null } 
+        ]
+      },
+      orderBy: { tourDate: { startDate: 'asc' } },
+      include: {
+       tour: {
+          select: {
+            title: true, slug: true, location: true, meetingPoint: true, coverImage: true,
+            difficulty: true, duration: true, checklist: true, documents: true, currency: true
+          },
         },
-            },
-      tourDate: {
-        select: {
-          startDate: true, endDate: true, time: true,
-          guide: { select: { name: true, image: true } },
+        tourDate: {
+          select: {
+            startDate: true, endDate: true, time: true,
+            guide: { select: { name: true, image: true } },
+          },
         },
       },
-    },
-  });
+    }),
 
-  // 2. Лист ожидания
-  let waitlists: any[] = [];
-  if (profile.phone) {
-    waitlists = await prisma.waitlist.findMany({
+    // Лист ожидания (если нет телефона, сразу возвращаем пустой массив)
+    profile.phone ? prisma.waitlist.findMany({
       where: { phone: profile.phone },
       include: {
         tour: { select: { title: true, slug: true, coverImage: true, location: true } },
         tourDate: { select: { startDate: true } },
       },
       orderBy: { createdAt: 'desc' },
-    });
-  }
+    }) : Promise.resolve([]),
 
-  // 3. Статистика (СИНХРОН С ИСТОРИЕЙ)
-  const pastConfirmedBookings = await prisma.booking.findMany({
-  where: { 
-      memberId: profile.id, 
-      // ✅ Ачивки и КМ считаем только по реально посещенным (оплаченным) турам
-      status: 'confirmed',
-      tourDate: { startDate: { lt: now } }
-    },
-    include: { 
-      tour: { select: { title: true, location: true, distance: true, duration: true } },
-      tourDate: { select: { startDate: true, endDate: true } }
-    },
-  });
+    // Прошлые туры для статистики
+    prisma.booking.findMany({
+      where: { 
+        memberId: profile.id, 
+        status: 'confirmed',
+        tourDate: { startDate: { lt: now } }
+      },
+      include: { 
+        tour: { select: { title: true, location: true, distance: true, duration: true } },
+        tourDate: { select: { startDate: true, endDate: true } }
+      },
+    })
+  ]);
 
-  // 4. Агрегация статистики и Ачивок
+  // 4. Агрегация статистики и Ачивок (в памяти сервера - это мгновенно)
   let totalKm = 0;
   let totalNights = 0;
   const totalTours = pastConfirmedBookings.length;
@@ -161,7 +158,7 @@ async function getDashboardData(userId: string) {
 
   return {
     profile,
-    promoCode, // Возвращаем реальный промокод из БД
+    promoCode,
     upcomingBookings,
     waitlists,
     stats: {
@@ -327,7 +324,6 @@ export default async function DashboardPage() {
         <AchievementsBox stats={achievements} />
       </section>
 
-      {/* ✅ ПЕРЕДАЕМ РЕАЛЬНЫЕ ДАННЫЕ В КАРТОЧКУ */}
       <section className="pt-2 px-2 md:px-0">
         <ReferralCard 
           promoCode={promoCode.code} 
@@ -381,7 +377,7 @@ export default async function DashboardPage() {
               return (
                 <BookingCard 
                   key={booking.id} 
-                  bookingId={booking.id} // ✅ Теперь ID брони передается железобетонно
+                  bookingId={booking.id}
                   booking={{ ...booking, guestsCount }} 
                 />
               );

@@ -29,7 +29,6 @@ export async function POST(req: Request) {
       if (callbackData.startsWith('confirm_')) {
         const bookingId = callbackData.replace('confirm_', '');
 
-        // ✅ ИСПРАВЛЕНИЕ: Пишем логи подтверждения
         const booking = await prisma.booking.update({
           where: { id: bookingId },
           data: { 
@@ -39,31 +38,43 @@ export async function POST(req: Request) {
           }
         });
 
-        await editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`);
+        const telegramTasks = [
+          editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`)
+        ];
 
         if (booking.payerTgChatId) {
-          await sendMessage(
-            booking.payerTgChatId,
-            `🎉 Отличные новости! Ваша оплата по заявке <b>#${booking.shortId}</b> подтверждена.\nМы закрепили за вами места. Ждем вас в туре!`
+          telegramTasks.push(
+            sendMessage(
+              booking.payerTgChatId,
+              `🎉 Отличные новости! Ваша оплата по заявке <b>#${booking.shortId}</b> подтверждена.\nМы закрепили за вами места. Ждем вас в туре!`
+            )
           );
         }
+
+        await Promise.allSettled(telegramTasks);
+        
       } else if (callbackData.startsWith('reject_')) {
         const bookingId = callbackData.replace('reject_', '');
 
-        // ✅ ИСПРАВЛЕНИЕ: Откатываем статус и удаляем неверный скрин
         const booking = await prisma.booking.update({
           where: { id: bookingId },
           data: { status: 'awaiting_payment', paymentProofUrl: null }
         });
 
-        await editAdminMessage(adminChatId, messageId, `❌ <b>ОТКЛОНЕНО (Бронь #${booking.shortId})</b>\nОтклонил: ${adminName}`);
+        const telegramTasks = [
+          editAdminMessage(adminChatId, messageId, `❌ <b>ОТКЛОНЕНО (Бронь #${booking.shortId})</b>\nОтклонил: ${adminName}`)
+        ];
 
         if (booking.payerTgChatId) {
-          await sendMessage(
-            booking.payerTgChatId,
-            `⚠️ К сожалению, мы не смогли подтвердить чек для заявки <b>#${booking.shortId}</b>.\nВозможно, скриншот обрезан, размыт или перевод не прошел.\nПожалуйста, проверьте данные и <b>отправьте фото чека еще раз</b> прямо в этот чат.`
+          telegramTasks.push(
+            sendMessage(
+              booking.payerTgChatId,
+              `⚠️ К сожалению, мы не смогли подтвердить чек для заявки <b>#${booking.shortId}</b>.\nВозможно, скриншот обрезан, размыт или перевод не прошел.\nПожалуйста, проверьте данные и <b>отправьте фото чека еще раз</b> прямо в этот чат.`
+            )
           );
         }
+        
+        await Promise.allSettled(telegramTasks);
       }
 
       await answerCallbackQuery(body.callback_query.id);
@@ -117,22 +128,36 @@ export async function POST(req: Request) {
     // ==========================================
     // СЦЕНАРИЙ 2: КЛИЕНТ ПРИСЛАЛ ФОТО ИЛИ ФАЙЛ (ЧЕК)
     // ==========================================
-    // ✅ ИСПРАВЛЕНИЕ: Ловим и photo, и document (когда шлют файл без сжатия или PDF)
-    if (body.message.photo || body.message.document) {
-      
-      // Ищем заявку, которая ждет чек (pending или awaiting_payment)
+    if (body.message?.photo || body.message?.document) {
+      console.log(`📸 Получен чек от chatId: ${chatId}`);
+
+      // 1. Ищем заявку этого клиента. 
+      // ВАЖНО: Добавлен include: { tour: true }, чтобы достать валюту (MDL/RUB)
       const booking = await prisma.booking.findFirst({
         where: { 
             payerTgChatId: chatId, 
             status: { in: ['awaiting_payment', 'pending', 'rejected'] } 
         },
+        include: { tour: { select: { currency: true } } },
         orderBy: { createdAt: 'desc' }
       });
 
       if (!booking) {
+        // Если заявка не найдена, возможно она УЖЕ на модерации (дубль из альбома)
+        const checkModeration = await prisma.booking.findFirst({
+          where: { payerTgChatId: chatId, status: 'moderation' }
+        });
+
+        if (checkModeration) {
+          console.log(`📸 Игнорируем дубликат фото из альбома для chatId: ${chatId}`);
+          return ok();
+        }
+
         await sendMessage(chatId, 'У вас нет заявок, ожидающих скриншота оплаты. Если вы хотите прислать чек для новой заявки, сначала перейдите в бота по кнопке с сайта.');
         return ok();
       }
+
+      console.log(`✅ Найдена заявка #${booking.shortId}`);
 
       let fileId = '';
       if (body.message.photo) {
@@ -145,17 +170,28 @@ export async function POST(req: Request) {
         const fileUrl = await getTelegramFileUrl(fileId);
         const receiptUrl = await uploadToCloudinary(fileUrl);
 
-        // ✅ ИСПРАВЛЕНИЕ: Пишем ссылку именно в paymentProofUrl
-        await prisma.booking.update({
-          where: { id: booking.id },
+        // 2. АТОМАРНОЕ ОБНОВЛЕНИЕ (ЗАЩИТА ОТ ГОНКИ ЗАПРОСОВ ПРИ ОТПРАВКЕ АЛЬБОМА)
+        const updateResult = await prisma.booking.updateMany({
+          where: { 
+            id: booking.id,
+            status: { in: ['awaiting_payment', 'pending', 'rejected'] }
+          },
           data: { status: 'moderation', paymentProofUrl: receiptUrl }
         });
 
-        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} MDL</b>\n\nПодтверждаете получение средств?`;
-        
-        await sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id);
+        // Если count === 0, значит другой процесс (соседнее фото из альбома) уже обновил статус до миллисекунды назад
+        if (updateResult.count === 0) {
+          console.log(`📸 Фото дубль. Бронь #${booking.shortId} уже захвачена другим процессом.`);
+          return ok();
+        }
 
-        await sendMessage(chatId, `✅ Фото чека получено!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`);
+        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'MDL'}</b>\n\nПодтверждаете получение средств?`;
+        
+        // 3. ТУРБО-РЕЖИМ: Отправляем админу и клиенту параллельно
+        await Promise.allSettled([
+          sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id),
+          sendMessage(chatId, `✅ Фото чека получено!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
+        ]);
         
       } catch (e) {
         console.error('Ошибка обработки фото чека:', e);

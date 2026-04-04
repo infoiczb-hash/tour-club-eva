@@ -2,12 +2,10 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ
 
-export async function upsertGuideAction(data: any) {
+export const upsertGuideAction = withAdminAuth(async (data: any) => {
   try {
-    await requireAuth(); // ✅ AUTH CHECK
-
     const payload = {
       name: data.name,
       slug: data.slug,
@@ -38,13 +36,12 @@ export async function upsertGuideAction(data: any) {
 
     revalidatePath('/');
     revalidatePath('/admin');
-    revalidatePath('/guides'); // 👈 ДОБАВЛЕНО
-    if (guide.slug) revalidatePath(`/guides/${guide.slug}`); // 👈 ДОБАВЛЕНО
+    revalidatePath('/guides');
+    if (guide.slug) revalidatePath(`/guides/${guide.slug}`);
     
     return { success: true, data: guide };
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
     console.error('Ошибка сохранения гида:', error);
     return { success: false, error: 'Не удалось сохранить профиль' };
   }
-}
+});

@@ -104,7 +104,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/login?error=signin_failed`);
     }
 
-    // 4. Синхронизация профиля с Prisma (Создаем или обновляем MemberProfile)
+  // 4. Синхронизация профиля с Prisma (Создаем или обновляем MemberProfile)
     if (userId) {
       const fullName = [userData.first_name, userData.last_name].filter(Boolean).join(' ');
       const tgUsername = userData.username ? `@${userData.username}` : null;
@@ -112,12 +112,15 @@ export async function GET(request: Request) {
       await prisma.memberProfile.upsert({
         where: { userId: userId },
         update: {
-          name: fullName || undefined, 
+          // ❌ МЫ УДАЛИЛИ ОТСЮДА `name: fullName || undefined`
+          // Теперь при повторном входе имя пользователя не перезаписывается!
           avatarUrl: userData.photo_url || undefined,
           telegram: tgUsername || undefined,
           tgChatId: userData.id, 
         },
         create: {
+          // ✅ А ЗДЕСЬ ОСТАВИЛИ
+          // При самом первом входе (регистрации) имя всё равно подтянется из ТГ
           userId: userId,
           name: fullName || null,
           avatarUrl: userData.photo_url || null,
@@ -127,7 +130,6 @@ export async function GET(request: Request) {
         }
       });
     }
-
     // 5. Успех! Перенаправляем в личный кабинет
     return NextResponse.redirect(`${origin}/account/dashboard`);
 

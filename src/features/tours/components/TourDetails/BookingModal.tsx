@@ -5,7 +5,7 @@ import {
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
   AlertCircle, Users, LifeBuoy, CalendarDays,
-  CreditCard, Banknote, Globe, QrCode, Tag
+  CreditCard, Banknote, Globe, QrCode, Tag, Mail
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction } from '@/features/tours/actions/createBooking';
@@ -57,19 +57,18 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Стейт для способа оплаты (По умолчанию онлайн)
   const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign'>('biletpmr');
 
   const [formData, setFormData] = useState({
     name: '',
     phone: '+373 ',
-    social: '', 
+    social: '', // Сюда пойдет Email или Telegram
     comment: '',
     website: '' 
   });
 
   const [successData, setSuccessData] = useState<{
-   bookingId: string;
+    bookingId: string;
     shortId: number;
     totalPrice: number;
     biletpmrLink?: string | null;
@@ -81,17 +80,12 @@ export default function BookingModal({
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
 
-  const [tickets, setTickets] = useState({ 
-    adult: 1, 
-    child: 0, 
-    member: 0, 
-    family: 0 
-  });
-  
+  const [tickets, setTickets] = useState({ adult: 1, child: 0, member: 0, family: 0 });
   const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
-  // Стейты баланса, бонусов и промокодов
- const [balance, setBalance] = useState<number>(0);
+  // ✅ НОВОЕ: Стейт авторизации
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [balance, setBalance] = useState<number>(0);
   const [useBonuses, setUseBonuses] = useState<boolean>(false);
   
   const [promoCode, setPromoCode] = useState<string>('');
@@ -109,7 +103,6 @@ export default function BookingModal({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
-      // ✅ БАГ 8 ИСПРАВЛЕН: Убрана фантомная проверка tour.date
       if (initialDate && initialDateId) {
          setSelectedDateStr(initialDate);
          setSelectedDateId(initialDateId);
@@ -117,34 +110,34 @@ export default function BookingModal({
          setSelectedDateId(tour.dates[0].id || null);
          setSelectedDateStr(formatDateForDropdown(tour.dates[0]));
       } else {
-         // Заглушка, если дат еще нет (предотвращает краш Invalid Date)
          setSelectedDateStr('Открытая дата (по согласованию)');
          setSelectedDateId(null);
       }
 
-     getMyProfileAction().then((profile) => {
-        if (!profile) return;
+      getMyProfileAction().then((profile) => {
+        if (!profile) {
+          setIsLoggedIn(false);
+          return;
+        }
 
-        // 1. Контакты заказчика
+        setIsLoggedIn(true);
         setFormData((prev) => ({
           ...prev,
           name: profile.name || prev.name,
           phone: profile.phone || prev.phone,
-          social: profile.telegram || profile.instagram || profile.email || prev.social,
+          social: profile.email || profile.telegram || profile.instagram || prev.social,
         }));
 
         setBalance(profile.balance || 0);
 
-        // 2. Данные первого билета (он же заказчик)
         setGuestData((prev) => {
           const firstGuest = prev['adult_0'] || { name: '', jacket: '' }; 
-
           return {
             ...prev,
             'adult_0': {
               ...firstGuest,
               name: profile.name || firstGuest.name || '',
-              jacket: profile.lifeJacketSize || firstGuest.jacket || '', // ✅ Используем правильный ключ jacket
+              jacket: profile.lifeJacketSize || firstGuest.jacket || '', 
             },
           };
         });
@@ -161,6 +154,7 @@ export default function BookingModal({
         setPaymentMethod('biletpmr'); 
         setUseBonuses(false);
         setPromoCode('');
+        setIsLoggedIn(false);
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -188,8 +182,6 @@ export default function BookingModal({
     return sum;
   }, [tickets, tour]);
 
-  // Логика скидки из баланса (Промокод посчитается на сервере)
-// ✅ Функция проверки промокода
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
     setIsCheckingPromo(true);
@@ -213,19 +205,19 @@ export default function BookingModal({
     }
   };
 
-  // ✅ Умный пересчет цены (Бонусы ИЛИ Промокод)
+  // Визуальный пересчет (для отображения клиенту)
   const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
   const availableBonusesToUse = Math.min(balance, maxBonusDiscount);
   
   let appliedDiscount = 0;
-  if (useBonuses && balance > 0) {
+  if (isLoggedIn && useBonuses && balance > 0) {
     appliedDiscount = availableBonusesToUse;
-  } else if (promoSuccess) {
+  } else if (!isLoggedIn && promoSuccess) {
     appliedDiscount = promoType === 'percent' 
       ? Math.floor(baseTotalPrice * (promoDiscount / 100)) 
       : promoDiscount;
   }
-  const finalPrice = Math.max(0, baseTotalPrice - appliedDiscount);
+  const displayFinalPrice = Math.max(0, baseTotalPrice - appliedDiscount);
 
   const getSmartPlaceholder = () => {
     const categorySlug = tour.category?.slug;
@@ -283,6 +275,7 @@ export default function BookingModal({
     });
 
     try {
+      // ✅ УБРАНЫ: expectedPrice и totalPrice
       const result = await createBookingAction({
         tourId:        String(tour.id),
         tourDateId:    selectedDateId || undefined, 
@@ -290,7 +283,7 @@ export default function BookingModal({
         tourDate:      selectedDateStr,
         name:          formData.name.trim(),
         phone:         formData.phone.trim(),
-        social:        formData.social.trim() || undefined,
+        social:        formData.social.trim() || undefined, // Почта/Телеграм отправляется сюда
         comment:       formData.comment.trim() || undefined,
         website:       formData.website, 
         ticketsAdult:  tickets.adult,
@@ -298,19 +291,17 @@ export default function BookingModal({
         ticketsMember: tickets.member,
         ticketsFamily: tickets.family, 
         guests:        payloadGuests, 
-        totalPrice:    baseTotalPrice,
         currency:      tour.currency ?? 'RUB',
         paymentMethod: paymentMethod, 
-        useBonuses:    useBonuses,
-        expectedPrice: finalPrice, // ✅ БАГ 6 ИСПРАВЛЕН: Передаем ожидаемую цену
-        promoCode:     promoCode.trim() || undefined, // ✅ Передаем промокод
+        useBonuses:    isLoggedIn ? useBonuses : false, // Только если авторизован
+        promoCode:     !isLoggedIn && promoCode.trim() ? promoCode.trim() : undefined, // Только если НЕ авторизован
       });
 
       if (result.success) {
         setSuccessData({
           bookingId: result.bookingId,
           shortId: result.shortId,
-          totalPrice: result.totalPrice, // Цена с учетом всех серверных скидок (бонусы/промо)
+          totalPrice: result.totalPrice, // Серверная цена
           biletpmrLink: result.biletpmrLink,
           apbQrLink: result.apbQrLink,
           apbQrImage: result.apbQrImage,
@@ -318,15 +309,15 @@ export default function BookingModal({
         });
         
         setStep('success');
-     } else {
-        if (result.fields && Object.keys(result.fields).length > 0) {
+   } else {
+        // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА (удовлетворяем строгий TypeScript)
+        if ('fields' in result && result.fields && Object.keys(result.fields).length > 0) {
             const issues = Object.values(result.fields).join(' | ');
             setErrorMsg(`Ошибка в полях: ${issues}`);
         } else {
-            // ✅ Если это наша ошибка о дубликате (Анти-спам), она будет в result.error
             setErrorMsg(result.error || 'Произошла ошибка при бронировании. Попробуйте позже.');
         }
-      }
+            }
     } catch {
       setErrorMsg('Ошибка соединения. Проверьте интернет и попробуйте снова.');
     } finally {
@@ -468,35 +459,46 @@ export default function BookingModal({
                       <Counter label="По клубной карте" price={tour.priceMember} value={tickets.member} type="member" />
                     ) : null}
                     
-                    {/* ✅ ЛОГИКА: Бонусы ИЛИ Промокод */}
-                    {balance > 0 ? (
+                    {/* ✅ НОВАЯ ЛОГИКА: Разделение по авторизации */}
+                    {isLoggedIn ? (
                       <div className="pt-3 mt-1 border-t border-white/10">
-                        <label className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 transition-colors">
-                          <div className="relative flex items-center justify-center">
-                            <input 
-                              type="checkbox" 
-                              checked={useBonuses} 
-                              onChange={(e) => setUseBonuses(e.target.checked)} 
-                              className="peer sr-only" 
-                            />
-                            <div className="w-5 h-5 border-2 border-amber-500/50 rounded flex items-center justify-center bg-slate-950 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all">
-                              <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                        {balance > 0 ? (
+                          <label className="flex items-center gap-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 transition-colors">
+                            <div className="relative flex items-center justify-center">
+                              <input 
+                                type="checkbox" 
+                                checked={useBonuses} 
+                                onChange={(e) => setUseBonuses(e.target.checked)} 
+                                className="peer sr-only" 
+                              />
+                              <div className="w-5 h-5 border-2 border-amber-500/50 rounded flex items-center justify-center bg-slate-950 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all">
+                                <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-amber-500">Списать бонусы</p>
+                              <p className="text-[12px] text-amber-500/70 uppercase tracking-widest font-bold mt-0.5">
+                                Доступно {balance} ₽ (макс. {maxBonusDiscount} ₽)
+                              </p>
+                            </div>
+                            {useBonuses && (
+                              <div className="text-sm font-black text-amber-500 shrink-0">
+                                -{availableBonusesToUse} ₽
+                              </div>
+                            )}
+                          </label>
+                        ) : (
+                          <div className="p-3 rounded-xl border border-white/5 bg-white/5 flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-bold text-slate-300">Бонусная система</p>
+                              <p className="text-[12px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">
+                                На вашем счету пока 0 ₽
+                              </p>
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-bold text-amber-500">Списать бонусы</p>
-                            <p className="text-[12px] text-amber-500/70 uppercase tracking-widest font-bold mt-0.5">
-                              Доступно {balance} ₽ (макс. {maxBonusDiscount} ₽)
-                            </p>
-                          </div>
-                          {useBonuses && (
-                            <div className="text-sm font-black text-amber-500 shrink-0">
-                              -{availableBonusesToUse} ₽
-                            </div>
-                          )}
-                        </label>
+                        )}
                       </div>
-                   ) : (
+                    ) : (
                       <div className="pt-3 mt-1 border-t border-white/10">
                         <div className="flex gap-2">
                           <div className="relative flex-1">
@@ -556,13 +558,13 @@ export default function BookingModal({
                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
                        <span className="text-xs font-bold text-slate-300 uppercase">Итого к оплате:</span>
                        <div className="text-right flex items-center gap-2 justify-end">
-                         {(useBonuses || promoSuccess) && (
+                         {((isLoggedIn && useBonuses) || (!isLoggedIn && promoSuccess)) && (
                            <div className="text-[12px] text-slate-300 line-through font-bold uppercase tracking-widest">
                              {baseTotalPrice.toLocaleString()} {tour.currency}
                            </div>
                          )}
                          <span className="text-xl font-black text-teal-400">
-                           {finalPrice.toLocaleString()} {tour.currency}
+                           {displayFinalPrice.toLocaleString()} {tour.currency}
                          </span>
                        </div>
                     </div>
@@ -588,29 +590,43 @@ export default function BookingModal({
                               </div>
 
                               {index === 0 ? (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      <div className="relative">
-                                         <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
-                                         <input 
-                                           required 
-                                           type="text" 
-                                           placeholder="Имя Фамилия" 
-                                           value={formData.name} 
-                                           onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                         />
-                                      </div>
-                                      <div className="relative">
-                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
-                                         <input 
-                                           required 
-                                           type="tel" 
-                                           value={formData.phone} 
-                                           onChange={(e) => setFormData({...formData, phone: e.target.value})} 
-                                           className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
-                                         />
-                                      </div>
-                                  </div>
+                                  <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="relative">
+                                           <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                           <input 
+                                             required 
+                                             type="text" 
+                                             placeholder="Имя Фамилия" 
+                                             value={formData.name} 
+                                             onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                                             className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                           />
+                                        </div>
+                                        <div className="relative">
+                                           <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                           <input 
+                                             required 
+                                             type="tel" 
+                                             value={formData.phone} 
+                                             onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                                             className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                           />
+                                        </div>
+                                    </div>
+                                    {/* ✅ НОВОЕ ПОЛЕ: Email/Telegram для получения билета */}
+                                    <div className="relative mt-3">
+                                       <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
+                                       <input 
+                                         required
+                                         type="text" 
+                                         placeholder="Email или Telegram (Сюда придет билет)" 
+                                         value={formData.social} 
+                                         onChange={(e) => setFormData({...formData, social: e.target.value})} 
+                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
+                                       />
+                                    </div>
+                                  </>
                               ) : (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div className="relative">
@@ -692,7 +708,6 @@ export default function BookingModal({
                     </div>
                 </div>
 
-                {/* ✅ БАГ 7 ИСПРАВЛЕН: Доступность оплат (button role="radio") */}
                 <div className="space-y-3 pt-2">
                   <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5 border-b border-white/5 pb-2">
                     <CreditCard size={14} className="text-teal-500" /> Способ оплаты
@@ -772,7 +787,7 @@ export default function BookingModal({
                   {isLoading ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    `Оформить за ${finalPrice.toLocaleString()} ${tour.currency}`
+                    `Оформить за ${displayFinalPrice.toLocaleString()} ${tour.currency}`
                   )}
                 </button>
                 

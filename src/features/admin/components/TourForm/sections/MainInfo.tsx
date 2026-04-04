@@ -35,7 +35,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
     }
   };
 
-  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingGallery(true);
       try {
@@ -44,9 +44,15 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
           const formData = new FormData();
           formData.append('file', file);
           formData.append('folder', 'tours');
+          
           const response = await uploadFile(formData); 
-          if (response && response.url) {
+          
+          // ✅ ИСПРАВЛЕНО: Сначала проверяем, есть ли ключ 'url' в ответе
+          if (response && 'url' in response && response.url) {
               append(response.url); 
+          } else if (response && 'error' in response) {
+              // Опционально: можно вывести конкретную ошибку, если загрузка не удалась
+              console.error('Ошибка сервера при загрузке:', response.error);
           }
         }
       } catch (err) {

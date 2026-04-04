@@ -1,3 +1,5 @@
+// src/app/account/wishlist/page.tsx
+
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
@@ -11,77 +13,90 @@ import WishlistToggle from '@/features/account/components/WishlistToggle';
 import CategoryPills from '@/components/account/CategoryPills';
 import CancelWaitlistButton from '@/features/account/components/CancelWaitlistButton';
 
-// ─── загрузка данных ─────────────────────────────────────────────────
+// ─── загрузка данных (АБСОЛЮТНО ОПТИМИЗИРОВАНО) ──────────────────────
 async function getWishlistData(userId: string) {
+  // 1. Берем профиль (строгая диета: только id и phone)
   const profile = await prisma.memberProfile.findUnique({
     where: { userId },
+    select: { id: true, phone: true }
   });
+  
   if (!profile) return null;
 
-  // 1. Лист ожидания (Waitlist)
-  const waitlists = await prisma.waitlist.findMany({
-    where: {
-      OR: [
-        { memberId: profile.id },
-        ...(profile.phone ? [{ phone: profile.phone }] : [])
-      ]
-    },
-    include: {
-      tour: { select: { title: true, slug: true, coverImage: true, location: true } },
-      tourDate: { select: { startDate: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+  // 2. 🚀 ТУРБО-РЕЖИМ: 5 запросов параллельно!
+  const [
+    waitlists,
+    tourWishlist,
+    favoritePosts,
+    categorySubscriptions,
+    allCategories
+  ] = await Promise.all([
+    // Запрос 1: Лист ожидания
+    prisma.waitlist.findMany({
+      where: {
+        OR: [
+          { memberId: profile.id },
+          ...(profile.phone ? [{ phone: profile.phone }] : [])
+        ]
+      },
+      include: {
+        tour: { select: { title: true, slug: true, coverImage: true, location: true } },
+        tourDate: { select: { startDate: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
 
-  // 2. Вишлист туров
-  const tourWishlist = await prisma.watchList.findMany({
-    where: { memberId: profile.id, tourId: { not: null } },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      tour: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          location: true,
-          coverImage: true,
-          duration: true,
-          distance: true,
-          price: true,
-          currency: true,
-          isActive: true,
-          category: { select: { title: true, color: true } },
-          tourDates: {
-            where: { startDate: { gte: new Date() }, isActive: true },
-            orderBy: { startDate: 'asc' },
-            take: 1,
-            select: { startDate: true, spotsLeft: true },
+    // Запрос 2: Вишлист туров (с легкими вложенными select)
+    prisma.watchList.findMany({
+      where: { memberId: profile.id, tourId: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        tour: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            location: true,
+            coverImage: true,
+            duration: true,
+            distance: true,
+            price: true,
+            currency: true,
+            isActive: true,
+            category: { select: { title: true, color: true } },
+            tourDates: {
+              where: { startDate: { gte: new Date() }, isActive: true },
+              orderBy: { startDate: 'asc' },
+              take: 1,
+              select: { startDate: true, spotsLeft: true },
+            },
           },
         },
       },
-    },
-  });
+    }),
 
-  // 3. Избранные Статьи Блога
-  const favoritePosts = await prisma.favoritePost.findMany({
-    where: { memberId: profile.id },
-    include: {
-      post: { select: { id: true, title: true, slug: true, image: true, read_time: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+    // Запрос 3: Избранные статьи блога
+    prisma.favoritePost.findMany({
+      where: { memberId: profile.id },
+      include: {
+        post: { select: { id: true, title: true, slug: true, image: true, read_time: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
 
-  // 4. Категории для Pill-тегов
-  const categorySubscriptions = await prisma.watchList.findMany({
-    where: { memberId: profile.id, categoryId: { not: null } },
-    select: { categoryId: true }
-  });
+    // Запрос 4: Подписки на категории
+    prisma.watchList.findMany({
+      where: { memberId: profile.id, categoryId: { not: null } },
+      select: { categoryId: true }
+    }),
 
-  const allCategories = await prisma.tourCategory.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
-    select: { id: true, slug: true, title: true, icon: true, color: true },
-  });
+    // Запрос 5: Все категории для Pill-тегов
+    prisma.tourCategory.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, slug: true, title: true, icon: true, color: true },
+    })
+  ]);
 
   const subscribedCategoryIds = categorySubscriptions.map(s => s.categoryId).filter(Boolean) as string[];
 

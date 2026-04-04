@@ -4,7 +4,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // ✅ ИМПОРТИРУЕМ НАШУ БРОНЮ
 import { publishToTelegram, publishTourToChannel, sendToUserTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
@@ -16,11 +16,11 @@ export type SaveTourPayload = Record<string, unknown> & {
 };
 
 // ==========================================
-// 1. SAVE TOUR (CREATE / UPDATE) - ОБНОВЛЕННАЯ ФУНКЦИЯ
+// 1. SAVE TOUR (CREATE / UPDATE) - ЗАЩИЩЕНО
 // ==========================================
-export async function saveTour(formData: SaveTourPayload) {
+export const saveTour = withAdminAuth(async (formData: SaveTourPayload) => {
   try {
-    await requireAuth();
+    // Внутри больше нет await requireAuth(), обертка уже все проверила!
 
     // 1. Нормализуем данные
     const rawData = {
@@ -159,17 +159,14 @@ export async function saveTour(formData: SaveTourPayload) {
     
     if (hasNewDates && data.isActive) {
        try {
-         // Единый сервис соберет Ждунов (по memberId и телефону), 
-         // Подписчиков категории, Избранное, и разошлет всем пуши параллельно.
          await notifySubscribersOnNewDates(
            savedTourId,
-           data.categoryId || null, // Если в data есть categoryId, передаем его
+           data.categoryId || null,
            data.title,
            slug
          );
        } catch (notifyError) {
          console.error("Ошибка при автоматической рассылке Telegram:", notifyError);
-         // Не даем ошибке рассылки сломать сохранение тура
        }
     }
     // 👆 КОНЕЦ БЛОКА 👆
@@ -181,31 +178,30 @@ export async function saveTour(formData: SaveTourPayload) {
 
     // Отправка в общий паблик
     if (!formData.id && data.isActive) {
-  publishTourToChannel({
-    title:      data.title,
-    subtitle:   data.subtitle,
-    location:   data.location,
-    duration:   data.duration ?? '',
-    price:      data.price,
-    currency:   data.currency,
-    slug:       slug,
-    coverImage: data.coverImage,
-  }).catch(console.error);
-}
+      publishTourToChannel({
+        title:      data.title,
+        subtitle:   data.subtitle,
+        location:   data.location,
+        duration:   data.duration ?? '',
+        price:      data.price,
+        currency:   data.currency,
+        slug:       slug,
+        coverImage: data.coverImage,
+      }).catch(console.error);
+    }
 
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;
-    if (err.message === 'Unauthorized') {
-      return { success: false, error: 'Unauthorized' };
-    }
     console.error('❌ Database Error in saveTour:', err);
     return { success: false, error: 'Произошла внутренняя ошибка сервера при сохранении тура.' };
   }
-}
+});
 
 // ==========================================
 // 2. GET ACTIVE GUIDES (БЕЗ ИЗМЕНЕНИЙ)
+// Эту функцию не оборачиваем, так как она только читает список,
+// и нам нужно, чтобы она возвращала массив, а не объект с ошибкой.
 // ==========================================
 export async function getActiveGuides() {
   try {
@@ -222,12 +218,10 @@ export async function getActiveGuides() {
 }
 
 // ==========================================
-// 3. DELETE TOUR (БЕЗ ИЗМЕНЕНИЙ)
+// 3. DELETE TOUR - ЗАЩИЩЕНО
 // ==========================================
-export async function deleteTour(id: string) {
+export const deleteTour = withAdminAuth(async (id: string) => {
   try {
-    await requireAuth();
-
     const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
     
     await prisma.tour.update({ 
@@ -242,22 +236,16 @@ export async function deleteTour(id: string) {
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;
-    if (err.message === 'Unauthorized') {
-      return { success: false, error: 'Unauthorized' };
-    }
     console.error('Delete Error:', err);
     return { success: false, error: 'Произошла внутренняя ошибка сервера при удалении тура.' };
   }
-}
+});
 
 // ==========================================
-// 4. TOGGLE STATUS (ОБНОВЛЕНО С ТЕЛЕГРАМ-РАССЫЛКОЙ)
+// 4. TOGGLE STATUS - ЗАЩИЩЕНО
 // ==========================================
-export async function updateTourStatus(id: string, isActive: boolean) {
+export const updateTourStatus = withAdminAuth(async (id: string, isActive: boolean) => {
   try {
-    await requireAuth();
-
-    // Читаем текущий статус ДО обновления — чтобы понять первая ли это публикация
     const existing = await prisma.tour.findUnique({
       where: { id },
       select: { isActive: true },
@@ -281,23 +269,15 @@ export async function updateTourStatus(id: string, isActive: boolean) {
       },
     });
 
-    // Тур только что перешёл из черновика в активный — первая публикация
     const isFirstPublish = !existing?.isActive && isActive;
 
     if (isFirstPublish) {
-      // Рассылка подписчикам
       try {
-        await notifySubscribersOnNewDates(
-          tour.id,
-          tour.categoryId,
-          tour.title,
-          tour.slug
-        );
+        await notifySubscribersOnNewDates(tour.id, tour.categoryId, tour.title, tour.slug);
       } catch (notifyError) {
         console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
       }
 
-      // Публикация в публичный канал @evaturclub
       publishTourToChannel({
         title:      tour.title,
         subtitle:   tour.subtitle,
@@ -316,10 +296,7 @@ export async function updateTourStatus(id: string, isActive: boolean) {
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;
-    if (err.message === 'Unauthorized') {
-      return { success: false, error: 'Unauthorized' };
-    }
     console.error('Update Status Error:', err);
     return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса.' };
   }
-}
+});

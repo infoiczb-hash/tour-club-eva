@@ -28,16 +28,6 @@ export async function GET(req: Request) {
 
     const now = new Date();
 
-    // Находим туры где ВСЕ даты уже прошли → деактивируем
-    const expiredTours = await prisma.tour.findMany({
-      where: {
-        isActive: true,
-        deletedAt: null,
-        tourDates: { none: {} }, // нет дат вообще — пропускаем
-      },
-      select: { id: true, slug: true },
-    });
-
     // Туры у которых есть даты но все прошли
     const toursWithAllDatesPast = await prisma.tour.findMany({
       where: {

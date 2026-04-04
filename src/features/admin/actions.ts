@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ БРОНИ
 import { prisma } from '@/lib/prisma';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { sendToUserTelegram, publishPostToChannel } from '@/features/admin/actions/telegram';
@@ -59,10 +59,8 @@ export interface SavePostPayload {
 // 1. БРОНИРОВАНИЯ (CRM)
 // ==========================================
 
-export async function getRegistrationsAction() {
+export const getRegistrationsAction = withAdminAuth(async () => {
   try {
-    await requireAuth(); 
-
     const rawData = await prisma.booking.findMany({
       include: {
         tour: { select: { title: true, dates: true } },
@@ -90,7 +88,6 @@ export async function getRegistrationsAction() {
         
         short_id: item.shortId ?? undefined, 
         
-        // ✅ ТЕПЕРЬ ФРОНТЕНД ПОЛУЧИТ ЭТИ ДАННЫЕ:
         guests: item.guests || [],
         payment_method: item.paymentMethod || 'cash', 
         discount: item.discount || 0,
@@ -103,7 +100,6 @@ export async function getRegistrationsAction() {
         comment: item.comment || '',
         social: item.social || item.email || '',
 
-        // ✅ НОВЫЕ ПОЛЯ ДЛЯ ЧЕКОВ (ЭТАП 2)
         payment_proof_url: item.paymentProofUrl || null,
         receipt_url: item.receiptUrl || null,
         confirmed_by: item.confirmedBy || null,
@@ -117,17 +113,13 @@ export async function getRegistrationsAction() {
 
     return { data };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized', data: [] };
     console.error('Get Registrations Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при загрузке бронирований', data: [] };
   }
-}
+});
 
-export async function updateRegistrationStatus(id: string, status: string) {
+export const updateRegistrationStatus = withAdminAuth(async (id: string, status: string) => {
   try {
-    await requireAuth(); 
-
     const booking = await prisma.$transaction(async (tx) => {
       const current = await tx.booking.findUnique({
         where: { id },
@@ -138,7 +130,6 @@ export async function updateRegistrationStatus(id: string, status: string) {
 
       const totalTickets = current.ticketsAdult + current.ticketsChild + current.ticketsMember + (current.ticketsFamily * 3);
 
-      // 1. ОТМЕНА: Если статус меняется на cancelled -> Возвращаем места в продажу (increment)
       if (status === 'cancelled' && current.status !== 'cancelled') {
         if (current.tourDateId) {
           await tx.tourDate.update({
@@ -152,7 +143,6 @@ export async function updateRegistrationStatus(id: string, status: string) {
           });
         }
       } 
-      // 2. ВОССТАНОВЛЕНИЕ: Если восстанавливаем из cancelled -> Забираем места обратно (decrement)
       else if (current.status === 'cancelled' && status !== 'cancelled') {
         if (current.tourDateId) {
           await tx.tourDate.update({
@@ -177,7 +167,6 @@ export async function updateRegistrationStatus(id: string, status: string) {
       });
     });
 
-    // 🔥 ТРИГГЕР: Отправляем пуш юзеру, если статус стал "confirmed" (Оплачено)
    if ((booking.member as any)?.tgChatId) {
         const chatId = (booking.member as any).tgChatId;
         const link = `${process.env.NEXT_PUBLIC_SITE_URL}/account/bookings/${booking.id}`;
@@ -204,24 +193,20 @@ export async function updateRegistrationStatus(id: string, status: string) {
     }
 
     revalidatePath('/admin');
-    revalidatePath('/account'); // Сброс кэша ЛК, чтобы статус обновился у клиента
+    revalidatePath('/account'); 
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
     console.error('[Action] Update Status Error:', error);
     return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
   }
-}
+});
 
 // ==========================================
 // 2. ГИДЫ
 // ==========================================
 
-export async function saveGuideAction(data: SaveGuidePayload) {
+export const saveGuideAction = withAdminAuth(async (data: SaveGuidePayload) => {
   try {
-    await requireAuth(); 
-
     const { id, ...rest } = data;
     const payload = {
       name: rest.name,
@@ -254,18 +239,13 @@ export async function saveGuideAction(data: SaveGuidePayload) {
 
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // 🛡️ Защита от утечки
     console.error('Save Guide Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при сохранении профиля гида' };
   }
-}
+});
 
-export async function deleteGuideAction(id: string | number) {
+export const deleteGuideAction = withAdminAuth(async (id: string | number) => {
   try {
-    await requireAuth(); 
-
     await prisma.guide.delete({ where: { id: String(id) } });
     
     revalidatePath('/admin');
@@ -274,22 +254,17 @@ export async function deleteGuideAction(id: string | number) {
     
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // 🛡️ Защита от утечки
     console.error('Delete Guide Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при удалении гида' };
   }
-}
+});
 
 // ==========================================
 // 3. БЛОГ
 // ==========================================
 
-export async function savePostAction(data: SavePostPayload) {
+export const savePostAction = withAdminAuth(async (data: SavePostPayload) => {
   try {
-    await requireAuth(); 
-
     const { id } = data;
 
     let slug = data.slug;
@@ -342,20 +317,14 @@ export async function savePostAction(data: SavePostPayload) {
     return { success: true };
   } catch (error: unknown) {
     const err = error as { message?: string, code?: string };
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // Единственная разрешенная техническая ошибка (понятна юзеру)
     if (err.code === 'P2002') return { error: 'URL (slug) должен быть уникальным' };
-    // 🛡️ Защита от утечки
     console.error('Save Post Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при сохранении поста' };
   }
-}
+});
 
-export async function togglePostStatusAction(id: string, field: 'isActive' | 'is_trending', value: boolean) {
+export const togglePostStatusAction = withAdminAuth(async (id: string, field: 'isActive' | 'is_trending', value: boolean) => {
   try {
-    await requireAuth();
-
-    // Читаем текущий статус ДО обновления — только для поля isActive
     const existing = field === 'isActive'
       ? await prisma.blog.findUnique({
           where: { id },
@@ -375,7 +344,6 @@ export async function togglePostStatusAction(id: string, field: 'isActive' | 'is
       },
     });
 
-    // Публикуем в канал только при первом переходе в isActive=true
     const isFirstPublish = field === 'isActive' && !existing?.isActive && value;
 
     if (isFirstPublish) {
@@ -392,41 +360,31 @@ export async function togglePostStatusAction(id: string, field: 'isActive' | 'is
     revalidatePath('/');
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
     console.error('Toggle Post Status Error:', error);
     return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
   }
-}
+});
 
-export async function deletePostAction(id: string) {
+export const deletePostAction = withAdminAuth(async (id: string) => {
   try {
-    await requireAuth(); 
-
     await prisma.blog.delete({ where: { id } });
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // 🛡️ Защита от утечки
     console.error('Delete Post Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при удалении поста' };
   }
-}
+});
 
 // ==========================================
 // 4. ТУРЫ
 // ==========================================
 
-export async function deleteTourAction(id: string) {
+export const deleteTourAction = withAdminAuth(async (id: string) => {
   try {
-    await requireAuth(); 
-
     const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
     
-    // ✅ ИСПРАВЛЕНИЕ: Мягкое удаление (Soft Delete), чтобы защитить статистику CRM
     await prisma.tour.update({ 
       where: { id },
       data: { deletedAt: new Date(), isActive: false }
@@ -438,22 +396,17 @@ export async function deleteTourAction(id: string) {
     revalidatePath('/');
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // 🛡️ Защита от утечки
     console.error('Delete Tour Action Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при удалении тура' };
   }
-}
+});
 
 // ==========================================
 // 5. КОНТЕНТ-БЛОКИ
 // ==========================================
 
-export async function saveContentBlockAction(slug: string, content: Prisma.InputJsonValue) {
+export const saveContentBlockAction = withAdminAuth(async (slug: string, content: Prisma.InputJsonValue) => {
   try {
-    await requireAuth(); 
-
     await prisma.contentBlock.upsert({
       where: { slug },
       update: { content },
@@ -463,20 +416,16 @@ export async function saveContentBlockAction(slug: string, content: Prisma.Input
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') return { error: 'Unauthorized' };
-    // 🛡️ Защита от утечки
     console.error('Content Save Error:', error);
     return { error: 'Произошла внутренняя ошибка сервера при сохранении блока' };
   }
-}
+});
 
 // ==========================================
 // 6. ОБНОВЛЕНИЕ КОММЕНТАРИЕВ В CRM
 // ==========================================
-export async function updateBookingCommentAction(id: string, comment: string) {
+export const updateBookingCommentAction = withAdminAuth(async (id: string, comment: string) => {
   try {
-    await requireAuth(); 
     await prisma.booking.update({ 
       where: { id }, 
       data: { comment } 
@@ -487,4 +436,4 @@ export async function updateBookingCommentAction(id: string, comment: string) {
     console.error('Update Comment Error:', error);
     return { success: false, error: 'Ошибка сохранения комментария' };
   }
-}
+});

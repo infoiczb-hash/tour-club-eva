@@ -2,21 +2,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ
 
-export async function upsertFunTestAction(data: {
-  id?: string;
-  slug: string;
-  title: string;
-  description: string;
-  image: string;
-  category: string;
-  isActive: boolean;
-  passCount?: number;
-}) {
+// Админская функция
+export const upsertFunTestAction = withAdminAuth(async (data: any) => {
   try {
-    await requireAuth(); // ✅ AUTH CHECK
-
     const test = await prisma.funTest.upsert({
       where: { slug: data.slug },
       update: {
@@ -42,16 +32,14 @@ export async function upsertFunTestAction(data: {
     revalidatePath('/admin/fun');
     return { success: true, test };
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
     console.error('Error saving FunTest:', error);
     return { success: false, error: 'Не удалось сохранить тест' };
   }
-}
+});
 
-export async function toggleFunTestStatusAction(id: string, currentStatus: boolean) {
+// Админская функция
+export const toggleFunTestStatusAction = withAdminAuth(async (id: string, currentStatus: boolean) => {
   try {
-    await requireAuth(); // ✅ AUTH CHECK
-
     await prisma.funTest.update({
       where: { id },
       data: { isActive: !currentStatus },
@@ -60,12 +48,11 @@ export async function toggleFunTestStatusAction(id: string, currentStatus: boole
     revalidatePath('/admin/fun');
     return { success: true };
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return { success: false, error: 'Unauthorized' };
-    return { success: false };
+    return { success: false, error: 'Ошибка смены статуса' };
   }
-}
+});
 
-// Публичный — счётчик прохождений, auth не нужен
+// ⚠️ ПУБЛИЧНАЯ функция (Оставляем как есть, auth не нужен)
 export async function incrementFunTestPassAction(slug: string) {
   try {
     await prisma.funTest.update({
@@ -78,7 +65,7 @@ export async function incrementFunTestPassAction(slug: string) {
   }
 }
 
-// Публичный — только чтение
+// ⚠️ ПУБЛИЧНАЯ функция (Оставляем как есть)
 export async function getFunTestsAction() {
   try {
     const tests = await prisma.funTest.findMany({ orderBy: { createdAt: 'desc' } });

@@ -4,10 +4,10 @@
 import { prisma } from '@/lib/prisma';
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { InquirySchema } from '@/features/inquiries/schema';
+import { withRateLimit } from '@/lib/rate-limit-server'; // 👈 ИМПОРТ ЛИМИТЕРА
 
-// Обработка заявки "В команду"
-export async function sendJoinTeamAction(data: unknown) {
-  // 🛡️ Валидация через Zod — отсекает мусор и невалидные данные до записи в БД
+// Оборачиваем в лимит (например, 8 запросов в минуту)
+export const sendJoinTeamAction = withRateLimit(async (data: unknown) => {
   const parsed = InquirySchema.safeParse({ ...data as object, type: 'HR' });
 
   if (!parsed.success) {
@@ -19,12 +19,10 @@ export async function sendJoinTeamAction(data: unknown) {
     return { success: false, error: 'Ошибка валидации', fields };
   }
 
-  // После валидации data типизирована строго
   const d = parsed.data;
   if (d.type !== 'HR') return { success: false, error: 'Неверный тип заявки' };
 
   try {
-    // 1. Сохраняем в базу данных
     await prisma.inquiry.create({
       data: {
         type: 'HR',
@@ -41,7 +39,6 @@ export async function sendJoinTeamAction(data: unknown) {
       },
     });
 
-    // 2. Отправляем уведомление в Telegram
     const contactStr = [
       d.phone ? `📱 ${d.phone}` : null,
       d.social ? `✈️ ${d.social}` : null,
@@ -56,4 +53,4 @@ export async function sendJoinTeamAction(data: unknown) {
     console.error("Ошибка обработки заявки в команду:", error);
     return { success: false, error: "Не удалось отправить заявку" };
   }
-}
+});

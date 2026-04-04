@@ -53,7 +53,7 @@ export const ImageUploader = ({
       const response = await uploadFile(formData); 
       
       // Достаем url из объекта response
-      if (response.url) {
+   if (response && 'url' in response && response.url) {
         // Записываем полученную СТРОКУ в форму
         setValue(name, response.url, { shouldDirty: true, shouldValidate: true });
       } else if (response.error) {

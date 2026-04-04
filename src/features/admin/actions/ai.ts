@@ -4,9 +4,8 @@ import { generateObject, generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import OpenAI from 'openai';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/auth';
-// ✅ ДОБАВЛЕНО: Импорт админского лимитера и функции получения IP
-import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
+import { withAdminAuth } from '@/lib/auth'; // ✅ Импортируем броню администратора
+import { adminRateLimit, getClientIp } from '@/lib/rate-limit'; // ✅ Лимитер остается на месте
 
 // === 1. КОНФИГУРАЦИЯ ===
 const model = google('gemini-1.5-flash');
@@ -67,17 +66,11 @@ type AiTaskType =
   | { mode: 'smm_post'; context: any; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
   | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] }
 
-// === 4. ГЛАВНЫЙ ЭКШЕН ===
-export async function performAiTask(task: AiTaskType) {
-  // 🔐 Только авторизованные пользователи могут вызывать AI
-  // Защищает Gemini и OpenAI API ключи от несанкционированного использования
-  try {
-    await requireAuth();
-  } catch {
-    return { success: false, error: 'Unauthorized' };
-  }
+// === 4. ГЛАВНЫЙ ЭКШЕН (🔥 ТЕПЕРЬ ЗАЩИЩЕН) ===
+export const performAiTask = withAdminAuth(async (task: AiTaskType) => {
+  // ✅ Убрали ручной requireAuth(), так как withAdminAuth уже проверил, что это именно АДМИН
 
-  // ✅ ДОБАВЛЕНО: Rate Limiting (защита кошелька API от чрезмерного использования)
+  // Rate Limiting (защита кошелька API от спама даже со стороны взломанного админа)
   try {
     const ip = await getClientIp();
     const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
@@ -94,7 +87,6 @@ export async function performAiTask(task: AiTaskType) {
   }
 
   try {
-
     // --- ГЕНЕРАЦИЯ КАРТИНКИ (DALL-E) ---
     if (task.mode === 'generate_image') {
       const apiKey = process.env.OPENAI_API_KEY;
@@ -110,7 +102,6 @@ export async function performAiTask(task: AiTaskType) {
     }
 
     // --- GEMINI ЗАДАЧИ ---
-
     if (task.mode === 'generate_tour') {
       const { object } = await generateObject({
         model, schema: TourAiSchema,
@@ -208,4 +199,4 @@ export async function performAiTask(task: AiTaskType) {
     console.error("AI Error:", error);
     return { success: false, error: error.message || "Ошибка обработки AI" };
   }
-}
+});

@@ -1,18 +1,15 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
-export async function broadcastToGroupAction(bookingIds: string[], message: string) {
+export const broadcastToGroupAction = withAdminAuth(async (bookingIds: string[], message: string) => {
   try {
-    await requireAuth(); // ✅ Только для админа
-
-    // 1. Ищем брони: Оплаченные ИЛИ Ожидающие (главное, что не Отмененные) и с привязанным Telegram
     const bookings = await prisma.booking.findMany({
       where: {
         id: { in: bookingIds },
-        status: { in: ['confirmed', 'pending'] }, // 👈 Наше бизнес-решение!
+        status: { in: ['confirmed', 'pending'] },
         member: { tgChatId: { not: null } }
       },
       include: { member: true }
@@ -23,13 +20,10 @@ export async function broadcastToGroupAction(bookingIds: string[], message: stri
     }
 
     let successCount = 0;
-
-    // 2. Рассылаем сообщения каждому клиенту в личку от имени @authevaclub_bot
     const formattedMessage = `📢 <b>Важное сообщение по туру!</b>\n\n${message}`;
 
     for (const b of bookings) {
       if (b.member?.tgChatId) {
-        // Последний аргумент true = используем бота авторизации
         const res = await sendToUserTelegramAdvanced(b.member.tgChatId, formattedMessage, undefined, true);
         if (res.success) successCount++;
       }
@@ -40,4 +34,4 @@ export async function broadcastToGroupAction(bookingIds: string[], message: stri
     console.error('Broadcast error:', error);
     return { success: false, error: error.message || 'Внутренняя ошибка рассылки' };
   }
-}
+});

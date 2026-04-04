@@ -150,6 +150,7 @@ model TourDate {
 
   @@index([tourId])
   @@index([startDate])
+  @@index([endDate, startDate])
   @@map("tour_dates")
 }
 
@@ -426,6 +427,7 @@ model MemberProfile {
 
   // ✅ НОВОЕ ПОЛЕ: Баланс для кэшбэка и рефералки (v2.0)
   balance       Int       @default(0) 
+  role      String   @default("user")
   
   invitedByCode String?
   promoCode     PromoCode?
@@ -509,6 +511,14 @@ model TestResult {
   @@unique([memberId, testSlug])
   @@index([memberId])
   @@map("test_results")
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
 }
 
 // ─────────────────────────────────────────────

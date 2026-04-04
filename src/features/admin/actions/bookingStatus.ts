@@ -2,69 +2,73 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { BookingStatus } from '@prisma/client';
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
+import { withAdminAuth } from '@/lib/auth'; // ✅ Импортируем нашу новую броню из auth.ts
 
 /**
  * Основной экшен для смены статуса брони в админке
+ * 🔥 ТЕПЕРЬ ЗАЩИЩЕН: Только для админов (BAC закрыт)!
  */
-export async function updateBookingStatusAction(bookingId: string, newStatus: BookingStatus) {
-  try {
-    await requireAuth();
+export const updateBookingStatusAction = withAdminAuth(
+  async (bookingId: string, newStatus: BookingStatus) => {
+    try {
+      // Оборачиваем в транзакцию и управляем инвентаризацией мест
+      const booking = await prisma.$transaction(async (tx) => {
+        const current = await tx.booking.findUnique({
+          where: { id: bookingId },
+          include: { member: true, tour: true, tourDate: true }
+        });
 
-    // ✅ ИСПРАВЛЕНИЕ 1: Оборачиваем в транзакцию и управляем инвентаризацией мест (increment/decrement)
-    const booking = await prisma.$transaction(async (tx) => {
-      const current = await tx.booking.findUnique({
-        where: { id: bookingId },
-        include: { member: true, tour: true, tourDate: true }
+        if (!current) throw new Error('Бронирование не найдено');
+
+        // Считаем все типы билетов (включая семейный = 3 места)
+        const totalTickets = (current.ticketsAdult || 0) + 
+                             (current.ticketsChild || 0) + 
+                             (current.ticketsMember || 0) + 
+                             ((current.ticketsFamily || 0) * 3);
+
+        // 1. ОТМЕНА: Если статус меняется на cancelled -> Возвращаем места (increment)
+        if (newStatus === 'cancelled' && current.status !== 'cancelled') {
+          if (current.tourDateId) {
+            await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { increment: totalTickets } } });
+          } else {
+            await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { increment: totalTickets } } });
+          }
+        } 
+        // 2. ВОССТАНОВЛЕНИЕ: Если восстанавливаем из cancelled -> Забираем места (decrement)
+        else if (current.status === 'cancelled' && newStatus !== 'cancelled') {
+          if (current.tourDateId) {
+            await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { decrement: totalTickets } } });
+          } else {
+            await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { decrement: totalTickets } } });
+          }
+        }
+
+        // Обновляем сам статус
+        return await tx.booking.update({
+          where: { id: bookingId },
+          data: { status: newStatus },
+          include: { member: true, tour: true, tourDate: true }
+        });
       });
 
-      if (!current) throw new Error('Бронирование не найдено');
-
-      // Считаем все типы билетов (включая семейный = 3 места)
-      const totalTickets = (current.ticketsAdult || 0) + (current.ticketsChild || 0) + (current.ticketsMember || 0) + ((current.ticketsFamily || 0) * 3);
-
-      // 1. ОТМЕНА: Если статус меняется на cancelled -> Возвращаем места (increment)
-      if (newStatus === 'cancelled' && current.status !== 'cancelled') {
-        if (current.tourDateId) {
-          await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { increment: totalTickets } } });
-        } else {
-          await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { increment: totalTickets } } });
-        }
-      } 
-      // 2. ВОССТАНОВЛЕНИЕ: Если восстанавливаем из cancelled -> Забираем места (decrement)
-      else if (current.status === 'cancelled' && newStatus !== 'cancelled') {
-        if (current.tourDateId) {
-          await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { decrement: totalTickets } } });
-        } else {
-          await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { decrement: totalTickets } } });
-        }
+      // Если у пользователя привязан Telegram — шлем уведомление
+      if (booking.member?.tgChatId) {
+        await formatAndSendClientMessage(booking, newStatus);
       }
 
-      // Обновляем сам статус
-      return await tx.booking.update({
-        where: { id: bookingId },
-        data: { status: newStatus },
-        include: { member: true, tour: true, tourDate: true }
-      });
-    });
-
-    // Если у пользователя привязан Telegram — шлем уведомление
-    if (booking.member?.tgChatId) {
-      await formatAndSendClientMessage(booking, newStatus);
+      revalidatePath('/admin');
+      revalidatePath('/account/bookings');
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Update Booking Status Error:', error);
+      return { success: false, error: error.message || 'Ошибка обновления статуса' };
     }
-
-    revalidatePath('/admin');
-    revalidatePath('/account/bookings');
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error('Update Booking Status Error:', error);
-    return { success: false, error: error.message || 'Ошибка обновления статуса' };
   }
-}
+);
 
 /**
  * Формирование и отправка красивого сообщения клиенту

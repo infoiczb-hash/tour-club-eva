@@ -1,9 +1,10 @@
+// src/features/admin/actions/manifest.ts
 'use server';
 
 import { env } from '@/lib/env';
-import { requireAuth } from '@/lib/auth';
+// 1. Меняем импорт
+import { withAdminAuth } from '@/lib/auth';
 
-// ✅ ВОЗВРАЩАЕМ СЛОВАРЬ (для удобной рассадки экипажей)
 const ticketTypeMap: Record<string, string> = {
   adult: 'Взр',
   child: 'Дет',
@@ -11,14 +12,15 @@ const ticketTypeMap: Record<string, string> = {
   member: 'Клуб'
 };
 
-export async function sendManifestToTelegramAction(payload: {
+// 2. Оборачиваем функцию и делаем ее стрелочной
+export const sendManifestToTelegramAction = withAdminAuth(async (payload: {
   tourName: string;
   date: string;
   totalTickets: number;
   participants: any[];
-}) {
+}) => {
   try {
-    await requireAuth(); 
+    // 3. УДАЛИЛИ await requireAuth(); 
 
     const { tourName, date, totalTickets, participants } = payload;
 
@@ -31,20 +33,19 @@ export async function sendManifestToTelegramAction(payload: {
       const num = index + 1;
       const phone = (p.phone && p.phone !== '—') ? p.phone : 'Нет номера';
       
-      // ✅ ВОЗВРАЩАЕМ ЛОГИКУ БИЛЕТОВ И ВОЗРАСТА
       const tType = ticketTypeMap[p.ticketType] || 'Взр';
-      const ticketLabel = p.age ? `${tType}, ${p.age} лет` : tType;
-
-      const equipStr = p.equipment ? ` | Жилет: ${p.equipment}` : '';
-      if (p.equipment) {
-        equipmentCount[p.equipment] = (equipmentCount[p.equipment] || 0) + 1;
+      const ticketLabel = p.isMain ? 'Заказчик' : tType;
+      
+      let equipStr = '';
+      if (p.jacket && p.jacket !== 'Не нужен') {
+        equipStr = ` | 🦺 ${p.jacket}`;
+        equipmentCount[p.jacket] = (equipmentCount[p.jacket] || 0) + 1;
       }
 
       let statusStr = '⏳ Не оплачено';
       if (p.status === 'confirmed') statusStr = '✅ Оплачено';
       if (p.status === 'pending') statusStr = '💵 Наличные';
 
-      // Формируем финальную строку с (ТипБилета)
       message += `<b>${num}. ${p.name}</b> (${ticketLabel}) / ${phone}${equipStr} | <i>#${p.shortId} (${statusStr})</i>\n`;
       
       if (p.isMain && p.comment) {
@@ -68,14 +69,20 @@ export async function sendManifestToTelegramAction(payload: {
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML'
+      })
     });
 
-    const data = await response.json();
-    if (!data.ok) return { success: false, error: data.description };
+    if (!response.ok) {
+      throw new Error('Telegram API error');
+    }
 
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Ошибка отправки списка' };
+  } catch (error) {
+    console.error('Manifest send error:', error);
+    return { success: false, error: 'Ошибка отправки манифеста' };
   }
-}
+});
