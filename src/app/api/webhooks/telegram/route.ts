@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
+import { Redis } from '@upstash/redis'; // ✅ Добавили импорт Redis
+
+// Инициализируем Redis
+const redis = Redis.fromEnv();
 
 // Хелпер для быстрого ответа Telegram (чтобы он не дублировал запросы)
 const ok = () => NextResponse.json({ ok: true }, { status: 200 });
@@ -15,6 +19,24 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    // ==========================================
+    // 🛡 ЗАЩИТА ОТ REPLAY-АТАК И ДУБЛЕЙ (SEC-ADV-01)
+    // ==========================================
+    const updateId = body.update_id;
+    if (updateId) {
+      const key = `tg:update:${updateId}`;
+      
+      // Атомарная запись: установит '1' и вернет "OK", ТОЛЬКО если ключа еще нет.
+      // ex: 86400 (храним 24 часа), nx: true (Not eXists - только если нет)
+      const isNew = await redis.set(key, '1', { ex: 86400, nx: true });
+      
+      if (!isNew) {
+        console.log(`[Telegram Webhook] Пропуск дубликата update_id: ${updateId}`);
+        return ok(); // Отдаем 200, чтобы Telegram перестал слать этот запрос
+      }
+    }
+    // ==========================================
 
     // ==========================================
     // СЦЕНАРИЙ 3: АДМИН НАЖАЛ КНОПКУ В ТГ (МОДЕРАЦИЯ)
@@ -131,8 +153,6 @@ export async function POST(req: Request) {
     if (body.message?.photo || body.message?.document) {
       console.log(`📸 Получен чек от chatId: ${chatId}`);
 
-      // 1. Ищем заявку этого клиента. 
-      // ВАЖНО: Добавлен include: { tour: true }, чтобы достать валюту (MDL/RUB)
       const booking = await prisma.booking.findFirst({
         where: { 
             payerTgChatId: chatId, 
@@ -143,7 +163,6 @@ export async function POST(req: Request) {
       });
 
       if (!booking) {
-        // Если заявка не найдена, возможно она УЖЕ на модерации (дубль из альбома)
         const checkModeration = await prisma.booking.findFirst({
           where: { payerTgChatId: chatId, status: 'moderation' }
         });
@@ -170,7 +189,6 @@ export async function POST(req: Request) {
         const fileUrl = await getTelegramFileUrl(fileId);
         const receiptUrl = await uploadToCloudinary(fileUrl);
 
-        // 2. АТОМАРНОЕ ОБНОВЛЕНИЕ (ЗАЩИТА ОТ ГОНКИ ЗАПРОСОВ ПРИ ОТПРАВКЕ АЛЬБОМА)
         const updateResult = await prisma.booking.updateMany({
           where: { 
             id: booking.id,
@@ -179,7 +197,6 @@ export async function POST(req: Request) {
           data: { status: 'moderation', paymentProofUrl: receiptUrl }
         });
 
-        // Если count === 0, значит другой процесс (соседнее фото из альбома) уже обновил статус до миллисекунды назад
         if (updateResult.count === 0) {
           console.log(`📸 Фото дубль. Бронь #${booking.shortId} уже захвачена другим процессом.`);
           return ok();
@@ -187,13 +204,12 @@ export async function POST(req: Request) {
 
         const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'MDL'}</b>\n\nПодтверждаете получение средств?`;
         
-        // 3. ТУРБО-РЕЖИМ: Отправляем админу и клиенту параллельно
         await Promise.allSettled([
           sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id),
           sendMessage(chatId, `✅ Фото чека получено!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
         ]);
         
-      } catch (e) {
+      } catch (e: unknown) {
         console.error('Ошибка обработки фото чека:', e);
         await sendMessage(chatId, 'Произошла ошибка при сохранении чека. Пожалуйста, попробуйте отправить фото еще раз чуть позже.');
       }
@@ -202,7 +218,7 @@ export async function POST(req: Request) {
 
     return ok();
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Telegram Webhook Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 200 }); 
   }

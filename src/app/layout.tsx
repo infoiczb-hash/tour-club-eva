@@ -87,7 +87,7 @@ alternates: {
 };
 
 const organizationSchema = {
-  '@context': 'https://schema.org',
+'@context': 'https://schema.org',
   '@type': ['TravelAgency', 'LocalBusiness'],
   name: 'Турклуб «Эва»',
   alternateName: ['ТурклубЭВА', 'EvaClub', 'evatur.club'],
@@ -99,15 +99,18 @@ const organizationSchema = {
     height: 200,
   },
   image: 'https://evatur.club/og-default.jpg',
+  openingHours: ['Mo-Fr 15:00-18:00', 'Sa 07:00-21:00'],
   telephone: '+37377770141',
   email: 'info@evatur.club',
   priceRange: "$$", 
  
   address: {
-    '@type': 'PostalAddress',
+   '@type': 'PostalAddress',
+    streetAddress: 'ул. 9 Января, 63', // укажи реальный адрес
     addressLocality: 'Тирасполь',
     addressRegion: 'Приднестровье',
     addressCountry: 'MD',
+    postalCode: '3300'
   },
   areaServed: [
     { "@type": "Place", "name": "Приднестровье" },
@@ -115,7 +118,12 @@ const organizationSchema = {
     { "@type": "Place", "name": "Молдова" },
     { "@type": "Place", "name": "Transnistria" },
     { "@type": "Place", "name": "Тирасполь" },
-    { "@type": "Place", "name": "Бендеры" }
+    { "@type": "Place", "name": "Бендеры" },
+    { "@type": "Place", "name": "Румыния" },
+    { "@type": "Place", "name": "Карпаты" },
+    { "@type": "Place", "name": "Кишинев" },
+    { "@type": "Place", "name": "Moldova" }
+
   ],
   geo: {
     '@type': 'GeoCoordinates',

@@ -17,7 +17,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// 1. РЕЕСТР МОДАЛОК
+// 1. РЕЕСТР МОДАЛОК 
 const MODAL_REGISTRY: Record<string, React.ComponentType<any>> = {
   'fears':         dynamic(() => import("@/features/fun/components/FearDebrief"), { ssr: false }),
   'physical':      dynamic(() => import("@/features/fun/components/PhysicalReadiness"), { ssr: false }),

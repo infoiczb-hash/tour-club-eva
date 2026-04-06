@@ -55,8 +55,8 @@ async function getDashboardData(userId: string) {
         data: {
           code: `${baseCode}-${Math.floor(Math.random() * 1000)}`,
           memberId: profile.id,
-          discount: 500,
-          reward: 500,
+          discount: 10,
+          reward: 10,
         }
       });
     }

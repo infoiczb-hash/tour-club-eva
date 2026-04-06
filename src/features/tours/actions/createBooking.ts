@@ -12,7 +12,7 @@ import { BookingTicketEmail } from '@/features/tours/emails/BookingTicketEmail';
 import { withRateLimit } from '@/lib/rate-limit-server'; // <-- НОВЫЙ ИМПОРТ
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
+const SITE_URL = env.NEXT_PUBLIC_SITE_URL;
 
 // Строгая схема для каждого гостя
 const GuestSchema = z.object({
@@ -119,7 +119,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         currentMemberId = profile.id;
       }
     }
-  } catch (e) {
+ } catch (e: unknown) {
     console.error('Ошибка проверки авторизации:', e);
   }
 
@@ -363,15 +363,17 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
 
       // Транзакция успешна — выходим из цикла
       break;
-    } catch (error: any) {
+ } catch (error: unknown) {
+      // 1. Для кодов Prisma приводим ошибку к базовому объекту словаря
+      const err = error as Record<string, unknown>;
       // Конфликт shortId — повторяем попытку
-      if (error?.code === 'P2002' && attempt < MAX_RETRIES) {
+     if (err?.code === 'P2002' && attempt < MAX_RETRIES) {
         console.warn(`[Booking] Race condition on shortId. Retry ${attempt + 1}/${MAX_RETRIES}`);
         continue;
       }
 
       // Обработка известных бизнес-ошибок
-      if (error instanceof Error) {
+   if (error instanceof Error) {
         if (error.message === 'PROMO_INVALID') {
           return { success: false, error: 'Промокод недействителен.' };
         }
@@ -383,8 +385,8 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         }
       }
       // Ошибка Prisma P2025 (запись не найдена при update) — мест нет или тур неактивен
-      if (error?.code === 'P2025') {
-        return { success: false, error: 'Выбранная дата или тур больше не доступны. Места могли закончиться.' };
+     if (err?.code === 'P2025') {
+        return { success: false, error: 'Выбранная дата или тур больше не доступны.' };
       }
 
       console.error('Booking Transaction Error:', error);
@@ -458,7 +460,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         })
       });
     }
-  } catch (notificationError) {
+  } catch (notificationError: unknown) {
     console.error('Ошибка рассылки уведомлений:', notificationError);
   }
 
@@ -491,7 +493,7 @@ async function notifyTelegram(
   appliedBonuses: number = 0,
   finalPrice: number // Убрал опциональность
 ): Promise<void> {
-  const token = env.TELEGRAM_BOT_TOKEN;
+  const token  = env.TELEGRAM_BOT_TOKEN;
   const chatId = env.TELEGRAM_ADMIN_CHAT_ID;
   if (!token || !chatId) {
     console.warn('Telegram credentials missing');

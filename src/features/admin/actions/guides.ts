@@ -40,7 +40,7 @@ export const upsertGuideAction = withAdminAuth(async (data: any) => {
     if (guide.slug) revalidatePath(`/guides/${guide.slug}`);
     
     return { success: true, data: guide };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Ошибка сохранения гида:', error);
     return { success: false, error: 'Не удалось сохранить профиль' };
   }

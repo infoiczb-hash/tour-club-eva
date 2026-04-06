@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { getLevelName } from '@/lib/constants/levels'; // ✅ ПОДКЛЮЧИЛИ ИСТОЧНИК ПРАВДЫ
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +11,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId or phone' }, { status: 400 });
     }
 
-    // Проверяем что запрос идёт от залогиненного пользователя с этим userId
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Upsert MemberProfile — создаём если нет, обновляем если есть
     const profile = await prisma.memberProfile.upsert({
       where: { userId },
       create: {
@@ -27,30 +26,26 @@ export async function POST(request: NextRequest) {
         name: user.user_metadata?.name ?? null,
       },
       update: {
-        // При повторном входе обновляем только если поле пустое
-        name: undefined, // не перезаписываем имя
+        name: undefined, 
       },
     });
 
-    // Привязываем все исторические Booking по номеру телефона
     const linked = await prisma.booking.updateMany({
       where: {
         phone,
-        memberId: null, // только ещё не привязанные
+        memberId: null, 
       },
       data: {
         memberId: profile.id,
       },
     });
 
-    // Обновляем счётчик туров в профиле
     if (linked.count > 0) {
       const stats = await prisma.booking.aggregate({
         where: { memberId: profile.id },
         _count: { id: true },
       });
 
-      // Считаем км: берём distance из связанных туров
       const bookingsWithTours = await prisma.booking.findMany({
         where: { memberId: profile.id },
         include: {
@@ -63,9 +58,10 @@ export async function POST(request: NextRequest) {
         return sum + (isNaN(km) ? 0 : km);
       }, 0);
 
-      // Определяем уровень
       const tourCount = stats._count.id;
-      const level = getLevel(tourCount);
+      
+      // ✅ ИСПОЛЬЗУЕМ ФУНКЦИЮ ИЗ КОНФИГА ВМЕСТО ЛОКАЛЬНОГО ХАРДКОДА
+      const level = getLevelName(tourCount);
 
       await prisma.memberProfile.update({
         where: { id: profile.id },
@@ -82,13 +78,4 @@ export async function POST(request: NextRequest) {
     console.error('[link-profile]', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
-}
-
-// ─── уровни участника ───────────────────────────────────────────────
-function getLevel(tourCount: number): string {
-  if (tourCount >= 30) return 'Легенда клуба';
-  if (tourCount >= 15) return 'Ветеран';
-  if (tourCount >= 7)  return 'Бывалый';
-  if (tourCount >= 3)  return 'Походник';
-  return 'Первопроходец';
 }

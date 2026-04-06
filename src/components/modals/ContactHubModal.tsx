@@ -285,7 +285,15 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                    </div>
 
                    {/* Honeypot (Hidden) */}
-                   <input ref={honeypotRef} type="text" name="website" className="hidden" autoComplete="off" tabIndex={-1} />
+                <input 
+  ref={honeypotRef} 
+  type="text" 
+  name="website" 
+  className="hidden" 
+  tabIndex={-1} 
+  aria-hidden="true" 
+  autoComplete="off" 
+/>
 
                    {/* 🔥 КНОПКА ОТПРАВКИ И ТЕЛЕГРАМ */}
                    <div className="mt-8 pt-6 border-t border-white/5 shrink-0 flex flex-col gap-4">

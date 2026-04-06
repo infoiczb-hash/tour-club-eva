@@ -39,11 +39,14 @@ export function withAdminAuth<TArgs extends any[], TReturn>(
 
       // 3. Если всё ок - выполняем сам экшен
       return await action(...args);
-    } catch (error: any) {
+} catch (error: unknown) {
       console.error('Admin Auth Error:', error);
-      if (error.message === 'Unauthorized') {
+      
+      // Сначала проверяем, что это объект Error, а затем читаем сообщение
+      if (error instanceof Error && error.message === 'Unauthorized') {
         return { success: false, error: 'Пожалуйста, авторизуйтесь' };
       }
+      
       return { success: false, error: 'Ошибка проверки прав доступа' };
     }
   };

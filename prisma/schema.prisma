@@ -111,6 +111,7 @@ model Tour {
 
   @@index([isActive])
   @@index([categoryId])
+  @@index([deletedAt])
   @@map("tours")
 }
 
@@ -351,6 +352,7 @@ model Review {
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([isActive])
+  @@index([tourId]) 
   @@map("reviews")
 }
 
@@ -451,8 +453,7 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([memberId])
-  @@index([isRead])
+ @@index([memberId, isRead])
   @@map("notifications")
 }
 
@@ -511,14 +512,6 @@ model TestResult {
   @@unique([memberId, testSlug])
   @@index([memberId])
   @@map("test_results")
-}
-
-model RateLimit {
-  id        String   @id @default(cuid())
-  ip        String
-  createdAt DateTime @default(now())
-
-  @@index([ip, createdAt])
 }
 
 // ─────────────────────────────────────────────

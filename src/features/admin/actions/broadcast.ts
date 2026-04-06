@@ -29,9 +29,10 @@ export const broadcastToGroupAction = withAdminAuth(async (bookingIds: string[],
       }
     }
 
-    return { success: true, count: successCount };
-  } catch (error: any) {
+return { success: true, count: successCount };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Внутренняя ошибка рассылки';
     console.error('Broadcast error:', error);
-    return { success: false, error: error.message || 'Внутренняя ошибка рассылки' };
+    return { success: false, error: message };
   }
 });

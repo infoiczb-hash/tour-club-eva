@@ -48,7 +48,7 @@ export const upsertTourCategoryAction = withAdminAuth(async (data: any) => {
     revalidatePath('/tour');
     revalidatePath('/');
     return { success: true, data: category };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Ошибка сохранения категории тура:", error);
     return { success: false, error: "Не удалось сохранить категорию" };
   }
@@ -65,7 +65,7 @@ export const deleteTourCategoryAction = withAdminAuth(async (id: string) => {
     revalidatePath('/admin');
     revalidatePath('/tour');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return { success: false, error: "Ошибка при удалении категории" };
   }
 });
@@ -79,7 +79,7 @@ export const toggleTourCategoryStatusAction = withAdminAuth(async (id: string, c
     revalidatePath('/admin');
     revalidatePath('/tour');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return { success: false, error: "Ошибка обновления статуса" };
   }
 });
@@ -125,7 +125,7 @@ export const upsertBlogCategoryAction = withAdminAuth(async (data: any) => {
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true, data: category };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Ошибка сохранения категории блога:", error);
     return { success: false, error: "Не удалось сохранить категорию" };
   }
@@ -142,7 +142,7 @@ export const deleteBlogCategoryAction = withAdminAuth(async (id: string) => {
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return { success: false, error: "Ошибка при удалении категории" };
   }
 });
@@ -156,7 +156,7 @@ export const toggleBlogCategoryStatusAction = withAdminAuth(async (id: string, c
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return { success: false, error: "Ошибка обновления статуса" };
   }
 });

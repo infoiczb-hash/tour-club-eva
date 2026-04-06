@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const url = `${BASE_URL}/tour/${tour.slug}`; 
   
-  let imageUrl = tour.image || `${BASE_URL}/og-default.jpg`;
+ let imageUrl = `${BASE_URL}/api/og?title=${encodeURIComponent(tour.title)}&subtitle=${encodeURIComponent(tour.subtitle || 'Турклуб Эва')}`;
   if (imageUrl.startsWith('/')) imageUrl = `${BASE_URL}${imageUrl}`;
 
   const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
@@ -79,9 +79,6 @@ export default async function TourPage({ params }: Props) {
   const similarTours = await getSimilarTours(tour.categoryId ?? null, tour.id, 3);
 
   const schemaImages = [tour.image, ...(tour.gallery || [])].filter(Boolean) as string[];
-  const ratingValue = (4.7 + ((tour.id.length % 3) * 0.1)).toFixed(1);
-  const reviewCount = String(15 + (tour.id.charCodeAt(0) % 20)); 
-
   // ✅ ИЗМЕНЕНО: Не ставим сегодняшнюю дату для туров-анонсов (без дат)
   const startDate = tour.date ? new Date(tour.date).toISOString() : undefined;
 
@@ -109,11 +106,6 @@ export default async function TourPage({ params }: Props) {
       price: tour.price, 
       priceCurrency: tour.currency || 'MDL',
       availability: (tour.spotsLeft || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: ratingValue,
-      reviewCount: reviewCount
     },
     organizer: {
       '@type': 'Organization',

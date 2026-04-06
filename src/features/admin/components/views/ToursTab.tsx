@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link'; 
 import { Plus, Search, MapPin, Send, Copy, Edit, Trash2, ExternalLink, EyeOff, LayoutGrid, Map as MapIcon } from 'lucide-react'; 
@@ -15,11 +15,17 @@ interface BookingSimple {
   tickets_child: number;
 }
 
-// 👇 НОВЫЕ ПРОПСЫ ДЛЯ КАТЕГОРИЙ
+// Расширенный интерфейс с пагинацией
 interface ToursTabProps {
   tours: Tour[];
+  total: number;
+  page: number;
+  limit?: number;
+  loading?: boolean;
+  searchTerm: string;
+  filter: 'all' | 'upcoming' | 'past' | 'full';
   bookings: BookingSimple[];
-  categories?: any[]; // Массив категорий из БД
+  categories?: any[];
   
   onAdd: () => void;
   onEdit: (tour: Tour) => void;
@@ -27,6 +33,9 @@ interface ToursTabProps {
   onDelete: (id: string) => void;
   onToggleStatus: (tour: Tour) => void;
   onSendTg: (id: string, title: string) => void;
+  onSearchChange: (val: string) => void;
+  onFilterChange: (filter: 'all' | 'upcoming' | 'past' | 'full') => void;
+  onPageChange: (page: number) => void;
 
   // Хендлеры для категорий
   onAddCategory?: () => void;
@@ -35,52 +44,84 @@ interface ToursTabProps {
   onToggleCategoryStatus?: (id: string, status: boolean, type: 'tour' | 'blog') => void;
 }
 
-type FilterType = 'all' | 'upcoming' | 'past' | 'full';
-type ViewType = 'tours' | 'categories'; // 👇 Переключатель вида (Туры или Категории)
+type ViewType = 'tours' | 'categories';
+
+// Компонент пагинации
+const Pagination = ({ page, total, limit, onPageChange }: { page: number; total: number; limit: number; onPageChange: (p: number) => void }) => {
+  const totalPages = Math.ceil(total / limit);
+  if (totalPages <= 1) return null;
+
+  const getVisiblePages = () => {
+    const delta = 2;
+    let start = Math.max(1, page - delta);
+    let end = Math.min(totalPages, page + delta);
+    if (end - start < 4) {
+      start = Math.max(1, end - 4);
+      end = Math.min(totalPages, start + 4);
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
+
+  return (
+    <div className="flex justify-center gap-2 mt-8">
+      <button
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50"
+      >
+        ←
+      </button>
+      {getVisiblePages().map(p => (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className={`px-3 py-1 rounded border ${p === page ? 'bg-teal-500 text-white border-teal-500' : 'border-slate-300'}`}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        onClick={() => onPageChange(page + 1)}
+        disabled={page === totalPages}
+        className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50"
+      >
+        →
+      </button>
+    </div>
+  );
+};
 
 export default function ToursTab({ 
-  tours, 
-  bookings, 
-  categories = [], 
-  onAdd, 
-  onEdit, 
-  onDuplicate, 
-  onDelete, 
-  onToggleStatus, 
+  tours,
+  total,
+  page,
+  limit = 20,
+  loading = false,
+  searchTerm,
+  filter,
+  bookings,
+  categories = [],
+  onAdd,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onToggleStatus,
   onSendTg,
+  onSearchChange,
+  onFilterChange,
+  onPageChange,
   onAddCategory,
   onEditCategory,
   onDeleteCategory,
   onToggleCategoryStatus
 }: ToursTabProps) {
   
-  const [activeView, setActiveView] = useState<ViewType>('tours');
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activeView, setActiveView] = React.useState<ViewType>('tours');
 
-  // Локальная логика фильтрации туров
+  // Данные уже отфильтрованы на сервере, просто сортируем
   const filteredTours = useMemo(() => {
-    let data = tours;
-    const now = new Date();
-
-    if (searchTerm) {
-        data = data.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-
-    if (filter === 'upcoming') {
-        data = data.filter(t => new Date(t.date) >= now);
-    } else if (filter === 'past') {
-        data = data.filter(t => new Date(t.date) < now);
-    } else if (filter === 'full') {
-        data = data.filter(t => {
-            const booked = bookings.filter(b => b.event_id === String(t.id) && b.status !== 'cancelled')
-                                   .reduce((acc, b) => acc + (b.tickets_adult || 0) + (b.tickets_child || 0), 0);
-            return booked >= (t.spots || 0);
-        });
-    }
-    
-    return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [tours, bookings, filter, searchTerm]);
+    return [...tours].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [tours]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -134,7 +175,7 @@ export default function ToursTab({
         </div>
 
         {/* ========================================== */}
-        {/* VIEW: РАСПИСАНИЕ ТУРОВ (Оригинальный код) */}
+        {/* VIEW: РАСПИСАНИЕ ТУРОВ */}
         {/* ========================================== */}
         {activeView === 'tours' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
@@ -145,7 +186,7 @@ export default function ToursTab({
                          key={f} 
                          label={f === 'all' ? 'Все' : f === 'upcoming' ? 'Актуальные' : f === 'past' ? 'Архив' : 'Заполненные'} 
                          active={filter === f} 
-                         onClick={() => setFilter(f as FilterType)} 
+                         onClick={() => onFilterChange(f as any)} 
                        />
                     ))}
                 </div>
@@ -155,7 +196,7 @@ export default function ToursTab({
                       placeholder="Поиск тура по названию..." 
                       className="w-full h-full pl-9 pr-4 bg-transparent text-sm font-medium outline-none text-slate-900 dark:text-white placeholder:text-slate-300" 
                       value={searchTerm} 
-                      onChange={e => setSearchTerm(e.target.value)} 
+                      onChange={e => onSearchChange(e.target.value)} 
                     />
                 </div>
             </div>
@@ -212,7 +253,7 @@ export default function ToursTab({
                                     <td className="p-5 font-medium">
                                         <div className="text-slate-900 dark:text-slate-200">{new Date(tour.date).toLocaleDateString()}</div>
                                         <div className="text-xs text-slate-300 font-bold">{tour.duration} дн.</div>
-                                    </td>
+                                     </td>
                                     <td className="p-5">
                                         <div className="flex justify-between text-[12px] font-black mb-1.5">
                                             <span className={percent >= 100 ? 'text-rose-500' : 'text-slate-300 dark:text-slate-300'}>{booked} / {tour.spots}</span>
@@ -221,7 +262,7 @@ export default function ToursTab({
                                         <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <div className={`h-full rounded-full transition-all duration-1000 ${percent >= 100 ? 'bg-rose-500' : 'bg-teal-500'}`} style={{ width: `${percent}%` }} />
                                         </div>
-                                    </td>
+                                     </td>
                                     <td className="p-5 font-black text-slate-900 dark:text-white">{tour.price} <span className="text-xs text-slate-300 font-bold">{tour.currency}</span></td>
                                     <td className="p-5 text-center">
                                         <StatusSwitch active={tour.isActive || false} onClick={() => onToggleStatus(tour)} labelOn="Опубликован" labelOff="Черновик" />
@@ -287,11 +328,19 @@ export default function ToursTab({
                      <Plus size={18} /> Создать тур
                  </button>
             </div>
+
+            {/* Индикатор загрузки и пагинация */}
+            {loading && (
+              <div className="p-10 text-center text-slate-500">Загрузка туров...</div>
+            )}
+            {!loading && (
+              <Pagination page={page} total={total} limit={limit} onPageChange={onPageChange} />
+            )}
           </div>
         )}
 
         {/* ========================================== */}
-        {/* VIEW: КАТЕГОРИИ ТУРОВ (НОВЫЙ КОД) */}
+        {/* VIEW: КАТЕГОРИИ ТУРОВ (без изменений) */}
         {/* ========================================== */}
         {activeView === 'categories' && (
           <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
@@ -312,7 +361,6 @@ export default function ToursTab({
                             <tr key={cat.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                 <td className="p-5">
                                     <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-300">
-                                        {/* Если иконки нет в маппере, показываем дефолтную (LayoutGrid) */}
                                         <LayoutGrid size={20} />
                                     </div>
                                 </td>

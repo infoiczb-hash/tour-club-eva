@@ -19,6 +19,30 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/admin/', '/api/', '/_next/', '/test'],
       },
+      {
+  userAgent: 'GPTBot',
+  allow: '/',
+  disallow: ['/admin/', '/api/', '/_next/', '/test'],
+},
+{
+  userAgent: 'ClaudeBot',
+  allow: '/',
+  disallow: ['/admin/', '/api/', '/_next/', '/test'],
+},
+{
+  userAgent: 'PerplexityBot',
+  allow: '/',
+  disallow: ['/admin/', '/api/', '/_next/', '/test'],
+},
+{
+  userAgent: 'Bytespider', // TikTok
+  disallow: '/',
+},
+{
+  userAgent: 'Google-Extended', // Google для AI-тренировок (можно разрешить или запретить)
+  allow: '/',
+  disallow: ['/admin/'],
+},
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,
     host: BASE_URL,

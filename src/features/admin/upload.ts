@@ -3,6 +3,29 @@
 import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ БРОНИ
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
+// ==========================================
+// 🛡 ФУНКЦИЯ ПРОВЕРКИ СИГНАТУР (MAGIC BYTES)
+// ==========================================
+function validateImageMagicBytes(buffer: Buffer): boolean {
+  if (buffer.length < 12) return false;
+
+  // JPEG: FF D8 FF
+  const isJpeg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  
+  // PNG: 89 50 4E 47
+  const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+  
+  // WEBP: Начинается с RIFF, а с 8-го байта идет строка WEBP
+  const isWebp =
+    buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+
+  // GIF: GIF8 (47 49 46 38)
+  const isGif = buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38;
+
+  return isJpeg || isPng || isWebp || isGif;
+}
+
 export const uploadFile = withAdminAuth(async (
   formData: FormData
 ): Promise<{ url: string | null; error?: string }> => {
@@ -14,16 +37,22 @@ export const uploadFile = withAdminAuth(async (
       return { url: null, error: 'Файл не найден в запросе' };
     }
 
-    // ── Валидация типа ──
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return { url: null, error: 'Разрешены только JPG, PNG, WebP, GIF' };
-    }
-
-    // ── Валидация размера ──
+    // ── Валидация размера (Делаем ПЕРЕД чтением в память) ──
     const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return { url: null, error: 'Файл слишком большой (макс. 5МБ)' };
+    }
+
+    // ── Чтение файла в буфер ──
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // ==========================================
+    // 🛡 ЗАЩИТА ОТ ПОДДЕЛКИ РАСШИРЕНИЙ (SEC-ADV-02)
+    // ==========================================
+    if (!validateImageMagicBytes(buffer)) {
+      console.warn(`[Security] Блокировка поддельного файла. Имя: ${file.name}, заявленный тип: ${file.type}`);
+      return { url: null, error: 'Неверный тип файла. Разрешены только настоящие изображения (JPG, PNG, WebP, GIF)' };
     }
 
     // ── Генерация имени файла ──
@@ -38,13 +67,12 @@ export const uploadFile = withAdminAuth(async (
 
     // ── Загрузка в Supabase Storage ──
     const supabase = await createServerSupabaseClient();
-    const fileBuffer = await file.arrayBuffer();
 
     const { error: uploadError } = await supabase.storage
       .from('tours-images')
-      .upload(filePath, fileBuffer, {
+      .upload(filePath, arrayBuffer, {
         upsert: false,
-        contentType: file.type,
+        contentType: file.type, // Тип мы уже валидировали по байтам, заголовок оставляем для браузера
         cacheControl: '31536000', // 1 год кеша
       });
 

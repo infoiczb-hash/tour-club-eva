@@ -9,7 +9,7 @@ import {
   TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby // ✅ ВСЕ ИКОНКИ НА МЕСТЕ
 } from 'lucide-react';
 import Link from 'next/link';
-import { TourPreview } from '@/features/tours/types';
+import { TourPreview, TourDateItem } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 import TourCard from './TourCard';
 import { useModalStore } from '@/shared/store/useModalStore'; 

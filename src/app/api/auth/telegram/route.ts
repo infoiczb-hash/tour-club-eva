@@ -38,6 +38,18 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/login?error=invalid_hash`);
     }
 
+    // ==========================================
+    // 🛡 ЗАЩИТА ОТ УСТАРЕВШИХ ДАННЫХ (SEC-ADV-06)
+    // ==========================================
+    const authDate = parseInt(userData.auth_date?.toString() || '0', 10);
+    const now = Math.floor(Date.now() / 1000); // Текущее время в секундах
+
+    if (now - authDate > 86400) { // 24 часа = 86400 секунд
+      console.warn(`[Telegram Auth] Отклонена попытка входа по устаревшим данным. ID: ${userData.id}`);
+      return NextResponse.redirect(`${origin}/login?error=auth_expired`);
+    }
+    // ==========================================
+
     // 3. Авторизуем в Supabase
     const email = `tg_${userData.id}@evaclub.tour`;
     // ✅ ИСПРАВЛЕНИЕ: Пароль тоже генерируем на основе правильного токена
@@ -133,7 +145,7 @@ export async function GET(request: Request) {
     // 5. Успех! Перенаправляем в личный кабинет
     return NextResponse.redirect(`${origin}/account/dashboard`);
 
-  } catch (error) {
+  } catch (error: unknown) { // ✅ Заменили any на unknown (OPT-09)
     console.error('Telegram Auth 500 Error:', error);
     const { origin } = new URL(request.url);
     return NextResponse.redirect(`${origin}/login?error=server_error`);

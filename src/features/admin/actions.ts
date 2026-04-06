@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { sendToUserTelegram, publishPostToChannel } from '@/features/admin/actions/telegram';
 
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -59,62 +60,105 @@ export interface SavePostPayload {
 // 1. БРОНИРОВАНИЯ (CRM)
 // ==========================================
 
-export const getRegistrationsAction = withAdminAuth(async () => {
-  try {
-    const rawData = await prisma.booking.findMany({
-      include: {
-        tour: { select: { title: true, dates: true } },
-        tourDate: { select: { startDate: true } } 
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+// ==========================================
+// 1. БРОНИРОВАНИЯ (CRM) С ПАГИНАЦИЕЙ
+// ==========================================
 
-    const data = rawData.map((item) => {
+export interface GetRegistrationsParams {
+  page: number;
+  limit?: number;          // по умолчанию 20
+  search?: string;
+  filterTab?: 'active' | 'archive';
+}
+
+export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrationsParams) => {
+  try {
+    const { page, limit = 20, search, filterTab = 'active' } = params;
+    const skip = (page - 1) * limit;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // 1. Построение WHERE
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search } },
+        { comment: { contains: search, mode: 'insensitive' } },
+        { tour: { title: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    if (filterTab === 'active') {
+      // Активные: не отменённые/отклонённые + дата тура в будущем
+      where.status = { notIn: ['cancelled', 'rejected'] };
+      where.tourDate = { startDate: { gte: now } };
+    } else {
+      // Архив: отменённые/отклонённые ИЛИ прошедшие
+      where.OR = [
+        { status: { in: ['cancelled', 'rejected'] } },
+        { tourDate: { startDate: { lt: now } } },
+      ];
+    }
+
+    // 2. Параллельные запросы: данные + общее количество
+    const [bookingsRaw, total] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        include: {
+          tour: { select: { title: true, dates: true } },
+          tourDate: { select: { startDate: true } },
+          member: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.booking.count({ where }),
+    ]);
+
+    // 3. Маппинг в DTO (безопасный, без мутаций)
+    const data = bookingsRaw.map((item) => {
       const legacyDates = (item.tour?.dates as TourDatesJson[]) || [];
       const firstLegacyDate = legacyDates[0]?.start ? new Date(legacyDates[0].start) : null;
       const actualDate = item.tourDate?.startDate || item.bookedDate || firstLegacyDate;
 
-     return {
+      return {
         id: item.id,
         user_name: item.name,
         user_phone: item.phone,
-        status: item.status || 'pending',
+        status: item.status,
         created_at: item.createdAt,
-        
         tickets_adult: item.ticketsAdult,
         tickets_child: item.ticketsChild,
         tickets_family: item.ticketsFamily,
         tickets_member: item.ticketsMember,
-        
-        short_id: item.shortId ?? undefined, 
-        
+        short_id: item.shortId ?? undefined,
         guests: item.guests || [],
-        payment_method: item.paymentMethod || 'cash', 
-        discount: item.discount || 0,
+        payment_method: item.paymentMethod || 'cash',
+        discount: item.discount,
         amount_paid: item.amountPaid,
         source: item.source,
         total_price: item.totalPrice,
-        
         tourId: item.tourId,
-        tourDateId: item.tourDateId || undefined,
-        comment: item.comment || '',
-        social: item.social || item.email || '',
-
-        payment_proof_url: item.paymentProofUrl || null,
-        receipt_url: item.receiptUrl || null,
-        confirmed_by: item.confirmedBy || null,
-        confirmed_at: item.confirmedAt || null,
-
+        tourDateId: item.tourDateId ?? undefined,
+        comment: item.comment ?? '',
+        social: item.social ?? item.email ?? '',
+        payment_proof_url: item.paymentProofUrl ?? null,
+        receipt_url: item.receiptUrl ?? null,
+        confirmed_by: item.confirmedBy ?? null,
+        confirmed_at: item.confirmedAt ?? null,
         tour: item.tour
           ? { title: item.tour.title, date: actualDate }
           : undefined,
       };
     });
 
-    return { data };
-  } catch (error: unknown) {
-    console.error('Get Registrations Error:', error);
-    return { error: 'Произошла внутренняя ошибка сервера при загрузке бронирований', data: [] };
+    return { success: true, data, total };
+  } catch (error) {
+    console.error('[getRegistrationsAction]', error);
+    return { success: false, error: 'Ошибка загрузки бронирований', data: [], total: 0 };
   }
 });
 

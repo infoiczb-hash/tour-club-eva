@@ -1,7 +1,7 @@
 // src/features/admin/components/AdminDashboard.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { Tour } from '@/features/tours/types'; 
@@ -33,7 +33,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 // ACTIONS & API
-import { saveTour, updateTourStatus } from '@/features/admin/actions/tour'; 
+import { saveTour,getToursAdmin,  updateTourStatus } from '@/features/admin/actions/tour'; 
 import { deleteTour } from '@/features/tours/actions';
 import { getInquiriesAction } from '@/features/admin/actions/inquiries';
 import { getFunTestsAction } from '@/features/admin/actions/fun';
@@ -100,9 +100,20 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [isAuth, setIsAuth] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const { showToast } = useToast();
+  const [bookingsPage, setBookingsPage] = useState(1);
+const [bookingsTotal, setBookingsTotal] = useState(0);
+const [bookingsSearch, setBookingsSearch] = useState('');
+const [bookingsFilterTab, setBookingsFilterTab] = useState<'active' | 'archive'>('active');
+const [bookingsLoading, setBookingsLoading] = useState(false);
+
+const [toursPage, setToursPage] = useState(1);
+const [toursTotal, setToursTotal] = useState(0);
+const [toursSearch, setToursSearch] = useState('');
+const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full'>('all');
+const [toursLoading, setToursLoading] = useState(false);
 
   // Data State
-  const [tours, setTours] = useState<Tour[]>(initialTours);
+ const [tours, setTours] = useState<Tour[]>([]);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [guides, setGuides] = useState<GuideItem[]>([]);
   const [posts, setPosts] = useState<Blog[]>([]);
@@ -134,52 +145,81 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
 
   const router = useRouter();
 
-  // ✅ ДОБАВЛЕНО: Синхронизируем туры, если Next.js обновит пропсы с сервера (через router.refresh())
-  useEffect(() => {
-    setTours(initialTours);
-  }, [initialTours]);
-
-   // --- INIT ---
+  // --- INIT ---
   useEffect(() => {
     setIsAuth(true);
     loadAllData();
   }, []);
+  useEffect(() => {
+    loadAllData();
+}, [bookingsPage, bookingsSearch, bookingsFilterTab]);
 
- const loadAllData = async () => {
+  const loadAllData = async () => {
     try {
-        // ✅ ИСПРАВЛЕНО: Убран вызов getAllTours() с клиента. Туры уже загружены на сервере!
-        const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes] = await Promise.all([
-            getRegistrationsAction(),
-            getGuides(),
-            getBlogPosts({ includeDrafts: true }), 
-            getReviews(),
-            getInquiriesAction(),
-            getFunTestsAction(),
-            getContentBlock('hero'),
-            getContentBlock('footer'),
-            getTourCategoriesAction(), 
-            getBlogCategoriesAction()
-        ]);
+      const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes] = await Promise.all([
+        getRegistrationsAction({
+          page: bookingsPage,
+          limit: 20,
+          search: bookingsSearch,
+          filterTab: bookingsFilterTab,
+        }),
+        getGuides(),
+        getBlogPosts({ includeDrafts: true }),
+        getReviews(),
+        getInquiriesAction(),
+        getFunTestsAction(),
+        getContentBlock('hero'),
+        getContentBlock('footer'),
+        getTourCategoriesAction(),
+        getBlogCategoriesAction()
+      ]);
 
-      if ('data' in bRes && bRes.data) {
-             setBookings(bRes.data as BookingItem[]);
-        }
-        setGuides(gRes as unknown as GuideItem[]);
-        setPosts(pRes as Blog[]);
-        setReviews(rRes);
-        if (inqRes.success && inqRes.data) setInquiries(inqRes.data); 
-        if (funRes && funRes.success) setFunTests(funRes.data);
-        setContentBlocks({ hero: heroRes, footer: footerRes });
-        
-        if (tCatRes && tCatRes.success) setTourCategories(tCatRes.data || []);
-        if (bCatRes && bCatRes.success) setBlogCategories(bCatRes.data || []);
-               
+      if (bRes.success && bRes.data) {
+        setBookings(bRes.data as BookingItem[]);
+        setBookingsTotal(bRes.total);
+      }
+      setGuides(gRes as unknown as GuideItem[]);
+      setPosts(pRes as Blog[]);
+      setReviews(rRes);
+      if (inqRes.success && inqRes.data) setInquiries(inqRes.data);
+      if (funRes && funRes.success) setFunTests(funRes.data);
+      setContentBlocks({ hero: heroRes, footer: footerRes });
+      if (tCatRes && tCatRes.success) setTourCategories(tCatRes.data || []);
+      if (bCatRes && bCatRes.success) setBlogCategories(bCatRes.data || []);
     } catch (error) {
-        console.error("Data load error:", error);
-        showToast("Ошибка загрузки данных", "error");
+      console.error("Data load error:", error);
+      showToast("Ошибка загрузки данных", "error");
     }
   };
 
+  const loadTours = useCallback(async () => {
+    setToursLoading(true);
+    const res = await getToursAdmin({
+      page: toursPage,
+      limit: 20,
+      search: toursSearch,
+      filter: toursFilter,
+    });
+    if (res.success) {
+      setTours(res.tours);
+      setToursTotal(res.total);
+    }
+    setToursLoading(false);
+  }, [toursPage, toursSearch, toursFilter]);
+
+  useEffect(() => {
+    loadTours();
+  }, [loadTours]);
+
+  useEffect(() => {
+    loadAllData();
+  }, [bookingsPage, bookingsSearch, bookingsFilterTab]);
+
+  useEffect(() => {
+    loadAllData();
+    loadTours();
+  }, []);
+  
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -365,30 +405,50 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
 
         {/* --- 2. Tours & Categories --- */}
         {activeTab === 'tours' && (
-            <ToursTab 
-                tours={tours}
-                bookings={bookings as any} 
-                categories={tourCategories}
-                onAdd={() => { setEditingItem(null); setModalState(p => ({...p, tour: true})); }}
-                onEdit={(tour) => { setEditingItem(tour); setModalState(p => ({...p, tour: true})); }}
-                onDuplicate={(tour) => { 
-                    const { id, ...rest } = tour; 
-                    setEditingItem({...rest, title: `${rest.title} (Копия)`, isActive: false, slug: ''}); 
-                    setModalState(p => ({...p, tour: true})); 
-                }}
-                onDelete={(id) => handleDelete('tour', id)}
-                onToggleStatus={toggleTourStatus}
-                onSendTg={handleSendTg}
-                onAddCategory={() => openCategoryModal('tour')}
-                onEditCategory={(cat) => openCategoryModal('tour', cat)}
-                onDeleteCategory={handleDeleteCategory}
-                onToggleCategoryStatus={handleToggleCategory}
-            />
-        )}
-
+  <ToursTab
+    tours={tours}
+    total={toursTotal}
+    page={toursPage}
+    limit={20}
+    loading={toursLoading}
+    searchTerm={toursSearch}
+    filter={toursFilter}
+    bookings={bookings as any}
+    categories={tourCategories}
+    onSearchChange={(val) => { setToursSearch(val); setToursPage(1); }}
+    onFilterChange={(f) => { setToursFilter(f); setToursPage(1); }}
+    onPageChange={(page) => setToursPage(page)}
+    onAdd={() => { setEditingItem(null); setModalState(p => ({...p, tour: true})); }}
+    onEdit={(tour) => { setEditingItem(tour); setModalState(p => ({...p, tour: true})); }}
+    onDuplicate={(tour) => {
+      const { id, ...rest } = tour;
+      setEditingItem({...rest, title: `${rest.title} (Копия)`, isActive: false, slug: ''});
+      setModalState(p => ({...p, tour: true}));
+    }}
+    onDelete={(id) => handleDelete('tour', id)}
+    onToggleStatus={toggleTourStatus}
+    onSendTg={handleSendTg}
+    onAddCategory={() => openCategoryModal('tour')}
+    onEditCategory={(cat) => openCategoryModal('tour', cat)}
+    onDeleteCategory={handleDeleteCategory}
+    onToggleCategoryStatus={handleToggleCategory}
+  />
+)}
         {/* --- 3. Bookings (CRM) --- */}
         {activeTab === 'bookings' && (
-            <BookingsTab bookings={bookings} onStatusChange={handleStatusChange} />
+            <BookingsTab
+        bookings={bookings}
+        total={bookingsTotal}
+        page={bookingsPage}
+        limit={20}
+        loading={bookingsLoading}
+        searchTerm={bookingsSearch}
+        filterTab={bookingsFilterTab}
+        onSearchChange={(val) => { setBookingsSearch(val); setBookingsPage(1); }}
+        onFilterTabChange={(tab) => { setBookingsFilterTab(tab); setBookingsPage(1); }}
+        onPageChange={(page) => setBookingsPage(page)}
+        onStatusChange={handleStatusChange}
+    />
         )}
 
         {/* --- 4. Inquiries --- */}

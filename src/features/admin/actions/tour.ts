@@ -300,3 +300,52 @@ export const updateTourStatus = withAdminAuth(async (id: string, isActive: boole
     return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса.' };
   }
 });
+
+// ==========================================
+// 5. ПОЛУЧЕНИЕ ТУРОВ ДЛЯ АДМИНКИ С ПАГИНАЦИЕЙ
+// ==========================================
+
+export interface GetToursAdminParams {
+  page: number;
+  limit?: number;
+  search?: string;
+  filter?: 'all' | 'upcoming' | 'past' | 'full';
+}
+
+export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) => {
+  const { page, limit = 20, search, filter = 'all' } = params;
+  const skip = (page - 1) * limit;
+  const now = new Date();
+
+  const where: any = { deletedAt: null };
+  if (search) {
+    where.title = { contains: search, mode: 'insensitive' };
+  }
+  if (filter === 'upcoming') {
+    where.date = { gte: now };
+  } else if (filter === 'past') {
+    where.date = { lt: now };
+  }
+  // filter === 'full' – пока не реализуем (оставляем без фильтра)
+
+  const [toursRaw, total] = await Promise.all([
+    prisma.tour.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        guide: true,
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' }, take: 3 },
+      },
+    }),
+    prisma.tour.count({ where }),
+  ]);
+
+  // Используем существующий маппер из api.ts (динамический импорт, чтобы избежать циклических зависимостей)
+  const { mapPrismaTourToFrontend } = await import('@/features/tours/api');
+  const tours = toursRaw.map(mapPrismaTourToFrontend);
+
+  return { success: true, tours, total };
+});

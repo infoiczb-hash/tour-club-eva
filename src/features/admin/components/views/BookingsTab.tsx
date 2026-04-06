@@ -32,8 +32,6 @@ export interface BookingItem {
   
   tickets_adult: number;
   tickets_child: number;
-
-
   tickets_family: number;
   tickets_member: number;
   
@@ -52,7 +50,6 @@ export interface BookingItem {
   
   guests?: GuestItem[] | any; 
 
-  // Новые поля для чеков
   payment_proof_url?: string | null;
   receipt_url?: string | null;
   confirmed_by?: string | null;
@@ -61,11 +58,19 @@ export interface BookingItem {
 
 interface BookingsTabProps {
   bookings: BookingItem[];
+  total: number;
+  page: number;
+  limit?: number;
+  loading?: boolean;
+  searchTerm: string;
+  filterTab: 'active' | 'archive';
+  onSearchChange: (val: string) => void;
+  onFilterTabChange: (tab: 'active' | 'archive') => void;
+  onPageChange: (page: number) => void;
   onStatusChange: (id: string, status: string) => void;
 }
 
 type TabMode = 'list' | 'groups';
-type FilterTab = 'active' | 'archive';
 
 // --- ХЕЛПЕРЫ ---
 const formatTickets = (b: BookingItem) => {
@@ -104,50 +109,77 @@ const isPastTour = (dateStr?: Date | string) => {
   return tourDate < today;
 };
 
-// --- КОМПОНЕНТ ---
-export default function BookingsTab({ bookings, onStatusChange }: BookingsTabProps) {
-  const [activeMode, setActiveMode] = useState<TabMode>('list'); // ✅ ПО УМОЛЧАНИЮ "ЛЕНТА"
-  const [filterTab, setFilterTab] = useState<FilterTab>('active'); // ✅ АРХИВ / АКТИВНЫЕ
-  
-  const [searchTerm, setSearchTerm] = useState('');
+// --- КОМПОНЕНТ ПАГИНАЦИИ ---
+const Pagination = ({ page, total, limit, onPageChange }: { page: number; total: number; limit: number; onPageChange: (p: number) => void }) => {
+  const totalPages = Math.ceil(total / limit);
+  if (totalPages <= 1) return null;
+
+  const getVisiblePages = () => {
+    const delta = 2;
+    let start = Math.max(1, page - delta);
+    let end = Math.min(totalPages, page + delta);
+    if (end - start < 4) {
+      start = Math.max(1, end - 4);
+      end = Math.min(totalPages, start + 4);
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  };
+
+  return (
+    <div className="flex justify-center gap-2 mt-8">
+      <button
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50"
+      >
+        ←
+      </button>
+      {getVisiblePages().map(p => (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className={`px-3 py-1 rounded border ${p === page ? 'bg-teal-500 text-white border-teal-500' : 'border-slate-300'}`}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        onClick={() => onPageChange(page + 1)}
+        disabled={page === totalPages}
+        className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50"
+      >
+        →
+      </button>
+    </div>
+  );
+};
+
+// --- ОСНОВНОЙ КОМПОНЕНТ ---
+export default function BookingsTab({ 
+  bookings,
+  total,
+  page,
+  limit = 20,
+  loading = false,
+  searchTerm,
+  filterTab,
+  onSearchChange,
+  onFilterTabChange,
+  onPageChange,
+  onStatusChange
+}: BookingsTabProps) {
+  const [activeMode, setActiveMode] = useState<TabMode>('list');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedRow, setExpandedRow] = useState<string | null>(null); 
   const { showToast } = useToast();
 
-  // Состояния для Модалок
+  // Состояния для модалок
   const [broadcastModal, setBroadcastModal] = useState<{isOpen: boolean, group: any | null}>({isOpen: false, group: null});
   const [broadcastText, setBroadcastText] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
-  
   const [receiptModal, setReceiptModal] = useState<{isOpen: boolean, booking: BookingItem | null}>({isOpen: false, booking: null});
 
-  // 1. Фильтрация для Ленты (Умная фильтрация по архиву)
-  const filteredBookings = useMemo(() => {
-    let data = bookings;
-
-    // Поиск
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      data = data.filter(b => 
-        b.user_name.toLowerCase().includes(lower) || 
-        b.user_phone.includes(lower) ||
-        (b.tour?.title || '').toLowerCase().includes(lower) ||
-        (b.comment || '').toLowerCase().includes(lower)
-      );
-    }
-
-    // Фильтр Активные/Архив
-    data = data.filter(b => {
-        const isPast = isPastTour(b.tour?.date);
-        const isArchivedStatus = ['cancelled', 'rejected'].includes(b.status);
-        const isArchive = isPast || isArchivedStatus;
-        return filterTab === 'archive' ? isArchive : !isArchive;
-    });
-
-    return data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [bookings, searchTerm, filterTab]);
-
-  // 2. Группировка и ПЛОСКИЙ МАНИФЕСТ для Гидов (С фиксом дублей)
+  // Группировка для манифеста (используем все брони, которые переданы – они уже отфильтрованы на сервере)
   const groupedManifests = useMemo(() => {
     const groups: Record<string, { 
       tourName: string; 
@@ -163,7 +195,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
       const dateStr = dateObj ? dateObj.toLocaleDateString('ru-RU') : 'Дата уточняется';
       const tourName = b.tour?.title || 'Неизвестный тур';
       
-      // ✅ ИСПРАВЛЕНИЕ: Жесткий ключ группировки (Игнорируем разные tourDateId для одной даты)
       const isoDate = dateObj ? dateObj.toISOString().split('T')[0] : 'nodate';
       const key = `${b.tourId}_${isoDate}`; 
 
@@ -175,7 +206,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
       const totalInBooking = (b.tickets_adult || 0) + (b.tickets_child || 0) + (b.tickets_member || 0) + ((b.tickets_family || 0) * 3);
       groups[key].totalTickets += totalInBooking;
 
-      // Добавляем Заказчика
       groups[key].participants.push({
         isMain: true,
         bookingId: b.id,
@@ -188,7 +218,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
         status: b.status,
       });
 
-      // ✅ ИСПРАВЛЕНИЕ: Фильтруем гостей, чтобы убрать заказчика из списка (по совпадению имени)
       const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
       const uniqueGuests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
       
@@ -216,7 +245,7 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
 
   const toggleGroup = (key: string) => setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
 
-  // Экшены
+  // --- Экшены ---
   const handleBroadcastSubmit = async () => {
     if (!broadcastText.trim()) return showToast('Введите текст сообщения', 'error');
     if (!broadcastModal.group) return;
@@ -254,6 +283,10 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
     if (receiptModal.isOpen) setReceiptModal({isOpen: false, booking: null});
   };
 
+  if (loading) {
+    return <div className="p-10 text-center text-slate-500">Загрузка бронирований...</div>;
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       
@@ -288,20 +321,20 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                     <input 
                         placeholder="Поиск по ФИО, телефону или заметкам..." 
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm font-medium outline-none text-slate-900 border border-slate-100 focus:border-teal-500 focus:bg-white transition-all placeholder:text-slate-300" 
-                        value={searchTerm} onChange={e => setSearchTerm(e.target.value)} 
+                        value={searchTerm}
+                        onChange={e => onSearchChange(e.target.value)}
                     />
                 </div>
                 
-                {/* ✅ ИСПРАВЛЕНИЕ: Переключатель Архива */}
                 <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto shrink-0">
                   <button 
-                    onClick={() => setFilterTab('active')}
+                    onClick={() => onFilterTabChange('active')}
                     className={clsx("flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterTab === 'active' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-400 hover:text-slate-800')}
                   >
                     <Inbox size={14}/> Активные
                   </button>
                   <button 
-                    onClick={() => setFilterTab('archive')}
+                    onClick={() => onFilterTabChange('archive')}
                     className={clsx("flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterTab === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-800')}
                   >
                     <Archive size={14}/> Архив
@@ -309,9 +342,9 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                 </div>
             </div>
 
+            {/* DESKTOP TABLE */}
             <div className="hidden md:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left table-fixed">
-                    {/* ✅ ИСПРАВЛЕНИЕ: Убрали колонку "Действия" */}
                     <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[12px] tracking-widest border-b border-slate-200">
                         <tr>
                             <th className="p-5 w-[20%]">Тур и Дата</th>
@@ -322,10 +355,10 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {filteredBookings.length === 0 && (
-                          <tr><td colSpan={5} className="p-8 text-center text-slate-300 font-medium">Ничего не найдено</td></tr>
+                        {bookings.length === 0 && (
+                           <tr><td colSpan={5} className="p-8 text-center text-slate-300 font-medium">Ничего не найдено</td></tr>
                         )}
-                        {filteredBookings.map(b => {
+                        {bookings.map(b => {
                             const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
                             const guests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
                             const hasGuests = guests.length > 0;
@@ -349,7 +382,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                         </div>
                                         <div className="flex flex-col gap-1 mt-1.5">
                                             <span className="text-xs text-slate-700 font-medium"><Phone size={10} className="inline text-slate-300 mr-1"/> {b.user_phone}</span>
-                                            {/* ✅ ИСПРАВЛЕНИЕ: Точная дата заявки */}
                                             <span className="text-[12px] text-slate-300 font-medium mt-1">Создано: {new Date(b.created_at).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'})}</span>
                                         </div>
                                     </td>
@@ -380,7 +412,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                     </td>
                                     
                                     <td className="p-5 align-top">
-                                        {/* ✅ ИСПРАВЛЕНИЕ: Четкое поле комментария */}
                                         <textarea 
                                             defaultValue={b.comment || ''}
                                             placeholder="Заметки админа (собаки, лодки)..."
@@ -415,7 +446,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                             <option value="cancelled">Отмена</option>
                                         </select>
 
-                                        {/* ✅ ИСПРАВЛЕНИЕ: Кнопка проверки чека */}
                                         {b.payment_proof_url && (
                                            <button 
                                               onClick={() => setReceiptModal({ isOpen: true, booking: b })}
@@ -457,7 +487,7 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
             
             {/* Mobile Cards */}
             <div className="md:hidden space-y-4 mt-4">
-                {filteredBookings.map(b => {
+                {bookings.map(b => {
                     const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
                     const guests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
                     const hasGuests = guests.length > 0;
@@ -508,14 +538,12 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                       Создано: {new Date(b.created_at).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'})}
                                     </div>
                                     
-                                    {/* ✅ ТЕПЕРЬ ТУТ ПОЛНАЯ ЭКОНОМИКА (Билеты, Сумма, Аванс) */}
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
                                       <div className="text-xs font-black text-teal-700">
                                         {formatTickets(b)} • {b.total_price} MDL
                                         {b.amount_paid > 0 && <span className="ml-2 text-emerald-600 border-l border-teal-500/30 pl-2">Аванс: {b.amount_paid}</span>}
                                       </div>
                                       
-                                      {/* ✅ НОВЫЕ БЕЙДЖИ ОПЛАТЫ И СКИДКИ */}
                                       <div className="flex gap-1.5 items-center">
                                         <span className="text-[9px] font-bold text-slate-400 uppercase bg-slate-200/60 px-1.5 py-0.5 rounded border border-slate-300/50">
                                           {b.payment_method === 'qr' ? 'Клевер QR' : b.payment_method === 'biletpmr' ? 'BiletPMR' : 'Наличные'}
@@ -534,7 +562,6 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                 </div>
                             </div>
 
-                            {/* ✅ ИСПРАВЛЕНИЕ: Кнопка Чек на мобилке */}
                             {b.payment_proof_url && (
                                 <button 
                                   onClick={() => setReceiptModal({ isOpen: true, booking: b })}
@@ -584,6 +611,10 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                     );
                 })}
             </div>
+
+            {/* Пагинация */}
+            <Pagination page={page} total={total} limit={limit} onPageChange={onPageChange} />
+
         </div>
       )}
 
@@ -676,7 +707,7 @@ export default function BookingsTab({ bookings, onStatusChange }: BookingsTabPro
                                             <td className="px-6 py-4 text-xs font-medium text-slate-600 whitespace-normal">
                                               {p.isMain && p.comment ? <span className="italic">«{p.comment}»</span> : null}
                                             </td>
-                                          </tr>
+                                           </tr>
                                         ))}
                                       </tbody>
                                     </table>

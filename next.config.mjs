@@ -1,4 +1,5 @@
 import bundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -51,4 +52,19 @@ const nextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+// Экспортируем конфигурацию: сначала применяем bundleAnalyzer, затем Sentry
+export default withSentryConfig(
+  withBundleAnalyzer(nextConfig),
+  {
+    silent: true,
+    org: "tc-eva",                 // ✅ ЖЕСТКО ЗАДАЛИ ОРГАНИЗАЦИЮ
+    project: "javascript-nextjs",  // ✅ ЖЕСТКО ЗАДАЛИ ПРОЕКТ
+  },
+  {
+    widenClientFileUpload: true,
+    transpileClientSDK: true,
+    hideSourceMaps: true,
+    disableLogger: true,
+    automaticVercelMonitors: true,
+  }
+);

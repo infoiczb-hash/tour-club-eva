@@ -7,7 +7,11 @@ import { InquirySchema } from '@/features/inquiries/schema';
 import { withRateLimit } from '@/lib/rate-limit-server'; // 👈 ИМПОРТ ЛИМИТЕРА
 
 // Оборачиваем в лимит (например, 8 запросов в минуту)
-export const sendJoinTeamAction = withRateLimit(async (data: unknown) => {
+type ActionResult = 
+  | { success: true }
+  | { success: false; error: string; fields?: Record<string, string> }
+
+export const sendJoinTeamAction = withRateLimit(async (data: unknown): Promise<ActionResult> => {
   const parsed = InquirySchema.safeParse({ ...data as object, type: 'HR' });
 
   if (!parsed.success) {

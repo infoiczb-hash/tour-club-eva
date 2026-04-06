@@ -333,43 +333,36 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           )}
         </div>
 
-        {/* CTA: Стать автором */}
-        <div
-          onClick={() => openContactModal('Стать автором блога', 'BLOG')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openContactModal('Стать автором блога', 'BLOG');
-            }
-          }}
-          aria-label="Стать автором блога — написать нам"
-          className="group relative w-full rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-teal-500/20 cursor-pointer hover:border-teal-500/50 transition-all duration-500 shadow-xl"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-teal-900/20 via-transparent to-slate-900/50" />
-          <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-start md:items-center gap-5 md:gap-8">
-              <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500 group-hover:text-slate-900 text-teal-400 transition-all duration-500 group-hover:rotate-12">
-                <PenLine size={28} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
-                  У вас есть тематическая статья?
-                </h3>
-                <p className="text-sm md:text-base text-slate-300 font-medium">
-                  Станьте автором полевого журнала и поделитесь опытом с нашим клубом.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 text-sm font-bold text-teal-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
-              <span>Написать нам</span>
-              <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center group-hover:translate-x-2 transition-transform duration-300">
-                <ArrowRight size={18} />
-              </div>
-            </div>
-          </div>
-        </div>
+   {/* CTA: Стать автором */}
+<button
+  type="button"
+  onClick={() => openContactModal('Стать автором блога', 'BLOG')}
+  aria-label="Стать автором блога — написать нам"
+  className="group relative w-full rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-teal-500/20 cursor-pointer hover:border-teal-500/50 transition-all duration-500 shadow-xl text-left"
+>
+  <div className="absolute inset-0 bg-gradient-to-r from-teal-900/20 via-transparent to-slate-900/50" />
+  <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div className="flex items-start md:items-center gap-5 md:gap-8">
+      <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500 group-hover:text-slate-900 text-teal-400 transition-all duration-500 group-hover:rotate-12">
+        <PenLine size={28} strokeWidth={1.5} />
+      </div>
+      <div>
+        <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
+          У вас есть тематическая статья?
+        </h3>
+        <p className="text-sm md:text-base text-slate-300 font-medium">
+          Станьте автором полевого журнала и поделитесь опытом с нашим клубом.
+        </p>
+      </div>
+    </div>
+    <div className="flex items-center gap-3 shrink-0 text-sm font-bold text-teal-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
+      <span>Написать нам</span>
+      <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center group-hover:translate-x-2 transition-transform duration-300">
+        <ArrowRight size={18} />
+      </div>
+    </div>
+  </div>
+</button>
 
       </div>
     </div>

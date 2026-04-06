@@ -94,7 +94,7 @@ export async function GET(req: Request) {
           }
         }
 
-      } catch (err) {
+     } catch (err: unknown) {
         console.error(`Ошибка обработки брони ${booking.id}:`, err);
       }
     }
@@ -112,9 +112,10 @@ export async function GET(req: Request) {
       reminded: remindedCount,
       cancelled: cancelledCount 
     });
-
-  } catch (error) {
+} catch (error: unknown) {
     console.error('Cron error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+// POST нужен для ручного пинга через curl/Postman
+export const POST = GET;

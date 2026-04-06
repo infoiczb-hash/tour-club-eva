@@ -63,9 +63,9 @@ export const updateBookingStatusAction = withAdminAuth(
       revalidatePath('/account/bookings');
       
       return { success: true };
-    } catch (error: any) {
+  } catch (error) {
       console.error('Update Booking Status Error:', error);
-      return { success: false, error: error.message || 'Ошибка обновления статуса' };
+      return { success: false, error: (error as Error).message || 'Ошибка обновления статуса' };
     }
   }
 );

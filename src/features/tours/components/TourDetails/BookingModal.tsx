@@ -8,7 +8,7 @@ import {
   CreditCard, Banknote, Globe, QrCode, Tag, Mail
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
-import { createBookingAction } from '@/features/tours/actions/createBooking';
+import { createBookingAction, type BookingInput, type GuestInput } from '@/features/tours/actions/createBooking';
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
 import { SuccessScreen } from './SuccessScreen';
 import { validatePromoCodeAction } from '@/features/tours/actions/validatePromo'; 
@@ -59,13 +59,22 @@ export default function BookingModal({
 
   const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign'>('biletpmr');
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '+373 ',
-    social: '', // Сюда пойдет Email или Telegram
-    comment: '',
-    website: '' 
-  });
+
+interface BookingFormData {
+  name: string;
+  phone: string;
+  social: string;
+  comment: string;
+  website: string;
+}
+
+const [formData, setFormData] = useState<BookingFormData>({
+  name: '',
+  phone: '+373 ',
+  social: '',
+  comment: '',
+  website: ''
+});
 
   const [successData, setSuccessData] = useState<{
     bookingId: string;
@@ -254,36 +263,36 @@ export default function BookingModal({
     setIsLoading(true);
     setErrorMsg(null);
 
-    const payloadGuests = expectedGuests.map((g, index) => {
-        if (index === 0) {
-            return {
-                isMain: true,
-                type: g.type,
-                name: formData.name.trim(), 
-                phone: formData.phone.trim(),
-                jacket: guestData[g.id]?.jacket || ''
-            };
-        }
+    const payloadGuests: GuestInput[] = expectedGuests.map((g, index) => {
+    if (index === 0) {
         return {
-            isMain: false,
+            isMain: true,
             type: g.type,
-            name: guestData[g.id]?.name?.trim() || '',
-            phone: guestData[g.id]?.phone?.trim() || undefined,
-            age: guestData[g.id]?.age?.trim() || undefined,
+            name: formData.name.trim(), 
+            phone: formData.phone.trim(),
             jacket: guestData[g.id]?.jacket || ''
         };
-    });
+    }
+    return {
+        isMain: false,
+        type: g.type,
+        name: guestData[g.id]?.name?.trim() || '',
+        phone: guestData[g.id]?.phone?.trim() || undefined,
+        age: guestData[g.id]?.age?.trim() || undefined,
+        jacket: guestData[g.id]?.jacket || ''
+    };
+});
 
-    try {
-      // ✅ УБРАНЫ: expectedPrice и totalPrice
-      const result = await createBookingAction({
+try {
+    // Явно указываем тип аргумента для дополнительной проверки (опционально)
+    const bookingPayload: BookingInput = {
         tourId:        String(tour.id),
         tourDateId:    selectedDateId || undefined, 
         tourTitle:     tour.title,
         tourDate:      selectedDateStr,
         name:          formData.name.trim(),
         phone:         formData.phone.trim(),
-        social:        formData.social.trim() || undefined, // Почта/Телеграм отправляется сюда
+        social:        formData.social.trim() || undefined,
         comment:       formData.comment.trim() || undefined,
         website:       formData.website, 
         ticketsAdult:  tickets.adult,
@@ -293,38 +302,37 @@ export default function BookingModal({
         guests:        payloadGuests, 
         currency:      tour.currency ?? 'RUB',
         paymentMethod: paymentMethod, 
-        useBonuses:    isLoggedIn ? useBonuses : false, // Только если авторизован
-        promoCode:     !isLoggedIn && promoCode.trim() ? promoCode.trim() : undefined, // Только если НЕ авторизован
-      });
+        useBonuses:    isLoggedIn ? useBonuses : false,
+        promoCode:     !isLoggedIn && promoCode.trim() ? promoCode.trim() : undefined,
+    };
 
-      if (result.success) {
+    const result = await createBookingAction(bookingPayload);
+
+    if (result.success) {
         setSuccessData({
-          bookingId: result.bookingId,
-          shortId: result.shortId,
-          totalPrice: result.totalPrice, // Серверная цена
-          biletpmrLink: result.biletpmrLink,
-          apbQrLink: result.apbQrLink,
-          apbQrImage: result.apbQrImage,
-          paymentMethod: paymentMethod
+            bookingId: result.bookingId,
+            shortId: result.shortId,
+            totalPrice: result.totalPrice,
+            biletpmrLink: result.biletpmrLink,
+            apbQrLink: result.apbQrLink,
+            apbQrImage: result.apbQrImage,
+            paymentMethod: paymentMethod
         });
-        
         setStep('success');
-   } else {
-        // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА (удовлетворяем строгий TypeScript)
+    } else {
         if ('fields' in result && result.fields && Object.keys(result.fields).length > 0) {
             const issues = Object.values(result.fields).join(' | ');
             setErrorMsg(`Ошибка в полях: ${issues}`);
         } else {
             setErrorMsg(result.error || 'Произошла ошибка при бронировании. Попробуйте позже.');
         }
-            }
-    } catch {
-      setErrorMsg('Ошибка соединения. Проверьте интернет и попробуйте снова.');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
+} catch {
+    setErrorMsg('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+} finally {
+    setIsLoading(false);
+}
+}
   const Counter = ({ 
     label, 
     price, 

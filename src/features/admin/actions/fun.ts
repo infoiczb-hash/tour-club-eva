@@ -31,7 +31,7 @@ export const upsertFunTestAction = withAdminAuth(async (data: any) => {
     revalidatePath('/fun');
     revalidatePath('/admin/fun');
     return { success: true, test };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error saving FunTest:', error);
     return { success: false, error: 'Не удалось сохранить тест' };
   }
@@ -47,7 +47,7 @@ export const toggleFunTestStatusAction = withAdminAuth(async (id: string, curren
     revalidatePath('/fun');
     revalidatePath('/admin/fun');
     return { success: true };
-  } catch (error: any) {
+  } catch(error: unknown) {
     return { success: false, error: 'Ошибка смены статуса' };
   }
 });

@@ -195,8 +195,8 @@ export const performAiTask = withAdminAuth(async (task: AiTaskType) => {
 
     return { success: false, error: 'Неизвестная команда AI' };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("AI Error:", error);
-    return { success: false, error: error.message || "Ошибка обработки AI" };
+    return { success: false, error: (error as Error).message || "Ошибка обработки AI" };
   }
 });

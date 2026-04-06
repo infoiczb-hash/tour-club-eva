@@ -1,6 +1,4 @@
 // src/features/tours/api.ts
-"use server";
-
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { Tour, TourPreview } from './types'; // ✅ ДОБАВЛЕНО: TourPreview
@@ -55,7 +53,7 @@ function getNearestFutureDate(
 // ─────────────────────────────────────────────
 // Маппер Prisma → фронтенд Tour (Полный объект)
 // ─────────────────────────────────────────────
-function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
+export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
   const relationalDates = item.tourDates?.map(td => ({
     id: td.id, 
     start: td.startDate.toISOString(),
@@ -393,8 +391,10 @@ export async function createBookingAction(params: {
       },
     });
     return { success: true, data: booking };
-  } catch (error: any) {
-    console.error('❌ Ошибка бронирования:', error.message);
+  } catch (error: unknown) {
+    // Безопасно получаем текст ошибки, даже если выброшен не стандартный объект Error
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('❌ Ошибка бронирования:', message);
     return { success: false, error: 'Не удалось создать бронь' };
   }
 }
@@ -410,4 +410,4 @@ export async function getGuides() {
     console.error('Ошибка загрузки гидов:', error);
     return [];
   }
-}
+} 
