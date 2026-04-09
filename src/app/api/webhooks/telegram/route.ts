@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
-import { Redis } from '@upstash/redis'; // ✅ Добавили импорт Redis
+import { Redis } from '@upstash/redis';
+import { NotificationHub } from '@/lib/notifications/hub';
+import { Ratelimit } from '@upstash/ratelimit';
+import { handleTelegramCallback } from '@/features/admin/actions/telegramInteractive';
 
-// Инициализируем Redis
+// Инициализируем Redis (оставляем твой вариант из оригинала)
 const redis = Redis.fromEnv();
+
+// Инициализируем Лимитер: 50 апдейтов в 10 секунд
+const ratelimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(50, '10 s'),
+  analytics: true,
+});
 
 // Хелпер для быстрого ответа Telegram (чтобы он не дублировал запросы)
 const ok = () => NextResponse.json({ ok: true }, { status: 200 });
@@ -12,10 +22,18 @@ const ok = () => NextResponse.json({ ok: true }, { status: 200 });
 export async function POST(req: Request) {
   try {
     // 1. Защита: Проверяем секретный токен Telegram
-    const secretHeader = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
+    const secretHeader = req.headers.get('x-telegram-bot-api-secret-token') || req.headers.get('X-Telegram-Bot-Api-Secret-Token');
     if (!secretHeader || secretHeader !== env.TELEGRAM_WEBHOOK_SECRET) {
       console.warn('Unauthorized webhook attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 2. Rate Limiting (Защита от спама)
+    const ip = req.headers.get('x-forwarded-for') ?? 'telegram-servers';
+    const { success } = await ratelimit.limit(`tg_webhook_rate:${ip}`);
+    if (!success) {
+      console.warn('[Webhook] Rate limit exceeded for IP:', ip);
+      return ok(); // Отвечаем 200, чтобы Telegram не переотправлял спам
     }
 
     const body = await req.json();
@@ -43,63 +61,98 @@ export async function POST(req: Request) {
     // ==========================================
     if (body.callback_query) {
       const callbackData = body.callback_query.data;
-      const adminChatId = String(body.callback_query.message.chat.id);
-      const messageId = body.callback_query.message.message_id;
-      // Вытягиваем имя админа, который нажал кнопку (для логов)
-      const adminName = body.callback_query.from.username ? `@${body.callback_query.from.username}` : (body.callback_query.from.first_name || 'Admin');
+      if (!callbackData) return ok();
 
-      if (callbackData.startsWith('confirm_')) {
-        const bookingId = callbackData.replace('confirm_', '');
+      // ✅ ВАЖНО: Разделяем твою старую логику оплат и новую логику Пакета 2
+      if (callbackData.startsWith('confirm_') || callbackData.startsWith('reject_')) {
+        const adminChatId = String(body.callback_query.message.chat.id);
+        const messageId = body.callback_query.message.message_id;
+        const adminName = body.callback_query.from.username ? `@${body.callback_query.from.username}` : (body.callback_query.from.first_name || 'Admin');
 
-        const booking = await prisma.booking.update({
-          where: { id: bookingId },
-          data: { 
-            status: 'confirmed',
-            confirmedBy: adminName,
-            confirmedAt: new Date()
+        if (callbackData.startsWith('confirm_')) {
+          const bookingId = callbackData.replace('confirm_', '');
+
+          // 1. Меняем статус в базе
+          const booking = await prisma.booking.update({
+            where: { id: bookingId },
+            data: { 
+              status: 'confirmed',
+              confirmedBy: adminName,
+              confirmedAt: new Date()
+            },
+            include: { tour: true, tourDate: true }
+          });
+
+          // 2. Уведомляем админа в рабочем чате напрямую
+          const telegramTasks: Promise<any>[] = [
+            editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`)
+          ];
+
+          // 3. 🔥 Уведомляем клиента через Единую Шину (Хаб)
+          if (booking.memberId) {
+            telegramTasks.push(NotificationHub.dispatch({
+              eventId: 'BOOKING_CONFIRMED',
+              memberId: booking.memberId,
+              data: {
+                bookingId: booking.id,
+                shortId: booking.shortId,
+                tourTitle: booking.tour?.title,
+                tourSlug: booking.tour?.slug,
+                meetingPoint: booking.tourDate?.meetingPoint || booking.tour?.meetingPoint,
+                meetingTime: booking.tourDate?.time,
+                importantInfo: booking.tour?.importantInfo
+              }
+            }));
+          } else if (booking.payerTgChatId) {
+            // 🔥 РЕШЕНИЕ 3: Красивое сообщение для "Гостей" (без аккаунта)
+            const meetingInfo = booking.tourDate?.meetingPoint || booking.tour?.meetingPoint || 'Будет уточнено гидом';
+            const meetingTime = booking.tourDate?.time || '08:30';
+            const important = booking.tour?.importantInfo ? `\n\n🎒 <b>Важно:</b> ${booking.tour.importantInfo}` : '';
+            const clientMsg = `🎉 <b>Оплата получена!</b>\n\nВаше место в туре «${booking.tour?.title}» официально забронировано.\n\n📍 <b>Место сбора:</b> ${meetingInfo}\n⏰ <b>Время:</b> ${meetingTime}${important}`;
+            telegramTasks.push(sendMessage(booking.payerTgChatId, clientMsg));
           }
-        });
 
-        const telegramTasks = [
-          editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`)
-        ];
+          await Promise.allSettled(telegramTasks);
+          
+        } else if (callbackData.startsWith('reject_')) {
+          const bookingId = callbackData.replace('reject_', '');
 
-        if (booking.payerTgChatId) {
-          telegramTasks.push(
-            sendMessage(
-              booking.payerTgChatId,
-              `🎉 Отличные новости! Ваша оплата по заявке <b>#${booking.shortId}</b> подтверждена.\nМы закрепили за вами места. Ждем вас в туре!`
-            )
-          );
+          const booking = await prisma.booking.update({
+            where: { id: bookingId },
+            data: { status: 'awaiting_payment', paymentProofUrl: null },
+            include: { tour: true }
+          });
+
+          const telegramTasks: Promise<any>[] = [
+            editAdminMessage(adminChatId, messageId, `❌ <b>ОТКЛОНЕНО (Бронь #${booking.shortId})</b>\nОтклонил: ${adminName}`)
+          ];
+
+          // 🔥 Уведомляем клиента через Хаб об ошибке
+          if (booking.memberId) {
+            telegramTasks.push(NotificationHub.dispatch({
+              eventId: 'PAYMENT_REJECTED',
+              memberId: booking.memberId,
+              data: {
+                bookingId: booking.id,
+                shortId: booking.shortId,
+                tourTitle: booking.tour?.title,
+              }
+            }));
+          } else if (booking.payerTgChatId) {
+            // 🔥 РЕШЕНИЕ 3: Сообщение об ошибке для "Гостей" (без аккаунта)
+            const clientMsg = `❌ <b>Ошибка оплаты</b>\n\nК сожалению, мы не смогли подтвердить оплату заявки <b>#${booking.shortId}</b> на тур «${booking.tour?.title}».\nВозможно, скриншот/файл обрезан, размыт или платеж завис в банке.\n\nПожалуйста, отправьте чек еще раз прямо в этот чат.`;
+            telegramTasks.push(sendMessage(booking.payerTgChatId, clientMsg));
+          }
+          
+          await Promise.allSettled(telegramTasks);
         }
 
-        await Promise.allSettled(telegramTasks);
-        
-      } else if (callbackData.startsWith('reject_')) {
-        const bookingId = callbackData.replace('reject_', '');
-
-        const booking = await prisma.booking.update({
-          where: { id: bookingId },
-          data: { status: 'awaiting_payment', paymentProofUrl: null }
-        });
-
-        const telegramTasks = [
-          editAdminMessage(adminChatId, messageId, `❌ <b>ОТКЛОНЕНО (Бронь #${booking.shortId})</b>\nОтклонил: ${adminName}`)
-        ];
-
-        if (booking.payerTgChatId) {
-          telegramTasks.push(
-            sendMessage(
-              booking.payerTgChatId,
-              `⚠️ К сожалению, мы не смогли подтвердить чек для заявки <b>#${booking.shortId}</b>.\nВозможно, скриншот обрезан, размыт или перевод не прошел.\nПожалуйста, проверьте данные и <b>отправьте фото чека еще раз</b> прямо в этот чат.`
-            )
-          );
-        }
-        
-        await Promise.allSettled(telegramTasks);
+        await answerCallbackQuery(body.callback_query.id);
+      } else {
+        // 🔥 ДЕЛЕГИРУЕМ НОВЫЕ КНОПКИ (из Пакета 2: Отзывы, Лиды и т.д.)
+        await handleTelegramCallback(body.callback_query);
       }
-
-      await answerCallbackQuery(body.callback_query.id);
+      
       return ok();
     }
 
@@ -138,7 +191,7 @@ export async function POST(req: Request) {
         if (booking.status === 'awaiting_payment' || booking.status === 'pending') {
           await sendMessage(
             chatId, 
-            `Вы оформляете оплату для заявки <b>#${shortId}</b>.\n\n📸 <b>Пожалуйста, отправьте скриншот чека об оплате (или купленный билет) прямо в этот чат картинкой.</b>\nМы проверим его и подтвердим вашу бронь.`
+            `Вы оформляете оплату для заявки <b>#${shortId}</b>.\n\n📸 <b>Пожалуйста, отправьте скриншот чека об оплате (или купленный билет) прямо в этот чат картинкой или файлом.</b>\nМы проверим его и подтвердим вашу бронь.`
           );
         } else if (booking.status === 'moderation') {
           await sendMessage(chatId, `Ваш чек для заявки <b>#${shortId}</b> уже находится на проверке у администратора. Пожалуйста, ожидайте уведомления.`);
@@ -206,12 +259,12 @@ export async function POST(req: Request) {
         
         await Promise.allSettled([
           sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id),
-          sendMessage(chatId, `✅ Фото чека получено!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
+          sendMessage(chatId, `✅ Файл чека получен!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
         ]);
         
       } catch (e: unknown) {
         console.error('Ошибка обработки фото чека:', e);
-        await sendMessage(chatId, 'Произошла ошибка при сохранении чека. Пожалуйста, попробуйте отправить фото еще раз чуть позже.');
+        await sendMessage(chatId, 'Произошла ошибка при сохранении чека. Пожалуйста, попробуйте отправить его еще раз чуть позже.');
       }
       return ok();
     }
@@ -252,23 +305,39 @@ async function editAdminMessage(chatId: string, messageId: number, newText: stri
   });
 }
 
-async function sendModerationRequest(adminChatId: string, imageUrl: string, caption: string, bookingId: string) {
+async function sendModerationRequest(adminChatId: string, fileUrl: string, caption: string, bookingId: string) {
   const token = env.TELEGRAM_BOT_TOKEN; 
-  await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+  
+  // 🔥 РЕШЕНИЕ 1: Поддержка отправки PDF-документов
+  const isDocument = fileUrl.toLowerCase().includes('.pdf');
+  const method = isDocument ? 'sendDocument' : 'sendPhoto';
+
+  const body: any = { 
+    chat_id: adminChatId, 
+    caption, 
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '✅ Подтвердить', callback_data: `confirm_${bookingId}` }],
+        [{ text: '❌ Отклонить', callback_data: `reject_${bookingId}` }]
+      ]
+    }
+  };
+
+  if (isDocument) body.document = fileUrl;
+  else body.photo = fileUrl;
+
+  // 🔥 РЕШЕНИЕ 1: Направляем сообщение в топик (если он есть)
+  if (env.TELEGRAM_TOPIC_MONEY) {
+    body.message_thread_id = env.TELEGRAM_TOPIC_MONEY;
+  } else if (env.TELEGRAM_TOPIC_BOOKINGS) {
+    body.message_thread_id = env.TELEGRAM_TOPIC_BOOKINGS;
+  }
+
+  await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      chat_id: adminChatId, 
-      photo: imageUrl, 
-      caption, 
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '✅ Подтвердить', callback_data: `confirm_${bookingId}` }],
-          [{ text: '❌ Отклонить', callback_data: `reject_${bookingId}` }]
-        ]
-      }
-    })
+    body: JSON.stringify(body)
   });
 }
 
@@ -302,7 +371,8 @@ async function uploadToCloudinary(fileUrl: string): Promise<string> {
   formData.append('file', fileUrl);
   formData.append('upload_preset', uploadPreset);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+  // 🔥 РЕШЕНИЕ 2: Используем /auto/upload чтобы Cloudinary кушал PDF
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
     method: 'POST',
     body: formData
   });

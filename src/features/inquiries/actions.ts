@@ -1,9 +1,11 @@
+// src/features/inquiries/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import { InquirySchema, InquiryInput } from './schema';
-import { sendToTelegram } from '@/features/admin/actions/telegram';
-// ✅ ДОБАВЛЕНО: Импорт лимитера и функции получения IP
+// 👇 ИЗМЕНЕНО: Импортируем publishToTelegram вместо sendToTelegram и добавляем env
+import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { env } from '@/lib/env';
 import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // ✅ ДОБАВЛЕНА: Функция экранирования опасных символов
@@ -82,7 +84,8 @@ export async function submitInquiry(data: InquiryInput) {
     }
 
     // 4. Сохранение в БД
-    await prisma.inquiry.create({
+    // 👇 ИЗМЕНЕНО: Записываем результат в newInquiry, чтобы получить ID
+    const newInquiry = await prisma.inquiry.create({
       data: {
         type: validData.type,
         name: validData.name,
@@ -125,8 +128,23 @@ export async function submitInquiry(data: InquiryInput) {
        tgMessage += `\n🏢 Компания: ${escapeHtml(validData.company)}`;
     }
 
-    // ✅ ИСПРАВЛЕНИЕ: Проверяем ответ от Telegram и пишем в консоль, если ошибка
-    const tgResult = await sendToTelegram(tgMessage);
+    // 👇 ИЗМЕНЕНО: Маршрутизируем в нужный топик
+    const targetTopic = validData.type === 'HR' ? env.TELEGRAM_TOPIC_HR : env.TELEGRAM_TOPIC_SUPPORT;
+
+    // 👇 ИЗМЕНЕНО: Используем publishToTelegram для отправки с кнопкой "Взять в работу"
+    const tgResult = await publishToTelegram(
+      tgMessage,
+      undefined,
+      undefined,
+      false,
+      {
+        messageThreadId: targetTopic,
+        inlineKeyboard: [
+          [{ text: 'Взять в работу', callback_data: `tk_lead:${newInquiry.id}` }]
+        ]
+      }
+    );
+
     if (!tgResult.success) {
         console.error("Ошибка при отправке в Telegram:", tgResult.error);
         // Не возвращаем false пользователю, так как в БД заявка сохранена успешно, 

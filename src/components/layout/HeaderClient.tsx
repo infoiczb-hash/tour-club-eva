@@ -6,12 +6,16 @@ import { Menu, X, Phone, ArrowRight, Instagram, Send, User } from "lucide-react"
 import { usePathname } from 'next/navigation';
 import { useModalStore } from '@/shared/store/useModalStore';
 
+// 🔥 ИМПОРТ НАШЕГО КОЛОКОЛЬЧИКА
+import { NotificationBell } from '@/features/account/components/NotificationBell';
+
 interface NavLink {
   name: string;
   href: string;
 }
 
 interface UserProfile {
+  id: string; // 🔥 ДОБАВИЛИ ID, он нужен колокольчику
   name: string | null;
   phone: string | null;
 }
@@ -117,12 +121,17 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             <div className="w-px h-6 bg-white/10" />
 
             {user ? (
-               <Link href="/account" className="flex items-center gap-2.5 group">
-                 <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[12px] font-black">
-                    {initials}
-                 </div>
-                 <span className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors">Кабинет</span>
-               </Link>
+               <div className="flex items-center gap-5">
+                 {/* 🔥 ВСТАВИЛИ КОЛОКОЛЬЧИК (Десктоп) */}
+                 <NotificationBell memberId={user.id} />
+                 
+                 <Link href="/account" className="flex items-center gap-2.5 group">
+                   <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[12px] font-black">
+                      {initials}
+                   </div>
+                   <span className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors">Кабинет</span>
+                 </Link>
+               </div>
             ) : (
                <Link href="/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors px-4 py-2 rounded-full border border-white/10 hover:border-white/30 hover:bg-white/5">
                  Войти
@@ -130,12 +139,17 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             )}
           </div>
 
-          {/* БУРГЕР */}
+          {/* БУРГЕР МЕНЮ И МОБИЛЬНАЯ ВЕРСИЯ */}
           <div className="md:hidden flex items-center gap-4 relative z-50">
             {user && (
-              <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[12px] font-black">
-                {initials}
-              </Link>
+              <div className="flex items-center gap-3">
+                {/* 🔥 ВСТАВИЛИ КОЛОКОЛЬЧИК (Мобилка) */}
+                <NotificationBell memberId={user.id} />
+                
+                <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[12px] font-black">
+                  {initials}
+                </Link>
+              </div>
             )}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -148,7 +162,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
         </div>
       </header>
 
-      {/* МОБИЛЬНОЕ МЕНЮ */}
+      {/* МОБИЛЬНОЕ МЕНЮ (Без изменений) */}
       <div
         className={`fixed inset-0 z-40 bg-slate-950 flex flex-col px-6 pt-16 pb-6 h-[100dvh] transition-all duration-300 ease-in-out ${
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"

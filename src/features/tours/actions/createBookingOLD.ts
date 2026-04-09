@@ -9,9 +9,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { env } from '@/lib/env';
 import { Resend } from 'resend';
 import { BookingTicketEmail } from '@/features/tours/emails/BookingTicketEmail';
-import { withRateLimit } from '@/lib/rate-limit-server'; 
-import { NotificationHub } from '@/lib/notifications/hub';
-import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { withRateLimit } from '@/lib/rate-limit-server'; // <-- НОВЫЙ ИМПОРТ
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = env.NEXT_PUBLIC_SITE_URL;
@@ -51,6 +49,8 @@ const BookingSchema = z.object({
 
   guests: z.array(GuestSchema).optional(),
 
+  // ⚠️ УДАЛЕНО: totalPrice - мы больше не доверяем фронтенду
+  // totalPrice: z.number().int().min(0).optional(), 
   currency: z.string().default('RUB'),
   
   paymentMethod: z.enum(['biletpmr', 'qr', 'cash', 'foreign']).default('biletpmr'),
@@ -153,8 +153,6 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     };
     finalPrice: number;
     appliedDiscount: number;
-    promoOwnerIdToReward: string | null; // 🔥 ДОБАВЛЕНО ДЛЯ КЭШБЭКА
-    promoRewardAmount: number;           // 🔥 ДОБАВЛЕНО ДЛЯ КЭШБЭКА
   } | null = null;
 
   const MAX_RETRIES = 3;
@@ -174,6 +172,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         let apbQrImage: string | null = null;
 
         if (data.tourDateId) {
+          // Обновляем конкретную дату, проверяя наличие мест
           const updatedTourDate = await tx.tourDate.update({
             where: {
               id: data.tourDateId,
@@ -201,7 +200,9 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
             }
           });
 
+          // Цена взрослого: если у даты указан basePrice, используем его, иначе цену из тура
           priceAdult = updatedTourDate.basePrice ?? updatedTourDate.tour.price;
+          // Детские, семейные, членские цены всегда из тура (в TourDate нет отдельных переопределений)
           priceChild = updatedTourDate.tour.priceChild ?? priceAdult; 
           priceFamily = updatedTourDate.tour.priceFamily ?? priceAdult;
           priceMember = updatedTourDate.tour.priceMember ?? priceAdult;
@@ -212,6 +213,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           apbQrLink = updatedTourDate.tour.apbQrLink;
           apbQrImage = updatedTourDate.tour.apbQrImage;
         } else {
+          // Обновляем общий тур
           const updatedTour = await tx.tour.update({
             where: {
               id: data.tourId,
@@ -246,6 +248,8 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         }
 
         // ---------- 2. Расчёт базовой цены на основе серверных данных ----------
+        // 🔥 ВОТ ЗДЕСЬ И ЕСТЬ ГЛАВНАЯ ЗАЩИТА 🔥
+        // Мы игнорируем всё, что прислал клиент, и пересчитываем цену сами
         const baseTotalPrice =
           data.ticketsAdult * priceAdult +
           data.ticketsChild * priceChild +
@@ -255,10 +259,6 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         // ---------- 3. Применение скидок (промокод или бонусы) ----------
         let appliedDiscount = 0;
         let usedPromoCodeId: string | null = null;
-        
-        // 🔥 ПЕРЕМЕННЫЕ ДЛЯ КЭШБЭКА ВЛАДЕЛЬЦУ ПРОМОКОДА
-        let promoOwnerIdToReward: string | null = null;
-        let promoRewardAmount = 0;
 
         if (!currentMemberId && data.promoCode) {
           const promoCodeRaw = data.promoCode.trim().toUpperCase();
@@ -274,6 +274,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           } else {
             appliedDiscount = promo.discount;
           }
+          // Ограничиваем скидку, чтобы цена не стала отрицательной
           appliedDiscount = Math.min(appliedDiscount, baseTotalPrice);
           usedPromoCodeId = promo.id;
 
@@ -283,14 +284,10 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           });
 
           if (promo.memberId) {
-            // Начисляем бонус (10 у.е.) владельцу промокода
             await tx.memberProfile.update({
               where: { id: promo.memberId },
               data: { balance: { increment: 10 } }
             });
-            // Фиксируем данные для отправки пуша
-            promoOwnerIdToReward = promo.memberId;
-            promoRewardAmount = 10;
           }
         } else if (currentMemberId && data.useBonuses) {
           const profile = await tx.memberProfile.findUnique({
@@ -298,7 +295,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
             select: { balance: true }
           });
           if (profile && profile.balance > 0) {
-            const maxDiscount = Math.floor(baseTotalPrice * 0.1); 
+            const maxDiscount = Math.floor(baseTotalPrice * 0.1); // максимум 10% от цены
             appliedDiscount = Math.min(profile.balance, maxDiscount, baseTotalPrice);
             if (appliedDiscount > 0) {
               await tx.memberProfile.update({
@@ -311,14 +308,14 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
 
         const finalPrice = baseTotalPrice - appliedDiscount;
 
-        // ---------- 4. Генерация shortId ----------
+        // ---------- 4. Генерация shortId (с защитой от гонки) ----------
         const lastBooking = await tx.booking.findFirst({
           orderBy: { shortId: 'desc' },
           select: { shortId: true }
         });
         const newShortId = (lastBooking?.shortId ?? 999) + 1;
 
-        // ---------- 5. Определяем начальный статус ----------
+        // ---------- 5. Определяем начальный статус в зависимости от метода оплаты ----------
         let initialStatus: 'pending' | 'awaiting_payment' = 'pending';
         if (['biletpmr', 'qr', 'foreign'].includes(data.paymentMethod)) {
           initialStatus = 'awaiting_payment';
@@ -343,7 +340,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
             ticketsMember: data.ticketsMember,
             guests: (data.guests || []) as Prisma.InputJsonValue,
             comment: data.comment || null,
-            totalPrice: finalPrice,  
+            totalPrice: finalPrice,  // Используем серверный расчёт!
             discount: appliedDiscount,
             promoCodeId: usedPromoCodeId,
             source: 'website',
@@ -360,20 +357,22 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           shortId: newShortId,
           paymentLinks: { biletpmrLink, apbQrLink, apbQrImage },
           finalPrice,
-          appliedDiscount,
-          promoOwnerIdToReward, // 🔥 Выкидываем наружу
-          promoRewardAmount     // 🔥 Выкидываем наружу
+          appliedDiscount
         };
       });
 
+      // Транзакция успешна — выходим из цикла
       break;
  } catch (error: unknown) {
+      // 1. Для кодов Prisma приводим ошибку к базовому объекту словаря
       const err = error as Record<string, unknown>;
+      // Конфликт shortId — повторяем попытку
      if (err?.code === 'P2002' && attempt < MAX_RETRIES) {
         console.warn(`[Booking] Race condition on shortId. Retry ${attempt + 1}/${MAX_RETRIES}`);
         continue;
       }
 
+      // Обработка известных бизнес-ошибок
    if (error instanceof Error) {
         if (error.message === 'PROMO_INVALID') {
           return { success: false, error: 'Промокод недействителен.' };
@@ -385,6 +384,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           return { success: false, error: 'Последние места на эту дату были выкуплены прямо сейчас.' };
         }
       }
+      // Ошибка Prisma P2025 (запись не найдена при update) — мест нет или тур неактивен
      if (err?.code === 'P2025') {
         return { success: false, error: 'Выбранная дата или тур больше не доступны.' };
       }
@@ -408,35 +408,36 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       transactionResult.booking.id,
       transactionResult.shortId,
       transactionResult.appliedDiscount,
-      transactionResult.finalPrice 
+      transactionResult.finalPrice // Передаем серверный finalPrice
     );
 
-    // 🔥 НОВОЕ: Начисляем кэшбэк владельцу промокода через Хаб
-    if (transactionResult.promoOwnerIdToReward) {
-      await NotificationHub.dispatch({
-        eventId: 'CASHBACK_RECEIVED',
-        memberId: transactionResult.promoOwnerIdToReward,
-        data: { amount: transactionResult.promoRewardAmount }
-      });
-    }
-
-    // Уведомление клиенту через Единую Шину (Хаб)
+    // Уведомление клиенту в Telegram, если есть chatId
     if (currentMemberId) {
-      await NotificationHub.dispatch({
-        eventId: 'BOOKING_CREATED',
-        memberId: currentMemberId,
-        data: {
-          bookingId: transactionResult.booking.id,
-          shortId: transactionResult.shortId,
-          tourTitle: data.tourTitle,
-          tourSlug: transactionResult.tourSlug,
-          totalPrice: transactionResult.finalPrice,
-          currency: data.currency,
-          paymentMethod: data.paymentMethod,
-          biletpmrLink: transactionResult.paymentLinks.biletpmrLink,
-          apbQrLink: transactionResult.paymentLinks.apbQrLink,
-        }
+      const profile = await prisma.memberProfile.findUnique({
+        where: { id: currentMemberId },
+        select: { tgChatId: true }
       });
+      if (profile?.tgChatId) {
+        let clientMessage = `🏕 Ваша заявка <b>#${transactionResult.shortId}</b> на тур «${data.tourTitle}» успешно создана!\nМеста за вами зарезервированы.\n\n`;
+        if (data.paymentMethod === 'biletpmr') {
+          clientMessage += `💳 Статус: <b>Ожидает оплаты</b>.\nЕсли Вам удобно оплатить на biletpmr, можно перейти по ссылке на сайте. Цена может отличаться (не применяются бонусные оплаты и промокод), так как это сторонний сервис оплаты. После оплаты вы можете отправить нам билет сюда, или ожидайте, пока мы проверим вручную.`;
+        } else if (data.paymentMethod === 'qr') {
+          clientMessage += `🧾 Статус: <b>Ожидает чека</b>.\nВы выбрали оплату по системе Клевер (QR-код). Пожалуйста, отправьте скриншот перевода прямо в этот чат, и мы подтвердим вашу бронь!`;
+        } else if (data.paymentMethod === 'cash') {
+          clientMessage += `💵 Статус: <b>Оплата гиду на месте</b>.\nДоговорились! Подготовьте сумму без сдачи к дню тура. За 3 дня и за сутки до выезда бот пришлет вам запрос на подтверждение участия — не пропустите! Рекомендуем выбрать другой способ оплаты или оплатить через платежные терминалы АПБ. Выберите там ТурКлуб "Эва". Квитанцию можете отправить нам сюда.`;
+        } else if (data.paymentMethod === 'foreign') {
+          clientMessage += `🌍 Статус: <b>Ожидает оплаты</b>.\nДля оплаты свяжитесь напрямую с менеджерами: https://t.me/romansvtirase`;
+        }
+        await fetch(`https://api.telegram.org/bot${env.TELEGRAM_AUTH_BOT}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: profile.tgChatId,
+            text: clientMessage,
+            parse_mode: 'HTML'
+          })
+        });
+      }
     }
 
     // Email-уведомление
@@ -451,7 +452,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           tourTitle: data.tourTitle,
           tourDate: data.tourDate,
           shortId: transactionResult.shortId,
-          totalPrice: transactionResult.finalPrice, 
+          totalPrice: transactionResult.finalPrice, // Серверный finalPrice
           currency: data.currency,
           paymentMethod: data.paymentMethod,
           ticketsCount: totalTickets,
@@ -476,7 +477,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     success: true,
     bookingId: transactionResult.booking.id,
     shortId: transactionResult.shortId,
-    totalPrice: transactionResult.finalPrice, 
+    totalPrice: transactionResult.finalPrice, // Возвращаем клиенту серверный finalPrice
     biletpmrLink: transactionResult.paymentLinks.biletpmrLink,
     apbQrLink: transactionResult.paymentLinks.apbQrLink,
     apbQrImage: transactionResult.paymentLinks.apbQrImage,
@@ -490,8 +491,15 @@ async function notifyTelegram(
   bookingId: string,
   shortId: number,
   appliedBonuses: number = 0,
-  finalPrice: number 
+  finalPrice: number // Убрал опциональность
 ): Promise<void> {
+  const token  = env.TELEGRAM_BOT_TOKEN;
+  const chatId = env.TELEGRAM_ADMIN_CHAT_ID;
+  if (!token || !chatId) {
+    console.warn('Telegram credentials missing');
+    return;
+  }
+
   const familySpots = data.ticketsFamily * 3;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
 
@@ -524,7 +532,7 @@ async function notifyTelegram(
     `👥 <b>Список группы (${totalTickets} чел.):</b>`,
     guestsList,
     ``,
-    `💰 Итого к оплате: <b>${finalPrice} ${data.currency}</b>`, 
+    `💰 Итого к оплате: <b>${finalPrice} ${data.currency}</b>`, // Использован finalPrice
     appliedBonuses > 0 ? `🎁 Списано бонусов: <b>-${appliedBonuses} ${data.currency}</b>` : null,
     `💳 Способ оплаты: <b>${selectedPaymentStr}</b>`,
     ``,
@@ -535,13 +543,15 @@ async function notifyTelegram(
   ].filter(line => line !== null).join('\n');
 
   try {
-    await publishToTelegram(
-      lines,
-      undefined,
-      undefined,
-      false,
-      { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS }
-    );
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: lines,
+        parse_mode: 'HTML'
+      })
+    });
   } catch (error) {
     console.error('Ошибка отправки уведомления в Telegram:', error);
   }

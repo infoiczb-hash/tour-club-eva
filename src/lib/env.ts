@@ -28,11 +28,21 @@ const serverSchema = z.object({
   // Resend
   RESEND_API_KEY:                z.string().optional(),
 
-  // ✅ ДОБАВЛЕНО: Токен Sentry для выгрузки Source Maps
-  SENTRY_AUTH_TOKEN:            z.string().optional(),
+  // Токен Sentry для выгрузки Source Maps
+  SENTRY_AUTH_TOKEN:             z.string().optional(),
 
   // Supabase Admin
   SUPABASE_SERVICE_ROLE_KEY:     z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY не задан'),
+
+  // Топики и ключи очередей
+  QSTASH_TOKEN:                  z.string().optional(),
+  QSTASH_CURRENT_SIGNING_KEY:    z.string().optional(), // 🔥 ДОБАВЛЕНО ДЛЯ БЕЗОПАСНОСТИ КРОНОВ
+  QSTASH_NEXT_SIGNING_KEY:       z.string().optional(), // 🔥 ДОБАВЛЕНО ДЛЯ БЕЗОПАСНОСТИ КРОНОВ
+  TELEGRAM_TOPIC_BOOKINGS:       z.string().optional(),
+  TELEGRAM_TOPIC_MONEY:          z.string().optional(),
+  TELEGRAM_TOPIC_SUPPORT:        z.string().optional(),
+  TELEGRAM_TOPIC_REVIEWS:        z.string().optional(),
+  TELEGRAM_TOPIC_HR:             z.string().optional(),
 });
 
 const isServer = typeof window === 'undefined';
@@ -60,6 +70,15 @@ const parsedServer = isServer
       RESEND_API_KEY:                process.env.RESEND_API_KEY,
       SENTRY_AUTH_TOKEN:             process.env.SENTRY_AUTH_TOKEN,
       SUPABASE_SERVICE_ROLE_KEY:     process.env.SUPABASE_SERVICE_ROLE_KEY,
+      
+      QSTASH_TOKEN:                  process.env.QSTASH_TOKEN,
+      QSTASH_CURRENT_SIGNING_KEY:    process.env.QSTASH_CURRENT_SIGNING_KEY, // 🔥 ПРОКИНУТО В ПАРСЕР
+      QSTASH_NEXT_SIGNING_KEY:       process.env.QSTASH_NEXT_SIGNING_KEY,    // 🔥 ПРОКИНУТО В ПАРСЕР
+      TELEGRAM_TOPIC_BOOKINGS:       process.env.TELEGRAM_TOPIC_BOOKINGS,
+      TELEGRAM_TOPIC_MONEY:          process.env.TELEGRAM_TOPIC_MONEY,
+      TELEGRAM_TOPIC_SUPPORT:        process.env.TELEGRAM_TOPIC_SUPPORT,
+      TELEGRAM_TOPIC_REVIEWS:        process.env.TELEGRAM_TOPIC_REVIEWS,
+      TELEGRAM_TOPIC_HR:             process.env.TELEGRAM_TOPIC_HR,
     }) 
   : {} as z.infer<typeof serverSchema>;
 

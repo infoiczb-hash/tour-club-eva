@@ -98,58 +98,39 @@ export default function ToursBrowser({
   };
 
   // --- SMART FEED LOGIC (Новая логика: Строгая хронология + Анонсы) ---
-  const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
-    const safeTours = tours || [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // 1. Фильтрация категорий и прошедших туров
-    const filtered = safeTours.filter(tour => {
-      // Категория
-      if (activeCategory !== 'all') {
-        const tourCategorySlug = tour.category?.slug;
-        if (tourCategorySlug !== activeCategory.toLowerCase()) return false;
-      }
+const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
+  const safeTours = tours || [];
+  
+  // 1. Фильтрация только по категории (сервер уже отдаёт только актуальные туры)
+  const filtered = safeTours.filter(tour => {
+    if (activeCategory !== 'all') {
+      const tourCategorySlug = tour.category?.slug;
+      if (tourCategorySlug !== activeCategory.toLowerCase()) return false;
+    }
+    return true;
+  });
 
-      // Отсекаем полностью прошедшие
-      if (tour.dates && tour.dates.length > 0) {
-        const hasFutureDate = tour.dates.some((d: any) => {
-           const dateToCompare = d.end ? new Date(d.end) : new Date(d.start);
-           dateToCompare.setHours(0, 0, 0, 0);
-           return dateToCompare >= today;
-        });
-        if (!hasFutureDate) return false;
-      } else if (tour.date) {
-        const singleDate = new Date(tour.date);
-        singleDate.setHours(0, 0, 0, 0);
-        if (singleDate < today) return false;
-      }
-      
-      return true;
-    });
+  // 2. Хронологическая сортировка
+  const sorted = filtered.sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : Infinity;
+    const dateB = b.date ? new Date(b.date).getTime() : Infinity;
+    return dateA - dateB;
+  });
 
-    // 2. Хронологическая сортировка
-    const sorted = filtered.sort((a, b) => {
-        const dateA = a.date ? new Date(a.date).getTime() : Infinity;
-        const dateB = b.date ? new Date(b.date).getTime() : Infinity;
-        return dateA - dateB;
-    });
+  // 3. Разделение на "С датами" (scheduled) и "Без дат / Анонсы" (tba)
+  const scheduled: TourPreview[] = [];
+  const tba: TourPreview[] = [];
 
-    // 3. Разделение на "С датами" (scheduled) и "Без дат / Анонсы" (tba)
-    const scheduled: TourPreview[] = []; // ✅ ИЗМЕНЕНО: TourPreview
-    const tba: TourPreview[] = []; // ✅ ИЗМЕНЕНО: TourPreview
+  sorted.forEach(t => {
+    if (!t.date || (t.dates && t.dates.length === 0)) {
+      tba.push(t);
+    } else {
+      scheduled.push(t);
+    }
+  });
 
-    sorted.forEach(t => {
-        // Если у тура нет даты или пустой массив дат — это анонс
-        if (!t.date || (t.dates && t.dates.length === 0)) {
-            tba.push(t);
-        } else {
-            scheduled.push(t);
-        }
-    });
-
-    return { scheduledTours: scheduled, tbaTours: tba, allFilteredTours: sorted };
-  }, [tours, activeCategory]);
+  return { scheduledTours: scheduled, tbaTours: tba, allFilteredTours: sorted };
+}, [tours, activeCategory]);;
 
   const displayScheduled = scheduledTours.slice(0, visibleCount);
   const hasMoreScheduled = visibleCount < scheduledTours.length;

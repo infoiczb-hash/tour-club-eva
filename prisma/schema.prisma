@@ -426,6 +426,7 @@ model MemberProfile {
   waitlists     Waitlist[]     
   reviews       Review[]
   notifications Notification[] // ✅ НОВОЕ ПОЛЕ: Связь с таблицей логов/уведомлений
+  pushSubscriptions PushSubscription[] 
 
   // ✅ НОВОЕ ПОЛЕ: Баланс для кэшбэка и рефералки (v2.0)
   balance       Int       @default(0) 
@@ -433,6 +434,7 @@ model MemberProfile {
   
   invitedByCode String?
   promoCode     PromoCode?
+  
 
   @@index([phone])
   @@index([userId])
@@ -512,6 +514,21 @@ model TestResult {
   @@unique([memberId, testSlug])
   @@index([memberId])
   @@map("test_results")
+}
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  device    String?  
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  member    MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@map("push_subscriptions")
 }
 
 // ─────────────────────────────────────────────

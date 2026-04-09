@@ -1,20 +1,18 @@
+// src/app/api/cron/rollover/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { env } from '@/lib/env';
 import { revalidatePath } from 'next/cache';
 import { Redis } from '@upstash/redis';
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:rollover:last_run';
 const MIN_INTERVAL_MS = 25 * 60 * 1000; // 25 минут
 
-export async function GET(req: Request) {
+// Внутренняя функция-обработчик
+async function handler(req: Request) {
   try {
-    // Защита от посторонних
-    const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // 🛡 Ручная проверка CRON_SECRET убрана. 
 
     // Rate limiting через Redis — не запускаем чаще чем раз в 25 минут
     const lastRun = await redis.get<number>(RATE_LIMIT_KEY);
@@ -74,3 +72,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// 🔥 Оборачиваем обработчик в HOC от Qstash
+export const GET = verifySignatureAppRouter(handler);
+export const POST = verifySignatureAppRouter(handler);

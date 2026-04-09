@@ -5,6 +5,8 @@ import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ БРОНИ
 import { prisma } from '@/lib/prisma';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { sendToUserTelegram, publishPostToChannel } from '@/features/admin/actions/telegram';
+import type { GroupManifest } from '@/features/admin/components/views/BookingsTab';
+
 
 
 // ==========================================
@@ -479,5 +481,144 @@ export const updateBookingCommentAction = withAdminAuth(async (id: string, comme
   } catch (error) {
     console.error('Update Comment Error:', error);
     return { success: false, error: 'Ошибка сохранения комментария' };
+  }
+  
+});
+
+export interface GetGroupsManifestParams {
+  page: number;
+  limit?: number;
+  search?: string;
+  sortBy?: 'date_asc' | 'date_desc';
+}
+
+export type GetGroupsManifestResult =
+  | { success: true; groups: GroupManifest[]; total: number }
+  | { success: false; error: string };
+
+// Оригинальная функция с обработкой ошибок
+export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestParams): Promise<GetGroupsManifestResult> => {
+  try {
+    const { page, limit = 20, search, sortBy = 'date_asc' } = params;
+    const skip = (page - 1) * limit;
+
+    const activeStatuses: BookingStatus[] = ['pending', 'confirmed'];
+
+    const bookingWhere: Prisma.BookingWhereInput = {
+      status: { in: activeStatuses },
+    };
+
+    if (search) {
+      bookingWhere.tour = { title: { contains: search, mode: 'insensitive' } };
+    }
+
+    const tourDatesWithBookings = await prisma.tourDate.findMany({
+      where: {
+        bookings: { some: bookingWhere },
+      },
+      include: {
+        tour: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: { startDate: sortBy === 'date_asc' ? 'asc' : 'desc' },
+      skip,
+      take: limit,
+    });
+
+    const total = await prisma.tourDate.count({
+      where: {
+        bookings: { some: bookingWhere },
+      },
+    });
+
+    const groups = await Promise.all(
+      tourDatesWithBookings.map(async (tourDate) => {
+        const bookings = await prisma.booking.findMany({
+          where: {
+            tourDateId: tourDate.id,
+            status: { in: activeStatuses },
+          },
+        });
+
+        const totalTickets = bookings.reduce((sum, b) => {
+          return sum + b.ticketsAdult + b.ticketsChild + b.ticketsMember + b.ticketsFamily * 3;
+        }, 0);
+
+        // ✅ 1. ДОБАВЛЕНО: Строгий интерфейс для парсинга JSON от Prisma
+        interface GuestJsonData {
+          isMain?: boolean;
+          name?: string;
+          ticketType?: string;
+          age?: string | number;
+          jacket?: string;
+          phone?: string;
+        }
+
+       // ✅ 1. Строгий интерфейс для расшифровки JSON из базы
+        interface GuestJsonData {
+          isMain?: boolean;
+          name?: string;
+          ticketType?: string;
+          age?: string | number;
+          jacket?: string;
+          phone?: string;
+        }
+
+        const participants = bookings.flatMap((b) => {
+          // ✅ 2. Кастуем JSON к массиву объектов (решает проблему с any и ошибками)
+          const guestsArray = (b.guests as unknown) as GuestJsonData[];
+          
+          const mainGuestInfo = Array.isArray(guestsArray) ? guestsArray.find(g => g.isMain) : null;
+          
+          const mainParticipant = {
+            isMain: true,
+            bookingId: b.id,
+            shortId: b.shortId ?? b.id.substring(0, 4),
+            name: b.name,
+            ticketType: 'adult',
+            phone: b.phone,
+            social: b.social,
+            comment: b.comment,
+            status: b.status,
+            jacket: mainGuestInfo?.jacket || '', 
+          };
+          
+          const extraGuests = Array.isArray(guestsArray)
+            ? guestsArray
+                .filter(g => !g.isMain)
+                .map(g => ({
+                  isMain: false,
+                  bookingId: b.id,
+                  shortId: b.shortId ?? b.id.substring(0, 4),
+                  name: g.name || 'Без имени',
+                  ticketType: g.ticketType || 'adult',
+                  age: g.age,
+                  jacket: g.jacket || '', 
+                  phone: g.phone,
+                  status: b.status,
+                }))
+            : [];
+            
+          return [mainParticipant, ...extraGuests];
+        });
+
+        return {
+          tourName: tourDate.tour.title,
+          date: tourDate.startDate.toLocaleDateString('ru-RU'),
+          totalTickets,
+          participants,
+        };
+      })
+    );
+
+    return { success: true, groups, total };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: error instanceof Error ? error.message : 'Ошибка загрузки групп' };
   }
 });

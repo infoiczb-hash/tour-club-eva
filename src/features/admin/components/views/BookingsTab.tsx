@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   Search, X as XIcon, Phone, Send, Instagram, 
   Users, ChevronDown, Map, AlertCircle, Globe, LifeBuoy, ChevronUp, Eye, Inbox, Archive
@@ -13,12 +13,11 @@ import { broadcastToGroupAction } from '@/features/admin/actions/broadcast';
 import { updateBookingCommentAction } from '@/features/admin/actions';
 
 // --- ИНТЕРФЕЙСЫ ---
-
 export interface GuestItem {
   name: string;
   ticketType: 'adult' | 'child' | 'family' | 'member';
   age?: string | number;
-  equipment?: string; 
+  jacket?: string; // ✅ ИСПРАВЛЕНО: заменено equipment на jacket
   phone?: string;     
 }
 
@@ -48,7 +47,7 @@ export interface BookingItem {
   social?: string | null;
   tour?: { title: string; date: Date | string };
   
-  guests?: GuestItem[] | any; 
+  guests?: GuestItem[] | null;
 
   payment_proof_url?: string | null;
   receipt_url?: string | null;
@@ -56,7 +55,16 @@ export interface BookingItem {
   confirmed_at?: Date | string | null;
 }
 
+// Группа для манифеста (то, что возвращает сервер)
+export interface GroupManifest {
+  tourName: string;
+  date: string;        // локализованная строка "dd.mm.yyyy"
+  totalTickets: number;
+  participants: any[]; // структура как раньше (isMain, name, ticketType, phone, social, comment, bookingId, shortId, status, age, jacket)
+}
+
 interface BookingsTabProps {
+  // Лента броней
   bookings: BookingItem[];
   total: number;
   page: number;
@@ -68,11 +76,23 @@ interface BookingsTabProps {
   onFilterTabChange: (tab: 'active' | 'archive') => void;
   onPageChange: (page: number) => void;
   onStatusChange: (id: string, status: string) => void;
+  
+  // Группы (манифест)
+  groupsManifest: GroupManifest[];
+  groupsTotal: number;
+  groupsPage: number;
+  groupsLimit?: number;
+  groupsLoading?: boolean;
+  groupsSearch: string;
+  groupsSort: 'date_asc' | 'date_desc';
+  onGroupsSearchChange: (val: string) => void;
+  onGroupsSortChange: (sort: 'date_asc' | 'date_desc') => void;
+  onGroupsPageChange: (page: number) => void;
 }
 
 type TabMode = 'list' | 'groups';
 
-// --- ХЕЛПЕРЫ ---
+// --- ХЕЛПЕРЫ (без изменений) ---
 const formatTickets = (b: BookingItem) => {
   const parts = [];
   if (b.tickets_adult > 0) parts.push(`${b.tickets_adult} взр`);
@@ -109,7 +129,7 @@ const isPastTour = (dateStr?: Date | string) => {
   return tourDate < today;
 };
 
-// --- КОМПОНЕНТ ПАГИНАЦИИ ---
+// --- КОМПОНЕНТ ПАГИНАЦИИ (общий) ---
 const Pagination = ({ page, total, limit, onPageChange }: { page: number; total: number; limit: number; onPageChange: (p: number) => void }) => {
   const totalPages = Math.ceil(total / limit);
   if (totalPages <= 1) return null;
@@ -166,7 +186,18 @@ export default function BookingsTab({
   onSearchChange,
   onFilterTabChange,
   onPageChange,
-  onStatusChange
+  onStatusChange,
+  // группы
+  groupsManifest,
+  groupsTotal,
+  groupsPage,
+  groupsLimit = 20,
+  groupsLoading = false,
+  groupsSearch,
+  groupsSort,
+  onGroupsSearchChange,
+  onGroupsSortChange,
+  onGroupsPageChange
 }: BookingsTabProps) {
   const [activeMode, setActiveMode] = useState<TabMode>('list');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -179,73 +210,9 @@ export default function BookingsTab({
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [receiptModal, setReceiptModal] = useState<{isOpen: boolean, booking: BookingItem | null}>({isOpen: false, booking: null});
 
-  // Группировка для манифеста (используем все брони, которые переданы – они уже отфильтрованы на сервере)
-  const groupedManifests = useMemo(() => {
-    const groups: Record<string, { 
-      tourName: string; 
-      date: string; 
-      participants: any[]; 
-      totalTickets: number;
-    }> = {};
-
-    bookings.forEach(b => {
-      if (['cancelled', 'rejected', 'awaiting_payment', 'moderation'].includes(b.status)) return; 
-       
-      const dateObj = b.tour?.date ? new Date(b.tour.date) : null;
-      const dateStr = dateObj ? dateObj.toLocaleDateString('ru-RU') : 'Дата уточняется';
-      const tourName = b.tour?.title || 'Неизвестный тур';
-      
-      const isoDate = dateObj ? dateObj.toISOString().split('T')[0] : 'nodate';
-      const key = `${b.tourId}_${isoDate}`; 
-
-      if (!groups[key]) {
-        groups[key] = { tourName, date: dateStr, participants: [], totalTickets: 0 };
-      }
-
-      const shortId = b.short_id || b.id.substring(0, 4);
-      const totalInBooking = (b.tickets_adult || 0) + (b.tickets_child || 0) + (b.tickets_member || 0) + ((b.tickets_family || 0) * 3);
-      groups[key].totalTickets += totalInBooking;
-
-      groups[key].participants.push({
-        isMain: true,
-        bookingId: b.id,
-        shortId: shortId,
-        name: b.user_name,
-        ticketType: 'adult', 
-        phone: b.user_phone,
-        social: b.social,
-        comment: b.comment,
-        status: b.status,
-      });
-
-      const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
-      const uniqueGuests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
-      
-      uniqueGuests.forEach((g) => {
-        groups[key].participants.push({
-          isMain: false,
-          bookingId: b.id,
-          shortId: shortId,
-          name: g.name,
-          ticketType: g.ticketType,
-          age: g.age,
-          equipment: g.equipment,
-          phone: g.phone || (g.ticketType === 'child' ? '—' : undefined), 
-          status: b.status,
-        });
-      });
-    });
-
-    return Object.values(groups).sort((a, b) => {
-        const [dayA, monthA, yearA] = a.date.split('.');
-        const [dayB, monthB, yearB] = b.date.split('.');
-        return new Date(`${yearA}-${monthA}-${dayA}`).getTime() - new Date(`${yearB}-${monthB}-${dayB}`).getTime();
-    });
-  }, [bookings]);
-
   const toggleGroup = (key: string) => setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
 
-  // --- Экшены ---
+  // --- Экшены (без изменений) ---
   const handleBroadcastSubmit = async () => {
     if (!broadcastText.trim()) return showToast('Введите текст сообщения', 'error');
     if (!broadcastModal.group) return;
@@ -283,7 +250,7 @@ export default function BookingsTab({
     if (receiptModal.isOpen) setReceiptModal({isOpen: false, booking: null});
   };
 
-  if (loading) {
+  if (loading && activeMode === 'list') {
     return <div className="p-10 text-center text-slate-500">Загрузка бронирований...</div>;
   }
 
@@ -309,7 +276,7 @@ export default function BookingsTab({
       </div>
 
       {/* ========================================== */}
-      {/* РЕЖИМ 1: ЛЕНТА */}
+      {/* РЕЖИМ 1: ЛЕНТА (без изменений) */}
       {/* ========================================== */}
       {activeMode === 'list' && (
         <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
@@ -342,7 +309,7 @@ export default function BookingsTab({
                 </div>
             </div>
 
-            {/* DESKTOP TABLE */}
+            {/* DESKTOP TABLE (без изменений) */}
             <div className="hidden md:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left table-fixed">
                     <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[12px] tracking-widest border-b border-slate-200">
@@ -356,7 +323,7 @@ export default function BookingsTab({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {bookings.length === 0 && (
-                           <tr><td colSpan={5} className="p-8 text-center text-slate-300 font-medium">Ничего не найдено</td></tr>
+                            <tr><td colSpan={5} className="p-8 text-center text-slate-300 font-medium">Ничего не найдено</td></tr>
                         )}
                         {bookings.map(b => {
                             const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
@@ -470,7 +437,7 @@ export default function BookingsTab({
                                             <span className="font-bold text-slate-800">{g.name}</span>
                                             <div className="flex gap-2 items-center text-[12px] uppercase font-bold text-slate-400">
                                               <span>{getTicketLabel(g.ticketType, g.age)}</span>
-                                              {g.equipment && <span className="text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">Жилет: {g.equipment}</span>}
+                                              {g.jacket && <span className="text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">Жилет: {g.jacket}</span>}
                                             </div>
                                           </div>
                                         ))}
@@ -485,7 +452,7 @@ export default function BookingsTab({
                 </table>
             </div>
             
-            {/* Mobile Cards */}
+            {/* Mobile Cards (без изменений) */}
             <div className="md:hidden space-y-4 mt-4">
                 {bookings.map(b => {
                     const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
@@ -583,7 +550,7 @@ export default function BookingsTab({
                                             <div key={i} className="text-xs flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-sm">
                                                 <span className="font-bold text-slate-800">{g.name}</span>
                                                 <div className="flex items-center gap-1.5">
-                                                    {g.equipment && <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 uppercase">Жилет: {g.equipment}</span>}
+                                                    {g.jacket && <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 uppercase">Жилет: {g.jacket}</span>}
                                                     <span className="text-[12px] font-bold text-slate-400 uppercase">{getTicketLabel(g.ticketType, g.age)}</span>
                                                 </div>
                                             </div>
@@ -612,132 +579,162 @@ export default function BookingsTab({
                 })}
             </div>
 
-            {/* Пагинация */}
+            {/* Пагинация ленты */}
             <Pagination page={page} total={total} limit={limit} onPageChange={onPageChange} />
 
         </div>
       )}
 
       {/* ========================================== */}
-      {/* РЕЖИМ 2: ПЛОСКИЙ МАНИФЕСТ ДЛЯ ГИДА */}
+      {/* РЕЖИМ 2: ГРУППЫ (МАНИФЕСТ) - переделан на серверные пропсы */}
       {/* ========================================== */}
       {activeMode === 'groups' && (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-            {groupedManifests.length === 0 ? (
-                <div className="p-10 text-center text-slate-400 font-medium bg-white rounded-3xl border border-dashed border-slate-300">Активных выездов пока нет</div>
-            ) : (
-                groupedManifests.map((group, gIdx) => {
-                    const key = `${group.tourName}_${group.date}`;
-                    const isOpen = expandedGroups[key] || false;
+          {/* Панель поиска и сортировки для групп */}
+          <div className="flex flex-col md:flex-row gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm items-center">
+            <div className="flex items-center relative w-full md:w-auto md:flex-1">
+              <Search className="absolute left-3 text-slate-300" size={18}/>
+              <input 
+                placeholder="Поиск групп по названию тура..." 
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm font-medium outline-none text-slate-900 border border-slate-100 focus:border-teal-500 focus:bg-white transition-all placeholder:text-slate-300" 
+                value={groupsSearch}
+                onChange={e => onGroupsSearchChange(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <select
+                value={groupsSort}
+                onChange={(e) => onGroupsSortChange(e.target.value as 'date_asc' | 'date_desc')}
+                className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-teal-500"
+              >
+                <option value="date_asc">Сначала старые</option>
+                <option value="date_desc">Сначала новые</option>
+              </select>
+            </div>
+          </div>
 
-                    return (
-                        <div key={gIdx} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                            <div onClick={() => toggleGroup(key)} className="p-5 md:p-6 flex items-center justify-between cursor-pointer hover:bg-slate-50 group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 border border-teal-500/20">
-                                        <Map size={24} strokeWidth={1.5} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-black text-lg text-slate-900 uppercase tracking-tight leading-tight">{group.tourName}</h3>
-                                        <div className="flex items-center gap-3 text-xs font-black text-slate-400 uppercase tracking-widest mt-1">
-                                            <span className="text-teal-700">{group.date}</span>
-                                            <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                            <span>{group.totalTickets} мест</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={clsx("w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 transition-transform", isOpen && "rotate-180 bg-slate-100")}>
-                                    <ChevronDown size={18} className="text-slate-400" />
-                                </div>
-                            </div>
+          {groupsLoading ? (
+            <div className="p-10 text-center text-slate-500">Загрузка групп...</div>
+          ) : groupsManifest.length === 0 ? (
+            <div className="p-10 text-center text-slate-400 font-medium bg-white rounded-3xl border border-dashed border-slate-300">
+              Групп не найдено
+            </div>
+          ) : (
+            groupsManifest.map((group, idx) => {
+              const key = `${group.tourName}_${group.date}_${idx}`;
+              const isOpen = expandedGroups[key] || false;
 
-                            {isOpen && (
-                                <div className="border-t border-slate-200 bg-slate-50/50 overflow-x-auto">
-                                    <table className="w-full text-left text-sm whitespace-nowrap">
-                                      <thead className="bg-slate-200/50 text-slate-600 text-[12px] font-black uppercase tracking-widest border-b border-slate-300">
-                                        <tr>
-                                          <th className="px-6 py-4">№</th>
-                                          <th className="px-6 py-4">Бронь</th>
-                                          <th className="px-6 py-4">ФИО Участника</th>
-                                          <th className="px-6 py-4">Билет / Возраст</th>
-                                          <th className="px-6 py-4">Снаряжение</th>
-                                          <th className="px-6 py-4">Связь</th>
-                                          <th className="px-6 py-4">Статус</th>
-                                          <th className="px-6 py-4 w-[250px]">Комментарий</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-slate-200/60">
-                                        {group.participants.map((p, index) => (
-                                          <tr key={`${p.bookingId}-${index}`} className={clsx(
-                                            "hover:bg-white transition-colors",
-                                            p.isMain && "border-t-[3px] border-t-slate-200 bg-slate-100/50" 
-                                          )}>
-                                            <td className="px-6 py-4 text-xs font-black text-slate-400">{index + 1}</td>
-                                            <td className="px-6 py-4">
-                                              <span className={clsx("text-xs font-black px-2 py-1 rounded", p.isMain ? "bg-indigo-100 text-indigo-800" : "text-slate-300 font-mono")}>
-                                                #{p.shortId}
-                                              </span>
-                                            </td>
-                                            <td className="px-6 py-4 font-black text-slate-900">{p.name}</td>
-                                            <td className="px-6 py-4 text-xs uppercase font-bold text-slate-600 tracking-wider">
-                                              {getTicketLabel(p.ticketType, p.age)}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                              {p.equipment ? (
-                                                <span className="flex items-center w-fit gap-1 text-[12px] uppercase font-black tracking-widest bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300">
-                                                  <LifeBuoy size={12}/> Жилет: {p.equipment}
-                                                </span>
-                                              ) : <span className="text-slate-300">—</span>}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                              {p.phone && p.phone !== '—' ? (
-                                                <div className="flex items-center gap-2">
-                                                  <a href={`tel:${p.phone.replace(/\s/g, '')}`} className="font-mono text-xs font-bold text-slate-700 hover:text-teal-700">{p.phone}</a>
-                                                  {p.isMain && p.social && <Send size={12} className="text-sky-600"/>}
-                                                </div>
-                                              ) : <span className="text-slate-300">—</span>}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                              {p.status === 'confirmed' ? (
-                                                <span className="text-[12px] uppercase font-black tracking-widest text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-1 rounded">Оплачено</span>
-                                              ) : (
-                                                <span className="text-[12px] uppercase font-black tracking-widest text-amber-700 bg-amber-100 border border-amber-200 px-2 py-1 rounded">Ожидает</span>
-                                              )}
-                                            </td>
-                                            <td className="px-6 py-4 text-xs font-medium text-slate-600 whitespace-normal">
-                                              {p.isMain && p.comment ? <span className="italic">«{p.comment}»</span> : null}
-                                            </td>
-                                           </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                    
-                                    <div className="p-4 md:p-6 border-t border-slate-200 bg-white flex flex-col md:flex-row justify-end gap-3">
-                                        <button 
-                                            onClick={() => setBroadcastModal({ isOpen: true, group })}
-                                            className="px-6 py-3 bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 border border-slate-200 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            📢 Рассылка участникам
-                                        </button>
-                                        <button 
-                                            onClick={() => handleSendToBot(group)}
-                                            className="px-6 py-3 bg-teal-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                                        >
-                                            <Send size={16} /> Отправить список боту
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+              return (
+                <div key={key} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div onClick={() => toggleGroup(key)} className="p-5 md:p-6 flex items-center justify-between cursor-pointer hover:bg-slate-50 group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 border border-teal-500/20">
+                        <Map size={24} strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <h3 className="font-black text-lg text-slate-900 uppercase tracking-tight leading-tight">{group.tourName}</h3>
+                        <div className="flex items-center gap-3 text-xs font-black text-slate-400 uppercase tracking-widest mt-1">
+                          <span className="text-teal-700">{group.date}</span>
+                          <span className="w-1 h-1 rounded-full bg-slate-300" />
+                          <span>{group.totalTickets} мест</span>
                         </div>
-                    );
-                })
-            )}
+                      </div>
+                    </div>
+                    <div className={clsx("w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 transition-transform", isOpen && "rotate-180 bg-slate-100")}>
+                      <ChevronDown size={18} className="text-slate-400" />
+                    </div>
+                  </div>
+
+                  {isOpen && (
+                    <div className="border-t border-slate-200 bg-slate-50/50 overflow-x-auto">
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-slate-200/50 text-slate-600 text-[12px] font-black uppercase tracking-widest border-b border-slate-300">
+                          <tr>
+                            <th className="px-6 py-4">№</th>
+                            <th className="px-6 py-4">Бронь</th>
+                            <th className="px-6 py-4">ФИО Участника</th>
+                            <th className="px-6 py-4">Билет / Возраст</th>
+                            <th className="px-6 py-4">Снаряжение</th>
+                            <th className="px-6 py-4">Связь</th>
+                            <th className="px-6 py-4">Статус</th>
+                            <th className="px-6 py-4 w-[250px]">Комментарий</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200/60">
+                          {group.participants.map((p: any, index: number) => (
+                            <tr key={`${p.bookingId}-${index}`} className={clsx(
+                              "hover:bg-white transition-colors",
+                              p.isMain && "border-t-[3px] border-t-slate-200 bg-slate-100/50"
+                            )}>
+                              <td className="px-6 py-4 text-xs font-black text-slate-400">{index + 1}</td>
+                              <td className="px-6 py-4">
+                                <span className={clsx("text-xs font-black px-2 py-1 rounded", p.isMain ? "bg-indigo-100 text-indigo-800" : "text-slate-300 font-mono")}>
+                                  #{p.shortId}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 font-black text-slate-900">{p.name}</td>
+                              <td className="px-6 py-4 text-xs uppercase font-bold text-slate-600 tracking-wider">
+                                {getTicketLabel(p.ticketType, p.age)}
+                              </td>
+                              <td className="px-6 py-4">
+                                {p.jacket ? (
+                                  <span className="flex items-center w-fit gap-1 text-[12px] uppercase font-black tracking-widest bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300">
+                                    <LifeBuoy size={12}/> Жилет: {p.jacket}
+                                  </span>
+                                ) : <span className="text-slate-300">—</span>}
+                              </td>
+                              <td className="px-6 py-4">
+                                {p.phone && p.phone !== '—' ? (
+                                  <div className="flex items-center gap-2">
+                                    <a href={`tel:${p.phone.replace(/\s/g, '')}`} className="font-mono text-xs font-bold text-slate-700 hover:text-teal-700">{p.phone}</a>
+                                    {p.isMain && p.social && <Send size={12} className="text-sky-600"/>}
+                                  </div>
+                                ) : <span className="text-slate-300">—</span>}
+                              </td>
+                              <td className="px-6 py-4">
+                                {p.status === 'confirmed' ? (
+                                  <span className="text-[12px] uppercase font-black tracking-widest text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-1 rounded">Оплачено</span>
+                                ) : (
+                                  <span className="text-[12px] uppercase font-black tracking-widest text-amber-700 bg-amber-100 border border-amber-200 px-2 py-1 rounded">Ожидает</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-xs font-medium text-slate-600 whitespace-normal">
+                                {p.isMain && p.comment ? <span className="italic">«{p.comment}»</span> : null}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      <div className="p-4 md:p-6 border-t border-slate-200 bg-white flex flex-col md:flex-row justify-end gap-3">
+                        <button 
+                          onClick={() => setBroadcastModal({ isOpen: true, group })}
+                          className="px-6 py-3 bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 border border-slate-200 transition-colors flex items-center justify-center gap-2"
+                        >
+                          📢 Рассылка участникам
+                        </button>
+                        <button 
+                          onClick={() => handleSendToBot(group)}
+                          className="px-6 py-3 bg-teal-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                        >
+                          <Send size={16} /> Отправить список боту
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+          
+          {/* Пагинация для групп */}
+          {!groupsLoading && groupsTotal > 0 && (
+            <Pagination page={groupsPage} total={groupsTotal} limit={groupsLimit} onPageChange={onGroupsPageChange} />
+          )}
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* МОДАЛКА: ПРОВЕРКА ЧЕКА */}
-      {/* ========================================== */}
+      {/* Модалки (без изменений) */}
       {receiptModal.isOpen && receiptModal.booking && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -795,7 +792,6 @@ export default function BookingsTab({
         </div>
       )}
 
-      {/* МОДАЛКА: РАССЫЛКА */}
       {broadcastModal.isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">

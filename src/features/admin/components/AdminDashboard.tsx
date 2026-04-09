@@ -5,7 +5,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { Tour } from '@/features/tours/types'; 
-// ✅ ИСПРАВЛЕНО: Добавлены все необходимые модели и типы
 import { Blog, BookingStatus, Guide, Review, Inquiry, FunTest, TourCategory, BlogCategory } from '@prisma/client'; 
 import AdminNavigation from './AdminNavigation';
 import FunTestTable from '@/features/admin/components/FunTestTab';
@@ -21,6 +20,8 @@ import GuidesTab from './views/GuidesTab';
 import ContentTab from './views/ContentTab';
 import InquiriesTab from './views/InquiriesTab';
 import CategoryForm from './views/CategoryForm'; 
+import { getGroupsManifest, GetGroupsManifestResult } from '@/features/admin/actions';
+import { GroupManifest } from './views/BookingsTab';
 
 // FORMS
 import TourForm from './TourForm'; 
@@ -40,11 +41,11 @@ import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { getReviews, deleteReview, upsertReview } from '@/features/reviews/actions';
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { getGuides } from '@/features/guides/api';
-// ❌ УДАЛЕНО: import { getAllTours } from '@/features/tours/api'; (теперь всё работает через серверный пропс)
 import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
 
 import { upsertGuideAction } from '@/features/admin/actions/guides';
+
 import { 
   deleteGuideAction, 
   savePostAction, 
@@ -101,19 +102,28 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const { showToast } = useToast();
   const [bookingsPage, setBookingsPage] = useState(1);
-const [bookingsTotal, setBookingsTotal] = useState(0);
-const [bookingsSearch, setBookingsSearch] = useState('');
-const [bookingsFilterTab, setBookingsFilterTab] = useState<'active' | 'archive'>('active');
-const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsTotal, setBookingsTotal] = useState(0);
+  const [bookingsSearch, setBookingsSearch] = useState('');
+  const [bookingsFilterTab, setBookingsFilterTab] = useState<'active' | 'archive'>('active');
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
-const [toursPage, setToursPage] = useState(1);
-const [toursTotal, setToursTotal] = useState(0);
-const [toursSearch, setToursSearch] = useState('');
-const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full'>('all');
-const [toursLoading, setToursLoading] = useState(false);
+  const [toursPage, setToursPage] = useState(1);
+  const [toursTotal, setToursTotal] = useState(0);
+  const [toursSearch, setToursSearch] = useState('');
+  const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full'>('all');
+  const [toursLoading, setToursLoading] = useState(false);
+
+  // --- Стейты для групп (манифест) ---
+  const [groupsManifest, setGroupsManifest] = useState<GroupManifest[]>([]);
+  const [groupsTotal, setGroupsTotal] = useState(0);
+  const [groupsPage, setGroupsPage] = useState(1);
+  const [groupsLimit] = useState(20);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsSearch, setGroupsSearch] = useState('');
+  const [groupsSort, setGroupsSort] = useState<'date_asc' | 'date_desc'>('date_asc');
 
   // Data State
- const [tours, setTours] = useState<Tour[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [guides, setGuides] = useState<GuideItem[]>([]);
   const [posts, setPosts] = useState<Blog[]>([]);
@@ -145,14 +155,60 @@ const [toursLoading, setToursLoading] = useState(false);
 
   const router = useRouter();
 
+  // --- Загрузка групп (манифест) ---
+type GetGroupsManifestResult =
+  | { success: true; groups: GroupManifest[]; total: number }
+  | { success: false; error: string };
+
+const loadGroupsManifest = useCallback(async () => {
+  setGroupsLoading(true);
+  try {
+    const result = await getGroupsManifest({
+      page: groupsPage,
+      limit: groupsLimit,
+      search: groupsSearch,
+      sortBy: groupsSort,
+    });
+
+    if (result.success) {
+      setGroupsManifest(result.groups);
+      setGroupsTotal(result.total);
+    } else {
+      showToast(result.error, 'error');
+    }
+  } catch (error) {
+    console.error(error);
+    showToast('Ошибка загрузки групп', 'error');
+  } finally {
+    setGroupsLoading(false);
+  }
+}, [groupsPage, groupsLimit, groupsSearch, groupsSort, showToast]);
+
+  // --- Обработчики для групп ---
+  const handleGroupsSearchChange = (val: string) => {
+    setGroupsSearch(val);
+    setGroupsPage(1);
+  };
+  const handleGroupsSortChange = (sort: 'date_asc' | 'date_desc') => {
+    setGroupsSort(sort);
+    setGroupsPage(1);
+  };
+  const handleGroupsPageChange = (page: number) => setGroupsPage(page);
+
   // --- INIT ---
   useEffect(() => {
     setIsAuth(true);
     loadAllData();
   }, []);
+
   useEffect(() => {
     loadAllData();
-}, [bookingsPage, bookingsSearch, bookingsFilterTab]);
+  }, [bookingsPage, bookingsSearch, bookingsFilterTab]);
+
+  // Загрузка групп при изменении параметров
+  useEffect(() => {
+    loadGroupsManifest();
+  }, [loadGroupsManifest]);
 
   const loadAllData = async () => {
     try {
@@ -211,15 +267,6 @@ const [toursLoading, setToursLoading] = useState(false);
     loadTours();
   }, [loadTours]);
 
-  useEffect(() => {
-    loadAllData();
-  }, [bookingsPage, bookingsSearch, bookingsFilterTab]);
-
-  useEffect(() => {
-    loadAllData();
-    loadTours();
-  }, []);
-  
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -272,7 +319,7 @@ const [toursLoading, setToursLoading] = useState(false);
   };
 
   // --- STATS ---
-   const stats = useMemo(() => {
+  const stats = useMemo(() => {
     const newBookings = bookings.filter(b => b.status === 'pending').length;
     const newInquiries = inquiries.filter(i => i.status === 'NEW').length;
     const totalTours = tours.length;
@@ -280,12 +327,8 @@ const [toursLoading, setToursLoading] = useState(false);
     const finishedTours = tours.filter(t => new Date(t.date) < new Date()).length;
     
     const now = new Date();
-    
-    // 1. Расчет даты через неделю
     const nextWeek = new Date();
     nextWeek.setDate(now.getDate() + 7);
-    
-    // 2. Расчет даты через месяц
     const nextMonth = new Date();
     nextMonth.setMonth(now.getMonth() + 1);
     
@@ -296,7 +339,6 @@ const [toursLoading, setToursLoading] = useState(false);
         })
         .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // ✅ ИСПРАВЛЕНО: Убираем .length, возвращаем сам массив Tour[]
     const toursThisMonth = tours.filter(t => {
         const d = new Date(t.date);
         return d >= now && d <= nextMonth && t.isActive;
@@ -311,8 +353,8 @@ const [toursLoading, setToursLoading] = useState(false);
         totalPosts: posts.length, 
         totalGuides: guides.length,
         toursThisWeek,
-        toursThisMonth,              // ✅ Теперь это массив Tour[], как и просил TS
-       allBookings: bookings
+        toursThisMonth,
+        allBookings: bookings
     };
   }, [bookings, inquiries, tours, posts, guides]);
 
@@ -405,50 +447,62 @@ const [toursLoading, setToursLoading] = useState(false);
 
         {/* --- 2. Tours & Categories --- */}
         {activeTab === 'tours' && (
-  <ToursTab
-    tours={tours}
-    total={toursTotal}
-    page={toursPage}
-    limit={20}
-    loading={toursLoading}
-    searchTerm={toursSearch}
-    filter={toursFilter}
-    bookings={bookings as any}
-    categories={tourCategories}
-    onSearchChange={(val) => { setToursSearch(val); setToursPage(1); }}
-    onFilterChange={(f) => { setToursFilter(f); setToursPage(1); }}
-    onPageChange={(page) => setToursPage(page)}
-    onAdd={() => { setEditingItem(null); setModalState(p => ({...p, tour: true})); }}
-    onEdit={(tour) => { setEditingItem(tour); setModalState(p => ({...p, tour: true})); }}
-    onDuplicate={(tour) => {
-      const { id, ...rest } = tour;
-      setEditingItem({...rest, title: `${rest.title} (Копия)`, isActive: false, slug: ''});
-      setModalState(p => ({...p, tour: true}));
-    }}
-    onDelete={(id) => handleDelete('tour', id)}
-    onToggleStatus={toggleTourStatus}
-    onSendTg={handleSendTg}
-    onAddCategory={() => openCategoryModal('tour')}
-    onEditCategory={(cat) => openCategoryModal('tour', cat)}
-    onDeleteCategory={handleDeleteCategory}
-    onToggleCategoryStatus={handleToggleCategory}
-  />
-)}
-        {/* --- 3. Bookings (CRM) --- */}
+          <ToursTab
+            tours={tours}
+            total={toursTotal}
+            page={toursPage}
+            limit={20}
+            loading={toursLoading}
+            searchTerm={toursSearch}
+            filter={toursFilter}
+            bookings={bookings as any}
+            categories={tourCategories}
+            onSearchChange={(val) => { setToursSearch(val); setToursPage(1); }}
+            onFilterChange={(f) => { setToursFilter(f); setToursPage(1); }}
+            onPageChange={(page) => setToursPage(page)}
+            onAdd={() => { setEditingItem(null); setModalState(p => ({...p, tour: true})); }}
+            onEdit={(tour) => { setEditingItem(tour); setModalState(p => ({...p, tour: true})); }}
+            onDuplicate={(tour) => {
+              const { id, ...rest } = tour;
+              setEditingItem({...rest, title: `${rest.title} (Копия)`, isActive: false, slug: ''});
+              setModalState(p => ({...p, tour: true}));
+            }}
+            onDelete={(id) => handleDelete('tour', id)}
+            onToggleStatus={toggleTourStatus}
+            onSendTg={handleSendTg}
+            onAddCategory={() => openCategoryModal('tour')}
+            onEditCategory={(cat) => openCategoryModal('tour', cat)}
+            onDeleteCategory={handleDeleteCategory}
+            onToggleCategoryStatus={handleToggleCategory}
+          />
+        )}
+
+        {/* --- 3. Bookings (CRM) с передачей всех пропсов для групп --- */}
         {activeTab === 'bookings' && (
             <BookingsTab
-        bookings={bookings}
-        total={bookingsTotal}
-        page={bookingsPage}
-        limit={20}
-        loading={bookingsLoading}
-        searchTerm={bookingsSearch}
-        filterTab={bookingsFilterTab}
-        onSearchChange={(val) => { setBookingsSearch(val); setBookingsPage(1); }}
-        onFilterTabChange={(tab) => { setBookingsFilterTab(tab); setBookingsPage(1); }}
-        onPageChange={(page) => setBookingsPage(page)}
-        onStatusChange={handleStatusChange}
-    />
+                bookings={bookings}
+                total={bookingsTotal}
+                page={bookingsPage}
+                limit={20}
+                loading={bookingsLoading}
+                searchTerm={bookingsSearch}
+                filterTab={bookingsFilterTab}
+                onSearchChange={(val) => { setBookingsSearch(val); setBookingsPage(1); }}
+                onFilterTabChange={(tab) => { setBookingsFilterTab(tab); setBookingsPage(1); }}
+                onPageChange={(page) => setBookingsPage(page)}
+                onStatusChange={handleStatusChange}
+                // Пропсы для групп (манифест)
+                groupsManifest={groupsManifest}
+                groupsTotal={groupsTotal}
+                groupsPage={groupsPage}
+                groupsLimit={groupsLimit}
+                groupsLoading={groupsLoading}
+                groupsSearch={groupsSearch}
+                groupsSort={groupsSort}
+                onGroupsSearchChange={handleGroupsSearchChange}
+                onGroupsSortChange={handleGroupsSortChange}
+                onGroupsPageChange={handleGroupsPageChange}
+            />
         )}
 
         {/* --- 4. Inquiries --- */}
@@ -533,7 +587,6 @@ const [toursLoading, setToursLoading] = useState(false);
       </main>
 
       {/* --- MODALS --- */}
-
       {/* Tour Modal */}
       {modalState.tour && (
         <TourForm 
@@ -544,7 +597,7 @@ const [toursLoading, setToursLoading] = useState(false);
             onSuccess={async () => {
                 setModalState(p => ({ ...p, tour: false }));
                 await loadAllData(); 
-                router.refresh(); // ✅ ДОБАВЛЕНО: Просим Next.js перерендерить серверный компонент и дать нам новые туры
+                router.refresh();
                 showToast('Тур успешно сохранен', 'success');
             }}
         />
