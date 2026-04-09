@@ -1,27 +1,34 @@
+// src/features/account/components/WishlistToggle.tsx
 'use client';
 
 import { useTransition } from 'react';
 import { Heart, Loader } from 'lucide-react';
-import { toggleWishlist } from '@/features/account/actions/wishlistActions';
+import { toggleTourWishlistAction } from '@/features/account/actions/tourWishlist'; // ← новый импорт
 
 interface WishlistToggleProps {
   tourId: string;
-  memberId: string;
+  // memberId и watchlistId больше не нужны новому экшену,
+  // но оставляем для совместимости с родительским компонентом
+  memberId?: string;
   watchlistId?: string;
   inWishlist: boolean;
 }
 
 export default function WishlistToggle({
   tourId,
-  memberId,
-  watchlistId,
   inWishlist,
+  // memberId и watchlistId можно игнорировать
 }: WishlistToggleProps) {
   const [isPending, startTransition] = useTransition();
 
   function handleToggle() {
     startTransition(async () => {
-      await toggleWishlist({ tourId, memberId, watchlistId, inWishlist });
+      const res = await toggleTourWishlistAction(tourId);
+
+      // Если вдруг понадобится обработка (пока не нужно, т.к. пользователь уже в кабинете)
+      if (!res.success) {
+        console.error('Ошибка toggle wishlist');
+      }
     });
   }
 

@@ -439,8 +439,11 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       });
     }
 
-    // Email-уведомление
-    const clientEmail = (data.social && data.social.includes('@')) ? data.social.trim() : null;
+  // Email-уведомление
+    // ✅ ИСПОЛЬЗУЕМ СТРОГОЕ РЕГУЛЯРНОЕ ВЫРАЖЕНИЕ ДЛЯ EMAIL
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const clientEmail = (data.social && emailRegex.test(data.social.trim())) ? data.social.trim() : null;
+
     if (clientEmail) {
       await resend.emails.send({
         from: 'Турклуб EVA <info@evatur.club>',
@@ -462,7 +465,6 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
   } catch (notificationError: unknown) {
     console.error('Ошибка рассылки уведомлений:', notificationError);
   }
-
   // Ревалидация кэша
   if (transactionResult.tourSlug) {
     revalidatePath(`/tour/${transactionResult.tourSlug}`);

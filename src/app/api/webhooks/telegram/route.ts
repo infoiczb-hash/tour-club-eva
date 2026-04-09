@@ -326,12 +326,11 @@ async function sendModerationRequest(adminChatId: string, fileUrl: string, capti
 
   if (isDocument) body.document = fileUrl;
   else body.photo = fileUrl;
-
-  // 🔥 РЕШЕНИЕ 1: Направляем сообщение в топик (если он есть)
-  if (env.TELEGRAM_TOPIC_MONEY) {
-    body.message_thread_id = env.TELEGRAM_TOPIC_MONEY;
-  } else if (env.TELEGRAM_TOPIC_BOOKINGS) {
-    body.message_thread_id = env.TELEGRAM_TOPIC_BOOKINGS;
+  
+// 🔥 РЕШЕНИЕ 1: Направляем сообщение в топик (ОБЯЗАТЕЛЬНО ЧИСЛОМ)
+  const topicId = env.TELEGRAM_TOPIC_MONEY || env.TELEGRAM_TOPIC_BOOKINGS;
+  if (topicId) {
+    body.message_thread_id = parseInt(topicId, 10);
   }
 
   await fetch(`https://api.telegram.org/bot${token}/${method}`, {

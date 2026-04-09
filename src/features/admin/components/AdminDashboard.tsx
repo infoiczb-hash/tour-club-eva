@@ -53,9 +53,9 @@ import {
   togglePostStatusAction, 
   SavePostPayload,        
   saveContentBlockAction, 
-  getRegistrationsAction, 
-  updateRegistrationStatus 
+  getRegistrationsAction 
 } from '@/features/admin/actions';
+import { updateBookingStatusAction } from '@/features/admin/actions/bookingStatus';
 
 import {  
   getTourCategoriesAction, getBlogCategoriesAction,
@@ -386,9 +386,15 @@ const loadGroupsManifest = useCallback(async () => {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-      await updateRegistrationStatus(id, status);
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
-      showToast('Статус обновлен', 'success');
+      // Вызываем новый экшен. Он сам внутри дернет NotificationHub.dispatch()
+      const res = await updateBookingStatusAction(id, status as BookingStatus);
+      
+      if (res.success) {
+          setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
+          showToast('Статус обновлен', 'success');
+      } else {
+          showToast(res.error || 'Ошибка обновления статуса', 'error');
+      }
   };
 
   const handleDelete = async (type: 'tour'|'post'|'guide'|'review', id: string) => {

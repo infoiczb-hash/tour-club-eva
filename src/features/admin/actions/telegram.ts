@@ -56,9 +56,11 @@ export async function publishToTelegram(
       parse_mode: 'HTML',
     };
 
-    // 🔥 ДОБАВЛЕНО: Маршрутизация по топикам
+   // 🔥 ДОБАВЛЕНО: Маршрутизация по топикам (Парсим в INT для Telegram API)
     if (options?.messageThreadId) {
-      body.message_thread_id = options.messageThreadId;
+      body.message_thread_id = typeof options.messageThreadId === 'string' 
+        ? parseInt(options.messageThreadId, 10) 
+        : options.messageThreadId;
     }
 
     if (imageUrl) {
@@ -197,8 +199,8 @@ export async function sendToTelegram(text: string) {
 }
 
 export async function sendToUserTelegram(chatId: string, text: string, linkUrl?: string) {
-  const token = env.TELEGRAM_BOT_TOKEN;
-  if (!token) return { success: false, error: 'Не настроен TELEGRAM_BOT_TOKEN' };
+  const token = env.TELEGRAM_AUTH_BOT; 
+  if (!token) return { success: false, error: 'Не настроен TELEGRAM_AUTH_BOT' };
 
   try {
     const tgApiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
