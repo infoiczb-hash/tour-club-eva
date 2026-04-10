@@ -19,10 +19,10 @@ import { Lists } from './sections/Lists';
 import { SEO } from './sections/SEO';
 
 interface TourFormProps {
-  initialData?: any;
+  initialData?: any; // оставляем как есть
   onClose: () => void;
   guides: { id: string; name: string }[];
-  categories?: { id: string; title: string }[]; // ✅ ДОБАВЛЕНО: Массив категорий
+  categories?: { id: string; title: string }[];
   onSuccess?: () => void;
 }
 

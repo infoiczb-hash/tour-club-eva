@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { Ratelimit } from '@upstash/ratelimit';
 import { handleTelegramCallback } from '@/features/admin/actions/telegramInteractive';
+import { publishToTelegram } from '@/features/admin/actions/telegram';
 
 // Инициализируем Redis (оставляем твой вариант из оригинала)
 const redis = Redis.fromEnv();
@@ -57,11 +58,69 @@ export async function POST(req: Request) {
     // ==========================================
 
     // ==========================================
-    // СЦЕНАРИЙ 3: АДМИН НАЖАЛ КНОПКУ В ТГ (МОДЕРАЦИЯ)
+    // СЦЕНАРИЙ 3: ОБРАБОТКА НАЖАТИЙ КНОПОК В TELEGRAM
     // ==========================================
     if (body.callback_query) {
       const callbackData = body.callback_query.data;
       if (!callbackData) return ok();
+
+      // 🔥 НОВОЕ: СЦЕНАРИЙ КЛИЕНТ ПОДТВЕРЖДАЕТ ИЛИ ОТМЕНЯЕТ УЧАСТИЕ (НАЛИЧНЫЕ/ИНОСТРАНЦЫ)
+      if (callbackData.startsWith('cash_confirm_') || callbackData.startsWith('cash_cancel_')) {
+        const bookingId = callbackData.replace(/cash_confirm_|cash_cancel_/, '');
+        const action = callbackData.startsWith('cash_confirm_') ? 'confirm' : 'cancel';
+        
+        const clientChatId = String(body.callback_query.message.chat.id);
+        const messageId = body.callback_query.message.message_id;
+        const originalText = body.callback_query.message.text || ''; // Забираем старый текст, чтобы он не пропал
+
+        if (action === 'confirm') {
+           // Клиент подтвердил: просто убираем кнопки и пишем "Успех"
+           const newText = originalText + '\n\n✅ <b>Участие подтверждено! Ждем вас!</b>';
+           await editClientMessage(clientChatId, messageId, newText);
+        } else {
+           // 🔥 НЕ отменяем автоматически. Переводим на менеджера.
+          
+          // 🔥 НОВОЕ: СЦЕНАРИЙ КЛИЕНТ НАЖАЛ "НАПИСАТЬ ОТЗЫВ"
+      if (callbackData.startsWith('write_review_')) {
+        const bookingId = callbackData.replace('write_review_', '');
+        const clientChatId = String(body.callback_query.message.chat.id);
+        const messageId = body.callback_query.message.message_id;
+        const originalText = body.callback_query.message.text || ''; 
+
+        // 1. Записываем состояние ожидания отзыва в Redis (ключ живет 1 час)
+        await redis.set(`review_state:${clientChatId}`, bookingId, { ex: 3600 });
+        
+        // 2. Меняем сообщение, просим написать текст
+        const newText = originalText + '\n\n👇 <b>Пожалуйста, отправьте ваш отзыв следующим текстовым сообщением прямо в этот чат.</b>';
+        await editClientMessage(clientChatId, messageId, newText);
+        await answerClientCallbackQuery(body.callback_query.id);
+        return ok();
+      }
+          const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tour: true }});
+           
+           if (booking && booking.status !== 'cancelled') {
+               // 1. Уведомляем Администратора о запросе на отмену
+               const adminMsg = `🚨 <b>ЗАПРОС НА ОТМЕНУ (Менее 24ч / 3 дней)</b>\nБронь #${booking.shortId} на тур «${booking.tour.title}».\n👤 Клиент: ${booking.name} (${booking.phone})\n\n⚠️ <b>Места ПОКА НЕ ОСВОБОЖДЕНЫ.</b>\nКлиент нажал кнопку отмены. Свяжитесь с ним для выяснения причин. Если отмена подтверждается — отмените бронь вручную в CRM (это автоматически вернет места в продажу и запустит Лист Ожидания).`;
+               
+               // Используем publishToTelegram (он уже импортирован в самом верху твоего файла)
+               await publishToTelegram(
+                 adminMsg,
+                 undefined,
+                 undefined,
+                 false,
+                 { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS } // Уйдет в топик с бронями
+               ); 
+
+               // 2. Меняем сообщение клиенту, направляя к менеджеру
+               const newText = originalText + '\n\n⚠️ <b>Мы получили ваш запрос.</b>\nТак как до старта осталось мало времени, пожалуйста, напишите нашему менеджеру для решения этого вопроса: @romansvtirase';
+               await editClientMessage(clientChatId, messageId, newText);
+           } else {
+               await editClientMessage(clientChatId, messageId, originalText + '\n\n⚠️ Бронь уже была отменена ранее.');
+           }
+        }
+        await answerClientCallbackQuery(body.callback_query.id);
+        return ok();
+      }
 
       // ✅ ВАЖНО: Разделяем твою старую логику оплат и новую логику Пакета 2
       if (callbackData.startsWith('confirm_') || callbackData.startsWith('reject_')) {
@@ -156,11 +215,56 @@ export async function POST(req: Request) {
       return ok();
     }
 
-    if (!body.message) return ok();
+   if (!body.message) return ok();
 
     const chatId = String(body.message.chat.id);
     const text = body.message.text || '';
 
+// ==========================================
+    // 🔥 НОВОЕ: ПЕРЕХВАТЧИК ТЕКСТОВОГО ОТЗЫВА (REDIS)
+    // ==========================================
+    const reviewBookingId = await redis.get<string>(`review_state:${chatId}`);
+    
+    // Если мы ждем отзыв, текст существует и это не команда
+    if (reviewBookingId && text && !text.startsWith('/')) {
+        const booking = await prisma.booking.findUnique({ 
+            where: { id: reviewBookingId }, 
+            include: { tour: true } 
+        });
+        
+        if (booking) {
+            // 1. Строго по schema.prisma: сохраняем отзыв на модерацию (isActive: false)
+            await prisma.review.create({
+                data: {
+                    tourId: booking.tourId,
+                    memberId: booking.memberId, // Prisma спокойно примет null, если это Гость
+                    name: booking.name,         // Имя клиента из брони
+                    text: text,                 // Текст отзыва
+                    rating: 5,                  // Дефолтная оценка
+                    source: 'tg',               // Источник
+                    isActive: false             // 🔥 Отправляет на модерацию (скрыт на сайте)
+                }
+            });
+            
+            // 2. Удаляем состояние ожидания из Redis
+            await redis.del(`review_state:${chatId}`);
+            
+            // 3. Отправляем спасибо клиенту
+            await sendMessage(chatId, '✅ <b>Спасибо за ваш отзыв!</b>\nОн отправлен на модерацию. Как только администратор опубликует его, мы начислим вам бонусные баллы!\n\n<i>Если вы захотите дополнить или отредактировать отзыв, это всегда можно сделать в Личном кабинете на сайте.</i>');
+            
+            // 4. Уведомляем админов в рабочий чат
+            const adminMsg = `⭐️ <b>НОВЫЙ ОТЗЫВ (На модерации)</b>\nТур: «${booking.tour.title}»\n👤 Клиент: ${booking.name}\n\n💬 Текст: <i>${text}</i>\n\nМодерировать отзыв, чтобы начислить бонусы, можно в Админ-панели на сайте.`;
+            
+            await publishToTelegram(
+                adminMsg, 
+                undefined, 
+                undefined, 
+                false, 
+                { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS } 
+            );
+        }
+        return ok(); // Завершаем запрос
+    }
     // ==========================================
     // СЦЕНАРИЙ 1: КЛИЕНТ ПЕРЕШЕЛ ПО ДИПЛИНКУ (/start {id})
     // ==========================================
@@ -380,4 +484,30 @@ async function uploadToCloudinary(fileUrl: string): Promise<string> {
   if (data.secure_url) return data.secure_url;
   
   return fileUrl;
+}
+
+// Обновляет сообщение КЛИЕНТА (использует токен клиентского бота)
+async function editClientMessage(chatId: string, messageId: number, newText: string) {
+  const token = env.TELEGRAM_AUTH_BOT; // Используем токен клиентского бота!
+  await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      chat_id: chatId, 
+      message_id: messageId, 
+      text: newText, 
+      parse_mode: 'HTML', 
+      reply_markup: { inline_keyboard: [] } // Очищаем кнопки после нажатия
+    })
+  });
+}
+
+// Отправляет Telegram сигнал, что кнопка нажата (убирает часики с кнопки)
+async function answerClientCallbackQuery(callbackQueryId: string) {
+  const token = env.TELEGRAM_AUTH_BOT;
+  await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ callback_query_id: callbackQueryId })
+  });
 }

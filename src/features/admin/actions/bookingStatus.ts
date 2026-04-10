@@ -80,7 +80,7 @@ export const updateBookingStatusAction = withAdminAuth(
             }
           });
         }
-      } else if (booking.payerTgChatId) {
+  } else if (booking.payerTgChatId) {
         // 🔥 РЕШЕНИЕ 3: Ручная отправка для Гостей
         const meetingInfo = booking.tourDate?.meetingPoint || booking.tour.meetingPoint || 'Будет уточнено гидом';
         const meetingTime = booking.tourDate?.time || '08:30';
@@ -88,24 +88,49 @@ export const updateBookingStatusAction = withAdminAuth(
         const shortId = booking.shortId;
 
         let msg = '';
+        let inlineButtons: any[] = []; // 🔥 ДОБАВЛЕНО: Массив для кнопок
+
         switch (newStatus) {
           case 'confirmed':
             msg = `🎉 <b>Оплата получена!</b>\n\nВаше место в туре «${tourTitle}» официально забронировано.\n\n📍 <b>Место сбора:</b> ${meetingInfo}\n⏰ <b>Время:</b> ${meetingTime}`;
-            if (booking.tour.importantInfo) msg += `\n\n🎒 <b>Важно:</b> ${booking.tour.importantInfo}`;
+            
+            // 🔥 ДОБАВЛЕНО: Детальный чек-лист как для зарегистрированных пользователей
+            const checklist = booking.tour.checklist;
+            if (Array.isArray(checklist) && checklist.length > 0) {
+              msg += `\n\n🎒 <b>Список снаряжения:</b>\n` + checklist.map((c: any) => `• <b>${c.title}</b>: ${c.items}`).join('\n');
+              if (booking.tour.importantInfo) {
+                 msg += `\n\n⚠️ <b>Дополнительно:</b> ${booking.tour.importantInfo}`;
+              }
+            } else if (booking.tour.importantInfo) {
+              msg += `\n\n🎒 <b>Важно:</b> ${booking.tour.importantInfo}`;
+            }
+
+            // 🔥 ДОБАВЛЕНО: Добавляем ссылку на чат группы и связь с менеджером
+            if (booking.tourDate?.groupChatUrl) {
+              inlineButtons.push([{ text: '💬 Вступить в чат группы', url: booking.tourDate.groupChatUrl }]);
+            }
+            inlineButtons.push([{ text: '👨‍💻 Связь с менеджером', url: 'https://t.me/romansvtirase' }]);
             break;
+
           case 'rejected':
             msg = `❌ <b>Ошибка оплаты</b>\n\nК сожалению, мы не смогли подтвердить оплату заявки <b>#${shortId}</b> на тур «${tourTitle}». Пожалуйста, проверьте чек и отправьте его заново в бота.`;
+            inlineButtons.push([{ text: '👨‍💻 Написать менеджеру', url: 'https://t.me/romansvtirase' }]);
             break;
+
           case 'cancelled':
             msg = `🚫 <b>Бронь отменена</b>\n\nВаша заявка <b>#${shortId}</b> на тур «${tourTitle}» аннулирована.`;
             break;
         }
 
         if (msg) {
-          await sendToUserTelegramAdvanced(booking.payerTgChatId, msg, undefined, true);
+          await sendToUserTelegramAdvanced(
+            booking.payerTgChatId, 
+            msg, 
+            inlineButtons.length > 0 ? inlineButtons : undefined, 
+            true
+          );
         }
       }
-
       if (newStatus === 'cancelled') {
         await notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId);
       }

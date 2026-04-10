@@ -21,7 +21,7 @@ export class NotificationHub {
       if (!profile) throw new Error('Profile not found');
 
       // Генерируем контент по шаблону
-      const content = NotificationTemplates.compile(eventId, data, profile);
+const content = await NotificationTemplates.compile(eventId, data, profile);
 
       // 🔥 ВОТ ТА САМАЯ ЗАЩИТА ОТ NULL
       if (!content) {

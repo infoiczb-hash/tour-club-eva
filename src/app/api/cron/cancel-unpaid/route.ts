@@ -5,7 +5,7 @@ import { Redis } from '@upstash/redis';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { revalidatePath } from 'next/cache';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ ВОЗВРАЩЕН
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
@@ -18,8 +18,6 @@ const CANCEL_HOURS = 48;
 // Внутренняя функция-обработчик
 async function handler(req: Request) {
   try {
-    // 🛡 Ручная проверка CRON_SECRET убрана. 
-
     const lastRun = await redis.get<number>(RATE_LIMIT_KEY);
     if (lastRun && Date.now() - lastRun < MIN_INTERVAL_MS) {
       return NextResponse.json({ skipped: true, reason: 'Too soon' });
@@ -37,6 +35,9 @@ async function handler(req: Request) {
 
     let cancelledCount = 0;
     let remindedCount = 0;
+
+    // 🔥 ОПТИМИЗАЦИЯ: Собираем все долгие задачи (уведомления) в массив, чтобы выполнить параллельно
+    const notificationPromises: Promise<any>[] = [];
 
     for (const booking of deadSouls) {
       try {
@@ -59,21 +60,23 @@ async function handler(req: Request) {
 
           cancelledCount++;
 
-          // 🔥 Вызов Хаба для автоотмены (сообщаем клиенту)
+          // Добавляем отправку уведомления в массив задач (не ждем через await прямо тут)
           if (booking.memberId) {
-            await NotificationHub.dispatch({
-              eventId: 'BOOKING_AUTO_CANCELLED',
-              memberId: booking.memberId,
-              data: {
-                bookingId: booking.id,
-                shortId: shortId,
-                tourTitle: booking.tour.title,
-              }
-            });
+            notificationPromises.push(
+              NotificationHub.dispatch({
+                eventId: 'BOOKING_AUTO_CANCELLED',
+                memberId: booking.memberId,
+                data: {
+                  bookingId: booking.id,
+                  shortId: shortId,
+                  tourTitle: booking.tour.title,
+                }
+              })
+            );
           }
 
           // 🔥 Снайпинг: места физически освободились, зовем ждунов
-          await notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId);
+          notificationPromises.push(notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId));
         }
 
         // --- ЛОГИКА 2: ПРОШЛО ОТ 24 ДО 48 ЧАСОВ (НАПОМИНАНИЕ) ---
@@ -82,17 +85,19 @@ async function handler(req: Request) {
           const isReminded = await redis.get(redisKey);
 
           if (!isReminded) {
-            // 🔥 Вызов Хаба для напоминания
+            // Добавляем напоминание в массив задач
             if (booking.memberId) {
-               await NotificationHub.dispatch({
-                 eventId: 'PAYMENT_REMINDER_24H',
-                 memberId: booking.memberId,
-                 data: {
-                   bookingId: booking.id,
-                   shortId: shortId,
-                   tourTitle: booking.tour.title,
-                 }
-               });
+               notificationPromises.push(
+                 NotificationHub.dispatch({
+                   eventId: 'PAYMENT_REMINDER_24H',
+                   memberId: booking.memberId,
+                   data: {
+                     bookingId: booking.id,
+                     shortId: shortId,
+                     tourTitle: booking.tour.title,
+                   }
+                 })
+               );
             }
             
             await redis.set(redisKey, '1', { ex: 48 * 60 * 60 });
@@ -103,6 +108,11 @@ async function handler(req: Request) {
       } catch (err) {
         console.error(`Ошибка обработки брони ${booking.id}:`, err);
       }
+    }
+
+    // 🔥 Выполняем все сетевые запросы Хаба и Листа ожидания параллельно! Это спасет от таймаута.
+    if (notificationPromises.length > 0) {
+      await Promise.allSettled(notificationPromises);
     }
 
     if (cancelledCount > 0) {
@@ -125,6 +135,6 @@ async function handler(req: Request) {
   }
 }
 
-// 🔥 Оборачиваем обработчик в HOC от Qstash
+// 🔥 Оборачиваем обработчик в HOC от Qstash для безопасного вызова
 export const GET = verifySignatureAppRouter(handler);
 export const POST = verifySignatureAppRouter(handler);

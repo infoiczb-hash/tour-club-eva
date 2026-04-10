@@ -12,6 +12,7 @@ import { twMerge } from "tailwind-merge";
 import type { FunTest } from "@prisma/client";
 import { useInView } from '@/hooks/useInView';
 import { useModalStore } from '@/shared/store/useModalStore';
+import { QUIZ_VISUAL_CONFIG } from '@/features/fun/components/constants';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -59,9 +60,6 @@ function QuizModalManager() {
   const openContactModal = useModalStore((state) => state.openContactModal);
 
   const slug = searchParams.get('quiz');
-
-  console.log('🔍 QuizModalManager → slug из URL:', slug);
-  console.log('📦 Компонент найден в реестре:', slug ? !!MODAL_REGISTRY[slug] : false);
 
   const ActiveModal = slug && MODAL_REGISTRY[slug] ? MODAL_REGISTRY[slug] : null;
 
@@ -114,7 +112,7 @@ export default function FunClient({ activeTests }: { activeTests: FunTest[] }) {
   }, [activeTests]);
 
   return (
-    <div suppressHydrationWarning className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
+    <div className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
 
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
@@ -181,14 +179,16 @@ function CategorySection({ categoryName, config, tests, categoryIndex, onOpen }:
 
       <div ref={refGrid} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {tests.map((test, index) => {
-          const visual = VISUAL_REGISTRY[test.slug] || VISUAL_REGISTRY['default'];
+          const visual = QUIZ_VISUAL_CONFIG[test.slug] || QUIZ_VISUAL_CONFIG['default'];
+          const Icon = visual.icon;
+          const iconElement = <Icon size={24} strokeWidth={2.5} />;
           return (
             <QuizCard
               key={test.id}
               onClick={() => onOpen(test.slug)}
               image={test.image || ""}
               color={visual.color}
-              icon={visual.icon}
+              icon={iconElement}
               badge={visual.badge}
               title={test.title}
               desc={test.description}

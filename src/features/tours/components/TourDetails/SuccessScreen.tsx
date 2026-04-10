@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, QrCode, Link as LinkIcon, Send, Globe, MessageCircle, Banknote, User } from 'lucide-react';
+import { CheckCircle, QrCode, Link as LinkIcon, Send, Globe, MessageCircle, Bell, Banknote, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -129,11 +129,24 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
     {/* 🌍 СЦЕНАРИЙ 4: INTERNATIONAL */}
       {paymentMethod === 'foreign' && (
         <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
-          {/* ... содержимое блока ... */}
+          <div className="flex items-center gap-3 mb-4">
+            <Globe className="text-blue-400 w-8 h-8" />
+            <h3 className="text-lg font-black text-white uppercase tracking-wider">Перевод из-за рубежа</h3>
+          </div>
+          <p className="text-[13px] text-slate-300 leading-relaxed mb-4">
+            Видим, что вам нужен перевод из другой страны. Свяжитесь с нашим менеджером, и мы подберем удобный способ оплаты (Crypto, SWIFT, P2P).
+          </p>
+          <Link 
+            href={managerLink} 
+            target="_blank" 
+            className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg active:scale-[0.98]"
+          >
+            <MessageCircle size={16} /> Написать менеджеру
+          </Link>
         </div>
       )}
 
-      {/* 🔥 НОВЫЙ БЛОК: ВОВЛЕЧЕНИЕ В ЛИЧНЫЙ КАБИНЕТ ДЛЯ ГОСТЕЙ */}
+      {/* 🔥 ФИНАЛЬНЫЙ БЛОК: ВОВЛЕЧЕНИЕ В ЛИЧНЫЙ КАБИНЕТ ДЛЯ ГОСТЕЙ */}
       {isGuest && (
         <div className="w-full bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-5 mb-6 text-left shadow-lg animate-in fade-in zoom-in-95 duration-500">
           <div className="flex items-center gap-2 mb-3">

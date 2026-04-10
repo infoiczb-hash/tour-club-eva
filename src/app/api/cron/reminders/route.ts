@@ -1,13 +1,17 @@
 // src/app/api/cron/reminders/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ
+// 🔥 УБРАЛИ QStash: import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 
-// Внутренняя функция-обработчик
-async function handler(req: Request) {
+export async function GET(req: Request) {
   try {
-    // 🛡 Ручная проверка CRON_SECRET убрана. 
+    // 🛡 ЗАЩИТА VERCEL CRON: Проверяем секретный ключ
+    const authHeader = req.headers.get('authorization');
+    if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
 
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -24,7 +28,7 @@ async function handler(req: Request) {
     const tomorrowRange = getDayRange(1);
     const in3DaysRange = getDayRange(3);
 
-    // 🔥 ИСПРАВЛЕННЫЙ ЗАПРОС PRISMA (Правильный OR на верхнем уровне)
+    // ИСПРАВЛЕННЫЙ ЗАПРОС PRISMA (Правильный OR на верхнем уровне)
     const bookings = await prisma.booking.findMany({
       where: {
         status: { in: ['pending', 'confirmed'] },
@@ -46,16 +50,19 @@ async function handler(req: Request) {
     });
 
     let sentCount = 0;
+    
+    // 🔥 ОПТИМИЗАЦИЯ: Собираем задачи в массив для параллельной отправки
+    const notificationPromises: Promise<any>[] = [];
 
     for (const booking of bookings) {
-      // 🔥 Безопасная проверка для TypeScript (убираем ошибки null)
+      // Безопасная проверка для TypeScript (убираем ошибки null)
       if (!booking.tourDate || !booking.memberId) continue;
 
       const isTomorrow = booking.tourDate.startDate < tomorrowRange.lt;
       const eventId = isTomorrow ? 'TOUR_TOMORROW_REMINDER' : 'TOUR_3DAY_REMINDER';
 
-      try {
-        await NotificationHub.dispatch({
+      notificationPromises.push(
+        NotificationHub.dispatch({
           eventId,
           memberId: booking.memberId,
           data: {
@@ -69,11 +76,15 @@ async function handler(req: Request) {
             checklist: booking.tour.checklist,
             groupChatUrl: booking.tourDate.groupChatUrl
           }
-        });
-        sentCount++;
-      } catch (e) {
-        console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e);
-      }
+        })
+        .then(() => { sentCount++; })
+        .catch((e) => { console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e); })
+      );
+    }
+
+    // Выполняем все запросы Хаба параллельно!
+    if (notificationPromises.length > 0) {
+      await Promise.allSettled(notificationPromises);
     }
 
     return NextResponse.json({ 
@@ -87,7 +98,3 @@ async function handler(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-
-// 🔥 Оборачиваем обработчик в HOC от Qstash
-export const GET = verifySignatureAppRouter(handler);
-export const POST = verifySignatureAppRouter(handler);

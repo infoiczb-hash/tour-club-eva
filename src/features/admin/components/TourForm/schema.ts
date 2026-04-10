@@ -1,6 +1,17 @@
 // src/features/admin/components/TourForm/schema.ts
 import { z } from 'zod';
 
+const DetailedItemSchema = z.object({
+  label: z.string(),
+  price: z.string().optional(),
+});
+
+const DetailedCategorySchema = z.object({
+  title: z.string(),
+  items: z.array(DetailedItemSchema),
+});
+
+
 export const tourFormSchema = z.object({
   id: z.string().optional(),
 
@@ -104,8 +115,8 @@ export const tourFormSchema = z.object({
   additionalExpenses: z.array(z.string()).default([]),
 
   // ✅ НОВЫЕ: Детализированные списки (Аккордеоны)
-  includedDetailed: z.any().optional().nullable(),
-  excludedDetailed: z.any().optional().nullable(),
+  includedDetailed: z.array(DetailedCategorySchema).optional().nullable(),
+  excludedDetailed: z.array(DetailedCategorySchema).optional().nullable(),
 
   // === SEO ===
   metaTitle: z.string().optional().nullable(),

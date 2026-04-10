@@ -2,11 +2,18 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ
+import { withAdminAuth } from '@/lib/auth';
+import { FunTest } from '@prisma/client';
 
-// Админская функция
-export const upsertFunTestAction = withAdminAuth(async (data: any) => {
+type UpsertFunTestInput = Partial<Omit<FunTest, 'id' | 'createdAt' | 'updatedAt'>> & { id?: string };
+
+export const upsertFunTestAction = withAdminAuth(async (data: UpsertFunTestInput) => {
   try {
+    // Проверяем обязательные поля перед созданием
+    if (!data.slug || !data.title || !data.description || !data.category) {
+      return { success: false, error: 'Отсутствуют обязательные поля: slug, title, description, category' };
+    }
+
     const test = await prisma.funTest.upsert({
       where: { slug: data.slug },
       update: {
@@ -21,9 +28,9 @@ export const upsertFunTestAction = withAdminAuth(async (data: any) => {
         slug: data.slug,
         title: data.title,
         description: data.description,
-        image: data.image,
+        image: data.image ?? null,
         category: data.category,
-        isActive: data.isActive,
+        isActive: data.isActive ?? false,
         passCount: data.passCount ?? 0,
       },
     });
@@ -37,7 +44,6 @@ export const upsertFunTestAction = withAdminAuth(async (data: any) => {
   }
 });
 
-// Админская функция
 export const toggleFunTestStatusAction = withAdminAuth(async (id: string, currentStatus: boolean) => {
   try {
     await prisma.funTest.update({
@@ -47,12 +53,11 @@ export const toggleFunTestStatusAction = withAdminAuth(async (id: string, curren
     revalidatePath('/fun');
     revalidatePath('/admin/fun');
     return { success: true };
-  } catch(error: unknown) {
+  } catch (error: unknown) {
     return { success: false, error: 'Ошибка смены статуса' };
   }
 });
 
-// ⚠️ ПУБЛИЧНАЯ функция (Оставляем как есть, auth не нужен)
 export async function incrementFunTestPassAction(slug: string) {
   try {
     await prisma.funTest.update({
@@ -65,7 +70,6 @@ export async function incrementFunTestPassAction(slug: string) {
   }
 }
 
-// ⚠️ ПУБЛИЧНАЯ функция (Оставляем как есть)
 export async function getFunTestsAction() {
   try {
     const tests = await prisma.funTest.findMany({ orderBy: { createdAt: 'desc' } });

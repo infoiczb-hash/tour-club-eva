@@ -7,6 +7,7 @@ import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activ
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import { FunTest } from '@prisma/client';
+import { QUIZ_VISUAL_CONFIG } from './constants';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -126,7 +127,7 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 }
 
 function QuizCard({ quiz }: { quiz: FunTest }) {
-  const visual = VISUAL_REGISTRY[quiz.slug] || VISUAL_REGISTRY['default'];
+ const visual = QUIZ_VISUAL_CONFIG[quiz.slug] || QUIZ_VISUAL_CONFIG['default'];
   const Icon = visual.icon;
 
   // ❌ МЫ ПОЛНОСТЬЮ УДАЛИЛИ sanitizeHtml ОТСЮДА

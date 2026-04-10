@@ -1,5 +1,9 @@
-// src/lib/notifications/templates.ts
 import { env } from '@/lib/env';
+import { render } from '@react-email/components'; // 🔥 ДОБАВЛЕНО
+import { BookingConfirmedEmail } from '@/features/tours/emails/BookingConfirmedEmail'; // 🔥 ДОБАВЛЕНО
+import { TourReminderEmail } from '@/features/tours/emails/TourReminderEmail';
+import { PostTourReviewEmail } from '@/features/tours/emails/PostTourReviewEmail';
+
 
 export type AppEvent = 
   | 'BOOKING_CREATED'
@@ -16,7 +20,11 @@ export type AppEvent =
   | 'CASHBACK_RECEIVED'
   | 'C2C_TICKET_TRANSFER'
   | 'BROADCAST_MESSAGE'
-  | 'TOUR_3DAY_REMINDER';
+  | 'TOUR_3DAY_REMINDER'
+  | 'POST_TOUR_REVIEW'
+  | 'REVIEW_PUBLISHED'
+  | 'WIN_BACK_OFFER'
+  | 'CROSS_SELL_OFFER';
 
   export interface NotificationContent {
   inApp: {
@@ -42,7 +50,8 @@ export type AppEvent =
 }
 
 export const NotificationTemplates = {
-compile(eventId: AppEvent, data: any = {}, profile: any = {}): NotificationContent | null {
+  // 🔥 ДОБАВИЛИ async и Promise
+  async compile(eventId: AppEvent, data: any = {}, profile: any = {}): Promise<NotificationContent | null> {
     const siteUrl = env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
     const accountLink = `${siteUrl}/account/bookings`;
     const managerLink = 'https://t.me/romansvtirase';
@@ -110,7 +119,7 @@ case 'BOOKING_CONFIRMED': {
         const meetingInfo = data.meetingPoint || 'Уточняется гидом';
         const meetingTime = data.meetingTime || '08:30';
         
-        // Формируем блок со списком снаряжения или важной инфой
+        // Формируем блок со списком снаряжения или важной инфой (для Telegram)
         let importantSection = data.importantInfo 
           ? `🎒 <b>Важно:</b> ${data.importantInfo}` 
           : `🎒 <b>Важно:</b> Возьмите с собой хорошее настроение!`;
@@ -136,16 +145,39 @@ case 'BOOKING_CONFIRMED': {
         buttons.push([{ text: '🎫 Открыть билет', url: accountLink }]);
 
         return {
-          inApp: { type: 'success', title: 'Бронь подтверждена', message: `Места в туре «${tourTitle}» закреплены за вами.`, link: `/account/bookings/${data.bookingId}` },
+          inApp: { 
+            type: 'success', 
+            title: 'Бронь подтверждена', 
+            message: `Места в туре «${tourTitle}» закреплены за вами.`, 
+            link: `/account/bookings/${data.bookingId}` 
+          },
           telegram: {
             text: `🎉 <b>Оплата получена!</b>\n\nВаше место в туре «${tourTitle}» официально забронировано.\n\n📍 <b>Место сбора:</b> ${meetingInfo}\n⏰ <b>Время:</b> ${meetingTime}\n\n${importantSection}`,
             buttons: buttons
           },
-          push: { title: `${ICONS.success} Тур оплачен!`, body: `Места на ${tourTitle} официально ваши.` },
-          email: null 
+          push: { 
+            title: `${ICONS.success} Тур оплачен!`, 
+            body: `Места на ${tourTitle} официально ваши.` 
+          },
+          // 🔥 ИНТЕГРАЦИЯ EMAIL ШАБЛОНА
+          email: {
+            subject: `Ваше участие подтверждено: ${tourTitle} 🎉`,
+          html: await render(
+              <BookingConfirmedEmail
+                name={firstName}
+                tourTitle={tourTitle}
+                meetingPoint={meetingInfo}
+                meetingTime={meetingTime}
+                importantInfo={data.importantInfo}
+                groupChatUrl={data.groupChatUrl}
+                siteUrl={siteUrl}
+                shortId={shortId}
+              />
+            ),
+            forceSend: true // Всегда дублируем важный "билет" на почту
+          }
         };
       }
-
       case 'PAYMENT_REJECTED':
         return {
           inApp: { type: 'error', title: 'Ошибка оплаты', message: `Чек для тура «${tourTitle}» не подошел.`, link: `/account/bookings/${data.bookingId}` },
@@ -190,33 +222,41 @@ case 'BOOKING_CONFIRMED': {
           email: null
         };
 
-      case 'TOUR_TOMORROW_REMINDER': {
+     case 'TOUR_TOMORROW_REMINDER': {
         const meeting = data.meetingPoint || 'Уточняется в чате';
         const time = data.meetingTime || 'Утром';
-        let cashText = data.paymentMethod === 'cash' ? `\n${ICONS.money} <b>Оплата на месте:</b> Подготовьте <b>${price} ${currency}</b> наличными (желательно без сдачи).\n` : '';
         
-        let checklistText = `\n🎒 <b>Важно:</b> Возьмите с собой хорошее настроение!`;
-        if (Array.isArray(data.checklist) && data.checklist.length > 0) {
-          checklistText = '\n🎒 <b>Что взять с собой:</b>\n' + data.checklist.map((c: any) => `• <b>${c.title}</b>: ${c.items}`).join('\n');
-        }
-
+        // 🔥 Проверяем статус: наличные или иностранцы
+        const isUnpaid = data.paymentMethod === 'cash' || data.paymentMethod === 'foreign';
+        
+        let customText = '';
         let buttons = [];
-        if (data.groupChatUrl) buttons.push([{ text: '💬 Перейти в чат группы', url: data.groupChatUrl }]);
-        if (data.paymentMethod === 'cash') {
+
+        // ЖЕСТКОЕ НАПОМИНАНИЕ ЗА 24 ЧАСА ДЛЯ НЕОПЛАЧЕННЫХ
+        if (isUnpaid) {
+           customText = `\n\n⚠️ <b>ФИНАЛЬНОЕ ПОДТВЕРЖДЕНИЕ:</b> Вы выбрали оплату на месте (<b>${price} ${currency}</b>). Пожалуйста, подтвердите свое участие прямо сейчас, чтобы мы закрепили за вами место в трансфере. 👇`;
            buttons.push(
-             [{ text: '✅ Буду точно', callback_data: `cash_confirm_${data.bookingId}` }],
-             [{ text: '❌ Не смогу поехать', callback_data: `cash_cancel_${data.bookingId}` }]
+             [{ text: '✅ Я точно буду', callback_data: `cash_confirm_${data.bookingId}` }],
+             [{ text: '❌ Планы изменились', callback_data: `cash_cancel_${data.bookingId}` }]
            );
+        } else {
+           customText = `\n\nОплата успешно подтверждена. Выспитесь и до встречи!`;
+           if (data.groupChatUrl) buttons.push([{ text: '💬 Перейти в чат группы', url: data.groupChatUrl }]);
         }
 
         return {
           inApp: { type: 'info', title: 'Завтра тур!', message: `Сбор в ${time}. Место: ${meeting}`, link: `/account/bookings/${data.bookingId}` },
           telegram: {
-            text: `${ICONS.success} <b>Завтра мы отправляемся в тур!</b>\n\n${firstName}, ждем вас на маршруте «<b>${tourTitle}</b>».\n\n📍 <b>Сбор:</b> ${meeting}\n⏰ <b>Время:</b> ${time}\n${cashText}${checklistText}\n\nЕсли вы еще не в чате группы — добавляйтесь, гид ждет вас там.`,
+            text: `🔥 <b>Завтра старт!</b>\n\n${firstName}, ждем вас на маршруте «<b>${tourTitle}</b>».\n\n📍 <b>Сбор:</b> ${meeting}\n⏰ <b>Время:</b> ${time}${customText}`,
             buttons: buttons.length > 0 ? buttons : undefined
           },
-          push: { title: `${ICONS.info} Завтра тур!`, body: `Сбор в ${time}. Проверьте снаряжение.` },
-          email: null
+          push: { title: `Завтра тур! 🔥`, body: `Сбор в ${time}. Проверьте снаряжение.` },
+          // 🔥 ИНТЕГРАЦИЯ EMAIL ШАБЛОНА
+          email: {
+             subject: `Завтра тур: ${tourTitle} 🔥`,
+             html: await render(<TourReminderEmail name={firstName} tourTitle={tourTitle} meetingPoint={meeting} meetingTime={time} daysLeft={1} paymentMethod={data.paymentMethod} price={price} currency={currency} bookingLink={accountLink} />),
+             forceSend: true
+          }
         };
       }
 
@@ -275,17 +315,20 @@ case 'BOOKING_CONFIRMED': {
           email: null
         };
 
-        case 'TOUR_3DAY_REMINDER': {
+case 'TOUR_3DAY_REMINDER': {
         const meeting = data.meetingPoint || 'Уточняется гидом';
         const time = data.meetingTime || '08:30';
+        
+        // 🔥 Проверяем статус: наличные или иностранцы (без предоплаты)
+        const isUnpaid = data.paymentMethod === 'cash' || data.paymentMethod === 'foreign';
         
         let buttons = [];
         if (data.groupChatUrl) {
           buttons.push([{ text: '💬 Чат группы (уже создан)', url: data.groupChatUrl }]);
         }
         
-        // Кнопки подтверждения для налички (рефрейминг: "Подтвердите, что мы вас ждем")
-        if (data.paymentMethod === 'cash') {
+        // Кнопки подтверждения для неоплаченных броней
+        if (isUnpaid) {
            buttons.push(
              [{ text: '✅ Подтверждаю, буду!', callback_data: `cash_confirm_${data.bookingId}` }],
              [{ text: '❌ Не смогу поехать', callback_data: `cash_cancel_${data.bookingId}` }]
@@ -300,10 +343,113 @@ case 'BOOKING_CONFIRMED': {
             link: `/account/bookings/${data.bookingId}` 
           },
           telegram: {
-            text: `${ICONS.info} <b>${firstName}, скоро отправляемся!</b>\n\nДо нашего приключения «<b>${tourTitle}</b>» осталось всего 3 дня. Самое время проверить снаряжение и подготовить рюкзак.\n\n📍 <b>Сбор:</b> ${meeting}\n⏰ <b>Старт:</b> ${time}\n\n${data.paymentMethod === 'cash' ? `⚠️ Так как у вас выбрана <b>оплата наличными</b>, пожалуйста, подтвердите ваше участие кнопкой ниже, чтобы мы забронировали за вами место в транспорте 👇` : 'Мы уже готовим всё необходимое для вашего отдыха!'}`,
+            text: `${ICONS.info} <b>${firstName}, скоро отправляемся!</b>\n\nДо нашего приключения «<b>${tourTitle}</b>» осталось всего 3 дня. Самое время проверить снаряжение и подготовить рюкзак.\n\n📍 <b>Сбор:</b> ${meeting}\n⏰ <b>Старт:</b> ${time}\n\n${isUnpaid ? `⚠️ Так как у вас выбрана <b>оплата на месте</b>, пожалуйста, подтвердите ваше участие кнопкой ниже, чтобы мы забронировали за вами место в транспорте 👇` : 'Мы уже готовим всё необходимое для вашего отдыха!'}`,
             buttons: buttons.length > 0 ? buttons : undefined
           },
           push: { title: '3 дня до тура! 🏕', body: `Ждем вас на маршруте ${tourTitle}` },
+          // 🔥 ИНТЕГРАЦИЯ EMAIL ШАБЛОНА
+          email: {
+             subject: `Подготовка к туру: ${tourTitle} 🏕️`,
+             html: await render(<TourReminderEmail name={firstName} tourTitle={tourTitle} meetingPoint={meeting} meetingTime={time} daysLeft={3} paymentMethod={data.paymentMethod} price={price} currency={currency} bookingLink={accountLink} />),
+             forceSend: true
+          }
+        };
+      }
+     
+      case 'POST_TOUR_REVIEW': {
+        const points = data.points || 0;
+        const level = data.level || 'Новичок';
+        const nextLevelPoints = data.nextLevelPoints || 500;
+        const pointsNeeded = nextLevelPoints - points > 0 ? nextLevelPoints - points : 0;
+        
+        let buttons = [
+          [{ text: '✍️ Написать отзыв', callback_data: `write_review_${data.bookingId}` }]
+        ];
+
+        return {
+          inApp: { 
+            type: 'bonus', 
+            title: 'С возвращением!', 
+            message: `Оцените тур «${tourTitle}» и получите бонусы!`, 
+            link: `/account/history` 
+          },
+          telegram: {
+            text: `🏕 <b>${firstName}, с возвращением!</b>\n\nНадеемся, наше приключение «<b>${tourTitle}</b>» прошло отлично.\n\n🏆 Ваш статус: <b>${level}</b>\n⭐️ Накоплено: <b>${points} баллов</b>\n${pointsNeeded > 0 ? `🚀 До следующего уровня осталось: ${pointsNeeded} баллов\n\n` : '\n'}Помогите нам стать еще лучше — поделитесь впечатлениями о работе гида и организации. За каждый опубликованный отзыв мы начисляем бонусы! 👇`,
+            buttons: buttons
+          },
+          push: { title: 'Поделитесь впечатлениями! 🏕', body: `Оцените тур ${tourTitle} и получите бонусы` },
+          email: {
+             subject: `Как прошел ваш тур? Поделитесь впечатлениями! 🌲`,
+             html: await render(<PostTourReviewEmail name={firstName} tourTitle={tourTitle} points={points} level={level} bookingLink={accountLink} />),
+             forceSend: true
+          }
+        };
+      }
+
+      case 'REVIEW_PUBLISHED': {
+        const added = data.pointsAdded || 50;
+        const balance = data.newBalance || 0;
+        const tour = data.tourTitle || 'туре';
+
+        return {
+          inApp: {
+            type: 'success',
+            title: 'Отзыв опубликован!',
+            message: `Вам начислено ${added} баллов за отзыв о туре «${tour}».`,
+            link: `/account/history`
+          },
+          telegram: {
+            text: `🎉 <b>${firstName}, ваш отзыв опубликован!</b>\n\nСпасибо, что поделились впечатлениями о туре «<b>${tour}</b>». Как мы и обещали, мы начислили вам бонусные баллы.\n\n🎁 Получено: <b>+${added} баллов</b>\n💰 Текущий баланс: <b>${balance}</b>\n\nВы можете использовать их для оплаты следующих приключений!`,
+            buttons: [[{ text: '🏕 Выбрать новый тур', url: `${siteUrl}/tour` }]]
+          },
+          push: { title: 'Отзыв одобрен! 🎉', body: `Вам начислено +${added} баллов на баланс` },
+          email: null // Пока не будем спамить письмами по этому поводу, хватит ТГ и Сайта
+        };
+      }
+
+      // ==========================================
+      // РОБОТ-ПРОДАЖНИК: ВОЗВРАТ СПЯЩИХ (90 ДНЕЙ)
+      // ==========================================
+      case 'WIN_BACK_OFFER': {
+        const lastTour = data.lastTourTitle || 'нами';
+        const promo = data.promoCode || 'COMEBACK';
+        const discount = data.discount || 50;
+
+        return {
+          inApp: {
+            type: 'bonus',
+            title: 'Давно не виделись! 🏕️',
+            message: `Дарим ${discount} ₽ на новые туры по промокоду ${promo}`,
+            link: `/tour`
+          },
+          telegram: {
+            text: `🏕 <b>${firstName}, давно не виделись на маршруте!</b>\n\nПрошло уже 3 месяца с вашей поездки «<b>${lastTour}</b>». Мы успели соскучиться и подготовили много новых интересных маршрутов.\n\nВам, как нашему опытному путешественнику, мы дарим персональный промокод на скидку <b>${discount} ₽</b>:\n\n👉 <code>${promo}</code>\n\n<i>Промокод действует 14 дней. Выбирайте приключение и погнали с нами!</i>`,
+            buttons: [[{ text: '🏕 Выбрать новый тур', url: `${siteUrl}/tour` }]]
+          },
+          push: { title: 'Скучаем по вам! 🏕', body: `Дарим скидку ${discount} ₽ на новые приключения` },
+          email: null
+        };
+      }
+
+      // ==========================================
+      // РОБОТ-ПРОДАЖНИК: КРОСС-СЕЛЛ (СМЕЖНЫЕ ТУРЫ)
+      // ==========================================
+      case 'CROSS_SELL_OFFER': {
+        const lastTour = data.lastTourTitle || 'прошлом туре';
+        const categoryText = data.categoryTransitionText || 'Попробуйте новый формат отдыха!';
+
+        return {
+          inApp: {
+            type: 'info',
+            title: 'Новый уровень! 🚀',
+            message: `Вам понравилось на «${lastTour}»? Попробуйте кое-что новое.`,
+            link: `/tour`
+          },
+          telegram: {
+            text: `🚀 <b>${firstName}, как насчет нового вызова?</b>\n\nНедавно вы были с нами на маршруте «<b>${lastTour}</b>». ${categoryText}\n\nСпециально для вас мы подобрали отличный вариант для следующих выходных. Переходите на сайт, чтобы посмотреть детали!`,
+            buttons: [[{ text: '🔥 Смотреть рекомендацию', url: `${siteUrl}/tour` }]]
+          },
+          push: { title: 'Готовы к новому вызову? 🚀', body: `Мы подобрали для вас идеальный маршрут` },
           email: null
         };
       }

@@ -6,9 +6,11 @@ import { ImageUploader } from '../ui/ImageUploader';
 import { AlignLeft, Plus, X, RefreshCw } from 'lucide-react'; 
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
-import { slugify } from '@/lib/slugify'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
+import { slugify } from '@/lib/slugify'; 
+import { TourCategory } from '@prisma/client'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
 
-export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
+type CategoryOption = Pick<TourCategory, 'id' | 'title'>;
+export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] }) => {
   const { control, watch, setValue, getValues } = useFormContext();
   
   const { fields, append, remove } = useFieldArray({

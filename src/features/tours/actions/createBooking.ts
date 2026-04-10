@@ -439,7 +439,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       });
     }
 
-  // Email-уведомление
+// Email-уведомление
     // ✅ ИСПОЛЬЗУЕМ СТРОГОЕ РЕГУЛЯРНОЕ ВЫРАЖЕНИЕ ДЛЯ EMAIL
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const clientEmail = (data.social && emailRegex.test(data.social.trim())) ? data.social.trim() : null;

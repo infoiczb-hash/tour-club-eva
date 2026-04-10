@@ -123,7 +123,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             {user ? (
                <div className="flex items-center gap-5">
                  {/* 🔥 ВСТАВИЛИ КОЛОКОЛЬЧИК (Десктоп) */}
-                 <NotificationBell memberId={user.id} />
+               <NotificationBell />
                  
                  <Link href="/account" className="flex items-center gap-2.5 group">
                    <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[12px] font-black">
@@ -144,7 +144,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             {user && (
               <div className="flex items-center gap-3">
                 {/* 🔥 ВСТАВИЛИ КОЛОКОЛЬЧИК (Мобилка) */}
-                <NotificationBell memberId={user.id} />
+                 <NotificationBell />
                 
                 <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[12px] font-black">
                   {initials}
