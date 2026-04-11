@@ -13,9 +13,9 @@ export async function middleware(request: NextRequest) {
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src * blob: data:;
-    media-src * blob: data:;
-    connect-src *;
+    img-src 'self' https://res.cloudinary.com https://*.supabase.co blob: data:;
+    media-src 'self' https://res.cloudinary.com blob: data:;
+    connect-src 'self' https://*.supabase.co https://res.cloudinary.com https://va.vercel-scripts.com;
     font-src 'self' data: https://fonts.gstatic.com;
     frame-src 'self' https://www.youtube.com https://oauth.telegram.org https://telegram.org;
     object-src 'none';

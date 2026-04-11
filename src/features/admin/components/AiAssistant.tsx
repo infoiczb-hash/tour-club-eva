@@ -145,7 +145,7 @@ export default function AiAssistant() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Спроси меня о чем угодно..."
-              className="flex-1 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all placeholder:text-slate-300"
+              className="flex-1 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all placeholder:text-slate-600"
             />
             <button 
               onClick={handleSend}

@@ -2,6 +2,31 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationHub } from '@/lib/notifications/hub';
 
+// === НОВАЯ ФУНКЦИЯ ДЛЯ СИСТЕМНЫХ И АДМИНСКИХ АЛЕРТОВ (КРОНЫ) ===
+export async function sendTelegramMessage(chatId: string | number, text: string) {
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  if (!BOT_TOKEN) {
+    console.warn("TELEGRAM_BOT_TOKEN не задан. Отправка системного сообщения отменена.");
+    return;
+  }
+  
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }),
+    });
+  } catch (error) {
+    console.error(`Ошибка отправки ТГ сообщения в чат ${chatId}:`, error);
+  }
+}
+// ===============================================================
+
 // 1. Уведомление о появлении НОВЫХ ДАТ в расписании
 export async function notifySubscribersOnNewDates(
   tourId: string,

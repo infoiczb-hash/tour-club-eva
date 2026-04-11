@@ -56,7 +56,13 @@ export const uploadFile = withAdminAuth(async (
     }
 
     // ── Генерация имени файла ──
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const EXT_MAP: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    };
+    const fileExt = EXT_MAP[file.type] ?? 'jpg';
     const safeName = file.name
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9]/g, '_')

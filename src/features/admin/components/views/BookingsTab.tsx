@@ -266,11 +266,11 @@ export default function BookingsTab({
         <div className="flex bg-slate-200/50 p-1.5 rounded-2xl w-fit">
             <button 
                 onClick={() => setActiveMode('list')}
-                className={clsx("flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all", activeMode === 'list' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-400 hover:text-slate-800')}
+                className={clsx("flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all", activeMode === 'list' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
             >Лента</button>
             <button 
                 onClick={() => setActiveMode('groups')}
-                className={clsx("flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all", activeMode === 'groups' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-400 hover:text-slate-800')}
+                className={clsx("flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all", activeMode === 'groups' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
             >Списки групп</button>
         </div>
       </div>
@@ -284,10 +284,10 @@ export default function BookingsTab({
             {/* Панель фильтров: Поиск + Активные/Архив */}
             <div className="flex flex-col md:flex-row gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm items-center">
                 <div className="flex items-center relative w-full md:w-auto md:flex-1">
-                    <Search className="absolute left-3 text-slate-300" size={18}/>
+                    <Search className="absolute left-3 text-slate-600" size={18}/>
                     <input 
                         placeholder="Поиск по ФИО, телефону или заметкам..." 
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm font-medium outline-none text-slate-900 border border-slate-100 focus:border-teal-500 focus:bg-white transition-all placeholder:text-slate-300" 
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm font-medium outline-none text-slate-900 border border-slate-100 focus:border-teal-500 focus:bg-white transition-all placeholder:text-slate-600" 
                         value={searchTerm}
                         onChange={e => onSearchChange(e.target.value)}
                     />
@@ -296,13 +296,13 @@ export default function BookingsTab({
                 <div className="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto shrink-0">
                   <button 
                     onClick={() => onFilterTabChange('active')}
-                    className={clsx("flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterTab === 'active' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-400 hover:text-slate-800')}
+                    className={clsx("flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterTab === 'active' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
                   >
                     <Inbox size={14}/> Активные
                   </button>
                   <button 
                     onClick={() => onFilterTabChange('archive')}
-                    className={clsx("flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterTab === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-800')}
+                    className={clsx("flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterTab === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
                   >
                     <Archive size={14}/> Архив
                   </button>
@@ -312,7 +312,7 @@ export default function BookingsTab({
             {/* DESKTOP TABLE (без изменений) */}
             <div className="hidden md:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
                 <table className="w-full text-sm text-left table-fixed">
-                    <thead className="bg-slate-50 text-slate-400 font-black uppercase text-[12px] tracking-widest border-b border-slate-200">
+                    <thead className="bg-slate-50 text-slate-500 font-black uppercase text-[12px] tracking-widest border-b border-slate-200">
                         <tr>
                             <th className="p-5 w-[20%]">Тур и Дата</th>
                             <th className="p-5 w-[20%]">Клиент</th>
@@ -323,7 +323,7 @@ export default function BookingsTab({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {bookings.length === 0 && (
-                            <tr><td colSpan={5} className="p-8 text-center text-slate-300 font-medium">Ничего не найдено</td></tr>
+                            <tr><td colSpan={5} className="p-8 text-center text-slate-600 font-medium">Ничего не найдено</td></tr>
                         )}
                         {bookings.map(b => {
                             const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
@@ -344,12 +344,12 @@ export default function BookingsTab({
                                     <td className="p-5 align-top">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="font-black text-slate-900 text-sm">
-                                                {b.user_name} <span className="text-slate-300 text-xs font-mono ml-1">#{b.short_id || '---'}</span>
+                                                {b.user_name} <span className="text-slate-600 text-xs font-mono ml-1">#{b.short_id || '---'}</span>
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-1 mt-1.5">
-                                            <span className="text-xs text-slate-700 font-medium"><Phone size={10} className="inline text-slate-300 mr-1"/> {b.user_phone}</span>
-                                            <span className="text-[12px] text-slate-300 font-medium mt-1">Создано: {new Date(b.created_at).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'})}</span>
+                                            <span className="text-xs text-slate-700 font-medium"><Phone size={10} className="inline text-slate-600 mr-1"/> {b.user_phone}</span>
+                                            <span className="text-[12px] text-slate-600 font-medium mt-1">Создано: {new Date(b.created_at).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'})}</span>
                                         </div>
                                     </td>
                                   
@@ -362,7 +362,7 @@ export default function BookingsTab({
                                         </div>
                                         
                                         <div className="flex items-center gap-2 mb-2">
-                                          <div className="text-[9px] font-bold uppercase text-slate-400 bg-slate-100 border border-slate-200 px-2 py-1 rounded w-fit">
+                                          <div className="text-[9px] font-bold uppercase text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded w-fit">
                                               {b.payment_method === 'qr' ? 'Клевер QR' : b.payment_method === 'biletpmr' ? 'BiletPMR' : 'Наличные'}
                                           </div>
                                           {b.amount_paid > 0 && <div className="text-[12px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Аванс: {b.amount_paid}</div>}
@@ -388,7 +388,7 @@ export default function BookingsTab({
                                                     showToast('Комментарий сохранен', 'success');
                                                 }
                                             }}
-                                            className="w-full min-h-[70px] text-xs p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-sm resize-y placeholder:text-slate-300 text-slate-800 transition-all font-medium"
+                                            className="w-full min-h-[70px] text-xs p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-sm resize-y placeholder:text-slate-600 text-slate-800 transition-all font-medium"
                                         />
                                     </td>
                                     
@@ -429,13 +429,13 @@ export default function BookingsTab({
                                     <td colSpan={5} className="p-4 px-8">
                                       <div className="flex flex-wrap gap-2">
                                         <div className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs flex flex-col gap-0.5 shadow-sm">
-                                          <span className="font-black text-slate-900">{b.user_name} <span className="text-slate-300 font-medium">(Заказчик)</span></span>
-                                          <span className="text-slate-400 text-[12px] font-bold uppercase">Взрослый</span>
+                                          <span className="font-black text-slate-900">{b.user_name} <span className="text-slate-600 font-medium">(Заказчик)</span></span>
+                                          <span className="text-slate-500 text-[12px] font-bold uppercase">Взрослый</span>
                                         </div>
                                         {guests.map((g, i) => (
                                           <div key={i} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs flex flex-col gap-0.5 shadow-sm">
                                             <span className="font-bold text-slate-800">{g.name}</span>
-                                            <div className="flex gap-2 items-center text-[12px] uppercase font-bold text-slate-400">
+                                            <div className="flex gap-2 items-center text-[12px] uppercase font-bold text-slate-500">
                                               <span>{getTicketLabel(g.ticketType, g.age)}</span>
                                               {g.jacket && <span className="text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">Жилет: {g.jacket}</span>}
                                             </div>
@@ -470,7 +470,7 @@ export default function BookingsTab({
                         
                         <div className="flex justify-between items-start pl-2 gap-2">
                             <div>
-                                <div className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                <div className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1">
                                   {b.tour?.date ? new Date(b.tour.date).toLocaleDateString('ru-RU') : 'Без даты'}
                                 </div>
                                 <h3 className="font-black text-sm text-slate-900 leading-tight line-clamp-2">{b.tour?.title}</h3>
@@ -499,9 +499,9 @@ export default function BookingsTab({
                             <div className="flex justify-between items-start">
                                 <div>
                                     <div className="font-black text-lg text-slate-900 flex items-center gap-2">
-                                        {b.user_name} <span className="text-slate-300 text-xs font-mono font-medium">#{b.short_id || '---'}</span>
+                                        {b.user_name} <span className="text-slate-600 text-xs font-mono font-medium">#{b.short_id || '---'}</span>
                                     </div>
-                                <div className="text-[12px] font-medium text-slate-400 mt-0.5">
+                                <div className="text-[12px] font-medium text-slate-500 mt-0.5">
                                       Создано: {new Date(b.created_at).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'})}
                                     </div>
                                     
@@ -512,7 +512,7 @@ export default function BookingsTab({
                                       </div>
                                       
                                       <div className="flex gap-1.5 items-center">
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase bg-slate-200/60 px-1.5 py-0.5 rounded border border-slate-300/50">
+                                        <span className="text-[9px] font-bold text-slate-500 uppercase bg-slate-200/60 px-1.5 py-0.5 rounded border border-slate-300/50">
                                           {b.payment_method === 'qr' ? 'Клевер QR' : b.payment_method === 'biletpmr' ? 'BiletPMR' : 'Наличные'}
                                         </span>
                                         {b.discount > 0 && (
@@ -540,18 +540,18 @@ export default function BookingsTab({
 
                             {hasGuests && (
                                 <div className="pt-3 border-t border-slate-200 flex flex-col gap-2 mt-1">
-                                    <span className="text-[12px] uppercase font-black text-slate-400 tracking-wider">Участники ({guests.length + 1}):</span>
+                                    <span className="text-[12px] uppercase font-black text-slate-500 tracking-wider">Участники ({guests.length + 1}):</span>
                                     <div className="flex flex-col gap-1.5">
                                         <div className="text-xs flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-sm">
-                                            <span className="font-bold text-slate-900">{b.user_name} <span className="text-[12px] text-slate-300 font-normal">(Заказчик)</span></span>
-                                            <span className="text-[12px] font-bold text-slate-400 uppercase">Взрослый</span>
+                                            <span className="font-bold text-slate-900">{b.user_name} <span className="text-[12px] text-slate-600 font-normal">(Заказчик)</span></span>
+                                            <span className="text-[12px] font-bold text-slate-500 uppercase">Взрослый</span>
                                         </div>
                                         {guests.map((g, i) => (
                                             <div key={i} className="text-xs flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-sm">
                                                 <span className="font-bold text-slate-800">{g.name}</span>
                                                 <div className="flex items-center gap-1.5">
                                                     {g.jacket && <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 uppercase">Жилет: {g.jacket}</span>}
-                                                    <span className="text-[12px] font-bold text-slate-400 uppercase">{getTicketLabel(g.ticketType, g.age)}</span>
+                                                    <span className="text-[12px] font-bold text-slate-500 uppercase">{getTicketLabel(g.ticketType, g.age)}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -561,7 +561,7 @@ export default function BookingsTab({
                         </div>
 
                         <div className="ml-2 bg-white border border-slate-300 rounded-2xl p-1 flex gap-2 items-start focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 shadow-sm transition-all">
-                            <AlertCircle size={16} className="text-slate-300 mt-2.5 ml-2 shrink-0" />
+                            <AlertCircle size={16} className="text-slate-600 mt-2.5 ml-2 shrink-0" />
                             <textarea 
                                 defaultValue={b.comment || ''}
                                 placeholder="Заметки (собаки, лодки)..."
@@ -571,7 +571,7 @@ export default function BookingsTab({
                                         showToast('Заметка сохранена', 'success');
                                     }
                                 }}
-                                className="w-full bg-transparent text-xs font-medium text-slate-900 leading-relaxed outline-none resize-none placeholder:text-slate-300 min-h-[50px] p-2"
+                                className="w-full bg-transparent text-xs font-medium text-slate-900 leading-relaxed outline-none resize-none placeholder:text-slate-600 min-h-[50px] p-2"
                             />
                         </div>
                     </div>
@@ -593,10 +593,10 @@ export default function BookingsTab({
           {/* Панель поиска и сортировки для групп */}
           <div className="flex flex-col md:flex-row gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm items-center">
             <div className="flex items-center relative w-full md:w-auto md:flex-1">
-              <Search className="absolute left-3 text-slate-300" size={18}/>
+              <Search className="absolute left-3 text-slate-600" size={18}/>
               <input 
                 placeholder="Поиск групп по названию тура..." 
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm font-medium outline-none text-slate-900 border border-slate-100 focus:border-teal-500 focus:bg-white transition-all placeholder:text-slate-300" 
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm font-medium outline-none text-slate-900 border border-slate-100 focus:border-teal-500 focus:bg-white transition-all placeholder:text-slate-600" 
                 value={groupsSearch}
                 onChange={e => onGroupsSearchChange(e.target.value)}
               />
@@ -616,7 +616,7 @@ export default function BookingsTab({
           {groupsLoading ? (
             <div className="p-10 text-center text-slate-500">Загрузка групп...</div>
           ) : groupsManifest.length === 0 ? (
-            <div className="p-10 text-center text-slate-400 font-medium bg-white rounded-3xl border border-dashed border-slate-300">
+            <div className="p-10 text-center text-slate-500 font-medium bg-white rounded-3xl border border-dashed border-slate-300">
               Групп не найдено
             </div>
           ) : (
@@ -633,7 +633,7 @@ export default function BookingsTab({
                       </div>
                       <div>
                         <h3 className="font-black text-lg text-slate-900 uppercase tracking-tight leading-tight">{group.tourName}</h3>
-                        <div className="flex items-center gap-3 text-xs font-black text-slate-400 uppercase tracking-widest mt-1">
+                        <div className="flex items-center gap-3 text-xs font-black text-slate-500 uppercase tracking-widest mt-1">
                           <span className="text-teal-700">{group.date}</span>
                           <span className="w-1 h-1 rounded-full bg-slate-300" />
                           <span>{group.totalTickets} мест</span>
@@ -641,7 +641,7 @@ export default function BookingsTab({
                       </div>
                     </div>
                     <div className={clsx("w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 transition-transform", isOpen && "rotate-180 bg-slate-100")}>
-                      <ChevronDown size={18} className="text-slate-400" />
+                      <ChevronDown size={18} className="text-slate-500" />
                     </div>
                   </div>
 
@@ -666,9 +666,9 @@ export default function BookingsTab({
                               "hover:bg-white transition-colors",
                               p.isMain && "border-t-[3px] border-t-slate-200 bg-slate-100/50"
                             )}>
-                              <td className="px-6 py-4 text-xs font-black text-slate-400">{index + 1}</td>
+                              <td className="px-6 py-4 text-xs font-black text-slate-500">{index + 1}</td>
                               <td className="px-6 py-4">
-                                <span className={clsx("text-xs font-black px-2 py-1 rounded", p.isMain ? "bg-indigo-100 text-indigo-800" : "text-slate-300 font-mono")}>
+                                <span className={clsx("text-xs font-black px-2 py-1 rounded", p.isMain ? "bg-indigo-100 text-indigo-800" : "text-slate-600 font-mono")}>
                                   #{p.shortId}
                                 </span>
                               </td>
@@ -681,7 +681,7 @@ export default function BookingsTab({
                                   <span className="flex items-center w-fit gap-1 text-[12px] uppercase font-black tracking-widest bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300">
                                     <LifeBuoy size={12}/> Жилет: {p.jacket}
                                   </span>
-                                ) : <span className="text-slate-300">—</span>}
+                                ) : <span className="text-slate-600">—</span>}
                               </td>
                               <td className="px-6 py-4">
                                 {p.phone && p.phone !== '—' ? (
@@ -689,7 +689,7 @@ export default function BookingsTab({
                                     <a href={`tel:${p.phone.replace(/\s/g, '')}`} className="font-mono text-xs font-bold text-slate-700 hover:text-teal-700">{p.phone}</a>
                                     {p.isMain && p.social && <Send size={12} className="text-sky-600"/>}
                                   </div>
-                                ) : <span className="text-slate-300">—</span>}
+                                ) : <span className="text-slate-600">—</span>}
                               </td>
                               <td className="px-6 py-4">
                                 {p.status === 'confirmed' ? (
@@ -741,13 +741,13 @@ export default function BookingsTab({
             <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <div>
                 <h3 className="font-black text-lg text-slate-900">Проверка оплаты</h3>
-                <p className="text-xs font-bold text-slate-400 mt-0.5">
+                <p className="text-xs font-bold text-slate-500 mt-0.5">
                   Бронь #{receiptModal.booking.short_id || receiptModal.booking.id.substring(0,4)} • {receiptModal.booking.user_name}
                 </p>
               </div>
               <button 
                 onClick={() => setReceiptModal({isOpen: false, booking: null})} 
-                className="p-2 text-slate-300 hover:text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
+                className="p-2 text-slate-600 hover:text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
               >
                 <XIcon size={24} />
               </button>
@@ -761,7 +761,7 @@ export default function BookingsTab({
                     className="max-h-[50vh] object-contain rounded-xl shadow-sm border border-slate-200 bg-white"
                   />
               ) : (
-                  <div className="text-slate-300 font-medium flex flex-col items-center gap-2">
+                  <div className="text-slate-600 font-medium flex flex-col items-center gap-2">
                     <AlertCircle size={32} />
                     <span>Файл чека не найден</span>
                   </div>
@@ -770,7 +770,7 @@ export default function BookingsTab({
 
             <div className="p-5 border-t border-slate-200 bg-white flex flex-col gap-3">
               <div className="flex justify-between items-center px-2 mb-2">
-                 <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">К оплате:</span>
+                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">К оплате:</span>
                  <span className="text-2xl font-black text-slate-900">{receiptModal.booking.total_price} MDL</span>
               </div>
               <div className="flex gap-3">
@@ -804,7 +804,7 @@ export default function BookingsTab({
               </div>
               <button 
                 onClick={() => setBroadcastModal({isOpen: false, group: null})} 
-                className="p-2 text-slate-300 hover:text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
+                className="p-2 text-slate-600 hover:text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
               >
                 <XIcon size={20} />
               </button>
@@ -819,14 +819,14 @@ export default function BookingsTab({
                   value={broadcastText}
                   onChange={(e) => setBroadcastText(e.target.value)}
                   placeholder="Например: Ребята, завтра обещают дождь, возьмите дождевики..."
-                  className="w-full h-32 p-4 bg-white border border-slate-300 rounded-2xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-inner resize-none text-sm text-slate-900 placeholder:text-slate-300 transition-all font-medium"
+                  className="w-full h-32 p-4 bg-white border border-slate-300 rounded-2xl outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-inner resize-none text-sm text-slate-900 placeholder:text-slate-600 transition-all font-medium"
                 />
               </div>
             </div>
             <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
               <button 
                 onClick={() => setBroadcastModal({isOpen: false, group: null})}
-                className="px-6 py-3 font-bold text-slate-400 hover:bg-slate-200 rounded-xl text-xs uppercase tracking-widest transition-colors"
+                className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-200 rounded-xl text-xs uppercase tracking-widest transition-colors"
               >
                 Отмена
               </button>

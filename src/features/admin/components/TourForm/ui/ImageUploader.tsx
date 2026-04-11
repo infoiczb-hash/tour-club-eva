@@ -95,7 +95,7 @@ export const ImageUploader = ({
 
   return (
     <div className={clsx("w-full", className)}>
-      <label className="text-xs font-bold uppercase text-slate-300 mb-2 block">
+      <label className="text-xs font-bold uppercase text-slate-600 mb-2 block">
         {label}
       </label>
 
@@ -154,7 +154,7 @@ export const ImageUploader = ({
               <span className="text-sm font-bold">Загрузка...</span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-300">
+            <div className="flex flex-col items-center gap-2 text-slate-600">
               <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                 <UploadCloud size={24} />
               </div>

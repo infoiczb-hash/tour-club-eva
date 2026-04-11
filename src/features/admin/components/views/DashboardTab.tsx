@@ -64,7 +64,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
       {/* 1. ВОРОНКА ЗАЯВОК И АЛЕРТЫ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 cursor-pointer" onClick={onNavigateToBookings}>
         {/* Срочные чеки */}
-        <div className={`rounded-2xl p-4 flex flex-col justify-between shadow-sm border transition-transform hover:scale-[1.02] ${analytics.moderation > 0 ? 'bg-orange-500 border-orange-600 text-white shadow-orange-500/20' : 'bg-white border-slate-200 text-slate-300'}`}>
+        <div className={`rounded-2xl p-4 flex flex-col justify-between shadow-sm border transition-transform hover:scale-[1.02] ${analytics.moderation > 0 ? 'bg-orange-500 border-orange-600 text-white shadow-orange-500/20' : 'bg-white border-slate-200 text-slate-600'}`}>
           <div className="flex justify-between items-start mb-2">
             <Search size={20} className={analytics.moderation > 0 ? 'animate-pulse' : ''}/>
             <ChevronRight size={18} className="opacity-50" />
@@ -76,7 +76,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
         </div>
 
         {/* Наличные (Новые) */}
-        <div className={`rounded-2xl p-4 flex flex-col justify-between shadow-sm border transition-transform hover:scale-[1.02] ${analytics.pending > 0 ? 'bg-sky-500 border-sky-600 text-white shadow-sky-500/20' : 'bg-white border-slate-200 text-slate-300'}`}>
+        <div className={`rounded-2xl p-4 flex flex-col justify-between shadow-sm border transition-transform hover:scale-[1.02] ${analytics.pending > 0 ? 'bg-sky-500 border-sky-600 text-white shadow-sky-500/20' : 'bg-white border-slate-200 text-slate-600'}`}>
           <div className="flex justify-between items-start mb-2">
             <Users size={20} />
             <ChevronRight size={18} className="opacity-50" />
@@ -88,7 +88,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
         </div>
 
         {/* Ждут оплаты (Онлайн) */}
-        <div className={`rounded-2xl p-4 flex flex-col justify-between shadow-sm border transition-transform hover:scale-[1.02] ${analytics.awaiting > 0 ? 'bg-amber-400 border-amber-500 text-amber-900 shadow-amber-400/20' : 'bg-white border-slate-200 text-slate-300'}`}>
+        <div className={`rounded-2xl p-4 flex flex-col justify-between shadow-sm border transition-transform hover:scale-[1.02] ${analytics.awaiting > 0 ? 'bg-amber-400 border-amber-500 text-amber-900 shadow-amber-400/20' : 'bg-white border-slate-200 text-slate-600'}`}>
           <div className="flex justify-between items-start mb-2">
             <Clock size={20} />
             <ChevronRight size={18} className="opacity-50" />
@@ -101,7 +101,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
       </div>
 
       {/* 2. ОПЕРАЦИОННАЯ СВОДКА И ФИНАНСЫ */}
-      <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest mt-6">
+      <h3 className="text-sm font-black text-slate-600 uppercase tracking-widest mt-6">
         Общая сводка
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -122,7 +122,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
           label="Архив" 
           value={stats.finishedTours} 
           icon={<Archive size={18}/>} 
-          color="bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          color="bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-600"
         />
         <DashboardCard 
           label="Контент" 
@@ -152,7 +152,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
                   className={`bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors ${isBurning ? 'border-rose-300 dark:border-rose-900/50' : 'border-slate-200 dark:border-slate-800'}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 border ${isBurning ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-400'}`}>
+                    <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 border ${isBurning ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-500'}`}>
                       <span className="text-[12px] font-black uppercase tracking-widest mb-0.5">
                         {new Date(tour.date).toLocaleString('ru', {month:'short'})}
                       </span>
@@ -165,7 +165,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
                         {tour.title}
                         {isBurning && <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[9px] rounded uppercase tracking-widest">Скоро</span>}
                       </h4>
-                      <p className="text-xs text-slate-300 flex items-center gap-1 mt-1">
+                      <p className="text-xs text-slate-600 flex items-center gap-1 mt-1">
                         <Users size={12}/> 
                         {(typeof tour.guide === 'object' && tour.guide?.name) ? tour.guide.name : "Без гида"}
                       </p>
@@ -184,7 +184,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
                       </div>
                     )}
                     
-                    <div className="flex items-center gap-1.5 text-slate-300 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg whitespace-nowrap">
                       Из {tour.spots} мест
                     </div>
                   </div>
@@ -193,7 +193,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
             })}
           </div>
         ) : (
-          <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-300 text-sm font-medium">
+          <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-600 text-sm font-medium">
             На ближайшие 30 дней стартов не запланировано 🌴
           </div>
         )}

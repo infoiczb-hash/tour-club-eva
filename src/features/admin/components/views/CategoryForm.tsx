@@ -114,7 +114,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
             {initialData?.id ? 'Редактировать' : 'Новая'}{' '}
             {type === 'tour' ? 'категория туров' : 'категория блога'}
           </h2>
-          <button onClick={onClose} className="text-slate-300 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-slate-600 hover:text-white transition-colors">
             <X size={24} />
           </button>
         </div>
@@ -123,7 +123,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
           <form id="category-form" onSubmit={handleSubmit} className="space-y-5">
             
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-300">Название категории *</label>
+              <label className="text-sm font-medium text-slate-600">Название категории *</label>
               <input
                 required
                 name="title"
@@ -135,7 +135,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-300">Slug (URL) *</label>
+              <label className="text-sm font-medium text-slate-600">Slug (URL) *</label>
               <input
                 required
                 name="slug"
@@ -148,7 +148,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
 
             {type === 'tour' && (
               <div className="space-y-3">
-                <label className="text-sm font-medium text-slate-300">Иконка категории</label>
+                <label className="text-sm font-medium text-slate-600">Иконка категории</label>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                   {AVAILABLE_ICONS.map((item) => {
                     const isSelected = formData.icon === item.name;
@@ -161,7 +161,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                           isSelected
                             ? 'bg-teal-500/20 border-teal-500 text-teal-400'
-                            : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 hover:text-slate-300'
+                            : 'bg-slate-950 border-slate-800 text-slate-600 hover:border-slate-600 hover:text-slate-600'
                         }`}
                       >
                         <item.icon size={24} strokeWidth={isSelected ? 2.5 : 2} />
@@ -177,7 +177,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
 
             {type === 'tour' && (
               <div className="space-y-3 border-t border-slate-800 pt-4">
-                <label className="text-sm font-medium text-slate-300">Фирменный цвет категории</label>
+                <label className="text-sm font-medium text-slate-600">Фирменный цвет категории</label>
                 <div className="flex flex-wrap gap-3">
                   {AVAILABLE_COLORS.map((color) => {
                     const isSelected = formData.color === color.key;
@@ -199,7 +199,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
 
             <div className="grid grid-cols-2 gap-4 border-t border-slate-800 pt-4">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-300">Порядок сортировки</label>
+                <label className="text-sm font-medium text-slate-600">Порядок сортировки</label>
                 <input
                   type="number"
                   name="sort_order"
@@ -208,7 +208,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
                   placeholder="0"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-teal-500 outline-none"
                 />
-                <p className="text-[11px] text-slate-300">Меньше цифра = выше в списке</p>
+                <p className="text-[11px] text-slate-600">Меньше цифра = выше в списке</p>
               </div>
 
               <div className="flex items-center mt-6">
@@ -224,7 +224,7 @@ export default function CategoryForm({ initialData, type, onClose, onSubmit }: P
                     <div className={`block w-10 h-6 rounded-full transition-colors ${formData.is_active ? 'bg-teal-500' : 'bg-slate-700'}`}></div>
                     <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_active ? 'translate-x-4' : ''}`}></div>
                   </div>
-                  <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+                  <span className="text-sm font-medium text-slate-600 group-hover:text-white transition-colors">
                     Активна
                   </span>
                 </label>

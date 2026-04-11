@@ -12,7 +12,7 @@ export const MobileNavItem = ({ active, onClick, icon, label, badge }: MobileNav
   <button 
     onClick={onClick} 
     className={`flex flex-col items-center gap-1 w-16 relative ${
-      active ? 'text-teal-600 dark:text-teal-400' : 'text-slate-300 dark:text-slate-300'
+      active ? 'text-teal-600 dark:text-teal-400' : 'text-slate-600 dark:text-slate-600'
     }`}
     type="button"
   >

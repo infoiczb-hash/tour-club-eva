@@ -23,7 +23,7 @@ const TYPE_ICONS = {
 const STATUS_LABELS = {
   NEW: { label: 'Новое', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   WORK: { label: 'В работе', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  DONE: { label: 'Архив', color: 'bg-slate-500/10 text-slate-300 border-slate-500/20' },
+  DONE: { label: 'Архив', color: 'bg-slate-500/10 text-slate-600 border-slate-500/20' },
 };
 
 interface Props {
@@ -65,7 +65,7 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
       <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
          <h1 className="text-2xl font-black uppercase tracking-tight dark:text-white flex items-center gap-3">
             <MessageSquare className="text-teal-500"/> Обращения
-            <span className="text-sm bg-slate-100 dark:bg-slate-800 text-slate-300 px-2 py-1 rounded-lg">
+            <span className="text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 px-2 py-1 rounded-lg">
                 {inquiries.filter(i => i.status === 'NEW').length} новых
             </span>
          </h1>
@@ -77,7 +77,7 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
                  {(['ALL', 'NEW', 'WORK', 'DONE'] as const).map(s => (
                     <button 
                        key={s} onClick={() => setFilterStatus(s)}
-                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${filterStatus === s ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-300 hover:text-slate-600'}`}
+                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${filterStatus === s ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
                     >
                         {s === 'ALL' ? 'Все' : s === 'NEW' ? 'Новые' : s === 'WORK' ? 'В работе' : 'Архив'}
                     </button>
@@ -89,7 +89,7 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
       {/* Список карточек (Mobile-first адаптация вместо таблицы) */}
       <div className="grid gap-3">
          {filtered.length === 0 && (
-             <div className="text-center py-20 text-slate-300">Нет обращений по выбранным фильтрам</div>
+             <div className="text-center py-20 text-slate-600">Нет обращений по выбранным фильтрам</div>
          )}
          
          {filtered.map(item => {
@@ -105,8 +105,8 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
                              {TYPE_ICONS[item.type]}
                           </div>
                           <div>
-                              <span className="text-[12px] font-bold text-slate-300 block uppercase tracking-wider">{item.type}</span>
-                              <span className="text-xs text-slate-300 font-mono">
+                              <span className="text-[12px] font-bold text-slate-600 block uppercase tracking-wider">{item.type}</span>
+                              <span className="text-xs text-slate-600 font-mono">
                                   {new Date(item.createdAt).toLocaleString('ru-RU')}
                               </span>
                           </div>
@@ -114,9 +114,9 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
                       
                       {/* Свитчер статуса */}
                       <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg">
-                          <button onClick={() => handleStatus(item.id, 'NEW')} title="Новое" className={`p-1.5 rounded ${item.status === 'NEW' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-200'}`}><Clock size={14}/></button>
-                          <button onClick={() => handleStatus(item.id, 'WORK')} title="В работе" className={`p-1.5 rounded ${item.status === 'WORK' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-200'}`}><Eye size={14}/></button>
-                          <button onClick={() => handleStatus(item.id, 'DONE')} title="Архив" className={`p-1.5 rounded ${item.status === 'DONE' ? 'bg-slate-500 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-200'}`}><Archive size={14}/></button>
+                          <button onClick={() => handleStatus(item.id, 'NEW')} title="Новое" className={`p-1.5 rounded ${item.status === 'NEW' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'}`}><Clock size={14}/></button>
+                          <button onClick={() => handleStatus(item.id, 'WORK')} title="В работе" className={`p-1.5 rounded ${item.status === 'WORK' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'}`}><Eye size={14}/></button>
+                          <button onClick={() => handleStatus(item.id, 'DONE')} title="Архив" className={`p-1.5 rounded ${item.status === 'DONE' ? 'bg-slate-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'}`}><Archive size={14}/></button>
                       </div>
                   </div>
 
@@ -139,7 +139,7 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
                           {payload.company && <div className="mb-2 text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded w-fit">Компания: {payload.company}</div>}
                           {payload.rating && <div className="mb-2 text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded w-fit">Оценка: {payload.rating} ★</div>}
                           
-                          <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          <p className="text-sm text-slate-600 dark:text-slate-600 whitespace-pre-wrap leading-relaxed">
                               {item.message}
                           </p>
                       </div>

@@ -51,7 +51,7 @@ export const Lists = () => {
             <button 
               type="button" 
               onClick={() => remove(k)} 
-              className="text-slate-300 hover:text-rose-500 transition-colors"
+              className="text-slate-600 hover:text-rose-500 transition-colors"
             >
               <XCircle size={14}/>
             </button>
@@ -101,7 +101,7 @@ export const Lists = () => {
                  <button 
                    type="button" 
                    onClick={() => removeIncDet(index)} 
-                   className="text-slate-300 hover:text-rose-500 transition-colors"
+                   className="text-slate-600 hover:text-rose-500 transition-colors"
                  >
                    <Trash2 size={18}/>
                  </button>
@@ -148,7 +148,7 @@ export const Lists = () => {
                  <button 
                    type="button" 
                    onClick={() => removeExcDet(index)} 
-                   className="text-slate-300 hover:text-rose-500 transition-colors"
+                   className="text-slate-600 hover:text-rose-500 transition-colors"
                  >
                    <Trash2 size={18}/>
                  </button>
@@ -179,7 +179,7 @@ export const Lists = () => {
 - Страховка
 - Билеты" 
                 />
-                <button type="button" onClick={() => removeCheck(index)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                <button type="button" onClick={() => removeCheck(index)} className="absolute top-2 right-2 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
               </div>
             ))}
          </div>
@@ -194,14 +194,14 @@ export const Lists = () => {
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {docFields.map((field, index) => (
               <div key={field.id} className="bg-white p-4 rounded-xl border border-slate-200 relative group flex gap-3 items-start">
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-300">
+                <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
                    <FileText size={24} />
                 </div>
                 <div className="flex-1 space-y-2">
                   <FormInput name={`documents.${index}.title`} label="Название" placeholder="Памятка туристу" />
                   <FormInput name={`documents.${index}.url`} label="Ссылка (URL)" placeholder="https://..." className="text-xs font-mono" />
                 </div>
-                <button type="button" onClick={() => removeDoc(index)} className="text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                <button type="button" onClick={() => removeDoc(index)} className="text-slate-600 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
               </div>
             ))}
          </div>

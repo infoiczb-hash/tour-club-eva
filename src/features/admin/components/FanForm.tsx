@@ -111,7 +111,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
         <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           {initialData ? "✏️ Редактирование карточки" : "✨ Новая карточка (Квиз)"}
         </h1>
-        <p className="text-xs text-slate-300 mt-1">
+        <p className="text-xs text-slate-600 mt-1">
           {initialData ? "Измените описание или категорию теста." : "Выберите системный ключ и настройте внешний вид."}
         </p>
       </div>
@@ -136,7 +136,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
               <input 
                 {...form.register("slug")}
                 disabled
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-300 font-mono text-sm outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 font-mono text-sm outline-none"
               />
             ) : (
               <select 
@@ -154,7 +154,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
 
           {/* --- КАТЕГОРИЯ --- */}
           <div className="space-y-2">
-            <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2">
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
                 <Tags size={12} /> Раздел на сайте <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
@@ -166,7 +166,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
                     className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
                       selectedCategory === cat 
                         ? 'bg-teal-500 text-white border-teal-600 shadow-md' 
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-300 hover:border-teal-300'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-600 hover:border-teal-300'
                     }`}
                  >
                     {cat}
@@ -179,7 +179,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* --- НАЗВАНИЕ --- */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Название карточки <span className="text-red-500">*</span></label>
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Название карточки <span className="text-red-500">*</span></label>
               <input 
                 {...form.register("title")}
                 placeholder="напр. Разбор страхов"
@@ -190,7 +190,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
 
             {/* --- ОБЛОЖКА --- */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">URL обложки</label>
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">URL обложки</label>
               <input 
                 {...form.register("image")}
                 placeholder="https://res.cloudinary.com/..."
@@ -202,7 +202,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
 
           {/* --- ОПИСАНИЕ --- */}
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Описание <span className="text-red-500">*</span></label>
+            <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Описание <span className="text-red-500">*</span></label>
             <textarea 
               {...form.register("description")}
               rows={3}
@@ -218,13 +218,13 @@ export default function FanForm({ initialData, onSuccess }: Props) {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" {...form.register("isActive")} className="sr-only peer" />
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                <span className="ml-3 text-sm font-bold text-slate-700 dark:text-slate-300">Показывать на сайте</span>
+                <span className="ml-3 text-sm font-bold text-slate-700 dark:text-slate-600">Показывать на сайте</span>
               </label>
             </div>
 
             {/* --- СЧЕТЧИК --- */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Прохождений (Накрутка)</label>
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Прохождений (Накрутка)</label>
               <input 
                 type="number"
                 {...form.register("passCount", { valueAsNumber: true })}

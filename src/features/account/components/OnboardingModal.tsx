@@ -3,12 +3,11 @@
 import React, { useState, useTransition, useEffect } from 'react';
 import { Phone, MapPin, CheckCircle2, AlertCircle, X, Compass, Bot, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-// ✅ Исправлен импорт на правильное имя функции и добавлен алиас
 import { saveOnboardingDataAction } from '@/features/account/actions/onboarding';
 
 export default function OnboardingModal() {
   const [phone, setPhone] = useState('+373 ');
-  const [name, setName] = useState(''); // ✅ Добавлен стейт для имени
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
   const [successData, setSuccessData] = useState<{ linkedCount: number } | null>(null);
@@ -43,7 +42,6 @@ export default function OnboardingModal() {
     }
 
     startTransition(async () => {
-      // ✅ Теперь передаем оба требуемых аргумента
       const res = await saveOnboardingDataAction(phone, name);
       
       if (res.success) {
@@ -78,16 +76,16 @@ export default function OnboardingModal() {
               <CheckCircle2 size={40} />
             </div>
             <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-3">
-              Отлично!
+              Отлично, {name.split(' ')[0]}!
             </h2>
             <p className="text-slate-400 font-medium leading-relaxed mb-4">
               {successData.linkedCount > 0 
-                ? `С возвращением, ${name}! Мы нашли вашу историю и добавили ${successData.linkedCount} прошлых туров в кабинет.` 
-                : `Супер, ${name}, данные сохранены! Теперь вы готовы к новым приключениям, а кэшбэк будет копиться автоматически!`}
+                ? `Мы нашли вашу историю и привязали ${successData.linkedCount} прошлых туров к вашему кабинету.` 
+                : 'Данные сохранены! Теперь вы готовы к новым приключениям, а кэшбэк будет копиться автоматически.'}
             </p>
             <div className="inline-flex items-center gap-2 bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-xs text-slate-300">
               <Bot size={14} className="text-teal-400" />
-              <span>Не забудьте заглянуть в настройки профиля!</span>
+              <span>Переходим к настройкам профиля...</span>
             </div>
           </div>
         ) : (
@@ -97,18 +95,17 @@ export default function OnboardingModal() {
                 <Compass size={28} />
               </div>
               <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
-                Ваш профиль
+                Завершим настройку
               </h2>
               <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                Как к вам обращаться и какой номер использовать для связи? Это поможет нам найти вашу историю походов и начислить кэшбэк.
+                Введите данные, чтобы мы могли начислять кэшбэк и присылать уведомления о ваших турах.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* ✅ Добавлено поле для ввода Имени */}
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">
-                  Как к вам обращаться
+                  Ваше имя и фамилия
                 </label>
                 <div className="relative group">
                   <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" />
@@ -118,7 +115,7 @@ export default function OnboardingModal() {
                     onChange={(e) => setName(e.target.value)}
                     disabled={isPending}
                     className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white font-medium focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all placeholder:text-slate-600"
-                    placeholder="Иван Иванов"
+                    placeholder="Александр Николаев"
                     autoFocus
                   />
                 </div>
@@ -126,7 +123,7 @@ export default function OnboardingModal() {
 
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">
-                  Номер телефона (с кодом)
+                  Номер телефона (для связи гида)
                 </label>
                 <div className="relative group">
                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" />
@@ -143,9 +140,9 @@ export default function OnboardingModal() {
 
               <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 flex items-start gap-3">
                 <div className="mt-0.5 text-teal-400 shrink-0"><Bot size={16} /></div>
-                <p className="text-xs text-teal-100/70 leading-snug">
-                  <strong className="text-teal-400 font-bold block mb-0.5">Максимум пользы:</strong>
-                  После входа загляните в настройки. Подключите Telegram-бота и заполните инвентарь, чтобы мы могли присылать важные уведомления о турах!
+                <p className="text-[11px] text-teal-100/70 leading-snug">
+                  <strong className="text-teal-400 font-bold block mb-1">Важный шаг:</strong>
+                  После входа обязательно загляните в настройки профиля. Подключите Telegram-бота и заполните Email для получения билетов и чек-листов!
                 </p>
               </div>
 
@@ -165,7 +162,7 @@ export default function OnboardingModal() {
                   {isPending ? (
                     <div className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
                   ) : (
-                    <><MapPin size={18} /> Сохранить данные</>
+                    <><MapPin size={18} /> Сохранить и продолжить</>
                   )}
                 </button>
                 
@@ -174,7 +171,7 @@ export default function OnboardingModal() {
                   onClick={handleSkip}
                   className="w-full flex items-center justify-center py-3 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
                 >
-                  Сделаю это позже
+                  Заполню позже
                 </button>
               </div>
             </form>

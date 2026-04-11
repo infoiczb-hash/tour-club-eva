@@ -662,7 +662,7 @@ const loadGroupsManifest = useCallback(async () => {
       {modalState.fun && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl relative shadow-2xl my-auto">
-             <button onClick={() => setModalState(p => ({...p, fun: false}))} className="absolute top-4 right-4 text-slate-400 hover:text-red-500 z-10 p-2">
+             <button onClick={() => setModalState(p => ({...p, fun: false}))} className="absolute top-4 right-4 text-slate-500 hover:text-red-500 z-10 p-2">
                 <X size={24}/>
              </button>
              <FanForm 

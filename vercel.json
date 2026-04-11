@@ -16,8 +16,11 @@
     {
       "path": "/api/cron/sales-bot",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/payment-report",
+      "schedule": "0 17 * * *"
     }
-     
 
   ]
 }
