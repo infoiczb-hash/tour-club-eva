@@ -6,6 +6,7 @@ import { NotificationHub } from '@/lib/notifications/hub';
 import { Ratelimit } from '@upstash/ratelimit';
 import { handleTelegramCallback } from '@/features/admin/actions/telegramInteractive';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН АУДИТ
 
 // Инициализируем Redis (оставляем твой вариант из оригинала)
 const redis = Redis.fromEnv();
@@ -142,6 +143,14 @@ export async function POST(req: Request) {
             include: { tour: true, tourDate: true }
           });
 
+          // ✅ СИСТЕМНЫЙ АУДИТ: Логируем подтверждение брони админом через кнопку Telegram
+          Promise.resolve().then(() => {
+            logSystemAction('TELEGRAM_BOOKING_CONFIRMED', {
+              targetId: booking.id,
+              changes: { shortId: booking.shortId, admin: adminName }
+            }).catch(console.error);
+          });
+
           // 2. Уведомляем админа в рабочем чате напрямую
           const telegramTasks: Promise<any>[] = [
             editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`)
@@ -180,6 +189,14 @@ export async function POST(req: Request) {
             where: { id: bookingId },
             data: { status: 'awaiting_payment', paymentProofUrl: null },
             include: { tour: true }
+          });
+
+          // ✅ СИСТЕМНЫЙ АУДИТ: Логируем отклонение оплаты админом
+          Promise.resolve().then(() => {
+            logSystemAction('TELEGRAM_BOOKING_REJECTED', {
+              targetId: booking.id,
+              changes: { shortId: booking.shortId, admin: adminName }
+            }).catch(console.error);
           });
 
           const telegramTasks: Promise<any>[] = [
@@ -244,6 +261,14 @@ export async function POST(req: Request) {
                     source: 'tg',               // Источник
                     isActive: false             // 🔥 Отправляет на модерацию (скрыт на сайте)
                 }
+            });
+
+            // ✅ СИСТЕМНЫЙ АУДИТ: Логируем получение отзыва
+            Promise.resolve().then(() => {
+              logSystemAction('REVIEW_SUBMITTED_VIA_TELEGRAM', {
+                targetId: booking.id,
+                changes: { shortId: booking.shortId, textLength: text.length }
+              }).catch(console.error);
             });
             
             // 2. Удаляем состояние ожидания из Redis
@@ -359,6 +384,14 @@ export async function POST(req: Request) {
           return ok();
         }
 
+        // ✅ СИСТЕМНЫЙ АУДИТ: Логируем успешное сохранение чека
+        Promise.resolve().then(() => {
+          logSystemAction('PAYMENT_PROOF_RECEIVED', {
+            targetId: booking.id,
+            changes: { shortId: booking.shortId, receiptUrl }
+          }).catch(console.error);
+        });
+
         const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'MDL'}</b>\n\nПодтверждаете получение средств?`;
         
         await Promise.allSettled([
@@ -376,7 +409,16 @@ export async function POST(req: Request) {
     return ok();
 
   } catch (error: unknown) {
-    console.error('Telegram Webhook Error:', error);
+    const err = error as Error;
+    console.error('Telegram Webhook Error:', err);
+    
+    // ✅ СИСТЕМНЫЙ АУДИТ: Логируем падение вебхука
+    Promise.resolve().then(() => {
+      logSystemAction('TELEGRAM_WEBHOOK_CRITICAL_ERROR', {
+        changes: { error: err.message, stack: err.stack }
+      }).catch(console.error);
+    });
+
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 200 }); 
   }
 }

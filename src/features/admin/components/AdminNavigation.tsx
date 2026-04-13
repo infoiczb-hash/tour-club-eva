@@ -4,13 +4,13 @@ import React from 'react';
 import { 
   LayoutTemplate, Compass, Users, 
   MessageCircle, FileText, Layout, 
-  LogOut, Plus, Settings, MessageSquare, Sparkles 
+  LogOut, Plus, Settings, MessageSquare, Sparkles, Activity,
 } from 'lucide-react';
 import { SidebarNavItem } from './ui/SidebarNavItem';
 import { MobileNavItem } from './ui/MobileNavItem';
 
 // Типы табов (должны совпадать с AdminDashboard)
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun';
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun'| 'logs' | 'members';
 interface AdminNavigationProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
@@ -100,6 +100,18 @@ export default function AdminNavigation({
   onClick={() => setActiveTab('fun')} 
   icon={<Sparkles size={20}/>} 
   label="Фан-сектор" 
+  />
+  <SidebarNavItem 
+  active={activeTab === 'members'} 
+  onClick={() => setActiveTab('members')} 
+  icon={<Users size={20}/>} 
+  label="Участники" 
+/>
+<SidebarNavItem 
+  active={activeTab === 'logs'} 
+  onClick={() => setActiveTab('logs')} 
+  icon={<Activity size={20}/>} 
+  label="Журнал" 
 />
          </nav>
 

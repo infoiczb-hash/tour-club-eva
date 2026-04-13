@@ -4,13 +4,17 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { BookingStatus } from '@prisma/client';
 import { withAdminAuth } from '@/lib/auth';
+import { withAdminAudit } from '@/lib/audit'; // ✅ ИМПОРТ АУДИТА
 import { NotificationHub } from '@/lib/notifications/hub';
 import { AppEvent } from '@/lib/notifications/templates';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify';
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
 export const updateBookingStatusAction = withAdminAuth(
-  async (bookingId: string, newStatus: BookingStatus) => {
+  withAdminAudit({
+    actionName: 'UPDATE_BOOKING_STATUS',
+    getTargetId: (bookingId: string, _newStatus: BookingStatus) => bookingId,
+  })(async (bookingId: string, newStatus: BookingStatus) => {
     try {
       const booking = await prisma.$transaction(async (tx) => {
         const current = await tx.booking.findUnique({
@@ -80,7 +84,7 @@ export const updateBookingStatusAction = withAdminAuth(
             }
           });
         }
-  } else if (booking.payerTgChatId) {
+      } else if (booking.payerTgChatId) {
         // 🔥 РЕШЕНИЕ 3: Ручная отправка для Гостей
         const meetingInfo = booking.tourDate?.meetingPoint || booking.tour.meetingPoint || 'Будет уточнено гидом';
         const meetingTime = booking.tourDate?.time || '08:30';
@@ -139,9 +143,11 @@ export const updateBookingStatusAction = withAdminAuth(
       revalidatePath('/account/bookings');
       
       return { success: true };
-    } catch (error: any) {
-      console.error('Update Booking Status Error:', error);
-      return { success: false, error: error.message || 'Ошибка обновления статуса' };
+    // 🔥 ИСПРАВЛЕНО: Убрали any, используем unknown
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Update Booking Status Error:', err);
+      return { success: false, error: err.message || 'Ошибка обновления статуса' };
     }
-  }
+  })
 );

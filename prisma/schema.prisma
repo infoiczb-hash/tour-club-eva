@@ -425,22 +425,21 @@ model MemberProfile {
   favoritePosts FavoritePost[] 
   waitlists     Waitlist[]     
   reviews       Review[]
-  notifications Notification[] // ✅ НОВОЕ ПОЛЕ: Связь с таблицей логов/уведомлений
+  notifications Notification[]
   pushSubscriptions PushSubscription[] 
 
-  // ✅ НОВОЕ ПОЛЕ: Баланс для кэшбэка и рефералки (v2.0)
   balance       Int       @default(0) 
-  role      String   @default("user")
+  role          String    @default("user")
   
   invitedByCode String?
   promoCode     PromoCode?
-  
+  tags          String[]  @default([])   // Сегментация: ["vip", "ambassador", "photographer"]
+  balanceLogs   BalanceLog[]            // История изменений баланса
 
   @@index([phone])
   @@index([userId])
   @@map("member_profiles")
 }
-
 // ✅ НОВАЯ ТАБЛИЦА: Центр Уведомлений / Логи (v2.0)
 model Notification {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -531,6 +530,36 @@ model PushSubscription {
   @@map("push_subscriptions")
 }
 
+model AdminLog {
+  id        String    @id @default(uuid())
+  actorType ActorType
+  adminId   String?   // UUID админа, выполнившего действие (null если SYSTEM)
+  adminName String?   // Денормализация для быстрого отображения в UI
+  action    String    // Название действия, например: "UPDATE_TOUR", "CRON_SYNC"
+  targetId  String?   // ID сущности, над которой произведено действие (опционально)
+  changes   Json?     // Payload: переданные аргументы или diff
+  ip        String?   // IP-адрес инициатора (null для CRON)
+  userAgent String?   // User-Agent (null для CRON)
+  createdAt DateTime  @default(now())
+
+  @@index([action])
+  @@index([targetId])
+  @@index([adminId])
+  @@index([createdAt])
+}
+
+model BalanceLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  member    MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount    Int      // +50 или -200
+  reason    String   // "Отзыв за тур", "Оплата тура #123", "Ручное начисление"
+  adminNote String?  @map("admin_note")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("balance_logs")
+}
+
 // ─────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────
@@ -562,4 +591,9 @@ enum InquiryStatus {
   NEW
   WORK
   DONE
+}
+
+enum ActorType {
+  ADMIN
+  SYSTEM
 }

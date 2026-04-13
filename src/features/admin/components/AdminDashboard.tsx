@@ -45,6 +45,9 @@ import { getBlogPosts } from '@/features/blog/api';
 import { getContentBlock } from '@/lib/api';
 
 import { upsertGuideAction } from '@/features/admin/actions/guides';
+import { LogsTab } from './views/LogsTab';
+import MembersTab from './views/MembersTab';
+import MemberDrawer from './views/MemberDrawer';
 
 import { 
   deleteGuideAction, 
@@ -64,9 +67,11 @@ import {
   toggleTourCategoryStatusAction, toggleBlogCategoryStatusAction 
 } from '@/features/admin/actions/categories';
 
-// TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun';
+// ХЕЛПЕР ДЛЯ TYPESCRIPT ЧТОБЫ УБРАТЬ "UNKNOWN" ОШИБКИ
+type AdminActionResult = { success: boolean; error?: string; data?: any; [key: string]: any };
 
+// TYPES
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'members';
 interface BookingItem {
   id: string;
   user_name: string;
@@ -152,6 +157,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   
   const [editingItem, setEditingItem] = useState<unknown>(null);
   const [editingSlug, setEditingSlug] = useState('');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -168,7 +174,7 @@ const loadGroupsManifest = useCallback(async () => {
       limit: groupsLimit,
       search: groupsSearch,
       sortBy: groupsSort,
-    });
+    }) as GetGroupsManifestResult; // <-- ИСПРАВЛЕНО
 
     if (result.success) {
       setGroupsManifest(result.groups);
@@ -230,18 +236,18 @@ const loadGroupsManifest = useCallback(async () => {
         getBlogCategoriesAction()
       ]);
 
-      if (bRes.success && bRes.data) {
-        setBookings(bRes.data as BookingItem[]);
-        setBookingsTotal(bRes.total);
+      if ((bRes as AdminActionResult).success && (bRes as AdminActionResult).data) {
+        setBookings((bRes as AdminActionResult).data as BookingItem[]);
+        setBookingsTotal((bRes as AdminActionResult).total);
       }
       setGuides(gRes as unknown as GuideItem[]);
       setPosts(pRes as Blog[]);
       setReviews(rRes);
-      if (inqRes.success && inqRes.data) setInquiries(inqRes.data);
-      if (funRes && funRes.success) setFunTests(funRes.data);
+      if ((inqRes as AdminActionResult).success && (inqRes as AdminActionResult).data) setInquiries((inqRes as AdminActionResult).data);
+      if (funRes && (funRes as AdminActionResult).success) setFunTests((funRes as AdminActionResult).data);
       setContentBlocks({ hero: heroRes, footer: footerRes });
-      if (tCatRes && tCatRes.success) setTourCategories(tCatRes.data || []);
-      if (bCatRes && bCatRes.success) setBlogCategories(bCatRes.data || []);
+      if (tCatRes && (tCatRes as AdminActionResult).success) setTourCategories((tCatRes as AdminActionResult).data || []);
+      if (bCatRes && (bCatRes as AdminActionResult).success) setBlogCategories((bCatRes as AdminActionResult).data || []);
     } catch (error) {
       console.error("Data load error:", error);
       showToast("Ошибка загрузки данных", "error");
@@ -255,7 +261,7 @@ const loadGroupsManifest = useCallback(async () => {
       limit: 20,
       search: toursSearch,
       filter: toursFilter,
-    });
+    }) as AdminActionResult; // <-- ИСПРАВЛЕНО
     if (res.success) {
       setTours(res.tours);
       setToursTotal(res.total);
@@ -274,12 +280,23 @@ const loadGroupsManifest = useCallback(async () => {
     router.refresh();
   }
 
-  // ==========================================
+ // ==========================================
   // ОБРАБОТЧИКИ КАТЕГОРИЙ
   // ==========================================
   const handleSaveCategory = async (data: Record<string, unknown>) => {
-    const action = categoryType === 'tour' ? upsertTourCategoryAction : upsertBlogCategoryAction;
-    const res = await action(data);
+    let res: AdminActionResult;
+
+    // Двойное приведение типов (as unknown as ...), чтобы обойти строгую проверку TS
+    if (categoryType === 'tour') {
+      res = await upsertTourCategoryAction(
+        data as unknown as Parameters<typeof upsertTourCategoryAction>[0]
+      ) as AdminActionResult;
+    } else {
+      res = await upsertBlogCategoryAction(
+        data as unknown as Parameters<typeof upsertBlogCategoryAction>[0]
+      ) as AdminActionResult;
+    }
+
     if (res.success) {
       showToast('Категория сохранена!', 'success');
       setModalState(p => ({ ...p, category: false }));
@@ -292,7 +309,7 @@ const loadGroupsManifest = useCallback(async () => {
   const handleDeleteCategory = async (id: string, type: 'tour' | 'blog') => {
     if (!confirm('Точно удалить эту категорию?')) return;
     const action = type === 'tour' ? deleteTourCategoryAction : deleteBlogCategoryAction;
-    const res = await action(id);
+    const res = await action(id) as AdminActionResult; // <-- ИСПРАВЛЕНО
     if (res.success) {
       showToast('Категория удалена', 'success');
       loadAllData();
@@ -303,7 +320,7 @@ const loadGroupsManifest = useCallback(async () => {
 
   const handleToggleCategory = async (id: string, currentStatus: boolean, type: 'tour' | 'blog') => {
     const action = type === 'tour' ? toggleTourCategoryStatusAction : toggleBlogCategoryStatusAction;
-    const res = await action(id, currentStatus);
+    const res = await action(id, currentStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
     if (res.success) {
       showToast('Статус обновлен', 'success');
       loadAllData();
@@ -365,7 +382,7 @@ const loadGroupsManifest = useCallback(async () => {
     const newStatus = !tour.isActive;
     setTours(prev => prev.map(t => t.id === tour.id ? { ...t, isActive: newStatus } : t));
 
-    const res = await updateTourStatus(String(tour.id), newStatus);
+    const res = await updateTourStatus(String(tour.id), newStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
 
     if(!res.success) {
         showToast("Ошибка обновления", "error");
@@ -381,13 +398,13 @@ const loadGroupsManifest = useCallback(async () => {
       list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
       msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
       
-      const res = await sendToTelegram(msg);
+      const res = await sendToTelegram(msg) as AdminActionResult; // <-- ИСПРАВЛЕНО
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
 
   const handleStatusChange = async (id: string, status: string) => {
       // Вызываем новый экшен. Он сам внутри дернет NotificationHub.dispatch()
-      const res = await updateBookingStatusAction(id, status as BookingStatus);
+      const res = await updateBookingStatusAction(id, status as BookingStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
       
       if (res.success) {
           setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
@@ -415,6 +432,8 @@ const loadGroupsManifest = useCallback(async () => {
       if (activeTab === 'guides') setModalState(p => ({...p, guide: true}));
       if (activeTab === 'reviews') setModalState(p => ({...p, review: true}));
       if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
+       if (activeTab === 'members') {
+    }
   };
 
   const togglePostStatus = async (post: Blog, field: 'isActive' | 'is_trending') => {
@@ -431,10 +450,9 @@ const loadGroupsManifest = useCallback(async () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] flex font-sans text-slate-900 dark:text-slate-800 transition-colors duration-300">
-      
       <AdminNavigation 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        activeTab={activeTab as any}
+        setActiveTab={(tab: any) => setActiveTab(tab)}
         onLogout={handleLogout}
         onFabClick={handleFabClick}
         stats={{ pendingBookings: stats.newBookings, newInquiries: stats.newInquiries }}
@@ -590,9 +608,36 @@ const loadGroupsManifest = useCallback(async () => {
             />
           </div>
         )}
+        
+        {/* --- 10. Журнал действий (Logs) --- */}
+        {activeTab === 'logs' && (
+          <div className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Журнал системы</h2>
+              <p className="text-sm text-slate-700 mt-1">История изменений данных и отчеты системных ботов</p>
+            </div>
+            <LogsTab />
+          </div>
+        )}
+
+             {/* --- 11. Members (Участники) --- */}
+        {activeTab === 'members' && (
+          <div className="relative flex h-full">
+            <div className="flex-1">
+              <MembersTab onSelectMember={setSelectedMemberId} />
+            </div>
+            {selectedMemberId && (
+              <MemberDrawer 
+                memberId={selectedMemberId} 
+                onClose={() => setSelectedMemberId(null)} 
+              />
+            )}
+          </div>
+        )}
+
       </main>
 
-      {/* --- MODALS --- */}
+    {/* --- MODALS --- */}
       {/* Tour Modal */}
       {modalState.tour && (
         <TourForm 
@@ -615,7 +660,7 @@ const loadGroupsManifest = useCallback(async () => {
             initialData={editingItem as React.ComponentProps<typeof GuideForm>['initialData']}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
             onSubmit={async (data: Record<string, unknown>) => { 
-                const res = await upsertGuideAction(data); 
+                const res = await upsertGuideAction(data) as AdminActionResult; // <-- ИСПРАВЛЕНО
                 if (res.success) {
                     showToast('Досье гида сохранено!', 'success');
                     await loadAllData();

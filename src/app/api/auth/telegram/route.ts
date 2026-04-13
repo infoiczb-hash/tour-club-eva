@@ -4,6 +4,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { env } from '@/lib/env';
 import { createClient } from '@supabase/supabase-js'; 
 import { prisma } from '@/lib/prisma';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 export async function GET(request: Request) {
   try { 
@@ -49,6 +52,14 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/login?error=auth_expired`);
     }
     // ==========================================
+
+    // 🛡 ЗАЩИТА ОТ REPLAY-АТАК
+    const replayKey = `tg:auth:${userData.id}:${authDate}`;
+    const isNewAuth = await redis.set(replayKey, '1', { ex: 86400, nx: true });
+    if (!isNewAuth) {
+      console.warn(`[Telegram Auth] Replay attack blocked. User ID: ${userData.id}`);
+      return NextResponse.redirect(`${origin}/login?error=auth_replayed`);
+    }
 
     // 3. Авторизуем в Supabase
     const email = `tg_${userData.id}@evaclub.tour`;
