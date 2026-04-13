@@ -36,20 +36,20 @@ export default function GuidesTab({ guides, onAdd, onEdit, onDelete }: GuidesTab
             />
             <div className="flex-1">
               <div className="font-bold text-lg dark:text-white">{g.name}</div>
-              <div className="text-xs text-slate-600 dark:text-slate-600 font-medium uppercase tracking-wider">
+              <div className="text-xs text-slate-800 dark:text-slate-800 font-medium uppercase tracking-wider">
                 {g.role}
               </div>
             </div>
             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button 
                 onClick={() => onEdit(g)} 
-                className="text-slate-600 hover:text-blue-500 transition-colors"
+                className="text-slate-800 hover:text-blue-500 transition-colors"
               >
                 <Edit size={18}/>
               </button>
               <button 
                 onClick={() => onDelete(g.id)} 
-                className="text-slate-600 hover:text-red-500 transition-colors"
+                className="text-slate-800 hover:text-red-500 transition-colors"
               >
                 <Trash2 size={18}/>
               </button>

@@ -60,7 +60,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
             {initialData ? '✏️ Редактировать отзыв' : '💬 Новый отзыв'}
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition">
-            <X size={20} className="text-slate-600"/>
+            <X size={20} className="text-slate-800"/>
           </button>
         </div>
 
@@ -69,7 +69,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
           
           {/* Имя */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Имя клиента</label>
+            <label className="block text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1.5">Имя клиента</label>
             <input 
               className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm dark:text-white focus:ring-2 focus:ring-teal-500 outline-none"
               placeholder="Например: Ольга К."
@@ -80,7 +80,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
 
           {/* Источник (Telegram, Viber, Insta) */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Источник</label>
+            <label className="block text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1.5">Источник</label>
             <div className="grid grid-cols-3 gap-2">
                {[
                  { id: 'tg', label: 'Telegram', icon: <Send size={14}/>, color: 'text-sky-500 bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30' },
@@ -94,7 +94,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
                     className={`flex items-center justify-center gap-1.5 p-2 rounded-xl border text-[11px] font-bold transition-all ${
                       formData.source === opt.id 
                         ? `${opt.color} ring-1 ring-current` 
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50'
                     }`}
                  >
                     {opt.icon} {opt.label}
@@ -105,7 +105,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
 
           {/* Категория тура */}
           <div>
-            <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1.5">
                 <Tags size={12} /> Направление
             </label>
             <div className="flex flex-wrap gap-2">
@@ -117,7 +117,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
                     className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
                       formData.category === cat.id 
                         ? 'bg-teal-500 text-white border-teal-600 shadow-md' 
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-600 hover:border-teal-300'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-800 hover:border-teal-300'
                     }`}
                  >
                     {cat.label}
@@ -128,7 +128,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
 
           {/* Текст */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Текст отзыва</label>
+            <label className="block text-[11px] font-bold text-slate-800 uppercase tracking-wider mb-1.5">Текст отзыва</label>
             <textarea 
               className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-teal-500 outline-none resize-none h-28 leading-relaxed"
               placeholder="Что клиент написал..."
@@ -151,7 +151,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
              </div>
              <div>
                 <span className="text-sm font-bold dark:text-white leading-tight block">Показывать на сайте</span>
-                <span className="text-[12px] text-slate-600 leading-tight">Если выключить, отзыв скроется из карусели</span>
+                <span className="text-[12px] text-slate-800 leading-tight">Если выключить, отзыв скроется из карусели</span>
              </div>
           </div>
 

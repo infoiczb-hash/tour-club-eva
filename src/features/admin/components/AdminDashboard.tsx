@@ -430,7 +430,7 @@ const loadGroupsManifest = useCallback(async () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] flex font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] flex font-sans text-slate-900 dark:text-slate-800 transition-colors duration-300">
       
       <AdminNavigation 
         activeTab={activeTab}
@@ -572,7 +572,7 @@ const loadGroupsManifest = useCallback(async () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Фан-сектор (Тесты)</h2>
-                <p className="text-sm text-slate-500 mt-1">Управляй карточками тестов на сайте</p>
+                <p className="text-sm text-slate-700 mt-1">Управляй карточками тестов на сайте</p>
               </div>
               <button
                 onClick={() => {
@@ -662,7 +662,7 @@ const loadGroupsManifest = useCallback(async () => {
       {modalState.fun && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl relative shadow-2xl my-auto">
-             <button onClick={() => setModalState(p => ({...p, fun: false}))} className="absolute top-4 right-4 text-slate-500 hover:text-red-500 z-10 p-2">
+             <button onClick={() => setModalState(p => ({...p, fun: false}))} className="absolute top-4 right-4 text-slate-700 hover:text-red-500 z-10 p-2">
                 <X size={24}/>
              </button>
              <FanForm 

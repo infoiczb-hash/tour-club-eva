@@ -40,7 +40,7 @@ export const Finance = () => {
 
         {/* Дополнительные тарифы */}
         <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-           <h4 className="text-xs font-black uppercase text-slate-600 mb-2">Спец. тарифы</h4>
+           <h4 className="text-xs font-black uppercase text-slate-800 mb-2">Спец. тарифы</h4>
            <div className="space-y-3">
              <div className="flex gap-2 items-end">
                 <Crown size={16} className="text-amber-500 mb-3" />
@@ -59,10 +59,10 @@ export const Finance = () => {
 
         {/* Места */}
         <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-          <h4 className="text-xs font-black uppercase text-slate-600 mb-2">Управление местами</h4>
+          <h4 className="text-xs font-black uppercase text-slate-800 mb-2">Управление местами</h4>
           <FormInput name="spots" label="Всего мест" type="number" />
           <FormInput name="spotsLeft" label="Осталось мест" type="number" />
-          <p className="text-[12px] text-slate-600 leading-tight mt-2">
+          <p className="text-[12px] text-slate-800 leading-tight mt-2">
             * "Осталось мест" уменьшается автоматически при бронировании, но здесь можно поправить вручную.
           </p>
         </div>

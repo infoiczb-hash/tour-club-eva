@@ -186,13 +186,13 @@ export default function TourForm({ initialData, onClose, guides, categories = []
                  {initialData ? 'Редактирование тура' : 'Создание нового тура'}
                  {initialData?.isActive && <span className="text-[12px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">Active</span>}
                </h2>
-               <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mt-1">
+               <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mt-1">
                  {initialData?.title || 'Заполните информацию'}
                </p>
             </div>
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-slate-100 text-slate-600 hover:text-slate-700 rounded-full transition-colors"
+              className="p-2 hover:bg-slate-100 text-slate-800 hover:text-slate-700 rounded-full transition-colors"
             >
               <X size={24} />
             </button>

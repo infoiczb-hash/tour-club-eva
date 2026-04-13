@@ -8,7 +8,7 @@ interface ActionButtonProps {
 }
 
 export const ActionButton = ({ icon, onClick, title, color }: ActionButtonProps) => {
-  const baseColor = "text-slate-600 hover:text-teal-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-teal-400";
+  const baseColor = "text-slate-800 hover:text-teal-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-teal-400";
   
   return (
     <button 

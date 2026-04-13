@@ -5,13 +5,13 @@ interface DashboardCardProps {
   value: string | number;
   sub?: string;
   icon: React.ReactNode;
-  color: string; // Например: "bg-slate-100 text-slate-600"
+  color: string; // Например: "bg-slate-100 text-slate-800"
 }
 
 export const DashboardCard = ({ label, value, sub, icon, color }: DashboardCardProps) => (
   <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
     <div className="flex items-start justify-between mb-2">
-      <span className="text-[12px] font-bold text-slate-600 uppercase tracking-wider">
+      <span className="text-[12px] font-bold text-slate-800 uppercase tracking-wider">
         {label}
       </span>
       <div className={`p-2 rounded-lg ${color}`}>
@@ -22,7 +22,7 @@ export const DashboardCard = ({ label, value, sub, icon, color }: DashboardCardP
       {value}
     </div>
     {sub && (
-      <div className="text-[12px] text-slate-600 font-bold mt-1">
+      <div className="text-[12px] text-slate-800 font-bold mt-1">
         {sub}
       </div>
     )}
