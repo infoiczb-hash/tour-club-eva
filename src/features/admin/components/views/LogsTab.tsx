@@ -34,7 +34,9 @@ export const LogsTab = () => {
   }, [fetchLogs]);
 
   // Хелпер для раскраски экшенов
+// Хелпер для раскраски экшенов
   const getActionBadge = (action: string) => {
+    if (!action) return 'bg-slate-100 text-slate-700 border-slate-200'; // Защита от пустых значений
     const a = action.toUpperCase();
     if (a.includes('CREATE') || a.includes('SAVE') || a.includes('CONFIRM')) 
       return 'bg-emerald-100 text-emerald-700 border-emerald-200';
@@ -112,8 +114,8 @@ export const LogsTab = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-md text-[11px] font-bold border ${getActionBadge(log.actionName)}`}>
-                      {log.actionName}
+                    <span className={`px-2 py-1 rounded-md text-[11px] font-bold border ${getActionBadge(log.action)}`}>
+                      {log.action}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -177,10 +179,10 @@ export const LogsTab = () => {
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">Детали изменений</h3>
-                <p className="text-sm text-slate-500">{selectedLog.actionName} — {selectedLog.id}</p>
+                <p className="text-sm text-slate-500">{selectedLog.action} — {selectedLog.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLog(null)}

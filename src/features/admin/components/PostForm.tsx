@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Blog } from '@prisma/client'; 
 import Button from '@/shared/ui/Button';
-import { performAiTask } from '@/features/admin/actions/ai';
+import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
 import { uploadImage, uploadImageFromUrl } from '@/lib/api';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -211,24 +211,29 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     finally { setLoadingField(null); }
   };
 
-  const handleAiImage = async () => {
+const handleAiImage = async () => {
     if (!formData.title) return alert("Please enter a title first!");
     setIsImageGenerating(true);
-    const res: any = await performAiTask({ mode: 'generate_image', prompt: formData.title }); // 👈 ДОБАВЛЕНО : any
-    if (res.success) {
-       const permanentUrl = await uploadImageFromUrl(res.data as string);
+    
+    const res = await performAiTask({ mode: 'generate_image', prompt: formData.title }) as PerformAiTaskResult;
+    
+    if (res.success && typeof res.data === 'string') {
+       const permanentUrl = await uploadImageFromUrl(res.data);
        if (permanentUrl) setFormData(prev => ({ ...prev, image: permanentUrl }));
-    } else { alert("AI Error: " + res.error); }
+    } else if (!res.success) { 
+       alert("AI Error: " + res.error); 
+    }
     setIsImageGenerating(false);
   };
 
- const handleAiText = async () => {
+const handleAiText = async () => {
     const topic = prompt("Topic of the article?"); if (!topic) return;
     setIsAiGenerating(true);
-    const res: any = await performAiTask({ mode: 'generate_blog', topic }); // 👈 ДОБАВЛЕНО : any
+    
+    const res = await performAiTask({ mode: 'generate_blog', topic }) as PerformAiTaskResult;
     setIsAiGenerating(false);
-    if (res.success) {
-        // Убираем any, задаем жесткую структуру ответа Gemini
+    
+    if (res.success && typeof res.data === 'object' && res.data !== null && 'title' in res.data) {
         const data = res.data as { title: string; excerpt: string; content: string; read_time: string | number; category: string; };
         setFormData(prev => ({ 
             ...prev, 
@@ -239,7 +244,9 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
             category: data.category, 
             slug: slugify(data.title) 
         }));
-    } else { alert("AI Error: " + res.error); }
+    } else if (!res.success) { 
+        alert("AI Error: " + res.error); 
+    }
   };
 
   return (
@@ -488,17 +495,25 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
             </div>
           </div>
 
-          {/* SMM GENERATOR */}
+         {/* SMM GENERATOR */}
           <div className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 p-6 rounded-3xl border border-pink-100 dark:border-pink-900/30 flex flex-col sm:flex-row justify-between items-center gap-4">
              <div><h4 className="text-xs font-black text-pink-700 dark:text-pink-400 uppercase flex items-center gap-2 mb-1"><Share2 size={14}/> SMM Announce</h4><p className="text-[12px] text-pink-600/70 dark:text-pink-400/70 font-medium">Generate social media posts</p></div>
              <div className="flex gap-2 w-full sm:w-auto">
                  <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
-                     const res: any = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' }); // 👈 ДОБАВЛЕНО : any
-                     if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
+                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' }) as PerformAiTaskResult;
+                     if(res.success && typeof res.data === 'string') {
+                         navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
+                     } else if (!res.success) {
+                         alert('Error: ' + res.error);
+                     }
                  }}><Instagram size={14} className="mr-2 text-pink-600"/> Instagram</Button>
                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
-                     const res: any = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' }); // 👈 ДОБАВЛЕНО : any
-                     if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
+                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' }) as PerformAiTaskResult;
+                     if(res.success && typeof res.data === 'string') {
+                         navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
+                     } else if (!res.success) {
+                         alert('Error: ' + res.error);
+                     }
                  }}><Send size={14} className="mr-2 text-sky-500"/> Telegram</Button>
              </div>
           </div>

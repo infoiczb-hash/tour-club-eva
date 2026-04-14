@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { 
   LayoutTemplate, Compass, Users, 
   MessageCircle, FileText, Layout, 
-  LogOut, Plus, Activity, MessageSquare, Sparkles, Menu, X
+  LogOut, Plus, Activity, MessageSquare, Sparkles, ScanLine, Menu, X
 } from 'lucide-react';
+
 import { SidebarNavItem } from './ui/SidebarNavItem';
 
 // Типы табов (совпадают с AdminDashboard)
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun'| 'logs' | 'members';
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'members' | 'scan' | 'logs';
 
 interface AdminNavigationProps {
   activeTab: Tab;
@@ -44,6 +45,7 @@ const navItems: Array<{ id: Tab; icon: any; label: string; badge?: number }> = [
     { id: 'content', icon: Layout, label: 'Сайт' },
     { id: 'fun', icon: Sparkles, label: 'Фан-сектор' },
     { id: 'members', icon: Users, label: 'Участники' },
+    { id: 'scan', icon: ScanLine, label: 'Сканер QR' },
     { id: 'logs', icon: Activity, label: 'Журнал' },
   ];
 

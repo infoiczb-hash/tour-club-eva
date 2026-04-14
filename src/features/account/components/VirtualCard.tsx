@@ -2,12 +2,12 @@
 
 import React, { useState, useRef, MouseEvent } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, X } from 'lucide-react';
+import { QrCode as QrCodeIcon, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import LevelsInfoModal from '@/components/modals/LevelsInfoModal';
-import MemberQrCode from '@/features/account/components/MemberQrCode';
 import { LEVELS_CONFIG, getLevelConfig } from '@/lib/constants/levels';
+import QRCode from "react-qr-code"; 
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -141,18 +141,21 @@ export default function VirtualCard({
               <X size={16} />
             </button>
 
-            <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
-              {bookingShortId ? (
-                <MemberQrCode
-                  bookingShortId={bookingShortId}
-                  tourTitle={tourTitle ?? ''}
-                  tourStartDate={tourStartDate ?? null}
-                  size={140}
-                />
-              ) : (
-                <QrCode size={140} className="text-slate-950" />
-              )}
-            </div>
+          <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
+  {bookingShortId ? (
+    <QRCode 
+      size={140} 
+      className="text-slate-950" 
+      value={`https://evatur.club/admin/scan?b=${bookingShortId}`} 
+    />
+  ) : (
+    <QRCode 
+      size={140} 
+      className="text-slate-950" 
+      value={`https://evatur.club/admin/scan?m=${memberId}`} 
+    />
+  )}
+</div>
 
             <p className="text-slate-300 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}

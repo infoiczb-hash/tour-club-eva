@@ -367,9 +367,11 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       });
 
       break;
- } catch (error: unknown) {
-      const err = error as Record<string, unknown>;
-     if (err?.code === 'P2002' && attempt < MAX_RETRIES) {
+} catch (error: unknown) {
+      // Безопасная проверка, является ли ошибка объектом с кодом Prisma
+      const err = typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : null;
+      
+      if (err?.code === 'P2002' && attempt < MAX_RETRIES) {
         console.warn(`[Booking] Race condition on shortId. Retry ${attempt + 1}/${MAX_RETRIES}`);
         continue;
       }

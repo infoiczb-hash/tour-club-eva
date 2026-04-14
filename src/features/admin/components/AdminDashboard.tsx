@@ -22,6 +22,7 @@ import InquiriesTab from './views/InquiriesTab';
 import CategoryForm from './views/CategoryForm'; 
 import { getGroupsManifest, GetGroupsManifestResult } from '@/features/admin/actions';
 import { GroupManifest } from './views/BookingsTab';
+import ScanTab from './views/ScanTab';
 
 // FORMS
 import TourForm from './TourForm'; 
@@ -72,7 +73,7 @@ import {
 type AdminActionResult = { success: boolean; error?: string; data?: any; [key: string]: any };
 
 // TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'members';
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'members' | 'scan' ;
 interface BookingItem {
   id: string;
   user_name: string;
@@ -199,11 +200,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
 
   const router = useRouter();
 
-  // --- Загрузка групп (манифест) ---
-type GetGroupsManifestResult =
-  | { success: true; groups: GroupManifest[]; total: number }
-  | { success: false; error: string };
-
+// --- Загрузка групп (манифест) ---
 const loadGroupsManifest = useCallback(async () => {
   setGroupsLoading(true);
   try {
@@ -243,6 +240,13 @@ const loadGroupsManifest = useCallback(async () => {
   useEffect(() => {
     setIsAuth(true);
     loadAllData();
+ 
+  // Обработка параметров URL для переключения вкладок (например, при сканировании)
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') as Tab;
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
   }, []);
 
   useEffect(() => {
@@ -469,9 +473,10 @@ const loadGroupsManifest = useCallback(async () => {
       if (activeTab === 'blog') setModalState(p => ({...p, post: true}));
       if (activeTab === 'guides') setModalState(p => ({...p, guide: true}));
       if (activeTab === 'reviews') setModalState(p => ({...p, review: true}));
-      if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
-       if (activeTab === 'members') {
-    }
+   if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
+      if (activeTab === 'members') {
+          showToast('Добавление участников вручную недоступно. Участники добавляются автоматически при регистрации.', 'info');
+      }
   };
 
   const togglePostStatus = async (post: Blog, field: 'isActive' | 'is_trending') => {
@@ -771,6 +776,10 @@ const loadGroupsManifest = useCallback(async () => {
           onSubmit={handleSaveCategory}
         />
       )}
+      {/* --- 12. Сканер QR --- */}
+        {activeTab === 'scan' && (
+            <ScanTab />
+        )}
             
       <AiAssistant />
     </div>

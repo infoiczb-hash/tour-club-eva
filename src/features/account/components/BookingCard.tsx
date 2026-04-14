@@ -204,12 +204,11 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
             </span>
           </div>
         </div>
-
-        {/* ✅ НАСТОЯЩИЙ QR Code */}
+{/* ✅ НАСТОЯЩИЙ QR Code */}
         <div className="p-2 bg-white rounded-xl mb-6 shadow-inner hidden md:block opacity-90 transition-all duration-300">
            <QRCode 
              size={90} 
-             value={`https://evatur.club/admin/scan?id=${displayId}`} 
+             value={`https://evatur.club/admin/scan?b=${displayId}`} // 👈 ИЗМЕНЕНО НА ?b=
              viewBox={`0 0 90 90`} 
              level="M" 
            />

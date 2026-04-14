@@ -183,6 +183,8 @@ model Booking {
   source        String    @default("website")
 
   status BookingStatus @default(pending)
+  checkedIn   Boolean   @default(false) @map("checked_in")
+  checkedInAt DateTime? @map("checked_in_at") @db.Timestamptz(6)
   bookedDate DateTime? @map("booked_date")
 
   tourId      String  @map("tour_id") @db.Uuid
@@ -430,7 +432,6 @@ model MemberProfile {
 
   balance       Int       @default(0) 
   role          String    @default("user")
-  
   invitedByCode String?
   promoCode     PromoCode?
   tags          String[]  @default([])   // Сегментация: ["vip", "ambassador", "photographer"]
