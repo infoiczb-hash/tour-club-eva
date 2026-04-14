@@ -1,102 +1,396 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight, Mail, Phone, User } from 'lucide-react';
-import Image from 'next/image';
-import { getMembersAction } from '@/features/admin/actions/members';
-import { LEVELS_CONFIG } from '@/lib/constants/levels';
+import React, { useState } from 'react';
+import {
+  Search, X, UserCircle2, Phone, Send,
+  ChevronUp, ChevronDown, RefreshCw,
+  Crown, Flame, Mountain, Compass, Map,
+  Instagram, ArrowRight, SlidersHorizontal
+} from 'lucide-react';
+import { FilterTab } from '../ui/FilterTab';
+import MemberDrawer from './MemberDrawer';
+import type { MemberSortField, MemberFilterLevel, MemberFilterActivity } from '@/features/admin/actions/members';
 
-interface MemberTabProps {
-  onSelectMember: (memberId: string) => void;
+// ─── Типы ────────────────────────────────────────────────────────────────────
+
+interface MemberRow {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  telegram: string | null;
+  avatarUrl: string | null;
+  level: string;
+  totalTours: number;
+  totalKm: number;
+  balance: number;
+  role: string;
+  tags: string[];
+  joinedAt: Date | string;
+  tgChatId: string | null;
+  _count: { bookings: number; reviews: number };
 }
 
-export default function MembersTab({ onSelectMember }: MemberTabProps) {
-  const [members, setMembers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+interface MembersTabProps {
+  members: MemberRow[];
+  total: number;
+  page: number;
+  loading: boolean;
+  searchTerm: string;
+  levelFilter: MemberFilterLevel;
+  activityFilter: MemberFilterActivity;
+  sortBy: MemberSortField;
+  sortDir: 'asc' | 'desc';
+  onSearchChange: (val: string) => void;
+  onLevelChange: (val: MemberFilterLevel) => void;
+  onActivityChange: (val: MemberFilterActivity) => void;
+  onSortChange: (field: MemberSortField, dir: 'asc' | 'desc') => void;
+  onPageChange: (page: number) => void;
+  onRefresh: () => void;
+}
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const res = await getMembersAction({ page, limit: 20, search });
-      if (res.success) {
-        setMembers(res.data);
-        setTotal(res.total);
-      }
-      setLoading(false);
-    };
-    load();
-  }, [page, search]);
+// ─── Конфиг уровней (цвета) ──────────────────────────────────────────────────
 
-  const getLevelColor = (levelName: string) => {
-    return LEVELS_CONFIG.find(l => l.name === levelName)?.color || 'text-slate-400';
-  };
+const LEVEL_STYLES: Record<string, { color: string; bg: string; icon: React.ReactNode }> = {
+  'Первопроходец': { color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/30', icon: <Map size={12} /> },
+  'Искатель':      { color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700/30',       icon: <Compass size={12} /> },
+  'Следопыт':      { color: 'text-purple-600',  bg: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700/30', icon: <Mountain size={12} /> },
+  'Мастер троп':   { color: 'text-orange-600',  bg: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700/30', icon: <Flame size={12} /> },
+  'Легенда':       { color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/30',    icon: <Crown size={12} /> },
+};
+
+const TAG_STYLES: Record<string, string> = {
+  vip:          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  photographer: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  ambassador:   'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+  difficult:    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
+const LIMIT = 30;
+
+// ─── Хелпер: сортировка ──────────────────────────────────────────────────────
+
+function SortButton({
+  field, label, sortBy, sortDir, onSortChange,
+}: {
+  field: MemberSortField;
+  label: string;
+  sortBy: MemberSortField;
+  sortDir: 'asc' | 'desc';
+  onSortChange: (f: MemberSortField, d: 'asc' | 'desc') => void;
+}) {
+  const isActive = sortBy === field;
+  const toggle = () => onSortChange(field, isActive && sortDir === 'desc' ? 'asc' : 'desc');
+  return (
+    <button
+      onClick={toggle}
+      className={`flex items-center gap-1 text-xs font-bold uppercase tracking-wider transition-colors ${
+        isActive ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+      }`}
+      type="button"
+    >
+      {label}
+      {isActive ? (
+        sortDir === 'desc' ? <ChevronDown size={12} /> : <ChevronUp size={12} />
+      ) : (
+        <ChevronDown size={12} className="opacity-30" />
+      )}
+    </button>
+  );
+}
+
+// ─── Главный компонент ───────────────────────────────────────────────────────
+
+export default function MembersTab({
+  members, total, page, loading,
+  searchTerm, levelFilter, activityFilter,
+  sortBy, sortDir,
+  onSearchChange, onLevelChange, onActivityChange,
+  onSortChange, onPageChange, onRefresh,
+}: MembersTabProps) {
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const totalPages = Math.ceil(total / LIMIT);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200">
-        <Search className="text-slate-400" size={20} />
-        <input
-          placeholder="Поиск по имени, телефону, Telegram..."
-          className="w-full bg-transparent outline-none text-sm"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
+    <div className="space-y-5">
+
+      {/* ── Заголовок ── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+            Члены клуба
+          </h2>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {loading ? 'Загрузка...' : `${total} участников`}
+          </p>
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="flex items-center gap-2 text-sm text-slate-500 hover:text-teal-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          type="button"
+        >
+          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+          Обновить
+        </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
-            <tr>
-              <th className="p-4 text-left">Участник</th>
-              <th className="p-4 text-left">Уровень</th>
-              <th className="p-4 text-left">Контакты</th>
-              <th className="p-4 text-left">Туров</th>
-              <th className="p-4 text-left">Баланс</th>
-              <th className="p-4"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {members.map(m => (
-              <tr 
-                key={m.id} 
-                className="hover:bg-slate-50 cursor-pointer transition-colors"
-                onClick={() => onSelectMember(m.id)}
-              >
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                      {m.avatarUrl ? <Image src={m.avatarUrl} alt="" width={40} height={40} /> : <User size={20} className="m-2" />}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">{m.name || 'Без имени'}</p>
-                      <p className="text-xs text-slate-500">ID: {m.id.slice(0, 8)}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <span className={`text-xs font-bold uppercase tracking-wider ${getLevelColor(m.level)}`}>
-                    {m.level}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex flex-col gap-1">
-                    {m.phone && <span className="text-xs flex items-center gap-1"><Phone size={12} /> {m.phone}</span>}
-                    {m.telegram && <span className="text-xs flex items-center gap-1 text-sky-500">@{m.telegram}</span>}
-                  </div>
-                </td>
-                <td className="p-4 font-bold">{m.totalTours}</td>
-                <td className="p-4 font-bold text-amber-600">{m.balance} ₽</td>
-                <td className="p-4 text-right">
-                  <ChevronRight size={18} className="text-slate-400" />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* ── Поиск + фильтры ── */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+
+        {/* Строка поиска */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Имя, телефон, Telegram..."
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+            />
+            {searchTerm && (
+              <button onClick={() => onSearchChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+              showFilters || levelFilter !== 'all' || activityFilter !== 'all'
+                ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20'
+                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+            }`}
+            type="button"
+          >
+            <SlidersHorizontal size={15} />
+            <span className="hidden sm:inline">Фильтры</span>
+          </button>
+        </div>
+
+        {/* Раскрывающиеся фильтры */}
+        {showFilters && (
+          <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+
+            {/* Уровень */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Уровень</p>
+              <div className="flex flex-wrap gap-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1">
+                {(['all', 'Первопроходец', 'Искатель', 'Следопыт', 'Мастер троп', 'Легенда'] as MemberFilterLevel[]).map(l => (
+                  <FilterTab
+                    key={l}
+                    label={l === 'all' ? 'Все' : l}
+                    active={levelFilter === l}
+                    onClick={() => onLevelChange(l)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Активность */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Активность</p>
+              <div className="flex gap-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1">
+                {([
+                  { val: 'all', label: 'Все' },
+                  { val: 'active', label: 'Активные (90 дн.)' },
+                  { val: 'sleeping', label: 'Спящие' },
+                ] as { val: MemberFilterActivity; label: string }[]).map(a => (
+                  <FilterTab
+                    key={a.val}
+                    label={a.label}
+                    active={activityFilter === a.val}
+                    onClick={() => onActivityChange(a.val)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* ── Таблица ── */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+
+        {/* Шапка таблицы (только десктоп) */}
+        <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_40px] gap-4 px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Участник</span>
+          <SortButton field="totalTours" label="Туров"   sortBy={sortBy} sortDir={sortDir} onSortChange={onSortChange} />
+          <SortButton field="balance"    label="Баланс"  sortBy={sortBy} sortDir={sortDir} onSortChange={onSortChange} />
+          <SortButton field="joinedAt"   label="Вступил" sortBy={sortBy} sortDir={sortDir} onSortChange={onSortChange} />
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Контакты</span>
+          <span />
+        </div>
+
+        {/* Строки */}
+        {loading ? (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="px-5 py-4 flex items-center gap-4 animate-pulse">
+                <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-32" />
+                  <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : members.length === 0 ? (
+          <div className="py-16 text-center">
+            <UserCircle2 size={40} className="mx-auto text-slate-300 mb-3" />
+            <p className="text-slate-500 font-medium">Участники не найдены</p>
+            {searchTerm && (
+              <button onClick={() => onSearchChange('')} className="mt-2 text-sm text-teal-600 hover:underline">
+                Сбросить поиск
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {members.map((member) => {
+              const levelStyle = LEVEL_STYLES[member.level] || LEVEL_STYLES['Первопроходец'];
+              const joinDate = new Date(member.joinedAt).toLocaleDateString('ru-RU', {
+                day: 'numeric', month: 'short', year: '2-digit',
+              });
+
+              return (
+                <div
+                  key={member.id}
+                  onClick={() => setSelectedMemberId(member.id)}
+                  className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_40px] gap-2 md:gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group"
+                >
+                  {/* Участник */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative shrink-0">
+                      {member.avatarUrl ? (
+                        <img
+                          src={member.avatarUrl}
+                          alt={member.name || ''}
+                          className="w-9 h-9 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400">
+                          <UserCircle2 size={18} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {member.name || 'Без имени'}
+                        {member.role === 'admin' && (
+                          <span className="ml-2 text-[10px] font-black text-teal-600 bg-teal-50 dark:bg-teal-900/30 px-1.5 py-0.5 rounded">ADMIN</span>
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded border ${levelStyle.color} ${levelStyle.bg}`}>
+                          {levelStyle.icon}
+                          {member.level}
+                        </span>
+                        {member.tags.map(tag => (
+                          <span key={tag} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${TAG_STYLES[tag] || 'bg-slate-100 text-slate-600'}`}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Туров */}
+                  <div className="flex md:block items-center gap-2">
+                    <span className="md:hidden text-[11px] font-bold text-slate-400 uppercase">Туров:</span>
+                    <div>
+                      <p className="text-sm font-black text-slate-900 dark:text-white">{member.totalTours}</p>
+                      <p className="text-[11px] text-slate-400">{member._count.bookings} броней</p>
+                    </div>
+                  </div>
+
+                  {/* Баланс */}
+                  <div className="flex md:block items-center gap-2">
+                    <span className="md:hidden text-[11px] font-bold text-slate-400 uppercase">Баланс:</span>
+                    <p className={`text-sm font-black ${member.balance > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {member.balance > 0 ? `+${member.balance} ₽` : '0 ₽'}
+                    </p>
+                  </div>
+
+                  {/* Дата */}
+                  <div className="flex md:block items-center gap-2">
+                    <span className="md:hidden text-[11px] font-bold text-slate-400 uppercase">Вступил:</span>
+                    <p className="text-sm text-slate-500">{joinDate}</p>
+                  </div>
+
+                  {/* Контакты */}
+                  <div className="flex items-center gap-2">
+                    {member.tgChatId && (
+                      <a
+                        href={`https://t.me/${member.telegram?.replace('@', '') || ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Написать в Telegram"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                      >
+                        <Send size={14} />
+                      </a>
+                    )}
+                    {member.phone && (
+                      <a
+                        href={`tel:${member.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        title={member.phone}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                      >
+                        <Phone size={14} />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Стрелка */}
+                  <div className="hidden md:flex items-center justify-center">
+                    <ArrowRight size={16} className="text-slate-300 group-hover:text-teal-500 transition-colors" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Пагинация */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-sm text-slate-500">
+              Страница {page} из {totalPages} · {total} участников
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onPageChange(page - 1)}
+                disabled={page <= 1}
+                className="px-3 py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Назад
+              </button>
+              <button
+                onClick={() => onPageChange(page + 1)}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Вперёд →
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+     {/* ── Drawer участника ── */}
+      {selectedMemberId && (
+      <MemberDrawer
+  memberId={selectedMemberId}
+  onClose={() => setSelectedMemberId(null)}
+  onRefresh={onRefresh} // 👈 ОШИБКА ИСЧЕЗНЕТ, так как мы добавили этот пропс в Drawer
+/>
+      )}
     </div>
   );
 }

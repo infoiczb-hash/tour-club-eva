@@ -48,6 +48,7 @@ import { upsertGuideAction } from '@/features/admin/actions/guides';
 import { LogsTab } from './views/LogsTab';
 import MembersTab from './views/MembersTab';
 import MemberDrawer from './views/MemberDrawer';
+import { getMembersAction } from '@/features/admin/actions/members';
 
 import { 
   deleteGuideAction, 
@@ -143,6 +144,43 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [blogCategories, setBlogCategories] = useState<BlogCategory[]>([]);
   const [editingCategory, setEditingCategory] = useState<TourCategory | BlogCategory | null>(null);
   const [categoryType, setCategoryType] = useState<'tour' | 'blog'>('tour');
+
+  // --- Members State ---
+  const [membersList, setMembersList] = useState<any[]>([]);
+  const [membersTotal, setMembersTotal] = useState(0);
+  const [membersPage, setMembersPage] = useState(1);
+  const [membersSearch, setMembersSearch] = useState('');
+  const [membersLevelFilter, setMembersLevelFilter] = useState<any>('all');
+  const [membersActivityFilter, setMembersActivityFilter] = useState<any>('all');
+  const [membersSortBy, setMembersSortBy] = useState<any>('joinedAt');
+  const [membersSortDir, setMembersSortDir] = useState<'asc' | 'desc'>('desc');
+  const [membersLoading, setMembersLoading] = useState(false);
+
+  const loadMembers = useCallback(async () => {
+    setMembersLoading(true);
+    const res: any = await getMembersAction({
+      page: membersPage,
+      limit: 30,
+      search: membersSearch,
+      level: membersLevelFilter,
+      activity: membersActivityFilter,
+      sortBy: membersSortBy,
+      sortDir: membersSortDir
+    });
+    
+    if (res.success) {
+      setMembersList(res.members || []);
+      setMembersTotal(res.total || 0);
+    } else {
+      showToast(res.error || 'Ошибка загрузки участников', 'error');
+    }
+    setMembersLoading(false);
+  }, [membersPage, membersSearch, membersLevelFilter, membersActivityFilter, membersSortBy, membersSortDir]);
+
+  // Загружаем только когда открыта нужная вкладка, чтобы не спамить базу
+  useEffect(() => {
+    if (activeTab === 'members') loadMembers();
+  }, [activeTab, loadMembers]);
 
   // Modals
   const [modalState, setModalState] = useState({
@@ -458,7 +496,7 @@ const loadGroupsManifest = useCallback(async () => {
         stats={{ pendingBookings: stats.newBookings, newInquiries: stats.newInquiries }}
       />
             
-      <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto w-full transition-all duration-300">
+   <main className="flex-1 md:ml-64 p-4 pt-20 md:pt-8 md:p-8 max-w-7xl mx-auto w-full transition-all duration-300">
         
         {/* --- 1. Dashboard --- */}
         {activeTab === 'dashboard' && (
@@ -620,24 +658,30 @@ const loadGroupsManifest = useCallback(async () => {
           </div>
         )}
 
-             {/* --- 11. Members (Участники) --- */}
+     {/* --- 11. Members (Участники) --- */}
         {activeTab === 'members' && (
-          <div className="relative flex h-full">
-            <div className="flex-1">
-              <MembersTab onSelectMember={setSelectedMemberId} />
-            </div>
-            {selectedMemberId && (
-              <MemberDrawer 
-                memberId={selectedMemberId} 
-                onClose={() => setSelectedMemberId(null)} 
-              />
-            )}
-          </div>
+            <MembersTab
+              members={membersList}
+              total={membersTotal}
+              page={membersPage}
+              loading={membersLoading}
+              searchTerm={membersSearch}
+              levelFilter={membersLevelFilter}
+              activityFilter={membersActivityFilter}
+              sortBy={membersSortBy}
+              sortDir={membersSortDir}
+              onSearchChange={(v) => { setMembersSearch(v); setMembersPage(1); }}
+              onLevelChange={(v) => { setMembersLevelFilter(v); setMembersPage(1); }}
+              onActivityChange={(v) => { setMembersActivityFilter(v); setMembersPage(1); }}
+              onSortChange={(f, d) => { setMembersSortBy(f); setMembersSortDir(d); setMembersPage(1); }}
+              onPageChange={setMembersPage}
+              onRefresh={loadMembers}
+            />
         )}
 
       </main>
 
-    {/* --- MODALS --- */}
+      {/* --- MODALS --- */}
       {/* Tour Modal */}
       {modalState.tour && (
         <TourForm 

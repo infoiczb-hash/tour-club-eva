@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Upload, Loader2, Sparkles, Wand2, Link as LinkIcon, Mail, Phone, Instagram, Send } from 'lucide-react';
 import Button from '@/shared/ui/Button';
 import { uploadImage } from '@/lib/api'; 
-import { performAiTask } from '@/features/admin/actions/ai';
+import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
 
 // === СТРОГАЯ ТИПИЗАЦИЯ ===
 export interface ContentData {
@@ -15,12 +15,11 @@ export interface ContentData {
   phone?: string;
   instagram?: string;
   telegram?: string;
-  // Индексная сигнатура на случай расширения других текстовых блоков
   [key: string]: string | undefined; 
 }
 
 interface Props {
-  slug: string; // 'hero' или 'footer'
+  slug: string;
   initialContent: ContentData | null;
   onClose: () => void;
   onSubmit: (slug: string, data: ContentData) => Promise<void>;
@@ -48,30 +47,44 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // 🖼️ ЗАГРУЗКА ФОНА
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUploading(true);
     try {
-        const url = await uploadImage(file);
-        if (url) handleChange('bg_image', url);
-        else alert("Ошибка загрузки");
-    } catch (e) { alert("Ошибка"); } 
-    finally { setUploading(false); }
+      const url = await uploadImage(file);
+      if (url) handleChange('bg_image', url);
+      else alert("Ошибка загрузки");
+    } catch (e) {
+      alert("Ошибка");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  // 🪄 AI УЛУЧШЕНИЕ ЗАГОЛОВКА
   const handleAiImprove = async (field: keyof ContentData) => {
-      const textToImprove = data[field];
-      if (!textToImprove) return;
-      
-      setAiLoading(true);
-      const res = await performAiTask({ mode: 'improve_text', text: textToImprove, tone: 'selling' });
-      setAiLoading(false);
-      
+    const textToImprove = data[field];
+    if (!textToImprove) return;
+
+    setAiLoading(true);
+    try {
+      const res = await performAiTask({
+        mode: 'improve_text',
+        text: textToImprove,
+        tone: 'selling'
+      }) as PerformAiTaskResult;
+
       if (res.success && typeof res.data === 'string') {
         handleChange(field, res.data);
+      } else if (!res.success) {
+        alert('Ошибка AI: ' + res.error);
       }
+    } catch (error) {
+      console.error('AI improve error:', error);
+      alert('Ошибка соединения с AI');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const getTitle = () => {

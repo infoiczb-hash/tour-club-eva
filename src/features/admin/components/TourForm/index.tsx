@@ -157,7 +157,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
           delete payload.categoryId;
       }
 
-      const res = await saveTour(payload); 
+      const res = await saveTour(payload) as { success: boolean; error?: string };
       
       if (res.success) {
         showToast('Тур успешно сохранен!', 'success');

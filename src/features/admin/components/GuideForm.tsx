@@ -67,8 +67,9 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
       if (!value || value.length < 3) return alert('Напишите хоть пару слов!');
       setAiLoading(true);
       try {
-        const res = await performAiTask({ mode: 'improve_text', text: value, tone: 'selling' });
-        if(res.success && typeof res.data === 'string') onChange(res.data);
+      const res = await performAiTask({ mode: 'improve_text', text: value, tone: 'selling' }) as { success: boolean; data?: string; error?: string };
+if(res.success && typeof res.data === 'string') onChange(res.data);
+
       } catch (e) { 
         console.error(e); 
       } finally { 

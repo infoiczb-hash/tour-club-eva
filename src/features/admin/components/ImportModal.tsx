@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { X, FileDown, Loader2, Clipboard } from 'lucide-react';
 import Button from '@/shared/ui/Button';
-import { performAiTask } from '@/features/admin/actions/ai';
+import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
+
 
 // ✅ ИСПРАВЛЕНО: Строгая типизация вместо any
 interface Props {
@@ -21,7 +22,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
     
     setLoading(true);
     // Вызываем режим parse_tour_text (The Importer)
-    const res = await performAiTask({ mode: 'parse_tour_text', text });
+const res = await performAiTask({ mode: 'parse_tour_text', text }) as PerformAiTaskResult;
     setLoading(false);
 
     if (res.success) {

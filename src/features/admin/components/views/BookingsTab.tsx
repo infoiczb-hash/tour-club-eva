@@ -221,7 +221,7 @@ export default function BookingsTab({
     showToast('Начинаем рассылку...', 'info');
 
     const bookingIds = Array.from(new Set(broadcastModal.group.participants.map((p: any) => p.bookingId))) as string[];
-    const res = await broadcastToGroupAction(bookingIds, broadcastText);
+    const res = await broadcastToGroupAction(bookingIds, broadcastText) as { success: boolean; count?: number; error?: string };
 
     if (res.success) {
       showToast(`Успешно отправлено ${res.count} участникам!`, 'success');

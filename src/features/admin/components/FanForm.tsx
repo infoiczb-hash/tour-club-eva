@@ -75,7 +75,6 @@ export default function FanForm({ initialData, onSuccess }: Props) {
     setError(null);
     
     try {
-      // ✅ ИСПРАВЛЕНО: Приводим данные к строгому формату экшена
       const payload = {
         id: data.id,
         slug: data.slug,
@@ -87,8 +86,8 @@ export default function FanForm({ initialData, onSuccess }: Props) {
         passCount: data.passCount,
       };
 
-      const res = await upsertFunTestAction(payload);
-      
+      const res = await upsertFunTestAction(payload) as { success: boolean; error?: string };
+
       if (res.success) {
         if (onSuccess) onSuccess(); 
       } else {
@@ -99,7 +98,8 @@ export default function FanForm({ initialData, onSuccess }: Props) {
     } finally {
       setIsSaving(false);
     }
-  };
+  }; 
+
 
   const selectedCategory = form.watch("category");
 

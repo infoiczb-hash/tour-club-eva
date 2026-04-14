@@ -47,10 +47,7 @@ export default function AiAssistant() {
     setMessages(newHistory);
     setIsLoading(true);
 
-    const res = await performAiTask({ 
-      mode: 'chat', 
-      messages: newHistory.slice(1) 
-    });
+  const res = await performAiTask({ mode: 'chat', messages: newHistory.slice(1) }) as { success: boolean; data?: string; error?: string };
 
     setIsLoading(false);
 

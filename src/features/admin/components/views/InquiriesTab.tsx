@@ -49,8 +49,8 @@ export default function InquiriesTab({ inquiries: initialData }: Props) {
   const handleStatus = async (id: string, newStatus: InquiryStatus) => {
     // Оптимистичное обновление UI
     setInquiries(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
-    const res = await updateInquiryStatusAction(id, newStatus);
-    if (!res.success) showToast('Ошибка обновления', 'error');
+    const res = await updateInquiryStatusAction(id, newStatus) as { success: boolean; error?: string };
+if (!res.success) showToast('Ошибка обновления', 'error');
   };
 
   const handleDelete = async (id: string) => {

@@ -214,7 +214,7 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
   const handleAiImage = async () => {
     if (!formData.title) return alert("Please enter a title first!");
     setIsImageGenerating(true);
-    const res = await performAiTask({ mode: 'generate_image', prompt: formData.title });
+    const res: any = await performAiTask({ mode: 'generate_image', prompt: formData.title }); // 👈 ДОБАВЛЕНО : any
     if (res.success) {
        const permanentUrl = await uploadImageFromUrl(res.data as string);
        if (permanentUrl) setFormData(prev => ({ ...prev, image: permanentUrl }));
@@ -222,10 +222,10 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
     setIsImageGenerating(false);
   };
 
-  const handleAiText = async () => {
+ const handleAiText = async () => {
     const topic = prompt("Topic of the article?"); if (!topic) return;
     setIsAiGenerating(true);
-    const res = await performAiTask({ mode: 'generate_blog', topic });
+    const res: any = await performAiTask({ mode: 'generate_blog', topic }); // 👈 ДОБАВЛЕНО : any
     setIsAiGenerating(false);
     if (res.success) {
         // Убираем any, задаем жесткую структуру ответа Gemini
@@ -493,11 +493,11 @@ export default function PostForm({ initialData, categories = [], onClose, onSubm
              <div><h4 className="text-xs font-black text-pink-700 dark:text-pink-400 uppercase flex items-center gap-2 mb-1"><Share2 size={14}/> SMM Announce</h4><p className="text-[12px] text-pink-600/70 dark:text-pink-400/70 font-medium">Generate social media posts</p></div>
              <div className="flex gap-2 w-full sm:w-auto">
                  <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
-                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' });
+                     const res: any = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' }); // 👈 ДОБАВЛЕНО : any
                      if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
                  }}><Instagram size={14} className="mr-2 text-pink-600"/> Instagram</Button>
-                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
-                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' });
+                <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
+                     const res: any = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' }); // 👈 ДОБАВЛЕНО : any
                      if(res.success && typeof res.data === 'string') navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
                  }}><Send size={14} className="mr-2 text-sky-500"/> Telegram</Button>
              </div>

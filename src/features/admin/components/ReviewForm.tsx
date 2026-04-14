@@ -40,7 +40,7 @@ export default function ReviewForm({ initialData, onClose, onSuccess }: ReviewFo
     if (!formData.name || !formData.text) return alert("Заполните имя и текст!");
 
     setLoading(true);
-    const res = await upsertReview(formData);
+ const res = await upsertReview(formData) as { success: boolean; error?: string };
     setLoading(false);
 
     if (res.success) {

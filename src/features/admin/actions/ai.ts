@@ -5,7 +5,7 @@ import { google } from '@ai-sdk/google';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { withAdminAuth } from '@/lib/auth';
-import { withAdminAudit } from '@/lib/audit'; // ✅ Добавлен аудит
+import { withAdminAudit } from '@/lib/audit';
 import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // === 1. КОНФИГУРАЦИЯ ===
@@ -57,36 +57,47 @@ const BlogAiSchema = z.object({
 });
 
 // === 3. ТИПЫ ЗАДАЧ ===
-export type AiTaskType = // Экспортируем, чтобы не было конфликтов при импорте, если понадобится
+export type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
   | { mode: 'generate_blog'; topic: string }
   | { mode: 'generate_image'; prompt: string }
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
-  | { mode: 'smm_post'; context: any; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
-  | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] }
+  | { mode: 'smm_post'; context: unknown; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
+  | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] };
 
-// === 4. ГЛАВНЫЙ ЭКШЕН (🔥 ТЕПЕРЬ ЗАЩИЩЕН И ЛОГИРУЕТСЯ) ===
+// === 4. ТИПЫ ВОЗВРАЩАЕМЫХ ЗНАЧЕНИЙ (СТРОГИЙ DISCRIMINATED UNION) ===
+export type TourAiData = z.infer<typeof TourAiSchema>;
+export type BlogAiData = z.infer<typeof BlogAiSchema>;
+export type ChecklistData = z.infer<typeof ChecklistSchema>;
+
+export type PerformAiTaskResult =
+  | { success: true; data: TourAiData }                                    // generate_tour, parse_tour_text
+  | { success: true; data: BlogAiData }                                    // generate_blog
+  | { success: true; data: ChecklistData }                                 // generate_checklist
+  | { success: true; data: string }                                        // improve_text, smm_post, chat, generate_image
+  | { success: true; data: Record<string, unknown> }                       // fallback для parse (на случай несоответствия схеме)
+  | { success: false; error: string };
+
+// === 5. ГЛАВНЫЙ ЭКШЕН ===
 export const performAiTask = withAdminAuth(
   withAdminAudit({
     actionName: 'PERFORM_AI_TASK',
-    getTargetId: (task: AiTaskType) => task.mode, // Используем мод как targetId
-  })(async (task: AiTaskType) => {
-    // Rate Limiting (защита кошелька API от спама)
+    getTargetId: (task: AiTaskType) => task.mode,
+  })(async (task: AiTaskType): Promise<PerformAiTaskResult> => {
+    // Rate Limiting
     try {
       const ip = await getClientIp();
       const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
-
       if (!rateLimitSuccess) {
-        return { 
-          success: false, 
-          error: 'Превышен лимит запросов к AI (15 в минуту). Пожалуйста, немного подождите.' 
+        return {
+          success: false,
+          error: 'Превышен лимит запросов к AI (15 в минуту). Пожалуйста, немного подождите.'
         };
       }
     } catch (error) {
       console.error('Rate limit error in performAiTask:', error);
-      // При падении Redis пропускаем запрос, чтобы админ мог продолжить работу
     }
 
     try {
@@ -101,7 +112,7 @@ export const performAiTask = withAdminAuth(
           prompt: `Professional travel photography, cinematic lighting, highly detailed. Subject: ${task.prompt}`,
           n: 1, size: "1024x1024",
         });
-        return { success: true, data: data?.[0]?.url };
+        return { success: true, data: data?.[0]?.url ?? '' };
       }
 
       // --- GEMINI ЗАДАЧИ ---
@@ -188,10 +199,9 @@ export const performAiTask = withAdminAuth(
         const { text } = await generateText({
           model,
           system: 'Ты — EVA, стратегический AI-партнер.',
-          // 🔥 ИСПРАВЛЕНО: Убрали any, используем выведенный тип из interface
           messages: task.messages.map((m) => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content as string,
+            role: m.role,
+            content: m.content,
           })),
         });
         return { success: true, data: text };
