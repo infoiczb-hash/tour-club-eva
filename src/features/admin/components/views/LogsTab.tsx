@@ -53,7 +53,7 @@ export const LogsTab = () => {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
             <input 
               type="text"
               placeholder="Поиск по логам..."
@@ -73,7 +73,7 @@ export const LogsTab = () => {
           </select>
         </div>
         
-        <div className="text-sm text-slate-500 font-medium">
+        <div className="text-sm text-slate-700 font-medium">
           Всего записей: <span className="text-slate-900">{total}</span>
         </div>
       </div>
@@ -83,11 +83,11 @@ export const LogsTab = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-bottom border-slate-200">
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Источник</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Действие</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Объект</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Дата</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Изменения</th>
+              <th className="px-6 py-4 text-xs font-semibold text-slate-700 uppercase tracking-wider">Источник</th>
+              <th className="px-6 py-4 text-xs font-semibold text-slate-700 uppercase tracking-wider">Действие</th>
+              <th className="px-6 py-4 text-xs font-semibold text-slate-700 uppercase tracking-wider">Объект</th>
+              <th className="px-6 py-4 text-xs font-semibold text-slate-700 uppercase tracking-wider">Дата</th>
+              <th className="px-6 py-4 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Изменения</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -109,7 +109,7 @@ export const LogsTab = () => {
                       )}
                       <div>
                         <div className="font-medium text-slate-900">{log.actorName || 'System'}</div>
-                        <div className="text-[10px] text-slate-400 font-mono uppercase">{log.actorType}</div>
+                        <div className="text-[10px] text-slate-700 font-mono uppercase">{log.actorType}</div>
                       </div>
                     </div>
                   </td>
@@ -119,11 +119,11 @@ export const LogsTab = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-slate-600 font-mono text-xs truncate max-w-[150px]" title={log.targetId}>
+                    <div className="text-slate-800 font-mono text-xs truncate max-w-[150px]" title={log.targetId}>
                       {log.targetId || '—'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-slate-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-slate-700">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
                       {format(new Date(log.createdAt), 'dd MMM, HH:mm', { locale: ru })}
@@ -142,7 +142,7 @@ export const LogsTab = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-700">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-20" />
                   Логи не найдены
                 </td>
@@ -153,7 +153,7 @@ export const LogsTab = () => {
 
         {/* PAGINATION */}
         <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-700">
             Показано {logs.length} из {total}
           </div>
           <div className="flex gap-2">
@@ -182,11 +182,11 @@ export const LogsTab = () => {
            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">Детали изменений</h3>
-                <p className="text-sm text-slate-500">{selectedLog.action} — {selectedLog.id}</p>
+                <p className="text-sm text-slate-700">{selectedLog.action} — {selectedLog.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLog(null)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-slate-700 hover:text-slate-800 transition-colors"
               >
                 Закрыть
               </button>
@@ -197,11 +197,11 @@ export const LogsTab = () => {
                   {JSON.stringify(selectedLog.changes, null, 2)}
                 </pre>
               ) : (
-                <span className="text-slate-400 italic">Нет данных об изменениях</span>
+                <span className="text-slate-700 italic">Нет данных об изменениях</span>
               )}
             </div>
             {selectedLog.ip && (
-              <div className="p-4 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between">
+              <div className="p-4 border-t border-slate-100 text-[10px] text-slate-700 flex justify-between">
                 <span>IP: {selectedLog.ip}</span>
                 <span>Agent: {selectedLog.userAgent?.substring(0, 50)}...</span>
               </div>

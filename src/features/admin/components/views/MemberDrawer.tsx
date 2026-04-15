@@ -87,7 +87,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
               {member?.avatarUrl ? (
                 <Image src={member.avatarUrl} alt="" fill className="object-cover" />
               ) : (
-                <User className="w-full h-full p-3 text-slate-300" />
+                <User className="w-full h-full p-3 text-slate-700" />
               )}
             </div>
             <div>
@@ -98,11 +98,11 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600">
                   {member?.level || 'Первопроходец'}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">ID: {memberId.slice(0, 8)}</span>
+                <span className="text-xs text-slate-700 font-mono">ID: {memberId.slice(0, 8)}</span>
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-700">
             <X size={24} />
           </button>
         </div>
@@ -122,7 +122,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
                 "flex items-center gap-2 px-4 py-4 text-sm font-medium transition-all border-b-2",
                 activeTab === tab.id 
                   ? "border-teal-500 text-teal-600" 
-                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  : "border-transparent text-slate-700 hover:text-slate-700"
               )}
             >
               <tab.icon size={16} />
@@ -136,7 +136,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full gap-3">
               <Loader2 className="animate-spin text-teal-500" />
-              <p className="text-sm text-slate-400">Синхронизируем данные...</p>
+              <p className="text-sm text-slate-700">Синхронизируем данные...</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -162,8 +162,8 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
 
                   <Section title="Предпочтения">
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                      <p className="text-xs text-slate-400 uppercase font-bold mb-1">Питание / Ограничения</p>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                      <p className="text-xs text-slate-700 uppercase font-bold mb-1">Питание / Ограничения</p>
+                      <p className="text-sm text-slate-700 dark:text-slate-700 leading-relaxed italic">
                         {member?.dietaryRestrictions || 'Информации нет'}
                       </p>
                     </div>
@@ -186,7 +186,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
                          </div>
                          <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{b.tour?.title}</p>
-                            <p className="text-[10px] text-slate-500 uppercase mt-1">
+                            <p className="text-[10px] text-slate-700 uppercase mt-1">
                               {new Date(b.createdAt).toLocaleDateString()} · {b.status}
                             </p>
                          </div>
@@ -245,11 +245,11 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
                             )}>
                               {log.changes.amount > 0 ? '+' : ''}{log.changes.amount} баллов
                             </span>
-                            <span className="text-slate-400 text-[10px]">
+                            <span className="text-slate-700 text-[10px]">
                               {new Date(log.createdAt).toLocaleDateString()}
                             </span>
                           </div>
-                          <p className="text-slate-600 dark:text-slate-400 italic">"{log.changes.reason}"</p>
+                          <p className="text-slate-800 dark:text-slate-700 italic">"{log.changes.reason}"</p>
                         </div>
                       ))}
                     </div>
@@ -268,7 +268,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</h3>
+      <h3 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">{title}</h3>
       {children}
     </div>
   );
@@ -277,7 +277,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoItem({ icon, label, value, link }: { icon: React.ReactNode; label: string; value: string; link?: string }) {
   return (
     <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
-      <p className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1">
+      <p className="text-[10px] text-slate-700 font-bold uppercase mb-1 flex items-center gap-1">
         {icon} {label}
       </p>
       {link ? (
@@ -292,8 +292,8 @@ function InfoItem({ icon, label, value, link }: { icon: React.ReactNode; label: 
 function GearCard({ label, value }: { label: string; value?: string }) {
   return (
     <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-      <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">{label}</p>
-      <p className="text-lg font-black text-slate-700 dark:text-slate-300">{value || '—'}</p>
+      <p className="text-[10px] text-slate-700 font-bold uppercase mb-1">{label}</p>
+      <p className="text-lg font-black text-slate-700 dark:text-slate-700">{value || '—'}</p>
     </div>
   );
 }
@@ -301,7 +301,7 @@ function GearCard({ label, value }: { label: string; value?: string }) {
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-      <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">{label}</p>
+      <p className="text-[10px] text-slate-700 font-bold uppercase mb-1">{label}</p>
       <p className="text-xl font-black text-slate-900 dark:text-white">{value}</p>
     </div>
   );

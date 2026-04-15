@@ -202,13 +202,13 @@ export default function SmmTab() {
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
           <button 
             onClick={() => setViewMode('generator')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'generator' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-500'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'generator' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-700'}`}
           >
             <Zap size={16}/> Мастерская
           </button>
           <button 
             onClick={() => setViewMode('history')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-500'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-700'}`}
           >
             <History size={16}/> История
           </button>
@@ -223,7 +223,7 @@ export default function SmmTab() {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Источник контента</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Источник контента</label>
                 <select 
                   value={selectedSourceId} 
                   onChange={(e) => setSelectedSourceId(e.target.value)}
@@ -238,12 +238,12 @@ export default function SmmTab() {
 
               {/* СТРАТЕГИЯ (Goal & Audience) */}
               <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-4 border border-slate-100 dark:border-slate-700/50">
-                  <h4 className="text-[11px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                  <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-widest flex items-center gap-2">
                     <Target size={12}/> AI Стратегия
                   </h4>
                   <div className="grid grid-cols-2 gap-4">
                       <div>
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Цель поста</label>
+                         <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Цель поста</label>
                          <select 
                            value={goal} 
                            onChange={(e) => setGoal(e.target.value as any)} 
@@ -253,7 +253,7 @@ export default function SmmTab() {
                          </select>
                       </div>
                       <div>
-                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Аудитория</label>
+                         <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Аудитория</label>
                          <select 
                            value={audience} 
                            onChange={(e) => setAudience(e.target.value as any)} 
@@ -266,13 +266,13 @@ export default function SmmTab() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Платформа</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Платформа</label>
                 <div className="grid grid-cols-2 gap-2">
                   {PLATFORMS.map(p => (
                     <button 
                       key={p.id}
                       onClick={() => setPlatform(p.id)}
-                      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border-2 transition-all ${platform === p.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-500'}`}
+                      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border-2 transition-all ${platform === p.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-700'}`}
                     >
                       {p.icon} {p.label}
                     </button>
@@ -281,34 +281,34 @@ export default function SmmTab() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Формат креатива</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Формат креатива</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setFormat('post')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'post' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent'}`}>📷 Квадрат (1:1)</button>
-                  <button onClick={() => setFormat('feed')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'feed' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent'}`}>🖼️ Лента (4:5)</button>
-                  <button onClick={() => setFormat('story')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'story' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent'}`}>📱 Сториз (9:16)</button>
-                  <button onClick={() => setFormat('event')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'event' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent'}`}>📅 FB Event</button>
+                  <button onClick={() => setFormat('post')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'post' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📷 Квадрат (1:1)</button>
+                  <button onClick={() => setFormat('feed')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'feed' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>🖼️ Лента (4:5)</button>
+                  <button onClick={() => setFormat('story')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'story' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📱 Сториз (9:16)</button>
+                  <button onClick={() => setFormat('event')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'event' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📅 FB Event</button>
                 </div>
               </div>
 
               <div>
-                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Триггер (Яркая плашка на фото)</label>
+                 <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Триггер (Яркая плашка на фото)</label>
                  <input 
                    type="text" 
                    value={triggerText} 
                    onChange={(e) => setTriggerText(e.target.value)} 
                    placeholder="Напр: Последние 2 места!" 
-                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none" 
+                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/20 text-slate-900 dark:text-white placeholder:text-slate-700 outline-none" 
                  />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Тональность текста</label>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Тональность текста</label>
                 <div className="grid grid-cols-2 gap-2">
                   {TONES.map(t => (
                     <button 
                       key={t.id} 
                       onClick={() => setTone(t.id)}
-                      className={`py-2 rounded-lg text-xs font-bold border-2 transition-all ${tone === t.id ? 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent'}`}
+                      className={`py-2 rounded-lg text-xs font-bold border-2 transition-all ${tone === t.id ? 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}
                     >
                       {t.label}
                     </button>
@@ -334,11 +334,11 @@ export default function SmmTab() {
               {/* ТЕКСТ */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-400">Текст поста</h3>
+                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-700">Текст поста</h3>
                   {generatedText && (
                     <button 
                       onClick={() => navigator.clipboard.writeText(`${generatedText}\n\n${hashtags.map(h => `#${h}`).join(' ')}`)} 
-                      className="text-slate-400 hover:text-teal-500 transition-colors"
+                      className="text-slate-700 hover:text-teal-500 transition-colors"
                     >
                       <Copy size={16}/>
                     </button>
@@ -362,7 +362,7 @@ export default function SmmTab() {
 
               {/* ВИЗУАЛ (API OG) */}
               <div className="space-y-4">
-                <h3 className="text-sm font-black uppercase tracking-tight text-slate-400">Превью обложки</h3>
+                <h3 className="text-sm font-black uppercase tracking-tight text-slate-700">Превью обложки</h3>
                 <div className={`relative w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 shadow-xl transition-all duration-300 ${previewAspectClass}`}>
                   {selectedSourceId ? (
                     <img 
@@ -372,7 +372,7 @@ export default function SmmTab() {
                       className="w-full h-full object-contain bg-[#0f172a]"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 opacity-50">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 opacity-50">
                       <ImageIcon size={48} strokeWidth={1}/>
                       <p className="text-xs font-bold mt-2">Выберите тур для превью</p>
                     </div>
@@ -416,20 +416,20 @@ export default function SmmTab() {
               )}
               <div className="p-4 space-y-3 flex-1 flex flex-col">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                  <span className="text-[10px] font-black uppercase px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700">
                     {post.platform} • {post.format}
                   </span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-slate-700">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed flex-1">
+                <p className="text-xs text-slate-800 dark:text-slate-700 line-clamp-3 leading-relaxed flex-1">
                   {post.content}
                 </p>
                 <div className="flex gap-2 pt-2 border-t border-slate-50 dark:border-slate-800 mt-auto">
                    <button 
                      onClick={() => navigator.clipboard.writeText(post.content)} 
-                     className="flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-teal-50 text-slate-800 dark:text-slate-300 hover:text-teal-600 transition-colors"
+                     className="flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-teal-50 text-slate-800 dark:text-slate-700 hover:text-teal-600 transition-colors"
                    >
                      <Copy size={12}/> Текст
                    </button>
@@ -438,7 +438,7 @@ export default function SmmTab() {
                        href={post.imageUrl} 
                        target="_blank" 
                        rel="noreferrer"
-                       className="flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-teal-50 text-slate-800 dark:text-slate-300 hover:text-teal-600 transition-colors"
+                       className="flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-teal-50 text-slate-800 dark:text-slate-700 hover:text-teal-600 transition-colors"
                      >
                        <ImageIcon size={12}/> Визуал
                      </a>

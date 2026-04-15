@@ -153,7 +153,7 @@ const [currentState, setCurrentState] = useState<ScannerState>('SCANNING');
             <ScanLine size={28} className="text-teal-500" />
             Сканер билетов
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-700 mt-1">
             Наведите камеру на QR-код участника (билет или клубная карта)
           </p>
         </div>
@@ -197,7 +197,7 @@ const [currentState, setCurrentState] = useState<ScannerState>('SCANNING');
         <div className={clsx("absolute inset-0 bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300 z-20", currentState === 'ERROR' ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
             <XCircle size={64} className="text-rose-500 mb-4" />
             <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase mb-2">Ошибка сканирования</h3>
-            <p className="text-slate-600 dark:text-slate-400 font-medium mb-8 max-w-sm">{errorMessage}</p>
+            <p className="text-slate-800 dark:text-slate-700 font-medium mb-8 max-w-sm">{errorMessage}</p>
             <button 
               onClick={startScanning} 
               className="px-8 py-4 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white font-bold uppercase tracking-widest text-sm rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
@@ -264,7 +264,7 @@ function BookingResultCard({ data, isCheckedIn, isCheckInLoading, onCheckIn, onN
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-b-3xl p-6 shadow-xl relative z-10 flex-1">
           
           <div className="text-center mb-6">
-              <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1">Бронь #{data.shortId || '---'}</p>
+              <p className="text-[12px] font-bold text-slate-700 uppercase tracking-widest mb-1">Бронь #{data.shortId || '---'}</p>
               <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{data.tour.title}</h3>
               <p className="text-sm font-bold text-teal-600 dark:text-teal-400 mt-2 flex items-center justify-center gap-1.5">
                  <MapPin size={14}/> {data.tourDate ? new Date(data.tourDate.startDate).toLocaleDateString('ru-RU') : 'Открытая дата'}
@@ -273,21 +273,21 @@ function BookingResultCard({ data, isCheckedIn, isCheckInLoading, onCheckIn, onN
 
           <div className="space-y-4 border-t border-b border-slate-100 dark:border-slate-800 py-6 mb-6">
              <div className="flex justify-between items-center">
-                 <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><User size={16}/> Клиент:</span>
+                 <span className="text-sm font-bold text-slate-700 flex items-center gap-2"><User size={16}/> Клиент:</span>
                  <span className="text-sm font-black text-slate-900 dark:text-white">{data.userName}</span>
              </div>
              <div className="flex justify-between items-center">
-                 <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Phone size={16}/> Телефон:</span>
+                 <span className="text-sm font-bold text-slate-700 flex items-center gap-2"><Phone size={16}/> Телефон:</span>
                  <span className="text-sm font-bold text-slate-900 dark:text-white">{data.userPhone}</span>
              </div>
              <div className="flex justify-between items-center">
-                 <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Ticket size={16}/> Билетов:</span>
+                 <span className="text-sm font-bold text-slate-700 flex items-center gap-2"><Ticket size={16}/> Билетов:</span>
                  <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50">
                    {data.totalTickets} чел.
                  </span>
              </div>
              <div className="flex justify-between items-center pt-2">
-                 <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><CreditCard size={16}/> Итого:</span>
+                 <span className="text-sm font-bold text-slate-700 flex items-center gap-2"><CreditCard size={16}/> Итого:</span>
                  <span className="text-sm font-black text-slate-900 dark:text-white">{data.totalPrice} {data.currency}</span>
              </div>
           </div>
@@ -298,7 +298,7 @@ function BookingResultCard({ data, isCheckedIn, isCheckInLoading, onCheckIn, onN
             disabled={isCheckInLoading || !isPaid}
             className={clsx(
               "w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 shadow-lg mb-4",
-              !isPaid ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed" :
+              !isPaid ? "bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed" :
               isCheckedIn ? "bg-amber-500 hover:bg-amber-600 text-slate-900 shadow-amber-500/20" : "bg-teal-600 hover:bg-teal-500 text-white shadow-teal-500/20 active:scale-95"
             )}
           >
@@ -307,7 +307,7 @@ function BookingResultCard({ data, isCheckedIn, isCheckInLoading, onCheckIn, onN
              isCheckedIn ? 'Отменить посадку' : 'Отметить посадку'}
           </button>
 
-          <button onClick={onNext} className="w-full py-3 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white uppercase tracking-widest transition-colors flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-800 rounded-xl">
+          <button onClick={onNext} className="w-full py-3 text-xs font-bold text-slate-700 hover:text-slate-900 dark:hover:text-white uppercase tracking-widest transition-colors flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-800 rounded-xl">
              Следующий <ArrowRight size={14}/>
           </button>
       </div>
@@ -325,7 +325,7 @@ function MemberResultCard({ data, onNext }: { data: ScannedMemberDTO, onNext: ()
 
           <div className="flex flex-col items-center text-center relative z-10">
              <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-amber-500 flex items-center justify-center overflow-hidden mb-4 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-                {data.avatarUrl ? <img src={data.avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={40} className="text-slate-500" />}
+                {data.avatarUrl ? <img src={data.avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={40} className="text-slate-700" />}
              </div>
              
              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
@@ -333,19 +333,19 @@ function MemberResultCard({ data, onNext }: { data: ScannedMemberDTO, onNext: ()
              </div>
 
              <h2 className="text-3xl font-black text-white leading-tight mb-2">{data.name || 'Без имени'}</h2>
-             <p className="text-slate-400 font-mono text-sm mb-8">{data.phone}</p>
+             <p className="text-slate-700 font-mono text-sm mb-8">{data.phone}</p>
 
              <div className="grid grid-cols-2 gap-4 w-full mb-8">
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col items-center">
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Статус</p>
+                   <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest mb-1">Статус</p>
                    <p className="text-lg font-black text-amber-400 text-center">{data.level}</p>
                 </div>
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col items-center">
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Туров</p>
+                   <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest mb-1">Туров</p>
                    <p className="text-2xl font-black text-white">{data.totalTours}</p>
                 </div>
                 <div className="col-span-2 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col items-center">
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Доступные бонусы</p>
+                   <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest mb-1">Доступные бонусы</p>
                    <p className="text-3xl font-black text-emerald-400 flex items-center gap-2"><Zap size={20} className="text-emerald-500"/> {data.balance} ₽</p>
                 </div>
              </div>

@@ -100,7 +100,7 @@ const navItems: Array<{ id: Tab; icon: any; label: string; badge?: number }> = [
          </div>
          <button 
            onClick={() => setIsMobileMenuOpen(true)} 
-           className="p-2 -mr-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 transition-all"
+           className="p-2 -mr-2 text-slate-700 dark:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 transition-all"
          >
            <Menu size={24} />
          </button>
@@ -128,7 +128,7 @@ const navItems: Array<{ id: Tab; icon: any; label: string; badge?: number }> = [
            <span className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">Меню</span>
            <button 
              onClick={() => setIsMobileMenuOpen(false)} 
-             className="p-2 -mr-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 active:scale-95 transition-transform"
+             className="p-2 -mr-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-800 dark:text-slate-700 active:scale-95 transition-transform"
            >
              <X size={16} strokeWidth={3}/>
            </button>

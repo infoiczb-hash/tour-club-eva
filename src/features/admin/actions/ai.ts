@@ -10,7 +10,7 @@ import { withAdminAudit } from '@/lib/audit';
 import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // === 1. КОНФИГУРАЦИЯ ===
-const model = google('gemini-1.5-pro'); 
+const model = google('gemini-2.5-flash'); 
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
 const TourAiSchema = z.object({

@@ -29,7 +29,7 @@ export default function AdminScanRedirect() {
       <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
         Обработка QR-кода...
       </h1>
-      <p className="text-sm text-slate-500 mt-2">
+      <p className="text-sm text-slate-700 mt-2">
         Перенаправляем в панель управления
       </p>
     </div>

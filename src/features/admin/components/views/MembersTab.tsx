@@ -85,7 +85,7 @@ function SortButton({
     <button
       onClick={toggle}
       className={`flex items-center gap-1 text-xs font-bold uppercase tracking-wider transition-colors ${
-        isActive ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+        isActive ? 'text-teal-600 dark:text-teal-400' : 'text-slate-700 hover:text-slate-800 dark:hover:text-slate-700'
       }`}
       type="button"
     >
@@ -122,14 +122,14 @@ export default function MembersTab({
           <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
             Члены клуба
           </h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-700 mt-0.5">
             {loading ? 'Загрузка...' : `${total} участников`}
           </p>
         </div>
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="flex items-center gap-2 text-sm text-slate-500 hover:text-teal-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="flex items-center gap-2 text-sm text-slate-700 hover:text-teal-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           type="button"
         >
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
@@ -143,7 +143,7 @@ export default function MembersTab({
         {/* Строка поиска */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-700" />
             <input
               type="text"
               value={searchTerm}
@@ -152,7 +152,7 @@ export default function MembersTab({
               className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
             />
             {searchTerm && (
-              <button onClick={() => onSearchChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button onClick={() => onSearchChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-800">
                 <X size={14} />
               </button>
             )}
@@ -162,7 +162,7 @@ export default function MembersTab({
             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
               showFilters || levelFilter !== 'all' || activityFilter !== 'all'
                 ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20'
-                : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                : 'border-slate-200 dark:border-slate-700 text-slate-700 hover:border-slate-300'
             }`}
             type="button"
           >
@@ -177,7 +177,7 @@ export default function MembersTab({
 
             {/* Уровень */}
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Уровень</p>
+              <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">Уровень</p>
               <div className="flex flex-wrap gap-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1">
                 {(['all', 'Первопроходец', 'Искатель', 'Следопыт', 'Мастер троп', 'Легенда'] as MemberFilterLevel[]).map(l => (
                   <FilterTab
@@ -192,7 +192,7 @@ export default function MembersTab({
 
             {/* Активность */}
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Активность</p>
+              <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">Активность</p>
               <div className="flex gap-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1">
                 {([
                   { val: 'all', label: 'Все' },
@@ -217,11 +217,11 @@ export default function MembersTab({
 
         {/* Шапка таблицы (только десктоп) */}
         <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_40px] gap-4 px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Участник</span>
+          <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Участник</span>
           <SortButton field="totalTours" label="Туров"   sortBy={sortBy} sortDir={sortDir} onSortChange={onSortChange} />
           <SortButton field="balance"    label="Баланс"  sortBy={sortBy} sortDir={sortDir} onSortChange={onSortChange} />
           <SortButton field="joinedAt"   label="Вступил" sortBy={sortBy} sortDir={sortDir} onSortChange={onSortChange} />
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Контакты</span>
+          <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Контакты</span>
           <span />
         </div>
 
@@ -240,8 +240,8 @@ export default function MembersTab({
           </div>
         ) : members.length === 0 ? (
           <div className="py-16 text-center">
-            <UserCircle2 size={40} className="mx-auto text-slate-300 mb-3" />
-            <p className="text-slate-500 font-medium">Участники не найдены</p>
+            <UserCircle2 size={40} className="mx-auto text-slate-700 mb-3" />
+            <p className="text-slate-700 font-medium">Участники не найдены</p>
             {searchTerm && (
               <button onClick={() => onSearchChange('')} className="mt-2 text-sm text-teal-600 hover:underline">
                 Сбросить поиск
@@ -272,7 +272,7 @@ export default function MembersTab({
                           className="w-9 h-9 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700">
                           <UserCircle2 size={18} />
                         </div>
                       )}
@@ -290,7 +290,7 @@ export default function MembersTab({
                           {member.level}
                         </span>
                         {member.tags.map(tag => (
-                          <span key={tag} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${TAG_STYLES[tag] || 'bg-slate-100 text-slate-600'}`}>
+                          <span key={tag} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${TAG_STYLES[tag] || 'bg-slate-100 text-slate-800'}`}>
                             {tag}
                           </span>
                         ))}
@@ -300,25 +300,25 @@ export default function MembersTab({
 
                   {/* Туров */}
                   <div className="flex md:block items-center gap-2">
-                    <span className="md:hidden text-[11px] font-bold text-slate-400 uppercase">Туров:</span>
+                    <span className="md:hidden text-[11px] font-bold text-slate-700 uppercase">Туров:</span>
                     <div>
                       <p className="text-sm font-black text-slate-900 dark:text-white">{member.totalTours}</p>
-                      <p className="text-[11px] text-slate-400">{member._count.bookings} броней</p>
+                      <p className="text-[11px] text-slate-700">{member._count.bookings} броней</p>
                     </div>
                   </div>
 
                   {/* Баланс */}
                   <div className="flex md:block items-center gap-2">
-                    <span className="md:hidden text-[11px] font-bold text-slate-400 uppercase">Баланс:</span>
-                    <p className={`text-sm font-black ${member.balance > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <span className="md:hidden text-[11px] font-bold text-slate-700 uppercase">Баланс:</span>
+                    <p className={`text-sm font-black ${member.balance > 0 ? 'text-emerald-600' : 'text-slate-700'}`}>
                       {member.balance > 0 ? `+${member.balance} ₽` : '0 ₽'}
                     </p>
                   </div>
 
                   {/* Дата */}
                   <div className="flex md:block items-center gap-2">
-                    <span className="md:hidden text-[11px] font-bold text-slate-400 uppercase">Вступил:</span>
-                    <p className="text-sm text-slate-500">{joinDate}</p>
+                    <span className="md:hidden text-[11px] font-bold text-slate-700 uppercase">Вступил:</span>
+                    <p className="text-sm text-slate-700">{joinDate}</p>
                   </div>
 
                   {/* Контакты */}
@@ -330,7 +330,7 @@ export default function MembersTab({
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         title="Написать в Telegram"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-700 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
                       >
                         <Send size={14} />
                       </a>
@@ -340,7 +340,7 @@ export default function MembersTab({
                         href={`tel:${member.phone}`}
                         onClick={(e) => e.stopPropagation()}
                         title={member.phone}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-700 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
                       >
                         <Phone size={14} />
                       </a>
@@ -349,7 +349,7 @@ export default function MembersTab({
 
                   {/* Стрелка */}
                   <div className="hidden md:flex items-center justify-center">
-                    <ArrowRight size={16} className="text-slate-300 group-hover:text-teal-500 transition-colors" />
+                    <ArrowRight size={16} className="text-slate-700 group-hover:text-teal-500 transition-colors" />
                   </div>
                 </div>
               );
@@ -360,21 +360,21 @@ export default function MembersTab({
         {/* Пагинация */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               Страница {page} из {totalPages} · {total} участников
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="px-3 py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 ← Назад
               </button>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages}
-                className="px-3 py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Вперёд →
               </button>
