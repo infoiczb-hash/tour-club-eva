@@ -6,6 +6,7 @@ import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 // ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
+import SwipeHint from '@/shared/ui/SwipeHint';  
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -133,11 +134,7 @@ export default function KidsFormats() {
                           </FadeBlock>
                       ))}
                     </div>
-
-                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                              </div>
+<SwipeHint />                  
                 </div>
 
                 <FadeBlock startY={30} className="pt-8 border-t border-white/5">
@@ -174,10 +171,7 @@ export default function KidsFormats() {
                                 )
                             })}
                         </div>
-   <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                              </div>
+<SwipeHint />
                     </div>
                 </FadeBlock>
                 

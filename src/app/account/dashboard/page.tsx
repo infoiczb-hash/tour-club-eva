@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import {
   ArrowRight, Wallet, Tent, Map, Moon, Hourglass, 
-  Info, ChevronDown, Star, FlaskConical, Gift, Mountain
+  Info, ChevronDown, Star, FlaskConical, Gift, Mountain, Bell
 } from 'lucide-react';
 
 import VirtualCard from '@/features/account/components/VirtualCard';
@@ -25,7 +25,7 @@ function formatDate(d: Date) {
 
 // ─── загрузка данных ─────────────────────────────────────────────────
 async function getDashboardData(userId: string) {
-  // ✅ ДОБАВЛЕНО: Подтягиваем promoCode вместе с профилем
+  // 1. Подтягиваем профиль и промокод
   const profile = await prisma.memberProfile.findUnique({
     where: { userId },
     include: { promoCode: true }
@@ -33,7 +33,7 @@ async function getDashboardData(userId: string) {
 
   if (!profile) return null;
 
-  // ✅ ЛОГИКА АВТОГЕНЕРАЦИИ ПРОМОКОДА
+  // 2. ЛОГИКА АВТОГЕНЕРАЦИИ ПРОМОКОДА
   let promoCode = profile.promoCode;
   
   if (!promoCode) {
@@ -46,18 +46,17 @@ async function getDashboardData(userId: string) {
         data: {
           code: baseCode,
           memberId: profile.id,
-          discount: 10, // Скидка другу (можно менять)
-          reward: 10,   // Бонус владельцу
+          discount: 10,
+          reward: 10,
         }
       });
     } catch (e) {
-      // Фолбэк: если такой код случайно уже существует, добавляем рандомные цифры
       promoCode = await prisma.promoCode.create({
         data: {
           code: `${baseCode}-${Math.floor(Math.random() * 1000)}`,
           memberId: profile.id,
-          discount: 500,
-          reward: 500,
+          discount: 10,
+          reward: 10,
         }
       });
     }
@@ -65,60 +64,63 @@ async function getDashboardData(userId: string) {
 
   const now = new Date();
 
-  // 1. Все предстоящие брони
-  const upcomingBookings = await prisma.booking.findMany({
-    where: {
-      memberId: profile.id,
-      // ✅ Теперь клиент видит бронь, даже если еще не оплатил или чек на проверке
-      status: { in: ['pending', 'confirmed', 'awaiting_payment', 'moderation'] },
-      OR: [
-        { tourDate: { startDate: { gte: now } } },
-        { tourDateId: null } 
-      ]
-    },
-    orderBy: { tourDate: { startDate: 'asc' } },
-    include: {
-     tour: {
-        select: {
-          title: true, slug: true, location: true, meetingPoint: true, coverImage: true, // ✅ ДОБАВИЛИ meetingPoint
-          difficulty: true, duration: true, checklist: true, documents: true, currency: true
+  // 🚀 3. ТУРБО-РЕЖИМ: Параллельный запуск тяжелых запросов
+  const [upcomingBookings, waitlists, pastConfirmedBookings, unreadCount] = await Promise.all([
+    // Предстоящие брони
+    prisma.booking.findMany({
+      where: {
+        memberId: profile.id,
+        status: { in: ['pending', 'confirmed', 'awaiting_payment', 'moderation'] },
+        OR: [
+          { tourDate: { startDate: { gte: now } } },
+          { tourDateId: null } 
+        ]
+      },
+      orderBy: { tourDate: { startDate: 'asc' } },
+      include: {
+       tour: {
+          select: {
+            title: true, slug: true, location: true, meetingPoint: true, coverImage: true,
+            difficulty: true, duration: true, checklist: true, documents: true, currency: true
+          },
         },
-            },
-      tourDate: {
-        select: {
-          startDate: true, endDate: true, time: true,
-          guide: { select: { name: true, image: true } },
+        tourDate: {
+          select: {
+            startDate: true, endDate: true, time: true,
+            guide: { select: { name: true, image: true } },
+          },
         },
       },
-    },
-  });
+    }),
 
-  // 2. Лист ожидания
-  let waitlists: any[] = [];
-  if (profile.phone) {
-    waitlists = await prisma.waitlist.findMany({
+    // Лист ожидания
+    profile.phone ? prisma.waitlist.findMany({
       where: { phone: profile.phone },
       include: {
         tour: { select: { title: true, slug: true, coverImage: true, location: true } },
         tourDate: { select: { startDate: true } },
       },
       orderBy: { createdAt: 'desc' },
-    });
-  }
+    }) : Promise.resolve([]),
 
-  // 3. Статистика (СИНХРОН С ИСТОРИЕЙ)
-  const pastConfirmedBookings = await prisma.booking.findMany({
-  where: { 
-      memberId: profile.id, 
-      // ✅ Ачивки и КМ считаем только по реально посещенным (оплаченным) турам
-      status: 'confirmed',
-      tourDate: { startDate: { lt: now } }
-    },
-    include: { 
-      tour: { select: { title: true, location: true, distance: true, duration: true } },
-      tourDate: { select: { startDate: true, endDate: true } }
-    },
-  });
+    // Прошлые туры для статистики
+    prisma.booking.findMany({
+      where: { 
+        memberId: profile.id, 
+        status: 'confirmed',
+        tourDate: { startDate: { lt: now } }
+      },
+      include: { 
+        tour: { select: { title: true, location: true, distance: true, duration: true } },
+        tourDate: { select: { startDate: true, endDate: true } }
+      },
+    }),
+
+    // 🔥 СЧЕТЧИК НЕПРОЧИТАННЫХ УВЕДОМЛЕНИЙ
+    prisma.notification.count({
+      where: { memberId: profile.id, isRead: false }
+    })
+  ]);
 
   // 4. Агрегация статистики и Ачивок
   let totalKm = 0;
@@ -161,9 +163,10 @@ async function getDashboardData(userId: string) {
 
   return {
     profile,
-    promoCode, // Возвращаем реальный промокод из БД
+    promoCode,
     upcomingBookings,
     waitlists,
+    unreadCount, // 🔥 Передаем счетчик
     stats: {
       totalTours,
       totalKm: Math.round(totalKm),
@@ -189,7 +192,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData(user.id);
   if (!data) redirect('/login?next=/account/dashboard');
 
-  const { profile, promoCode, upcomingBookings, waitlists, stats, achievements } = data;
+  const { profile, promoCode, upcomingBookings, waitlists, stats, achievements, unreadCount } = data;
   const displayName = profile.name ?? 'Участник';
 
   const nearestBooking = upcomingBookings.length > 0 ? upcomingBookings[0] : null;
@@ -258,7 +261,43 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="order-2 xl:order-1 px-2 md:px-0">
+          <div className="order-2 xl:order-1 px-2 md:px-0 flex flex-col gap-5">
+            
+            {/* 🔥 НОВАЯ КАРТОЧКА: УВЕДОМЛЕНИЯ */}
+            <Link 
+              href="/account/notifications" 
+              className="group flex items-center justify-between p-5 bg-slate-900 border border-slate-700/50 rounded-3xl hover:border-teal-500/50 hover:bg-slate-800/50 transition-all shadow-lg"
+            >
+              <div className="flex items-center gap-4">
+                <div className="relative flex items-center justify-center w-12 h-12 bg-teal-500/10 text-teal-400 rounded-2xl group-hover:bg-teal-500 group-hover:text-slate-900 transition-all duration-300 shadow-inner">
+                  <Bell size={24} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[9px] font-black text-white bg-red-500 border-2 border-slate-900 rounded-full">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">
+                    Уведомления
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {unreadCount > 0 ? `У вас ${unreadCount} новых сообщений` : 'История ваших пушей'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <span className="hidden sm:inline-block px-2.5 py-1 bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-red-500/20">
+                    Новые
+                  </span>
+                )}
+                <ArrowRight size={18} className="text-slate-500 group-hover:text-teal-400 transition-colors" />
+              </div>
+            </Link>
+
+            {/* СТАРЫЙ БЛОК БАЛАНСА */}
             <div className="bg-slate-900 border border-amber-500/20 rounded-3xl overflow-hidden shadow-lg">
               
               <div className="p-5 flex items-center justify-between bg-gradient-to-r from-amber-500/10 to-transparent">
@@ -327,7 +366,6 @@ export default async function DashboardPage() {
         <AchievementsBox stats={achievements} />
       </section>
 
-      {/* ✅ ПЕРЕДАЕМ РЕАЛЬНЫЕ ДАННЫЕ В КАРТОЧКУ */}
       <section className="pt-2 px-2 md:px-0">
         <ReferralCard 
           promoCode={promoCode.code} 
@@ -381,7 +419,7 @@ export default async function DashboardPage() {
               return (
                 <BookingCard 
                   key={booking.id} 
-                  bookingId={booking.id} // ✅ Теперь ID брони передается железобетонно
+                  bookingId={booking.id}
                   booking={{ ...booking, guestsCount }} 
                 />
               );

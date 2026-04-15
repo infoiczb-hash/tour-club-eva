@@ -1,17 +1,19 @@
+// src/features/admin/actions/ai.ts
 'use server';
 
 import { generateObject, generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import OpenAI from 'openai';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/auth';
-// ✅ ДОБАВЛЕНО: Импорт админского лимитера и функции получения IP
+import { withAdminAuth } from '@/lib/auth';
+import { withAdminAudit } from '@/lib/audit';
 import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // === 1. КОНФИГУРАЦИЯ ===
-const model = google('gemini-1.5-flash');
+const model = google('gemini-2.0-flash-001'); 
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
+
 const TourAiSchema = z.object({
   title: z.string().describe('Маркетинговое название тура'),
   subtitle: z.string().describe('Краткий слоган'),
@@ -56,156 +58,178 @@ const BlogAiSchema = z.object({
   read_time: z.string()
 });
 
+// ✅ Схема доработана под Проблемы 1, 4, 6
+const SmmPostSchema = z.object({
+  caption: z.string().describe('Текст поста. СТРОГО разделять абзацы через \\n\\n. Должен быть легким для чтения.'),
+  slides: z.array(z.object({
+    title: z.string().describe('Заголовок для UI-карточки (до 5 слов, КАПСОМ)'),
+    text: z.string().describe('Краткий тезис (до 90 символов), чтобы не перекрывать дизайн')
+  })).describe('Массив слайдов карусели. Количество должно совпадать с запрошенной структурой.'),
+  hashtags: z.array(z.string()).describe('Массив тематических хештегов без символа #')
+});
+
 // === 3. ТИПЫ ЗАДАЧ ===
-type AiTaskType =
+export type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
   | { mode: 'generate_blog'; topic: string }
   | { mode: 'generate_image'; prompt: string }
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
-  | { mode: 'smm_post'; context: any; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
-  | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] }
+  | { mode: 'smm_post'; context: string; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' | 'info' | 'sell'; steps?: string[] }
+  | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] };
 
-// === 4. ГЛАВНЫЙ ЭКШЕН ===
-export async function performAiTask(task: AiTaskType) {
-  // 🔐 Только авторизованные пользователи могут вызывать AI
-  // Защищает Gemini и OpenAI API ключи от несанкционированного использования
-  try {
-    await requireAuth();
-  } catch {
-    return { success: false, error: 'Unauthorized' };
-  }
+export type TourAiData = z.infer<typeof TourAiSchema>;
+export type BlogAiData = z.infer<typeof BlogAiSchema>;
+export type ChecklistData = z.infer<typeof ChecklistSchema>;
+export type SmmPostData = z.infer<typeof SmmPostSchema>;
 
-  // ✅ ДОБАВЛЕНО: Rate Limiting (защита кошелька API от чрезмерного использования)
-  try {
-    const ip = await getClientIp();
-    const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
+// Универсальный результат без any
+export type PerformAiTaskResult =
+  | { success: true; data: TourAiData | BlogAiData | ChecklistData | SmmPostData | string | Record<string, unknown> }
+  | { success: false; error: string };
 
-    if (!rateLimitSuccess) {
-      return { 
-        success: false, 
-        error: 'Превышен лимит запросов к AI (15 в минуту). Пожалуйста, немного подождите.' 
-      };
-    }
-  } catch (error) {
-    console.error('Rate limit error in performAiTask:', error);
-    // При падении Redis пропускаем запрос, чтобы админ мог продолжить работу
-  }
-
-  try {
-
-    // --- ГЕНЕРАЦИЯ КАРТИНКИ (DALL-E) ---
-    if (task.mode === 'generate_image') {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) return { success: false, error: "Нет API ключа OpenAI (.env)" };
-
-      const openai = new OpenAI({ apiKey });
-      const { data } = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: `Professional travel photography, cinematic lighting, highly detailed. Subject: ${task.prompt}`,
-        n: 1, size: "1024x1024",
-      });
-      return { success: true, data: data?.[0]?.url };
+// === 5. ГЛАВНЫЙ ЭКШЕН ===
+export const performAiTask = withAdminAuth(
+  withAdminAudit({
+    actionName: 'PERFORM_AI_TASK',
+    getTargetId: (task: AiTaskType) => task.mode,
+  })(async (task: AiTaskType): Promise<PerformAiTaskResult> => {
+    
+    // 1. RATE LIMITING
+    try {
+      const ip = await getClientIp();
+      const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
+      if (!rateLimitSuccess) {
+        return { success: false, error: 'Превышен лимит (15/мин). Подождите немного.' };
+      }
+    } catch (error) {
+      console.error('Rate limit error:', error);
     }
 
-    // --- GEMINI ЗАДАЧИ ---
+    try {
+      // --- IMAGE GENERATION (DALL-E 3) ---
+      if (task.mode === 'generate_image') {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { success: false, error: "Нет API ключа OpenAI" };
 
-    if (task.mode === 'generate_tour') {
-      const { object } = await generateObject({
-        model, schema: TourAiSchema,
-        prompt: `Придумай план тура: "${task.prompt}". Валюта: MDL.`,
-      });
-      return { success: true, data: object };
+        const openai = new OpenAI({ apiKey });
+        const { data } = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: `Professional travel photography, high detail, 8k. Context: ${task.prompt}`,
+          n: 1, size: "1024x1024",
+        });
+        return { success: true, data: data?.[0]?.url ?? '' };
+      }
+
+      // --- TOUR GENERATION ---
+      if (task.mode === 'generate_tour') {
+        const { object } = await generateObject({
+          model, schema: TourAiSchema,
+          prompt: `Придумай план тура на основе: "${task.prompt}". Валюта: MDL.`,
+        });
+        return { success: true, data: object };
+      }
+
+      // --- BLOG GENERATION ---
+      if (task.mode === 'generate_blog') {
+        const { object } = await generateObject({
+          model, schema: BlogAiSchema,
+          prompt: `Статья для блога: "${task.topic}".`,
+        });
+        return { success: true, data: object };
+      }
+
+      // --- TEXT PARSING ---
+      if (task.mode === 'parse_tour_text') {
+        const { object } = await generateObject({
+          model, schema: TourAiSchema,
+          prompt: `Извлеки структурированные данные из этого текста: "${task.text}"`,
+        });
+        return { success: true, data: object };
+      }
+
+      // --- CHECKLIST ---
+      if (task.mode === 'generate_checklist') {
+        const { object } = await generateObject({
+          model, schema: ChecklistSchema,
+          prompt: `Список вещей: ${task.location}, ${task.type}, ${task.season}.`,
+        });
+        return { success: true, data: object };
+      }
+
+      // --- TEXT IMPROVEMENT ---
+      if (task.mode === 'improve_text') {
+        const prompts = {
+          selling: 'Сделай текст продающим, эмоциональным и ярким.',
+          fix: 'Исправь грамматические ошибки и убери лишнюю воду.',
+          casual: 'Сделай текст дружелюбным, простым, как для друга.'
+        };
+        const { text } = await generateText({
+          model,
+          system: prompts[task.tone || 'selling'],
+          prompt: `Улучши этот текст:\n\n${task.text}`,
+        });
+        return { success: true, data: text };
+      }
+
+      // --- SMM POST (КЛЮЧЕВАЯ ЛОГИКА - ПРОБЛЕМЫ 1, 4, 6, 7) ---
+      if (task.mode === 'smm_post') {
+        const platformGuides: Record<string, string> = {
+          instagram: 'Instagram. СТРОГО без кликабельных ссылок. Призыв: "Активная ссылка в шапке профиля 👆". Абзацы через \\n\\n.',
+          telegram: 'Telegram. Используй Markdown (**bold**). Вшивай ссылки в текст: [Забронировать тур](URL).',
+          facebook: 'Facebook. Солидно и развернуто. Ссылка в конце поста.',
+          threads: 'Threads. Коротко и цепляюще.'
+        };
+
+        const toneGuides: Record<string, string> = {
+          fun: "Хайпово, на 'ты', много огня и эмодзи.",
+          epic: "Вдохновляюще, про силу природы и масштаб.",
+          strict: "Только факты, тайминги и цена.",
+          info: "Полезно, интересно, экспертно.",
+          sell: "Продающий стиль с акцентом на дефицит мест (FOMO)."
+        };
+
+        const selectedTone = toneGuides[task.tone || 'fun'];
+        const selectedPlatform = platformGuides[task.platform || 'instagram'];
+        const targetSteps = task.steps?.length ? task.steps : ['Обложка', 'Суть', 'Детали', 'CTA'];
+
+        const { object } = await generateObject({
+          model,
+          schema: SmmPostSchema,
+          system: `Ты — Senior SMM турклуба "ЭВА". Твоя задача — создать безупречный контент.
+            
+            ПРАВИЛА ТЕКСТА:
+            - Каждая новая мысль — это новый абзац.
+            - Между абзацами ОБЯЗАТЕЛЬНО двойной отступ (\\n\\n).
+            - Тон: ${selectedTone}
+            - Платформа: ${selectedPlatform}
+            
+            ПРАВИЛА СЛАЙДОВ:
+            - Текст для слайдов должен быть экстремально коротким (до 80-90 символов).
+            - Сгенерируй ровно ${targetSteps.length} слайдов по структуре:
+            ${targetSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`,
+          prompt: `Создай контент для поста на основе данных:\n${task.context}`,
+        });
+        
+        return { success: true, data: object };
+      }
+
+      // --- CHAT ---
+      if (task.mode === 'chat') {
+        const { text } = await generateText({
+          model,
+          system: 'Ты — EVA, интеллектуальный помощник турклуба.',
+          messages: task.messages.map(m => ({ role: m.role, content: m.content })),
+        });
+        return { success: true, data: text };
+      }
+
+      return { success: false, error: 'Команда не распознана' };
+
+    } catch (error) {
+      console.error("AI Action Error:", error);
+      return { success: false, error: error instanceof Error ? error.message : "Ошибка AI" };
     }
-
-    if (task.mode === 'generate_blog') {
-      const { object } = await generateObject({
-        model, schema: BlogAiSchema,
-        prompt: `Статья для блога турклуба: "${task.topic}".`,
-      });
-      return { success: true, data: object };
-    }
-
-    if (task.mode === 'parse_tour_text') {
-      const { object } = await generateObject({
-        model, schema: TourAiSchema,
-        prompt: `Извлеки структуру тура из текста: "${task.text}"`,
-      });
-      return { success: true, data: object };
-    }
-
-    if (task.mode === 'generate_checklist') {
-      const { object } = await generateObject({
-        model, schema: ChecklistSchema,
-        prompt: `Список вещей. Локация: ${task.location}, Тип: ${task.type}, Сезон: ${task.season}.`,
-      });
-      return { success: true, data: object };
-    }
-
-    if (task.mode === 'improve_text') {
-      const prompts: Record<string, string> = {
-        selling: 'Твоя цель: продать. Сделай текст эмоциональным, ярким, с призывом.',
-        fix: 'Твоя цель: корректор. Исправь ошибки, убери воду.',
-        casual: 'Твоя цель: друг. Сделай текст простым и понятным.'
-      };
-
-      const { text } = await generateText({
-        model,
-        system: prompts[task.tone || 'selling'],
-        prompt: `Улучши этот текст для описания тура:\n\n${task.text}`,
-      });
-      return { success: true, data: text };
-    }
-
-    if (task.mode === 'smm_post') {
-      const platformPrompts = {
-        instagram: 'Instagram. Визуал, эмодзи, абзацы, хештеги.',
-        telegram: 'Telegram. Информативно, Markdown разметка, без воды.',
-        facebook: 'Facebook. Официально, дружелюбно.',
-        threads: 'Threads. Коротко, дерзко, хук в начале.'
-      };
-
-      const tonePrompts = {
-        fun: "Стиль: Веселый, хайповый, на 'ты', много эмодзи.",
-        epic: "Стиль: Эпичный, вдохновляющий, 'зов природы', кинематографично.",
-        strict: "Стиль: Сдержанный, по делу, только факты."
-      };
-
-      const selectedTone = tonePrompts[task.tone || 'fun'];
-
-      const { text } = await generateText({
-        model,
-        system: `Ты — SMM-менеджер турклуба. Твоя задача — написать пост.`,
-        prompt: `
-          ПЛАТФОРМА: ${platformPrompts[task.platform]}
-          НАСТРОЕНИЕ: ${selectedTone}
-
-          ДАННЫЕ ТУРА (Контекст):
-          ${JSON.stringify(task.context)}
-
-          ЗАДАЧА: Напиши готовый к публикации пост. В конце призыв к действию.
-        `,
-      });
-      return { success: true, data: text };
-    }
-
-    if (task.mode === 'chat') {
-      const { text } = await generateText({
-        model,
-        system: 'Ты — EVA, стратегический AI-партнер.',
-        messages: task.messages.map((m: any) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content as string,
-        })),
-      });
-      return { success: true, data: text };
-    }
-
-    return { success: false, error: 'Неизвестная команда AI' };
-
-  } catch (error: any) {
-    console.error("AI Error:", error);
-    return { success: false, error: error.message || "Ошибка обработки AI" };
-  }
-}
+  })
+);

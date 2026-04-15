@@ -19,10 +19,10 @@ import { Lists } from './sections/Lists';
 import { SEO } from './sections/SEO';
 
 interface TourFormProps {
-  initialData?: any;
+  initialData?: any; // оставляем как есть
   onClose: () => void;
   guides: { id: string; name: string }[];
-  categories?: { id: string; title: string }[]; // ✅ ДОБАВЛЕНО: Массив категорий
+  categories?: { id: string; title: string }[];
   onSuccess?: () => void;
 }
 
@@ -157,7 +157,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
           delete payload.categoryId;
       }
 
-      const res = await saveTour(payload); 
+      const res = await saveTour(payload) as { success: boolean; error?: string };
       
       if (res.success) {
         showToast('Тур успешно сохранен!', 'success');
@@ -186,13 +186,13 @@ export default function TourForm({ initialData, onClose, guides, categories = []
                  {initialData ? 'Редактирование тура' : 'Создание нового тура'}
                  {initialData?.isActive && <span className="text-[12px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">Active</span>}
                </h2>
-               <p className="text-xs text-slate-300 font-bold uppercase tracking-wider mt-1">
+               <p className="text-xs text-slate-800 font-bold uppercase tracking-wider mt-1">
                  {initialData?.title || 'Заполните информацию'}
                </p>
             </div>
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-slate-100 text-slate-300 hover:text-slate-700 rounded-full transition-colors"
+              className="p-2 hover:bg-slate-100 text-slate-800 hover:text-slate-700 rounded-full transition-colors"
             >
               <X size={24} />
             </button>

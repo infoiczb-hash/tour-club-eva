@@ -4,6 +4,7 @@ import React from 'react';
 import { Tent, Droplets, Mountain, ArrowRight } from 'lucide-react'; 
 import Image from 'next/image';
 import { useInView } from '@/hooks/useInView';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const DESTINATIONS = [
   {
@@ -109,11 +110,7 @@ export default function HikesDestinations() {
               )
             })}
           </div>
-
-          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                              </div>
+          <SwipeHint />
         </div>
 
       </div>

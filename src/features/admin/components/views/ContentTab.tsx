@@ -14,17 +14,17 @@ export default function ContentTab({ onEdit }: ContentTabProps) {
           onClick={() => onEdit('hero')} 
           className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 cursor-pointer hover:shadow-xl hover:border-teal-500 transition-all group"
         >
-          <LayoutTemplate size={40} className="text-slate-300 mb-4 group-hover:text-teal-500 transition-colors"/>
+          <LayoutTemplate size={40} className="text-slate-800 mb-4 group-hover:text-teal-500 transition-colors"/>
           <h3 className="text-xl font-bold dark:text-white">Главный экран (Hero)</h3>
-          <p className="text-sm text-slate-300 mt-2">Заголовок, подзаголовок и видео на главной</p>
+          <p className="text-sm text-slate-800 mt-2">Заголовок, подзаголовок и видео на главной</p>
         </div>
         <div 
           onClick={() => onEdit('footer')} 
           className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 cursor-pointer hover:shadow-xl hover:border-teal-500 transition-all group"
         >
-          <MessageSquare size={40} className="text-slate-300 mb-4 group-hover:text-teal-500 transition-colors"/>
+          <MessageSquare size={40} className="text-slate-800 mb-4 group-hover:text-teal-500 transition-colors"/>
           <h3 className="text-xl font-bold dark:text-white">Футер и Контакты</h3>
-          <p className="text-sm text-slate-300 mt-2">Ссылки на соцсети, телефоны</p>
+          <p className="text-sm text-slate-800 mt-2">Ссылки на соцсети, телефоны</p>
         </div>
       </div>
     </div>

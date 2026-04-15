@@ -1,52 +1,61 @@
 // src/features/tours/api.ts
-"use server";
-
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { Tour } from './types';
+import { Tour, TourPreview } from './types'; // ✅ ДОБАВЛЕНО: TourPreview
 import { cache } from 'react';
 
+// ─────────────────────────────────────────────
+// Строгий тип для данных из Prisma с релейшенами
+// ─────────────────────────────────────────────
 type PrismaTourWithRelations = Prisma.TourGetPayload<{
   include: { guide: true; category: true; tourDates: true };
 }>;
 
+// ─────────────────────────────────────────────
+// Вспомогательные утилиты
+// ─────────────────────────────────────────────
 const ensureArray = (val: unknown): any[] =>
   Array.isArray(val) ? val : [];
 
-// ─── ИСПРАВЛЕНИЕ 1: today() вычисляется один раз, не на каждый тур ───────────
-function getTodayDate(): Date {
+const today = (): Date => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d;
-}
+};
 
+// Находит ближайшую дату тура, которая ещё не закончилась.
+// Используется и для маппинга (date/endDate карточки),
+// и для фильтрации прошедших туров.
 function getNearestFutureDate(
-  dates: { start: string; end?: string }[],
-  now: Date
+  dates: { start: string; end?: string }[]
 ): { start: string; end?: string } | null {
   if (!dates || dates.length === 0) return null;
 
+  const now = today();
   const future = dates.filter(d => {
     const end = d.end ? new Date(d.end) : new Date(d.start);
     end.setHours(0, 0, 0, 0);
     return end >= now;
   });
-
+  
   if (future.length > 0) {
     return future.sort(
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
     )[0];
   }
-
+  
+  // Если будущих дат нет, возвращаем самую "свежую" прошедшую
   return [...dates].sort(
     (a, b) => new Date(b.start).getTime() - new Date(a.start).getTime()
   )[0];
 }
 
-// ─── ИСПРАВЛЕНИЕ 2: now передаётся снаружи — не создаётся N раз ─────────────
-function mapPrismaTourToFrontend(item: PrismaTourWithRelations, now: Date): Tour {
+// ─────────────────────────────────────────────
+// Маппер Prisma → фронтенд Tour (Полный объект)
+// ─────────────────────────────────────────────
+export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
   const relationalDates = item.tourDates?.map(td => ({
-    id: td.id,
+    id: td.id, 
     start: td.startDate.toISOString(),
     end: td.endDate ? td.endDate.toISOString() : undefined,
     time: td.time || undefined,
@@ -62,8 +71,7 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations, now: Date): Tour
 
   const legacyDates = ensureArray(item.dates as any);
   const datesToUse = relationalDates.length > 0 ? relationalDates : legacyDates;
-
-  const nearestDate = getNearestFutureDate(datesToUse, now) ?? datesToUse[0] ?? null;
+  const nearestDate = getNearestFutureDate(datesToUse) ?? datesToUse[0] ?? null;
 
   const nearestSpots = nearestDate && (nearestDate as any).spots != null
     ? (nearestDate as any).spots
@@ -158,59 +166,115 @@ function mapPrismaTourToFrontend(item: PrismaTourWithRelations, now: Date): Tour
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ИСПРАВЛЕНИЕ 3: Фильтрация прошедших туров перенесена в WHERE — не в JS
-// ИСПРАВЛЕНИЕ 4: take: 100 — защита от полного скана при росте каталога
-// isTourRelevant больше не нужен — база возвращает только актуальные туры
-// ─────────────────────────────────────────────────────────────────────────────
-export const getTours = cache(async (): Promise<Tour[]> => {
-  try {
-    const now = getTodayDate();
+// ─────────────────────────────────────────────
+// ✅ ДОБАВЛЕНО: Маппер Prisma → TourPreview (DTO для карточек)
+// ─────────────────────────────────────────────
+function mapPrismaTourToPreview(item: PrismaTourWithRelations): TourPreview {
+  const full = mapPrismaTourToFrontend(item);
+  return {
+    id: full.id,
+    slug: full.slug,
+    title: full.title,
+    subtitle: full.subtitle,
+    price: full.price,
+    currency: full.currency,
+    priceOld: full.priceOld,
+    priceMember: full.priceMember, 
+    priceChild: full.priceChild,  
+    tags: full.tags,
+    date: full.date,
+    endDate: full.endDate,
+    dates: full.dates,
+    image: full.image,
+    label: full.label,
+    categoryId: full.categoryId,
+    category: full.category,
+    difficulty: full.difficulty,
+    location: full.location,
+    duration: full.duration,
+    spots: full.spots,
+    spotsLeft: full.spotsLeft,
+    isActive: full.isActive,
+    guide: full.guide,
+  };
+}
 
+// ─────────────────────────────────────────────
+// Фильтр: убирает туры у которых все даты прошли.
+// ─────────────────────────────────────────────
+function isTourRelevant(tour: Tour): boolean {
+  const hasDatesArray = Array.isArray(tour.dates) && tour.dates.length > 0;
+  const hasLegacyDate =
+    typeof tour.date === 'string' ? tour.date.length > 0 : !!tour.date;
+
+  if (!hasDatesArray && !hasLegacyDate) return true;
+
+  const now = today();
+
+  if (hasDatesArray) {
+    return tour.dates!.some((d: any) => {
+        const end = d.end ? new Date(d.end) : new Date(d.start);
+        end.setHours(0, 0, 0, 0);
+        return end >= now;
+    });
+  }
+
+  const d = new Date(tour.date);
+  d.setHours(0, 0, 0, 0);
+  return d >= now;
+}
+
+// ─────────────────────────────────────────────
+// Публичные функции
+// ─────────────────────────────────────────────
+
+// ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
+export const getTours = cache(async (cursor?: string): Promise<TourPreview[]> => {
+  try {
+    const now = today();
     const tours = await prisma.tour.findMany({
-      where: {
-        isActive: true,
+      where: { 
+        isActive: true, 
         deletedAt: null,
-        // Туры без дат (анонсы) ИЛИ туры с хотя бы одной будущей датой
         OR: [
-          { tourDates: { none: {} } },
-          { tourDates: { some: { endDate: { gte: now } } } },
           { tourDates: { some: { startDate: { gte: now } } } },
-        ],
+          { tourDates: { some: { endDate: { gte: now } } } },
+          { tourDates: { none: {} } }
+        ]
       },
-      take: 100,
+      take: 50,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: { createdAt: 'desc' },
-      include: {
-        guide: true,
+      include: { 
+        guide: true, 
         category: true,
-        tourDates: { orderBy: { startDate: 'asc' } }
+        tourDates: { orderBy: { startDate: 'asc' }, take: 3 }
       },
     });
-
-    return tours.map(t => mapPrismaTourToFrontend(t, now));
+    return tours.map(mapPrismaTourToPreview).filter(t => isTourRelevant(t as unknown as Tour));
   } catch (error) {
     console.error('Ошибка получения туров:', error);
     return [];
   }
 });
 
+// ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
 export const getToursByCategory = cache(async (
   categorySlug: string,
   take: number = 6
-): Promise<Tour[]> => {
+): Promise<TourPreview[]> => {
   try {
-    const now = getTodayDate();
-
+    const now = today();
     const tours = await prisma.tour.findMany({
       where: {
         isActive: true,
         deletedAt: null,
         category: { slug: categorySlug },
         OR: [
-          { tourDates: { none: {} } },
-          { tourDates: { some: { endDate: { gte: now } } } },
           { tourDates: { some: { startDate: { gte: now } } } },
-        ],
+          { tourDates: { some: { endDate: { gte: now } } } },
+          { tourDates: { none: {} } }
+        ]
       },
       take,
       orderBy: { createdAt: 'desc' },
@@ -220,85 +284,90 @@ export const getToursByCategory = cache(async (
         tourDates: { orderBy: { startDate: 'asc' }, take: 3 },
       },
     });
-
-    return tours.map(t => mapPrismaTourToFrontend(t, now));
+    return tours.map(mapPrismaTourToPreview).filter(t => isTourRelevant(t as unknown as Tour));
   } catch (error) {
     console.error(`Ошибка получения туров категории ${categorySlug}:`, error);
     return [];
   }
 });
 
+// Полный запрос одного тура для страницы (Остается без изменений)
 export const getTourBySlug = cache(async (slug: string): Promise<Tour | null> => {
   try {
-    const now = getTodayDate();
     const tour = await prisma.tour.findFirst({
       where: { slug, isActive: true, deletedAt: null },
-      include: {
-        guide: true,
+      include: { 
+        guide: true, 
         category: true,
-        tourDates: { orderBy: { startDate: 'asc' } }
+        tourDates: { orderBy: { startDate: 'asc' } } 
       },
     });
     if (!tour) return null;
-    return mapPrismaTourToFrontend(tour, now);
+    return mapPrismaTourToFrontend(tour);
   } catch (error) {
     console.error(`Ошибка получения тура ${slug}:`, error);
     return null;
   }
 });
 
-// ИСПРАВЛЕНИЕ 5: getSimilarTours обёрнут в cache() — дедупликация на странице тура
+// ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация актуальных дат в БД
 export const getSimilarTours = cache(async (
   categoryId: string | null,
   excludeId: string,
   limit: number = 3
-): Promise<Tour[]> => {
+): Promise<TourPreview[]> => {
   if (!categoryId) return [];
   try {
-    const now = getTodayDate();
+    const now = today();
     const tours = await prisma.tour.findMany({
       where: {
         isActive: true,
         deletedAt: null,
-        categoryId,
+        categoryId: categoryId,
         id: { not: excludeId },
+        OR: [
+          { tourDates: { some: { startDate: { gte: now } } } },
+          { tourDates: { some: { endDate: { gte: now } } } },
+          { tourDates: { none: {} } }
+        ]
       },
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: {
-        guide: true,
+      include: { 
+        guide: true, 
         category: true,
-        // ИСПРАВЛЕНИЕ 6: берём только ближайшие 3 даты — достаточно для карточки
-        tourDates: { orderBy: { startDate: 'asc' }, take: 3 },
+        tourDates: { orderBy: { startDate: 'asc' }, take: 3 } 
       }
     });
-    return tours.map(t => mapPrismaTourToFrontend(t, now));
+    return tours.map(mapPrismaTourToPreview).filter(t => isTourRelevant(t as unknown as Tour));
   } catch (error) {
     console.error('Ошибка получения похожих туров:', error);
     return [];
   }
 });
 
-// Админка — без фильтрации по датам и isActive
-export async function getAllTours(): Promise<Tour[]> {
+// Админка — все туры без фильтрации по датам и isActive (Остается без изменений)
+export async function getAllTours(skip: number = 0, take: number = 50): Promise<Tour[]> {
   try {
-    const now = getTodayDate();
     const tours = await prisma.tour.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
-      include: {
-        guide: true,
+      skip,
+      take,
+      include: { 
+        guide: true, 
         category: true,
-        tourDates: { orderBy: { startDate: 'asc' } }
+        tourDates: { orderBy: { startDate: 'asc' } } 
       },
     });
-    return tours.map(t => mapPrismaTourToFrontend(t, now));
+    return tours.map(mapPrismaTourToFrontend);
   } catch (error) {
     console.error('Ошибка получения всех туров для админки:', error);
     return [];
   }
 }
 
+// Старый экшен для бронирования (Остается без изменений)
 export async function createBookingAction(params: {
   eventId: string;
   name: string;
@@ -322,8 +391,10 @@ export async function createBookingAction(params: {
       },
     });
     return { success: true, data: booking };
-  } catch (error: any) {
-    console.error('❌ Ошибка бронирования:', error.message);
+  } catch (error: unknown) {
+    // Безопасно получаем текст ошибки, даже если выброшен не стандартный объект Error
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('❌ Ошибка бронирования:', message);
     return { success: false, error: 'Не удалось создать бронь' };
   }
 }
@@ -339,4 +410,4 @@ export async function getGuides() {
     console.error('Ошибка загрузки гидов:', error);
     return [];
   }
-}
+} 

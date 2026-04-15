@@ -16,25 +16,44 @@ import LocalLanding from '@/features/directions/local/LocalLanding';
 import OrganizersLanding from '@/features/directions/organizers/OrganizersLanding';
 import HikesLanding from '@/features/directions/hiking/HikesLanding';
 
-import { Tour } from '@/features/tours/types';
-import { getTours, getToursByCategory } from '@/features/tours/api';
+import { TourPreview } from '@/features/tours/types';
+import { getToursByCategory } from '@/features/tours/api';
 
 // ==========================================
-// SEO: КОНФИГ НАПРАВЛЕНИЙ
+// SEO: РАСШИРЕННЫЙ КОНФИГ НАПРАВЛЕНИЙ
 // ==========================================
 
-const BASE_URL = "https://evatur.club";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evatur.club";
 
-const DIRECTION_META: Record<string, {
-  tripName: string;
-  description: string;
-  touristType: string[];
-  place: string;
-  price: string;
-  breadcrumbName: string;
-}> = {
+type DirectionMetaType = {
+  tripName: string;         // Краткое название (для JSON-LD и хлебных крошек)
+  title: string;            // Расширенный SEO-Title страницы
+  description: string;      // SEO-Description страницы
+  touristType: string[];    // Для микроразметки
+  place: string;            // Для микроразметки
+  price: string;            // Для микроразметки
+  breadcrumbName: string;   // Название в хлебных крошках
+  ogImage?: string;         // Кастомная картинка для репостов (опционально)
+  twitterTitle?: string;    // Кастомный заголовок для Twitter (опционально)
+  twitterDesc?: string;     // Кастомное описание для Twitter (опционально)
+};
+
+const DIRECTION_META: Record<string, DirectionMetaType> = {
+  hiking: {
+    tripName: "Туры в горы",
+    title: "Приключенческие туры в горы из Приднестровья и Молдовы",
+    description: "Многодневные треки в горы Румынии и не только с гидами. Маршруты для начинающих и опытных. Выезды из Тирасполя/Кишинев. Группы 6–20 человек.",
+    touristType: ["Hiking tourism", "Ecotourism"],
+    place: "Румыния и мир",
+    price: "100",
+    breadcrumbName: "Горные туры",
+    ogImage: "/og-default.jpg",
+    twitterTitle: "Туры в горы | Эва",
+    twitterDesc: "Пешие и горные походы с гидами. Маршруты для начинающих и опытных.",
+  },
   kayaking: {
     tripName: "Сплав на байдарках по Днестру",
+    title: "Сплавы на байдарках по Днестру", // Заполнишь своими крутыми SEO-тайтлами
     description: "Однодневные и многодневные сплавы по реке Днестр. Снаряжение, гид и трансфер включены.",
     touristType: ["Adventure tourism", "Water tourism"],
     place: "Река Днестр, Приднестровье",
@@ -43,39 +62,35 @@ const DIRECTION_META: Record<string, {
   },
   sup: {
     tripName: "SUP-прогулки и Sup-сплавы",
+    title: "SUP-серфинг и прогулки на сапбордах",
     description: "Прогулки на сапборде. Доска, весло, инструктор — всё включено.",
     touristType: ["Water tourism", "Active tourism"],
     place: "Река Днестр, Приднестровье",
     price: "100",
     breadcrumbName: "SUP-серфинг",
   },
-  hiking: {
-    tripName: "Туры в горы",
-    description: "Многодневные туры в горы. Гид и трансфер включены.",
-    touristType: ["Hiking tourism", "Ecotourism"],
-    place: "Румыния и мир",
-    price: "100",
-    breadcrumbName: "Горные туры",
-  },
-  local: {
-    tripName: "Приключения в Приднестровье и Молдове",
-    description: "Однодневные туры природным местам Приднестровья и Молдовы.",
-    touristType: ["Cultural tourism", "Ecotourism"],
-    place: "Приднестровье",
-    price: "100",
-    breadcrumbName: "Местный туризм",
-  },
   kids: {
-    tripName: "Детские туры и лагеря Турклуба Эва",
+    tripName: "Детские туры и лагеря",
+    title: "Детские туры и туристические лагеря в Приднестровье",
     description: "Приключения для детей с опытными инструкторами.",
     touristType: ["Family tourism", "Adventure tourism"],
     place: "Приднестровье",
     price: "150",
     breadcrumbName: "Детский туризм",
   },
+  local: {
+    tripName: "Приключения в Приднестровье и Молдове",
+    title: "Местный туризм: Приднестровье и Молдова",
+    description: "Однодневные туры природным местам Приднестровья и Молдовы.",
+    touristType: ["Cultural tourism", "Ecotourism"],
+    place: "Приднестровье",
+    price: "100",
+    breadcrumbName: "Местный туризм",
+  },
   organizers: {
-    tripName: "Корпоративный и групповой туризм от Турклуба Эва",
-    description: "Тимбилдинг, сплавы, школьные группы.",
+    tripName: "Корпоративный и групповой туризм",
+    title: "Корпоративный отдых и тимбилдинги на природе",
+    description: "Тимбилдинг, сплавы, школьные группы от Турклуба Эва.",
     touristType: ["Corporate tourism", "Group tourism"],
     place: "Приднестровье",
     price: "200",
@@ -83,23 +98,49 @@ const DIRECTION_META: Record<string, {
   },
 };
 
+// ✅ ИСПРАВЛЕНО: Типизация params как Promise
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
 // ==========================================
 // SEO: generateMetadata
 // ==========================================
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
-  const meta = DIRECTION_META[params.slug];
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const meta = DIRECTION_META[slug];
+  
   if (!meta) return {};
+
+  const url = `${BASE_URL}/directions/${slug}`;
+  const imageUrl = meta.ogImage ? `${BASE_URL}${meta.ogImage}` : `${BASE_URL}/og-default.jpg`;
+  
   return {
-    title: `${meta.tripName} | Турклуб «Эва»`,
+    title: `${meta.title} | Турклуб «Эва»`,
     description: meta.description,
-    alternates: { canonical: `${BASE_URL}/directions/${params.slug}` },
+    alternates: { canonical: url },
     openGraph: {
-      title: `${meta.tripName} | Турклуб «Эва»`,
+      title: `${meta.title} | Турклуб «Эва»`,
       description: meta.description,
-      url: `${BASE_URL}/directions/${params.slug}`,
+      url: url,
+      siteName: 'Турклуб «Эва»',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: meta.title,
+        }
+      ],
+      type: 'website',
+      locale: 'ru_RU',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: meta.twitterTitle || `${meta.title} | Турклуб «Эва»`, // Фолбэк, если twitterTitle нет
+      description: meta.twitterDesc || meta.description,
+      images: [imageUrl],
     },
   };
 }
@@ -166,29 +207,31 @@ function DirectionJsonLd({ slug }: { slug: string }) {
 // СТРАНИЦА
 // ==========================================
 export const revalidate = 3600;
+
 export async function generateStaticParams() {
-  return [
-    { slug: 'kayaking' },
-    { slug: 'sup' },
-    { slug: 'kids' },
-    { slug: 'local' },
-    { slug: 'organizers' },
-    { slug: 'hiking' },
-  ];
-}
-interface PageProps {
-  params: { slug: string };
+  return Object.keys(DIRECTION_META).map((slug) => ({ slug }));
 }
 
+export default async function DirectionPage({ params }: Props) {
+  // 1. Получаем slug из Promise-параметров
+  const { slug } = await params;
 
-export default async function DirectionPage({ params }: PageProps) {
-  const { slug } = params;
+  // 2. Определяем, нужны ли нам туры для этого направления
+  const noToursNeeded = slug === 'sup' || slug === 'organizers';
 
-  // Направления без каталога туров — не грузим БД зря
- const noToursNeeded = slug === 'sup' || slug === 'organizers';
-  const tours: Tour[] = noToursNeeded ? [] : await getToursByCategory(slug, 6);
- 
-   switch (slug) {
+  // 3. Получаем данные из базы (API возвращает тип Tour[])
+  const rawTours: TourPreview[] = noToursNeeded ? [] : await getToursByCategory(slug, 6);
+
+  // 4. Оптимизируем: создаем TourPreview[], отсекая тяжелые поля
+  // Мы явно указываем тип (tour: any), чтобы TS не ругался на отсутствие полей в финальном типе
+  const tours: TourPreview[] = rawTours.map((tour: any) => {
+    const { 
+      program, faq, checklist, documents, included, additionalExpenses, 
+      ...lightTour 
+    } = tour;
+    return lightTour as TourPreview;
+  });
+  switch (slug) {
     case 'kayaking':
       return (
         <main className="min-h-screen bg-slate-950">
@@ -206,10 +249,10 @@ export default async function DirectionPage({ params }: PageProps) {
       );
 
     case 'kids':
-      return (
+    return (
         <main className="min-h-screen bg-slate-950">
           <DirectionJsonLd slug={slug} />
-          <KidsLanding />
+          <KidsLanding tours={tours} /> {/* ✅ Теперь туры пошли на клиент! */}
         </main>
       );
 

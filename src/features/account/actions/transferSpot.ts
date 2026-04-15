@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { NotificationHub } from '@/lib/notifications/hub'; 
 
 interface TransferInput {
   bookingId: string;
@@ -47,6 +48,10 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
   }
 
   // Транзакция: отмена старой брони + создание новой
+// Объявляем переменные до транзакции, чтобы вытащить их наружу
+  let newOwnerId: string | null = null;
+  let newBookingId: string | null = null;
+
   try {
     await prisma.$transaction(async (tx) => {
       // 1. Отменяем старую бронь
@@ -56,28 +61,31 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
       });
 
       // 2. Создаём новую бронь для нового участника
-    const newBooking = await tx.booking.create({
-  data: {
-    name: newName,
-    phone: newPhone,
-    tourId: booking.tourId,
-    tourDateId: booking.tourDateId,
-    ticketsAdult: booking.ticketsAdult,
-    ticketsChild: booking.ticketsChild,
-    ticketsFamily: booking.ticketsFamily,
-    ticketsMember: booking.ticketsMember,
-    totalPrice: booking.totalPrice,
-    source: 'transfer',
-    status: 'confirmed',
-    comment: `Передано от ${profile.name ?? profile.phone}`,
-  },
-});
+      const newBooking = await tx.booking.create({
+        data: {
+          name: newName,
+          phone: newPhone,
+          tourId: booking.tourId,
+          tourDateId: booking.tourDateId,
+          ticketsAdult: booking.ticketsAdult,
+          ticketsChild: booking.ticketsChild,
+          ticketsFamily: booking.ticketsFamily,
+          ticketsMember: booking.ticketsMember,
+          totalPrice: booking.totalPrice,
+          source: 'transfer',
+          status: 'confirmed',
+          comment: `Передано от ${profile.name ?? profile.phone}`,
+        },
+      });
+      
+      newBookingId = newBooking.id;
 
       // 3. Привязываем новую бронь к профилю если новый участник уже зарегистрирован
       const newProfile = await tx.memberProfile.findUnique({
         where: { phone: newPhone },
       });
       if (newProfile) {
+        newOwnerId = newProfile.id;
         await tx.booking.update({
           where: { id: newBooking.id },
           data: { memberId: newProfile.id },
@@ -85,7 +93,7 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
       }
     });
 
-    // Уведомление в Telegram (не блокируем основной флоу)
+    // Уведомление в Telegram админу (не блокируем основной флоу)
     try {
       const dateStr = booking.tourDate
         ? booking.tourDate.startDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
@@ -101,10 +109,22 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
       // Telegram уведомление не критично
     }
 
+    // 🔥 НОВОЕ: Уведомляем нового владельца через Хаб, если он есть в системе
+    if (newOwnerId && newBookingId) {
+      await NotificationHub.dispatch({
+        eventId: 'C2C_TICKET_TRANSFER',
+        memberId: newOwnerId,
+        data: {
+          bookingId: newBookingId,
+          tourTitle: booking.tour.title,
+        }
+      });
+    }
+
     revalidatePath('/account/bookings');
     return { success: true };
 
-  } catch (err) {
+   } catch (err) {
     console.error('[transferBookingSpot]', err);
     return { success: false, error: 'Не удалось передать место. Попробуйте ещё раз.' };
   }

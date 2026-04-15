@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Upload, Loader2, Sparkles, Wand2, Link as LinkIcon, Mail, Phone, Instagram, Send } from 'lucide-react';
 import Button from '@/shared/ui/Button';
 import { uploadImage } from '@/lib/api'; 
-import { performAiTask } from '@/features/admin/actions/ai';
+import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
 
 // === СТРОГАЯ ТИПИЗАЦИЯ ===
 export interface ContentData {
@@ -15,12 +15,11 @@ export interface ContentData {
   phone?: string;
   instagram?: string;
   telegram?: string;
-  // Индексная сигнатура на случай расширения других текстовых блоков
   [key: string]: string | undefined; 
 }
 
 interface Props {
-  slug: string; // 'hero' или 'footer'
+  slug: string;
   initialContent: ContentData | null;
   onClose: () => void;
   onSubmit: (slug: string, data: ContentData) => Promise<void>;
@@ -48,30 +47,44 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // 🖼️ ЗАГРУЗКА ФОНА
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUploading(true);
     try {
-        const url = await uploadImage(file);
-        if (url) handleChange('bg_image', url);
-        else alert("Ошибка загрузки");
-    } catch (e) { alert("Ошибка"); } 
-    finally { setUploading(false); }
+      const url = await uploadImage(file);
+      if (url) handleChange('bg_image', url);
+      else alert("Ошибка загрузки");
+    } catch (e) {
+      alert("Ошибка");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  // 🪄 AI УЛУЧШЕНИЕ ЗАГОЛОВКА
   const handleAiImprove = async (field: keyof ContentData) => {
-      const textToImprove = data[field];
-      if (!textToImprove) return;
-      
-      setAiLoading(true);
-      const res = await performAiTask({ mode: 'improve_text', text: textToImprove, tone: 'selling' });
-      setAiLoading(false);
-      
+    const textToImprove = data[field];
+    if (!textToImprove) return;
+
+    setAiLoading(true);
+    try {
+      const res = await performAiTask({
+        mode: 'improve_text',
+        text: textToImprove,
+        tone: 'selling'
+      }) as PerformAiTaskResult;
+
       if (res.success && typeof res.data === 'string') {
         handleChange(field, res.data);
+      } else if (!res.success) {
+        alert('Ошибка AI: ' + res.error);
       }
+    } catch (error) {
+      console.error('AI improve error:', error);
+      alert('Ошибка соединения с AI');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const getTitle = () => {
@@ -91,9 +104,9 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
                   {slug === 'hero' ? <Sparkles className="text-yellow-500" size={20}/> : <LinkIcon className="text-blue-500" size={20}/>}
                   {getTitle()}
               </h2>
-              <p className="text-xs text-slate-300 dark:text-slate-300 font-medium">Настройка контента сайта</p>
+              <p className="text-xs text-slate-800 dark:text-slate-800 font-medium">Настройка контента сайта</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition text-slate-300"><X size={20}/></button>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition text-slate-800"><X size={20}/></button>
         </div>
 
         {/* BODY */}
@@ -105,7 +118,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
               {/* Заголовок с AI */}
               <div>
                 <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Заголовок (H1)</label>
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">Заголовок (H1)</label>
                     <button type="button" onClick={() => handleAiImprove('title')} disabled={aiLoading || !data.title} className="text-[12px] text-violet-600 hover:text-violet-700 flex items-center gap-1 font-bold disabled:opacity-50 transition-colors">
                         {aiLoading ? <Loader2 size={10} className="animate-spin"/> : <Wand2 size={10}/>} AI Rewrite
                     </button>
@@ -117,7 +130,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
 
               {/* Подзаголовок */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Подзаголовок</label>
+                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">Подзаголовок</label>
                 <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/20 text-sm dark:text-white h-20 resize-none transition-all"
                     value={data.subtitle || ''} onChange={e => handleChange('subtitle', e.target.value)} placeholder="Описание..."
                 />
@@ -125,7 +138,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
 
               {/* ФОН (Картинка) */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Фоновое изображение</label>
+                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Фоновое изображение</label>
                 <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors relative group overflow-hidden">
                     {data.bg_image ? (
                         <div className="relative h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
@@ -135,7 +148,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
                             </div>
                         </div>
                     ) : (
-                        <div className="py-4 text-slate-300 flex flex-col items-center">
+                        <div className="py-4 text-slate-800 flex flex-col items-center">
                             {uploading ? <Loader2 className="animate-spin mb-2" size={24} /> : <Upload className="mb-2 opacity-50" size={24} />}
                             <span className="text-xs font-bold uppercase tracking-widest">{uploading ? 'Загрузка...' : 'Загрузить фото'}</span>
                         </div>
@@ -143,7 +156,7 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
                     <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileUpload} accept="image/*" disabled={uploading} />
                 </div>
                 {/* Fallback input */}
-                <input className="w-full mt-2 p-2 text-xs bg-transparent border-b border-slate-200 dark:border-slate-800 outline-none text-slate-300 focus:border-violet-500 transition-colors"
+                <input className="w-full mt-2 p-2 text-xs bg-transparent border-b border-slate-200 dark:border-slate-800 outline-none text-slate-800 focus:border-violet-500 transition-colors"
                     placeholder="Или вставьте прямую ссылку на картинку..." value={data.bg_image || ''} onChange={e => handleChange('bg_image', e.target.value)}
                 />
               </div>
@@ -155,26 +168,26 @@ export default function ContentForm({ slug, initialContent, onClose, onSubmit }:
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 uppercase mb-1 flex items-center gap-1 tracking-wider"><Mail size={12}/> Email</label>
+                    <label className="text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1 tracking-wider"><Mail size={12}/> Email</label>
                     <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                         value={data.email || ''} onChange={e => handleChange('email', e.target.value)} placeholder="info@evatur.club"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-300 uppercase mb-1 flex items-center gap-1 tracking-wider"><Phone size={12}/> Телефон</label>
+                    <label className="text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1 tracking-wider"><Phone size={12}/> Телефон</label>
                     <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                         value={data.phone || ''} onChange={e => handleChange('phone', e.target.value)} placeholder="+373 777 00000"
                     />
                   </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-300 uppercase mb-1 flex items-center gap-1 tracking-wider"><Instagram size={12}/> Instagram (ссылка)</label>
+                <label className="text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1 tracking-wider"><Instagram size={12}/> Instagram (ссылка)</label>
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                     value={data.instagram || ''} onChange={e => handleChange('instagram', e.target.value)} placeholder="https://instagram.com/..."
                 />
               </div>
                <div>
-                <label className="text-xs font-bold text-slate-300 uppercase mb-1 flex items-center gap-1 tracking-wider"><Send size={12}/> Telegram (ссылка)</label>
+                <label className="text-xs font-bold text-slate-800 uppercase mb-1 flex items-center gap-1 tracking-wider"><Send size={12}/> Telegram (ссылка)</label>
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm dark:text-white outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                     value={data.telegram || ''} onChange={e => handleChange('telegram', e.target.value)} placeholder="https://t.me/..."
                 />

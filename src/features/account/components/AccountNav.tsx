@@ -11,7 +11,8 @@ import {
   Settings, 
   LogOut,
   Compass,
-  FlaskConical // ✅ ДОБАВЛЕНА ИКОНКА
+  FlaskConical,
+  Bell // 🔥 ДОБАВИЛИ ИКОНКУ КОЛОКОЛЬЧИКА
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -25,6 +26,7 @@ type AccountNavProps = {
 
 const NAV_LINKS = [
   { name: 'Дашборд', href: '/account/dashboard', icon: LayoutDashboard },
+  { name: 'Уведомления', href: '/account/notifications', icon: Bell }, // 🔥 ДОБАВИЛИ ПУНКТ МЕНЮ
   // Удалили 'Мои туры' (/account/bookings)
   { name: 'Мои поездки', href: '/account/history', icon: History }, // Переименовали
   { name: 'Вишлист', href: '/account/wishlist',  icon: Heart },
@@ -110,7 +112,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl transition-all relative ${
+                className={`snap-start shrink-0 flex flex-col items-center justify-center w-[100px] h-14 rounded-2xl transition-all relative ${
                   isActive 
                     ? 'text-teal-400' 
                     : 'text-slate-300 hover:text-slate-300'
@@ -120,7 +122,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
                   <div className="absolute inset-0 bg-teal-500/10 rounded-2xl -z-10 animate-in fade-in zoom-in duration-300" />
                 )}
                 <Icon size={20} className={isActive ? 'mb-1' : 'mb-1 opacity-80'} />
-                <span className="text-[12px] font-bold tracking-wide">
+                <span className="text-[12px] font-bold tracking-wide truncate w-full text-center px-1">
                   {link.name}
                 </span>
               </Link>

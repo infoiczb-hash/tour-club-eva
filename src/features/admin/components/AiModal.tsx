@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Loader2, Wand2 } from 'lucide-react';
 import Button from '@/shared/ui/Button';
-import { performAiTask } from '@/features/admin/actions/ai';
+import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
 
 interface Props {
   isOpen: boolean;
@@ -15,12 +15,11 @@ export default function AiModal({ isOpen, onClose, onApply }: Props) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleGenerate = async () => {
+    const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
     
-    // Выполняем запрос к AI
-    const res = await performAiTask({ mode: 'generate_tour', prompt });
+    const res = await performAiTask({ mode: 'generate_tour', prompt }) as PerformAiTaskResult;
     
     setLoading(false);
 
@@ -52,7 +51,7 @@ export default function AiModal({ isOpen, onClose, onApply }: Props) {
           </h3>
           <button 
             onClick={(e) => { e.stopPropagation(); onClose(); }} 
-            className="text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition p-1 hover:bg-slate-100 rounded-lg"
+            className="text-slate-800 hover:text-slate-800 dark:hover:text-slate-800 transition p-1 hover:bg-slate-100 rounded-lg"
           >
             <X size={24} />
           </button>
@@ -60,14 +59,14 @@ export default function AiModal({ isOpen, onClose, onApply }: Props) {
 
         {/* Body */}
         <div className="p-6 space-y-4">
-          <p className="text-sm text-slate-300 dark:text-slate-300">
+          <p className="text-sm text-slate-800 dark:text-slate-800">
             Опишите в двух словах, какой тур вы хотите создать (локация, сложность, фишки), и AI подготовит черновик.
           </p>
           
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="w-full h-32 p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none resize-none dark:text-white placeholder:text-slate-300 transition-all"
+            className="w-full h-32 p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none resize-none dark:text-white placeholder:text-slate-800 transition-all"
             placeholder="Например: Семейный поход на байдарках по Днестру на 2 дня с ночевкой в палатках и мастер-классом по выживанию..."
             autoFocus
           />

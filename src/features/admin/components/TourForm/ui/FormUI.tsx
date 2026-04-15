@@ -16,7 +16,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-xs font-bold uppercase text-slate-600 flex items-center gap-2 tracking-wide">
+        <label className="text-xs font-bold uppercase text-slate-800 flex items-center gap-2 tracking-wide">
           {label}
         </label>
         <input
@@ -25,14 +25,14 @@ export const FormInput = React.forwardRef<HTMLInputElement, InputProps>(
           className={clsx(
             "w-full rounded-lg px-4 py-3 text-sm font-semibold transition-all outline-none shadow-sm",
             // Цвета: Белый фон, серая рамка. При фокусе - бирюзовая рамка.
-            "bg-white border placeholder:text-slate-300",
+            "bg-white border placeholder:text-slate-800",
             error 
               ? "border-rose-500 focus:ring-4 focus:ring-rose-100 text-rose-900" 
               : "border-slate-300 hover:border-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 text-slate-800",
             className
           )}
         />
-        {helperText && !error && <span className="text-[12px] text-slate-300 font-medium">{helperText}</span>}
+        {helperText && !error && <span className="text-[12px] text-slate-800 font-medium">{helperText}</span>}
         {error && <span className="text-xs text-rose-500 font-bold animate-fadeIn">{error}</span>}
       </div>
     );
@@ -52,13 +52,13 @@ export const FormTextarea = ({ label, name, className, ...props }: TextareaProps
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-xs font-bold uppercase text-slate-600 tracking-wide">{label}</label>
+      <label className="text-xs font-bold uppercase text-slate-800 tracking-wide">{label}</label>
       <textarea
         {...register(name)}
         {...props}
         className={clsx(
           "w-full rounded-lg px-4 py-3 text-sm font-medium transition-all outline-none shadow-sm resize-y", // resize-y позволяет тянуть
-          "bg-white border placeholder:text-slate-300 min-h-[100px]",
+          "bg-white border placeholder:text-slate-800 min-h-[100px]",
           error 
              ? "border-rose-500 focus:ring-4 focus:ring-rose-100" 
              : "border-slate-300 hover:border-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 text-slate-800",
@@ -82,7 +82,7 @@ export const FormSwitch = ({ name, label }: { name: string; label: string }) => 
         <div className={clsx("w-11 h-6 rounded-full transition-colors shadow-inner", checked ? "bg-teal-500" : "bg-slate-300 group-hover:bg-slate-400")} />
         <div className={clsx("absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200", checked ? "translate-x-5" : "translate-x-0")} />
       </div>
-      <span className={clsx("text-sm font-bold", checked ? "text-slate-800" : "text-slate-300")}>
+      <span className={clsx("text-sm font-bold", checked ? "text-slate-800" : "text-slate-800")}>
         {label}
       </span>
     </label>
@@ -95,7 +95,7 @@ export const FormSelect = ({ name, label, options }: { name: string, label: stri
   
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-bold uppercase text-slate-600 tracking-wide">{label}</label>
+      <label className="text-xs font-bold uppercase text-slate-800 tracking-wide">{label}</label>
       <div className="relative">
         <select 
           {...register(name)}
@@ -105,7 +105,7 @@ export const FormSelect = ({ name, label, options }: { name: string, label: stri
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        <div className="absolute right-3 top-3.5 pointer-events-none text-slate-300">
+        <div className="absolute right-3 top-3.5 pointer-events-none text-slate-800">
            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </div>

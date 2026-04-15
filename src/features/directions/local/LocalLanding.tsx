@@ -1,4 +1,4 @@
-import { Tour } from '@/features/tours/types';
+import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 
 // Первый экран — синхронно (серверный, с изображением + priority)
@@ -19,7 +19,7 @@ const LocalFAQ = dynamic(() => import('@/features/directions/local/LocalFAQ'), {
 // 🔥 Используем нашу новую динамическую обертку
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
 
-export default function LocalLanding({ tours }: { tours: Tour[] }) {
+export default function LocalLanding({ tours }: { tours: TourPreview[] }) {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-white">
       

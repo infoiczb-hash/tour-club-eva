@@ -47,10 +47,7 @@ export default function AiAssistant() {
     setMessages(newHistory);
     setIsLoading(true);
 
-    const res = await performAiTask({ 
-      mode: 'chat', 
-      messages: newHistory.slice(1) 
-    });
+  const res = await performAiTask({ mode: 'chat', messages: newHistory.slice(1) }) as { success: boolean; data?: string; error?: string };
 
     setIsLoading(false);
 
@@ -116,7 +113,7 @@ export default function AiAssistant() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-900/50 scroll-smooth">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-violet-600 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none'}`}>
+                <div className={`max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-violet-600 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-800 border border-slate-100 dark:border-slate-700 rounded-tl-none'}`}>
                   {msg.role === 'assistant' && (
                       <div className="flex items-center gap-1.5 mb-1 opacity-50 text-[12px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
                           <Sparkles size={10}/> AI Thinking
@@ -145,7 +142,7 @@ export default function AiAssistant() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Спроси меня о чем угодно..."
-              className="flex-1 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all placeholder:text-slate-300"
+              className="flex-1 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all placeholder:text-slate-800"
             />
             <button 
               onClick={handleSend}

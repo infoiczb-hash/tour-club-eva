@@ -1,4 +1,4 @@
-import { Tour } from '@/features/tours/types';
+import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 
 // Первый экран — синхронно, это LCP (с изображением Cloudinary + priority)
@@ -26,7 +26,7 @@ const KidsCatalog = dynamic(() => import('./KidsCatalog'), {
 });
 
 // ✅ Ожидаем массив туров из page.tsx
-export default function KidsLanding({ tours = [] }: { tours?: Tour[] }) {
+export default function KidsLanding({ tours }: { tours: TourPreview[] }) {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-amber-500/30 selection:text-white">
       

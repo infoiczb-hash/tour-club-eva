@@ -4,6 +4,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { env } from '@/lib/env';
 import { createClient } from '@supabase/supabase-js'; 
 import { prisma } from '@/lib/prisma';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 export async function GET(request: Request) {
   try { 
@@ -36,6 +39,26 @@ export async function GET(request: Request) {
     if (hmac !== hash) {
       console.error('Telegram auth failed: Invalid Hash');
       return NextResponse.redirect(`${origin}/login?error=invalid_hash`);
+    }
+
+    // ==========================================
+    // 🛡 ЗАЩИТА ОТ УСТАРЕВШИХ ДАННЫХ (SEC-ADV-06)
+    // ==========================================
+    const authDate = parseInt(userData.auth_date?.toString() || '0', 10);
+    const now = Math.floor(Date.now() / 1000); // Текущее время в секундах
+
+    if (now - authDate > 86400) { // 24 часа = 86400 секунд
+      console.warn(`[Telegram Auth] Отклонена попытка входа по устаревшим данным. ID: ${userData.id}`);
+      return NextResponse.redirect(`${origin}/login?error=auth_expired`);
+    }
+    // ==========================================
+
+    // 🛡 ЗАЩИТА ОТ REPLAY-АТАК
+    const replayKey = `tg:auth:${userData.id}:${authDate}`;
+    const isNewAuth = await redis.set(replayKey, '1', { ex: 86400, nx: true });
+    if (!isNewAuth) {
+      console.warn(`[Telegram Auth] Replay attack blocked. User ID: ${userData.id}`);
+      return NextResponse.redirect(`${origin}/login?error=auth_replayed`);
     }
 
     // 3. Авторизуем в Supabase
@@ -104,7 +127,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/login?error=signin_failed`);
     }
 
-    // 4. Синхронизация профиля с Prisma (Создаем или обновляем MemberProfile)
+  // 4. Синхронизация профиля с Prisma (Создаем или обновляем MemberProfile)
     if (userId) {
       const fullName = [userData.first_name, userData.last_name].filter(Boolean).join(' ');
       const tgUsername = userData.username ? `@${userData.username}` : null;
@@ -112,12 +135,15 @@ export async function GET(request: Request) {
       await prisma.memberProfile.upsert({
         where: { userId: userId },
         update: {
-          name: fullName || undefined, 
+          // ❌ МЫ УДАЛИЛИ ОТСЮДА `name: fullName || undefined`
+          // Теперь при повторном входе имя пользователя не перезаписывается!
           avatarUrl: userData.photo_url || undefined,
           telegram: tgUsername || undefined,
           tgChatId: userData.id, 
         },
         create: {
+          // ✅ А ЗДЕСЬ ОСТАВИЛИ
+          // При самом первом входе (регистрации) имя всё равно подтянется из ТГ
           userId: userId,
           name: fullName || null,
           avatarUrl: userData.photo_url || null,
@@ -127,11 +153,10 @@ export async function GET(request: Request) {
         }
       });
     }
-
     // 5. Успех! Перенаправляем в личный кабинет
     return NextResponse.redirect(`${origin}/account/dashboard`);
 
-  } catch (error) {
+  } catch (error: unknown) { // ✅ Заменили any на unknown (OPT-09)
     console.error('Telegram Auth 500 Error:', error);
     const { origin } = new URL(request.url);
     return NextResponse.redirect(`${origin}/login?error=server_error`);

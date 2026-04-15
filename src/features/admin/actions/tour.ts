@@ -4,7 +4,8 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from '@/lib/auth';
+import { withAdminAuth } from '@/lib/auth'; // ✅ ИМПОРТИРУЕМ НАШУ БРОНЮ
+import { withAdminAudit } from '@/lib/audit'; // ✅ ИМПОРТИРУЕМ ЯДРО АУДИТА
 import { publishToTelegram, publishTourToChannel, sendToUserTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
@@ -16,196 +17,197 @@ export type SaveTourPayload = Record<string, unknown> & {
 };
 
 // ==========================================
-// 1. SAVE TOUR (CREATE / UPDATE) - ОБНОВЛЕННАЯ ФУНКЦИЯ
+// 1. SAVE TOUR (CREATE / UPDATE) - ЗАЩИЩЕНО + АУДИТ
 // ==========================================
-export async function saveTour(formData: SaveTourPayload) {
-  try {
-    await requireAuth();
+export const saveTour = withAdminAuth(
+  withAdminAudit({
+    actionName: 'SAVE_TOUR',
+    getTargetId: (formData: SaveTourPayload) => formData.id,
+  })(async (formData: SaveTourPayload) => {
+    try {
+      // Внутри больше нет await requireAuth(), обертка уже все проверила!
 
-    // 1. Нормализуем данные
-    const rawData = {
-      ...formData,
-      categoryId: formData.categoryId ?? formData.category_id,
-      isActive: formData.isActive ?? formData.is_active ?? false,
-      meetingPoint: formData.meetingPoint ?? formData.meeting_point,
-      priceOld: formData.priceOld ?? formData.price_old,
-      priceChild: formData.priceChild ?? formData.price_child,
-      priceFamily: formData.priceFamily ?? formData.price_family,
-      priceMember: formData.priceMember ?? formData.price_member,
-      spotsLeft: formData.spotsLeft ?? formData.spots_left,
-      coverImage: formData.coverImage ?? formData.cover_image ?? formData.image,
-      additionalExpenses: formData.additionalExpenses ?? formData.additional_expenses,
-      metaTitle: formData.metaTitle ?? formData.meta_title,
-      metaDesc: formData.metaDesc ?? formData.meta_desc,
-      
-      tags: Array.isArray(formData.tags) ? formData.tags : [],
-      included: Array.isArray(formData.included) ? formData.included : [],
-      
-      dates: Array.isArray(formData.dates) ? formData.dates.map((d: any) => ({
-        ...d,
-        guide_id: d.guide_id === "" ? null : d.guide_id 
-      })) : [],
-    };
+      // 1. Нормализуем данные
+      const rawData = {
+        ...formData,
+        categoryId: formData.categoryId ?? formData.category_id,
+        isActive: formData.isActive ?? formData.is_active ?? false,
+        meetingPoint: formData.meetingPoint ?? formData.meeting_point,
+        priceOld: formData.priceOld ?? formData.price_old,
+        priceChild: formData.priceChild ?? formData.price_child,
+        priceFamily: formData.priceFamily ?? formData.price_family,
+        priceMember: formData.priceMember ?? formData.price_member,
+        spotsLeft: formData.spotsLeft ?? formData.spots_left,
+        coverImage: formData.coverImage ?? formData.cover_image ?? formData.image,
+        additionalExpenses: formData.additionalExpenses ?? formData.additional_expenses,
+        metaTitle: formData.metaTitle ?? formData.meta_title,
+        metaDesc: formData.metaDesc ?? formData.meta_desc,
+        
+        tags: Array.isArray(formData.tags) ? formData.tags : [],
+        included: Array.isArray(formData.included) ? formData.included : [],
+        
+        dates: Array.isArray(formData.dates) ? formData.dates.map((d: any) => ({
+          ...d,
+          guide_id: d.guide_id === "" ? null : d.guide_id 
+        })) : [],
+      };
 
-    // 2. Валидация
-    const result = tourFormSchema.safeParse(rawData);
-    if (!result.success) {
-      console.error('❌ Validation Error:', result.error.flatten());
-      return { success: false, error: 'Ошибка проверки данных. Проверьте обязательные поля.' };
-    }
-
-    const data: TourFormValues = result.data;
-    const mainGuideId = data.dates?.[0]?.guide_id || null;
-
-    // Подготовка дат
-    const tourDatesData = data.dates.map((d) => ({
-      startDate: new Date(d.start),
-      endDate: d.end ? new Date(d.end) : null,
-      time: d.time || null,
-      guideId: d.guide_id || null,
-      groupChatUrl: d.groupChatUrl || null, 
-      spots: data.spots,
-      spotsLeft: data.spotsLeft,
-    }));
-
-    // 3. Формируем Payload
-    const prismaPayload: Prisma.TourUncheckedCreateInput = {
-      slug: data.slug,
-      title: data.title,
-      subtitle: data.subtitle ?? null,
-      isActive: data.isActive,
-      categoryId: data.categoryId ?? null, 
-      difficulty: data.difficulty,
-      label: data.label ?? '',
-      tags: data.tags,
-      location: data.location,
-      route: data.route ?? null,
-      distance: data.distance ?? null,
-      duration: data.duration ?? null,
-      meetingPoint: data.meetingPoint ?? null,
-      dates: data.dates as unknown as Prisma.InputJsonValue,
-      guideId: mainGuideId,
-      currency: data.currency,
-      price: data.price,
-      priceOld: data.priceOld ?? null,
-      priceChild: data.priceChild ?? null,
-      priceFamily: data.priceFamily ?? null,
-      priceMember: data.priceMember ?? null,
-      spots: data.spots,
-      spotsLeft: data.spotsLeft,
-      coverImage: data.coverImage ?? null,
-      gallery: data.gallery,
-      description: data.description ?? null,
-      highlights: data.highlights as unknown as Prisma.InputJsonValue,
-      program: data.program as unknown as Prisma.InputJsonValue,
-      faq: data.faq as unknown as Prisma.InputJsonValue,
-      checklist: data.checklist as unknown as Prisma.InputJsonValue,
-      documents: data.documents as unknown as Prisma.InputJsonValue,
-      included: data.included,
-      additionalExpenses: data.additionalExpenses,
-      tourFormat: data.tourFormat ?? null,
-      accommodation: data.accommodation ?? null,
-      groupInfo: data.groupInfo ?? null,
-      importantInfo: data.importantInfo ?? null,
-      includedDetailed: data.includedDetailed ? (data.includedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
-      excludedDetailed: data.excludedDetailed ? (data.excludedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
-      biletpmrLink: formData.biletpmrLink as string | undefined ?? null,
-      apbQrLink: formData.apbQrLink as string | undefined ?? null,
-      apbQrImage: formData.apbQrImage as string | undefined ?? null,
-      metaTitle: data.metaTitle ?? null,
-      metaDesc: data.metaDesc ?? null,
-    };
-
-    let slug = data.slug;
-    let savedTourId = formData.id as string;
-
-    if (formData.id) {
-      // === UPDATE ===
-      await prisma.tour.update({
-        where: { id: formData.id as string },
-        data: {
-            ...prismaPayload,
-            tourDates: {
-                deleteMany: {}, // Очищаем старые даты
-                create: tourDatesData // Пишем новые
-            }
-        }, 
-      });
-    } else {
-      // === CREATE ===
-      const existing = await prisma.tour.findUnique({ where: { slug } });
-      if (existing) {
-        let counter = 1;
-        let candidate = `${slug}-${counter}`;
-        while (await prisma.tour.findUnique({ where: { slug: candidate } })) {
-          counter++;
-          candidate = `${slug}-${counter}`;
-        }
-        slug = candidate;
-        prismaPayload.slug = slug;
+      // 2. Валидация
+      const result = tourFormSchema.safeParse(rawData);
+      if (!result.success) {
+        console.error('❌ Validation Error:', result.error.flatten());
+        return { success: false, error: 'Ошибка проверки данных. Проверьте обязательные поля.' };
       }
 
-      const newTour = await prisma.tour.create({ 
+      const data: TourFormValues = result.data;
+      const mainGuideId = data.dates?.[0]?.guide_id || null;
+
+      // Подготовка дат
+      const tourDatesData = data.dates.map((d) => ({
+        startDate: new Date(d.start),
+        endDate: d.end ? new Date(d.end) : null,
+        time: d.time || null,
+        guideId: d.guide_id || null,
+        groupChatUrl: d.groupChatUrl || null, 
+        spots: data.spots,
+        spotsLeft: data.spotsLeft,
+      }));
+
+      // 3. Формируем Payload
+      const prismaPayload: Prisma.TourUncheckedCreateInput = {
+        slug: data.slug,
+        title: data.title,
+        subtitle: data.subtitle ?? null,
+        isActive: data.isActive,
+        categoryId: data.categoryId ?? null, 
+        difficulty: data.difficulty,
+        label: data.label ?? '',
+        tags: data.tags,
+        location: data.location,
+        route: data.route ?? null,
+        distance: data.distance ?? null,
+        duration: data.duration ?? null,
+        meetingPoint: data.meetingPoint ?? null,
+        dates: data.dates as unknown as Prisma.InputJsonValue,
+        guideId: mainGuideId,
+        currency: data.currency,
+        price: data.price,
+        priceOld: data.priceOld ?? null,
+        priceChild: data.priceChild ?? null,
+        priceFamily: data.priceFamily ?? null,
+        priceMember: data.priceMember ?? null,
+        spots: data.spots,
+        spotsLeft: data.spotsLeft,
+        coverImage: data.coverImage ?? null,
+        gallery: data.gallery,
+        description: data.description ?? null,
+        highlights: data.highlights as unknown as Prisma.InputJsonValue,
+        program: data.program as unknown as Prisma.InputJsonValue,
+        faq: data.faq as unknown as Prisma.InputJsonValue,
+        checklist: data.checklist as unknown as Prisma.InputJsonValue,
+        documents: data.documents as unknown as Prisma.InputJsonValue,
+        included: data.included,
+        additionalExpenses: data.additionalExpenses,
+        tourFormat: data.tourFormat ?? null,
+        accommodation: data.accommodation ?? null,
+        groupInfo: data.groupInfo ?? null,
+        importantInfo: data.importantInfo ?? null,
+        includedDetailed: data.includedDetailed ? (data.includedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
+        excludedDetailed: data.excludedDetailed ? (data.excludedDetailed as Prisma.InputJsonValue) : Prisma.JsonNull,
+        biletpmrLink: formData.biletpmrLink as string | undefined ?? null,
+        apbQrLink: formData.apbQrLink as string | undefined ?? null,
+        apbQrImage: formData.apbQrImage as string | undefined ?? null,
+        metaTitle: data.metaTitle ?? null,
+        metaDesc: data.metaDesc ?? null,
+      };
+
+      let slug = data.slug;
+      let savedTourId = formData.id as string;
+
+      if (formData.id) {
+        // === UPDATE ===
+        await prisma.tour.update({
+          where: { id: formData.id as string },
           data: {
               ...prismaPayload,
-              tourDates: { create: tourDatesData }
-          } 
-      });
-      savedTourId = newTour.id; 
+              tourDates: {
+                  deleteMany: {}, // Очищаем старые даты
+                  create: tourDatesData // Пишем новые
+              }
+          }, 
+        });
+      } else {
+        // === CREATE ===
+        const existing = await prisma.tour.findUnique({ where: { slug } });
+        if (existing) {
+          let counter = 1;
+          let candidate = `${slug}-${counter}`;
+          while (await prisma.tour.findUnique({ where: { slug: candidate } })) {
+            counter++;
+            candidate = `${slug}-${counter}`;
+          }
+          slug = candidate;
+          prismaPayload.slug = slug;
+        }
+
+        const newTour = await prisma.tour.create({ 
+            data: {
+                ...prismaPayload,
+                tourDates: { create: tourDatesData }
+            } 
+        });
+        savedTourId = newTour.id; 
+      }
+
+      // 👇 НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine) 👇
+      const hasNewDates = data.dates.some(d => !d.id);
+      
+      if (hasNewDates && data.isActive) {
+         try {
+           await notifySubscribersOnNewDates(
+             savedTourId,
+             data.categoryId || null,
+             data.title,
+             slug
+           );
+         } catch (notifyError) {
+           console.error("Ошибка при автоматической рассылке Telegram:", notifyError);
+         }
+      }
+      // 👆 КОНЕЦ БЛОКА 👆
+
+      revalidatePath('/admin');
+      revalidatePath('/tour');
+      revalidatePath(`/tour/${slug}`);
+      revalidatePath('/');
+
+      // Отправка в общий паблик
+      if (!formData.id && data.isActive) {
+        publishTourToChannel({
+          title:      data.title,
+          subtitle:   data.subtitle,
+          location:   data.location,
+          duration:   data.duration ?? '',
+          price:      data.price,
+          currency:   data.currency,
+          slug:       slug,
+          coverImage: data.coverImage,
+        }).catch(console.error);
+      }
+
+      return { success: true };
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('❌ Database Error in saveTour:', err);
+      return { success: false, error: 'Произошла внутренняя ошибка сервера при сохранении тура.' };
     }
-
-    // 👇 НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine) 👇
-    const hasNewDates = data.dates.some(d => !d.id);
-    
-    if (hasNewDates && data.isActive) {
-       try {
-         // Единый сервис соберет Ждунов (по memberId и телефону), 
-         // Подписчиков категории, Избранное, и разошлет всем пуши параллельно.
-         await notifySubscribersOnNewDates(
-           savedTourId,
-           data.categoryId || null, // Если в data есть categoryId, передаем его
-           data.title,
-           slug
-         );
-       } catch (notifyError) {
-         console.error("Ошибка при автоматической рассылке Telegram:", notifyError);
-         // Не даем ошибке рассылки сломать сохранение тура
-       }
-    }
-    // 👆 КОНЕЦ БЛОКА 👆
-
-    revalidatePath('/admin');
-    revalidatePath('/tour');
-    revalidatePath(`/tour/${slug}`);
-    revalidatePath('/');
-
-    // Отправка в общий паблик
-    if (!formData.id && data.isActive) {
-  publishTourToChannel({
-    title:      data.title,
-    subtitle:   data.subtitle,
-    location:   data.location,
-    duration:   data.duration ?? '',
-    price:      data.price,
-    currency:   data.currency,
-    slug:       slug,
-    coverImage: data.coverImage,
-  }).catch(console.error);
-}
-
-    return { success: true };
-  } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') {
-      return { success: false, error: 'Unauthorized' };
-    }
-    console.error('❌ Database Error in saveTour:', err);
-    return { success: false, error: 'Произошла внутренняя ошибка сервера при сохранении тура.' };
-  }
-}
+  })
+);
 
 // ==========================================
 // 2. GET ACTIVE GUIDES (БЕЗ ИЗМЕНЕНИЙ)
+// Эту функцию не оборачиваем, так как она только читает список,
+// и нам нужно, чтобы она возвращала массив, а не объект с ошибкой.
 // ==========================================
 export async function getActiveGuides() {
   try {
@@ -222,104 +224,145 @@ export async function getActiveGuides() {
 }
 
 // ==========================================
-// 3. DELETE TOUR (БЕЗ ИЗМЕНЕНИЙ)
+// 3. DELETE TOUR - ЗАЩИЩЕНО + АУДИТ
 // ==========================================
-export async function deleteTour(id: string) {
-  try {
-    await requireAuth();
+export const deleteTour = withAdminAuth(
+  withAdminAudit({
+    actionName: 'DELETE_TOUR',
+    getTargetId: (id: string) => id,
+  })(async (id: string) => {
+    try {
+      const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
+      
+      await prisma.tour.update({ 
+          where: { id },
+          data: { deletedAt: new Date(), isActive: false }
+      });
 
-    const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
-    
-    await prisma.tour.update({ 
-        where: { id },
-        data: { deletedAt: new Date(), isActive: false }
-    });
-
-    revalidatePath('/admin');
-    revalidatePath('/tour');
-    if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); 
-    revalidatePath('/');
-    return { success: true };
-  } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') {
-      return { success: false, error: 'Unauthorized' };
+      revalidatePath('/admin');
+      revalidatePath('/tour');
+      if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); 
+      revalidatePath('/');
+      return { success: true };
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Delete Error:', err);
+      return { success: false, error: 'Произошла внутренняя ошибка сервера при удалении тура.' };
     }
-    console.error('Delete Error:', err);
-    return { success: false, error: 'Произошла внутренняя ошибка сервера при удалении тура.' };
-  }
-}
+  })
+);
 
 // ==========================================
-// 4. TOGGLE STATUS (ОБНОВЛЕНО С ТЕЛЕГРАМ-РАССЫЛКОЙ)
+// 4. TOGGLE STATUS - ЗАЩИЩЕНО + АУДИТ
 // ==========================================
-export async function updateTourStatus(id: string, isActive: boolean) {
-  try {
-    await requireAuth();
+export const updateTourStatus = withAdminAuth(
+  withAdminAudit({
+    actionName: 'UPDATE_TOUR_STATUS',
+    // ПРОСТО ДОБАВЛЯЕМ ВТОРОЙ АРГУМЕНТ СЮДА (с нижним подчеркиванием, так как он не используется для ID):
+    getTargetId: (id: string, _isActive: boolean) => id,
+  })(async (id: string, isActive: boolean) => {
+    try {
+      const existing = await prisma.tour.findUnique({
+        where: { id },
+        select: { isActive: true },
+      });
 
-    // Читаем текущий статус ДО обновления — чтобы понять первая ли это публикация
-    const existing = await prisma.tour.findUnique({
-      where: { id },
-      select: { isActive: true },
-    });
+      const tour = await prisma.tour.update({
+        where: { id },
+        data: { isActive },
+        select: { 
+          id: true,
+          slug: true, 
+          title: true,
+          subtitle: true,
+          location: true,
+          duration: true,
+          price: true,
+          currency: true,
+          coverImage: true,
+          categoryId: true,
+          isActive: true,
+        },
+      });
 
-    const tour = await prisma.tour.update({
-      where: { id },
-      data: { isActive },
-      select: { 
-        id: true,
-        slug: true, 
-        title: true,
-        subtitle: true,
-        location: true,
-        duration: true,
-        price: true,
-        currency: true,
-        coverImage: true,
-        categoryId: true,
-        isActive: true,
-      },
-    });
+      const isFirstPublish = !existing?.isActive && isActive;
 
-    // Тур только что перешёл из черновика в активный — первая публикация
-    const isFirstPublish = !existing?.isActive && isActive;
+      if (isFirstPublish) {
+        try {
+          await notifySubscribersOnNewDates(tour.id, tour.categoryId, tour.title, tour.slug);
+        } catch (notifyError) {
+          console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
+        }
 
-    if (isFirstPublish) {
-      // Рассылка подписчикам
-      try {
-        await notifySubscribersOnNewDates(
-          tour.id,
-          tour.categoryId,
-          tour.title,
-          tour.slug
-        );
-      } catch (notifyError) {
-        console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
+        publishTourToChannel({
+          title:      tour.title,
+          subtitle:   tour.subtitle,
+          location:   tour.location,
+          duration:   tour.duration ?? '',
+          price:      tour.price,
+          currency:   tour.currency,
+          slug:       tour.slug,
+          coverImage: tour.coverImage,
+        }).catch(console.error);
       }
 
-      // Публикация в публичный канал @evaturclub
-      publishTourToChannel({
-        title:      tour.title,
-        subtitle:   tour.subtitle,
-        location:   tour.location,
-        duration:   tour.duration ?? '',
-        price:      tour.price,
-        currency:   tour.currency,
-        slug:       tour.slug,
-        coverImage: tour.coverImage,
-      }).catch(console.error);
+      revalidatePath('/admin');
+      revalidatePath('/tour');
+      revalidatePath(`/tour/${tour.slug}`);
+      return { success: true };
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Update Status Error:', err);
+      return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса.' };
     }
+  })
+);
 
-    revalidatePath('/admin');
-    revalidatePath('/tour');
-    revalidatePath(`/tour/${tour.slug}`);
-    return { success: true };
-  } catch (error: unknown) {
-    const err = error as Error;
-    if (err.message === 'Unauthorized') {
-      return { success: false, error: 'Unauthorized' };
-    }
-    console.error('Update Status Error:', err);
-    return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса.' };
-  }
+// ==========================================
+// 5. ПОЛУЧЕНИЕ ТУРОВ ДЛЯ АДМИНКИ С ПАГИНАЦИЕЙ (READ-ONLY)
+// ==========================================
+
+export interface GetToursAdminParams {
+  page: number;
+  limit?: number;
+  search?: string;
+  filter?: 'all' | 'upcoming' | 'past' | 'full';
 }
+
+export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) => {
+  const { page, limit = 20, search, filter = 'all' } = params;
+  const skip = (page - 1) * limit;
+  const now = new Date();
+
+  const where: any = { deletedAt: null };
+  if (search) {
+    where.title = { contains: search, mode: 'insensitive' };
+  }
+  if (filter === 'upcoming') {
+    where.date = { gte: now };
+  } else if (filter === 'past') {
+    where.date = { lt: now };
+  }
+  // filter === 'full' – пока не реализуем (оставляем без фильтра)
+
+  const [toursRaw, total] = await Promise.all([
+    prisma.tour.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        guide: true,
+        category: true,
+        tourDates: { orderBy: { startDate: 'asc' }, take: 3 },
+      },
+    }),
+    prisma.tour.count({ where }),
+  ]);
+
+  // Используем существующий маппер из api.ts (динамический импорт, чтобы избежать циклических зависимостей)
+  const { mapPrismaTourToFrontend } = await import('@/features/tours/api');
+  const tours = toursRaw.map(mapPrismaTourToFrontend);
+
+  return { success: true, tours, total };
+});

@@ -53,7 +53,7 @@ export const ImageUploader = ({
       const response = await uploadFile(formData); 
       
       // Достаем url из объекта response
-      if (response.url) {
+   if (response && 'url' in response && response.url) {
         // Записываем полученную СТРОКУ в форму
         setValue(name, response.url, { shouldDirty: true, shouldValidate: true });
       } else if (response.error) {
@@ -95,7 +95,7 @@ export const ImageUploader = ({
 
   return (
     <div className={clsx("w-full", className)}>
-      <label className="text-xs font-bold uppercase text-slate-300 mb-2 block">
+      <label className="text-xs font-bold uppercase text-slate-800 mb-2 block">
         {label}
       </label>
 
@@ -154,12 +154,12 @@ export const ImageUploader = ({
               <span className="text-sm font-bold">Загрузка...</span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-300">
+            <div className="flex flex-col items-center gap-2 text-slate-800">
               <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                 <UploadCloud size={24} />
               </div>
               <div className="text-center">
-                <p className="text-sm font-bold text-slate-600">Нажмите или перетащите фото</p>
+                <p className="text-sm font-bold text-slate-800">Нажмите или перетащите фото</p>
                 <p className="text-xs">JPG, PNG, WEBP (макс 5MB)</p>
               </div>
             </div>

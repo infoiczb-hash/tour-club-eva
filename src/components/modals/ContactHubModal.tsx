@@ -6,6 +6,8 @@ import { X, Send, User, Phone, AtSign, MessageSquare, Briefcase, Heart, Star, Te
 import { clsx } from 'clsx';
 import { submitInquiry } from '@/features/inquiries/actions';
 import { InquiryInput } from '@/features/inquiries/schema';
+// ✅ Подключено серверное действие для получения данных из БД
+import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 type TabType = 'TOUR' | 'HR' | 'BLOG' | 'B2B' | 'REVIEW' | 'HELP';
 
@@ -34,9 +36,22 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
   useEffect(() => {
     if (isOpen) {
         setActiveTab(initialTab);
-        setFormData({});
         setStatus('idle');
         document.body.style.overflow = 'hidden';
+
+        // ✅ Исправлено: Предзаполнение из MemberProfile (БД)
+        getMyProfileAction().then(profile => {
+          if (profile) {
+            setFormData({
+              name: profile.name || '',
+              phone: profile.phone || '',
+              // Приоритет соцсетей для связи
+              social: profile.telegram || profile.instagram || profile.email || ''
+            });
+          } else {
+            setFormData({});
+          }
+        });
     } else {
         document.body.style.overflow = '';
     }
@@ -125,7 +140,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                               <button
                                 key={tab.id}
                                 type="button"
-                                onClick={() => { setActiveTab(tab.id); setFormData({}); }}
+                                onClick={() => { setActiveTab(tab.id); setFormData((prev: any) => ({ name: prev.name, phone: prev.phone, social: prev.social })); }}
                                 className={clsx(
                                     "flex items-center gap-2 px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide transition-all border",
                                     isActive 
@@ -285,7 +300,15 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                    </div>
 
                    {/* Honeypot (Hidden) */}
-                   <input ref={honeypotRef} type="text" name="website" className="hidden" autoComplete="off" tabIndex={-1} />
+                   <input 
+                     ref={honeypotRef} 
+                     type="text" 
+                     name="website" 
+                     className="hidden" 
+                     tabIndex={-1} 
+                     aria-hidden="true" 
+                     autoComplete="off" 
+                   />
 
                    {/* 🔥 КНОПКА ОТПРАВКИ И ТЕЛЕГРАМ */}
                    <div className="mt-8 pt-6 border-t border-white/5 shrink-0 flex flex-col gap-4">

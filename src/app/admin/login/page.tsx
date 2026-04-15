@@ -39,18 +39,18 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-4xl font-black text-white tracking-tighter">ЭВА</div>
-          <p className="text-slate-300 text-sm mt-1">Панель управления</p>
+          <p className="text-slate-600 text-sm mt-1">Панель управления</p>
         </div>
 
         <div className="bg-slate-900 border border-white/10 rounded-2xl p-6">
           <form onSubmit={handleLogin} className="space-y-4">
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                 <input
                   type="email"
                   required
@@ -64,11 +64,11 @@ export default function AdminLoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                 <input
                   type={showPass ? 'text' : 'password'}
                   required
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
                   placeholder="••••••••••••"
                 />
                 <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>

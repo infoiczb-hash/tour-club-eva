@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { ArrowRight, Compass } from 'lucide-react';
 // Убедись, что путь до твоей карточки тура правильный! 
 // Если она лежит в другом месте, поправь импорт.
-import TourCard from '@/features/tours/components/TourCard'; 
+import TourCard from '@/features/tours/components/TourCard';
+import { TourPreview } from '@/features/tours/types';
 
 interface SimilarToursProps {
-  tours: any[]; // Передаем массив туров
+  tours: TourPreview[]; // ✅ Меняем тип
 }
 
 export default function SimilarTours({ tours }: SimilarToursProps) {

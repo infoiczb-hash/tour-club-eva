@@ -7,6 +7,7 @@ import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activ
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import { FunTest } from '@prisma/client';
+import { QUIZ_VISUAL_CONFIG } from './constants';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -78,7 +79,7 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
   }, [activeTests]);
   
   return (
-    <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
+ <section className="py-12 md:py-24 bg-slate-950 relative overflow-hidden border-t border-white/5">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-violet-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
@@ -126,7 +127,7 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 }
 
 function QuizCard({ quiz }: { quiz: FunTest }) {
-  const visual = VISUAL_REGISTRY[quiz.slug] || VISUAL_REGISTRY['default'];
+ const visual = QUIZ_VISUAL_CONFIG[quiz.slug] || QUIZ_VISUAL_CONFIG['default'];
   const Icon = visual.icon;
 
   // ❌ МЫ ПОЛНОСТЬЮ УДАЛИЛИ sanitizeHtml ОТСЮДА

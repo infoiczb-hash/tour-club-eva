@@ -18,8 +18,8 @@ interface BlogCategory {
   sortOrder: number;
 }
 
-// ✅ ИСПРАВЛЕННЫЙ ИНТЕРФЕЙС: Точное совпадение с тем, что возвращает Prisma
-interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags'> {
+// ✅ НОВЫЙ ИНТЕРФЕЙС: Легкий DTO-тип. Жестко убираем 'content' через Omit
+export interface BlogPreview extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
   tags?: string[];
   categoryId?: string | null;
   blogCategory?: { 
@@ -40,7 +40,7 @@ interface ExtendedBlog extends Omit<Blog, 'categoryId' | 'tags'> {
 }
 
 interface BlogSectionProps {
-  posts: ExtendedBlog[];
+  posts: BlogPreview[]; // ✅ ИЗМЕНЕНО: Ожидаем легкие карточки
   categories?: BlogCategory[];
 }
 
@@ -60,7 +60,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
 
   const authors = ["all", ...Array.from(new Set(posts.map(p => p.author_name).filter(Boolean)))];
 
-  const getLabel = (post: ExtendedBlog): string => {
+  const getLabel = (post: BlogPreview): string => {
     if (post.categoryId) {
       const cat = categories.find(c => c.id === post.categoryId);
       if (cat) return cat.title;
@@ -97,7 +97,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
   if (!posts || posts.length === 0) return null;
 
   return (
-    <section className="relative w-full bg-[#0B1120] py-12 md:py-20 overflow-hidden border-t border-white/5" id="blog">
+  <section className="relative w-full bg-[#0B1120] py-12 md:py-24 overflow-hidden border-t border-white/5" id="blog">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-500/5 md:blur-[120px] rounded-full opacity-30" />
       </div>

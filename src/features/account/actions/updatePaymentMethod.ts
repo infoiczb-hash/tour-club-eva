@@ -3,27 +3,48 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { createServerSupabaseClient } from '@/lib/supabase/server'; // 👈 Добавлен импорт
 
 export async function updatePaymentMethodAction(bookingId: string, paymentMethod: string) {
   try {
-    // 1. Сначала проверяем текущее состояние брони
+    // 1. Проверка авторизации и получение profile.id
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: false, error: 'Необходима авторизация' };
+    }
+
+    const profile = await prisma.memberProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true }
+    });
+
+    if (!profile) {
+      return { success: false, error: 'Профиль не найден' };
+    }
+
+    // 2. Проверка существования брони И ЕЁ ПРИНАДЛЕЖНОСТИ пользователю
     const current = await prisma.booking.findUnique({
-      where: { id: bookingId },
+      where: { 
+        id: bookingId,
+        memberId: profile.id // 👈 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: проверка владельца
+      },
       select: { status: true }
     });
 
     if (!current) {
-      return { success: false, error: 'Бронирование не найдено' };
+      return { success: false, error: 'Бронирование не найдено или вам не принадлежит' };
     }
 
     if (current.status === 'confirmed') {
       return { success: false, error: 'Билет уже оплачен, смена метода невозможна' };
     }
 
-    // 2. Определяем новый статус (cash -> pending, остальные -> awaiting_payment)
+    // 3. Определяем новый статус
     const newStatus = paymentMethod === 'cash' ? 'pending' : 'awaiting_payment';
 
-    // 3. Обновляем данные и ОЧИЩАЕМ старые чеки/ошибки
+    // 4. Обновляем данные и ОЧИЩАЕМ старые чеки/ошибки
     await prisma.booking.update({
       where: { id: bookingId },
       data: { 
@@ -34,7 +55,7 @@ export async function updatePaymentMethodAction(bookingId: string, paymentMethod
       }
     });
 
-    // 4. Очищаем кэш по всем направлениям, чтобы клиент сразу увидел изменения
+    // 5. Ревалидация кэша
     revalidatePath(`/account/bookings/${bookingId}`);
     revalidatePath('/account/bookings');
     revalidatePath('/account/dashboard');

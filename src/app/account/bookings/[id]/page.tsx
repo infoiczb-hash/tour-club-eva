@@ -50,22 +50,26 @@ export default async function BookingDetailsPage({
 
   if (!user) redirect("/login");
 
-  const profile = await prisma.memberProfile.findUnique({
-    where: { userId: user.id },
-    select: { id: true }
-  });
-
-  if (!profile) redirect("/login");
-
-  // ✅ 3. БЕЗОПАСНАЯ ЛОГИКА: findFirst с проверкой владельца
+  // ✅ 3. БЕЗОПАСНАЯ ЛОГИКА И СТРОГАЯ ДИЕТА: 1 запрос вместо 2
   const booking = await prisma.booking.findFirst({
     where: { 
       id: id, 
-      memberId: profile.id 
+      member: { userId: user.id } 
     },
     include: {
-      tour: true,
-      tourDate: true
+      tourDate: true,
+      tour: {
+        select: {
+          title: true,
+          meetingPoint: true,
+          location: true,
+          checklist: true,
+          currency: true,
+          biletpmrLink: true,
+          apbQrLink: true,
+          apbQrImage: true
+        }
+      }
     }
   });
 
@@ -89,15 +93,17 @@ export default async function BookingDetailsPage({
   const timeStr = tourDateObj?.time || "08:00";
   const startPoint = tourDateObj?.meetingPoint || booking.tour.meetingPoint || booking.tour.location || "Уточняется менеджером";
 
-  // Чек-лист: Парсим из базы
-  const checklist = Array.isArray(booking.tour.checklist) ? booking.tour.checklist : [];
+  // Чек-лист: Парсим из базы (с правильной типизацией для TypeScript)
+  const checklist = Array.isArray(booking.tour.checklist) 
+    ? (booking.tour.checklist as { title: string; items: string }[]) 
+    : [];
 
   // Логика чата: Показываем если Оплачено ИЛИ (Новая + Наличные)
   const showChatButton = (status === 'confirmed' || (status === 'pending' && booking.paymentMethod === 'cash')) && tourDateObj?.groupChatUrl;
 
   const displayId = booking.shortId ? String(booking.shortId) : booking.id.substring(0, 5).toUpperCase();
 
-  // ✅ 4. ИДЕАЛЬНЫЙ UI ИЗ ВТОРОГО ФАЙЛА
+  // ✅ 4. ИДЕАЛЬНЫЙ UI ИЗ ТВОЕГО ОРИГИНАЛА (Одноколоночный дизайн билета)
   return (
     <div className="max-w-2xl mx-auto pb-12 animate-in fade-in duration-500 px-4">
       
@@ -199,7 +205,7 @@ export default async function BookingDetailsPage({
                   <CheckSquare size={14} /> Что взять с собой
                 </h3>
                 <div className="bg-slate-950/40 rounded-2xl p-5 border border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {checklist.map((block: any, i: number) => (
+                  {checklist.map((block, i) => (
                     <div key={i} className="space-y-1">
                       <p className="text-[12px] font-black text-teal-500 uppercase tracking-wider">{block.title}</p>
                       <p className="text-xs text-slate-300 leading-relaxed">{block.items}</p>

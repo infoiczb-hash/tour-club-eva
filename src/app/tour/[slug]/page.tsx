@@ -3,22 +3,19 @@ import ReactDOM from 'react-dom';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getTourBySlug, getTours, getSimilarTours } from '@/features/tours/api'; 
-import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper'; 
-// ✅ ДОБАВЛЕНО: Импорты для проверки сессии и БД
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { prisma } from '@/lib/prisma';
+import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper';
 
 // Базовый URL сайта (из env или фолбек на прод)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
 export async function generateStaticParams() {
   const tours = await getTours();
-  
   return tours.map((tour) => ({
     slug: tour.slug,
   }));
 }
 
+// ✅ ТЕПЕРЬ ЭТО РАБОТАЕТ НА 100%. Страница кэшируется на час.
 export const revalidate = 3600;
 
 type Props = {
@@ -41,32 +38,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const url = `${BASE_URL}/tour/${tour.slug}`; 
   
-  let imageUrl = tour.image || `${BASE_URL}/og-default.jpg`;
-  if (imageUrl.startsWith('/')) {
-    imageUrl = `${BASE_URL}${imageUrl}`;
-  }
+ let imageUrl = `${BASE_URL}/api/og?title=${encodeURIComponent(tour.title)}&subtitle=${encodeURIComponent(tour.subtitle || 'Турклуб Эва')}`;
+  if (imageUrl.startsWith('/')) imageUrl = `${BASE_URL}${imageUrl}`;
 
   const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
 
   return {
     title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
-    alternates: {
-      canonical: url, 
-    },
+     alternates: { canonical: url },
     openGraph: {
       title: `${tour.title} | Турклуб «Эва»`,
       description: cleanDescription,
       url: url,
       siteName: 'Турклуб «Эва»',
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: tour.title,
-        }
-      ],
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: tour.title }],
       type: 'website',
       locale: 'ru_RU',
     },
@@ -82,79 +68,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // --- 2. СТРАНИЦА ТУРА ---
 export default async function TourPage({ params }: Props) {
   const { slug } = await params;
-  
   const decodedSlug = decodeURIComponent(slug);
 
   const tour = await getTourBySlug(decodedSlug);
-  if (!tour) { notFound(); }
+  if (!tour) notFound();
+  
+  if (tour.image) ReactDOM.preload(tour.image, { as: 'image', fetchPriority: 'high' });
 
-  // ✅ ПАТЧ: Адаптивный Preload LCP-изображения с imageSrcSet
-  if (tour.image) {
-    // Умная генерация URL для адаптивной предзагрузки
-    const generatePreloadUrl = (url: string, width: number) => {
-      // Если картинка отдается напрямую с Cloudinary, добавляем параметры трансформации
-      if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
-        return url.replace('/upload/', `/upload/c_scale,w_${width},q_auto,f_auto/`);
-      }
-      // Фолбэк на дефолтный Next.js Image Optimizer
-      return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=75`;
-    };
+  // ✅ ИЗМЕНЕНО: Убрали чтение кук. Запрашиваем только похожие туры (теперь это TourPreview)
+  const similarTours = await getSimilarTours(tour.categoryId ?? null, tour.id, 3);
 
-    const mobileUrl = generatePreloadUrl(tour.image, 828);
-    const desktopUrl = generatePreloadUrl(tour.image, 1920);
+  const schemaImages = [tour.image, ...(tour.gallery || [])].filter(Boolean) as string[];
+  // ✅ ИЗМЕНЕНО: Не ставим сегодняшнюю дату для туров-анонсов (без дат)
+  const startDate = tour.date ? new Date(tour.date).toISOString() : undefined;
 
-    ReactDOM.preload(desktopUrl, { // desktopUrl выступает как fallback href
-      as: 'image',
-      imageSrcSet: `${mobileUrl} 828w, ${desktopUrl} 1920w`,
-      imageSizes: '100vw',
-      fetchPriority: 'high',
-    });
-  }
-
-  // getSimilarTours и проверка сессии — независимы, запускаем параллельно
-  const [similarTours, supabase] = await Promise.all([
-    getSimilarTours(tour.categoryId ?? null, tour.id, 3),
-    createServerSupabaseClient(),
-  ]);
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  let isWished = false;
-  if (user) {
-    // ✅ ИСПРАВЛЕНО: Честно получаем профиль из БД вместо удаления строк с ошибкой Cannot find name 'profile'
-    const profile = await prisma.memberProfile.findUnique({
-      where: { userId: user.id },
-      select: { id: true }
-    });
-
-    if (profile) {
-      const watch = await prisma.watchList.findFirst({
-        where: { memberId: profile.id, tourId: tour.id },
-      });
-      isWished = !!watch;
-    }
-  }
-
-  const schemaImages = [
-    tour.image,
-    ...(tour.gallery || [])
-  ].filter(Boolean) as string[];
-
-  const ratingValue = (4.7 + ((tour.id.length % 3) * 0.1)).toFixed(1);
-  const reviewCount = String(15 + (tour.id.charCodeAt(0) % 20)); 
-
-  const jsonLd = {
+  const jsonLd: any = {
     '@context': 'https://schema.org',
     '@type': ['Event', 'TouristTrip'],
     name: tour.title,
     description: tour.subtitle || tour.description,
     image: schemaImages,
-    touristType: [
-      "Любители природы",
-      "Активный отдых"
-    ],
-    startDate: tour.date || new Date().toISOString(), 
-    endDate: tour.endDate || tour.date || new Date().toISOString(),
+    touristType: ["Любители природы", "Активный отдых"],
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
@@ -172,24 +106,23 @@ export default async function TourPage({ params }: Props) {
       price: tour.price, 
       priceCurrency: tour.currency || 'MDL',
       availability: (tour.spotsLeft || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
-      validFrom: new Date().toISOString(),
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: ratingValue,
-      reviewCount: reviewCount
     },
     organizer: {
       '@type': 'Organization',
       name: 'Турклуб «Эва»',
       url: BASE_URL,
       logo: `${BASE_URL}/logo.png` 
-    },
-    performer: (typeof tour.guide === 'object' && tour.guide) ? {
-      '@type': 'Person',
-      name: tour.guide.name
-    } : undefined
+    }
   };
+
+  if (startDate) {
+    jsonLd.startDate = startDate;
+    jsonLd.endDate = tour.endDate ? new Date(tour.endDate).toISOString() : startDate;
+  }
+
+  if (typeof tour.guide === 'object' && tour.guide) {
+    jsonLd.performer = { '@type': 'Person', name: tour.guide.name };
+  }
 
   return (
     <main className="print:bg-white print:text-slate-900">
@@ -197,8 +130,8 @@ export default async function TourPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* ✅ ПЕРЕДАЕМ isWished ДАЛЬШЕ */}
-      <TourDetailsWrapper tour={tour} similarTours={similarTours} isWished={isWished} />
+      {/* ✅ isWished теперь всегда false при рендере на сервере. Кнопка вишлиста должна сама проверять статус на клиенте */}
+      <TourDetailsWrapper tour={tour} similarTours={similarTours} isWished={false} />
     </main>
   );
 }

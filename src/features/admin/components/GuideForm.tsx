@@ -67,8 +67,9 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
       if (!value || value.length < 3) return alert('Напишите хоть пару слов!');
       setAiLoading(true);
       try {
-        const res = await performAiTask({ mode: 'improve_text', text: value, tone: 'selling' });
-        if(res.success && typeof res.data === 'string') onChange(res.data);
+      const res = await performAiTask({ mode: 'improve_text', text: value, tone: 'selling' }) as { success: boolean; data?: string; error?: string };
+if(res.success && typeof res.data === 'string') onChange(res.data);
+
       } catch (e) { 
         console.error(e); 
       } finally { 
@@ -79,14 +80,14 @@ const RichTextarea = ({ label, value, onChange, placeholder, height = "h-32" }: 
     return (
       <div className="space-y-2 group">
          <div className="flex justify-between items-end">
-            <label className="text-[12px] font-bold uppercase tracking-wider text-slate-300 ml-1">{label}</label>
+            <label className="text-[12px] font-bold uppercase tracking-wider text-slate-800 ml-1">{label}</label>
             <button type="button" onClick={handleAiImprove} disabled={aiLoading} className="text-[12px] flex items-center gap-1 text-teal-600 hover:text-teal-400 disabled:opacity-50 transition-colors bg-teal-950/30 px-2 py-1 rounded-md border border-teal-900/50">
                 {aiLoading ? <Loader2 className="animate-spin" size={10}/> : <Wand2 size={10}/>}
                 <span>AI Rewrite</span>
             </button>
          </div>
          <textarea 
-            className={`w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50 transition-all resize-none ${height}`}
+            className={`w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-800 placeholder:text-slate-800 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50 transition-all resize-none ${height}`}
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -193,7 +194,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
                 {initialData ? 'Редактировать досье' : 'Новый оперативник'}
               </h2>
           </div>
-          <button onClick={onClose} className="hover:bg-slate-800 p-2 rounded-xl transition text-slate-300"><X size={24}/></button>
+          <button onClick={onClose} className="hover:bg-slate-800 p-2 rounded-xl transition text-slate-800"><X size={24}/></button>
         </div>
 
         <form id="guide-form" onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-8 flex-1 scrollbar-thin scrollbar-thumb-slate-800">
@@ -201,7 +202,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
           {/* ФОТОГРАФИИ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-slate-300 uppercase tracking-wider ml-1 flex items-center gap-2">
+                <label className="text-[12px] font-bold text-slate-800 uppercase tracking-wider ml-1 flex items-center gap-2">
                     <User size={12}/> Портрет (Сетка 3:4)
                 </label>
                 <div className="aspect-[3/4] rounded-xl border-2 border-dashed border-slate-800 relative group overflow-hidden bg-slate-900 hover:border-teal-500/50 transition-colors">
@@ -214,7 +215,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
              </div>
 
              <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-slate-300 uppercase tracking-wider ml-1 flex items-center gap-2">
+                <label className="text-[12px] font-bold text-slate-800 uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Camera size={12}/> Экшен (Широкое фото для SEO)
                 </label>
                 <div className="aspect-[4/3] rounded-xl border-2 border-dashed border-slate-800 relative group overflow-hidden bg-slate-900 hover:border-teal-500/50 transition-colors">
@@ -232,13 +233,13 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
           {/* ОСНОВНАЯ ИНФО */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
              <div className="space-y-1">
-                <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1">Имя Фамилия</label>
+                <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1">Имя Фамилия</label>
                 <input required className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm font-bold text-white transition-colors"
                     value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Роман Санду"
                 />
              </div>
              <div className="space-y-1">
-                <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1 text-teal-500">SEO Slug (Ссылка)</label>
+                <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1 text-teal-500">SEO Slug (Ссылка)</label>
                 <input required className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-teal-400 transition-colors"
                     value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} placeholder="roman-sandu"
                 />
@@ -247,15 +248,15 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
              <div className="space-y-1">
-                <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1">Роль (Бейдж)</label>
+                <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1">Роль (Бейдж)</label>
                 <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} placeholder="Основатель"/>
              </div>
              <div className="space-y-1">
-                <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1 flex items-center gap-1"><Sparkles size={10} className="text-amber-400"/> Суперсила</label>
+                <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1 flex items-center gap-1"><Sparkles size={10} className="text-amber-400"/> Суперсила</label>
                 <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white" value={formData.superpower} onChange={e => setFormData({...formData, superpower: e.target.value})} placeholder="Специалист по кухне"/>
              </div>
              <div className="space-y-1">
-                <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1">Порядок сортировки</label>
+                <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1">Порядок сортировки</label>
                 <input type="number" className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-teal-500 text-sm text-white" value={formData.order} onChange={e => setFormData({...formData, order: parseInt(e.target.value) || 0})}/>
              </div>
           </div>
@@ -269,7 +270,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
                  </Button>
              </div>
              
-             {formData.stats.length === 0 && <p className="text-xs text-slate-300">Нет характеристик. Добавьте "Выносливость", "Кулинария" и т.д.</p>}
+             {formData.stats.length === 0 && <p className="text-xs text-slate-800">Нет характеристик. Добавьте "Выносливость", "Кулинария" и т.д.</p>}
 
              <div className="space-y-3">
                  {formData.stats.map((stat: StatItem, i: number) => (
@@ -288,7 +289,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
                           <input type="range" min="0" max="100" value={stat.value} onChange={(e) => handleStatChange(i, 'value', parseInt(e.target.value))} className="w-full accent-teal-500"/>
                           <span className="text-xs font-mono font-bold text-teal-400 w-8">{stat.value}%</span>
                        </div>
-                       <button type="button" onClick={() => removeStat(i)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                       <button type="button" onClick={() => removeStat(i)} className="p-2 text-slate-800 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                           <Trash2 size={16}/>
                        </button>
                     </div>
@@ -298,7 +299,7 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
 
           {/* ТЕКСТЫ */}
           <div className="space-y-1">
-             <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1">Теги-фишки (через запятую)</label>
+             <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1">Теги-фишки (через запятую)</label>
              <input className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none text-sm text-white" value={formData.tags as string} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="играет на гитаре, воспитывает черепаху"/>
           </div>
 
@@ -306,8 +307,8 @@ export default function GuideForm({ initialData, onClose, onSubmit }: GuideFormP
           <RichTextarea label="Полная биография (Для SEO-страницы)" placeholder="Развернутая история..." value={formData.fullBio || ''} onChange={(val: string) => setFormData({...formData, fullBio: val})} height="h-40" />
           
           <div className="space-y-1">
-             <label className="block text-[12px] font-bold text-slate-300 uppercase ml-1">Цитаты гида (каждая с новой строки)</label>
-             <textarea className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 h-28" value={formData.quotes as string} onChange={e => setFormData({...formData, quotes: e.target.value})} placeholder="«Горы не покоряют, в них гостят»"/>
+             <label className="block text-[12px] font-bold text-slate-800 uppercase ml-1">Цитаты гида (каждая с новой строки)</label>
+             <textarea className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-800 h-28" value={formData.quotes as string} onChange={e => setFormData({...formData, quotes: e.target.value})} placeholder="«Горы не покоряют, в них гостят»"/>
           </div>
 
           <label className="flex items-center gap-3 p-4 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-900/50 transition">

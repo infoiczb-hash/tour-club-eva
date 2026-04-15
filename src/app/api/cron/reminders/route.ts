@@ -1,83 +1,97 @@
+// src/app/api/cron/reminders/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
-import { BookingStatus, Prisma } from '@prisma/client';
-
-// Строгий тип данных, которые вернет Prisma
-type BookingWithRelations = Prisma.BookingGetPayload<{
-  include: { tour: true; tourDate: true; member: true }
-}>;
+import { NotificationHub } from '@/lib/notifications/hub';
+// 🔥 УБРАЛИ QStash: import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 
 export async function GET(req: Request) {
   try {
+    // 🛡 ЗАЩИТА VERCEL CRON: Проверяем секретный ключ
     const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const tomorrowStart = new Date();
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-    tomorrowStart.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
 
-    const tomorrowEnd = new Date(tomorrowStart);
-    tomorrowEnd.setHours(23, 59, 59, 999);
+    // Функция для создания временного окна (целые сутки)
+    const getDayRange = (daysOffset: number) => {
+      const start = new Date(now);
+      start.setDate(start.getDate() + daysOffset);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return { gte: start, lt: end };
+    };
 
-   const bookings = await prisma.booking.findMany({
+    const tomorrowRange = getDayRange(1);
+    const in3DaysRange = getDayRange(3);
+
+    // ИСПРАВЛЕННЫЙ ЗАПРОС PRISMA (Правильный OR на верхнем уровне)
+    const bookings = await prisma.booking.findMany({
       where: {
-        paymentMethod: 'cash',
-        status: { in: ['pending', 'confirmed'] }, // ✅ Берем оба статуса
+        status: { in: ['pending', 'confirmed'] },
+        memberId: { not: null },
+        OR: [
+          {
+            tourDate: {
+              startDate: { gte: tomorrowRange.gte, lt: tomorrowRange.lt }
+            }
+          },
+          {
+            tourDate: {
+              startDate: { gte: in3DaysRange.gte, lt: in3DaysRange.lt }
+            }
+          }
+        ]
       },
-      include: {
-        tour: true,
-        tourDate: true,
-        member: true
-      }
-    }) as BookingWithRelations[];
+      include: { tour: true, tourDate: true }
+    });
 
     let sentCount = 0;
+    
+    // 🔥 ОПТИМИЗАЦИЯ: Собираем задачи в массив для параллельной отправки
+    const notificationPromises: Promise<any>[] = [];
 
     for (const booking of bookings) {
-      // 1. Безопасно достаем дату из tourDate или tour
-      const tourData = booking.tour as any;
-      const tourDateData = booking.tourDate as any;
+      // Безопасная проверка для TypeScript (убираем ошибки null)
+      if (!booking.tourDate || !booking.memberId) continue;
 
-      const dateFromTourDate = tourDateData?.startDate || tourDateData?.date;
-      const dateFromTour = tourData?.date || tourData?.dates?.[0]?.start;
+      const isTomorrow = booking.tourDate.startDate < tomorrowRange.lt;
+      const eventId = isTomorrow ? 'TOUR_TOMORROW_REMINDER' : 'TOUR_3DAY_REMINDER';
 
-      const finalDateValue = dateFromTourDate || dateFromTour;
-
-      // Если даты вообще нет - пропускаем бронь
-      if (!finalDateValue) continue;
-
-      // 2. Явно приводим тип, чтобы TS не ругался на "unknown"
-      const targetDate = new Date(finalDateValue as string | number | Date);
-
-      // 3. Проверяем, попадает ли дата на "завтра"
-      if (targetDate >= tomorrowStart && targetDate <= tomorrowEnd) {
-        if (booking.member?.tgChatId) {
-          const message = `🏕 <b>Напоминание о туре!</b>\n\nЗавтра выезд: «<b>${booking.tour.title}</b>».\nПодготовьте <b>${booking.totalPrice} руб.</b> без сдачи (оплата наличными).\n\nПодтвердите участие:`;
-
-          await fetch(`https://api.telegram.org/bot${env.TELEGRAM_AUTH_BOT}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: booking.member.tgChatId,
-              text: message,
-              parse_mode: 'HTML',
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: '✅ Буду точно', callback_data: `cash_confirm_${booking.id}` }],
-                  [{ text: '❌ Не смогу поехать', callback_data: `cash_cancel_${booking.id}` }]
-                ]
-              }
-            })
-          });
-          sentCount++;
-        }
-      }
+      notificationPromises.push(
+        NotificationHub.dispatch({
+          eventId,
+          memberId: booking.memberId,
+          data: {
+            bookingId: booking.id,
+            tourTitle: booking.tour.title,
+            meetingPoint: booking.tourDate.meetingPoint || booking.tour.meetingPoint,
+            meetingTime: booking.tourDate.time,
+            paymentMethod: booking.paymentMethod,
+            totalPrice: booking.totalPrice,
+            currency: booking.tour.currency,
+            checklist: booking.tour.checklist,
+            groupChatUrl: booking.tourDate.groupChatUrl
+          }
+        })
+        .then(() => { sentCount++; })
+        .catch((e) => { console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e); })
+      );
     }
 
-    return NextResponse.json({ success: true, sent: sentCount });
+    // Выполняем все запросы Хаба параллельно!
+    if (notificationPromises.length > 0) {
+      await Promise.allSettled(notificationPromises);
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      sent: sentCount, 
+      processed: bookings.length 
+    });
 
   } catch (error) {
     console.error('Cron reminder error:', error);

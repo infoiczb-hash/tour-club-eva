@@ -4,9 +4,9 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Clock, ChevronRight, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
-import { Tour } from '@/features/tours/types';
+import { TourPreview } from '@/features/tours/types';
 import { clsx } from 'clsx';
-import { twMerge } from "tailwind-merge";
+import { twMerge } from "tailwind-merge"; 
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -27,7 +27,7 @@ const COLOR_THEMES: Record<string, string> = {
 };
 
 // ✅ ИСПРАВЛЕНО: Добавлен currentPrice для динамического ценообразования дат
-type CalendarTour = Omit<Tour, 'date'> & {
+type CalendarTour = Omit<TourPreview, 'date'> & { // ✅ ИЗМЕНЕНО: Omit из TourPreview
   uniqueId: string; 
   originalId: string;
   date: string | null; 
@@ -36,43 +36,28 @@ type CalendarTour = Omit<Tour, 'date'> & {
   currentPrice?: number | null; 
 };
 
-interface CalendarViewProps { events: Tour[]; }
-
+interface CalendarViewProps { events: TourPreview[]; }
 export default function CalendarView({ events }: CalendarViewProps) {
-  const { groupedTours, tbaTours } = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+const { groupedTours, tbaTours } = useMemo(() => {
+  // Удалена переменная today и фильтрация futureDates
+  const explodedEvents: CalendarTour[] = events.flatMap((tour): CalendarTour[] => {
+    const datesArray = Array.isArray(tour.dates) ? tour.dates : [];
 
-    const explodedEvents: CalendarTour[] = events.flatMap((tour): CalendarTour[] => {
-      
-      // ✅ ИСПРАВЛЕНО: Убрали костыль с JSON.parse. api.ts уже отдаёт чистый массив.
-      const datesArray = Array.isArray(tour.dates) ? tour.dates : [];
+    if (datesArray.length > 0) {
+      // Показываем все даты без фильтрации (сервер уже отдаёт только будущие)
+      return datesArray.map((dateObj, idx) => ({
+        ...tour,
+        date: dateObj.start || null,
+        endDate: dateObj.end || null,
+        guideId: dateObj.guide_id || null,
+        originalId: tour.id,
+        uniqueId: dateObj.id || `${tour.id}-${dateObj.start}-${idx}`,
+        currentPrice: dateObj.basePrice || tour.price
+      }));
+    }
 
-      if (datesArray.length > 0) {
-        const futureDates = datesArray.filter(dateObj => {
-            if (!dateObj.start) return false;
-            const eventDate = new Date(dateObj.start);
-            eventDate.setHours(0, 0, 0, 0); 
-            return eventDate.getTime() >= today.getTime();
-        });
-
-        if (futureDates.length === 0) return [];
-
-        return futureDates.map((dateObj, idx) => ({
-          ...tour, 
-          date: dateObj.start || null, 
-          endDate: dateObj.end || null,
-          guideId: dateObj.guide_id || null, 
-          originalId: tour.id,
-          // ✅ ИСПРАВЛЕНО: Берем UUID из TourDate, если он есть, иначе фолбэк
-          uniqueId: dateObj.id || `${tour.id}-${dateObj.start}-${idx}`,
-          // ✅ ИСПРАВЛЕНО: Динамическая цена конкретной даты (если задана) перекрывает базовую
-          currentPrice: dateObj.basePrice || tour.price 
-        }));
-      }
-
-      return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null, currentPrice: tour.price } as CalendarTour];
-    });
+    return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null, currentPrice: tour.price } as CalendarTour];
+  });
 
     const sorted = explodedEvents.sort((a, b) => {
       const dateA = a.date ? new Date(a.date).getTime() : Infinity;
@@ -85,9 +70,10 @@ export default function CalendarView({ events }: CalendarViewProps) {
     
     sorted.forEach(tour => {
       if (!tour.date) { tba.push(tour); return; }
-      const date = new Date(tour.date);
-      const monthKey = date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-      const formattedKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+     const date = new Date(tour.date);
+const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const monthKey = monthFormatter.format(date);
+const formattedKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
       if (!groups[formattedKey]) groups[formattedKey] = [];
       groups[formattedKey].push(tour);
     });
@@ -149,7 +135,8 @@ export default function CalendarView({ events }: CalendarViewProps) {
 function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: boolean }) {
   const dateObj = tour.date ? new Date(tour.date) : null;
   const dayNumber = dateObj ? dateObj.getDate() : null;
-  const weekDay = dateObj ? dateObj.toLocaleDateString('ru-RU', { weekday: 'short' }) : null;
+const weekdayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', timeZone: 'UTC' });
+const weekDay = dateObj ? weekdayFormatter.format(dateObj) : null;
   const endDateObj = tour.endDate ? new Date(tour.endDate) : null;
   const isMultiDay = endDateObj && dateObj && endDateObj.getTime() !== dateObj.getTime();
 

@@ -9,11 +9,12 @@ import {
   TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby // ✅ ВСЕ ИКОНКИ НА МЕСТЕ
 } from 'lucide-react';
 import Link from 'next/link';
-import { Tour } from '@/features/tours/types'; 
+import { TourPreview, TourDateItem } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 import TourCard from './TourCard';
 import { useModalStore } from '@/shared/store/useModalStore'; 
 import { cn } from '@/lib/utils';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const CalendarView = dynamic(() => import('./CalendarView'), {
   ssr: true,
@@ -33,7 +34,7 @@ const getIconComponent = (iconName: string, size = 14) => {
 };
 
 interface ToursBrowserProps {
-  tours: Tour[];
+  tours: TourPreview[];
   categories?: any[]; 
   title?: string;
   subtitle?: string;
@@ -98,58 +99,39 @@ export default function ToursBrowser({
   };
 
   // --- SMART FEED LOGIC (Новая логика: Строгая хронология + Анонсы) ---
-  const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
-    const safeTours = tours || [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // 1. Фильтрация категорий и прошедших туров
-    const filtered = safeTours.filter(tour => {
-      // Категория
-      if (activeCategory !== 'all') {
-        const tourCategorySlug = tour.category?.slug;
-        if (tourCategorySlug !== activeCategory.toLowerCase()) return false;
-      }
+const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
+  const safeTours = tours || [];
+  
+  // 1. Фильтрация только по категории (сервер уже отдаёт только актуальные туры)
+  const filtered = safeTours.filter(tour => {
+    if (activeCategory !== 'all') {
+      const tourCategorySlug = tour.category?.slug;
+      if (tourCategorySlug !== activeCategory.toLowerCase()) return false;
+    }
+    return true;
+  });
 
-      // Отсекаем полностью прошедшие
-      if (tour.dates && tour.dates.length > 0) {
-        const hasFutureDate = tour.dates.some((d: any) => {
-           const dateToCompare = d.end ? new Date(d.end) : new Date(d.start);
-           dateToCompare.setHours(0, 0, 0, 0);
-           return dateToCompare >= today;
-        });
-        if (!hasFutureDate) return false;
-      } else if (tour.date) {
-        const singleDate = new Date(tour.date);
-        singleDate.setHours(0, 0, 0, 0);
-        if (singleDate < today) return false;
-      }
-      
-      return true;
-    });
+  // 2. Хронологическая сортировка
+  const sorted = filtered.sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : Infinity;
+    const dateB = b.date ? new Date(b.date).getTime() : Infinity;
+    return dateA - dateB;
+  });
 
-    // 2. Хронологическая сортировка
-    const sorted = filtered.sort((a, b) => {
-        const dateA = a.date ? new Date(a.date).getTime() : Infinity;
-        const dateB = b.date ? new Date(b.date).getTime() : Infinity;
-        return dateA - dateB;
-    });
+  // 3. Разделение на "С датами" (scheduled) и "Без дат / Анонсы" (tba)
+  const scheduled: TourPreview[] = [];
+  const tba: TourPreview[] = [];
 
-    // 3. Разделение на "С датами" (scheduled) и "Без дат / Анонсы" (tba)
-    const scheduled: Tour[] = [];
-    const tba: Tour[] = [];
+  sorted.forEach(t => {
+    if (!t.date || (t.dates && t.dates.length === 0)) {
+      tba.push(t);
+    } else {
+      scheduled.push(t);
+    }
+  });
 
-    sorted.forEach(t => {
-        // Если у тура нет даты или пустой массив дат — это анонс
-        if (!t.date || (t.dates && t.dates.length === 0)) {
-            tba.push(t);
-        } else {
-            scheduled.push(t);
-        }
-    });
-
-    return { scheduledTours: scheduled, tbaTours: tba, allFilteredTours: sorted };
-  }, [tours, activeCategory]);
+  return { scheduledTours: scheduled, tbaTours: tba, allFilteredTours: sorted };
+}, [tours, activeCategory]);;
 
   const displayScheduled = scheduledTours.slice(0, visibleCount);
   const hasMoreScheduled = visibleCount < scheduledTours.length;
@@ -334,10 +316,7 @@ export default function ToursBrowser({
                             </div>
                             
                             {/* Подсказка для свайпа на мобилках */}
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
-                                <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
-                                <ArrowRight size={14} className="text-teal-500 animate-pulse" />
-                            </div>
+                           <SwipeHint />
                         </div>
 
                         {/* Кнопка "Показать еще" */}
@@ -375,10 +354,7 @@ export default function ToursBrowser({
                                 ))}
                             </div>
                             
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
-                                <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
-                                <ArrowRight size={14} className="text-teal-500 animate-pulse" />
-                            </div>
+                           <SwipeHint />
                         </div>
                     </section>
                 )}

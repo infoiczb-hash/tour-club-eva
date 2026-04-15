@@ -72,7 +72,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
               <button 
                 type="button" 
                 onClick={() => remove(index)}
-                className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors z-10"
+                className="absolute top-4 right-4 p-2 text-slate-800 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors z-10"
                 title="Удалить дату"
               >
                 <Trash2 size={18} />
@@ -89,7 +89,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                   <FormInput name={`dates.${index}.time`} label="Время" placeholder="09:00" />
                 </div>
                 <div className="md:col-span-4">
-                   <label className="text-xs font-bold uppercase text-slate-300 mb-1.5 block">
+                   <label className="text-xs font-bold uppercase text-slate-800 mb-1.5 block">
                       Гид на выезд
                    </label>
                    <div className="relative">
@@ -102,7 +102,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                          <option key={g.id} value={g.id}>{g.name}</option>
                        ))}
                      </select>
-                     <User className="absolute right-3 top-3 text-slate-300 pointer-events-none" size={14} />
+                     <User className="absolute right-3 top-3 text-slate-800 pointer-events-none" size={14} />
                    </div>
                 </div>
               </div>
@@ -140,7 +140,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
 
           {fields.length === 0 && (
             <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-              <p className="text-slate-300 text-sm font-medium">Даты выездов еще не добавлены</p>
+              <p className="text-slate-800 text-sm font-medium">Даты выездов еще не добавлены</p>
               <button 
                 type="button"
                onClick={() => append({ start: '', end: '', guide_id: '', groupChatUrl: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
@@ -151,7 +151,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
             </div>
           )}
         </div>
-        <p className="text-[12px] text-slate-300 mt-3 flex items-center gap-1">
+        <p className="text-[12px] text-slate-800 mt-3 flex items-center gap-1">
           <DollarSign size={12} /> Если оставить "Свою цену" пустой, будет использоваться базовая цена из вкладки "Финансы".
         </p>
       </div>

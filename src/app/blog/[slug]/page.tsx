@@ -9,7 +9,7 @@ import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import sanitizeHtml from 'sanitize-html';
-// ✅ ДОБАВЛЕНО: Импорт кнопки, клиента Supabase и проверки сессии
+import { SafeHTML } from '@/shared/ui/SafeHTML'; // ✅ ИМПОРТ НАШЕГО КОМПОНЕНТА
 import PostWishlistButton from '@/features/blog/components/PostWishlistButton';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -110,7 +110,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const { post, relatedPosts } = data;
   const postUrl = `${BASE_URL}/blog/${post.slug}`;
 
-  // ✅ ДОБАВЛЕНО: Проверка сессии и статуса "в избранном" для статьи
+  // Проверка сессии и статуса "в избранном" для статьи
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   let isWished = false;
@@ -242,7 +242,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </span>
             </div>
 
-            {/* ✅ ИСПРАВЛЕНИЕ: Вывели заголовок и кнопку в Flex-контейнер */}
             <div className="flex items-start justify-between gap-4 mb-8 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight max-w-4xl drop-shadow-2xl text-balance">
                     {post.title}
@@ -319,36 +318,30 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
-                <div 
+                {/* ✅ ВНЕДРЕНИЕ НАШЕГО SafeHTML с кастомными настройками */}
+                <SafeHTML 
+                    html={post.content}
                     className="prose prose-base prose-invert max-w-none 
-                    
-                    [&_p:empty]:hidden 
-                    [&_br]:hidden
-
+                    [&_p:empty]:hidden [&_br]:hidden
                     prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-white
                     prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl md:prose-h2:text-3xl
                     prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
-                    
                     prose-p:text-slate-300 prose-p:text-[15px] md:prose-p:text-[16px] prose-p:leading-snug prose-p:mb-4 prose-p:mt-0
-                    
                     prose-strong:text-white prose-strong:font-bold
-                    
                     prose-ul:my-3 prose-li:my-0.5 prose-li:text-slate-300 prose-li:text-[15px] md:prose-li:text-[16px] prose-li:leading-snug prose-li:marker:text-teal-500
-                    
                     prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
-                    
                     prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6 prose-blockquote:font-medium"
-                   dangerouslySetInnerHTML={{ 
-                      __html: sanitizeHtml(post.content, {
+                    options={{
                         allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
                         allowedAttributes: {
-                          '*': ['class', 'style'],
-                          'a': ['href', 'name', 'target'],
-                          'img': ['src', 'alt'],
-                          'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
+                            '*': ['class', 'style'],
+                            'a': ['href', 'name', 'target'],
+                            'img': ['src', 'alt'],
+                            'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
                         },
-                        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
-                      }) 
+                        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+                        // ✅ ИСПРАВЛЕНИЕ УЯЗВИМОСТИ №9 ИЗ АУДИТА (XSS):
+                        allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
                     }}
                 />
 

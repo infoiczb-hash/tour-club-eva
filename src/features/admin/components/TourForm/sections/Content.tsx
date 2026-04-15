@@ -58,10 +58,10 @@ export const Content = () => {
               </div>
               <FormTextarea name={`highlights.${index}.desc`} label="Описание" rows={2} placeholder="Кратко о впечатлении..." className="min-h-[60px]" />
               
-              <button type="button" onClick={() => removeHigh(index)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+              <button type="button" onClick={() => removeHigh(index)} className="absolute top-2 right-2 text-slate-800 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
             </div>
           ))}
-          {highFields.length === 0 && <div className="col-span-full text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-300 text-sm">Нет впечатлений</div>}
+          {highFields.length === 0 && <div className="col-span-full text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-800 text-sm">Нет впечатлений</div>}
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export const Content = () => {
 
       {/* 3. ТЕГИ */}
       <div>
-        <label className="text-xs font-bold uppercase text-slate-600 mb-2 flex items-center gap-2">
+        <label className="text-xs font-bold uppercase text-slate-800 mb-2 flex items-center gap-2">
           <Hash size={16}/> Теги (Поиск и фильтры)
         </label>
         <div className="p-3 bg-white border border-slate-300 rounded-xl focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-100 transition-all">
@@ -96,7 +96,7 @@ export const Content = () => {
           <input 
             type="text" 
             placeholder="Введите тег и нажмите Enter..." 
-            className="w-full outline-none text-sm font-medium text-slate-700 placeholder:text-slate-300"
+            className="w-full outline-none text-sm font-medium text-slate-700 placeholder:text-slate-800"
             onKeyDown={handleAddTag}
           />
         </div>
@@ -122,7 +122,7 @@ export const Content = () => {
                    <div className="w-full mr-4">
                       <FormInput name={`program.${index}.title`} label={`Заголовок Дня ${index + 1}`} placeholder="Прибытие и заселение" />
                    </div>
-                   <button type="button" onClick={() => removeProg(index)} className="text-slate-300 hover:text-rose-500 mt-2"><Trash2 size={18}/></button>
+                   <button type="button" onClick={() => removeProg(index)} className="text-slate-800 hover:text-rose-500 mt-2"><Trash2 size={18}/></button>
                 </div>
                 <FormTextarea name={`program.${index}.description`} label="Детали дня" rows={3} />
               </div>
@@ -144,7 +144,7 @@ export const Content = () => {
                  <FormInput name={`faq.${index}.question`} label="Вопрос" placeholder="Например: Нужна ли виза?" />
                  <FormTextarea name={`faq.${index}.answer`} label="Ответ" rows={2} />
               </div>
-              <button type="button" onClick={() => removeFaq(index)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+              <button type="button" onClick={() => removeFaq(index)} className="absolute top-2 right-2 text-slate-800 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
             </div>
           ))}
         </div>

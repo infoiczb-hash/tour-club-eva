@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Camera,ArrowRight } from 'lucide-react';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 // FIX: Убрали ручные /f_auto,q_60/ из URL — cloudinary-loader добавит трансформации сам
 // с правильным width под конкретный брейкпоинт устройства
@@ -66,11 +67,7 @@ export default function LocalGallery() {
                             );
                         })}
                     </div>
-
-                       <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                              </div>
+                       <SwipeHint />
                 </div>
 
             </div>

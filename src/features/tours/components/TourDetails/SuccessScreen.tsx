@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, QrCode, Link as LinkIcon, Send, Globe, MessageCircle, Banknote } from 'lucide-react';
+import { CheckCircle, QrCode, Link as LinkIcon, Send, Globe, MessageCircle, Bell, Banknote, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -126,31 +126,75 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
         </div>
       )}
 
-      {/* 🌍 СЦЕНАРИЙ 4: INTERNATIONAL */}
+    {/* 🌍 СЦЕНАРИЙ 4: INTERNATIONAL */}
       {paymentMethod === 'foreign' && (
         <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
           <div className="flex items-center gap-3 mb-4">
-            <Globe className="text-blue-400 w-6 h-6" />
-            <h3 className="text-lg font-semibold text-white">Из других стран</h3>
+            <Globe className="text-blue-400 w-8 h-8" />
+            <h3 className="text-lg font-black text-white uppercase tracking-wider">Перевод из-за рубежа</h3>
           </div>
-          <p className="text-sm text-slate-300 leading-relaxed mb-6">
-            Для оплаты свяжитесь напрямую с менеджерами. Мы поможем подобрать удобный способ перевода.
+          <p className="text-[13px] text-slate-300 leading-relaxed mb-4">
+            Видим, что вам нужен перевод из другой страны. Свяжитесь с нашим менеджером, и мы подберем удобный способ оплаты (Crypto, SWIFT, P2P).
           </p>
-          
-          <Link href={managerLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
-            <MessageCircle size={18} /> Написать менеджеру (Telegram)
+          <Link 
+            href={managerLink} 
+            target="_blank" 
+            className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg active:scale-[0.98]"
+          >
+            <MessageCircle size={16} /> Написать менеджеру
           </Link>
         </div>
       )}
 
-     <div className="w-full flex flex-col gap-2 mt-2">
-        {/* ✅ Кнопка Изменить способ оплаты (Только для не-гостей) */}
+      {/* 🔥 ФИНАЛЬНЫЙ БЛОК: ВОВЛЕЧЕНИЕ В ЛИЧНЫЙ КАБИНЕТ ДЛЯ ГОСТЕЙ */}
+      {isGuest && (
+        <div className="w-full bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-5 mb-6 text-left shadow-lg animate-in fade-in zoom-in-95 duration-500">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
+              <User className="w-4 h-4" />
+            </div>
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest">Сохраните ваш билет</h3>
+          </div>
+          
+          <p className="text-[13px] text-indigo-100/90 leading-relaxed mb-5 font-medium">
+            Вы оформили заявку как гость. Войдите в <strong>Личный кабинет</strong>, чтобы билет всегда был под рукой, начислялся кэшбэк за поездки, и вы могли настроить удобные уведомления.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            {/* ГЛАВНОЕ ДЕЙСТВИЕ: В ЛК */}
+            <Link 
+              href={`/login?next=/account/bookings/${bookingId}`} 
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-[0.98]"
+            >
+              <User size={16} /> Войти в кабинет
+            </Link>
+
+            <div className="relative py-2">
+               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+               <div className="relative flex justify-center text-xs"><span className="bg-slate-900 px-2 text-slate-500 font-medium">ИЛИ БЕЗ РЕГИСТРАЦИИ</span></div>
+            </div>
+
+            {/* ВТОРОСТЕПЕННОЕ ДЕЙСТВИЕ: ПРОСТО В БОТ */}
+            <Link 
+              href={botDeepLink} 
+              target="_blank" 
+              className="w-full py-3.5 bg-[#2AABEE]/10 hover:bg-[#2AABEE]/20 border border-[#2AABEE]/30 text-[#2AABEE] text-xs font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
+            >
+              <Send size={16} /> Получить билет в Telegram
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* КНОПКИ УПРАВЛЕНИЯ */}
+      <div className="w-full flex flex-col gap-2 mt-2 border-t border-white/5 pt-4">
+        {/* Кнопка Управление билетом (Только для авторизованных) */}
         {!isGuest && (
           <Link 
             href={`/account/bookings/${bookingId}`}
             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-widest rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
           >
-            <Banknote size={16} className="text-teal-500" /> Изменить способ оплаты
+            <Banknote size={16} className="text-teal-500" /> Управление билетом
           </Link>
         )}
 
@@ -158,7 +202,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
           onClick={onClose}
           className="w-full py-3 text-slate-400 hover:text-slate-300 font-bold transition-colors text-[12px] uppercase tracking-[0.2em]"
         >
-          Закрыть и вернуться к туру
+          Закрыть окно
         </button>
       </div>
     </div>

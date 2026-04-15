@@ -11,6 +11,7 @@ import {
 import { routesData, RouteData } from "@/data/routes";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -121,10 +122,7 @@ export default function PopularRoutes() {
               </div>
             ))}
           </div>
-          <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
-          </div>
+       <SwipeHint />
         </div>
 
         {/* OTHER FORMATS */}
@@ -158,10 +156,7 @@ export default function PopularRoutes() {
               })}
             </div>
             
-            <div className="md:hidden absolute bottom-0 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-              <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-              <ChevronRight size={14} className="text-teal-400" />
-            </div>
+            <SwipeHint />
           </div>
         </div>
 

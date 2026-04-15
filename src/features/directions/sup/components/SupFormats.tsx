@@ -4,6 +4,7 @@ import React from "react";
 import { Coffee, Heart, Users, Briefcase, Dog, Baby, ArrowRight } from 'lucide-react';
 // ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const FORMATS = [
   { icon: Heart, label: "Романтики/Свиданий" },
@@ -68,11 +69,7 @@ export default function SupFormats() {
               );
             })}
           </div>
-          
-          <div className="md:hidden flex items-center justify-end gap-1.5 mt-4 pr-4 text-slate-300 pointer-events-none">
-              <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
-              <ArrowRight size={14} className="text-teal-500 animate-pulse" />
-          </div>
+          <SwipeHint />
         </div>
       </div>
     </section>

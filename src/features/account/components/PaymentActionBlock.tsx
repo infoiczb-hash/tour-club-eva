@@ -1,11 +1,12 @@
-// src/features/account/components/PaymentActionBlock.tsx
+// СТАЛО: src/features/account/components/PaymentActionBlock.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { Send, Link as LinkIcon, AlertCircle, RefreshCw, CheckCircle, CreditCard, QrCode, Banknote, Globe, Eye } from 'lucide-react';
+import { Send, Link as LinkIcon, AlertCircle, RefreshCw, CheckCircle, CreditCard, QrCode, Banknote, Globe, Eye, Upload, Loader } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { updatePaymentMethodAction } from '../actions/updatePaymentMethod';
+import { uploadClientReceiptAction } from '../actions/uploadReceipt'; // ✅ Подключаем наш экшен
 
 interface PaymentActionBlockProps {
   bookingId: string;
@@ -28,6 +29,7 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
 }) => {
   const [isChangingMethod, setIsChangingMethod] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const botDeepLink = `https://t.me/authevaclub_bot?start=${shortId}`;
   const managerLink = `https://t.me/romansvtirase`;
@@ -40,7 +42,23 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
   const isConfirmed = status === 'confirmed';
   const isModeration = status === 'moderation';
   const isRejected = status === 'rejected';
-  const isAwaiting = status === 'awaiting_payment' || status === 'pending';
+
+  // Обработчик загрузки файла с сайта
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await uploadClientReceiptAction(bookingId, formData);
+    setIsUploading(false);
+
+    if (!res.success) {
+      alert(res.error || 'Ошибка при загрузке чека');
+    }
+  };
 
   const handleChangeMethod = async (newMethod: string) => {
     setIsLoading(true);
@@ -84,7 +102,7 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
 
   return (
     <div className="w-full space-y-4">
-      {/* Алерт об ошибке (Если отклонено) */}
+      {/* Алерт об ошибке */}
       {isRejected && (
         <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex gap-3 items-start">
           <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={18} />
@@ -95,7 +113,6 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
         </div>
       )}
 
-      {/* Блок с инструкциями по текущему методу */}
       <div className="bg-slate-900/80 border border-white/5 rounded-2xl p-5 shadow-lg">
         {/* Шапка блока */}
         <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
@@ -133,33 +150,49 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
           <div className="space-y-4 animate-in fade-in">
             {paymentMethod === 'biletpmr' && (
               <>
-                <p className="text-xs text-slate-300 leading-relaxed">Оплатите билеты онлайн через систему biletPmr.  После оплаты отправьте PDF/скрин-билета в наш Telegram бот.</p>
-                <div className="flex flex-col gap-2">
+                <p className="text-xs text-slate-300 leading-relaxed">Оплатите билеты онлайн через систему biletPmr. После оплаты загрузите скрин-билета.</p>
+                <div className="flex flex-col gap-2 mt-2">
                   {biletpmrLink && (
-                    <Link href={biletpmrLink} target="_blank" className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
+                    <Link href={biletpmrLink} target="_blank" className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
                       <LinkIcon size={16} /> Перейти к оплате
                     </Link>
                   )}
-                  <Link href={botDeepLink} target="_blank" className="w-full py-3 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
-                    <Send size={16} /> Отправить билет
-                  </Link>
+                  {/* ДВЕ АЛЬТЕРНАТИВНЫЕ КНОПКИ ЗАГРУЗКИ */}
+                  <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                    <Link href={botDeepLink} target="_blank" className="flex-1 py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-lg active:scale-95">
+                      <Send size={16} /> В Telegram
+                    </Link>
+                    <label className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-600 shadow-lg active:scale-95">
+                      {isUploading ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
+                      <span>{isUploading ? 'Загрузка...' : 'На сайт'}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                    </label>
+                  </div>
                 </div>
               </>
             )}
 
             {paymentMethod === 'qr' && (
               <>
-                <p className="text-xs text-slate-300 leading-relaxed">Отсканируйте QR-код. После перевода <strong>обязательно</strong> отправьте скриншот чека в Telegram.</p>
+                <p className="text-xs text-slate-300 leading-relaxed">Отсканируйте QR-код. После перевода <strong>обязательно</strong> отправьте скриншот чека.</p>
                 <div className="flex justify-center bg-white p-2 rounded-xl w-fit mx-auto">
                   <Image src={finalApbImage} alt="QR" width={120} height={120} className="rounded-lg object-contain" />
                 </div>
                 <div className="flex flex-col gap-2 mt-2">
-                  <Link href={finalApbLink} target="_blank" className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
+                  <Link href={finalApbLink} target="_blank" className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
                     <LinkIcon size={16} /> Ссылка (Клевер)
                   </Link>
-                  <Link href={botDeepLink} target="_blank" className="w-full py-3 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors shadow-[0_0_15px_rgba(42,171,238,0.2)]">
-                    <Send size={16} /> Отправить чек
-                  </Link>
+                  {/* ДВЕ АЛЬТЕРНАТИВНЫЕ КНОПКИ ЗАГРУЗКИ */}
+                  <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                    <Link href={botDeepLink} target="_blank" className="flex-1 py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-lg active:scale-95">
+                      <Send size={16} /> В Telegram
+                    </Link>
+                    <label className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-600 shadow-lg active:scale-95">
+                      {isUploading ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
+                      <span>{isUploading ? 'Загрузка...' : 'На сайт'}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                    </label>
+                  </div>
                 </div>
               </>
             )}
@@ -167,18 +200,26 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
             {paymentMethod === 'cash' && (
               <>
                 <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                  Оплата гиду на месте (без сдачи). Если вы решили оплатить наличкой через платежные терминалы АПБ (ТурКлуб "Эва"), отправьте квитанцию в наш Телеграмм бот.
+                  Оплата гиду на месте (без сдачи). Если оплатили наличкой через терминал АПБ (ТурКлуб "Эва"), отправьте нам квитанцию.
                 </p>
-                <Link href={botDeepLink} target="_blank" className="w-full py-3 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
-                  <Send size={16} /> Отправить квитанцию
-                </Link>
+                {/* ДВЕ АЛЬТЕРНАТИВНЫЕ КНОПКИ ЗАГРУЗКИ */}
+                <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                  <Link href={botDeepLink} target="_blank" className="flex-1 py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-lg active:scale-95">
+                    <Send size={16} /> В Telegram
+                  </Link>
+                  <label className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-600 shadow-lg active:scale-95">
+                    {isUploading ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
+                    <span>{isUploading ? 'Загрузка...' : 'На сайт'}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                  </label>
+                </div>
               </>
             )}
 
             {paymentMethod === 'foreign' && (
               <>
                 <p className="text-xs text-slate-300 leading-relaxed mb-4">Для перевода свяжитесь напрямую с нашими менеджерами.</p>
-                <Link href={managerLink} target="_blank" className="w-full py-3 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
+                <Link href={managerLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-colors">
                   Написать менеджеру (Telegram)
                 </Link>
               </>

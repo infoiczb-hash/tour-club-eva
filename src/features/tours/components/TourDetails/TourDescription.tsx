@@ -4,7 +4,7 @@ import {
   Compass, Tent, Flame, Heart, Star, Coffee, Navigation 
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
-import sanitizeHtml from 'sanitize-html';
+import { SafeHTML } from '@/shared/ui/SafeHTML';
 
 interface TourDescriptionProps {
   tour: Tour;
@@ -40,7 +40,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
   return (
     // ✅ ИСПРАВЛЕНИЕ: Убрали mb-12 и сделали секцию flex-контейнером с идеальным gap.
     // Теперь блоки никогда не слипнутся, а снизу не будет лишней дыры.
-    <section className="scroll-mt-24 flex flex-col gap-10 md:gap-12" id="about">
+<section className="scroll-mt-24 flex flex-col gap-10 md:gap-12" id="about">
       
       {/* ВАЖНАЯ ИНФОРМАЦИЯ (ФАЗА 1) */}
       {tour.importantInfo && (
@@ -90,30 +90,19 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
         </div>
       )}
 
-      {/* Описание тура */}
+     {/* Описание тура */}
       {tour.description && (
-        // ✅ ИСПРАВЛЕНИЕ: Добавили px-2 md:px-0, чтобы на мобилке текст не лип к краям экрана 
-        // и убрали mb-12, чтобы убрать гигантскую дыру перед "Программой"
         <div className="prose prose-invert prose-teal max-w-none px-2 md:px-0">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
             О туре
           </h2>
-          <div 
+          {/* ✅ ЗАМЕНЯЕМ DANGEROUSLY SET INNER HTML НА SAFEHTML */}
+          <SafeHTML 
+            html={tour.description}
             className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"
-           dangerouslySetInnerHTML={{ 
-              __html: sanitizeHtml(tour.description, {
-                allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span' ]),
-                allowedAttributes: {
-                  '*': ['class', 'style'],
-                  'a': ['href', 'name', 'target'],
-                  'img': ['src', 'alt']
-                }
-              }) 
-            }}
           />
         </div>
       )}
-
     </section>
   );
 }

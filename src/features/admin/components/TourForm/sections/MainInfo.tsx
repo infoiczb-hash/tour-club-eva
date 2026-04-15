@@ -6,9 +6,11 @@ import { ImageUploader } from '../ui/ImageUploader';
 import { AlignLeft, Plus, X, RefreshCw } from 'lucide-react'; 
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
-import { slugify } from '@/lib/slugify'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
+import { slugify } from '@/lib/slugify'; 
+import { TourCategory } from '@prisma/client'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
 
-export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
+type CategoryOption = Pick<TourCategory, 'id' | 'title'>;
+export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] }) => {
   const { control, watch, setValue, getValues } = useFormContext();
   
   const { fields, append, remove } = useFieldArray({
@@ -35,7 +37,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
     }
   };
 
-  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingGallery(true);
       try {
@@ -44,9 +46,15 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
           const formData = new FormData();
           formData.append('file', file);
           formData.append('folder', 'tours');
+          
           const response = await uploadFile(formData); 
-          if (response && response.url) {
+          
+          // ✅ ИСПРАВЛЕНО: Сначала проверяем, есть ли ключ 'url' в ответе
+          if (response && 'url' in response && response.url) {
               append(response.url); 
+          } else if (response && 'error' in response) {
+              // Опционально: можно вывести конкретную ошибку, если загрузка не удалась
+              console.error('Ошибка сервера при загрузке:', response.error);
           }
         }
       } catch (err) {
@@ -91,14 +99,14 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
                    name="slug" 
                    label="URL (Slug)" 
                    placeholder="auto-generated"
-                   className="font-mono text-xs text-slate-300"
+                   className="font-mono text-xs text-slate-800"
                    helperText="Уникальная ссылка на страницу тура"
                  />
              </div>
              <button 
                 type="button" 
                 onClick={handleRegenerateSlug} 
-                className="h-[44px] px-3 bg-slate-100 hover:bg-teal-50 text-slate-300 hover:text-teal-600 rounded-xl border border-slate-200 transition-colors flex items-center justify-center mb-6" 
+                className="h-[44px] px-3 bg-slate-100 hover:bg-teal-50 text-slate-800 hover:text-teal-600 rounded-xl border border-slate-200 transition-colors flex items-center justify-center mb-6" 
                 title="Сгенерировать из названия"
              >
                <RefreshCw size={18} />
@@ -126,7 +134,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
           </div>
 
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
-             <h4 className="text-xs font-black uppercase text-slate-300 mb-2">Детализация для карточки</h4>
+             <h4 className="text-xs font-black uppercase text-slate-800 mb-2">Детализация для карточки</h4>
              
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <FormInput 
@@ -163,7 +171,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
            </div>
            
            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <label className="text-xs font-bold uppercase text-slate-600 mb-3 flex items-center justify-between">
+              <label className="text-xs font-bold uppercase text-slate-800 mb-3 flex items-center justify-between">
                  <span>Галерея ({fields.length})</span>
                  {isUploadingGallery && <span className="text-teal-500 animate-pulse">Загрузка...</span>}
               </label>
@@ -177,7 +185,7 @@ export const MainInfo = ({ categories = [] }: { categories?: any[] }) => {
                     </button>
                   </div>
                 ))}
-                <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-300 hover:text-teal-600">
+                <label className="aspect-square rounded-lg border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 flex flex-col items-center justify-center cursor-pointer transition-colors text-slate-800 hover:text-teal-600">
                   <Plus size={24} />
                   <span className="text-[12px] font-bold uppercase mt-1">Добавить</span>
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryUpload} />

@@ -75,12 +75,13 @@ export default function TourEssentials({
   excludedDetailed
 }: TourEssentialsProps) {
   
-  const [includedOpen, setIncludedOpen] = useState(true);
-  const [excludedOpen, setExcludedOpen] = useState(false);
+ const finalIncluded = Array.isArray(includedDetailed) && includedDetailed.length > 0 ? includedDetailed : included;
+const finalExcluded = Array.isArray(excludedDetailed) && excludedDetailed.length > 0 ? excludedDetailed : additionalExpenses;
 
-  // ✅ ИНЖЕКЦИЯ: Умный фолбэк. Если есть новые данные - берем их, иначе старые
-  const finalIncluded = Array.isArray(includedDetailed) && includedDetailed.length > 0 ? includedDetailed : included;
-  const finalExcluded = Array.isArray(excludedDetailed) && excludedDetailed.length > 0 ? excludedDetailed : additionalExpenses;
+const [includedOpen, setIncludedOpen] = useState(true);
+const [excludedOpen, setExcludedOpen] = useState(
+  Array.isArray(finalExcluded) && finalExcluded.length > 0
+);
 
   return (
     <section className="scroll-mt-24" id="essentials">

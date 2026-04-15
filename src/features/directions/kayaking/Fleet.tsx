@@ -2,6 +2,7 @@ import Image from "next/image";
 import { ShieldCheck, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import SwipeHint from '@/shared/ui/SwipeHint';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -74,10 +75,7 @@ export default function Fleet() {
             ))}
           </div>
           
-          <div className="md:hidden flex items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400 animate-pulse" />
-          </div>
+       <SwipeHint />
         </div>
       </div>
     </section>

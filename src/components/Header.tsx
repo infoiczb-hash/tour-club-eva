@@ -20,16 +20,20 @@ export default async function Header() {
   let userProfile = null;
 
   if (user) {
-    // Если юзер есть, достаем его профиль для аватарки
+    // 🔥 ДОБАВИЛИ id: true в select
     const profile = await prisma.memberProfile.findUnique({
       where: { userId: user.id },
-      select: { name: true, phone: true }
+      select: { id: true, name: true, phone: true }
     });
     
-    userProfile = {
-      name: profile?.name || null,
-      phone: profile?.phone || user.phone || null
-    };
+    // Если профиль найден, прокидываем его id вместе с остальными данными
+    if (profile) {
+      userProfile = {
+        id: profile.id, // 🔥 ТЕПЕРЬ ID ПЕРЕДАЕТСЯ
+        name: profile.name || null,
+        phone: profile.phone || user.phone || null
+      };
+    }
   }
 
   return (

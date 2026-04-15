@@ -7,11 +7,20 @@
     },
     {
       "path": "/api/cron/reminders",
-      "schedule": "0 12 * * *"
+      "schedule": "0 8 * * *"
+    },
+      {
+      "path": "/api/cron/post-tour-reviews",
+      "schedule": "30 8 * * *" 
     },
     {
-      "path": "/api/cron/rollover",
+      "path": "/api/cron/sales-bot",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/payment-report",
       "schedule": "0 17 * * *"
     }
+
   ]
 }

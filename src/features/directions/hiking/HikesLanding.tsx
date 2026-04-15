@@ -1,4 +1,4 @@
-import { Tour } from '@/features/tours/types';
+import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 
 // Первый экран — синхронно, это LCP (серверный, без JS)
@@ -27,7 +27,7 @@ const HikesFAQ = dynamic(() => import('./HikesFAQ'), {
 
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
 
-export default function HikesLanding({ tours = [] }: { tours?: Tour[] }) {
+export default function HikesLanding({ tours = [] }: { tours?: TourPreview[] }) {
   return (
     // Обертка страницы теперь темная!
     <main className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-teal-500/30">

@@ -27,7 +27,7 @@ export const SEO = () => {
                 label="Meta Title (Заголовок в Google)" 
                 placeholder="Поход в Карпаты | Лучшие цены | Название компании" 
               />
-              <div className={`text-[12px] text-right mt-1 font-bold ${metaTitle.length > 60 ? 'text-rose-500' : 'text-slate-300'}`}>
+              <div className={`text-[12px] text-right mt-1 font-bold ${metaTitle.length > 60 ? 'text-rose-500' : 'text-slate-800'}`}>
                 {metaTitle.length} / 60 символов
               </div>
            </div>
@@ -39,7 +39,7 @@ export const SEO = () => {
                 rows={4}
                 placeholder="Краткое описание тура, которое заставит кликнуть. Укажите ключевые преимущества..." 
               />
-              <div className={`text-[12px] text-right mt-1 font-bold ${metaDesc.length > 160 ? 'text-rose-500' : 'text-slate-300'}`}>
+              <div className={`text-[12px] text-right mt-1 font-bold ${metaDesc.length > 160 ? 'text-rose-500' : 'text-slate-800'}`}>
                 {metaDesc.length} / 160 символов
               </div>
            </div>
@@ -47,16 +47,16 @@ export const SEO = () => {
 
         {/* Превью (Как это видит клиент в Google) */}
         <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-           <h4 className="text-xs font-bold uppercase text-slate-300 mb-4 flex gap-2 items-center">
+           <h4 className="text-xs font-bold uppercase text-slate-800 mb-4 flex gap-2 items-center">
              <Globe size={14}/> Предпросмотр в Google
            </h4>
            
            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 mb-1">
-                 <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[12px] text-slate-300">Logo</div>
+                 <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[12px] text-slate-800">Logo</div>
                  <div className="flex flex-col">
                     <span className="text-[12px] text-slate-800 font-bold">Ваш Сайт</span>
-                    <span className="text-[12px] text-slate-300">https://vash-site.com/tours/...</span>
+                    <span className="text-[12px] text-slate-800">https://vash-site.com/tours/...</span>
                  </div>
               </div>
               <h3 className="text-lg text-[#1a0dab] hover:underline cursor-pointer font-medium truncate">
@@ -67,7 +67,7 @@ export const SEO = () => {
               </p>
            </div>
            
-           <p className="text-[12px] text-slate-300 mt-4 leading-tight">
+           <p className="text-[12px] text-slate-800 mt-4 leading-tight">
              * Это примерное отображение. Реальный вид зависит от поисковой системы.
            </p>
         </div>

@@ -111,6 +111,7 @@ model Tour {
 
   @@index([isActive])
   @@index([categoryId])
+  @@index([deletedAt])
   @@map("tours")
 }
 
@@ -150,6 +151,7 @@ model TourDate {
 
   @@index([tourId])
   @@index([startDate])
+  @@index([endDate, startDate])
   @@map("tour_dates")
 }
 
@@ -181,6 +183,8 @@ model Booking {
   source        String    @default("website")
 
   status BookingStatus @default(pending)
+  checkedIn   Boolean   @default(false) @map("checked_in")
+  checkedInAt DateTime? @map("checked_in_at") @db.Timestamptz(6)
   bookedDate DateTime? @map("booked_date")
 
   tourId      String  @map("tour_id") @db.Uuid
@@ -350,6 +354,7 @@ model Review {
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([isActive])
+  @@index([tourId]) 
   @@map("reviews")
 }
 
@@ -422,19 +427,20 @@ model MemberProfile {
   favoritePosts FavoritePost[] 
   waitlists     Waitlist[]     
   reviews       Review[]
-  notifications Notification[] // ✅ НОВОЕ ПОЛЕ: Связь с таблицей логов/уведомлений
+  notifications Notification[]
+  pushSubscriptions PushSubscription[] 
 
-  // ✅ НОВОЕ ПОЛЕ: Баланс для кэшбэка и рефералки (v2.0)
   balance       Int       @default(0) 
-  
+  role          String    @default("user")
   invitedByCode String?
   promoCode     PromoCode?
+  tags          String[]  @default([])   // Сегментация: ["vip", "ambassador", "photographer"]
+  balanceLogs   BalanceLog[]            // История изменений баланса
 
   @@index([phone])
   @@index([userId])
   @@map("member_profiles")
 }
-
 // ✅ НОВАЯ ТАБЛИЦА: Центр Уведомлений / Логи (v2.0)
 model Notification {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -449,8 +455,7 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([memberId])
-  @@index([isRead])
+ @@index([memberId, isRead])
   @@map("notifications")
 }
 
@@ -511,6 +516,78 @@ model TestResult {
   @@map("test_results")
 }
 
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  device    String?  
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  member    MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@map("push_subscriptions")
+}
+
+model AdminLog {
+  id        String    @id @default(uuid())
+  actorType ActorType
+  adminId   String?   // UUID админа, выполнившего действие (null если SYSTEM)
+  adminName String?   // Денормализация для быстрого отображения в UI
+  action    String    // Название действия, например: "UPDATE_TOUR", "CRON_SYNC"
+  targetId  String?   // ID сущности, над которой произведено действие (опционально)
+  changes   Json?     // Payload: переданные аргументы или diff
+  ip        String?   // IP-адрес инициатора (null для CRON)
+  userAgent String?   // User-Agent (null для CRON)
+  createdAt DateTime  @default(now())
+
+  @@index([action])
+  @@index([targetId])
+  @@index([adminId])
+  @@index([createdAt])
+}
+
+model BalanceLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  member    MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount    Int      // +50 или -200
+  reason    String   // "Отзыв за тур", "Оплата тура #123", "Ручное начисление"
+  adminNote String?  @map("admin_note")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("balance_logs")
+}
+
+model ScheduledPost {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platform      String    // 'telegram', 'instagram', 'facebook'
+  format        String    @default("post") // 'post', 'story'
+  content       String    // Готовый текст поста
+  imageUrl      String?   @map("image_url") // Ссылка на готовую картинку
+  status        String    @default("draft") // 'draft', 'scheduled', 'published', 'failed'
+  scheduledFor  DateTime? @map("scheduled_for") @db.Timestamptz(6)
+  
+  sourceType    String    @map("source_type") // 'tour', 'blog', 'custom'
+  sourceId      String?   @map("source_id") @db.Uuid
+  sourceUrl     String?   @map("source_url")
+  
+  templateStyle String?   @map("template_style") // 'minimal', 'bright' и т.д.
+  
+  adminId       String?   @map("admin_id") @db.Uuid // Кто создал/запланировал
+  errorMessage  String?   @map("error_message") // Ошибка при публикации
+  metadata      Json?     // Хештеги, ID сообщения в ТГ и т.д.
+  
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("scheduled_posts")
+}
+
 // ─────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────
@@ -542,4 +619,9 @@ enum InquiryStatus {
   NEW
   WORK
   DONE
+}
+
+enum ActorType {
+  ADMIN
+  SYSTEM
 }

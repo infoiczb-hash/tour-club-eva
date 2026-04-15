@@ -1,53 +1,52 @@
+// src/lib/telegram/notify.ts
 import { prisma } from "@/lib/prisma";
-import { env } from '@/lib/env';
+import { NotificationHub } from '@/lib/notifications/hub';
 
-const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
-
-async function sendTelegramMessage(chatId: string, text: string) {
-  if (!BOT_TOKEN) return;
+// === НОВАЯ ФУНКЦИЯ ДЛЯ СИСТЕМНЫХ И АДМИНСКИХ АЛЕРТОВ (КРОНЫ) ===
+export async function sendTelegramMessage(chatId: string | number, text: string) {
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  if (!BOT_TOKEN) {
+    console.warn("TELEGRAM_BOT_TOKEN не задан. Отправка системного сообщения отменена.");
+    return;
+  }
+  
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text,
+        text: text,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
       }),
     });
   } catch (error) {
-    console.error(`Ошибка отправки ТГ сообщения юзеру ${chatId}:`, error);
+    console.error(`Ошибка отправки ТГ сообщения в чат ${chatId}:`, error);
   }
 }
+// ===============================================================
 
+// 1. Уведомление о появлении НОВЫХ ДАТ в расписании
 export async function notifySubscribersOnNewDates(
   tourId: string,
   categoryId: string | null,
   tourTitle: string,
   tourSlug: string
 ) {
-  if (!BOT_TOKEN) {
-    console.warn("TELEGRAM_BOT_TOKEN не задан. Рассылка отменена.");
-    return;
-  }
-
-  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
-  const tourUrl  = `${BASE_URL}/tour/${tourSlug}`;
-
-  // 1. Ждуны (Waitlist) — notified не проверяем, они всегда новые
+  // 1. Ждуны (Waitlist)
   const waitlistUsers = await prisma.waitlist.findMany({
     where: { tourId },
     include: { member: true },
   });
 
-  // 2. Избранное (WatchList по туру) — только ещё не уведомлённые
+  // 2. Избранное (только неуведомленные)
   const favoritedUsers = await prisma.watchList.findMany({
     where: { tourId, notified: false },
     include: { member: true },
   });
 
-  // 3. Подписчики категории — только ещё не уведомлённые
+  // 3. Подписчики категории
   const categoryUsers = categoryId
     ? await prisma.watchList.findMany({
         where: { categoryId, notified: false },
@@ -55,71 +54,27 @@ export async function notifySubscribersOnNewDates(
       })
     : [];
 
-  // Уникальные chatId для Telegram
-  const uniqueChatIds  = new Set<string>();
-  const waitlistChatIds = new Set<string>();
-
-  const addUsers = (users: any[], isWaitlist = false) => {
-    for (const u of users) {
-      const chatId = u.member?.tgChatId;
-      if (chatId) {
-        uniqueChatIds.add(chatId);
-        if (isWaitlist) waitlistChatIds.add(chatId);
-      }
-    }
-  };
-
-  addUsers(waitlistUsers, true);
-  addUsers(favoritedUsers);
-  addUsers(categoryUsers);
-
-  // Уникальные memberId для in-app уведомлений
   const allMembers = [
-    ...waitlistUsers.map(u => u.member),
-    ...favoritedUsers.map(u => u.member),
-    ...categoryUsers.map(u => u.member),
+    ...waitlistUsers.map(u => u.memberId),
+    ...favoritedUsers.map(u => u.memberId),
+    ...categoryUsers.map(u => u.memberId),
   ].filter(Boolean);
 
-  const uniqueMemberIds = [...new Set(allMembers.map(m => m!.id))];
+  const uniqueMemberIds = [...new Set(allMembers)];
 
-  if (uniqueChatIds.size === 0 && uniqueMemberIds.length === 0) return;
-
-  const message = `
-🔥 <b>Открыта запись на тур!</b>
-
-Мы добавили новые даты для маршрута <b>«${tourTitle}»</b>, которым вы интересовались!
-
-Места разбирают быстро, успейте забронировать своё приключение 🌲
-
-👉 <a href="${tourUrl}">Посмотреть даты и забронировать</a>
-  `.trim();
-
-  // Telegram рассылка
-  if (uniqueChatIds.size > 0) {
-    await Promise.all(
-      Array.from(uniqueChatIds).map(chatId => sendTelegramMessage(chatId, message))
-    );
-  }
-
-  // In-app уведомления
-  if (uniqueMemberIds.length > 0) {
-    await prisma.notification.createMany({
-      data: uniqueMemberIds.map(memberId => ({
-        memberId,
-        type:    'info',
-        title:   '🔥 Открыта запись на тур!',
-        message: `Появились новые даты для маршрута «${tourTitle}». Места разбирают быстро!`,
-        link:    tourUrl,
-        isRead:  false,
-      })),
-      skipDuplicates: true,
+  // Прогоняем всех через Хаб
+  for (const memberId of uniqueMemberIds) {
+    await NotificationHub.dispatch({
+      eventId: 'NEW_DATES_PUBLISHED',
+      memberId: memberId as string,
+      data: { tourTitle, tourSlug }
     });
   }
 
-  // Помечаем WatchList как уведомлённые — защита от повторного спама
+  // Помечаем WatchList как уведомленные
   const watchlistIdsToMark = [
-    ...favoritedUsers.filter(w => w.member?.tgChatId).map(w => w.id),
-    ...categoryUsers.filter(w => w.member?.tgChatId).map(w => w.id),
+    ...favoritedUsers.map(w => w.id),
+    ...categoryUsers.map(w => w.id),
   ];
 
   if (watchlistIdsToMark.length > 0) {
@@ -129,19 +84,42 @@ export async function notifySubscribersOnNewDates(
     });
   }
 
-  // Удаляем из Waitlist только тех кому отправили ТГ
-  // Без ТГ — остаются для ручного прозвона админом
-  if (waitlistUsers.length > 0) {
-    const waitlistIdsToDelete = waitlistUsers
-      .filter(w => w.member?.tgChatId && waitlistChatIds.has(w.member.tgChatId))
-      .map(w => w.id);
+  // Очищаем Waitlist (уведомленные)
+  const notifiedWaitlistIds = waitlistUsers.filter(w => w.memberId).map(w => w.id);
+  if (notifiedWaitlistIds.length > 0) {
+    await prisma.waitlist.deleteMany({
+      where: { id: { in: notifiedWaitlistIds } }
+    });
+  }
+}
 
-    if (waitlistIdsToDelete.length > 0) {
-      await prisma.waitlist.deleteMany({
-        where: { id: { in: waitlistIdsToDelete } },
+// 2. СНАЙПИНГ: Уведомление об освобождении мест (Отмена брони)
+export async function notifyWaitlistOnSpotFreed(tourId: string, tourDateId: string | null = null) {
+  const waitlist = await prisma.waitlist.findMany({
+    where: { tourId, tourDateId },
+    include: { tour: true }
+  });
+
+  if (waitlist.length === 0) return;
+
+  for (const w of waitlist) {
+    if (w.memberId) {
+      await NotificationHub.dispatch({
+        eventId: 'WAITLIST_ALERT',
+        memberId: w.memberId,
+        data: {
+          tourTitle: w.tour.title,
+          tourSlug: w.tour.slug,
+        }
       });
     }
   }
 
-  console.log(`Успешно разослано ${uniqueChatIds.size} ТГ уведомлений и ${uniqueMemberIds.length} in-app для тура «${tourTitle}»`);
+  // Очищаем Waitlist (кто успел, тот и забронировал)
+  const notifiedWaitlistIds = waitlist.filter(w => w.memberId).map(w => w.id);
+  if (notifiedWaitlistIds.length > 0) {
+    await prisma.waitlist.deleteMany({
+      where: { id: { in: notifiedWaitlistIds } }
+    });
+  }
 }
