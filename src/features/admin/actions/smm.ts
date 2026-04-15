@@ -17,7 +17,15 @@ export type SmmSource = {
   type: 'tour' | 'blog';
   image: string | null;
   categoryColor: string;
+  // ✅ П1: Добавляем расширенные поля для TourCard
+  categoryTitle?: string; 
   price?: number;
+  priceMember?: number; 
+  priceChild?: number;  
+  currency?: string;    
+  location?: string;    
+  duration?: string;    
+  tags?: string[];      
   date?: Date | string | null;
 };
 
@@ -31,15 +39,22 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
           id: true, 
           title: true, 
           coverImage: true, 
+          // ✅ П1: Вытягиваем всю экономику и метаданные тура
           price: true,
-          // ✅ ИСПРАВЛЕНИЕ: Берем ближайшую будущую дату через новую связь
+          priceMember: true,
+          priceChild: true,
+          currency: true,
+          location: true,
+          duration: true,
+          tags: true,
           tourDates: {
             where: { startDate: { gte: new Date() }, isActive: true },
             orderBy: { startDate: 'asc' },
             take: 1,
             select: { startDate: true }
           },
-          category: { select: { color: true } }
+          // ✅ П1: Берем реальное название категории
+          category: { select: { color: true, title: true } }
         },
         orderBy: { createdAt: 'desc' },
         take: 50,
@@ -58,16 +73,31 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
     ]);
 
     const tourSources: SmmSource[] = tours.map(t => {
-      // Извлекаем дату из связи
       const firstDate = t.tourDates?.[0]?.startDate || null;
+      
+      // Безопасный парсинг тегов
+      let parsedTags: string[] = [];
+      if (Array.isArray(t.tags)) {
+        parsedTags = t.tags as string[];
+      } else if (typeof t.tags === 'string') {
+        try { parsedTags = JSON.parse(t.tags); } catch (e) { parsedTags = []; }
+      }
+
       return {
         id: t.id,
         title: t.title,
         type: 'tour',
         image: t.coverImage,
-        price: t.price,
+        price: t.price ? Number(t.price) : undefined,
+        priceMember: t.priceMember ? Number(t.priceMember) : undefined,
+        priceChild: t.priceChild ? Number(t.priceChild) : undefined,
+        currency: t.currency || 'MDL',
+        location: t.location || '',
+        duration: t.duration || '',
+        tags: parsedTags,
         date: firstDate,
         categoryColor: t.category?.color || 'teal',
+        categoryTitle: t.category?.title || 'Тур',
       };
     });
 
@@ -77,6 +107,7 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
       type: 'blog',
       image: p.image,
       categoryColor: 'violet',
+      categoryTitle: 'Блог',
     }));
 
     return { success: true, data: [...tourSources, ...blogSources] };
@@ -99,7 +130,7 @@ export type SaveScheduledPostPayload = {
   sourceId?: string | null;
   sourceUrl?: string | null;
   templateStyle?: string | null;
-  metadata?: Record<string, unknown>; // ✅ ИСПРАВЛЕНИЕ: Строгая типизация
+  metadata?: Record<string, unknown>; 
 };
 
 export const saveScheduledPostAction = withAdminAuth(
@@ -166,20 +197,21 @@ export const generateSmmContentAction = withAdminAuth(async ({
   platform,
   tone,
   goal,      
-  audience,   
+  audience,
+  steps, 
 }: {
   sourceType: 'tour' | 'blog';
   sourceId: string;
   platform: 'instagram' | 'telegram' | 'facebook' | 'threads';
   tone: 'fun' | 'epic' | 'info' | 'sell' | 'strict';
-  goal?: 'warmup' | 'sell';   // 🔥 ДОБАВЛЕНО
-  audience?: 'cold' | 'warm'; // 🔥 ДОБАВЛЕНО
+  goal?: 'warmup' | 'sell';
+  audience?: 'cold' | 'warm';
+  steps?: string[]; 
 }) => {
   try {
     let contextData = '';
     const siteUrl = env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-    // 1. Формируем контекстную строку для ИИ
     if (sourceType === 'tour') {
       const tour = await prisma.tour.findUnique({
         where: { id: sourceId },
@@ -191,7 +223,6 @@ export const generateSmmContentAction = withAdminAuth(async ({
           currency: true, 
           duration: true, 
           location: true,
-          // ✅ ИСПРАВЛЕНИЕ: Берем ближайшую дату тура вместо поля date
           tourDates: {
             where: { startDate: { gte: new Date() }, isActive: true },
             orderBy: { startDate: 'asc' },
@@ -216,26 +247,33 @@ export const generateSmmContentAction = withAdminAuth(async ({
       contextData = `ТИП: Анонс статьи блога\nНАЗВАНИЕ: ${post.title}\nОПИСАНИЕ: ${post.excerpt || post.content.substring(0, 500)}...\nССЫЛКА: ${siteUrl}/blog/${sourceId}`;
     }
 
-    // 2. Вызываем наш центральный AI модуль и явно указываем тип возвращаемых данных
    const result = (await performAiTask({
       mode: 'smm_post',
       context: `ЦЕЛЬ ПОСТА: ${goal === 'sell' ? 'Продать места' : 'Прогреть аудиторию'}\nАУДИТОРИЯ: ${audience === 'warm' ? 'Теплая (знают нас)' : 'Холодная'}\n\n${contextData}`,
       platform,
-      tone
-    })) as { success: boolean; data?: { text: string; hashtags: string[] }; error?: string };
+      tone,
+      steps 
+    })) as { 
+      success: boolean; 
+      data?: { 
+        caption: string; 
+        slides: { title: string; text: string }[]; 
+        hashtags: string[] 
+      }; 
+      error?: string 
+    };
 
     if (!result.success) {
       throw new Error(result.error || 'Неизвестная ошибка ИИ');
     }
 
-    // Теперь TS знает, что data имеет нужную структуру
     return { success: true, data: result.data };
   } catch (error) {
     console.error('SMM Controller Error:', error);
     return { success: false, error: 'Ошибка генерации контента' };
   }
 });
-// Строгий тип для нашего экшена
+
 export type FreezeAndPublishPayload = {
   imageUrls: string[];
   content: string;
@@ -246,10 +284,8 @@ export type FreezeAndPublishPayload = {
 export const freezeAndPublishSmmAction = withAdminAuth(
   withAdminAudit({
     actionName: 'FREEZE_AND_PUBLISH_SMM',
-    // ✅ ИСПРАВЛЕНО: Явно передаем payload, чтобы TS понял, какие аргументы ждет функция
     getTargetId: (payload: FreezeAndPublishPayload) => 'telegram_post',
   })(async (payload: FreezeAndPublishPayload) => {
-    // Распаковываем payload внутри функции
     const { imageUrls, content, platform, isPublic = false } = payload;
     
     try {
@@ -259,7 +295,6 @@ export const freezeAndPublishSmmAction = withAdminAuth(
 
       // 1. ЗАМОРОЗКА: Скачиваем динамические OG картинки и кладем в Storage
       for (const relUrl of imageUrls) {
-        // Превращаем относительный путь /api/og... в абсолютный
         const absoluteUrl = relUrl.startsWith('http') ? relUrl : `${siteUrl}${relUrl}`;
 
         const res = await fetch(absoluteUrl);
@@ -267,9 +302,8 @@ export const freezeAndPublishSmmAction = withAdminAuth(
 
         const arrayBuffer = await res.arrayBuffer();
         
-        // Генерируем уникальное имя файла
         const fileName = `smm-${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
-        const filePath = `smm/${fileName}`; // Кладем в папку smm внутри бакета
+        const filePath = `smm/${fileName}`; 
 
         const { error } = await supabase.storage
           .from('tours-images')
@@ -284,15 +318,15 @@ export const freezeAndPublishSmmAction = withAdminAuth(
         permanentUrls.push(data.publicUrl);
       }
 
-      // 2. ОТПРАВКА В TELEGRAM (С КАРУСЕЛЯМИ)
-      if (platform === 'telegram') {
-        const { publishMediaGroupToTelegram } = await import('@/features/admin/actions/telegram');
-        // Отправляем массив вечных ссылок
-        const tgRes = await publishMediaGroupToTelegram(content, permanentUrls, isPublic);
+      // 2. ОТПРАВКА В TELEGRAM (ПРОБЛЕМА 7 - ИСПРАВЛЕНА)
+      // 🔥 Теперь мы ВСЕГДА отправляем в Telegram, даже если текст сгенерирован для Инсты. 
+      // isPublic = false означает, что улетит в админский/тестовый канал.
+      const { publishMediaGroupToTelegram } = await import('@/features/admin/actions/telegram');
+      
+      const tgRes = await publishMediaGroupToTelegram(content, permanentUrls, isPublic);
 
-        if (!tgRes.success) {
-          throw new Error(tgRes.error);
-        }
+      if (!tgRes.success) {
+        throw new Error(tgRes.error);
       }
 
       return { success: true, permanentUrls };

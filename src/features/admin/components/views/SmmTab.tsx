@@ -1,27 +1,52 @@
 // src/features/admin/components/views/SmmTab.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Send, Instagram, MessageSquare, Plus, Sparkles, 
-  RefreshCw, Save, Image as ImageIcon, Copy, Check,
-  FileText, History, Zap, ChevronRight, Layout, Target, Users
+  Send,
+  Instagram,
+  MessageSquare,
+  Sparkles,
+  RefreshCw,
+  Save,
+  Image as ImageIcon,
+  Copy,
+  History,
+  Zap,
+  Layout,
+  Trash2,
+  Eye,
+  X,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  ListPlus,
+  Target,
+  FileText,
+  Users
 } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
-import { 
-  getSmmSourcesAction, 
-  generateSmmContentAction, 
+import {
+  getSmmSourcesAction,
+  generateSmmContentAction,
   saveScheduledPostAction,
   getScheduledPostsAction,
   freezeAndPublishSmmAction,
   type SmmSource
 } from '@/features/admin/actions/smm';
 
+// --- ТИПЫ ДЛЯ ТИПИЗАЦИИ ОТВЕТОВ (Исправление ошибки unknown) ---
+interface ActionResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+  permanentUrls?: string[];
+}
+
 const PLATFORMS = [
-  { id: 'telegram', label: 'Telegram', icon: <Send size={16}/>, color: 'bg-sky-500' },
-  { id: 'instagram', label: 'Instagram', icon: <Instagram size={16}/>, color: 'bg-pink-500' },
-  { id: 'facebook', label: 'Facebook', icon: <MessageSquare size={16}/>, color: 'bg-blue-600' },
-  { id: 'threads', label: 'Threads', icon: <MessageSquare size={16}/>, color: 'bg-slate-800' },
+  { id: 'telegram', label: 'Telegram', icon: <Send size={16} />, color: 'bg-sky-500' },
+  { id: 'instagram', label: 'Instagram', icon: <Instagram size={16} />, color: 'bg-pink-500' },
+  { id: 'facebook', label: 'Facebook', icon: <MessageSquare size={16} />, color: 'bg-blue-600' },
 ] as const;
 
 const TONES = [
@@ -41,419 +66,713 @@ const AUDIENCES = [
   { id: 'warm', label: 'Теплая ❤️' }
 ] as const;
 
+const DEFAULT_FUNNEL = [
+  { id: 'hook', label: 'Крючок/Боль', checked: true },
+  { id: 'details', label: 'Детали тура', checked: true },
+  { id: 'price', label: 'Цены и Билеты', checked: false },
+  { id: 'cta', label: 'Призыв к действию', checked: true },
+];
+
 export default function SmmTab() {
   const { showToast } = useToast();
-  
+
+  // --- СОСТОЯНИЕ ДАННЫХ ---
   const [viewMode, setViewMode] = useState<'generator' | 'history'>('generator');
   const [sources, setSources] = useState<SmmSource[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Состояние генератора
+  // --- СОСТОЯНИЕ ГЕНЕРАТОРА ---
   const [selectedSourceId, setSelectedSourceId] = useState('');
   const [platform, setPlatform] = useState<typeof PLATFORMS[number]['id']>('instagram');
   const [tone, setTone] = useState<typeof TONES[number]['id']>('sell');
   const [goal, setGoal] = useState<typeof GOALS[number]['id']>('warmup');
   const [audience, setAudience] = useState<typeof AUDIENCES[number]['id']>('warm');
-  
   const [format, setFormat] = useState<'post' | 'feed' | 'story' | 'event'>('feed');
+  const [isCarousel, setIsCarousel] = useState(true);
+  const [funnelSteps, setFunnelSteps] = useState(DEFAULT_FUNNEL);
   const [triggerText, setTriggerText] = useState('');
-  
-  // Результат генерации
-  const [generatedText, setGeneratedText] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
+
+  // --- РЕЗУЛЬТАТЫ ---
+  const [generatedCaption, setGeneratedCaption] = useState('');
+  const [generatedSlides, setGeneratedSlides] = useState<{ title: string; text: string }[]>([]);
   const [hashtags, setHashtags] = useState<string[]>([]);
+
+  // --- ПРОЦЕССЫ ---
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
+  // --- МОДАЛКА (LIGHTBOX) ---
+  const [previewPost, setPreviewPost] = useState<any>(null);
+
   useEffect(() => {
-    initData();
+    loadData();
   }, []);
 
-  const initData = async () => {
+  const loadData = async () => {
     setIsLoading(true);
-    const [srcRes, histRes] = await Promise.all([
-      getSmmSourcesAction(),
-      getScheduledPostsAction()
-    ]);
-    if (srcRes.success) setSources(srcRes.data || []);
-    if (histRes.success) setHistory(histRes.data || []);
-    setIsLoading(false);
-  };
+    try {
+      const [srcRes, histRes] = (await Promise.all([
+        getSmmSourcesAction(),
+        getScheduledPostsAction()
+      ])) as ActionResponse[];
 
-  const selectedSource = sources.find(s => s.id === selectedSourceId);
-
-  // ── ГЕНЕРАЦИЯ ТЕКСТА ──
-  const handleGenerate = async () => {
-    if (!selectedSourceId) return showToast('Сначала выбери тур или пост', 'error');
-    setIsGenerating(true);
-    
-    const res = await generateSmmContentAction({
-      sourceType: selectedSource?.type as any,
-      sourceId: selectedSourceId,
-      platform,
-      tone,
-      goal,
-      audience
-    }) as { success: boolean; data?: { text: string; hashtags: string[] }; error?: string };
-
-    if (res.success && res.data) {
-      setGeneratedText(res.data.text);
-      setHashtags(res.data.hashtags);
-      showToast('Текст и теги готовы! ✨', 'success');
-    } else {
-      showToast(res.error || 'Ошибка ИИ', 'error');
+      if (srcRes.success) setSources(srcRes.data || []);
+      if (histRes.success) setHistory(histRes.data || []);
+    } catch (err) {
+      showToast('Ошибка при загрузке данных', 'error');
+    } finally {
+      setIsLoading(false);
     }
-    setIsGenerating(false);
   };
 
-  // ── ФОРМИРОВАНИЕ ССЫЛКИ НА ВИЗУАЛ (С УЧЕТОМ СЛАЙДОВ) ──
-  const getOgUrl = (slide: number = 0) => {
+  const selectedSource = useMemo(() => 
+    sources.find(s => s.id === selectedSourceId), 
+  [sources, selectedSourceId]);
+
+  // --- БЕЗОПАСНЫЙ ГЕНЕРАТОР URL (Проблема 1, 3, 5) ---
+  const getOgUrl = (index: number, slideTitle?: string, slideText?: string) => {
     if (!selectedSource) return '';
-    const params = new URLSearchParams({
-      format,
-      slide: slide.toString(),
-      title: selectedSource.title,
-      image: selectedSource.image || '',
-      categoryColor: selectedSource.categoryColor,
-      price: selectedSource.price?.toString() || '',
-      date: selectedSource.date ? new Date(selectedSource.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '',
-    });
     
-    if (triggerText) {
-      params.append('trigger', triggerText);
+    const params = new URLSearchParams();
+    params.append('format', format);
+    params.append('slide', index.toString());
+    params.append('title', selectedSource.title);
+    params.append('image', selectedSource.image || '');
+    params.append('categoryColor', selectedSource.categoryColor);
+    params.append('categoryTitle', selectedSource.categoryTitle || 'ТУР');
+    params.append('location', selectedSource.location || '');
+    params.append('duration', selectedSource.duration || '');
+    params.append('tags', (selectedSource.tags || []).join(','));
+    params.append('price', selectedSource.price?.toString() || '');
+    params.append('currency', selectedSource.currency || 'RUB');
+    
+    if (selectedSource.date) {
+      const dateStr = new Date(selectedSource.date).toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'short' 
+      });
+      params.append('date', dateStr);
     }
-    
+
+    if (triggerText) params.append('trigger', triggerText);
+    if (slideTitle) params.append('slideTitle', slideTitle);
+    if (slideText) params.append('slideText', slideText);
+
     return `/api/og?${params.toString()}`;
   };
-  
-  // ── СОХРАНЕНИЕ В ИСТОРИЮ ──
-  const handleSave = async () => {
-    setIsSaving(true);
-    const res = (await saveScheduledPostAction({
-      platform,
-      format,
-      content: `${generatedText}\n\n${hashtags.map(h => `#${h}`).join(' ')}`,
-      imageUrl: getOgUrl(0), // Сохраняем обложку для превью
-      status: 'draft',
-      sourceType: selectedSource?.type || 'custom',
-      sourceId: selectedSourceId,
-    })) as { success: boolean; error?: string }; 
 
-    if (res.success) {
-      showToast('Сохранено в историю', 'success');
-      initData();
-      setViewMode('history');
-    } else {
-      showToast(res.error || 'Ошибка при сохранении', 'error');
-    }
-    setIsSaving(false);
-  };
+  const handleGenerate = async () => {
+    if (!selectedSourceId) return showToast('Сначала выбери источник контента', 'error');
+    setIsGenerating(true);
 
-  // ── ЗАМОРОЗКА И ПУБЛИКАЦИЯ В TELEGRAM ──
-  const handlePublish = async () => {
-    setIsPublishing(true);
-    showToast('Начинаем заморозку и генерацию карусели...', 'info');
-    
     try {
-      const urlsToFreeze = [];
+      const activeSteps = isCarousel 
+        ? funnelSteps.filter(s => s.checked).map(s => s.label) 
+        : [];
 
-      // Если это Тур, генерируем карусель из 3 слайдов (Обложка, Описание, Что включено)
-      if (selectedSource?.type === 'tour') {
-         urlsToFreeze.push(getOgUrl(0));
-         urlsToFreeze.push(getOgUrl(1));
-         urlsToFreeze.push(getOgUrl(2));
-      } else {
-         urlsToFreeze.push(getOgUrl(0));
-      }
-
-      const fullContent = `${generatedText}\n\n${hashtags.map(h => `#${h}`).join(' ')}`;
-
-      // 🔥 ИСПРАВЛЕНИЕ ЗДЕСЬ: Явно указываем тип ответа сервера для TypeScript
-      const res = (await freezeAndPublishSmmAction({
-        imageUrls: urlsToFreeze,
-        content: fullContent,
+      const res = (await generateSmmContentAction({
+        sourceType: selectedSource?.type as any,
+        sourceId: selectedSourceId,
         platform,
-        isPublic: false // Временно отправляем в тестовый админский канал
-      })) as { success: boolean; permanentUrls?: string[]; error?: string };
+        tone,
+        goal,
+        audience,
+        steps: activeSteps
+      })) as ActionResponse;
 
-      if (res.success) {
-         showToast('Успешно заморожено и опубликовано в TG!', 'success');
+      if (res.success && res.data) {
+        setGeneratedCaption(res.data.caption);
+        setGeneratedSlides(res.data.slides || []);
+        setHashtags(res.data.hashtags || []);
+        showToast('ИИ подготовил контент! ✨', 'success');
       } else {
-         showToast(`Ошибка: ${res.error}`, 'error');
+        showToast(res.error || 'Ошибка генерации', 'error');
       }
     } catch (err) {
-      showToast('Произошла критическая ошибка', 'error');
+      showToast('Критическая ошибка ИИ', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // П8: Сохраняем массив всех картинок в метаданные
+      const allImages = [
+        getOgUrl(0), 
+        ...generatedSlides.map((s, i) => getOgUrl(i + 1, s.title, s.text))
+      ];
+
+      const res = (await saveScheduledPostAction({
+        platform,
+        format,
+        content: `${generatedCaption}\n\n${hashtags.map(h => `#${h}`).join(' ')}`,
+        imageUrl: allImages[0],
+        status: scheduledAt ? 'scheduled' : 'draft',
+        scheduledFor: scheduledAt || null,
+        sourceType: selectedSource?.type || 'custom',
+        sourceId: selectedSourceId,
+        metadata: { imageUrls: allImages }
+      })) as ActionResponse;
+
+      if (res.success) {
+        showToast(scheduledAt ? 'Пост запланирован' : 'Сохранено в черновики', 'success');
+        loadData();
+        setViewMode('history');
+      }
+    } catch (err) {
+      showToast('Не удалось сохранить', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublishNow = async () => {
+    setIsPublishing(true);
+    try {
+      const allImages = [
+        getOgUrl(0), 
+        ...generatedSlides.map((s, i) => getOgUrl(i + 1, s.title, s.text))
+      ];
+
+      const res = (await freezeAndPublishSmmAction({
+        imageUrls: allImages,
+        content: `${generatedCaption}\n\n${hashtags.map(h => `#${h}`).join(' ')}`,
+        platform,
+        isPublic: false
+      })) as ActionResponse;
+
+      if (res.success) {
+        showToast('Цепочка отправлена в Telegram! 🚀', 'success');
+      } else {
+        showToast(res.error || 'Ошибка публикации', 'error');
+      }
+    } catch (err) {
+      showToast('Ошибка связи с сервером', 'error');
     } finally {
       setIsPublishing(false);
     }
   };
 
-  const previewAspectClass = 
-    format === 'story' ? 'aspect-[9/16]' : 
-    format === 'feed'  ? 'aspect-[4/5]' : 
-    format === 'event' ? 'aspect-[1.91/1]' : 
-    'aspect-square';
+  const toggleFunnelStep = (id: string) => {
+    setFunnelSteps(prev => prev.map(s => s.id === id ? { ...s, checked: !s.checked } : s));
+  };
 
   return (
     <div className="space-y-6">
-      {/* Переключатель режимов */}
-      <div className="flex items-center justify-between">
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          <button 
+      {/* ─── ВЕРХНЯЯ ПАНЕЛЬ НАВИГАЦИИ ─── */}
+      <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-sm">
+        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+          <button
             onClick={() => setViewMode('generator')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'generator' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-700'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              viewMode === 'generator' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
           >
-            <Zap size={16}/> Мастерская
+            <Zap size={14} /> Мастерская
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('history')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-700'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              viewMode === 'history' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
           >
-            <History size={16}/> История
+            <History size={14} /> История
           </button>
+        </div>
+        <div className="hidden md:flex px-4 py-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
+          <span className="text-[10px] font-black text-teal-600 uppercase tracking-[0.2em]">
+            SMM Engine Gold 2026
+          </span>
         </div>
       </div>
 
       {viewMode === 'generator' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* ЛЕВАЯ КОЛОНКА: НАСТРОЙКИ */}
-          <div className="lg:col-span-5 space-y-5">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
-              
+          {/* ─── ЛЕВАЯ ПАНЕЛЬ: НАСТРОЙКИ ─── */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 shadow-sm">
+              {/* Источник */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Источник контента</label>
-                <select 
-                  value={selectedSourceId} 
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                  Источник контента
+                </label>
+                <select
+                  value={selectedSourceId}
                   onChange={(e) => setSelectedSourceId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-teal-500 rounded-2xl px-4 py-4 text-sm font-bold transition-all outline-none text-slate-900 dark:text-white"
                 >
-                  <option value="">Выбери из списка...</option>
-                  {sources.map(s => (
-                    <option key={s.id} value={s.id}>{s.type === 'tour' ? '🏕️' : '📝'} {s.title}</option>
+                  <option value="">Выберите из базы данных...</option>
+                  {sources.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.type === 'tour' ? '🏕️' : '📝'} {s.title}
+                    </option>
                   ))}
                 </select>
               </div>
 
-              {/* СТРАТЕГИЯ (Goal & Audience) */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-4 border border-slate-100 dark:border-slate-700/50">
-                  <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-widest flex items-center gap-2">
-                    <Target size={12}/> AI Стратегия
+              {/* Переключатель режима */}
+              <div className="space-y-3">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Тип публикации
+                </label>
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                  <button
+                    onClick={() => setIsCarousel(false)}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      !isCarousel ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500'
+                    }`}
+                  >
+                    Одиночный
+                  </button>
+                  <button
+                    onClick={() => setIsCarousel(true)}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      isCarousel ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500'
+                    }`}
+                  >
+                    Карусель
+                  </button>
+                </div>
+              </div>
+
+              {/* Стратегия */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Target size={10} /> Цель
+                  </label>
+                  <select
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value as any)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white"
+                  >
+                    {GOALS.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Users size={10} /> Аудитория
+                  </label>
+                  <select
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value as any)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white"
+                  >
+                    {AUDIENCES.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Конструктор воронки (только для карусели) */}
+              {isCarousel && (
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                  <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 mb-4">
+                    <ListPlus size={14} /> Стуктура карусели
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                      <div>
-                         <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Цель поста</label>
-                         <select 
-                           value={goal} 
-                           onChange={(e) => setGoal(e.target.value as any)} 
-                           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer text-slate-900 dark:text-white"
-                         >
-                            {GOALS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
-                         </select>
-                      </div>
-                      <div>
-                         <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Аудитория</label>
-                         <select 
-                           value={audience} 
-                           onChange={(e) => setAudience(e.target.value as any)} 
-                           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer text-slate-900 dark:text-white"
-                         >
-                            {AUDIENCES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
-                         </select>
-                      </div>
+                  <div className="space-y-2">
+                    {funnelSteps.map((step) => (
+                      <label
+                        key={step.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={step.checked}
+                          onChange={() => toggleFunnelStep(step.id)}
+                          className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-white border-slate-300"
+                        />
+                        <span
+                          className={`text-xs font-bold ${
+                            step.checked ? 'text-slate-900 dark:text-white' : 'text-slate-500'
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                      </label>
+                    ))}
                   </div>
-              </div>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Платформа</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PLATFORMS.map(p => (
-                    <button 
-                      key={p.id}
-                      onClick={() => setPlatform(p.id)}
-                      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border-2 transition-all ${platform === p.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-700'}`}
-                    >
-                      {p.icon} {p.label}
-                    </button>
-                  ))}
+              {/* Платформы и Форматы */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Платформа
+                  </label>
+                  <div className="space-y-2">
+                    {PLATFORMS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPlatform(p.id)}
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${
+                          platform === p.id
+                            ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600'
+                            : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-500'
+                        }`}
+                      >
+                        {p.icon} {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Размер
+                  </label>
+                  <div className="space-y-2">
+                    {['post', 'feed', 'story'].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setFormat(f as any)}
+                        className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${
+                          format === f
+                            ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600'
+                            : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-500'
+                        }`}
+                      >
+                        {f === 'post' ? 'Квадрат' : f === 'feed' ? 'Лента' : 'Сториз'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
+              {/* Триггер */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Формат креатива</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setFormat('post')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'post' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📷 Квадрат (1:1)</button>
-                  <button onClick={() => setFormat('feed')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'feed' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>🖼️ Лента (4:5)</button>
-                  <button onClick={() => setFormat('story')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'story' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📱 Сториз (9:16)</button>
-                  <button onClick={() => setFormat('event')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'event' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📅 FB Event</button>
-                </div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                  Хайп-триггер
+                </label>
+                <input
+                  type="text"
+                  value={triggerText}
+                  onChange={(e) => setTriggerText(e.target.value)}
+                  placeholder="Осталось 3 места!"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-rose-500 rounded-2xl px-4 py-4 text-sm font-black uppercase outline-none text-rose-600 transition-all placeholder:text-slate-400"
+                />
               </div>
 
-              <div>
-                 <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Триггер (Яркая плашка на фото)</label>
-                 <input 
-                   type="text" 
-                   value={triggerText} 
-                   onChange={(e) => setTriggerText(e.target.value)} 
-                   placeholder="Напр: Последние 2 места!" 
-                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/20 text-slate-900 dark:text-white placeholder:text-slate-700 outline-none" 
-                 />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Тональность текста</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {TONES.map(t => (
-                    <button 
-                      key={t.id} 
-                      onClick={() => setTone(t.id)}
-                      className={`py-2 rounded-lg text-xs font-bold border-2 transition-all ${tone === t.id ? 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button 
+              <button
                 onClick={handleGenerate}
                 disabled={isGenerating || !selectedSourceId}
-                className="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-50 transition-all"
+                className="w-full py-5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 shadow-xl shadow-teal-500/30 transition-all disabled:opacity-50 active:scale-95"
               >
-                {isGenerating ? <RefreshCw className="animate-spin" size={16}/> : <Sparkles size={16}/>}
-                Генерировать контент
+                {isGenerating ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                Сгенерировать сценарий
               </button>
             </div>
           </div>
 
-          {/* ПРАВАЯ КОЛОНКА: ПРЕВЬЮ И ПУБЛИКАЦИЯ */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              
-              {/* ТЕКСТ */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-black uppercase tracking-tight text-slate-700">Текст поста</h3>
-                  {generatedText && (
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(`${generatedText}\n\n${hashtags.map(h => `#${h}`).join(' ')}`)} 
-                      className="text-slate-700 hover:text-teal-500 transition-colors"
+          {/* ─── ПРАВАЯ ПАНЕЛЬ: МОНТАЖНЫЙ СТОЛ ─── */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <Layout size={16} /> Монтажный стол
+                </h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500 uppercase">
+                    {format} • {isCarousel ? `${generatedSlides.length + 1} слайдов` : '1 слайд'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar snap-x snap-mandatory">
+                {/* 1. ОБЛОЖКА */}
+                <div className="shrink-0 w-80 flex flex-col gap-4 snap-start">
+                  <div
+                    className={`relative w-full overflow-hidden rounded-2xl border-4 border-slate-50 dark:border-slate-800 bg-[#0f172a] shadow-xl ${
+                      format === 'story' ? 'aspect-[9/16]' : format === 'feed' ? 'aspect-[4/5]' : 'aspect-square'
+                    }`}
+                  >
+                    {selectedSourceId ? (
+                      <img
+                        src={getOgUrl(0)}
+                        alt="Preview Cover"
+                        className="w-full h-full object-cover transition-opacity duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-700">
+                        <ImageIcon size={48} strokeWidth={1} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-center border border-slate-100 dark:border-slate-700">
+                    <span className="text-[9px] font-black uppercase text-teal-600 tracking-widest">
+                      Слайд 1 (Обложка)
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. ТЕКСТОВЫЕ СЛАЙДЫ */}
+                {isCarousel &&
+                  generatedSlides.map((slide, idx) => (
+                    <div key={idx} className="shrink-0 w-80 flex flex-col gap-4 snap-start">
+                      <div
+                        className={`relative w-full overflow-hidden rounded-2xl border-4 border-slate-50 dark:border-slate-800 bg-[#0f172a] shadow-xl ${
+                          format === 'story' ? 'aspect-[9/16]' : format === 'feed' ? 'aspect-[4/5]' : 'aspect-square'
+                        }`}
+                      >
+                        <img
+                          src={getOgUrl(idx + 1, slide.title, slide.text)}
+                          alt={`Slide ${idx + 2}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={slide.title}
+                          onChange={(e) => {
+                            const newS = [...generatedSlides];
+                            newS[idx].title = e.target.value;
+                            setGeneratedSlides(newS);
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white"
+                          placeholder="Заголовок слайда"
+                        />
+                        <textarea
+                          value={slide.text}
+                          onChange={(e) => {
+                            const newS = [...generatedSlides];
+                            newS[idx].text = e.target.value;
+                            setGeneratedSlides(newS);
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-xs font-bold leading-relaxed outline-none focus:ring-2 focus:ring-teal-500/20 resize-none text-slate-800 dark:text-slate-200"
+                          rows={3}
+                          placeholder="Текст слайда"
+                        />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* ТЕКСТ ПОСТА */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+                  Подпись к публикации (Caption)
+                </h3>
+                {generatedCaption && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${generatedCaption}\n\n${hashtags.map((h) => `#${h}`).join(' ')}`);
+                      showToast('Скопировано в буфер', 'success');
+                    }}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-500"
+                  >
+                    <Copy size={16} />
+                  </button>
+                )}
+              </div>
+              <textarea
+                value={generatedCaption}
+                onChange={(e) => setGeneratedCaption(e.target.value)}
+                placeholder="Здесь появится сгенерированный текст..."
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm font-medium leading-[1.8] resize-none focus:ring-0 outline-none h-64 custom-scrollbar text-slate-900 dark:text-slate-100"
+              />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {hashtags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-600 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* ДЕЙСТВИЯ */}
+            {generatedCaption && (
+              <div className="bg-slate-900 dark:bg-white rounded-3xl p-6 flex flex-col gap-6 shadow-2xl">
+                {/* ПЛАНИРОВЩИК (Вектор 2) */}
+                <div className="flex flex-col md:flex-row items-center gap-4 bg-white/10 dark:bg-slate-100 p-4 rounded-2xl border border-white/10 dark:border-slate-200">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <CalendarIcon size={20} className="text-amber-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white dark:text-slate-900">
+                      Запланировать:
+                    </span>
+                  </div>
+                  <input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(e) => setScheduledAt(e.target.value)}
+                    className="flex-1 bg-transparent border-none text-white dark:text-slate-900 font-bold text-sm outline-none cursor-pointer"
+                  />
+                  {scheduledAt && (
+                    <button
+                      onClick={() => setScheduledAt('')}
+                      className="text-white/40 hover:text-white dark:text-slate-400"
                     >
-                      <Copy size={16}/>
+                      <X size={16} />
                     </button>
                   )}
                 </div>
-                <textarea 
-                  value={generatedText}
-                  onChange={(e) => setGeneratedText(e.target.value)}
-                  placeholder="Здесь появится текст от AI..."
-                  className="flex-1 w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-4 text-sm leading-relaxed resize-none focus:ring-0 text-slate-900 dark:text-white outline-none"
-                  rows={12}
-                />
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {hashtags.map((tag, i) => (
-                    <span key={i} className="text-[11px] font-bold text-teal-600 bg-teal-50 dark:bg-teal-900/20 px-2 py-1 rounded-md">
-                      #{tag}
-                    </span>
-                  ))}
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="flex-1 py-5 bg-white/10 hover:bg-white/20 text-white dark:text-slate-900 dark:bg-slate-100 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all shadow-lg"
+                  >
+                    {isSaving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                    {scheduledAt ? 'Запланировать пост' : 'Сохранить черновик'}
+                  </button>
+                  <button
+                    onClick={handlePublishNow}
+                    disabled={isPublishing}
+                    className="flex-1 py-5 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all shadow-xl shadow-teal-500/20"
+                  >
+                    {isPublishing ? <RefreshCw className="animate-spin" size={16} /> : <Send size={16} />}
+                    Заморозить и в Telegram
+                  </button>
                 </div>
-              </div>
-
-              {/* ВИЗУАЛ (API OG) */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-black uppercase tracking-tight text-slate-700">Превью обложки</h3>
-                <div className={`relative w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 shadow-xl transition-all duration-300 ${previewAspectClass}`}>
-                  {selectedSourceId ? (
-                    <img 
-                      key={getOgUrl(0)} 
-                      src={getOgUrl(0)} 
-                      alt="Preview" 
-                      className="w-full h-full object-contain bg-[#0f172a]"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 opacity-50">
-                      <ImageIcon size={48} strokeWidth={1}/>
-                      <p className="text-xs font-bold mt-2">Выберите тур для превью</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-
-            {/* ЭКШЕНЫ СОХРАНЕНИЯ */}
-            {generatedText && (
-              <div className="flex flex-col sm:flex-row gap-4 p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <button 
-                  onClick={handleSave} 
-                  disabled={isSaving || isPublishing} 
-                  className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-                >
-                  {isSaving ? <RefreshCw className="animate-spin" size={16}/> : <Save size={16}/>} В черновики
-                </button>
-                <button 
-                  onClick={handlePublish} 
-                  disabled={isSaving || isPublishing} 
-                  className="flex-1 py-4 bg-sky-500 hover:bg-sky-400 text-white rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20 disabled:opacity-50 transition-all"
-                >
-                  {isPublishing ? <RefreshCw className="animate-spin" size={16}/> : <Send size={16}/>} Заморозить и в TG
-                </button>
               </div>
             )}
           </div>
-
         </div>
       ) : (
-        /* РЕЕСТР ИСТОРИИ */
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {history.length > 0 ? history.map(post => (
-            <div key={post.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-md transition-all flex flex-col">
-              {post.imageUrl && (
-                <div className="relative h-40 overflow-hidden bg-[#0f172a] shrink-0">
-                  <img src={post.imageUrl} alt="" className="w-full h-full object-contain" />
+        /* ─── ПАНЕЛЬ ИСТОРИИ (Проблема 8) ─── */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {history.length > 0 ? (
+            history.map((post) => (
+              <div
+                key={post.id}
+                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col border-b-4 border-b-transparent hover:border-b-teal-500"
+              >
+                <div className="relative aspect-[4/5] bg-slate-900 overflow-hidden">
+                  <img
+                    src={post.imageUrl}
+                    alt=""
+                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />
+
+                  {/* Значки статуса */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    <span
+                      className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-lg ${
+                        post.platform === 'instagram' ? 'bg-pink-500' : 'bg-sky-500'
+                      }`}
+                    >
+                      {post.platform}
+                    </span>
+                    {post.status === 'scheduled' && (
+                      <span className="px-3 py-1 bg-amber-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-950 shadow-lg">
+                        Запланирован
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
-              <div className="p-4 space-y-3 flex-1 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700">
-                    {post.platform} • {post.format}
-                  </span>
-                  <span className="text-[10px] text-slate-700">
-                    {new Date(post.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-800 dark:text-slate-700 line-clamp-3 leading-relaxed flex-1">
-                  {post.content}
-                </p>
-                <div className="flex gap-2 pt-2 border-t border-slate-50 dark:border-slate-800 mt-auto">
-                   <button 
-                     onClick={() => navigator.clipboard.writeText(post.content)} 
-                     className="flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-teal-50 text-slate-800 dark:text-slate-700 hover:text-teal-600 transition-colors"
-                   >
-                     <Copy size={12}/> Текст
-                   </button>
-                   {post.imageUrl && (
-                     <a 
-                       href={post.imageUrl} 
-                       target="_blank" 
-                       rel="noreferrer"
-                       className="flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-teal-50 text-slate-800 dark:text-slate-700 hover:text-teal-600 transition-colors"
-                     >
-                       <ImageIcon size={12}/> Визуал
-                     </a>
-                   )}
+
+                <div className="p-5 flex-1 flex flex-col gap-4">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed italic">
+                    "{post.content.substring(0, 180)}..."
+                  </p>
+
+                  <div className="flex items-center justify-between text-[10px] font-black border-t border-slate-50 dark:border-slate-800 pt-5 mt-auto">
+                    <div className="flex items-center gap-2 text-slate-400 uppercase tracking-tighter">
+                      <History size={12} /> {new Date(post.createdAt).toLocaleDateString('ru-RU')}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPreviewPost(post)}
+                        className="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-teal-500 hover:text-white rounded-xl transition-all text-slate-500"
+                        title="Просмотр всей карусели"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        className="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-rose-500 hover:text-white rounded-xl transition-all text-slate-500"
+                        title="Удалить из базы"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          )) : (
-            <div className="col-span-full py-20 text-center opacity-30">
-              <History size={48} className="mx-auto mb-2"/>
-              <p className="font-bold">История пуста</p>
+            ))
+          ) : (
+            <div className="col-span-full py-40 text-center opacity-20">
+              <History size={80} className="mx-auto mb-6" strokeWidth={1} />
+              <p className="font-black uppercase tracking-[0.4em] text-sm">История пуста</p>
             </div>
           )}
         </div>
       )}
+
+      {/* ─── ПОЛНОЭКРАННАЯ МОДАЛКА (LIGHTBOX ДЛЯ П8) ─── */}
+      {previewPost && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-4 md:p-10 animate-in fade-in zoom-in duration-300">
+          <button
+            onClick={() => setPreviewPost(null)}
+            className="absolute top-8 right-8 p-4 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all shadow-2xl z-[110]"
+          >
+            <X size={28} />
+          </button>
+
+          <div className="w-full max-w-7xl h-full flex flex-col gap-10">
+            <div className="flex-1 flex overflow-x-auto gap-8 custom-scrollbar snap-x snap-mandatory items-center px-4">
+              {/* Рендерим все картинки из метаданных или одну основную */}
+              {(previewPost.metadata?.imageUrls || [previewPost.imageUrl]).map((img: string, i: number) => (
+                <div
+                  key={i}
+                  className="shrink-0 h-[75vh] aspect-[4/5] bg-slate-900 rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] snap-center border-4 border-white/5"
+                >
+                  <img src={img} alt={`Slide ${i + 1}`} className="w-full h-full object-contain" />
+                  <div className="absolute bottom-6 right-6 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white/50 text-[10px] font-black uppercase tracking-widest">
+                    Slide {i + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white/5 border border-white/10 p-8 rounded-[32px] max-w-3xl mx-auto shadow-2xl">
+              <h4 className="text-[10px] font-black uppercase text-teal-400 mb-4 tracking-[0.3em] flex items-center gap-2">
+                <FileText size={14} /> Текст публикации
+              </h4>
+              <p className="text-white/90 text-sm leading-relaxed max-h-48 overflow-y-auto custom-scrollbar font-medium whitespace-pre-line">
+                {previewPost.content}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 6px;
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        .whitespace-pre-line {
+          white-space: pre-line;
+        }
+      `}</style>
     </div>
   );
 }
