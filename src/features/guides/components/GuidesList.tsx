@@ -105,7 +105,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
     : [];
 
   return (
-    <section className="py-12 md:py-20 bg-slate-950 text-white relative overflow-hidden" id="team">
+ <section className="py-12 md:py-24 bg-slate-950 text-white relative overflow-hidden" id="team">
       
       {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 pointer-events-none">

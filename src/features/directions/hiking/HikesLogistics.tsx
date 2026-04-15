@@ -3,6 +3,7 @@
 import React from 'react';
 import { Bus, Tent, Utensils, SignalHigh, ArrowRight } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const logisticsData = [
     {
@@ -63,10 +64,7 @@ export default function HikesLogistics() {
 
                 {/* --- 2. КАРТОЧКИ ЛОГИСТИКИ --- */}
                 <div ref={cardsView.ref}>
-                    <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                        <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                    </div>
+                 <SwipeHint />
 
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         

@@ -79,7 +79,7 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
   }, [activeTests]);
   
   return (
-    <section className="py-12 md:py-20 bg-slate-950 relative overflow-hidden border-t border-white/5">
+ <section className="py-12 md:py-24 bg-slate-950 relative overflow-hidden border-t border-white/5">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-violet-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">

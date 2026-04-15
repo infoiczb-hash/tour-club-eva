@@ -5,6 +5,7 @@ import {
   Shirt, Footprints, Briefcase, 
   Lightbulb, Dog, Coffee, Thermometer, CheckSquare, ChevronRight
 } from "lucide-react";
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 type TripDuration = "one-day" | "two-days";
 
@@ -74,12 +75,7 @@ export default function PackingList() {
                             : ["Вода (от 2л на человека)", "Солнцезащитный крем (SPF) и очки", "Купальник и пакет для мокрых вещей", "Средства гигиены", "Многоразовая посуда (миска, ложка, чашка)", "Фонарик (желательно налобный)"]}
                     />
                 </div>
-
-                {/* Подсказка "Мотай" */}
-                <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 text-teal-400 animate-pulse pointer-events-none">
-                    <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-                    <ChevronRight size={14} />
-                </div>
+                   <SwipeHint />
             </div>
 
             {/* Подсказки и Лайфхаки */}

@@ -118,6 +118,97 @@ export async function publishToTelegram(
   }
 }
 
+/**
+ * 🔥 НОВОЕ: Отправка карусели (MediaGroup) в Telegram с поддержкой Qstash и топиков.
+ */
+export async function publishMediaGroupToTelegram(
+  text: string,
+  imageUrls: string[],
+  isPublic: boolean = false,
+  options?: TelegramTopicOptions
+) {
+  const token = isPublic
+    ? env.TELEGRAM_PUBLIC_BOT_TOKEN
+    : env.TELEGRAM_BOT_TOKEN;
+
+  const chatId = isPublic
+    ? env.TELEGRAM_CHANNEL_ID
+    : env.TELEGRAM_ADMIN_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.error('publishMediaGroupToTelegram: не настроен .env');
+    return { success: false, error: 'Telegram credentials missing' };
+  }
+
+  try {
+    if (imageUrls.length === 0) return { success: false, error: 'Нет изображений' };
+    
+    // Если картинка одна — фолбэк на стандартную отправку
+    if (imageUrls.length === 1) {
+      return publishToTelegram(text, imageUrls[0], undefined, isPublic, options);
+    }
+
+    const tgApiUrl = `https://api.telegram.org/bot${token}/sendMediaGroup`;
+    const url = env.QSTASH_TOKEN 
+      ? `https://qstash.upstash.io/v2/publish/${tgApiUrl}` 
+      : tgApiUrl;
+
+    // Telegram ограничивает подпись (caption) до 1024 символов
+    const raw = text.substring(0, 1024);
+    const caption = raw.lastIndexOf(' ') > 900
+      ? raw.substring(0, raw.lastIndexOf(' ')) + '...'
+      : raw;
+
+    // В MediaGroup подпись вешается только на первый элемент
+    const media = imageUrls.map((imgUrl, index) => ({
+      type: 'photo',
+      media: imgUrl,
+      caption: index === 0 ? caption : undefined,
+      parse_mode: 'HTML'
+    }));
+
+    const body: Record<string, unknown> = {
+      chat_id: chatId,
+      media: media,
+    };
+
+    // Маршрутизация по топикам
+    if (options?.messageThreadId) {
+      body.message_thread_id = typeof options.messageThreadId === 'string' 
+        ? parseInt(options.messageThreadId, 10) 
+        : options.messageThreadId;
+    }
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (env.QSTASH_TOKEN) {
+      headers['Authorization'] = `Bearer ${env.QSTASH_TOKEN}`;
+      headers['Upstash-Forward-Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (env.QSTASH_TOKEN && data.messageId) {
+      return { success: true, qstashMessageId: data.messageId };
+    }
+
+    if (!data.ok && !env.QSTASH_TOKEN) {
+      return { success: false, error: `TG Error: ${data.description}` };
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error('publishMediaGroupToTelegram Error:', error);
+    return { success: false, error: 'Ошибка сети' };
+  }
+}
+
 // ─── ХЕЛПЕРЫ (ВОССТАНОВЛЕНЫ ИЗ ОРИГИНАЛА) ───────────────────────────────────
 
 /**

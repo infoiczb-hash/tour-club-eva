@@ -23,6 +23,7 @@ import CategoryForm from './views/CategoryForm';
 import { getGroupsManifest, GetGroupsManifestResult } from '@/features/admin/actions';
 import { GroupManifest } from './views/BookingsTab';
 import ScanTab from './views/ScanTab';
+import SmmTab from './views/SmmTab';
 
 // FORMS
 import TourForm from './TourForm'; 
@@ -73,7 +74,7 @@ import {
 type AdminActionResult = { success: boolean; error?: string; data?: any; [key: string]: any };
 
 // TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'members' | 'scan' ;
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' ;
 interface BookingItem {
   id: string;
   user_name: string;
@@ -779,6 +780,10 @@ const loadGroupsManifest = useCallback(async () => {
       {/* --- 12. Сканер QR --- */}
         {activeTab === 'scan' && (
             <ScanTab />
+        )}
+        {/* 👇 ДОБАВИЛИ РЕНДЕР ВКЛАДКИ SMM */}
+        {activeTab === 'smm' && (
+            <SmmTab />
         )}
             
       <AiAssistant />

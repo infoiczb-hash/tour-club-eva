@@ -561,6 +561,33 @@ model BalanceLog {
   @@map("balance_logs")
 }
 
+model ScheduledPost {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platform      String    // 'telegram', 'instagram', 'facebook'
+  format        String    @default("post") // 'post', 'story'
+  content       String    // Готовый текст поста
+  imageUrl      String?   @map("image_url") // Ссылка на готовую картинку
+  status        String    @default("draft") // 'draft', 'scheduled', 'published', 'failed'
+  scheduledFor  DateTime? @map("scheduled_for") @db.Timestamptz(6)
+  
+  sourceType    String    @map("source_type") // 'tour', 'blog', 'custom'
+  sourceId      String?   @map("source_id") @db.Uuid
+  sourceUrl     String?   @map("source_url")
+  
+  templateStyle String?   @map("template_style") // 'minimal', 'bright' и т.д.
+  
+  adminId       String?   @map("admin_id") @db.Uuid // Кто создал/запланировал
+  errorMessage  String?   @map("error_message") // Ошибка при публикации
+  metadata      Json?     // Хештеги, ID сообщения в ТГ и т.д.
+  
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("scheduled_posts")
+}
+
 // ─────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────

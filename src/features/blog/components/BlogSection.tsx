@@ -97,7 +97,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
   if (!posts || posts.length === 0) return null;
 
   return (
-    <section className="relative w-full bg-[#0B1120] py-12 md:py-20 overflow-hidden border-t border-white/5" id="blog">
+  <section className="relative w-full bg-[#0B1120] py-12 md:py-24 overflow-hidden border-t border-white/5" id="blog">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-teal-500/5 md:blur-[120px] rounded-full opacity-30" />
       </div>

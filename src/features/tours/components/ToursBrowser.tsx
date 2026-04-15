@@ -14,6 +14,7 @@ import dynamic from 'next/dynamic';
 import TourCard from './TourCard';
 import { useModalStore } from '@/shared/store/useModalStore'; 
 import { cn } from '@/lib/utils';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const CalendarView = dynamic(() => import('./CalendarView'), {
   ssr: true,
@@ -315,10 +316,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                             </div>
                             
                             {/* Подсказка для свайпа на мобилках */}
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
-                                <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
-                                <ArrowRight size={14} className="text-teal-500 animate-pulse" />
-                            </div>
+                           <SwipeHint />
                         </div>
 
                         {/* Кнопка "Показать еще" */}
@@ -356,10 +354,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                                 ))}
                             </div>
                             
-                            <div className="flex md:hidden items-center justify-end gap-1.5 mt-2 pr-4 text-slate-300 pointer-events-none">
-                                <span className="text-[12px] font-bold uppercase tracking-widest">Листай вбок</span>
-                                <ArrowRight size={14} className="text-teal-500 animate-pulse" />
-                            </div>
+                           <SwipeHint />
                         </div>
                     </section>
                 )}

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Anchor, XCircle, ShieldAlert, ChevronRight } from "lucide-react";
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const rules = [
   { id: 1, image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771522497/1_fnmpfs.jpg", title: "Берег — не место для отдыха", desc: "Не садитесь в байдарку на берегу. Это ломает каркас." },
@@ -66,10 +67,7 @@ export default function KayakRules() {
               </div>
             ))}
           </div>
-          <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
-          </div>
+         <SwipeHint />
         </div>
 
         <div className="mt-6 md:mt-8 p-6 md:p-8 rounded-[2.5rem] bg-gradient-to-r from-teal-900/40 to-slate-900 border border-teal-500/20 flex flex-col md:flex-row items-center gap-6 md:gap-8 animate-in fade-in zoom-in-95 duration-700 fill-mode-both">

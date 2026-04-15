@@ -1,3 +1,4 @@
+// src/features/admin/actions/ai.ts
 'use server';
 
 import { generateObject, generateText } from 'ai';
@@ -9,7 +10,7 @@ import { withAdminAudit } from '@/lib/audit';
 import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // === 1. КОНФИГУРАЦИЯ ===
-const model = google('gemini-1.5-flash');
+const model = google('gemini-1.5-pro'); 
 
 // === 2. СХЕМЫ ДАННЫХ (ZOD) ===
 const TourAiSchema = z.object({
@@ -56,6 +57,11 @@ const BlogAiSchema = z.object({
   read_time: z.string()
 });
 
+const SmmPostSchema = z.object({
+  text: z.string().describe('Основной текст поста, разделенный на абзацы. Без хештегов.'),
+  hashtags: z.array(z.string()).describe('Массив хештегов без символа #, например ["турклубэва", "горы"]')
+});
+
 // === 3. ТИПЫ ЗАДАЧ ===
 export type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
@@ -64,20 +70,21 @@ export type AiTaskType =
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
-  | { mode: 'smm_post'; context: unknown; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' }
+  | { mode: 'smm_post'; context: string; platform: 'instagram' | 'telegram' | 'facebook' | 'threads'; tone?: 'fun' | 'epic' | 'strict' | 'info' | 'sell' }
   | { mode: 'chat'; messages: { role: 'user' | 'assistant'; content: string }[] };
 
-// === 4. ТИПЫ ВОЗВРАЩАЕМЫХ ЗНАЧЕНИЙ (СТРОГИЙ DISCRIMINATED UNION) ===
 export type TourAiData = z.infer<typeof TourAiSchema>;
 export type BlogAiData = z.infer<typeof BlogAiSchema>;
 export type ChecklistData = z.infer<typeof ChecklistSchema>;
+export type SmmPostData = z.infer<typeof SmmPostSchema>;
 
 export type PerformAiTaskResult =
-  | { success: true; data: TourAiData }                                    // generate_tour, parse_tour_text
-  | { success: true; data: BlogAiData }                                    // generate_blog
-  | { success: true; data: ChecklistData }                                 // generate_checklist
-  | { success: true; data: string }                                        // improve_text, smm_post, chat, generate_image
-  | { success: true; data: Record<string, unknown> }                       // fallback для parse (на случай несоответствия схеме)
+  | { success: true; data: TourAiData }                                    
+  | { success: true; data: BlogAiData }                                    
+  | { success: true; data: ChecklistData }                                 
+  | { success: true; data: SmmPostData }                                   
+  | { success: true; data: string }                                        
+  | { success: true; data: Record<string, unknown> }                       
   | { success: false; error: string };
 
 // === 5. ГЛАВНЫЙ ЭКШЕН ===
@@ -86,7 +93,6 @@ export const performAiTask = withAdminAuth(
     actionName: 'PERFORM_AI_TASK',
     getTargetId: (task: AiTaskType) => task.mode,
   })(async (task: AiTaskType): Promise<PerformAiTaskResult> => {
-    // Rate Limiting
     try {
       const ip = await getClientIp();
       const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
@@ -101,7 +107,6 @@ export const performAiTask = withAdminAuth(
     }
 
     try {
-      // --- ГЕНЕРАЦИЯ КАРТИНКИ (DALL-E) ---
       if (task.mode === 'generate_image') {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) return { success: false, error: "Нет API ключа OpenAI (.env)" };
@@ -115,7 +120,6 @@ export const performAiTask = withAdminAuth(
         return { success: true, data: data?.[0]?.url ?? '' };
       }
 
-      // --- GEMINI ЗАДАЧИ ---
       if (task.mode === 'generate_tour') {
         const { object } = await generateObject({
           model, schema: TourAiSchema,
@@ -164,35 +168,36 @@ export const performAiTask = withAdminAuth(
       }
 
       if (task.mode === 'smm_post') {
-        const platformPrompts = {
-          instagram: 'Instagram. Визуал, эмодзи, абзацы, хештеги.',
-          telegram: 'Telegram. Информативно, Markdown разметка, без воды.',
-          facebook: 'Facebook. Официально, дружелюбно.',
+        const platformPrompts: Record<string, string> = {
+          instagram: 'Instagram. Короткие абзацы (не более 2-3 строк). Используй эмодзи. Призыв к действию: "Ссылка на бронирование в шапке профиля". Никаких кликабельных ссылок в самом тексте.',
+          telegram: 'Telegram. Структурированно. Используй Markdown (**жирный** для акцентов).',
+          facebook: 'Facebook. Официально, информативно, для взрослой аудитории.',
           threads: 'Threads. Коротко, дерзко, хук в начале.'
         };
 
-        const tonePrompts = {
+        const tonePrompts: Record<string, string> = {
           fun: "Стиль: Веселый, хайповый, на 'ты', много эмодзи.",
           epic: "Стиль: Эпичный, вдохновляющий, 'зов природы', кинематографично.",
-          strict: "Стиль: Сдержанный, по делу, только факты."
+          strict: "Стиль: Сдержанный, по делу, только факты.",
+          info: "Стиль: Информативный, спокойный, экспертный.",
+          sell: "Стиль: Продающий, акцент на дефицит мест (FOMO) и выгоду."
         };
 
         const selectedTone = tonePrompts[task.tone || 'fun'];
+        const selectedPlatform = platformPrompts[task.platform || 'telegram'];
 
-        const { text } = await generateText({
+        const { object } = await generateObject({
           model,
-          system: `Ты — SMM-менеджер турклуба. Твоя задача — написать пост.`,
-          prompt: `
-            ПЛАТФОРМА: ${platformPrompts[task.platform]}
+          schema: SmmPostSchema,
+          system: `Ты — профессиональный SMM-маркетолог туристического клуба "ЭВА". 
+            Твоя задача — писать вовлекающие, продающие посты.
             НАСТРОЕНИЕ: ${selectedTone}
-
-            ДАННЫЕ ТУРА (Контекст):
-            ${JSON.stringify(task.context)}
-
-            ЗАДАЧА: Напиши готовый к публикации пост. В конце призыв к действию.
-          `,
+            ПЛАТФОРМА: ${selectedPlatform}
+            Выдай результат строго в формате JSON.`,
+          prompt: `Напиши пост на основе этих данных:\n${task.context}`,
         });
-        return { success: true, data: text };
+        
+        return { success: true, data: object };
       }
 
       if (task.mode === 'chat') {

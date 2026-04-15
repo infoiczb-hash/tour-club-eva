@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import SwipeHint from '@/shared/ui/SwipeHint';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -104,7 +105,7 @@ export default function Philosophy() {
   };
 
   return (
-    <section ref={containerRef} className="relative bg-slate-950 py-12 md:py-16 overflow-hidden border-t border-white/5">
+   <section className="relative bg-slate-950 py-12 md:py-24 overflow-hidden border-t border-white/5">
       
       <div className="absolute inset-0 z-0 pointer-events-none">
        <div className="hidden md:block absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full" />
@@ -114,7 +115,7 @@ export default function Philosophy() {
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             
           {/* LEFT: STICKY CONTENT */}
-          <div className="lg:w-1/3 lg:sticky lg:top-32 h-fit z-30 flex flex-col items-start">
+         <div className="lg:w-1/3 lg:sticky lg:top-32 h-fit z-30 flex flex-col items-start pt-4 md:pt-8">
             <div
               ref={headerRef}
               className={cn(
@@ -180,12 +181,9 @@ export default function Philosophy() {
 
           {/* RIGHT: SCROLLABLE CARDS */}
           <div className="lg:w-2/3 min-w-0 flex flex-col">
-            <div className="lg:hidden mb-6 flex items-center justify-between pl-2">
-              <span className="text-s font-black uppercase tracking-widest text-slate-300">Направления</span>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-white/5 shadow-inner animate-pulse pointer-events-none">
-                <span className="text-xs font-bold uppercase tracking-widest text-teal-400">Листай вбок</span>
-                <MoveRight size={14} className="text-teal-400 animate-pulse" />
-              </div>
+           <div className="lg:hidden mb-6 flex items-center justify-between pl-2">
+  <span className="text-s font-black uppercase tracking-widest text-slate-300">Направления</span>
+  <SwipeHint />
             </div>
 
            <div

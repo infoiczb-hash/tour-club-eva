@@ -499,19 +499,28 @@ const handleAiText = async () => {
           <div className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 p-6 rounded-3xl border border-pink-100 dark:border-pink-900/30 flex flex-col sm:flex-row justify-between items-center gap-4">
              <div><h4 className="text-xs font-black text-pink-700 dark:text-pink-400 uppercase flex items-center gap-2 mb-1"><Share2 size={14}/> SMM Announce</h4><p className="text-[12px] text-pink-600/70 dark:text-pink-400/70 font-medium">Generate social media posts</p></div>
              <div className="flex gap-2 w-full sm:w-auto">
-                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
-                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'instagram' }) as PerformAiTaskResult;
-                     if(res.success && typeof res.data === 'string') {
-                         navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
-                     } else if (!res.success) {
+               <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
+                     // ЯВНОЕ ПРИВЕДЕНИЕ ТИПА:
+                     const res = (await performAiTask({ mode: 'smm_post', context: JSON.stringify(formData), platform: 'instagram' })) as PerformAiTaskResult;
+                     
+                     if (res.success) {
+                         const data = res.data as { text: string; hashtags: string[] };
+                         const finalPost = `${data.text}\n\n${data.hashtags.map(h => `#${h}`).join(' ')}`;
+                         navigator.clipboard.writeText(finalPost).then(() => alert('✅ Copied!'));
+                     } else {
                          alert('Error: ' + res.error);
                      }
                  }}><Instagram size={14} className="mr-2 text-pink-600"/> Instagram</Button>
-                <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
-                     const res = await performAiTask({ mode: 'smm_post', context: formData, platform: 'telegram' }) as PerformAiTaskResult;
-                     if(res.success && typeof res.data === 'string') {
-                         navigator.clipboard.writeText(res.data).then(() => alert('✅ Copied!'));
-                     } else if (!res.success) {
+                 
+                 <Button type="button" variant="secondary" className="bg-white dark:bg-pink-950/50 border-none shadow-sm h-9 text-[12px] flex-1" onClick={async () => {
+                     // ЯВНОЕ ПРИВЕДЕНИЕ ТИПА:
+                     const res = (await performAiTask({ mode: 'smm_post', context: JSON.stringify(formData), platform: 'telegram' })) as PerformAiTaskResult;
+                     
+                     if (res.success) {
+                         const data = res.data as { text: string; hashtags: string[] };
+                         const finalPost = `${data.text}\n\n${data.hashtags.map(h => `#${h}`).join(' ')}`;
+                         navigator.clipboard.writeText(finalPost).then(() => alert('✅ Copied!'));
+                     } else {
                          alert('Error: ' + res.error);
                      }
                  }}><Send size={14} className="mr-2 text-sky-500"/> Telegram</Button>

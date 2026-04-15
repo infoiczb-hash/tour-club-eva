@@ -1,6 +1,7 @@
 import { Clock, Coffee, Waves, Tent, Flag, Sparkles, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -79,10 +80,7 @@ export default function Timeline() {
             })}
           </div>
 
-          <div className="md:hidden absolute bottom-2 right-4 flex items-center gap-1 animate-pulse pointer-events-none">
-            <span className="text-[12px] font-bold uppercase tracking-widest text-white/50">Мотай</span>
-            <ChevronRight size={14} className="text-teal-400" />
-          </div>
+          <SwipeHint />
         </div>
       </div>
     </section>
