@@ -14,18 +14,15 @@ import { Prisma } from '@prisma/client';
 export type SmmSource = {
   id: string;
   title: string;
-  type: 'tour' | 'blog';
+  type: 'tour' | 'blog' | 'calendar'; // Добавлен calendar
   image: string | null;
   categoryColor: string;
-  // ✅ П1: Добавляем расширенные поля для TourCard
-  categoryTitle?: string; 
+  categoryTitle?: string;
   price?: number;
-  priceMember?: number; 
-  priceChild?: number;  
-  currency?: string;    
-  location?: string;    
-  duration?: string;    
-  tags?: string[];      
+  currency?: string;
+  location?: string;
+  duration?: string;
+  tags?: string[];
   date?: Date | string | null;
 };
 
@@ -39,10 +36,7 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
           id: true, 
           title: true, 
           coverImage: true, 
-          // ✅ П1: Вытягиваем всю экономику и метаданные тура
           price: true,
-          priceMember: true,
-          priceChild: true,
           currency: true,
           location: true,
           duration: true,
@@ -53,7 +47,6 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
             take: 1,
             select: { startDate: true }
           },
-          // ✅ П1: Берем реальное название категории
           category: { select: { color: true, title: true } }
         },
         orderBy: { createdAt: 'desc' },
@@ -72,15 +65,19 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
       }),
     ]);
 
+    // Маппинг туров с безопасным парсингом тегов
     const tourSources: SmmSource[] = tours.map(t => {
       const firstDate = t.tourDates?.[0]?.startDate || null;
       
-      // Безопасный парсинг тегов
       let parsedTags: string[] = [];
       if (Array.isArray(t.tags)) {
         parsedTags = t.tags as string[];
       } else if (typeof t.tags === 'string') {
-        try { parsedTags = JSON.parse(t.tags); } catch (e) { parsedTags = []; }
+        try { 
+          parsedTags = JSON.parse(t.tags); 
+        } catch (e) { 
+          parsedTags = []; 
+        }
       }
 
       return {
@@ -89,15 +86,13 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
         type: 'tour',
         image: t.coverImage,
         price: t.price ? Number(t.price) : undefined,
-        priceMember: t.priceMember ? Number(t.priceMember) : undefined,
-        priceChild: t.priceChild ? Number(t.priceChild) : undefined,
         currency: t.currency || 'MDL',
         location: t.location || '',
         duration: t.duration || '',
         tags: parsedTags,
         date: firstDate,
         categoryColor: t.category?.color || 'teal',
-        categoryTitle: t.category?.title || 'Тур',
+        categoryTitle: t.category?.title || 'ТУР',
       };
     });
 
@@ -107,10 +102,20 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
       type: 'blog',
       image: p.image,
       categoryColor: 'violet',
-      categoryTitle: 'Блог',
+      categoryTitle: 'БЛОГ'
     }));
 
-    return { success: true, data: [...tourSources, ...blogSources] };
+    // Добавляем виртуальный источник для АФИШИ
+    const calendarSource: SmmSource = {
+      id: 'monthly_calendar',
+      title: '📅 АФИША НА МЕСЯЦ',
+      type: 'calendar',
+      image: tours[0]?.coverImage || null, // Берем обложку любого тура для фона
+      categoryColor: 'amber',
+      categoryTitle: 'АФИША'
+    };
+
+    return { success: true, data: [calendarSource, ...tourSources, ...blogSources] };
   } catch (error) {
     console.error('getSmmSourcesAction Error:', error);
     return { success: false, error: 'Ошибка при загрузке источников' };
@@ -130,7 +135,7 @@ export type SaveScheduledPostPayload = {
   sourceId?: string | null;
   sourceUrl?: string | null;
   templateStyle?: string | null;
-  metadata?: Record<string, unknown>; 
+  metadata?: Record<string, unknown>; // Строгая типизация
 };
 
 export const saveScheduledPostAction = withAdminAuth(
@@ -200,7 +205,7 @@ export const generateSmmContentAction = withAdminAuth(async ({
   audience,
   steps, 
 }: {
-  sourceType: 'tour' | 'blog';
+  sourceType: 'tour' | 'blog' | 'calendar';
   sourceId: string;
   platform: 'instagram' | 'telegram' | 'facebook' | 'threads';
   tone: 'fun' | 'epic' | 'info' | 'sell' | 'strict';
@@ -212,6 +217,7 @@ export const generateSmmContentAction = withAdminAuth(async ({
     let contextData = '';
     const siteUrl = env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
+    // 1. Формируем контекстную строку для ИИ
     if (sourceType === 'tour') {
       const tour = await prisma.tour.findUnique({
         where: { id: sourceId },
@@ -237,6 +243,26 @@ export const generateSmmContentAction = withAdminAuth(async ({
       const tourDateStr = firstDate ? new Date(firstDate).toLocaleDateString('ru-RU') : 'Открытая дата';
       
       contextData = `ТИП: Анонс тура\nНАЗВАНИЕ: ${tour.title}\nЛОКАЦИЯ: ${tour.location}\nДЛИТЕЛЬНОСТЬ: ${tour.duration}\nДАТА: ${tourDateStr}\nЦЕНА: ${tour.price} ${tour.currency}\nОПИСАНИЕ: ${tour.subtitle || ''}. ${tour.description?.substring(0, 500) || ''}...\nССЫЛКА: ${siteUrl}/tour/${sourceId}`;
+    
+    } else if (sourceType === 'calendar') {
+      // Подтягиваем 10 ближайших активных туров для генерации афиши
+      const upcomingTours = await prisma.tourDate.findMany({
+        where: { 
+          startDate: { gte: new Date() }, 
+          isActive: true, 
+          tour: { isActive: true } 
+        },
+        orderBy: { startDate: 'asc' },
+        take: 10,
+        include: { tour: { select: { title: true, price: true, currency: true } } }
+      });
+      
+      const scheduleString = upcomingTours.map(t => 
+        `- ${t.startDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}: ${t.tour.title} (${t.tour.price} ${t.tour.currency})`
+      ).join('\n');
+
+      contextData = `ТИП: Афиша туров на ближайший месяц.\nРАСПИСАНИЕ МЕРОПРИЯТИЙ:\n${scheduleString}`;
+
     } else {
       const post = await prisma.blog.findUnique({
         where: { id: sourceId },
@@ -247,7 +273,8 @@ export const generateSmmContentAction = withAdminAuth(async ({
       contextData = `ТИП: Анонс статьи блога\nНАЗВАНИЕ: ${post.title}\nОПИСАНИЕ: ${post.excerpt || post.content.substring(0, 500)}...\nССЫЛКА: ${siteUrl}/blog/${sourceId}`;
     }
 
-   const result = (await performAiTask({
+    // 2. Вызываем наш центральный AI модуль и явно указываем тип возвращаемых данных
+    const result = (await performAiTask({
       mode: 'smm_post',
       context: `ЦЕЛЬ ПОСТА: ${goal === 'sell' ? 'Продать места' : 'Прогреть аудиторию'}\nАУДИТОРИЯ: ${audience === 'warm' ? 'Теплая (знают нас)' : 'Холодная'}\n\n${contextData}`,
       platform,
@@ -274,6 +301,7 @@ export const generateSmmContentAction = withAdminAuth(async ({
   }
 });
 
+// Строгий тип для экшена заморозки
 export type FreezeAndPublishPayload = {
   imageUrls: string[];
   content: string;
@@ -286,6 +314,7 @@ export const freezeAndPublishSmmAction = withAdminAuth(
     actionName: 'FREEZE_AND_PUBLISH_SMM',
     getTargetId: (payload: FreezeAndPublishPayload) => 'telegram_post',
   })(async (payload: FreezeAndPublishPayload) => {
+    // Распаковываем payload
     const { imageUrls, content, platform, isPublic = false } = payload;
     
     try {
@@ -295,6 +324,7 @@ export const freezeAndPublishSmmAction = withAdminAuth(
 
       // 1. ЗАМОРОЗКА: Скачиваем динамические OG картинки и кладем в Storage
       for (const relUrl of imageUrls) {
+        // Превращаем относительный путь /api/og... в абсолютный
         const absoluteUrl = relUrl.startsWith('http') ? relUrl : `${siteUrl}${relUrl}`;
 
         const res = await fetch(absoluteUrl);
@@ -302,8 +332,9 @@ export const freezeAndPublishSmmAction = withAdminAuth(
 
         const arrayBuffer = await res.arrayBuffer();
         
+        // Генерируем уникальное имя файла
         const fileName = `smm-${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
-        const filePath = `smm/${fileName}`; 
+        const filePath = `smm/${fileName}`;
 
         const { error } = await supabase.storage
           .from('tours-images')
@@ -318,11 +349,9 @@ export const freezeAndPublishSmmAction = withAdminAuth(
         permanentUrls.push(data.publicUrl);
       }
 
-      // 2. ОТПРАВКА В TELEGRAM (ПРОБЛЕМА 7 - ИСПРАВЛЕНА)
-      // 🔥 Теперь мы ВСЕГДА отправляем в Telegram, даже если текст сгенерирован для Инсты. 
-      // isPublic = false означает, что улетит в админский/тестовый канал.
+      // 2. ОТПРАВКА В TELEGRAM
+      // Убрано ограничение `if (platform === 'telegram')`, теперь публикует всегда
       const { publishMediaGroupToTelegram } = await import('@/features/admin/actions/telegram');
-      
       const tgRes = await publishMediaGroupToTelegram(content, permanentUrls, isPublic);
 
       if (!tgRes.success) {
@@ -336,3 +365,12 @@ export const freezeAndPublishSmmAction = withAdminAuth(
     }
   })
 );
+export const deleteScheduledPostAction = withAdminAuth(async (id: string) => {
+  try {
+    await prisma.scheduledPost.delete({ where: { id } });
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'Ошибка при удалении поста' };
+  }
+}); 

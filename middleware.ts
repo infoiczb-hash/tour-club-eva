@@ -8,12 +8,12 @@ export async function middleware(request: NextRequest) {
   // ✅ ПРОВЕРКА ОКРУЖЕНИЯ: Включаем HTTPS-апгрейд только в продакшене
   const isProd = process.env.NODE_ENV === 'production';
 
-  // CSP — строится один раз для всех маршрутов
+// CSP — строится один раз для всех маршрутов
   const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' https://res.cloudinary.com https://*.supabase.co blob: data:;
+    img-src 'self' https://res.cloudinary.com https://*.supabase.co https://api.telegram.org https://t.me blob: data:;
     media-src 'self' https://res.cloudinary.com blob: data:;
     connect-src 'self' https://*.supabase.co https://res.cloudinary.com https://va.vercel-scripts.com;
     font-src 'self' data: https://fonts.gstatic.com;
