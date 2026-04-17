@@ -149,9 +149,10 @@ model TourDate {
   bookings  Booking[]
   waitlists Waitlist[]
 
-  @@index([tourId])
+@@index([tourId])
   @@index([startDate])
   @@index([endDate, startDate])
+  @@index([startDate, isActive])
   @@map("tour_dates")
 }
 
@@ -206,11 +207,14 @@ model Booking {
   tourDate  TourDate?  @relation(fields: [tourDateId], references: [id], onDelete: SetNull)
   promoCode PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
 
-  @@index([tourId])
+ @@index([tourId])
   @@index([status])
   @@index([memberId])
   @@index([shortId]) 
   @@index([phone, tourDateId])
+  @@index([payerTgChatId])
+  @@index([memberId, status])
+  @@index([tourDateId, status])
   @@map("bookings")
 }
 
@@ -232,6 +236,8 @@ model Waitlist {
   @@index([tourId])
   @@index([tourDateId])
   @@index([memberId]) 
+  @@index([phone])
+  @@index([tourId, tourDateId])
   @@map("waitlists")
 }
 
@@ -437,8 +443,10 @@ model MemberProfile {
   tags          String[]  @default([])   // Сегментация: ["vip", "ambassador", "photographer"]
   balanceLogs   BalanceLog[]            // История изменений баланса
 
-  @@index([phone])
+ @@index([phone])
   @@index([userId])
+  @@index([level])
+  @@index([totalTours])
   @@map("member_profiles")
 }
 // ✅ НОВАЯ ТАБЛИЦА: Центр Уведомлений / Логи (v2.0)
@@ -455,7 +463,8 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
- @@index([memberId, isRead])
+@@index([memberId, isRead])
+  @@index([memberId, isRead, createdAt])
   @@map("notifications")
 }
 

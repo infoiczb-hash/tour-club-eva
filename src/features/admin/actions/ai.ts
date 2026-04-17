@@ -9,23 +9,26 @@ import { withAdminAuth } from '@/lib/auth';
 import { withAdminAudit } from '@/lib/audit';
 import { adminRateLimit, getClientIp } from '@/lib/rate-limit';
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis';
+import * as Sentry from '@sentry/nextjs';
+import crypto from 'crypto';
 
 // ============================================================================
 // 1. КОНФИГУРАЦИЯ ИИ
 // ============================================================================
-const model = google('gemini-2.5-flash');
+const primaryModel = google('gemini-2.5-flash');
+const fallbackModel = createGroq({ apiKey: process.env.GROQ_API_KEY! })('llama3-70b-8192');
 
 // ============================================================================
 // 2. СТРУКТУРИРОВАННОЕ ЛОГИРОВАНИЕ (АУДИТ)
 // ============================================================================
-// Структурированный JSON-лог — удобно парсить в Sentry, Datadog, Loki и т.д.
 function logAiError(mode: string, error: unknown, meta?: Record<string, unknown>) {
   console.error(JSON.stringify({
     level: 'error',
     source: 'performAiTask',
     mode,
-    error: error instanceof Error 
-      ? { message: error.message, stack: error.stack } 
+    error: error instanceof Error
+      ? { message: error.message, stack: error.stack }
       : String(error),
     ...meta,
     ts: new Date().toISOString(),
@@ -148,18 +151,18 @@ export type ChecklistData = z.infer<typeof ChecklistSchema>;
 export type SmmPostData = z.infer<typeof SmmPostSchema>;
 
 export type PerformAiTaskResult =
-  | { success: true; mode: 'generate_tour';      data: TourAiData }
-  | { success: true; mode: 'parse_tour_text';    data: TourAiData }
-  | { success: true; mode: 'generate_blog';      data: BlogAiData }
+  | { success: true; mode: 'generate_tour'; data: TourAiData }
+  | { success: true; mode: 'parse_tour_text'; data: TourAiData }
+  | { success: true; mode: 'generate_blog'; data: BlogAiData }
   | { success: true; mode: 'generate_checklist'; data: ChecklistData }
-  | { success: true; mode: 'smm_post';           data: SmmPostData }
-  | { success: true; mode: 'generate_image';     data: string }
-  | { success: true; mode: 'improve_text';       data: string }
-  | { success: true; mode: 'chat';               data: string }
+  | { success: true; mode: 'smm_post'; data: SmmPostData }
+  | { success: true; mode: 'generate_image'; data: string }
+  | { success: true; mode: 'improve_text'; data: string }
+  | { success: true; mode: 'chat'; data: string }
   | { success: false; error: string };
 
 // ============================================================================
-// 6. RAG: КОНТЕКСТ ИЗ БД ДЛЯ ВНУТРЕННЕГО ЧАТА (ИСПРАВЛЕНЫ PRISMA СВЯЗИ)
+// 6. RAG: КОНТЕКСТ ИЗ БД ДЛЯ ВНУТРЕННЕГО ЧАТА
 // ============================================================================
 interface UpcomingTour {
   title: string;
@@ -187,20 +190,19 @@ async function loadChatContext(): Promise<ChatDbContext> {
     const now = new Date();
     const in60days = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
 
-    // ✅ ИСПРАВЛЕНИЕ БАЗЫ: Адаптировано под твою реальную схему prisma
     const [tours, posts] = await Promise.all([
       prisma.tour.findMany({
         where: {
-          isActive: true, // исправлено с isPublished
-          tourDates: { some: { startDate: { gte: now, lte: in60days }, isActive: true } } // исправлено с dates.date
+          isActive: true,
+          tourDates: { some: { startDate: { gte: now, lte: in60days }, isActive: true } }
         },
         select: {
           title: true,
-          price: true, // исправлено с price_adult
+          price: true,
           currency: true,
           location: true,
           difficulty: true,
-          tourDates: { // исправлено с dates
+          tourDates: {
             where: { startDate: { gte: now, lte: in60days }, isActive: true },
             select: { startDate: true },
             orderBy: { startDate: 'asc' },
@@ -211,10 +213,10 @@ async function loadChatContext(): Promise<ChatDbContext> {
         take: 10,
       }),
 
-      prisma.blog.findMany({ // исправлено с blogPost
-        where: { isActive: true }, // исправлено с isPublished
-        select: { title: true, blogCategory: { select: { slug: true } }, date: true }, // исправлено
-        orderBy: { date: 'desc' }, // исправлено
+      prisma.blog.findMany({
+        where: { isActive: true },
+        select: { title: true, blogCategory: { select: { slug: true } }, date: true },
+        orderBy: { date: 'desc' },
         take: 5,
       }),
     ]);
@@ -265,7 +267,78 @@ function formatContextForPrompt(ctx: ChatDbContext): string {
 }
 
 // ============================================================================
-// 7. ГЛАВНЫЙ ЭКШЕН И МАРШРУТИЗАТОР (CONTROLLER)
+// 7. КЭШИРОВАНИЕ И ХЕЛПЕРЫ УСТОЙЧИВОСТИ
+// ============================================================================
+
+function isQuotaExceededError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.includes('quota') || msg.includes('429') || msg.includes('exceeded');
+}
+
+function generateCacheKey(mode: string, params: Record<string, unknown>): string {
+  const serialized = JSON.stringify({ mode, ...params });
+  const hash = crypto.createHash('sha256').update(serialized).digest('hex');
+  return `ai:${mode}:${hash}`;
+}
+
+async function getCachedResult<T>(key: string): Promise<T | null> {
+  try {
+    const data = await redis.get(key);
+    if (typeof data === 'string') {
+      return JSON.parse(data) as T;
+    }
+  } catch {
+    // игнорируем ошибки Redis – просто идём в AI
+  }
+  return null;
+}
+
+async function setCachedResult<T>(key: string, value: T, ttlSeconds = 86400): Promise<void> {
+  try {
+    await redis.set(key, JSON.stringify(value), { ex: ttlSeconds });
+  } catch {
+    // не критично
+  }
+}
+
+async function withAiFallback<T>(
+  mode: string,
+  cacheParams: Record<string, unknown>,
+  generateFn: (model: any) => Promise<T>
+): Promise<T> {
+  const cacheKey = generateCacheKey(mode, cacheParams);
+  const cached = await getCachedResult<T>(cacheKey);
+  if (cached) {
+    logAiInfo(mode, { cacheHit: true });
+    return cached;
+  }
+
+  try {
+    const result = await generateFn(primaryModel);
+    await setCachedResult(cacheKey, result);
+    return result;
+  } catch (error) {
+    if (isQuotaExceededError(error)) {
+      Sentry.captureMessage(`Gemini quota exceeded for mode: ${mode}`, {
+        level: 'warning',
+        tags: { mode },
+      });
+      logAiInfo(mode, { fallback: 'groq' });
+      try {
+        const result = await generateFn(fallbackModel);
+        await setCachedResult(cacheKey, result);
+        return result;
+      } catch (fallbackError) {
+        logAiError(mode, fallbackError);
+        throw fallbackError;
+      }
+    }
+    throw error;
+  }
+}
+
+// ============================================================================
+// 8. ГЛАВНЫЙ ЭКШЕН И МАРШРУТИЗАТОР (CONTROLLER)
 // ============================================================================
 export const performAiTask = withAdminAuth(
   withAdminAudit({
@@ -273,7 +346,6 @@ export const performAiTask = withAdminAuth(
     getTargetId: (task: AiTaskType) => task.mode,
   })(async (task: AiTaskType): Promise<PerformAiTaskResult> => {
 
-    // Rate limit
     try {
       const ip = await getClientIp();
       const { success: rateLimitSuccess } = await adminRateLimit.limit(ip);
@@ -302,7 +374,6 @@ export const performAiTask = withAdminAuth(
         try {
           const groq = createGroq({ apiKey: groqKey });
 
-          // Расширяем промпт через быструю Llama 3
           const { text: enhancedPrompt } = await generateText({
             model: groq('llama3-70b-8192'),
             system: `You are an expert Flux image generation prompt engineer.
@@ -322,7 +393,6 @@ Otherwise:
             return { success: false, error: 'Запрос содержит недопустимый контент и заблокирован.' };
           }
 
-          // Генерируем картинку через Fal.ai
           const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
             method: 'POST',
             headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
@@ -350,10 +420,14 @@ Otherwise:
       // GENERATE TOUR
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_tour') {
-        const { object } = await generateObject({
-          model,
-          schema: TourAiSchema,
-          system: `${EVA_BRAND_CONTEXT}
+        const result = await withAiFallback(
+          'generate_tour',
+          { prompt: task.prompt },
+          async (model) => {
+            const { object } = await generateObject({
+              model,
+              schema: TourAiSchema,
+              system: `${EVA_BRAND_CONTEXT}
 
 Ты генерируешь карточку тура для сайта клуба.
 Правила:
@@ -363,19 +437,26 @@ Otherwise:
 - faq — 3–5 вопросов, которые реально задают перед таким туром
 - meta_title — до 60 символов, с ключевым словом
 - Если данные не указаны в запросе — придумывай логично, но не пиши конкретные цены и даты`,
-          prompt: `Создай карточку тура: «${task.prompt}». Валюта: MDL.`,
-        });
-        return { success: true, mode: 'generate_tour', data: object };
+              prompt: `Создай карточку тура: «${task.prompt}». Валюта: MDL.`,
+            });
+            return object;
+          }
+        );
+        return { success: true, mode: 'generate_tour', data: result };
       }
 
       // ─────────────────────────────────────────────
       // GENERATE BLOG
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_blog') {
-        const { object } = await generateObject({
-          model,
-          schema: BlogAiSchema,
-          system: `${EVA_BRAND_CONTEXT}
+        const result = await withAiFallback(
+          'generate_blog',
+          { topic: task.topic },
+          async (model) => {
+            const { object } = await generateObject({
+              model,
+              schema: BlogAiSchema,
+              system: `${EVA_BRAND_CONTEXT}
 
 Ты пишешь статью для блога турклуба.
 Правила:
@@ -384,19 +465,26 @@ Otherwise:
 - Используй подзаголовки (##), списки и выделения где уместно
 - Избегай банальных советов — пиши как опытный инструктор
 - SEO: естественно упоминай ключевые слова (активный отдых, туры, природа Днестра)`,
-          prompt: `Напиши статью для блога на тему: «${task.topic}».`,
-        });
-        return { success: true, mode: 'generate_blog', data: object };
+              prompt: `Напиши статью для блога на тему: «${task.topic}».`,
+            });
+            return object;
+          }
+        );
+        return { success: true, mode: 'generate_blog', data: result };
       }
 
       // ─────────────────────────────────────────────
-      // PARSE TOUR TEXT (Извлечение структуры)
+      // PARSE TOUR TEXT
       // ─────────────────────────────────────────────
       if (task.mode === 'parse_tour_text') {
-        const { object } = await generateObject({
-          model,
-          schema: TourAiSchema,
-          system: `${EVA_BRAND_CONTEXT}
+        const result = await withAiFallback(
+          'parse_tour_text',
+          { text: task.text },
+          async (model) => {
+            const { object } = await generateObject({
+              model,
+              schema: TourAiSchema,
+              system: `${EVA_BRAND_CONTEXT}
 
 Ты извлекаешь структуру тура из произвольного текста.
 
@@ -405,19 +493,26 @@ Otherwise:
 - Если поле не упоминается в тексте — оставь его пустым
 - ЗАПРЕЩЕНО выдумывать: цены, даты, места встречи, дистанции, программу дней
 - Если не уверен в значении — лучше оставь поле пустым, чем угадывать`,
-          prompt: `Извлеки структуру тура из следующего текста:\n\n${task.text}`,
-        });
-        return { success: true, mode: 'parse_tour_text', data: object };
+              prompt: `Извлеки структуру тура из следующего текста:\n\n${task.text}`,
+            });
+            return object;
+          }
+        );
+        return { success: true, mode: 'parse_tour_text', data: result };
       }
 
       // ─────────────────────────────────────────────
-      // GENERATE CHECKLIST (Список вещей)
+      // GENERATE CHECKLIST
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_checklist') {
-        const { object } = await generateObject({
-          model,
-          schema: ChecklistSchema,
-          system: `${EVA_BRAND_CONTEXT}
+        const result = await withAiFallback(
+          'generate_checklist',
+          { location: task.location, season: task.season, type: task.type },
+          async (model) => {
+            const { object } = await generateObject({
+              model,
+              schema: ChecklistSchema,
+              system: `${EVA_BRAND_CONTEXT}
 
 Ты составляешь список снаряжения для участника тура.
 Правила:
@@ -426,33 +521,48 @@ Otherwise:
 - Без дублей
 - Учитывай специфику региона (Приднестровье/Молдова, климат, рельеф)
 - Пиши конкретно: не «обувь», а «треккинговые ботинки или кроссовки с агрессивным протектором»`,
-          prompt: `Список вещей для тура.\nЛокация: ${task.location}\nТип активности: ${task.type}\nСезон: ${task.season}`,
-        });
-        return { success: true, mode: 'generate_checklist', data: object };
+              prompt: `Список вещей для тура.\nЛокация: ${task.location}\nТип активности: ${task.type}\nСезон: ${task.season}`,
+            });
+            return object;
+          }
+        );
+        return { success: true, mode: 'generate_checklist', data: result };
       }
 
       // ─────────────────────────────────────────────
-      // IMPROVE TEXT (Редактор)
+      // IMPROVE TEXT
       // ─────────────────────────────────────────────
       if (task.mode === 'improve_text') {
+        const tone = task.tone ?? 'selling';
         const toneInstructions: Record<string, string> = {
           selling: `Твоя цель — продать тур. Сделай текст эмоциональным, конкретным, с призывом к действию. Убери воду.`,
           fix: `Твоя цель — корректор и редактор. Исправь грамматику, пунктуацию. Убери повторы. Сохрани смысл оригинала.`,
           casual: `Твоя цель — сделать текст живым и понятным. Пиши как опытный друг.`
         };
 
-        const { text } = await generateText({
-          model,
-          system: `${EVA_BRAND_CONTEXT}\n\n${toneInstructions[task.tone ?? 'selling']}`,
-          prompt: `Улучши этот текст:\n\n${task.text}`,
-        });
-        return { success: true, mode: 'improve_text', data: text };
+        const result = await withAiFallback(
+          'improve_text',
+          { text: task.text, tone },
+          async (model) => {
+            const { text } = await generateText({
+              model,
+              system: `${EVA_BRAND_CONTEXT}\n\n${toneInstructions[tone]}`,
+              prompt: `Улучши этот текст:\n\n${task.text}`,
+            });
+            return text;
+          }
+        );
+        return { success: true, mode: 'improve_text', data: result };
       }
 
       // ─────────────────────────────────────────────
-      // SMM POST (Для SMM-Пульта)
+      // SMM POST
       // ─────────────────────────────────────────────
       if (task.mode === 'smm_post') {
+        const platform = task.platform ?? 'telegram';
+        const tone = task.tone ?? 'fun';
+        const steps = task.steps ?? [];
+
         const platformInstructions: Record<string, string> = {
           instagram: 'Платформа: Instagram. Короткие абзацы (2–3 строки). Эмодзи уместны. Без кликабельных ссылок в тексте.',
           telegram: 'Платформа: Telegram. Поддерживает Markdown. Вшивай ссылку в текст: [Забронировать тур](URL).',
@@ -468,26 +578,31 @@ Otherwise:
           sell: 'Стиль: продающий. Акцент на дефицит мест (FOMO) и конкретную выгоду.'
         };
 
-        const selectedTone = toneInstructions[task.tone ?? 'fun'];
-        const selectedPlatform = platformInstructions[task.platform ?? 'telegram'];
-        const targetSteps = task.steps && task.steps.length > 0 ? task.steps : [];
+        const selectedTone = toneInstructions[tone];
+        const selectedPlatform = platformInstructions[platform];
 
-        const structureInstruction = targetSteps.length > 0
-          ? `СЛАЙДЫ КАРУСЕЛИ: сгенерируй ровно ${targetSteps.length} слайдов.\nСтрогая последовательность:\n${targetSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n\nФУНДАМЕНТАЛЬНОЕ ПРАВИЛО: ты форматер, а не фантазёр. Используй данные ТОЛЬКО из контекста.`
+        const structureInstruction = steps.length > 0
+          ? `СЛАЙДЫ КАРУСЕЛИ: сгенерируй ровно ${steps.length} слайдов.\nСтрогая последовательность:\n${steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n\nФУНДАМЕНТАЛЬНОЕ ПРАВИЛО: ты форматер, а не фантазёр. Используй данные ТОЛЬКО из контекста.`
           : 'СЛАЙДЫ: не нужны. Оставь массив slides пустым. Напиши только текст поста (caption).';
 
-        const { object } = await generateObject({
-          model,
-          schema: SmmPostSchema,
-          system: `${EVA_BRAND_CONTEXT}\n\nТы — SMM-маркетолог. \n${selectedTone}\n${selectedPlatform}\n\n${structureInstruction}`,
-          prompt: `Напиши пост и тексты слайдов на основе этих данных (используй как источник фактов):\n\n${task.context}`,
-        });
-
-        return { success: true, mode: 'smm_post', data: object };
+        const result = await withAiFallback(
+          'smm_post',
+          { context: task.context, platform, tone, steps },
+          async (model) => {
+            const { object } = await generateObject({
+              model,
+              schema: SmmPostSchema,
+              system: `${EVA_BRAND_CONTEXT}\n\nТы — SMM-маркетолог. \n${selectedTone}\n${selectedPlatform}\n\n${structureInstruction}`,
+              prompt: `Напиши пост и тексты слайдов на основе этих данных (используй как источник фактов):\n\n${task.context}`,
+            });
+            return object;
+          }
+        );
+        return { success: true, mode: 'smm_post', data: result };
       }
 
       // ─────────────────────────────────────────────
-      // CHAT (Внутренний ассистент с RAG контекстом БД)
+      // CHAT
       // ─────────────────────────────────────────────
       if (task.mode === 'chat') {
         const dbContext = await loadChatContext();
@@ -500,7 +615,7 @@ Otherwise:
         });
 
         const { text } = await generateText({
-          model,
+          model: primaryModel, // для чата fallback не используем, чтобы не путать контекст
           system: `${EVA_BRAND_CONTEXT}
 
 Ты — EVA, стратегический AI-ассистент для команды клуба.

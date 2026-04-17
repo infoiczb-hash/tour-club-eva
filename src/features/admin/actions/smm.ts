@@ -314,9 +314,20 @@ export const generateSmmContentAction = withAdminAuth(async ({
     }
 
     return { success: true, data: result.data };
-  } catch (error) {
+ } catch (error) {
     console.error('SMM Controller Error:', error);
-    return { success: false, error: 'Ошибка генерации контента' };
+    let friendlyError = 'Не удалось сгенерировать контент. Попробуйте позже.';
+    if (error instanceof Error) {
+      const msg = error.message;
+      if (msg.includes('quota') || msg.includes('429') || msg.includes('exceeded')) {
+        friendlyError = 'Превышен лимит запросов к AI. Пожалуйста, подождите минуту и попробуйте снова.';
+      } else if (msg.includes('fetch') || msg.includes('network')) {
+        friendlyError = 'Проблема с сетью. Проверьте подключение к интернету.';
+      } else if (msg.includes('timeout')) {
+        friendlyError = 'Превышено время ожидания ответа от AI. Попробуйте ещё раз.';
+      }
+    }
+    return { success: false, error: friendlyError };
   }
 });
 
@@ -376,12 +387,24 @@ export const freezeAndPublishSmmAction = withAdminAuth(
       if (!tgRes.success) {
         throw new Error(tgRes.error);
       }
-
-      return { success: true, permanentUrls };
-    } catch (error) {
-      console.error('Freeze & Publish Error:', error);
-      return { success: false, error: (error as Error).message };
+    return { success: true, permanentUrls };
+  } catch (error) {
+    console.error('Freeze & Publish Error:', error);
+    let friendlyError = 'Не удалось опубликовать пост. Попробуйте позже.';
+    if (error instanceof Error) {
+      const msg = error.message;
+      if (msg.includes('quota') || msg.includes('429') || msg.includes('exceeded')) {
+        friendlyError = 'Превышен лимит запросов к AI. Пожалуйста, подождите минуту.';
+      } else if (msg.includes('fetch') || msg.includes('network')) {
+        friendlyError = 'Проблема с сетью. Проверьте подключение.';
+      } else if (msg.includes('timeout')) {
+        friendlyError = 'Превышено время ожидания. Попробуйте ещё раз.';
+      } else if (msg.includes('storage') || msg.includes('supabase')) {
+        friendlyError = 'Ошибка сохранения изображений. Попробуйте позже.';
+      }
     }
+    return { success: false, error: friendlyError };
+  }
   })
 );
 export const deleteScheduledPostAction = withAdminAuth(async (id: string) => {

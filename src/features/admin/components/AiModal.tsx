@@ -22,13 +22,13 @@ export default function AiModal({ isOpen, onClose, onApply }: Props) {
     const res = await performAiTask({ mode: 'generate_tour', prompt }) as PerformAiTaskResult;
     
     setLoading(false);
-
-    if (res.success) {
+ if (res.success) {
       onApply(res.data);
       onClose();
       setPrompt('');
     } else {
-      alert("Ошибка AI: " + res.error);
+      // res.error уже содержит дружественное сообщение из performAiTask
+      alert(res.error || 'Не удалось сгенерировать тур. Попробуйте позже.');
     }
   };
 
