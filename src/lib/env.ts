@@ -19,7 +19,8 @@ const serverSchema = z.object({
   TELEGRAM_WEBHOOK_SECRET:       z.string().min(1, 'TELEGRAM_WEBHOOK_SECRET не задан'),
   CRON_SECRET:                   z.string().min(1, 'CRON_SECRET не задан'),
   GOOGLE_GENERATIVE_AI_API_KEY:  z.string().optional(),
-  OPENAI_API_KEY:                z.string().optional(),
+  GROQ_API_KEY:                  z.string().optional(),
+  FAL_KEY:                       z.string().optional(),
   
   // Upstash Redis
   UPSTASH_REDIS_REST_URL:        z.string().url('Некорректный URL Upstash Redis'),
@@ -64,7 +65,8 @@ const parsedServer = isServer
       TELEGRAM_WEBHOOK_SECRET:       process.env.TELEGRAM_WEBHOOK_SECRET,
       CRON_SECRET:                   process.env.CRON_SECRET,
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      OPENAI_API_KEY:                process.env.OPENAI_API_KEY,
+      GROQ_API_KEY:                  process.env.GROQ_API_KEY,
+      FAL_KEY:                       process.env.FAL_KEY,
       UPSTASH_REDIS_REST_URL:        process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN:      process.env.UPSTASH_REDIS_REST_TOKEN,
       RESEND_API_KEY:                process.env.RESEND_API_KEY,

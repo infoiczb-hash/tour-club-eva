@@ -3,7 +3,7 @@
 
 import { generateObject, generateText } from 'ai';
 import { google } from '@ai-sdk/google';
-import OpenAI from 'openai';
+import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
 import { withAdminAuth } from '@/lib/auth';
 import { withAdminAudit } from '@/lib/audit';
@@ -57,13 +57,13 @@ const BlogAiSchema = z.object({
   read_time: z.string()
 });
 
-// ✅ ПРАВКА ДЛЯ НОВОГО UI И АБЗАЦЕВ
+// ✅ ПРОБЛЕМА 2: УЖЕСТОЧЕНИЕ СХЕМЫ КАРОСЕЛИ (ANTI-HALLUCINATION)
 const SmmPostSchema = z.object({
   caption: z.string().describe('Основной текст поста. СТРОГО разделять логические абзацы через двойной перенос \\n\\n. Без хештегов.'),
   slides: z.array(z.object({
-    title: z.string().describe('Короткий заголовок для дизайна. ИСПОЛЬЗУЙ СТРОГИЕ ТРИГГЕРЫ: ОБЛОЖКА, ВПЕЧАТЛЕНИЯ, ДЕТАЛИ МАРШРУТА, ПРОГРАММА ТУРА, ЧТО ВКЛЮЧЕНО, АФИША НА МЕСЯЦ.'),
-    text: z.string().describe('Текст слайда. Если ВПЕЧАТЛЕНИЯ/ВКЛЮЧЕНО - пиши списком через "-". Если ДЕТАЛИ - "Локация: X | Длительность: Y". Если АФИША - "ДД МЕС : Название : Цена | ДД МЕС : Название : Цена". Если ПРОГРАММА - "Время - Событие | Время - Событие".')
-  })).describe('Массив карточек карусели. Количество карточек должно строго совпадать с запрошенной структурой.'),
+    title: z.string().describe('Короткий заголовок. ИСПОЛЬЗУЙ СТРОГИЕ ТРИГГЕРЫ ИЗ ЗАПРОСА (напр: ДЕТАЛИ МАРШРУТА, ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ, ПРОГРАММА ТУРА, ЧТО ВКЛЮЧЕНО, ПРИЗЫВ (CTA)).'),
+    text: z.string().describe('Текст слайда. Строго соблюдай форматирование в зависимости от типа слайда (списки через "-", расписания через "|"). Для CTA никаких списков вещей.')
+  })).describe('Массив карточек карусели. Количество карточек должно СТРОГО совпадать с запрошенной структурой.'),
   hashtags: z.array(z.string()).describe('Массив хештегов без символа #')
 });
 
@@ -113,16 +113,52 @@ export const performAiTask = withAdminAuth(
 
     try {
       if (task.mode === 'generate_image') {
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { success: false, error: "Нет API ключа OpenAI (.env)" };
+        const groqKey = process.env.GROQ_API_KEY;
+        const falKey = process.env.FAL_KEY;
 
-        const openai = new OpenAI({ apiKey });
-        const { data } = await openai.images.generate({
-          model: "dall-e-3",
-          prompt: `Professional travel photography, cinematic lighting, highly detailed. Subject: ${task.prompt}`,
-          n: 1, size: "1024x1024",
-        });
-        return { success: true, data: data?.[0]?.url ?? '' };
+        if (!groqKey || !falKey) {
+          return { success: false, error: "Нет ключей GROQ_API_KEY или FAL_KEY (.env)" };
+        }
+
+        try {
+          const groq = createGroq({ apiKey: groqKey });
+          const { text: enhancedPrompt } = await generateText({
+            model: groq('llama3-70b-8192'),
+            system: 'You are an expert midjourney and flux prompt engineer. The user will give you a simple idea in Russian or English. You must translate it to English and expand it into a highly detailed, cinematic, hyperrealistic photography prompt for the Flux image generation model. Return ONLY the English prompt, nothing else. No conversational filler.',
+            prompt: task.prompt
+          });
+
+          const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+              method: 'POST',
+              headers: {
+                  'Authorization': `Key ${falKey}`,
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  prompt: enhancedPrompt,
+                  image_size: "landscape_4_3",
+                  num_inference_steps: 4
+              })
+          });
+
+          if (!falRes.ok) {
+              const errText = await falRes.text();
+              console.error('Fal.ai error:', errText);
+              throw new Error('Fal.ai API error');
+          }
+
+          const falData = await falRes.json();
+          const imageUrl = falData.images?.[0]?.url;
+
+          if (!imageUrl) {
+              return { success: false, error: "Провайдер не вернул изображение" };
+          }
+
+          return { success: true, data: imageUrl };
+        } catch (e) {
+          console.error("Image Gen Error:", e);
+          return { success: false, error: "Ошибка при генерации картинки" };
+        }
       }
 
       if (task.mode === 'generate_tour') {
@@ -172,7 +208,6 @@ export const performAiTask = withAdminAuth(
         return { success: true, data: text };
       }
 
-      // ✅ ПРАВКА ДЛЯ SMM КОНТЕНТА (ОБУЧАЕМ ИИ СЦЕНАРИЯМ ДИЗАЙНА)
       if (task.mode === 'smm_post') {
         const platformPrompts: Record<string, string> = {
           instagram: 'Instagram. Короткие абзацы (не более 2-3 строк). Используй эмодзи. Призыв к действию: "Ссылка на бронирование в шапке профиля". Никаких кликабельных ссылок в самом тексте.',
@@ -194,15 +229,18 @@ export const performAiTask = withAdminAuth(
 
         const targetSteps = task.steps && task.steps.length > 0 ? task.steps : [];
 
-        // Умная инструкция для ИИ в зависимости от того, карусель это или одиночка
+        // ✅ ПРОБЛЕМА 4 И 2: ЖЕСТКИЙ ПРОМПТ 2026 ГОДА
         const structureInstruction = targetSteps.length > 0 
-          ? `ВАЖНО: Сгенерируй ровно ${targetSteps.length} слайдов для карусели по следующей структуре:\n${targetSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
-             \nСТРОГИЕ ПРАВИЛА ДЛЯ ПОЛЯ text В ЗАВИСИМОСТИ ОТ ЗАГОЛОВКА СЛАЙДА:
-             - ВПЕЧАТЛЕНИЯ или ВКЛЮЧЕНО: пиши пункты через дефис "-".
+          ? `ВАЖНО: Сгенерируй ровно ${targetSteps.length} слайдов для карусели. Ты ОБЯЗАН следовать этой строгой последовательности шагов:\n${targetSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+             
+             СТРОГИЕ ПРАВИЛА ДЛЯ ПОЛЯ text В ЗАВИСИМОСТИ ОТ ШАГА:
+             - ВПЕЧАТЛЕНИЯ или ВКЛЮЧЕНО: пиши короткими пунктами через дефис "-". НИКАКОЙ ВОДЫ. Бери данные СТРОГО из переданного контекста.
              - ДЕТАЛИ: пиши в формате "Локация: Текст | Длительность: Текст | Сложность: Текст".
              - АФИША: пиши в формате "ДД МЕС : Название тура : Цена | ДД МЕС : Название : Цена".
-             - ПРОГРАММА: пиши в формате "Время - Текст события | Время - Текст события".
-             ОБЯЗАТЕЛЬНО ИСПОЛЬЗУЙ СИМВОЛ | ДЛЯ РАЗДЕЛЕНИЯ БЛОКОВ В ДЕТАЛЯХ, АФИШЕ И ПРОГРАММЕ.`
+             - ПРОГРАММА: пиши в формате "Время - Текст события | Время - Текст события". Используй только реальное расписание из базы.
+             - ПРИЗЫВ (CTA) / CTA: КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО писать списки снаряжения, советы или правила. Напиши ТОЛЬКО мощный призыв к бронированию, укажи куда нажимать (ссылка в шапке/директ).
+
+             ФУНДАМЕНТАЛЬНОЕ ПРАВИЛО: Ты — форматер, а не фантазер. Если в контексте переданы точные данные (расписание, включенные услуги, цены) — используй их КАК ЕСТЬ, просто красиво упакуй в лимиты Инстаграма.`
           : `ВАЖНО: Слайды не нужны (массив slides оставь пустым), напиши только идеальный текст поста.`;
 
         const { object } = await generateObject({
@@ -216,7 +254,7 @@ export const performAiTask = withAdminAuth(
             ${structureInstruction}
             
             Выдай результат строго в формате JSON.`,
-          prompt: `Напиши подпись к посту (caption) и текст для каждого слайда карусели на основе этих данных:\n${task.context}`,
+          prompt: `Напиши подпись к посту (caption) и текст для каждого слайда карусели на основе этих данных (Используй их как источник фактов):\n${task.context}`,
         });
         
         return { success: true, data: object };

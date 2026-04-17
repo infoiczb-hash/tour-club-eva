@@ -18,6 +18,11 @@ import {
   freezeAndPublishSmmAction,
   type SmmSource
 } from '@/features/admin/actions/smm';
+import { 
+  getAiPromptsAction, 
+  saveAiPromptAction, 
+  deleteAiPromptAction 
+} from '@/features/admin/actions/ai-prompts'; 
 
 // ✅ ИСПРАВЛЕНИЕ ТИПИЗАЦИИ
 interface ActionRes {
@@ -52,13 +57,13 @@ const AUDIENCES = [
 
 // ── ШАГИ ВОРОНКИ ПОД НОВЫЕ UI ШАБЛОНЫ ──
 const DEFAULT_FUNNEL_STEPS = [
-  { id: 'hook', label: 'ОБЛОЖКА (Крючок)', checked: true },
   { id: 'details', label: 'ДЕТАЛИ МАРШРУТА', checked: true },
   { id: 'impressions', label: 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ', checked: true },
   { id: 'program', label: 'ПРОГРАММА ТУРА', checked: false },
   { id: 'included', label: 'ЧТО ВКЛЮЧЕНО', checked: false },
   { id: 'cta', label: 'ПРИЗЫВ (CTA)', checked: true },
 ];
+
 
 export default function SmmTab() {
   const { showToast } = useToast();
@@ -100,6 +105,7 @@ export default function SmmTab() {
   const [studioStyle, setStudioStyle] = useState('Cinematic travel photography, hyperrealistic, epic lighting');
   const [studioResultUrl, setStudioResultUrl] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [savedPrompts, setSavedPrompts] = useState<{id: string, title: string, prompt: string}[]>([]); 
 
   useEffect(() => {
     initData();
@@ -107,12 +113,15 @@ export default function SmmTab() {
 
   const initData = async () => {
     setIsLoading(true);
-    const [srcRes, histRes] = await Promise.all([
+    const [srcRes, histRes, promptsRes] = await Promise.all([
       getSmmSourcesAction(),
-      getScheduledPostsAction()
+      getScheduledPostsAction(),
+      getAiPromptsAction() // ✅ Добавлено
     ]);
     if ((srcRes as ActionRes).success) setSources((srcRes as ActionRes).data || []);
     if ((histRes as ActionRes).success) setHistory((histRes as ActionRes).data || []);
+    // ✅ Кладем шаблоны из БД в стейт:
+    if ((promptsRes as ActionRes).success) setSavedPrompts((promptsRes as ActionRes).data || []);
     setIsLoading(false);
   };
 
@@ -122,8 +131,7 @@ export default function SmmTab() {
   useEffect(() => {
     if (selectedSource?.type === 'calendar') {
       setFunnelSteps([
-        { id: 'hook', label: 'ОБЛОЖКА (Анонс)', checked: true },
-        { id: 'afisha', label: 'АФИША НА МЕСЯЦ', checked: true }
+       { id: 'afisha', label: 'АФИША НА МЕСЯЦ', checked: true }
       ]);
     } else {
       setFunnelSteps(DEFAULT_FUNNEL_STEPS);
@@ -164,15 +172,27 @@ export default function SmmTab() {
   };
 
   // ── ФОРМИРОВАНИЕ ССЫЛКИ НА ВИЗУАЛ (ПРОБЛЕМЫ 1 и 5) ──
-  const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: string) => {
+const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: string) => {
     if (!selectedSource) return '';
     
+   // ✅ ПРОБЛЕМА 3: ИНТЕГРАЦИЯ ГАЛЕРЕИ ДЛЯ КАРУСЕЛИ
+    let slideImage = selectedSource.image || '';
+    
+    // Если это карточка карусели (slideIndex > 0), ищем галерею.
+    // Приводим к any на случай, если в интерфейсе SmmSource еще нет поля gallery
+    const sourceData = selectedSource as any; 
+    if (slideIndex > 0 && sourceData.gallery && sourceData.gallery.length > 0) {
+      // Идем по кругу: 1 слайд = 0 фото, 2 слайд = 1 фото и т.д.
+      const galleryIndex = (slideIndex - 1) % sourceData.gallery.length;
+      slideImage = sourceData.gallery[galleryIndex];
+    }
+
     // URLSearchParams сам кодирует спецсимволы и эмодзи
     const params = new URLSearchParams({
       format,
       slide: slideIndex.toString(),
       title: selectedSource.title,
-      image: selectedSource.image || '',
+      image: slideImage,
       categoryColor: selectedSource.categoryColor,
       categoryTitle: selectedSource.categoryTitle || 'ТУР',
       location: selectedSource.location || '',
@@ -614,12 +634,68 @@ export default function SmmTab() {
           
           {/* Панель управления */}
           <div className="lg:col-span-4 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border shadow-2xl space-y-8 flex flex-col">
-             <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-3 flex items-center gap-2"><Wand2 size={16} className="text-fuchsia-500"/> Что рисуем?</label>
+           <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase flex items-center gap-2">
+                    <Wand2 size={16} className="text-fuchsia-500"/> Что рисуем?
+                  </label>
+                  
+                  {/* ✅ Кнопка сохранения в БД */}
+                  {studioPrompt.length > 5 && (
+                    <button 
+                      onClick={async () => {
+                        const title = window.prompt("Название заготовки (например: Дети у костра):");
+                        if (title) {
+                          const res = await saveAiPromptAction(title, studioPrompt) as ActionRes;
+                          if (res.success) {
+                            showToast("Заготовка сохранена в облако", "success");
+                            initData(); // Перезагружаем список из БД
+                          } else {
+                            showToast(res.error || "Ошибка сохранения", "error");
+                          }
+                        }
+                      }}
+                      className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-fuchsia-500 transition-colors uppercase tracking-widest"
+                    >
+                      <Save size={12} />
+                      Сохранить
+                    </button>
+                  )}
+                </div>
+
+                {/* ✅ Библиотека шаблонов из БД */}
+                {savedPrompts.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {savedPrompts.map((p) => (
+                      <div key={p.id} className="group relative">
+                        <button
+                          onClick={() => setStudioPrompt(p.prompt)}
+                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-all uppercase tracking-tighter"
+                          title={p.prompt}
+                        >
+                          {p.title}
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if(confirm('Удалить заготовку из облака?')) {
+                              const res = await deleteAiPromptAction(p.id) as ActionRes;
+                              if (res.success) initData(); // Перезагружаем список
+                            }
+                          }}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <textarea 
                   value={studioPrompt} 
                   onChange={(e) => setStudioPrompt(e.target.value)} 
-                  placeholder="Например: Счастливая пара плывет на SUP-досках по живописной реке на рассвете, легкий туман..."
+                  placeholder="Например: Счастливая пара плывет на SUP-досках по живописной реке на рассвете..."
                   className="w-full h-32 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm focus:ring-2 focus:ring-fuchsia-500/20 text-slate-900 dark:text-white resize-none" 
                 />
              </div>

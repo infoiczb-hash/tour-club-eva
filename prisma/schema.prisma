@@ -588,6 +588,15 @@ model ScheduledPost {
   @@map("scheduled_posts")
 }
 
+model AiPrompt {
+  id        String   @id @default(cuid())
+  title     String
+  prompt    String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("ai_prompts")
+}
+
 // ─────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────
