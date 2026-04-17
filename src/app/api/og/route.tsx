@@ -53,15 +53,16 @@ export async function GET(request: Request) {
     }
 
     const format = searchParams.get('format'); 
+    const type = searchParams.get('type') || 'tour'; // ✅ ДОБАВЛЕНО: Тип контента (tour, blog, calendar)
     const slide = searchParams.get('slide') || '0';
 
     if (format === 'post' || format === 'feed' || format === 'story' || format === 'event') {
       const title = searchParams.get('title') || 'Секретный тур';
       const price = searchParams.get('price');
       const currency = searchParams.get('currency') || 'MDL';
-      const date = (searchParams.get('date') || '').toUpperCase(); // Дата капсом
+      const date = (searchParams.get('date') || '').toUpperCase(); 
       
-      // ✅ ПРОБЛЕМА 1: ПРЕМИАЛЬНЫЙ ПАРСЕР ДАТЫ
+      // ✅ ПРЕМИАЛЬНЫЙ ПАРСЕР ДАТЫ
       let formattedDate = date;
       if (date && date.includes('-') && date.split('-').length >= 3) {
         try {
@@ -95,14 +96,13 @@ export async function GET(request: Request) {
       
       if (format === 'story') { width = 1080; height = 1920; } 
       else if (format === 'post') { width = 1080; height = 1080; } 
-      else if (format === 'event') { width = 1920; height = 1005; } // Оставляем FB Event
+      else if (format === 'event') { width = 1920; height = 1005; } 
 
       // ==========================================
       // ✅ ЛОГИКА ШАБЛОНОВ СЛАЙДОВ (slide !== '0')
-      // ПОЛНОСТЬЮ ИДЕНТИЧНО ОРИГИНАЛУ
       // ==========================================
       if (slide !== '0') {
-        const bgOverlay = 'rgba(15, 23, 42, 0.9)'; // #0f172a с легкой прозрачностью
+        const bgOverlay = 'rgba(15, 23, 42, 0.9)'; 
         
         return new ImageResponse(
           (
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
 
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '80px', zIndex: 10 }}>
                 
-                {/* 1. ШАБЛОН: АФИША (Календарь на месяц) */}
+                {/* 1. ШАБЛОН: АФИША */}
                 {slideTitle.includes('АФИША') || slideTitle.includes('РАСПИСАНИЕ') ? (
                   <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <span style={{ fontSize: '60px', color: brandColor, fontWeight: 900, marginBottom: '60px' }}>{slideTitle}</span>
@@ -136,7 +136,7 @@ export async function GET(request: Request) {
                   </div>
                 ) : 
                 
-                /* 2. ШАБЛОН: ДЕТАЛИ (Плитки 2х2) */
+                /* 2. ШАБЛОН: ДЕТАЛИ */
                 slideTitle.includes('ДЕТАЛИ') ? (
                   <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <span style={{ fontSize: '60px', color: brandColor, fontWeight: 900, marginBottom: '60px' }}>{slideTitle}</span>
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
                   </div>
                 ) : 
                 
-                /* 3. ШАБЛОН: ПРОГРАММА (Таймлайн) */
+                /* 3. ШАБЛОН: ПРОГРАММА */
                 slideTitle.includes('ПРОГРАММА') ? (
                   <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <span style={{ fontSize: '60px', color: brandColor, fontWeight: 900, marginBottom: '60px' }}>{slideTitle}</span>
@@ -180,7 +180,7 @@ export async function GET(request: Request) {
                   </div>
                 ) : 
                 
-                /* 4. ШАБЛОН: ВПЕЧАТЛЕНИЯ / ВКЛЮЧЕНО (Список с галочками) */
+                /* 4. ШАБЛОН: ВПЕЧАТЛЕНИЯ */
                 (slideTitle.includes('ВПЕЧАТЛЕНИЯ') || slideTitle.includes('ВКЛЮЧЕНО') || slideTitle.includes('С СОБОЙ')) ? (
                   <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '60px' }}>
@@ -200,7 +200,7 @@ export async function GET(request: Request) {
                   </div>
                 ) : 
                 
-                /* 5. ШАБЛОН ПО УМОЛЧАНИЮ (Текст по центру) */
+                /* 5. ШАБЛОН ПО УМОЛЧАНИЮ */
                 (
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                      <span style={{ fontSize: '50px', color: brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: '40px' }}>{slideTitle}</span>
@@ -228,10 +228,8 @@ export async function GET(request: Request) {
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
               {imageUrl && <img src={imageUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
               
-              {/* ✅ ПРОБЛЕМА 2: ЖЕСТКОЕ ЗАТЕМНЕНИЕ */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(15,23,42,0) 0%, rgba(15,23,42,0.3) 30%, rgba(15,23,42,0.8) 70%, rgba(15,23,42,1) 100%)' }} />
 
-              {/* ✅ ПРОБЛЕМА 4: SAFE ZONES И РАСТЯГИВАНИЕ */}
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '140px 80px 100px 80px', position: 'relative', zIndex: 10 }}>
                 
                 {/* Триггер и Категория прижаты наверх */}
@@ -241,19 +239,22 @@ export async function GET(request: Request) {
                       <span style={{ fontSize: '28px', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '2px' }}>🔥 {trigger}</span>
                     </div>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <div style={{ width: '12px', height: '40px', backgroundColor: brandColor, marginRight: '20px', borderRadius: '4px' }} />
-                    <span style={{ fontSize: '36px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px', textShadow: '0 5px 20px rgba(0,0,0,0.8)' }}>{categoryTitle}</span>
+                  {/* ✅ ПРОБЛЕМА 2: ПРЕМИАЛЬНЫЙ БЕЙДЖ GLASSMORPHISM */}
+                  <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.65)', border: `2px solid ${brandColor}`, padding: '16px 36px', borderRadius: '100px', marginBottom: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '8px', backgroundColor: brandColor, marginRight: '20px', boxShadow: `0 0 15px ${brandColor}` }} />
+                    <span style={{ fontSize: '36px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{categoryTitle}</span>
                   </div>
                 </div>
 
-                {/* Заголовок и Теги по центру (flex: 1) */}
-                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
-                  <h1 style={{ color: 'white', fontSize: '110px', fontWeight: 900, lineHeight: 0.95, margin: '0 0 50px 0', textTransform: 'uppercase', textShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 60px rgba(0,0,0,0.6)' }}>
+                {/* ✅ ПРОБЛЕМА 1: ПРУЖИНА СВЕРХУ ДЛЯ ЦЕНТРОВКИ */}
+                <div style={{ display: 'flex', flex: 1 }} />
+
+                {/* Заголовок и Теги */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <h1 style={{ color: 'white', fontSize: type === 'blog' ? '130px' : '110px', fontWeight: 900, lineHeight: 0.95, margin: '0 0 50px 0', textTransform: 'uppercase', textShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 60px rgba(0,0,0,0.6)' }}>
                     {title}
                   </h1>
 
-                  {/* ✅ ПРОБЛЕМА 5: ТЕГИ ВЕЗДЕ */}
                   {tags.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
                       {tags.map((tag, idx) => (
@@ -263,45 +264,61 @@ export async function GET(request: Request) {
                   )}
                 </div>
 
+                {/* ✅ ПРОБЛЕМА 1: ПРУЖИНА СНИЗУ ДЛЯ ЦЕНТРОВКИ */}
+                <div style={{ display: 'flex', flex: 1 }} />
+
                 {/* Инфо и Цена прижаты вниз */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
-                  {/* ИНФО-ПАНЕЛЬ */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '40px', backgroundColor: 'rgba(15, 23, 42, 0.6)', padding: '30px 45px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.15)', alignSelf: 'flex-start', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-                    {formattedDate && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <CalendarIcon color={brandColor} />
-                        <span style={{ color: 'white', fontSize: '36px', fontWeight: 900 }}>{formattedDate}</span>
-                      </div>
-                    )}
-                    {formattedDate && <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <MapPinIcon color={brandColor} />
-                      <span style={{ color: 'white', fontSize: '36px', fontWeight: 900 }}>{location}</span>
-                    </div>
-                    {duration && (
-                      <>
-                        <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                  {/* ✅ СТРАТЕГИЯ 3: ПОЛИМОРФИЗМ (СКРЫВАЕМ ЦЕНУ ДЛЯ БЛОГА) */}
+                  {type !== 'blog' ? (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '40px', backgroundColor: 'rgba(15, 23, 42, 0.6)', padding: '30px 45px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.15)', alignSelf: 'flex-start', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                        {formattedDate && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <CalendarIcon color={brandColor} />
+                            <span style={{ color: 'white', fontSize: '36px', fontWeight: 900 }}>{formattedDate}</span>
+                          </div>
+                        )}
+                        {formattedDate && <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <ClockIcon color={brandColor} />
-                          <span style={{ color: 'white', fontSize: '36px', fontWeight: 900 }}>{duration}</span>
+                          <MapPinIcon color={brandColor} />
+                          <span style={{ color: 'white', fontSize: '36px', fontWeight: 900 }}>{location}</span>
                         </div>
-                      </>
-                    )}
-                  </div>
+                        {duration && (
+                          <>
+                            <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                              <ClockIcon color={brandColor} />
+                              <span style={{ color: 'white', fontSize: '36px', fontWeight: 900 }}>{duration}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
 
-                  {/* ✅ ПРОБЛЕМА 3: КРУГЛАЯ СТРЕЛКА */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
-                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                       <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.7)', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>Стоимость тура</span>
-                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '20px' }}>
-                         <span style={{ fontSize: '100px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>{Number(price).toLocaleString()}</span>
-                         <span style={{ fontSize: '44px', color: brandColor, fontWeight: 900 }}>{currency}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
+                         <div style={{ display: 'flex', flexDirection: 'column' }}>
+                           <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.7)', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>Стоимость {type === 'calendar' ? 'от' : 'тура'}</span>
+                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '20px' }}>
+                             <span style={{ fontSize: '100px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>{Number(price).toLocaleString()}</span>
+                             <span style={{ fontSize: '44px', color: brandColor, fontWeight: 900 }}>{currency}</span>
+                           </div>
+                         </div>
+                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100px', height: '100px', borderRadius: '50px', backgroundColor: brandColor, boxShadow: `0 10px 40px ${brandColor}80` }}>
+                           <ArrowRightIcon color="#0f172a" />
+                         </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* ДИЗАЙН ДЛЯ БЛОГА */
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '20px' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', backgroundColor: brandColor, padding: '24px 48px', borderRadius: '100px', boxShadow: `0 15px 40px ${brandColor}60` }}>
+                          <span style={{ fontSize: '32px', color: '#0f172a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>📖 Читать статью</span>
                        </div>
-                     </div>
-                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100px', height: '100px', borderRadius: '50px', backgroundColor: brandColor, boxShadow: `0 10px 40px ${brandColor}80` }}>
-                       <ArrowRightIcon color="#0f172a" />
-                     </div>
-                  </div>
+                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100px', height: '100px', borderRadius: '50px', backgroundColor: 'rgba(15, 23, 42, 0.6)', border: `2px solid ${brandColor}` }}>
+                         <ArrowRightIcon color={brandColor} />
+                       </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -317,31 +334,31 @@ export async function GET(request: Request) {
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
               {imageUrl && <img src={imageUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
               
-              {/* ✅ ПРОБЛЕМА 2: ЖЕСТКОЕ ЗАТЕМНЕНИЕ */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(15,23,42,0) 0%, rgba(15,23,42,0.3) 30%, rgba(15,23,42,0.8) 70%, rgba(15,23,42,1) 100%)' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '80px', position: 'relative', zIndex: 10 }}>
                 
-                {/* Триггер и Категория прижаты наверх */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   {trigger && (
                     <div style={{ display: 'flex', backgroundColor: '#f59e0b', padding: '12px 28px', borderRadius: '100px', marginBottom: '40px', alignSelf: 'flex-start', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                       <span style={{ fontSize: '28px', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '2px' }}>🔥 {trigger}</span>
                     </div>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <div style={{ width: '12px', height: '40px', backgroundColor: brandColor, marginRight: '20px', borderRadius: '4px' }} />
-                    <span style={{ fontSize: '36px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px', textShadow: '0 5px 20px rgba(0,0,0,0.8)' }}>{categoryTitle}</span>
+                  {/* ✅ ПРОБЛЕМА 2: ПРЕМИАЛЬНЫЙ БЕЙДЖ GLASSMORPHISM */}
+                  <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.65)', border: `2px solid ${brandColor}`, padding: '14px 32px', borderRadius: '100px', marginBottom: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                    <div style={{ width: '14px', height: '14px', borderRadius: '7px', backgroundColor: brandColor, marginRight: '16px', boxShadow: `0 0 15px ${brandColor}` }} />
+                    <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{categoryTitle}</span>
                   </div>
                 </div>
 
-                {/* Заголовок и Теги по центру */}
-                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
-                  <h1 style={{ color: 'white', fontSize: '96px', fontWeight: 900, lineHeight: 0.95, margin: '0 0 50px 0', textTransform: 'uppercase', textShadow: '0 10px 40px rgba(0,0,0,0.8)' }}>
+                {/* ✅ ПРОБЛЕМА 1: ПРУЖИНА СВЕРХУ */}
+                <div style={{ display: 'flex', flex: 1 }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <h1 style={{ color: 'white', fontSize: type === 'blog' ? '110px' : '96px', fontWeight: 900, lineHeight: 0.95, margin: '0 0 50px 0', textTransform: 'uppercase', textShadow: '0 10px 40px rgba(0,0,0,0.8)' }}>
                     {title}
                   </h1>
 
-                  {/* ✅ ПРОБЛЕМА 5: ТЕГИ ВЕЗДЕ */}
                   {tags.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
                       {tags.map((tag, idx) => (
@@ -351,45 +368,60 @@ export async function GET(request: Request) {
                   )}
                 </div>
 
-                {/* Инфо и Цена прижаты вниз */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                  {/* ИНФО-ПАНЕЛЬ */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '40px', backgroundColor: 'rgba(15, 23, 42, 0.6)', padding: '30px 45px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.15)', alignSelf: 'flex-start', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-                    {formattedDate && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <CalendarIcon color={brandColor} />
-                        <span style={{ color: 'white', fontSize: '34px', fontWeight: 900 }}>{formattedDate}</span>
-                      </div>
-                    )}
-                    {formattedDate && <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <MapPinIcon color={brandColor} />
-                      <span style={{ color: 'white', fontSize: '34px', fontWeight: 900 }}>{location}</span>
-                    </div>
-                    {duration && (
-                      <>
-                        <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <ClockIcon color={brandColor} />
-                          <span style={{ color: 'white', fontSize: '34px', fontWeight: 900 }}>{duration}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                {/* ✅ ПРОБЛЕМА 1: ПРУЖИНА СНИЗУ */}
+                <div style={{ display: 'flex', flex: 1 }} />
 
-                  {/* ✅ ПРОБЛЕМА 3: КРУГЛАЯ СТРЕЛКА */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
-                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                       <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.7)', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>Стоимость тура</span>
-                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '15px' }}>
-                         <span style={{ fontSize: '90px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>{Number(price).toLocaleString()}</span>
-                         <span style={{ fontSize: '40px', color: brandColor, fontWeight: 900 }}>{currency}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                  {/* ✅ СТРАТЕГИЯ 3: ПОЛИМОРФИЗМ (СКРЫВАЕМ ЦЕНУ ДЛЯ БЛОГА) */}
+                  {type !== 'blog' ? (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '40px', backgroundColor: 'rgba(15, 23, 42, 0.6)', padding: '30px 45px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.15)', alignSelf: 'flex-start', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                        {formattedDate && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <CalendarIcon color={brandColor} />
+                            <span style={{ color: 'white', fontSize: '34px', fontWeight: 900 }}>{formattedDate}</span>
+                          </div>
+                        )}
+                        {formattedDate && <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                          <MapPinIcon color={brandColor} />
+                          <span style={{ color: 'white', fontSize: '34px', fontWeight: 900 }}>{location}</span>
+                        </div>
+                        {duration && (
+                          <>
+                            <div style={{ width: '2px', height: '50px', backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                              <ClockIcon color={brandColor} />
+                              <span style={{ color: 'white', fontSize: '34px', fontWeight: 900 }}>{duration}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
+                         <div style={{ display: 'flex', flexDirection: 'column' }}>
+                           <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.7)', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>Стоимость {type === 'calendar' ? 'от' : 'тура'}</span>
+                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '15px' }}>
+                             <span style={{ fontSize: '90px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>{Number(price).toLocaleString()}</span>
+                             <span style={{ fontSize: '40px', color: brandColor, fontWeight: 900 }}>{currency}</span>
+                           </div>
+                         </div>
+                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '90px', height: '90px', borderRadius: '45px', backgroundColor: brandColor, boxShadow: `0 10px 40px ${brandColor}80` }}>
+                           <ArrowRightIcon color="#0f172a" />
+                         </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* ДИЗАЙН ДЛЯ БЛОГА */
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '20px' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', backgroundColor: brandColor, padding: '20px 40px', borderRadius: '100px', boxShadow: `0 15px 40px ${brandColor}60` }}>
+                          <span style={{ fontSize: '28px', color: '#0f172a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>📖 Читать статью</span>
                        </div>
-                     </div>
-                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '90px', height: '90px', borderRadius: '45px', backgroundColor: brandColor, boxShadow: `0 10px 40px ${brandColor}80` }}>
-                       <ArrowRightIcon color="#0f172a" />
-                     </div>
-                  </div>
+                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '90px', height: '90px', borderRadius: '45px', backgroundColor: 'rgba(15, 23, 42, 0.6)', border: `2px solid ${brandColor}` }}>
+                         <ArrowRightIcon color={brandColor} />
+                       </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -419,7 +451,7 @@ export async function GET(request: Request) {
                       <span style={{ color: 'white', fontSize: '40px', fontWeight: 900, marginLeft: '16px' }}>{formattedDate}</span>
                     </div>
                   )}
-                  {price && (
+                  {price && type !== 'blog' && (
                     <div style={{ display: 'flex', alignItems: 'baseline', padding: '24px 0' }}>
                       <span style={{ fontSize: '64px', color: 'white', fontWeight: 900, lineHeight: 1 }}>{price}</span>
                       <span style={{ fontSize: '36px', color: brandColor, fontWeight: 900, marginLeft: '16px' }}>{currency}</span>

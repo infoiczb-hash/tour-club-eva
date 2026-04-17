@@ -24,7 +24,6 @@ import {
   deleteAiPromptAction 
 } from '@/features/admin/actions/ai-prompts'; 
 
-// ✅ ИСПРАВЛЕНИЕ ТИПИЗАЦИИ
 interface ActionRes {
   success: boolean;
   data?: any;
@@ -64,7 +63,6 @@ const DEFAULT_FUNNEL_STEPS = [
   { id: 'cta', label: 'ПРИЗЫВ (CTA)', checked: true },
 ];
 
-
 export default function SmmTab() {
   const { showToast } = useToast();
   
@@ -73,8 +71,10 @@ export default function SmmTab() {
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Состояние генератора
+  // ✅ СТРАТЕГИЯ 2: КАСКАДНАЯ АРХИТЕКТУРА СТЕЙТОВ
+  const [entityType, setEntityType] = useState<'tour' | 'blog' | 'calendar'>('tour');
   const [selectedSourceId, setSelectedSourceId] = useState('');
+  
   const [platform, setPlatform] = useState<typeof PLATFORMS[number]['id']>('instagram');
   const [tone, setTone] = useState<typeof TONES[number]['id']>('sell');
   const [goal, setGoal] = useState<typeof GOALS[number]['id']>('warmup');
@@ -83,9 +83,7 @@ export default function SmmTab() {
   const [format, setFormat] = useState<'post' | 'feed' | 'story' | 'event'>('feed');
   const [triggerText, setTriggerText] = useState('');
   
-  // ✅ ПРОБЛЕМА 2: Тумблер Карусель/Одиночка
   const [isCarousel, setIsCarousel] = useState(true);
-  
   const [funnelSteps, setFunnelSteps] = useState(DEFAULT_FUNNEL_STEPS);
   
   // Результат генерации
@@ -97,7 +95,6 @@ export default function SmmTab() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // ✅ ПРОБЛЕМА 8: Стейт для Lightbox Истории
   const [previewPost, setPreviewPost] = useState<any>(null);
 
   // Стейты Нейро-студии
@@ -116,27 +113,32 @@ export default function SmmTab() {
     const [srcRes, histRes, promptsRes] = await Promise.all([
       getSmmSourcesAction(),
       getScheduledPostsAction(),
-      getAiPromptsAction() // ✅ Добавлено
+      getAiPromptsAction()
     ]);
     if ((srcRes as ActionRes).success) setSources((srcRes as ActionRes).data || []);
     if ((histRes as ActionRes).success) setHistory((histRes as ActionRes).data || []);
-    // ✅ Кладем шаблоны из БД в стейт:
     if ((promptsRes as ActionRes).success) setSavedPrompts((promptsRes as ActionRes).data || []);
     setIsLoading(false);
   };
 
-  const selectedSource = sources.find(s => s.id === selectedSourceId);
-
-  // Авто-выбор шагов для Афиши
+  // ✅ СТРАТЕГИЯ 2: Умная реакция на выбор типа контента
   useEffect(() => {
-    if (selectedSource?.type === 'calendar') {
-      setFunnelSteps([
-       { id: 'afisha', label: 'АФИША НА МЕСЯЦ', checked: true }
-      ]);
+    setSelectedSourceId(''); 
+    if (entityType === 'blog') {
+      setIsCarousel(false); // Блогам карусель не нужна
+      setGoal('warmup'); // Блоги только греют
+    } else if (entityType === 'calendar') {
+      setIsCarousel(true); // Афиша всегда карусель
+      setFunnelSteps([{ id: 'afisha', label: 'АФИША НА МЕСЯЦ', checked: true }]);
+      const calSource = sources.find(s => s.type === 'calendar');
+      if (calSource) setSelectedSourceId(calSource.id);
     } else {
+      setIsCarousel(true); 
       setFunnelSteps(DEFAULT_FUNNEL_STEPS);
     }
-  }, [selectedSourceId]);
+  }, [entityType, sources]);
+
+  const selectedSource = sources.find(s => s.id === selectedSourceId);
 
   const toggleFunnelStep = (id: string) => {
     setFunnelSteps(prev => prev.map(step => step.id === id ? { ...step, checked: !step.checked } : step));
@@ -144,10 +146,9 @@ export default function SmmTab() {
 
   // ── ГЕНЕРАЦИЯ ТЕКСТА ──
   const handleGenerate = async () => {
-    if (!selectedSourceId) return showToast('Сначала выбери тур или пост', 'error');
+    if (!selectedSourceId) return showToast('Сначала выбери источник', 'error');
     setIsGenerating(true);
     
-    // Если одиночка - шлем пустой массив
     const activeSteps = isCarousel ? funnelSteps.filter(s => s.checked).map(s => s.label) : [];
 
     const res = (await generateSmmContentAction({
@@ -171,25 +172,21 @@ export default function SmmTab() {
     setIsGenerating(false);
   };
 
-  // ── ФОРМИРОВАНИЕ ССЫЛКИ НА ВИЗУАЛ (ПРОБЛЕМЫ 1 и 5) ──
-const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: string) => {
+  // ── ФОРМИРОВАНИЕ ССЫЛКИ НА ВИЗУАЛ ──
+  const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: string) => {
     if (!selectedSource) return '';
     
-   // ✅ ПРОБЛЕМА 3: ИНТЕГРАЦИЯ ГАЛЕРЕИ ДЛЯ КАРУСЕЛИ
     let slideImage = selectedSource.image || '';
     
-    // Если это карточка карусели (slideIndex > 0), ищем галерею.
-    // Приводим к any на случай, если в интерфейсе SmmSource еще нет поля gallery
     const sourceData = selectedSource as any; 
     if (slideIndex > 0 && sourceData.gallery && sourceData.gallery.length > 0) {
-      // Идем по кругу: 1 слайд = 0 фото, 2 слайд = 1 фото и т.д.
       const galleryIndex = (slideIndex - 1) % sourceData.gallery.length;
       slideImage = sourceData.gallery[galleryIndex];
     }
 
-    // URLSearchParams сам кодирует спецсимволы и эмодзи
     const params = new URLSearchParams({
       format,
+      type: selectedSource.type, // ✅ СТРАТЕГИЯ 3: Передаем тип (tour, blog, calendar) для Полиморфизма обложек
       slide: slideIndex.toString(),
       title: selectedSource.title,
       image: slideImage,
@@ -218,7 +215,7 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
     setGeneratedSlides(newSlides);
   };
   
-  // ── СОХРАНЕНИЕ В ИСТОРИЮ (ПРОБЛЕМА 8: Сохранение массива картинок) ──
+  // ── СОХРАНЕНИЕ В ИСТОРИЮ ──
   const handleSave = async () => {
     setIsSaving(true);
     
@@ -235,7 +232,7 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
       status: 'draft',
       sourceType: selectedSource?.type || 'custom',
       sourceId: selectedSourceId,
-      metadata: { imageUrls } // Сохраняем всю карусель для Lightbox
+      metadata: { imageUrls } 
     })) as ActionRes; 
 
     if (res.success) {
@@ -287,7 +284,7 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
     const res = await deleteScheduledPostAction(id) as ActionRes;
     if (res.success) {
       showToast('Пост удален', 'success');
-      initData(); // Перезагружаем историю
+      initData(); 
     } else {
       showToast(res.error || 'Ошибка удаления', 'error');
     }
@@ -299,7 +296,6 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
     setIsGeneratingImage(true);
     
     try {
-      // Динамически импортируем performAiTask, чтобы не захламлять верхние импорты
       const { performAiTask } = await import('@/features/admin/actions/ai');
       
       const res = await performAiTask({ 
@@ -328,22 +324,26 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
 
   return (
     <div className="space-y-6">
-      {/* Переключатель режимов */}
-      <div className="flex items-center justify-between">
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+      
+      {/* ✅ СТРАТЕГИЯ 1: МОБИЛЬНЫЙ СГМЕНТИРОВАННЫЙ КОНТРОЛЛЕР (STICKY НА МОБИЛКЕ) */}
+      <div className="sticky top-0 z-30 -mx-4 px-4 py-3 md:mx-0 md:px-0 md:py-0 md:static bg-white dark:bg-[#020617] md:bg-transparent border-b border-slate-100 dark:border-slate-800 md:border-none">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl overflow-x-auto snap-x custom-scrollbar w-full md:w-auto">
           <button 
             onClick={() => setViewMode('generator')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'generator' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-700'}`}
+            className={`flex-shrink-0 snap-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'generator' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-600 dark:text-slate-400'}`}
           >
             <Zap size={16}/> Мастерская
           </button>
           <button 
             onClick={() => setViewMode('history')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-700'}`}
+            className={`flex-shrink-0 snap-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-600 dark:text-slate-400'}`}
           >
             <History size={16}/> История
           </button>
-          <button onClick={() => setViewMode('studio')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'studio' ? 'bg-white dark:bg-slate-700 shadow-sm text-fuchsia-600' : 'text-slate-700'}`}>
+          <button 
+            onClick={() => setViewMode('studio')} 
+            className={`flex-shrink-0 snap-center flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'studio' ? 'bg-white dark:bg-slate-700 shadow-sm text-fuchsia-600' : 'text-slate-600 dark:text-slate-400'}`}
+          >
             <Wand2 size={16}/> Нейро-студия
           </button>
         </div>
@@ -353,111 +353,134 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
       {viewMode === 'generator' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* ЛЕВАЯ КОЛОНКА: НАСТРОЙКИ */}
+          {/* ЛЕВАЯ КОЛОНКА: НАСТРОЙКИ (КАСКАДНАЯ АРХИТЕКТУРА) */}
           <div className="lg:col-span-4 space-y-5">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-6">
               
+              {/* ✅ ШАГ 1: ВЫБОР СУЩНОСТИ */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Источник контента</label>
-                <select 
-                  value={selectedSourceId} 
-                  onChange={(e) => setSelectedSourceId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white"
-                >
-                  <option value="">Выбери из списка...</option>
-                  {sources.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.type === 'calendar' ? '📅' : s.type === 'tour' ? '🏕️' : '📝'} {s.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* ТУМБЛЕР РЕЖИМА */}
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Тип публикации</label>
-                <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                  <button onClick={() => setIsCarousel(false)} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${!isCarousel ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-500'}`}>Одиночный</button>
-                  <button onClick={() => setIsCarousel(true)} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${isCarousel ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-500'}`}>Карусель</button>
+                <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-400 uppercase mb-3">Шаг 1. Что публикуем?</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => setEntityType('tour')} className={`py-3 rounded-xl text-[10px] font-black uppercase flex flex-col items-center gap-1.5 transition-all border-2 ${entityType === 'tour' ? 'border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400' : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'}`}>
+                    <span className="text-2xl">🏕️</span> Тур
+                  </button>
+                  <button onClick={() => setEntityType('blog')} className={`py-3 rounded-xl text-[10px] font-black uppercase flex flex-col items-center gap-1.5 transition-all border-2 ${entityType === 'blog' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400' : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'}`}>
+                    <span className="text-2xl">📝</span> Блог
+                  </button>
+                  <button onClick={() => setEntityType('calendar')} className={`py-3 rounded-xl text-[10px] font-black uppercase flex flex-col items-center gap-1.5 transition-all border-2 ${entityType === 'calendar' ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'}`}>
+                    <span className="text-2xl">📅</span> Афиша
+                  </button>
                 </div>
               </div>
 
-              {/* СТРАТЕГИЯ */}
-              <div className="grid grid-cols-2 gap-4">
-                  <div>
-                     <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Цель поста</label>
-                     <select value={goal} onChange={(e) => setGoal(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white">
-                        {GOALS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
-                     </select>
-                  </div>
-                  <div>
-                     <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Аудитория</label>
-                     <select value={audience} onChange={(e) => setAudience(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white">
-                        {AUDIENCES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
-                     </select>
-                  </div>
-              </div>
-
-              {/* КОНСТРУКТОР ВОРОНКИ */}
-              {isCarousel && (
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                    <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-widest flex items-center gap-2 mb-3">
-                      <ListPlus size={14}/> Шаги карусели
-                    </h4>
-                    <div className="space-y-2">
-                      {funnelSteps.map(step => (
-                        <label key={step.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors">
-                          <input 
-                            type="checkbox" 
-                            checked={step.checked} 
-                            onChange={() => toggleFunnelStep(step.id)}
-                            className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-white border-slate-300"
-                          />
-                          <span className={`text-xs font-bold ${step.checked ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
-                            {step.label}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
+              {/* ✅ ШАГ 2: ВЫБОР ИСТОЧНИКА (Скрыт для Афиши) */}
+              {entityType !== 'calendar' && (
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-400 uppercase mb-2">Шаг 2. Конкретный {entityType === 'tour' ? 'тур' : 'материал'}</label>
+                  <select 
+                    value={selectedSourceId} 
+                    onChange={(e) => setSelectedSourceId(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white"
+                  >
+                    <option value="">Выбери из списка...</option>
+                    {sources.filter(s => s.type === entityType).map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Платформа</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PLATFORMS.map(p => (
-                    <button key={p.id} onClick={() => setPlatform(p.id)} className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border-2 transition-all ${platform === p.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-700'}`}>
-                      {p.icon} {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* ✅ ШАГ 3: ФОРМАТ ПОДАЧИ (Логика адаптации) */}
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-400 uppercase">Шаг 3. Настройка и Формат</label>
+                
+                {/* ТУМБЛЕР РЕЖИМА (Только для Туров) */}
+                {entityType === 'tour' && (
+                  <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <button onClick={() => setIsCarousel(false)} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${!isCarousel ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-500'}`}>Одиночный</button>
+                    <button onClick={() => setIsCarousel(true)} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${isCarousel ? 'bg-white dark:bg-slate-700 shadow-sm text-teal-600' : 'text-slate-500'}`}>Карусель</button>
+                  </div>
+                )}
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Формат картинок</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setFormat('post')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'post' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📷 Квадрат (1:1)</button>
-                  <button onClick={() => setFormat('feed')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'feed' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>🖼️ Лента (4:5)</button>
-                  <button onClick={() => setFormat('story')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'story' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📱 Сториз (9:16)</button>
-                  <button onClick={() => setFormat('event')} className={`py-2 px-2 rounded-lg text-xs font-bold border-2 transition-all ${format === 'event' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📅 FB Event</button>
-                </div>
-              </div>
+                {/* КОНСТРУКТОР ВОРОНКИ (Для Туров) */}
+                {isCarousel && entityType === 'tour' && (
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                      <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-widest flex items-center gap-2 mb-3">
+                        <ListPlus size={14}/> Шаги карусели
+                      </h4>
+                      <div className="space-y-2">
+                        {funnelSteps.map(step => (
+                          <label key={step.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors">
+                            <input 
+                              type="checkbox" 
+                              checked={step.checked} 
+                              onChange={() => toggleFunnelStep(step.id)}
+                              className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-white border-slate-300"
+                            />
+                            <span className={`text-xs font-bold ${step.checked ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
+                              {step.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                  </div>
+                )}
 
-              <div>
-                 <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1.5">Триггер (на обложку)</label>
-                 <input 
-                   type="text" 
-                   value={triggerText} 
-                   onChange={(e) => setTriggerText(e.target.value)} 
-                   placeholder="Напр: Последние 2 места!" 
-                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/20 text-slate-900 dark:text-white placeholder:text-slate-700 outline-none" 
-                 />
+                {/* Цель и Аудитория */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Цель поста</label>
+                       <select value={goal} onChange={(e) => setGoal(e.target.value as any)} disabled={entityType === 'blog'} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white disabled:opacity-50">
+                          {GOALS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
+                       </select>
+                    </div>
+                    <div>
+                       <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Аудитория</label>
+                       <select value={audience} onChange={(e) => setAudience(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white">
+                          {AUDIENCES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+                       </select>
+                    </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Платформа</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PLATFORMS.map(p => (
+                      <button key={p.id} onClick={() => setPlatform(p.id)} className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border-2 transition-all ${platform === p.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-700'}`}>
+                        {p.icon} {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Формат картинок</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => setFormat('post')} className={`py-2 px-2 rounded-lg text-[11px] font-bold border-2 transition-all ${format === 'post' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📷 Квадрат</button>
+                    <button onClick={() => setFormat('feed')} className={`py-2 px-2 rounded-lg text-[11px] font-bold border-2 transition-all ${format === 'feed' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>🖼️ Лента (4:5)</button>
+                    <button onClick={() => setFormat('story')} className={`py-2 px-2 rounded-lg text-[11px] font-bold border-2 transition-all ${format === 'story' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📱 Сториз</button>
+                    <button onClick={() => setFormat('event')} className={`py-2 px-2 rounded-lg text-[11px] font-bold border-2 transition-all ${format === 'event' ? 'border-teal-500 text-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 border-transparent'}`}>📅 FB Event</button>
+                  </div>
+                </div>
+
+                <div>
+                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Триггер (на обложку)</label>
+                   <input 
+                     type="text" 
+                     value={triggerText} 
+                     onChange={(e) => setTriggerText(e.target.value)} 
+                     placeholder="Напр: Последние 2 места!" 
+                     className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none" 
+                   />
+                </div>
               </div>
 
               <button 
                 onClick={handleGenerate}
                 disabled={isGenerating || !selectedSourceId}
-                className="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-50 transition-all"
+                className="w-full mt-4 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-50 transition-all"
               >
                 {isGenerating ? <RefreshCw className="animate-spin" size={16}/> : <Sparkles size={16}/>}
                 Сгенерировать сценарий
@@ -469,7 +492,7 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
           <div className="lg:col-span-8 space-y-6">
             
             {/* МОНТАЖНЫЙ СТОЛ (Storyboard) */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm overflow-hidden">
               <h3 className="text-sm font-black uppercase tracking-tight text-slate-700 mb-4 flex items-center gap-2">
                 <Layout size={16}/> Монтажный стол (Слайды: {isCarousel ? generatedSlides.length + 1 : 1})
               </h3>
@@ -486,7 +509,7 @@ const getOgUrl = (slideIndex: number = 0, slideTitle?: string, slideText?: strin
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-center border border-slate-100 dark:border-slate-700">
                     <p className="text-[10px] font-black uppercase text-slate-500">Обложка</p>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 truncate">{selectedSource?.title || 'Выберите тур'}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 truncate">{selectedSource?.title || 'Выберите источник'}</p>
                   </div>
                 </div>
 

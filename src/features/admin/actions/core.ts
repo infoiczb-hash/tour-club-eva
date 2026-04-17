@@ -1,17 +1,27 @@
-// src/features/admin/actions.ts
+// src/features/admin/actions/core.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { withAdminAuth } from '@/lib/auth'; // 👈 ИМПОРТ БРОНИ
-import { withAdminAudit } from '@/lib/audit'; // ✅ ИМПОРТ АУДИТА
+import { withAdminAuth } from '@/lib/auth';
+import { withAdminAudit } from '@/lib/audit';
 import { prisma } from '@/lib/prisma';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { sendToUserTelegram, publishPostToChannel } from '@/features/admin/actions/telegram';
 import type { GroupManifest } from '@/features/admin/components/views/BookingsTab';
 
 // ==========================================
-// TYPES
+// 0. ОБЩИЕ ИНТЕРФЕЙСЫ И ТИПЫ
 // ==========================================
+
+export interface GuestJsonData {
+  isMain?: boolean;
+  name?: string;
+  ticketType?: 'adult' | 'child' | 'family' | 'member';
+  age?: string | number;
+  jacket?: string;
+  phone?: string;
+}
+
 interface TourDatesJson {
   start?: string;
   end?: string;
@@ -59,12 +69,12 @@ export interface SavePostPayload {
 }
 
 // ==========================================
-// 1. БРОНИРОВАНИЯ (CRM) С ПАГИНАЦИЕЙ (ЧТЕНИЕ - БЕЗ АУДИТА)
+// 1. БРОНИРОВАНИЯ (CRM) - ИСПРАВЛЕН БАГ ГДЕ ПРОПАДАЛИ БРОНИ
 // ==========================================
 
 export interface GetRegistrationsParams {
   page: number;
-  limit?: number;          // по умолчанию 20
+  limit?: number;
   search?: string;
   filterTab?: 'active' | 'archive';
 }
@@ -76,31 +86,44 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
-    // 1. Построение WHERE
-    const where: any = {};
+    const where: Prisma.BookingWhereInput = {};
+    const andConditions: Prisma.BookingWhereInput[] = [];
 
+    // Поиск (не затирает другие условия)
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search } },
-        { comment: { contains: search, mode: 'insensitive' } },
-        { tour: { title: { contains: search, mode: 'insensitive' } } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search } },
+          { comment: { contains: search, mode: 'insensitive' } },
+          { tour: { title: { contains: search, mode: 'insensitive' } } },
+        ]
+      });
     }
 
     if (filterTab === 'active') {
-      // Активные: не отменённые/отклонённые + дата тура в будущем
-      where.status = { notIn: ['cancelled', 'rejected'] };
-      where.tourDate = { startDate: { gte: now } };
+      // ✅ ФИКС: Оффлайн-брони (tourDateId: null) теперь видны в активных
+      andConditions.push({
+        status: { notIn: ['cancelled', 'rejected'] },
+        OR: [
+          { tourDate: { startDate: { gte: now } } },
+          { tourDateId: null } 
+        ]
+      });
     } else {
-      // Архив: отменённые/отклонённые ИЛИ прошедшие
-      where.OR = [
-        { status: { in: ['cancelled', 'rejected'] } },
-        { tourDate: { startDate: { lt: now } } },
-      ];
+      // Архив: отменённые/отклонённые ИЛИ прошедшие по дате
+      andConditions.push({
+        OR: [
+          { status: { in: ['cancelled', 'rejected'] } },
+          { tourDate: { startDate: { lt: now } } },
+        ]
+      });
     }
 
-    // 2. Параллельные запросы: данные + общее количество
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
     const [bookingsRaw, total] = await Promise.all([
       prisma.booking.findMany({
         where,
@@ -116,7 +139,6 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
       prisma.booking.count({ where }),
     ]);
 
-    // 3. Маппинг в DTO (безопасный, без мутаций)
     const data = bookingsRaw.map((item) => {
       const legacyDates = (item.tour?.dates as TourDatesJson[]) || [];
       const firstLegacyDate = legacyDates[0]?.start ? new Date(legacyDates[0].start) : null;
@@ -155,13 +177,13 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
 
     return { success: true, data, total };
   } catch (error) {
-    console.error('[getRegistrationsAction]', error);
+    console.error('[getRegistrationsAction] Error:', error);
     return { success: false, error: 'Ошибка загрузки бронирований', data: [], total: 0 };
   }
 });
 
 // ==========================================
-// 2. ГИДЫ (ЗАЩИЩЕНО АУДИТОМ)
+// 2. ГИДЫ (CRUD + АУДИТ)
 // ==========================================
 
 export const saveGuideAction = withAdminAuth(
@@ -196,14 +218,12 @@ export const saveGuideAction = withAdminAuth(
       revalidatePath('/admin');
       revalidatePath('/');
       revalidatePath('/guides');
-      if (data.slug) {
-        revalidatePath(`/guides/${data.slug}`);
-      }
+      if (data.slug) revalidatePath(`/guides/${data.slug}`);
 
       return { success: true };
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Save Guide Error:', error);
-      return { error: 'Произошла внутренняя ошибка сервера при сохранении профиля гида' };
+      return { error: 'Не удалось сохранить профиль гида' };
     }
   })
 );
@@ -215,21 +235,19 @@ export const deleteGuideAction = withAdminAuth(
   })(async (id: string | number) => {
     try {
       await prisma.guide.delete({ where: { id: String(id) } });
-      
       revalidatePath('/admin');
       revalidatePath('/');
       revalidatePath('/guides'); 
-      
       return { success: true };
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Delete Guide Error:', error);
-      return { error: 'Произошла внутренняя ошибка сервера при удалении гида' };
+      return { error: 'Ошибка при удалении гида' };
     }
   })
 );
 
 // ==========================================
-// 3. БЛОГ (ЗАЩИЩЕНО АУДИТОМ)
+// 3. БЛОГ (CRUD + АУДИТ)
 // ==========================================
 
 export const savePostAction = withAdminAuth(
@@ -239,16 +257,12 @@ export const savePostAction = withAdminAuth(
   })(async (data: SavePostPayload) => {
     try {
       const { id } = data;
-
-      let slug = data.slug;
-      if (!slug) {
-        slug = data.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-      }
+      let slug = data.slug || data.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
 
       const existingPost = await prisma.blog.findUnique({ where: { slug } });
       if (existingPost && existingPost.id !== id) {
         if (!id) slug = `${slug}-${Date.now().toString().slice(-4)}`;
-        else return { error: 'Такой URL (slug) уже занят! Измените его.' };
+        else return { error: 'URL (slug) уже занят!' };
       }
 
       const formattedData = {
@@ -279,20 +293,19 @@ export const savePostAction = withAdminAuth(
       revalidatePath('/admin');
       revalidatePath('/blog');
       revalidatePath('/');
+      
       if (!id && formattedData.isActive) {
         publishPostToChannel({
-          title:   formattedData.title,
+          title: formattedData.title,
           excerpt: formattedData.excerpt,
-          slug:    slug!,
-          image:   formattedData.image,
+          slug: slug!,
+          image: formattedData.image,
         }).catch(console.error);
       }
       return { success: true };
-    } catch (error: unknown) {
-      const err = error as { message?: string, code?: string };
-      if (err.code === 'P2002') return { error: 'URL (slug) должен быть уникальным' };
+    } catch (error) {
       console.error('Save Post Error:', error);
-      return { error: 'Произошла внутренняя ошибка сервера при сохранении поста' };
+      return { error: 'Ошибка при сохранении статьи' };
     }
   })
 );
@@ -300,36 +313,25 @@ export const savePostAction = withAdminAuth(
 export const togglePostStatusAction = withAdminAuth(
   withAdminAudit({
     actionName: 'TOGGLE_POST_STATUS',
-    getTargetId: (id: string, _field: 'isActive' | 'is_trending', _value: boolean) => id,
+    getTargetId: (id: string, _field: 'isActive' | 'is_trending', _value: boolean) => id, // ✅ Добавили недостающие аргументы
   })(async (id: string, field: 'isActive' | 'is_trending', value: boolean) => {
     try {
-      const existing = field === 'isActive'
-        ? await prisma.blog.findUnique({
-            where: { id },
-            select: { isActive: true },
-          })
+      const existing = field === 'isActive' 
+        ? await prisma.blog.findUnique({ where: { id }, select: { isActive: true } }) 
         : null;
 
       const post = await prisma.blog.update({
         where: { id },
         data: { [field]: value },
-        select: {
-          title: true,
-          excerpt: true,
-          slug: true,
-          image: true,
-          isActive: true,
-        },
+        select: { title: true, excerpt: true, slug: true, image: true, isActive: true },
       });
 
-      const isFirstPublish = field === 'isActive' && !existing?.isActive && value;
-
-      if (isFirstPublish) {
+      if (field === 'isActive' && !existing?.isActive && value) {
         publishPostToChannel({
-          title:   post.title,
+          title: post.title,
           excerpt: post.excerpt,
-          slug:    post.slug,
-          image:   post.image,
+          slug: post.slug,
+          image: post.image,
         }).catch(console.error);
       }
 
@@ -337,9 +339,9 @@ export const togglePostStatusAction = withAdminAuth(
       revalidatePath('/blog');
       revalidatePath('/');
       return { success: true };
-    } catch (error: unknown) {
-      console.error('Toggle Post Status Error:', error);
-      return { success: false, error: 'Произошла внутренняя ошибка сервера при обновлении статуса' };
+    } catch (error) {
+      console.error('Toggle Post Error:', error);
+      return { success: false, error: 'Ошибка обновления статуса' };
     }
   })
 );
@@ -354,15 +356,14 @@ export const deletePostAction = withAdminAuth(
       revalidatePath('/admin');
       revalidatePath('/blog');
       return { success: true };
-    } catch (error: unknown) {
-      console.error('Delete Post Error:', error);
-      return { error: 'Произошла внутренняя ошибка сервера при удалении поста' };
+    } catch (error) {
+      return { error: 'Ошибка при удалении поста' };
     }
   })
 );
 
 // ==========================================
-// 4. ТУРЫ (ЗАЩИЩЕНО АУДИТОМ)
+// 4. ТУРЫ (SOFT DELETE + АУДИТ)
 // ==========================================
 
 export const deleteTourAction = withAdminAuth(
@@ -372,32 +373,27 @@ export const deleteTourAction = withAdminAuth(
   })(async (id: string) => {
     try {
       const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
-      
       await prisma.tour.update({ 
         where: { id },
         data: { deletedAt: new Date(), isActive: false }
       });
-
       revalidatePath('/admin');
       revalidatePath('/tour');
       if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); 
-      revalidatePath('/');
       return { success: true };
-    } catch (error: unknown) {
-      console.error('Delete Tour Action Error:', error);
-      return { error: 'Произошла внутренняя ошибка сервера при удалении тура' };
+    } catch (error) {
+      return { error: 'Ошибка при удалении тура' };
     }
   })
 );
 
 // ==========================================
-// 5. КОНТЕНТ-БЛОКИ (ЗАЩИЩЕНО АУДИТОМ)
+// 5. КОНТЕНТ-БЛОКИ И CRM (АУДИТ)
 // ==========================================
-
 export const saveContentBlockAction = withAdminAuth(
   withAdminAudit({
     actionName: 'SAVE_CONTENT_BLOCK',
-    getTargetId: (slug: string, _content: Prisma.InputJsonValue) => slug,
+    getTargetId: (slug: string, _content: Prisma.InputJsonValue) => slug, // ✅ Добавили второй аргумент
   })(async (slug: string, content: Prisma.InputJsonValue) => {
     try {
       await prisma.contentBlock.upsert({
@@ -405,40 +401,31 @@ export const saveContentBlockAction = withAdminAuth(
         update: { content },
         create: { slug, content }
       });
-
       revalidatePath('/', 'layout');
       return { success: true };
-    } catch (error: unknown) {
-      console.error('Content Save Error:', error);
-      return { error: 'Произошла внутренняя ошибка сервера при сохранении блока' };
+    } catch (error) {
+      return { error: 'Ошибка сохранения контента' };
     }
   })
 );
 
-// ==========================================
-// 6. ОБНОВЛЕНИЕ КОММЕНТАРИЕВ В CRM (ЗАЩИЩЕНО АУДИТОМ)
-// ==========================================
 export const updateBookingCommentAction = withAdminAuth(
   withAdminAudit({
     actionName: 'UPDATE_BOOKING_COMMENT',
-    getTargetId: (id: string, _comment: string) => id,
+    getTargetId: (id: string, _comment: string) => id, // ✅ Добавили _comment
   })(async (id: string, comment: string) => {
     try {
-      await prisma.booking.update({ 
-        where: { id }, 
-        data: { comment } 
-      });
+      await prisma.booking.update({ where: { id }, data: { comment } });
       revalidatePath('/admin');
       return { success: true };
     } catch (error) {
-      console.error('Update Comment Error:', error);
-      return { success: false, error: 'Ошибка сохранения комментария' };
+      return { success: false, error: 'Ошибка сохранения заметки' };
     }
   })
 );
 
 // ==========================================
-// 7. ПОЛУЧЕНИЕ MANIFEST ДЛЯ ГРУПП (ЧТЕНИЕ - БЕЗ АУДИТА)
+// 6. МАНИФЕСТЫ (ГРУППЫ) - РЕШЕНО N+1 QUERY PROBLEM
 // ==========================================
 
 export interface GetGroupsManifestParams {
@@ -452,34 +439,20 @@ export type GetGroupsManifestResult =
   | { success: true; groups: GroupManifest[]; total: number }
   | { success: false; error: string };
 
-// Оригинальная функция с обработкой ошибок
 export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestParams): Promise<GetGroupsManifestResult> => {
   try {
     const { page, limit = 20, search, sortBy = 'date_asc' } = params;
     const skip = (page - 1) * limit;
-
     const activeStatuses: BookingStatus[] = ['pending', 'confirmed'];
 
-    const bookingWhere: Prisma.BookingWhereInput = {
-      status: { in: activeStatuses },
-    };
-
-    if (search) {
-      bookingWhere.tour = { title: { contains: search, mode: 'insensitive' } };
-    }
-
-    const tourDatesWithBookings = await prisma.tourDate.findMany({
+    // 1. Получаем даты туров (основной запрос)
+    const tourDates = await prisma.tourDate.findMany({
       where: {
-        bookings: { some: bookingWhere },
+        bookings: { some: { status: { in: activeStatuses } } },
+        ...(search && { tour: { title: { contains: search, mode: 'insensitive' } } })
       },
       include: {
-        tour: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-          },
-        },
+        tour: { select: { id: true, title: true, slug: true } },
       },
       orderBy: { startDate: sortBy === 'date_asc' ? 'asc' : 'desc' },
       skip,
@@ -488,83 +461,83 @@ export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestP
 
     const total = await prisma.tourDate.count({
       where: {
-        bookings: { some: bookingWhere },
+        bookings: { some: { status: { in: activeStatuses } } },
+        ...(search && { tour: { title: { contains: search, mode: 'insensitive' } } })
       },
     });
 
-    const groups = await Promise.all(
-      tourDatesWithBookings.map(async (tourDate) => {
-        const bookings = await prisma.booking.findMany({
-          where: {
-            tourDateId: tourDate.id,
-            status: { in: activeStatuses },
-          },
-        });
+    if (tourDates.length === 0) return { success: true, groups: [], total: 0 };
 
-        const totalTickets = bookings.reduce((sum, b) => {
-          return sum + b.ticketsAdult + b.ticketsChild + b.ticketsMember + b.ticketsFamily * 3;
-        }, 0);
+    // ✅ РЕШЕНИЕ N+1: Выгружаем все брони для выбранных дат одним запросом
+    const tourDateIds = tourDates.map(td => td.id);
+    const allBookings = await prisma.booking.findMany({
+      where: {
+        tourDateId: { in: tourDateIds },
+        status: { in: activeStatuses },
+      },
+      orderBy: { createdAt: 'asc' }
+    });
 
-        // ✅ ИСПРАВЛЕНО: Оставили только одно объявление интерфейса во избежание Duplicate identifier
-        interface GuestJsonData {
-          isMain?: boolean;
-          name?: string;
-          ticketType?: string;
-          age?: string | number;
-          jacket?: string;
-          phone?: string;
-        }
+    // Группируем брони по ID даты в памяти
+    const bookingsByDate = new Map<string, typeof allBookings>();
+    allBookings.forEach(b => {
+      const key = b.tourDateId!;
+      if (!bookingsByDate.has(key)) bookingsByDate.set(key, []);
+      bookingsByDate.get(key)!.push(b);
+    });
 
-        const participants = bookings.flatMap((b) => {
-          // ✅ Кастуем JSON к массиву объектов (решает проблему с any и ошибками)
-          const guestsArray = (b.guests as unknown) as GuestJsonData[];
-          
-          const mainGuestInfo = Array.isArray(guestsArray) ? guestsArray.find(g => g.isMain) : null;
-          
-          const mainParticipant = {
-            isMain: true,
-            bookingId: b.id,
-            shortId: b.shortId ?? b.id.substring(0, 4),
-            name: b.name,
-            ticketType: 'adult',
-            phone: b.phone,
-            social: b.social,
-            comment: b.comment,
-            status: b.status,
-            jacket: mainGuestInfo?.jacket || '', 
-          };
-          
-          const extraGuests = Array.isArray(guestsArray)
-            ? guestsArray
-                .filter(g => !g.isMain)
-                .map(g => ({
-                  isMain: false,
-                  bookingId: b.id,
-                  shortId: b.shortId ?? b.id.substring(0, 4),
-                  name: g.name || 'Без имени',
-                  ticketType: g.ticketType || 'adult',
-                  age: g.age,
-                  jacket: g.jacket || '', 
-                  phone: g.phone,
-                  status: b.status,
-                }))
-            : [];
-            
-          return [mainParticipant, ...extraGuests];
-        });
+    // 2. Формируем финальный массив групп
+    const groups = tourDates.map(td => {
+      const bookings = bookingsByDate.get(td.id) || [];
+      const totalTickets = bookings.reduce((sum, b) => 
+        sum + b.ticketsAdult + b.ticketsChild + b.ticketsMember + b.ticketsFamily * 3, 0
+      );
 
-        return {
-          tourName: tourDate.tour.title,
-          date: tourDate.startDate.toLocaleDateString('ru-RU'),
-          totalTickets,
-          participants,
+      const participants = bookings.flatMap((b) => {
+        const guestsArray = (b.guests as unknown) as GuestJsonData[];
+        const mainGuestInfo = Array.isArray(guestsArray) ? guestsArray.find(g => g.isMain) : null;
+        
+        const mainParticipant = {
+          isMain: true,
+          bookingId: b.id,
+          shortId: b.shortId ?? b.id.substring(0, 4),
+          name: b.name,
+          ticketType: 'adult',
+          phone: b.phone,
+          social: b.social,
+          comment: b.comment,
+          status: b.status,
+          jacket: mainGuestInfo?.jacket || '', 
         };
-      })
-    );
+        
+        const extraGuests = Array.isArray(guestsArray)
+          ? guestsArray.filter(g => !g.isMain).map(g => ({
+              isMain: false,
+              bookingId: b.id,
+              shortId: b.shortId ?? b.id.substring(0, 4),
+              name: g.name || 'Без имени',
+              ticketType: g.ticketType || 'adult',
+              age: g.age,
+              jacket: g.jacket || '', 
+              phone: g.phone,
+              status: b.status,
+            }))
+          : [];
+            
+        return [mainParticipant, ...extraGuests];
+      });
+
+      return {
+        tourName: td.tour.title,
+        date: td.startDate.toLocaleDateString('ru-RU'),
+        totalTickets,
+        participants,
+      };
+    });
 
     return { success: true, groups, total };
   } catch (error) {
-    console.error(error);
-    return { success: false, error: error instanceof Error ? error.message : 'Ошибка загрузки групп' };
+    console.error('[getGroupsManifest] Error:', error);
+    return { success: false, error: 'Ошибка загрузки группы' };
   }
 });

@@ -16,6 +16,7 @@ export type SmmSource = {
   title: string;
   type: 'tour' | 'blog' | 'calendar'; // Добавлен calendar
   image: string | null;
+  gallery?: string[];
   categoryColor: string;
   categoryTitle?: string;
   price?: number;
@@ -86,6 +87,7 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
         type: 'tour',
         image: t.coverImage,
         price: t.price ? Number(t.price) : undefined,
+        gallery: t.coverImage ? [t.coverImage] : [],
         currency: t.currency || 'MDL',
         location: t.location || '',
         duration: t.duration || '',
@@ -217,7 +219,7 @@ export const generateSmmContentAction = withAdminAuth(async ({
     let contextData = '';
     const siteUrl = env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-    // 1. Формируем контекстную строку для ИИ
+   // 1. Формируем контекстную строку для ИИ
     if (sourceType === 'tour') {
       const tour = await prisma.tour.findUnique({
         where: { id: sourceId },
@@ -229,6 +231,10 @@ export const generateSmmContentAction = withAdminAuth(async ({
           currency: true, 
           duration: true, 
           location: true,
+          difficulty: true, // ✅ ДОБАВЛЕНО
+          included: true, // ✅ ДОБАВЛЕНО
+          additionalExpenses: true, // ✅ ДОБАВЛЕНО
+          program: true, // ✅ ДОБАВЛЕНО
           tourDates: {
             where: { startDate: { gte: new Date() }, isActive: true },
             orderBy: { startDate: 'asc' },
@@ -242,8 +248,21 @@ export const generateSmmContentAction = withAdminAuth(async ({
       const firstDate = tour.tourDates?.[0]?.startDate || null;
       const tourDateStr = firstDate ? new Date(firstDate).toLocaleDateString('ru-RU') : 'Открытая дата';
       
-      contextData = `ТИП: Анонс тура\nНАЗВАНИЕ: ${tour.title}\nЛОКАЦИЯ: ${tour.location}\nДЛИТЕЛЬНОСТЬ: ${tour.duration}\nДАТА: ${tourDateStr}\nЦЕНА: ${tour.price} ${tour.currency}\nОПИСАНИЕ: ${tour.subtitle || ''}. ${tour.description?.substring(0, 500) || ''}...\nССЫЛКА: ${siteUrl}/tour/${sourceId}`;
-    
+      // ✅ ДОБАВЛЕНО: Сверхточный контекст. ИИ теперь работает как форматер данных из БД.
+      contextData = `
+        ТИП КОНТЕНТА: Анонс туристического маршрута
+        НАЗВАНИЕ: ${tour.title}
+        ЛОКАЦИЯ: ${tour.location}
+        ДЛИТЕЛЬНОСТЬ: ${tour.duration}
+        СЛОЖНОСТЬ: ${tour.difficulty || 'Не указана'}
+        ДАТА БЛИЖАЙШЕГО: ${tourDateStr}
+        ЦЕНА: ${tour.price} ${tour.currency}
+        ВКЛЮЧЕНО В СТОИМОСТЬ: ${Array.isArray(tour.included) ? tour.included.join(', ') : 'Не указано'}
+        ДОП. РАСХОДЫ: ${Array.isArray(tour.additionalExpenses) ? tour.additionalExpenses.join(', ') : 'Нет'}
+        ПРОГРАММА ПО ДНЯМ: ${JSON.stringify(tour.program)}
+        МАРКЕТИНГОВОЕ ОПИСАНИЕ: ${tour.subtitle || ''}. ${tour.description?.substring(0, 500) || ''}...
+        ССЫЛКА НА БРОНЬ: ${siteUrl}/tour/${sourceId}
+      `;
     } else if (sourceType === 'calendar') {
       // Подтягиваем 10 ближайших активных туров для генерации афиши
       const upcomingTours = await prisma.tourDate.findMany({
