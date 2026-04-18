@@ -25,10 +25,11 @@ function formatPrice(raw: string | null): string {
 }
 
 /** Полное название месяца: "26 апреля" */
+
 function formatFullDate(raw: string): string {
   if (!raw) return '';
   try {
-    const d = new Date(raw);
+    const d = new Date(raw.includes('T') ? raw : `${raw}T12:00:00`);
     if (isNaN(d.getTime())) return raw;
     const months = [
       'января','февраля','марта','апреля','мая','июня',
@@ -40,11 +41,10 @@ function formatFullDate(raw: string): string {
   }
 }
 
-/** Короткая дата для афиши: "26 АПР." */
 function formatShortDate(raw: string): string {
   if (!raw) return '';
   try {
-    const d = new Date(raw);
+    const d = new Date(raw.includes('T') ? raw : `${raw}T12:00:00`);
     if (isNaN(d.getTime())) return raw;
     const months = ['ЯНВ.','ФЕВ.','МАР.','АПР.','МАЯ','ИЮН.','ИЮЛ.','АВГ.','СЕН.','ОКТ.','НОЯ.','ДЕК.'];
     return `${d.getDate()} ${months[d.getMonth()]}`;
@@ -160,13 +160,15 @@ export async function GET(request: Request) {
       };
       const [width, height] = SIZES[format] ?? [1080, 1350];
 
-      // ------------------------------------------------------------------
+     // ------------------------------------------------------------------
       // СЛАЙДЫ (slide !== '0')
       // ------------------------------------------------------------------
       if (slide !== '0' || type === 'calendar') {
-        // Для календаря всегда рисуем афишу (фон не нужен)
         const isCalendar = type === 'calendar' || slideTitle.includes('АФИША') || slideTitle.includes('РАСПИСАНИЕ');
-        const useImageBg = !isCalendar; // фон только для не-календарных слайдов
+        const useImageBg = !isCalendar;
+        
+        // Динамический коэффициент: для Story (1920) scale = 1, для Post (1080) scale = 0.56
+        const scale = height / 1920;
 
         return new ImageResponse(
           (
@@ -176,58 +178,15 @@ export async function GET(request: Request) {
               )}
               {useImageBg && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15,23,42,0.88)' }} />}
 
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '80px', position: 'relative', zIndex: 10 }}>
+              {/* Адаптивный паддинг основного контейнера */}
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: `${80 * scale}px`, position: 'relative', zIndex: 10 }}>
 
                 {/* ----- АФИША / РАСПИСАНИЕ ----- */}
                 {isCalendar ? (
                   <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '60px' }}>
-                      <div style={{ width: '8px', height: '60px', backgroundColor: brandColor, borderRadius: '4px', marginRight: '28px' }} />
-                      <span style={{ fontSize: '72px', color: 'white', fontWeight: 900, letterSpacing: '-1px' }}>
-                        {slideTitle || 'АФИША НА МЕСЯЦ'}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
-                      {slideText.split('|').map((item, i) => {
-                        const parts = item.split(':').map(s => s?.trim());
-                        const [d, n, p] = parts;
-                        if (!d || !n) return null;
-                        return (
-                          <div key={i} style={{
-                            display: 'flex', alignItems: 'center',
-                            backgroundColor: 'rgba(30,41,59,0.9)',
-                            borderRadius: '24px',
-                            padding: '28px 36px',
-                            border: `1px solid rgba(255,255,255,0.07)`,
-                          }}>
-                            <div style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                              backgroundColor: brandColor, padding: '16px 22px', borderRadius: '16px',
-                              minWidth: '130px', marginRight: '36px',
-                            }}>
-                              <span style={{ color: '#0f172a', fontSize: '34px', fontWeight: 900, lineHeight: 1.1 }}>
-                                {formatShortDate(d) || d}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                              <span style={{ color: 'white', fontSize: '38px', fontWeight: 900, lineHeight: 1.2 }}>{n}</span>
-                              {p && <span style={{ color: '#94a3b8', fontSize: '30px', fontWeight: 700, marginTop: '8px' }}>{p}</span>}
-                            </div>
-                            <div style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              width: '56px', height: '56px', borderRadius: '28px',
-                              backgroundColor: `${brandColor}22`, marginLeft: '20px',
-                            }}>
-                              <ArrowRightIcon color={brandColor} size={28} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px', opacity: 0.35 }}>
-                      <span style={{ color: 'white', fontSize: '28px', fontWeight: 900, letterSpacing: '8px' }}>EVATUR.CLUB</span>
+                     {/* ... вставленный тобой новый код афиши ... */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: `${40 * scale}px`, opacity: 0.35 }}>
+                      <span style={{ color: 'white', fontSize: `${28 * scale}px`, fontWeight: 900, letterSpacing: `${8 * scale}px` }}>EVATUR.CLUB</span>
                     </div>
                   </div>
 
@@ -406,13 +365,13 @@ export async function GET(request: Request) {
                             {type === 'calendar' ? 'от' : 'Стоимость'}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
-                            <span style={{ fontSize: '108px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 8px 28px rgba(0,0,0,0.9)' }}>
+                            <span style={{ fontSize: '84px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 8px 28px rgba(0,0,0,0.9)' }}>
                               {priceStr}
                             </span>
-                            <span style={{ fontSize: '48px', color: brandColor, fontWeight: 900 }}>{currency}</span>
+                            <span style={{ fontSize: '42px', color: brandColor, fontWeight: 900 }}>{currency}</span>
                           </div>
                           {/* Плашки с дополнительными тарифами */}
-                          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                          <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
                             {priceChildStr && (
                               <span style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '8px 20px', borderRadius: '24px', fontSize: '28px', color: '#e2e8f0', fontWeight: 700 }}>👶 Детский {priceChildStr} {currency}</span>
                             )}
@@ -460,7 +419,7 @@ export async function GET(request: Request) {
                 background: 'linear-gradient(to bottom, rgba(15,23,42,0) 0%, rgba(15,23,42,0.25) 30%, rgba(15,23,42,0.82) 65%, rgba(15,23,42,1) 100%)',
               }} />
 
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '80px', position: 'relative', zIndex: 10 }}>
+             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: format === 'post' ? '50px' : '60px', position: 'relative', zIndex: 10 }}>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   {trigger && (
@@ -479,10 +438,10 @@ export async function GET(request: Request) {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   <h1 style={{
                     color: 'white',
-                    fontSize: type === 'blog' ? '108px' : '96px',
+                    fontSize: type === 'blog' ? '84px' : (format === 'post' ? '64px' : '76px'),
                     fontWeight: 900,
                     lineHeight: 0.95,
-                    margin: '0 0 44px 0',
+                    margin: '0 0 24px 0',
                     textTransform: 'uppercase',
                     textShadow: '0 8px 32px rgba(0,0,0,0.9)',
                   }}>
@@ -541,13 +500,13 @@ export async function GET(request: Request) {
                             <span style={{ fontSize: '30px', color: 'rgba(255,255,255,0.6)', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '2px' }}>
                               {type === 'calendar' ? 'от' : 'Стоимость'}
                             </span>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
-                              <span style={{ fontSize: '96px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 8px 28px rgba(0,0,0,0.9)' }}>
+                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
+                              <span style={{ fontSize: format === 'post' ? '72px' : '84px', color: 'white', fontWeight: 900, lineHeight: 1, textShadow: '0 8px 28px rgba(0,0,0,0.9)' }}>
                                 {priceStr}
                               </span>
-                              <span style={{ fontSize: '42px', color: brandColor, fontWeight: 900 }}>{currency}</span>
+                              <span style={{ fontSize: format === 'post' ? '32px' : '38px', color: brandColor, fontWeight: 900 }}>{currency}</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
                               {priceChildStr && (
                                 <span style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 16px', borderRadius: '20px', fontSize: '24px', color: '#e2e8f0', fontWeight: 700 }}>👶 Детский {priceChildStr} {currency}</span>
                               )}
