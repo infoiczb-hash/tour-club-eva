@@ -271,8 +271,15 @@ function formatContextForPrompt(ctx: ChatDbContext): string {
 // ============================================================================
 
 function isQuotaExceededError(error: unknown): boolean {
-  const msg = error instanceof Error ? error.message : String(error);
-  return msg.includes('quota') || msg.includes('429') || msg.includes('exceeded');
+  const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    msg.includes('quota') ||
+    msg.includes('429') ||
+    msg.includes('exceeded') ||
+    msg.includes('rate limit') ||
+    msg.includes('resource exhausted') ||
+    msg.includes('too many requests')
+  );
 }
 
 function generateCacheKey(mode: string, params: Record<string, unknown>): string {
@@ -360,23 +367,25 @@ export const performAiTask = withAdminAuth(
 
     try {
 
-      // ─────────────────────────────────────────────
-      // GENERATE IMAGE (Fal.ai + Groq)
+     // ─────────────────────────────────────────────
+      // GENERATE IMAGE (Fal.ai + AI Fallback)
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_image') {
-        const groqKey = process.env.GROQ_API_KEY;
         const falKey = process.env.FAL_KEY;
-
-        if (!groqKey || !falKey) {
-          return { success: false, error: 'Нет ключей GROQ_API_KEY или FAL_KEY (.env)' };
+        if (!falKey) {
+          return { success: false, error: 'Нет ключа FAL_KEY (.env)' };
         }
-
+        
         try {
-          const groq = createGroq({ apiKey: groqKey });
-
-          const { text: enhancedPrompt } = await generateText({
-            model: groq('llama3-70b-8192'),
-            system: `You are an expert Flux image generation prompt engineer.
+          // ✅ Обернули в withAiFallback: сначала пробуем Gemini, при ошибке - Groq + Кэш
+          const enhancedPrompt = await withAiFallback(
+            'enhance_image_prompt',
+            { prompt: task.prompt },
+            async (model) => {
+              const { text } = await generateText({
+                model,
+                temperature: 0.7, // ✅ Добавили креативности для промптов
+                system: `You are an expert Flux image generation prompt engineer.
 The user will give you a simple idea in Russian or English.
 
 SAFETY CHECK: If the idea contains harmful, violent, adult, or illegal content — respond with exactly the word: BLOCKED
@@ -386,8 +395,11 @@ Otherwise:
 - Expand it into a detailed, cinematic, hyperrealistic photography prompt for Flux
 - Include: lighting, composition, mood, camera angle, style
 - Return ONLY the English prompt. No explanations, no preamble.`,
-            prompt: task.prompt
-          });
+                prompt: task.prompt
+              });
+              return text;
+            }
+          );
 
           if (enhancedPrompt.trim() === 'BLOCKED') {
             return { success: false, error: 'Запрос содержит недопустимый контент и заблокирован.' };
@@ -426,6 +438,7 @@ Otherwise:
           async (model) => {
             const { object } = await generateObject({
               model,
+              temperature: 0.7,
               schema: TourAiSchema,
               system: `${EVA_BRAND_CONTEXT}
 
@@ -455,6 +468,7 @@ Otherwise:
           async (model) => {
             const { object } = await generateObject({
               model,
+              temperature: 0.7,
               schema: BlogAiSchema,
               system: `${EVA_BRAND_CONTEXT}
 
@@ -483,6 +497,7 @@ Otherwise:
           async (model) => {
             const { object } = await generateObject({
               model,
+              temperature: 0.1,
               schema: TourAiSchema,
               system: `${EVA_BRAND_CONTEXT}
 
@@ -511,6 +526,7 @@ Otherwise:
           async (model) => {
             const { object } = await generateObject({
               model,
+              temperature: 0.1, 
               schema: ChecklistSchema,
               system: `${EVA_BRAND_CONTEXT}
 
@@ -591,6 +607,7 @@ Otherwise:
           async (model) => {
             const { object } = await generateObject({
               model,
+              temperature: 0.7,
               schema: SmmPostSchema,
               system: `${EVA_BRAND_CONTEXT}\n\nТы — SMM-маркетолог. \n${selectedTone}\n${selectedPlatform}\n\n${structureInstruction}`,
               prompt: `Напиши пост и тексты слайдов на основе этих данных (используй как источник фактов):\n\n${task.context}`,
@@ -604,19 +621,17 @@ Otherwise:
       // ─────────────────────────────────────────────
       // CHAT
       // ─────────────────────────────────────────────
-      if (task.mode === 'chat') {
-        const dbContext = await loadChatContext();
-        const contextBlock = formatContextForPrompt(dbContext);
+     if (task.mode === 'chat') {
+  const dbContext = await loadChatContext();
+  const contextBlock = formatContextForPrompt(dbContext);
 
-        logAiInfo('chat', {
-          upcomingToursCount: dbContext.upcomingTours.length,
-          recentPostsCount: dbContext.recentBlogPosts.length,
-          messagesCount: task.messages.length,
-        });
+  logAiInfo('chat', {
+    upcomingToursCount: dbContext.upcomingTours.length,
+    recentPostsCount: dbContext.recentBlogPosts.length,
+    messagesCount: task.messages.length,
+  });
 
-        const { text } = await generateText({
-          model: primaryModel, // для чата fallback не используем, чтобы не путать контекст
-          system: `${EVA_BRAND_CONTEXT}
+  const chatSystem = `${EVA_BRAND_CONTEXT}
 
 Ты — EVA, стратегический AI-ассистент для команды клуба.
 Помогаешь с: планированием туров, маркетингом, текстами, анализом, идеями.
@@ -629,15 +644,30 @@ ${contextBlock}
 - На вопросы о расписании и ценах отвечай ТОЛЬКО на основе данных выше.
 - Если тур не в списке — скажи: «Этого тура нет в ближайшем расписании».
 - Не придумывай туры, цены и даты, которых нет в контексте.
-- Отвечай конкретно и по делу.`,
-          messages: task.messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        });
+- Отвечай конкретно и по делу.`;
 
-        return { success: true, mode: 'chat', data: text };
-      }
+  const chatMessages = task.messages.map((m) => ({ role: m.role, content: m.content }));
+
+  let chatText: string;
+  try {
+    ({ text: chatText } = await generateText({
+      model: primaryModel,
+      system: chatSystem,
+      messages: chatMessages,
+    }));
+  } catch (error) {
+    if (!isQuotaExceededError(error)) throw error;
+    Sentry.captureMessage('Gemini quota exceeded for mode: chat', { level: 'warning', tags: { mode: 'chat' } });
+    logAiInfo('chat', { fallback: 'groq' });
+    ({ text: chatText } = await generateText({
+      model: fallbackModel,
+      system: chatSystem,
+      messages: chatMessages,
+    }));
+  }
+
+  return { success: true, mode: 'chat', data: chatText };
+}
 
       return { success: false, error: 'Неизвестная команда AI' };
 

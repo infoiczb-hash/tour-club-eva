@@ -36,8 +36,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 // ACTIONS & API
-import { saveTour,getToursAdmin,  updateTourStatus } from '@/features/admin/actions/tour'; 
-import { deleteTour } from '@/features/tours/actions';
+import { saveTour,getToursAdmin,  updateTourStatus, deleteTour } from '@/features/admin/actions/tour'; 
 import { getInquiriesAction } from '@/features/admin/actions/inquiries';
 import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { getReviews, deleteReview, upsertReview } from '@/features/reviews/actions';
@@ -118,9 +117,8 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [toursPage, setToursPage] = useState(1);
   const [toursTotal, setToursTotal] = useState(0);
   const [toursSearch, setToursSearch] = useState('');
-  const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full'>('all');
+  const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full' | 'drafts'>('upcoming');
   const [toursLoading, setToursLoading] = useState(false);
-
   // --- Стейты для групп (манифест) ---
   const [groupsManifest, setGroupsManifest] = useState<GroupManifest[]>([]);
   const [groupsTotal, setGroupsTotal] = useState(0);

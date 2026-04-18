@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Search, X as XIcon, Phone, Send, Instagram, 
   Users, ChevronDown, Map, AlertCircle, Globe, LifeBuoy, ChevronUp, Eye, Inbox, Archive
@@ -203,6 +203,17 @@ export default function BookingsTab({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedRow, setExpandedRow] = useState<string | null>(null); 
   const { showToast } = useToast();
+  // ✅ ДОБАВЛЕНО: Фильтруем старые брони. 
+  // При удалении даты tourDateId становится null. Мы скрываем их из активной вкладки.
+  const displayBookings = useMemo(() => {
+    return bookings.filter(b => {
+      if (filterTab === 'active') {
+        if (!b.tourDateId) return false;
+        if (isPastTour(b.tour?.date)) return false;
+      }
+      return true;
+    });
+  }, [bookings, filterTab]);
 
   // Состояния для модалок
   const [broadcastModal, setBroadcastModal] = useState<{isOpen: boolean, group: any | null}>({isOpen: false, group: null});
@@ -322,10 +333,10 @@ export default function BookingsTab({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {bookings.length === 0 && (
+                        {displayBookings.length === 0 && (
                             <tr><td colSpan={5} className="p-8 text-center text-slate-800 font-medium">Ничего не найдено</td></tr>
                         )}
-                        {bookings.map(b => {
+                        {displayBookings.map(b => {
                             const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
                             const guests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
                             const hasGuests = guests.length > 0;
@@ -452,9 +463,9 @@ export default function BookingsTab({
                 </table>
             </div>
             
-            {/* Mobile Cards (без изменений) */}
+     {/* Mobile Cards (без изменений) */}
             <div className="md:hidden space-y-4 mt-4">
-                {bookings.map(b => {
+                {displayBookings.map(b => {
                     const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
                     const guests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
                     const hasGuests = guests.length > 0;
