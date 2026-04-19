@@ -5,10 +5,8 @@ export const runtime = 'edge';
 
 // ─── ШРИФТ НА УРОВНЕ МОДУЛЯ ─────────────────────────────────────────────────
 // Загружается один раз при холодном старте Edge-контейнера.
-// При повторных запросах Promise уже resolved — await возвращает мгновенно.
-// Файл: /public/fonts/Montserrat-Black.ttf
 const fontPromise: Promise<ArrayBuffer | null> = fetch(
-  new URL('/fonts/Montserrat-Black.ttf', process.env.NEXT_PUBLIC_SITE_URL)
+  new URL('/fonts/Montserrat-Black.ttf', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
 )
   .then((r) => (r.ok ? r.arrayBuffer() : null))
   .catch(() => null);
@@ -17,10 +15,6 @@ const fontPromise: Promise<ArrayBuffer | null> = fetch(
 
 type SmmFormat = 'story' | 'feed' | 'post' | 'event';
 
-/**
- * Тип слайда передаётся явно через ?slideType=...
- * Fallback: определяется по slideTitle для обратной совместимости.
- */
 type SlideType = 'details' | 'program' | 'checklist' | 'default';
 
 interface FontConfig {
@@ -29,7 +23,6 @@ interface FontConfig {
   weight: 900;
 }
 
-/** Все параметры запроса после валидации и нормализации */
 interface OgParams {
   format:         SmmFormat | null;
   type:           string;
@@ -53,6 +46,9 @@ interface OgParams {
   priceChildStr:  string;
   priceMemberStr: string;
   priceFamilyStr: string;
+  author:         string;
+  readTime:       string;
+  rubric:         string;
   width:          number;
   height:         number;
 }
@@ -80,6 +76,18 @@ const SIZES: Record<SmmFormat, [number, number]> = {
 
 // ─── УТИЛИТЫ ────────────────────────────────────────────────────────────────
 
+/** * БЕСПЛАТНЫЙ ПРОКСИ ДЛЯ WebP: 
+ * Оборачиваем прямые ссылки в wsrv.nl, чтобы конвертировать WebP в JPG на лету. 
+ * Это спасает Satori от краша "Unsupported image type".
+ */
+function getSafeImageUrl(url: string | null): string {
+  if (!url) return '';
+  if (url.startsWith('http')) {
+    return `https://wsrv.nl/?url=${encodeURIComponent(url)}&output=jpg&q=85`;
+  }
+  return url;
+}
+
 /** Форматирует цену с неразрывными пробелями. Невалидный ввод → '' */
 export function formatPrice(raw: string | null): string {
   if (!raw || raw.trim() === '') return '';
@@ -105,10 +113,7 @@ export function formatFullDate(raw: string): string {
   }
 }
 
-/**
- * Определяет SlideType из явного параметра или по slideTitle (обратная совместимость).
- * calendar исключён — он живёт в /api/og/calendar.
- */
+/** Определяет SlideType из явного параметра или по slideTitle */
 function resolveSlideType(explicit: string | null, title: string): SlideType {
   const VALID: SlideType[] = ['details', 'program', 'checklist', 'default'];
   if (explicit && VALID.includes(explicit as SlideType)) return explicit as SlideType;
@@ -141,6 +146,11 @@ function parseParams(searchParams: URLSearchParams): OgParams {
   const duration      = searchParams.get('duration')      || '';
   const tagsStr       = searchParams.get('tags')          || '';
 
+  // Поля блога
+  const author        = searchParams.get('author')        || 'ЭВА';
+  const readTime      = searchParams.get('readTime')      || '5 мин';
+  const rubric        = (searchParams.get('rubric')       || 'БЛОГ').toUpperCase();
+
   // Неизвестный цвет → fallback teal
   const rawColor      = searchParams.get('categoryColor') || 'teal';
   const categoryColor = COLOR_MAP[rawColor] ? rawColor : 'teal';
@@ -150,7 +160,7 @@ function parseParams(searchParams: URLSearchParams): OgParams {
   const brandColor    = COLOR_MAP[categoryColor]!;
   const formattedDate = formatFullDate(rawDate);
 
-  // Невалидные цены → '' → блок не рендерится
+  // Цены
   const priceStr      = formatPrice(searchParams.get('price'));
   const priceChildStr = formatPrice(searchParams.get('priceChild'));
   const priceMemberStr= formatPrice(searchParams.get('priceMember'));
@@ -163,6 +173,7 @@ function parseParams(searchParams: URLSearchParams): OgParams {
     title, currency, rawDate, imageUrl, categoryColor, categoryTitle,
     trigger, location, duration, tags, brandColor, formattedDate,
     priceStr, priceChildStr, priceMemberStr, priceFamilyStr,
+    author, readTime, rubric,
     width, height,
   };
 }
@@ -170,71 +181,41 @@ function parseParams(searchParams: URLSearchParams): OgParams {
 // ─── SVG-ИКОНКИ ─────────────────────────────────────────────────────────────
 
 export const MapPinIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
 );
 
 export const ClockIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
-  </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
 );
 
 export const CalendarIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-    <line x1="16" x2="16" y1="2" y2="6" />
-    <line x1="8" x2="8" y1="2" y2="6" />
-    <line x1="3" x2="21" y1="10" y2="10" />
-  </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
 );
 
 export const ArrowRightIcon = ({ color, size = 40 }: { color: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14" />
-    <path d="m12 5 7 7-7 7" />
-  </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
 );
 
 const SparklesIcon = ({ color, size = 48 }: { color: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-    <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
-  </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" /></svg>
 );
 
 const CheckIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
 );
 
 // ─── ПЕРЕИСПОЛЬЗУЕМЫЕ UI-БЛОКИ ───────────────────────────────────────────────
 
-/** Строка с датой / локацией / длительностью */
-function MetaBar({ p, iconSize, fontSize, gap, padding }: {
-  p: OgParams; iconSize: number; fontSize: string; gap: string; padding: string;
-}) {
+/** Строка с локацией / длительностью (ДАТА УБРАНА НАВЕРХ) */
+function MetaBar({ p, iconSize, fontSize, gap, padding }: { p: OgParams; iconSize: number; fontSize: string; gap: string; padding: string; }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap,
-      backgroundColor: 'rgba(15,23,42,0.7)', padding,
-      borderRadius: '30px', border: '1px solid rgba(255,255,255,0.12)',
+      backgroundColor: 'rgba(15,23,42,0.8)', padding,
+      borderRadius: '30px', border: '1px solid rgba(255,255,255,0.15)',
       alignSelf: 'flex-start', boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
       flexWrap: 'wrap',
     }}>
-      {p.formattedDate && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <CalendarIcon color={p.brandColor} size={iconSize} />
-            <span style={{ color: 'white', fontSize, fontWeight: 900 }}>{p.formattedDate}</span>
-          </div>
-          <div style={{ width: '2px', height: '40px', backgroundColor: 'rgba(255,255,255,0.2)' }} />
-        </>
-      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <MapPinIcon color={p.brandColor} size={iconSize} />
         <span style={{ color: 'white', fontSize, fontWeight: 900 }}>{p.location}</span>
@@ -252,13 +233,17 @@ function MetaBar({ p, iconSize, fontSize, gap, padding }: {
   );
 }
 
-/** Блок стоимости с плашками тарифов */
-function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFontSize, arrowSize }: {
-  p: OgParams; priceFontSize: string; currencyFontSize: string;
-  labelFontSize: string; badgeFontSize: string; arrowSize: number;
-}) {
+/** Блок стоимости с плотной подложкой (ЗАЩИТА ОТ ПЕСТРОГО ФОНА) */
+function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFontSize, arrowSize }: { p: OgParams; priceFontSize: string; currencyFontSize: string; labelFontSize: string; badgeFontSize: string; arrowSize: number; }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%',
+      backgroundColor: 'rgba(15, 23, 42, 0.92)',
+      padding: '28px 36px',
+      borderRadius: '32px',
+      border: '1px solid rgba(255,255,255,0.15)',
+      boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+    }}>
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         <span style={{
           fontSize: labelFontSize, color: 'white', fontWeight: 900,
@@ -277,18 +262,18 @@ function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFo
         {(p.priceChildStr || p.priceMemberStr || p.priceFamilyStr) && (
           <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
             {p.priceChildStr && (
-              <span style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 18px', borderRadius: '20px', fontSize: badgeFontSize, color: '#e2e8f0', fontWeight: 700 }}>
-                👶 Детский {p.priceChildStr} {p.currency}
+              <span style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 18px', borderRadius: '16px', fontSize: badgeFontSize, color: '#e2e8f0', fontWeight: 700 }}>
+                👶 ДЕТИ {p.priceChildStr}
               </span>
             )}
             {p.priceMemberStr && (
-              <span style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 18px', borderRadius: '20px', fontSize: badgeFontSize, color: '#e2e8f0', fontWeight: 700 }}>
-                👑 Клубный {p.priceMemberStr} {p.currency}
+              <span style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)', border: '1px solid #14b8a6', padding: '6px 18px', borderRadius: '16px', fontSize: badgeFontSize, color: '#5eead4', fontWeight: 700 }}>
+                👑 КЛУБ {p.priceMemberStr}
               </span>
             )}
             {p.priceFamilyStr && (
-              <span style={{ backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 18px', borderRadius: '20px', fontSize: badgeFontSize, color: '#e2e8f0', fontWeight: 700 }}>
-                👨‍👩‍👧 Семейный {p.priceFamilyStr} {p.currency}
+              <span style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 18px', borderRadius: '16px', fontSize: badgeFontSize, color: '#e2e8f0', fontWeight: 700 }}>
+                👨‍👩‍👧 СЕМЬЯ {p.priceFamilyStr}
               </span>
             )}
           </div>
@@ -310,7 +295,6 @@ function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFo
 
 // ─── РЕНДЕРЕРЫ СЛАЙДОВ ───────────────────────────────────────────────────────
 
-/** ДЕТАЛИ — сетка карточек ключ:значение */
 function renderDetailsSlide(p: OgParams) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -322,17 +306,9 @@ function renderDetailsSlide(p: OgParams) {
           const parts = item.split(':');
           if (parts.length < 2) return null;
           return (
-            <div key={i} style={{
-              display: 'flex', flexDirection: 'column', width: '46%',
-              backgroundColor: '#1e293b', padding: '36px',
-              borderRadius: '24px', border: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              <span style={{ color: '#94a3b8', fontSize: '22px', fontWeight: 900, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                {parts[0].trim()}
-              </span>
-              <span style={{ color: 'white', fontSize: '40px', fontWeight: 900, lineHeight: 1.2 }}>
-                {parts[1].trim()}
-              </span>
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', width: '46%', backgroundColor: '#1e293b', padding: '36px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ color: '#94a3b8', fontSize: '22px', fontWeight: 900, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '2px' }}>{parts[0].trim()}</span>
+              <span style={{ color: 'white', fontSize: '40px', fontWeight: 900, lineHeight: 1.2 }}>{parts[1].trim()}</span>
             </div>
           );
         })}
@@ -341,7 +317,6 @@ function renderDetailsSlide(p: OgParams) {
   );
 }
 
-/** ПРОГРАММА — таймлайн с точками и соединительными линиями */
 function renderProgramSlide(p: OgParams) {
   const items = p.slideText.split('|').filter(Boolean);
   return (
@@ -349,12 +324,7 @@ function renderProgramSlide(p: OgParams) {
       <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, marginBottom: '48px' }}>
         {p.slideTitle}
       </span>
-      <div style={{
-        display: 'flex', flexDirection: 'column',
-        backgroundColor: '#1e293b', padding: '44px',
-        borderRadius: '32px', border: '1px solid rgba(255,255,255,0.06)',
-        gap: '32px',
-      }}>
+      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1e293b', padding: '44px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.06)', gap: '32px' }}>
         {items.map((item, i) => {
           const parts = item.split('-');
           if (parts.length < 2) return null;
@@ -362,17 +332,11 @@ function renderProgramSlide(p: OgParams) {
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
                 <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: p.brandColor }} />
-                {i < items.length - 1 && (
-                  <div style={{ width: '2px', flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', marginTop: '8px', minHeight: '36px' }} />
-                )}
+                {i < items.length - 1 && <div style={{ width: '2px', flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', marginTop: '8px', minHeight: '36px' }} />}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <span style={{ color: p.brandColor, fontSize: '26px', fontWeight: 900, marginBottom: '6px' }}>
-                  {parts[0].trim()}
-                </span>
-                <span style={{ color: 'white', fontSize: '32px', fontWeight: 700, lineHeight: 1.35 }}>
-                  {parts.slice(1).join('-').trim()}
-                </span>
+                <span style={{ color: p.brandColor, fontSize: '26px', fontWeight: 900, marginBottom: '6px' }}>{parts[0].trim()}</span>
+                <span style={{ color: 'white', fontSize: '32px', fontWeight: 700, lineHeight: 1.35 }}>{parts.slice(1).join('-').trim()}</span>
               </div>
             </div>
           );
@@ -382,7 +346,6 @@ function renderProgramSlide(p: OgParams) {
   );
 }
 
-/** ВКЛЮЧЕНО / ВПЕЧАТЛЕНИЯ / С СОБОЙ — чеклист со значками */
 function renderChecklistSlide(p: OgParams) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -395,16 +358,10 @@ function renderChecklistSlide(p: OgParams) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
         {p.slideText.split('-').filter(t => t.trim()).map((t, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backgroundColor: '#1e293b', borderRadius: '16px',
-              padding: '14px', marginRight: '24px', flexShrink: 0,
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1e293b', borderRadius: '16px', padding: '14px', marginRight: '24px', flexShrink: 0 }}>
               <CheckIcon color={p.brandColor} size={30} />
             </div>
-            <span style={{ color: '#e2e8f0', fontSize: '36px', fontWeight: 700, lineHeight: 1.4, flex: 1 }}>
-              {t.trim()}
-            </span>
+            <span style={{ color: '#e2e8f0', fontSize: '36px', fontWeight: 700, lineHeight: 1.4, flex: 1 }}>{t.trim()}</span>
           </div>
         ))}
       </div>
@@ -412,16 +369,11 @@ function renderChecklistSlide(p: OgParams) {
   );
 }
 
-/** Дефолтный слайд — заголовок + текст по центру */
 function renderDefaultSlide(p: OgParams) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-      <span style={{ fontSize: '50px', color: p.brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: '36px' }}>
-        {p.slideTitle}
-      </span>
-      <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, lineHeight: 1.4 }}>
-        {p.slideText}
-      </span>
+      <span style={{ fontSize: '50px', color: p.brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: '36px' }}>{p.slideTitle}</span>
+      <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, lineHeight: 1.4 }}>{p.slideText}</span>
     </div>
   );
 }
@@ -430,9 +382,7 @@ function renderDefaultSlide(p: OgParams) {
 
 /** Контентные слайды — маршрутизирует по slideType */
 function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
-  const useImageBg = true;
   let content: React.ReactNode;
-
   switch (p.slideType) {
     case 'details':   content = renderDetailsSlide(p);   break;
     case 'program':   content = renderProgramSlide(p);   break;
@@ -443,12 +393,10 @@ function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
   return new ImageResponse(
     (
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#0f172a', position: 'relative', fontFamily: 'Montserrat' }}>
-        {useImageBg && p.imageUrl && (
-          <img src={p.imageUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        {p.imageUrl && (
+          <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
-        {useImageBg && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15,23,42,0.88)' }} />
-        )}
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15,23,42,0.88)' }} />
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '80px', position: 'relative', zIndex: 10 }}>
           {content}
         </div>
@@ -460,45 +408,56 @@ function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
 
 /** Story (1080×1920) — обложка для Instagram Stories */
 function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
-  const { width, height, brandColor, imageUrl, title, categoryTitle, trigger, tags, type, priceStr } = p;
+  const { width, height, brandColor, imageUrl, title, categoryTitle, trigger, tags, type, priceStr, rubric, author, readTime } = p;
+  const isBlog = type === 'blog';
 
   return new ImageResponse(
     (
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
         {imageUrl && (
-          <img src={imageUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={getSafeImageUrl(imageUrl)} width={width} height={height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(2,6,23,0) 0%, rgba(2,6,23,0.15) 35%, rgba(2,6,23,0.75) 60%, rgba(2,6,23,0.97) 100%)',
         }} />
 
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '140px 80px 100px 80px', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '100px 80px', position: 'relative', zIndex: 10 }}>
 
-          {/* Шапка: триггер + категория */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            {trigger && (
-              <div style={{ display: 'flex', backgroundColor: '#f59e0b', padding: '16px 36px', borderRadius: '100px', marginBottom: '32px', boxShadow: '0 10px 30px rgba(245,158,11,0.5)' }}>
-                <span style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                  🔥 {trigger}
+          {/* Шапка: Триггер + Категория + Крупная Дата */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              {trigger && (
+                <div style={{ display: 'flex', backgroundColor: '#f59e0b', padding: '16px 36px', borderRadius: '100px', marginBottom: '32px', boxShadow: '0 10px 30px rgba(245,158,11,0.5)' }}>
+                  <span style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                    🔥 {trigger}
+                  </span>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '18px 40px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                <div style={{ width: '16px', height: '16px', borderRadius: '8px', backgroundColor: brandColor, marginRight: '18px', boxShadow: `0 0 14px ${brandColor}` }} />
+                <span style={{ fontSize: '38px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>
+                  {isBlog ? rubric : categoryTitle}
                 </span>
               </div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '18px 40px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-              <div style={{ width: '16px', height: '16px', borderRadius: '8px', backgroundColor: brandColor, marginRight: '18px', boxShadow: `0 0 14px ${brandColor}` }} />
-              <span style={{ fontSize: '38px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>
-                {categoryTitle}
-              </span>
             </div>
+            
+            {/* Крупная дата наверху */}
+            {!isBlog && p.formattedDate && (
+              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'white', padding: '18px 40px', borderRadius: '100px', gap: '16px', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' }}>
+                <CalendarIcon color="#0f172a" size={38} />
+                <span style={{ fontSize: '38px', fontWeight: 900, color: '#0f172a' }}>{p.formattedDate}</span>
+              </div>
+            )}
           </div>
 
-          <div style={{ display: 'flex', flex: 2 }} />
+          <div style={{ display: 'flex', flex: 1 }} />
 
           {/* Заголовок + теги */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <h1 style={{
               color: 'white',
-              fontSize: type === 'blog' ? '128px' : '112px',
+              fontSize: isBlog ? '128px' : '112px',
               fontWeight: 900, lineHeight: 0.95,
               margin: '0 0 48px 0',
               textTransform: 'uppercase',
@@ -525,24 +484,17 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
 
           <div style={{ display: 'flex', flex: 1 }} />
 
-          {/* Нижний блок: мета + цена */}
-          {type !== 'blog' ? (
+          {/* Нижний блок: Блог vs Тур */}
+          {!isBlog ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
               <MetaBar p={p} iconSize={36} fontSize="38px" gap="24px" padding="26px 40px" />
-              {priceStr && (
-                <PriceBlock p={p} priceFontSize="84px" currencyFontSize="42px" labelFontSize="32px" badgeFontSize="26px" arrowSize={96} />
-              )}
+              {priceStr && <PriceBlock p={p} priceFontSize="84px" currencyFontSize="42px" labelFontSize="32px" badgeFontSize="26px" arrowSize={96} />}
             </div>
           ) : (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: brandColor, padding: '26px 52px', borderRadius: '100px', boxShadow: `0 12px 40px ${brandColor}60` }}>
-                <span style={{ fontSize: '36px', color: '#0f172a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>
-                  📖 Читать статью
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100px', height: '100px', borderRadius: '50px', backgroundColor: 'rgba(15,23,42,0.6)', border: `2px solid ${brandColor}` }}>
-                <ArrowRightIcon color={brandColor} size={44} />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '24px 40px', borderRadius: '30px', alignSelf: 'flex-start' }}>
+               <span style={{ color: brandColor, fontSize: '36px', fontWeight: 900 }}>{author}</span>
+               <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }} />
+               <span style={{ color: 'white', fontSize: '32px', opacity: 0.8 }}>{readTime} чтенья</span>
             </div>
           )}
         </div>
@@ -552,39 +504,49 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
   );
 }
 
-/** Feed / Post (1080×1350 или 1080×1080) */
+/** Feed / Post (1080×1350 или 1080×1080) — Адаптивные шрифты */
 function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
-  const { width, height, format, brandColor, imageUrl, title, categoryTitle, trigger, tags, type, priceStr } = p;
+  const { width, height, format, brandColor, imageUrl, title, categoryTitle, trigger, tags, type, priceStr, rubric, author, readTime } = p;
   const isPost = format === 'post';
+  const isBlog = type === 'blog';
+
+  // Адаптивные шрифты для квадрата
+  const titleSize = isBlog ? (isPost ? '72px' : '84px') : (isPost ? '60px' : '76px');
+  const pad = isPost ? '40px' : '60px';
 
   return new ImageResponse(
     (
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
         {imageUrl && (
-          <img src={imageUrl} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={getSafeImageUrl(imageUrl)} width={width} height={height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(15,23,42,0) 0%, rgba(15,23,42,0.25) 30%, rgba(15,23,42,0.82) 65%, rgba(15,23,42,1) 100%)',
         }} />
 
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: isPost ? '50px' : '60px', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: pad, position: 'relative', zIndex: 10 }}>
 
           {/* Шапка */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            {trigger && (
-              <div style={{ display: 'flex', backgroundColor: '#f59e0b', padding: '12px 28px', borderRadius: '100px', marginBottom: '24px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-                <span style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                  🔥 {trigger}
-                </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              {trigger && (
+                <div style={{ display: 'flex', backgroundColor: '#f59e0b', padding: '12px 28px', borderRadius: '100px', marginBottom: '20px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                  <span style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '2px' }}>🔥 {trigger}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '14px 32px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                <div style={{ width: '14px', height: '14px', borderRadius: '7px', backgroundColor: brandColor, marginRight: '16px', boxShadow: `0 0 12px ${brandColor}` }} />
+                <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{isBlog ? rubric : categoryTitle}</span>
+              </div>
+            </div>
+
+            {!isBlog && p.formattedDate && (
+              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'white', padding: '14px 32px', borderRadius: '100px', gap: '12px', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' }}>
+                <CalendarIcon color="#0f172a" size={28} />
+                <span style={{ fontSize: '28px', fontWeight: 900, color: '#0f172a' }}>{p.formattedDate}</span>
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '14px 32px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-              <div style={{ width: '14px', height: '14px', borderRadius: '7px', backgroundColor: brandColor, marginRight: '16px', boxShadow: `0 0 12px ${brandColor}` }} />
-              <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>
-                {categoryTitle}
-              </span>
-            </div>
           </div>
 
           <div style={{ display: 'flex', flex: 1 }} />
@@ -592,12 +554,8 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
           {/* Заголовок + теги */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <h1 style={{
-              color: 'white',
-              fontSize: type === 'blog' ? '84px' : (isPost ? '64px' : '76px'),
-              fontWeight: 900, lineHeight: 0.95,
-              margin: '0 0 24px 0',
-              textTransform: 'uppercase',
-              textShadow: '0 8px 32px rgba(0,0,0,0.9)',
+              color: 'white', fontSize: titleSize, fontWeight: 900, lineHeight: 0.95,
+              margin: '0 0 24px 0', textTransform: 'uppercase', textShadow: '0 8px 32px rgba(0,0,0,0.9)',
             }}>
               {title}
             </h1>
@@ -605,10 +563,8 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
                 {tags.map((tag, idx) => (
                   <div key={idx} style={{
-                    display: 'flex', backgroundColor: 'rgba(15,23,42,0.65)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    padding: '12px 24px', borderRadius: '14px',
-                    color: 'white', fontSize: '28px', fontWeight: 900, textTransform: 'uppercase',
+                    display: 'flex', backgroundColor: 'rgba(15,23,42,0.65)', border: '1px solid rgba(255,255,255,0.18)',
+                    padding: '10px 20px', borderRadius: '14px', color: 'white', fontSize: '24px', fontWeight: 900, textTransform: 'uppercase',
                   }}>
                     # {tag}
                   </div>
@@ -619,28 +575,19 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
 
           <div style={{ display: 'flex', flex: 1 }} />
 
-          {/* Нижний блок */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-            {type !== 'blog' ? (
-              <>
-                <MetaBar p={p} iconSize={30} fontSize="32px" gap="20px" padding="22px 32px" />
-                {priceStr && (
-                  <PriceBlock p={p} priceFontSize={isPost ? '68px' : '78px'} currencyFontSize={isPost ? '30px' : '36px'} labelFontSize="26px" badgeFontSize="22px" arrowSize={84} />
-                )}
-              </>
-            ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: brandColor, padding: '22px 48px', borderRadius: '100px', boxShadow: `0 12px 40px ${brandColor}60` }}>
-                  <span style={{ fontSize: '32px', color: '#0f172a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>
-                    📖 Читать статью
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '90px', height: '90px', borderRadius: '45px', backgroundColor: 'rgba(15,23,42,0.6)', border: `2px solid ${brandColor}` }}>
-                  <ArrowRightIcon color={brandColor} size={40} />
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Нижний блок: Блог vs Тур */}
+          {!isBlog ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: isPost ? '16px' : '28px' }}>
+              <MetaBar p={p} iconSize={28} fontSize="28px" gap="20px" padding="20px 30px" />
+              {priceStr && <PriceBlock p={p} priceFontSize={isPost ? '64px' : '78px'} currencyFontSize={isPost ? '28px' : '36px'} labelFontSize="24px" badgeFontSize="20px" arrowSize={isPost ? 72 : 84} />}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '20px 36px', borderRadius: '30px', alignSelf: 'flex-start' }}>
+               <span style={{ color: brandColor, fontSize: '28px', fontWeight: 900 }}>{author}</span>
+               <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }} />
+               <span style={{ color: 'white', fontSize: '24px', opacity: 0.8 }}>{readTime} чтенья</span>
+            </div>
+          )}
         </div>
       </div>
     ),
@@ -680,9 +627,7 @@ function renderEvent(p: OgParams, fontConfig: FontConfig[] | undefined) {
             )}
             {priceStr && type !== 'blog' && (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '22px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '4px' }}>
-                  СТОИМОСТЬ ТУРА
-                </span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '22px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '4px' }}>СТОИМОСТЬ ТУРА</span>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                   <span style={{ fontSize: '68px', color: 'white', fontWeight: 900, lineHeight: 1 }}>{priceStr}</span>
                   <span style={{ fontSize: '32px', color: brandColor, fontWeight: 900 }}>{currency}</span>
@@ -695,7 +640,7 @@ function renderEvent(p: OgParams, fontConfig: FontConfig[] | undefined) {
         {/* Правая колонка — изображение */}
         <div style={{ display: 'flex', width: '55%', height: '100%', position: 'relative' }}>
           {imageUrl ? (
-            <img src={imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={getSafeImageUrl(imageUrl)} width={1056} height={1005} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#1e293b' }} />
           )}
@@ -720,12 +665,8 @@ function renderSeoFallback(searchParams: URLSearchParams, fontConfig: FontConfig
     (
       <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#020617', fontFamily: 'Montserrat' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 80px', border: '4px solid #8b5cf6', borderRadius: '30px', backgroundColor: '#0f172a', boxShadow: '0 20px 40px rgba(139,92,246,0.2)' }}>
-          <span style={{ fontSize: '40px', color: '#a78bfa', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '2px' }}>
-            {seoSubtitle}
-          </span>
-          <span style={{ fontSize: '75px', color: 'white', fontWeight: 900, textAlign: 'center', maxWidth: '900px', lineHeight: 1.2 }}>
-            {seoTitle}
-          </span>
+          <span style={{ fontSize: '40px', color: '#a78bfa', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '2px' }}>{seoSubtitle}</span>
+          <span style={{ fontSize: '75px', color: 'white', fontWeight: 900, textAlign: 'center', maxWidth: '900px', lineHeight: 1.2 }}>{seoTitle}</span>
         </div>
       </div>
     ),
@@ -739,7 +680,6 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
 
-    // fontPromise создан на уровне модуля — повторные вызовы мгновенны
     const fontData = await fontPromise;
     const fontConfig: FontConfig[] | undefined = fontData
       ? [{ name: 'Montserrat', data: fontData, weight: 900 }]
@@ -747,11 +687,80 @@ export async function GET(request: Request) {
 
     const p = parseParams(searchParams);
 
-    if (p.format) {
-      // Контентные слайды (slide !== '0')
-      if (p.slide !== '0') return renderSlide(p, fontConfig);
+    // 1. ПРОВЕРЯЕМ, ЗАПРОСИЛИ ЛИ МЫ ДИНАМИЧЕСКИЙ СЛАЙД ТУРА ПО ID
+    const tourId = searchParams.get('tourId');
+    const explicitSlideType = searchParams.get('slideType');
 
-      // Обложки (slide === '0')
+    if (tourId && explicitSlideType && p.slide !== '0') {
+      try {
+        // Делаем fetch к нашему безопасному Node.js API (с кэшированием)
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
+        const res = await fetch(`${baseUrl}/api/tour-data?id=${encodeURIComponent(tourId)}`, {
+          next: { revalidate: 3600 },
+        });
+
+        if (res.ok) {
+          const tour = await res.json();
+          
+          // Динамический импорт утилит форматирования
+          const {
+            formatProgramForSlide,
+            formatChecklistForSlide,
+            formatIncludedForSlide,
+            formatLogisticsForSlide,
+          } = await import('@/lib/tour-formatting');
+
+          let slideTitle = '';
+          let slideText = '';
+          let mappedSlideType: SlideType = 'default';
+
+          // Маппинг новых типов данных на наши существующие дизайны
+          switch (explicitSlideType) {
+            case 'program':
+              slideTitle = 'ПРОГРАММА ТУРА';
+              slideText = formatProgramForSlide(tour.program);
+              mappedSlideType = 'program';
+              break;
+            case 'checklist':
+              slideTitle = 'ЧТО ВЗЯТЬ С СОБОЙ';
+              slideText = formatChecklistForSlide(tour.checklist);
+              mappedSlideType = 'checklist';
+              break;
+            case 'included':
+              slideTitle = 'В СТОИМОСТЬ ВХОДИТ';
+              slideText = formatIncludedForSlide(tour.includedDetailed, tour.included);
+              mappedSlideType = 'checklist'; // Переиспользуем дизайн с галочками
+              break;
+            case 'logistics':
+              slideTitle = 'ЛОГИСТИКА';
+              slideText = formatLogisticsForSlide(tour);
+              mappedSlideType = 'details'; // Переиспользуем дизайн с плитками "Ключ:Значение"
+              break;
+          }
+
+          // Переопределяем параметры для генератора
+          const dynamicParams: OgParams = {
+            ...p,
+            slideType: mappedSlideType,
+            slideTitle,
+            slideText,
+            title: tour.title || p.title,
+            imageUrl: tour.coverImage || p.imageUrl,
+            categoryColor: tour.category?.color || p.categoryColor,
+            categoryTitle: tour.category?.title || p.categoryTitle,
+          };
+
+          return renderSlide(dynamicParams, fontConfig);
+        }
+      } catch (error) {
+        console.error('[OG] Tour dynamic slide fetch error:', error);
+        // При ошибке fetch просто пойдем по стандартному пути ниже
+      }
+    }
+
+    // 2. СТАНДАРТНЫЙ ПУТЬ РЕНДЕРИНГА (если нет tourId или это обложка)
+    if (p.format) {
+      if (p.slide !== '0') return renderSlide(p, fontConfig); // Обычный слайд с текстом из URL
       if (p.format === 'story')                       return renderStory(p, fontConfig);
       if (p.format === 'feed' || p.format === 'post') return renderFeed(p, fontConfig);
       if (p.format === 'event')                       return renderEvent(p, fontConfig);

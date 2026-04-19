@@ -16,6 +16,7 @@ import {
   Layout,
   Trash2,
   Eye,
+  Clock,
   X,
   Calendar as CalendarIcon,
   ListPlus,
@@ -24,7 +25,8 @@ import {
   Users,
   CheckCircle2,
   Wand2,
-  BookmarkPlus
+  BookmarkPlus,
+  AtSign // Добавлено для Threads
 } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import {
@@ -50,6 +52,15 @@ import { clsx } from 'clsx';
 type EntityType = 'tour' | 'blog' | 'calendar';
 type CalendarPeriod = 'week' | '2weeks' | 'month';
 
+// Восстановлены все форматы
+const FORMATS = [
+  { id: 'post', label: '1:1 Квадрат', aspect: 'aspect-square' },
+  { id: 'feed', label: '4:5 Лента', aspect: 'aspect-[4/5]' },
+  { id: 'story', label: '9:16 Сториз', aspect: 'aspect-[9/16]' },
+  { id: 'event', label: '16:9 Ивент', aspect: 'aspect-video' },
+] as const;
+type ContentFormat = typeof FORMATS[number]['id'];
+
 // Типизация для промптов (Нейро-студия)
 interface AiPrompt {
   id: string;
@@ -58,10 +69,12 @@ interface AiPrompt {
   createdAt?: Date;
 }
 
+// Восстановлен Threads
 const PLATFORMS = [
   { id: 'telegram', label: 'Telegram', icon: <Send size={14} /> },
   { id: 'instagram', label: 'Instagram', icon: <Instagram size={14} /> },
   { id: 'facebook', label: 'Facebook', icon: <MessageSquare size={14} /> },
+  { id: 'threads', label: 'Threads', icon: <AtSign size={14} /> },
 ] as const;
 
 const TONES = [
@@ -90,24 +103,39 @@ const DEFAULT_FUNNEL = [
 
 // --- ХЕЛПЕРЫ (ВЫНОС ЛОГИКИ ИЗ UI) ---
 
+// Функция определения CSS-класса пропорций для канваса
+const getAspectClass = (fmt: string) => {
+  const f = FORMATS.find(x => x.id === fmt);
+  return f ? f.aspect : 'aspect-[4/5]';
+};
+
 const generateGetOgUrl = (source: SmmSource, format: string, index: number, slideTitle?: string, slideText?: string, trigger?: string) => {
   const params = new URLSearchParams();
   params.append('format', format);
   params.append('slide', index.toString());
+  params.append('type', source.type); // Передаем тип для разделения Блог/Тур
   params.append('title', source.title);
   params.append('image', source.image || '');
   params.append('categoryColor', source.categoryColor);
-  params.append('categoryTitle', source.categoryTitle || 'ТУР');
-  params.append('location', source.location || '');
-  params.append('duration', source.duration || '');
-  params.append('tags', (source.tags || []).join(','));
-  params.append('price', source.price?.toString() || '');
-  params.append('currency', source.currency || 'MDL');
+  params.append('categoryTitle', source.categoryTitle || (source.type === 'blog' ? 'БЛОГ' : 'ТУР'));
   
-  if (source.date) {
-    const dateStr = new Date(source.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-    params.append('date', dateStr);
+  if (source.type === 'tour') {
+    params.append('location', source.location || '');
+    params.append('duration', source.duration || '');
+    params.append('price', source.price?.toString() || '');
+    // Добавлены дополнительные цены и дата для обложек
+    params.append('priceMember', (source as any).priceMember?.toString() || '');
+    params.append('priceChild', (source as any).priceChild?.toString() || '');
+    params.append('currency', source.currency || 'MDL');
+    if (source.date) {
+      params.append('date', new Date(source.date).toISOString());
+    }
+  } else if (source.type === 'blog') {
+    // Поля специчные для блога
+    params.append('author', (source as any).author || 'ЭВА');
+    params.append('readTime', (source as any).read_time || '');
   }
+  
   if (trigger) params.append('trigger', trigger);
   if (slideTitle) params.append('slideTitle', slideTitle);
   if (slideText) params.append('slideText', slideText);
@@ -137,7 +165,7 @@ export default function SmmTab() {
   const [tone, setTone] = useState<typeof TONES[number]['id']>('sell');
   const [goal, setGoal] = useState<typeof GOALS[number]['id']>('sell');
   const [audience, setAudience] = useState<typeof AUDIENCES[number]['id']>('warm');
-  const [format, setFormat] = useState<'post' | 'feed' | 'story'>('feed');
+  const [format, setFormat] = useState<ContentFormat>('feed');
   const [isCarousel, setIsCarousel] = useState(true);
   const [funnelSteps, setFunnelSteps] = useState(DEFAULT_FUNNEL);
   const [triggerText, setTriggerText] = useState('');
@@ -147,7 +175,7 @@ export default function SmmTab() {
   const [generatedCaption, setGeneratedCaption] = useState('');
   const [generatedSlides, setGeneratedSlides] = useState<{ title: string; text: string }[]>([]);
   const [hashtags, setHashtags] = useState<string[]>([]);
-  const [calendarBlobUrl, setCalendarBlobUrl] = useState<string | null>(null);
+  const [calendarBlobUrls, setCalendarBlobUrls] = useState<string[]>([]);
 
   const [showPromptSave, setShowPromptSave] = useState(false);
   const [newPromptTitle, setNewPromptTitle] = useState('');
@@ -165,25 +193,35 @@ export default function SmmTab() {
   const [previewPost, setPreviewPost] = useState<ScheduledPost | null>(null);
 
   // --- ОЧИСТКА ПАМЯТИ ОТ BLOB ---
-  useEffect(() => {
+useEffect(() => {
     return () => {
-      if (calendarBlobUrl) URL.revokeObjectURL(calendarBlobUrl);
+      calendarBlobUrls.forEach(url => URL.revokeObjectURL(url)); // ✅ Очищаем весь массив
     };
-  }, [calendarBlobUrl]);
+  }, [calendarBlobUrls]);
 
   // --- ЗАГРУЗКА ДАННЫХ ---
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [srcRes, histRes, promptsRes] = await Promise.all([
-        getSmmSourcesAction(),
-        getScheduledPostsAction(),
-        getAiPromptsAction()
+        getSmmSourcesAction() as Promise<{ success: boolean; data?: SmmSource[] }>,
+        getScheduledPostsAction() as Promise<{ success: boolean; data?: ScheduledPost[] }>,
+        getAiPromptsAction() as Promise<{ success: boolean; data?: any[] }>
       ]);
       
       if (srcRes.success) setSources(srcRes.data || []);
       if (histRes.success) setHistory(histRes.data || []);
-      if (promptsRes.success) setPrompts(promptsRes.data || []);
+      
+      // Надежный маппинг Нейро-студии (решает проблему пустой вкладки)
+      if (promptsRes.success && promptsRes.data) {
+        const mappedPrompts = promptsRes.data.map(p => ({
+          id: p.id,
+          title: p.title,
+          prompt: p.prompt || p.promptText || '',
+          createdAt: p.createdAt
+        }));
+        setPrompts(mappedPrompts);
+      }
     } catch (err) {
       showToast('Ошибка при обновлении данных', 'error');
     } finally {
@@ -208,25 +246,40 @@ export default function SmmTab() {
       setIsAssembling(true);
       try {
         const days = calendarPeriod === 'week' ? 7 : calendarPeriod === '2weeks' ? 14 : 30;
-        const eventsRes = await getSmmCalendarEventsAction(days);
+        const eventsRes = await getSmmCalendarEventsAction(days) as { success: boolean; data?: any[] };
         
-        if (eventsRes.success && eventsRes.data) {
-          const res = await fetch('/api/og/calendar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              format,
-              period: calendarPeriod,
-              brandColor: 'teal',
-              events: eventsRes.data
+        if (eventsRes.success && eventsRes.data && eventsRes.data.length > 0) {
+          // ✅ Нарезаем события на чанки: 6 для Сториз, 4 для Ленты/Квадрата
+          const chunkSize = format === 'story' ? 6 : 4;
+          const chunks = [];
+          for (let i = 0; i < eventsRes.data.length; i += chunkSize) {
+            chunks.push(eventsRes.data.slice(i, i + chunkSize));
+          }
+
+          // Очищаем старые ссылки из памяти
+          calendarBlobUrls.forEach(url => URL.revokeObjectURL(url));
+          
+          // ✅ Делаем параллельные запросы для каждого куска афиши
+          const fetchPromises = chunks.map(chunk => 
+            fetch('/api/og/calendar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                format: format === 'story' ? 'story' : 'feed', // генератор ждет только story/feed для размеров
+                period: calendarPeriod,
+                brandColor: 'teal',
+                events: chunk
+              })
+            }).then(r => {
+              if (!r.ok) throw new Error('Ошибка генерации');
+              return r.blob();
             })
-          });
+          );
+
+          const blobs = await Promise.all(fetchPromises);
+          const newUrls = blobs.map(blob => URL.createObjectURL(blob));
           
-          if (!res.ok) throw new Error('Ошибка генерации');
-          
-          if (calendarBlobUrl) URL.revokeObjectURL(calendarBlobUrl);
-          const blob = await res.blob();
-          setCalendarBlobUrl(URL.createObjectURL(blob));
+          setCalendarBlobUrls(newUrls); // ✅ Сохраняем массив слайдов
           
           setGeneratedCaption(`Свежая афиша туров ЭВА на ${calendarPeriod === 'week' ? 'неделю' : 'ближайшее время'}! 🏔️\n\nВыбирайте свой маршрут и бронируйте места заранее.`);
           setHashtags(['эватур', 'афишатирасполь', 'отдыхпмр']);
@@ -241,33 +294,47 @@ export default function SmmTab() {
       return;
     }
 
-    if (!selectedSource) return showToast('Сначала выбери тур', 'error');
+    if (!selectedSource) return showToast('Сначала выбери источник', 'error');
     
     setIsAssembling(true);
     const slides: { title: string; text: string }[] = [];
 
     if (isCarousel) {
-      if (selectedSource.program && Array.isArray(selectedSource.program)) {
-        const progText = selectedSource.program.slice(0, 5).map((p: any) => `• ${p.title || p.activities?.[0]?.title || 'Активность'}`).join('\n');
-        slides.push({ title: 'ПРОГРАММА ТУРА', text: progText });
+      if (selectedSource.type === 'tour') {
+        // Логика сборки ТУРА
+        if (selectedSource.program && Array.isArray(selectedSource.program)) {
+          const progText = selectedSource.program.slice(0, 5).map((p: any) => `• ${p.title || p.activities?.[0]?.title || 'Активность'}`).join('\n');
+          slides.push({ title: 'ПРОГРАММА ТУРА', text: progText });
+        }
+        if (selectedSource.included && Array.isArray(selectedSource.included)) {
+          const incText = selectedSource.included.slice(0, 6).map((i: string) => `- ${i}`).join('\n');
+          slides.push({ title: 'В СТОИМОСТЬ ВХОДИТ', text: incText });
+        }
+        const priceText = `Цена: ${selectedSource.price} ${selectedSource.currency}\nЛокация: ${selectedSource.location}\nСложность: ${selectedSource.tags?.[0] || 'Средняя'}`;
+        slides.push({ title: 'БРОНИРОВАНИЕ', text: priceText });
+      } else if (selectedSource.type === 'blog') {
+        // Логика сборки БЛОГА
+        slides.push({ title: 'О ЧЕМ СТАТЬЯ', text: selectedSource.title });
+        slides.push({ title: 'ДЕТАЛИ', text: `Автор: ${(selectedSource as any).author || 'ЭВА'}\nРубрика: ${selectedSource.categoryTitle || 'Блог'}` });
+        slides.push({ title: 'ПОЛЕЗНО', text: `Время чтения: ${(selectedSource as any).read_time || '5 мин'}\nЧитайте подробнее на сайте!` });
       }
-      if (selectedSource.included && Array.isArray(selectedSource.included)) {
-        const incText = selectedSource.included.slice(0, 6).map(i => `- ${i}`).join('\n');
-        slides.push({ title: 'В СТОИМОСТЬ ВХОДИТ', text: incText });
-      }
-      const priceText = `Цена: ${selectedSource.price} ${selectedSource.currency}\nЛокация: ${selectedSource.location}\nСложность: ${selectedSource.tags?.[0] || 'Средняя'}`;
-      slides.push({ title: 'БРОНИРОВАНИЕ', text: priceText });
     }
 
     setGeneratedSlides(slides);
-    setGeneratedCaption(`${selectedSource.title.toUpperCase()}\n\n${selectedSource.location}\n\nПриглашаем вас в активное путешествие вместе с турклубом ЭВА! 🏕️`);
+    
+    if (selectedSource.type === 'tour') {
+      setGeneratedCaption(`${selectedSource.title.toUpperCase()}\n\n${selectedSource.location}\n\nПриглашаем вас в активное путешествие вместе с турклубом ЭВА! 🏕️`);
+    } else {
+      setGeneratedCaption(`Новая статья в блоге ЭВА: ${selectedSource.title.toUpperCase()}!\n\nПереходите по ссылке, чтобы узнать больше 📖`);
+    }
+    
     setHashtags(['эватур', selectedSource.type, 'приднестровье']);
     
     setTimeout(() => {
       resultRef.current?.scrollIntoView({ behavior: 'smooth' });
       setIsAssembling(false);
     }, 100);
-  }, [entityType, selectedSource, calendarPeriod, format, isCarousel, calendarBlobUrl, showToast]);
+  }, [entityType, selectedSource, calendarPeriod, format, isCarousel, calendarBlobUrls, showToast]);
 
   // --- AI ГЕНЕРАЦИЯ ТЕКСТА ---
   const handleAiTextGenerate = async () => {
@@ -276,7 +343,7 @@ export default function SmmTab() {
 
     try {
       const activeSteps = isCarousel ? funnelSteps.filter(s => s.checked).map(s => s.label) : [];
-      const res = await generateSmmContentAction({
+      const res = (await generateSmmContentAction({
         sourceType: entityType as any,
         sourceId: selectedSourceId,
         platform,
@@ -284,7 +351,7 @@ export default function SmmTab() {
         goal,
         audience,
         steps: activeSteps
-      });
+      })) as { success: boolean; data?: any; error?: string };
 
       if (res.success && res.data) {
         setGeneratedCaption(res.data.caption);
@@ -309,11 +376,10 @@ export default function SmmTab() {
     setIsSaving(true);
    try {
       const allImages = entityType === 'calendar' 
-        ? [calendarBlobUrl || ''] 
+       ? calendarBlobUrls
         : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText), 
            ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText))];
 
-      // ✅ Добавили типизацию ответа (каст), чтобы убрать ошибку unknown
       const res = (await saveScheduledPostAction({
         platform,
         format,
@@ -344,7 +410,7 @@ export default function SmmTab() {
     setIsPublishing(true);
     try {
       const allImages = entityType === 'calendar' 
-        ? [calendarBlobUrl || ''] 
+       ? calendarBlobUrls
         : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText), 
            ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText))];
 
@@ -370,7 +436,7 @@ export default function SmmTab() {
 
   // --- УДАЛЕНИЕ ИСТОРИИ ---
   const handleDeleteHistoryPost = async (id: string) => {
-    const res = await deleteScheduledPostAction(id);
+    const res = (await deleteScheduledPostAction(id)) as { success: boolean; error?: string };
     if (res.success) {
         setHistory(prev => prev.filter(p => p.id !== id));
         setDeleteConfirmHistoryId(null);
@@ -387,7 +453,6 @@ export default function SmmTab() {
     
     setIsSaving(true);
     try {
-      // ✅ Передаем два отдельных аргумента (title и prompt) и добавляем каст ответа
       const res = (await saveAiPromptAction(newPromptTitle, generatedCaption)) as { success: boolean; error?: string };
        if (res.success) {
         showToast('Шаблон сохранен в Нейро-студию', 'success');
@@ -405,7 +470,7 @@ export default function SmmTab() {
   };
 
   const handleDeletePrompt = async (id: string) => {
-    const res = await deleteAiPromptAction(id);
+    const res = (await deleteAiPromptAction(id)) as { success: boolean; error?: string };
     if (res.success) {
       setPrompts(prev => prev.filter(p => p.id !== id));
       setDeleteConfirmPromptId(null);
@@ -415,7 +480,7 @@ export default function SmmTab() {
     }
   };
 
-const applyPrompt = (p: AiPrompt) => {
+  const applyPrompt = (p: AiPrompt) => {
     setGeneratedCaption(p.prompt); 
     setViewMode('generator');
     showToast('Шаблон применен', 'success');
@@ -432,7 +497,7 @@ const applyPrompt = (p: AiPrompt) => {
             onClick={() => setViewMode('generator')}
             className={clsx(
               "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'generator' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              viewMode === 'generator' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             )}
           >
             <Zap size={14} /> Мастерская
@@ -441,7 +506,7 @@ const applyPrompt = (p: AiPrompt) => {
             onClick={() => setViewMode('history')}
             className={clsx(
               "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'history' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              viewMode === 'history' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             )}
           >
             <History size={14} /> История
@@ -450,7 +515,7 @@ const applyPrompt = (p: AiPrompt) => {
             onClick={() => setViewMode('prompts')}
             className={clsx(
               "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'prompts' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              viewMode === 'prompts' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             )}
           >
             <Wand2 size={14} /> Нейро-студия
@@ -467,7 +532,7 @@ const applyPrompt = (p: AiPrompt) => {
               
               {/* Шаг 1: Сущность */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px]">1</span>
                   Объект продвижения
                 </label>
@@ -478,7 +543,7 @@ const applyPrompt = (p: AiPrompt) => {
                       onClick={() => { setEntityType(t); setSelectedSourceId(''); }}
                       className={clsx(
                         "py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                        entityType === t ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500'
+                        entityType === t ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
                       )}
                     >
                       {t === 'tour' ? 'Тур' : t === 'blog' ? 'Блог' : 'Афиша'}
@@ -489,7 +554,7 @@ const applyPrompt = (p: AiPrompt) => {
 
               {/* Шаг 2: Контент / Период */}
               <section className="animate-in fade-in slide-in-from-top-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px]">2</span>
                   Детализация
                 </label>
@@ -502,7 +567,7 @@ const applyPrompt = (p: AiPrompt) => {
                         onClick={() => setCalendarPeriod(p)}
                         className={clsx(
                           "py-3 border-2 rounded-xl text-[9px] font-bold uppercase transition-all",
-                          calendarPeriod === p ? 'border-teal-500 bg-teal-50 text-teal-600' : 'border-slate-100 dark:border-slate-800 text-slate-500'
+                          calendarPeriod === p ? 'border-teal-500 bg-teal-50 text-teal-600' : 'border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                         )}
                       >
                         {p === 'week' ? 'Неделя' : p === '2weeks' ? '2 нед.' : 'Месяц'}
@@ -517,7 +582,7 @@ const applyPrompt = (p: AiPrompt) => {
                       <select
                         value={selectedSourceId}
                         onChange={(e) => setSelectedSourceId(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-teal-500 rounded-2xl px-4 py-4 text-sm font-bold outline-none"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-teal-500 rounded-2xl px-4 py-4 text-sm font-bold text-slate-800 dark:text-slate-200 outline-none"
                       >
                         <option value="">Выбрать из базы...</option>
                         {sources.filter(s => s.type === entityType).map(s => (
@@ -534,7 +599,7 @@ const applyPrompt = (p: AiPrompt) => {
 
               {/* Шаг 3: Формат и ИИ Стратегия */}
               <section className="space-y-6">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px]">3</span>
                   Настройка форматов
                 </label>
@@ -564,7 +629,7 @@ const applyPrompt = (p: AiPrompt) => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Платформа</label>
+                      <label className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest">Платформа</label>
                       <div className="space-y-1">
                         {PLATFORMS.map(p => (
                           <button
@@ -572,7 +637,7 @@ const applyPrompt = (p: AiPrompt) => {
                             onClick={() => setPlatform(p.id)}
                             className={clsx(
                               "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[10px] font-bold border-2 transition-all",
-                              platform === p.id ? 'border-teal-500 bg-teal-50 text-teal-600' : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              platform === p.id ? 'border-teal-500 bg-teal-50 text-teal-600' : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                             )}
                           >
                             {p.icon} {p.label}
@@ -581,18 +646,18 @@ const applyPrompt = (p: AiPrompt) => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Размер</label>
+                      <label className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest">Размер</label>
                       <div className="space-y-1">
-                        {['feed', 'story'].map(f => (
+                        {FORMATS.map(f => (
                           <button
-                            key={f}
-                            onClick={() => setFormat(f as any)}
+                            key={f.id}
+                            onClick={() => setFormat(f.id)}
                             className={clsx(
                               "w-full py-2.5 rounded-xl text-[10px] font-bold border-2 transition-all",
-                              format === f ? 'border-teal-500 bg-teal-50 text-teal-600' : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              format === f.id ? 'border-teal-500 bg-teal-50 text-teal-600' : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                             )}
                           >
-                            {f === 'feed' ? 'Лента' : 'Сториз'}
+                            {f.label}
                           </button>
                         ))}
                       </div>
@@ -603,14 +668,14 @@ const applyPrompt = (p: AiPrompt) => {
                 {entityType !== 'calendar' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Тон (AI)</label>
-                      <select value={tone} onChange={e => setTone(e.target.value as any)} className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-2 py-2 text-[10px] font-bold outline-none">
+                      <label className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest">Тон (AI)</label>
+                      <select value={tone} onChange={e => setTone(e.target.value as any)} className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-2 py-2 text-[10px] font-bold text-slate-800 dark:text-slate-200 outline-none">
                          {TONES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Цель (AI)</label>
-                      <select value={goal} onChange={e => setGoal(e.target.value as any)} className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-2 py-2 text-[10px] font-bold outline-none">
+                      <label className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest">Цель (AI)</label>
+                      <select value={goal} onChange={e => setGoal(e.target.value as any)} className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-2 py-2 text-[10px] font-bold text-slate-800 dark:text-slate-200 outline-none">
                          {GOALS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
                       </select>
                     </div>
@@ -652,7 +717,7 @@ const applyPrompt = (p: AiPrompt) => {
                  )}
                  
                  {!selectedSourceId && entityType !== 'calendar' && (
-                    <p className="text-[9px] text-slate-400 text-center font-bold">
+                    <p className="text-[9px] text-slate-500 text-center font-bold">
                       Сначала выбери источник на Шаге 2
                     </p>
                  )}
@@ -667,35 +732,49 @@ const applyPrompt = (p: AiPrompt) => {
              {/* МОНТАЖНЫЙ СТОЛ */}
              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-8">
-                   <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                   <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-2">
                      <ImageIcon size={18} /> Монтажный стол
                    </h3>
                 </div>
 
-                <div className="flex overflow-x-auto gap-8 pb-8 custom-scrollbar snap-x snap-mandatory">
+            <div className="flex overflow-x-auto gap-8 pb-8 custom-scrollbar snap-x snap-mandatory">
                    {entityType === 'calendar' ? (
-                     <div className="shrink-0 w-80 snap-start">
-                        <div className={clsx(
-                          "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-100 dark:border-slate-800 shadow-2xl",
-                          format === 'story' ? 'aspect-[9/16]' : 'aspect-[4/5]'
-                        )}>
-                          {calendarBlobUrl ? (
-                            <img src={calendarBlobUrl} className="w-full h-full object-contain" alt="Affiche" />
-                          ) : (
+                     calendarBlobUrls.length > 0 ? (
+                       // ✅ Если афиша собрана, рендерим карусель из кусков
+                       calendarBlobUrls.map((url, idx) => (
+                         <div key={idx} className="shrink-0 w-80 snap-start flex flex-col gap-6">
+                            <div className={clsx(
+                              "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-100 dark:border-slate-800 shadow-2xl",
+                              getAspectClass(format)
+                            )}>
+                              <img src={url} className="w-full h-full object-contain" alt={`Affiche ${idx + 1}`} />
+                            </div>
+                            <div className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-center">
+                               <span className="text-[9px] font-black uppercase text-teal-600 tracking-widest">Афиша: Часть {idx + 1}</span>
+                            </div>
+                         </div>
+                       ))
+                     ) : (
+                       // ❌ Если афиши еще нет, показываем заглушку
+                       <div className="shrink-0 w-80 snap-start flex flex-col gap-6">
+                          <div className={clsx(
+                            "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-100 dark:border-slate-800 shadow-2xl",
+                            getAspectClass(format)
+                          )}>
                             <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 gap-4">
                                <CalendarIcon size={48} strokeWidth={1} />
                                <span className="text-[10px] font-black uppercase text-slate-500">Нажми "Собрать афишу"</span>
                             </div>
-                          )}
-                        </div>
-                     </div>
+                          </div>
+                       </div>
+                     )
                    ) : (
                      <>
                         {/* ОБЛОЖКА */}
-                        <div className="shrink-0 w-80 snap-start flex flex-col gap-4">
+                        <div className="shrink-0 w-80 snap-start flex flex-col gap-6">
                            <div className={clsx(
                              "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-50 dark:border-slate-800 shadow-2xl transition-all",
-                             format === 'story' ? 'aspect-[9/16]' : 'aspect-[4/5]'
+                             getAspectClass(format)
                            )}>
                               {selectedSource ? (
                                 <img src={generateGetOgUrl(selectedSource, format, 0, undefined, undefined, triggerText)} className="w-full h-full object-cover" />
@@ -708,14 +787,15 @@ const applyPrompt = (p: AiPrompt) => {
 
                         {/* КОНТЕНТНЫЕ СЛАЙДЫ */}
                         {isCarousel && generatedSlides.map((slide, idx) => (
-                          <div key={idx} className="shrink-0 w-80 snap-start flex flex-col gap-4">
+                          <div key={idx} className="shrink-0 w-80 snap-start flex flex-col gap-6">
                              <div className={clsx(
                                "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-50 dark:border-slate-800 shadow-2xl",
-                               format === 'story' ? 'aspect-[9/16]' : 'aspect-[4/5]'
+                               getAspectClass(format)
                              )}>
                                 <img src={generateGetOgUrl(selectedSource!, format, idx+1, slide.title, slide.text, triggerText)} className="w-full h-full object-cover" />
                              </div>
-                             <div className="space-y-2">
+                             {/* Отступы увеличены через space-y-4 для предотвращения наслоения */}
+                             <div className="space-y-4">
                                 <input 
                                   value={slide.title} 
                                   onChange={e => {
@@ -727,7 +807,7 @@ const applyPrompt = (p: AiPrompt) => {
                                 />
                                 <textarea 
                                   value={slide.text} 
-                                  rows={3}
+                                  rows={4}
                                   onChange={e => {
                                     const newS = [...generatedSlides];
                                     newS[idx].text = e.target.value;
@@ -746,17 +826,17 @@ const applyPrompt = (p: AiPrompt) => {
              {/* КОПИРАЙТИНГ И ХЕШТЕГИ */}
              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                   <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Текст публикации</h3>
+                   <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Текст публикации</h3>
                    <div className="flex items-center gap-2">
                      <button 
                       onClick={() => setShowPromptSave(!showPromptSave)}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600 transition-colors flex items-center gap-2"
                      >
                        <BookmarkPlus size={14}/> В шаблоны
                      </button>
                      <button 
                       onClick={() => { navigator.clipboard.writeText(fullContent); showToast('Скопировано', 'success'); }}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400 hover:text-teal-600"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-500 hover:text-teal-600"
                      >
                        <Copy size={18}/>
                      </button>
@@ -780,20 +860,20 @@ const applyPrompt = (p: AiPrompt) => {
                      >
                        Сохранить
                      </button>
-                     <button onClick={() => setShowPromptSave(false)} className="p-2.5 text-slate-400 hover:bg-white rounded-xl"><X size={16}/></button>
+                     <button onClick={() => setShowPromptSave(false)} className="p-2.5 text-slate-500 hover:bg-white rounded-xl"><X size={16}/></button>
                   </div>
                 )}
 
                 <textarea 
                   value={generatedCaption}
                   onChange={e => setGeneratedCaption(e.target.value)}
-                  className="w-full h-64 bg-slate-50 dark:bg-slate-800/50 border-none rounded-[1.5rem] p-6 text-sm font-medium leading-[1.8] outline-none focus:ring-2 focus:ring-teal-500/10 custom-scrollbar text-slate-900 dark:text-slate-100"
+                  className="w-full h-64 bg-slate-50 dark:bg-slate-800/50 border-none rounded-[1.5rem] p-6 text-sm font-medium leading-[1.8] outline-none focus:ring-2 focus:ring-teal-500/10 custom-scrollbar text-slate-800 dark:text-slate-100"
                   placeholder="Текст поста появится здесь..."
                 />
 
                 <div className="mt-6 flex flex-wrap gap-2">
                    {hashtags.map((tag, i) => (
-                     <div key={i} className="group flex items-center gap-1.5 px-4 py-2 bg-teal-50 dark:bg-teal-900/20 text-teal-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-teal-100 dark:border-teal-900">
+                     <div key={i} className="group flex items-center gap-1.5 px-4 py-2 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-teal-100 dark:border-teal-900">
                         #{tag}
                         <button onClick={() => setHashtags(h => h.filter((_, j) => j !== i))} className="opacity-0 group-hover:opacity-100 transition-opacity">
                            <X size={10}/>
@@ -845,64 +925,108 @@ const applyPrompt = (p: AiPrompt) => {
       )}
       
       {/* ─── ИСТОРИЯ ПУБЛИКАЦИЙ ─── */}
-      {viewMode === 'history' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-300">
-          {history.length > 0 ? history.map(post => (
-            <div key={post.id} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col border-b-8 border-b-transparent hover:border-b-teal-500">
-               <div className="relative aspect-[4/5] bg-slate-900">
-                  <img src={post.imageUrl || ''} className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent opacity-80" />
-                  
-                  <div className="absolute top-6 left-6 flex flex-col gap-2">
-                     <span className={clsx(
-                       "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-lg",
-                       post.platform === 'instagram' ? 'bg-pink-500' : 'bg-sky-500'
-                     )}>
-                        {post.platform}
-                     </span>
-                     <span className={clsx(
-                       "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg",
-                       post.status === 'scheduled' ? 'bg-amber-400 text-slate-900' : 'bg-slate-500 text-white'
-                     )}>
-                        {post.status === 'scheduled' ? 'Запланирован' : 'Черновик'}
-                     </span>
-                  </div>
-               </div>
-
-               <div className="p-8 flex-1 flex flex-col gap-6">
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed italic">
-                    "{post.content.substring(0, 150)}..."
-                  </p>
-                  
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800 mt-auto">
-                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase">
-                        <History size={12}/> {new Date(post.createdAt).toLocaleDateString('ru-RU')}
-                     </div>
-                     <div className="flex gap-2">
-                        <button onClick={() => setPreviewPost(post)} className="p-3 bg-slate-50 dark:bg-slate-800 hover:bg-teal-500 hover:text-white rounded-2xl transition-all text-slate-400">
-                           <Eye size={18}/>
-                        </button>
-                        
-                        <div className="relative">
-                          {deleteConfirmHistoryId === post.id ? (
-                            <div className="absolute bottom-0 right-0 flex gap-1 animate-in slide-in-from-right-2">
-                               <button onClick={() => handleDeleteHistoryPost(post.id)} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg"><CheckCircle2 size={18}/></button>
-                               <button onClick={() => setDeleteConfirmHistoryId(null)} className="p-3 bg-slate-200 text-slate-600 rounded-2xl"><X size={18}/></button>
-                            </div>
-                          ) : (
-                            <button onClick={() => setDeleteConfirmHistoryId(post.id)} className="p-3 bg-slate-50 dark:bg-slate-800 hover:bg-rose-500 hover:text-white rounded-2xl transition-all text-slate-400">
-                               <Trash2 size={18}/>
-                            </button>
-                          )}
+     {viewMode === 'history' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm animate-in fade-in duration-300 overflow-hidden">
+          {history.length > 0 ? (
+            <div className="overflow-x-auto custom-scrollbar pb-4">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <th className="pb-4 pl-4">Превью</th>
+                    <th className="pb-4 w-1/3">Контент</th>
+                    <th className="pb-4">Платформа</th>
+                    <th className="pb-4">Статус</th>
+                    <th className="pb-4">Создано</th>
+                    <th className="pb-4 text-right pr-4">Действия</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                  {history.map(post => (
+                    <tr key={post.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      
+                      {/* Thumbnail */}
+                      <td className="py-4 pl-4">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 cursor-pointer" onClick={() => setPreviewPost(post)}>
+                           {post.imageUrl ? (
+                             <img src={post.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center text-slate-400"><ImageIcon size={16}/></div>
+                           )}
                         </div>
-                     </div>
-                  </div>
-               </div>
+                      </td>
+                      
+                      {/* Контент (Обрезанный) */}
+                      <td className="py-4 pr-6">
+                         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2">
+                           {post.content}
+                         </p>
+                      </td>
+                      
+                      {/* Платформа */}
+                      <td className="py-4">
+                        <span className={clsx(
+                           "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
+                           post.platform === 'instagram' ? 'bg-pink-50 text-pink-600 dark:bg-pink-500/10 dark:text-pink-400' : 
+                           post.platform === 'facebook' ? 'bg-blue-50 text-blue-600 dark:bg-blue-600/10 dark:text-blue-400' :
+                           post.platform === 'threads' ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white' :
+                           'bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400'
+                        )}>
+                           {PLATFORMS.find(p => p.id === post.platform)?.icon}
+                           {post.platform}
+                        </span>
+                      </td>
+
+                      {/* Статус */}
+                      <td className="py-4">
+                         <span className={clsx(
+                           "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
+                           post.status === 'scheduled' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                         )}>
+                            {post.status === 'scheduled' ? 'Запланирован' : 'Черновик'}
+                         </span>
+                         {post.scheduledFor && (
+                           <div className="text-[10px] text-slate-400 font-bold mt-1.5 flex items-center gap-1">
+                             <Clock size={10} /> {new Date(post.scheduledFor).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})}
+                           </div>
+                         )}
+                      </td>
+
+                      {/* Дата создания */}
+                      <td className="py-4 text-xs font-bold text-slate-500">
+                        {new Date(post.createdAt).toLocaleDateString('ru-RU')}
+                      </td>
+
+                      {/* Действия (CRUD) */}
+                      <td className="py-4 pr-4 text-right">
+                         <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => setPreviewPost(post)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-teal-600" title="Просмотр">
+                               <Eye size={16}/>
+                            </button>
+                            
+                            {/* Удаление с инлайн-подтверждением */}
+                            <div className="relative flex justify-end min-w-[70px]">
+                              {deleteConfirmHistoryId === post.id ? (
+                                <div className="flex gap-1 animate-in fade-in slide-in-from-right-2">
+                                   <button onClick={() => handleDeleteHistoryPost(post.id)} className="p-2 bg-rose-500 text-white rounded-lg shadow-sm hover:bg-rose-600"><CheckCircle2 size={16}/></button>
+                                   <button onClick={() => setDeleteConfirmHistoryId(null)} className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"><X size={16}/></button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setDeleteConfirmHistoryId(post.id)} className="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg transition-colors text-slate-400 hover:text-rose-500" title="Удалить">
+                                   <Trash2 size={16}/>
+                                </button>
+                              )}
+                            </div>
+                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )) : (
-            <div className="col-span-full py-40 text-center opacity-10">
-               <History size={100} className="mx-auto mb-6" strokeWidth={1}/>
-               <p className="text-2xl font-black uppercase tracking-[0.5em]">История пуста</p>
+          ) : (
+            <div className="py-20 text-center opacity-30">
+               <History size={64} className="mx-auto mb-4" strokeWidth={1}/>
+               <p className="text-xl font-black uppercase tracking-[0.3em]">Реестр пуст</p>
             </div>
           )}
         </div>
@@ -919,7 +1043,7 @@ const applyPrompt = (p: AiPrompt) => {
                   </h3>
                </div>
                
-               <p className="text-xs text-slate-500 dark:text-slate-400 mb-8 leading-relaxed line-clamp-5 italic">
+               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-8 leading-relaxed line-clamp-5 italic">
                 {prompt.prompt}
                </p>
                
@@ -935,10 +1059,10 @@ const applyPrompt = (p: AiPrompt) => {
                     {deleteConfirmPromptId === prompt.id ? (
                       <div className="absolute bottom-0 right-0 flex gap-1 animate-in slide-in-from-right-2">
                          <button onClick={() => handleDeletePrompt(prompt.id)} className="p-2.5 bg-rose-500 text-white rounded-xl shadow-lg"><CheckCircle2 size={16}/></button>
-                         <button onClick={() => setDeleteConfirmPromptId(null)} className="p-2.5 bg-slate-100 text-slate-600 rounded-xl"><X size={16}/></button>
+                         <button onClick={() => setDeleteConfirmPromptId(null)} className="p-2.5 bg-slate-100 text-slate-700 rounded-xl"><X size={16}/></button>
                       </div>
                     ) : (
-                      <button onClick={() => setDeleteConfirmPromptId(prompt.id)} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
+                      <button onClick={() => setDeleteConfirmPromptId(prompt.id)} className="p-2.5 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
                          <Trash2 size={18}/>
                       </button>
                     )}

@@ -4,44 +4,6 @@
 //
 // Генерирует OG-изображение афиши (расписания туров) для Instagram Stories и Feed.
 // Принимает JSON-тело вместо URL-параметров — нет ограничения на размер данных.
-//
-// ─── ТЕЛО ЗАПРОСА (CalendarOgRequest) ───────────────────────────────────────
-//
-// {
-//   format:     'story' | 'feed',           // story=1080×1920, feed=1080×1350
-//   period:     'week' | '2weeks' | 'month', // определяет заголовок
-//   brandColor: 'teal' | 'amber' | ...,     // акцентный цвет (из COLOR_MAP)
-//   events: [
-//     {
-//       date:     '2026-04-25',   // ISO дата
-//       category: 'МЕСТНОЕ',      // название категории
-//       color:    'teal',         // цвет категории
-//       duration: '1 ДЕНЬ',       // длительность (опционально)
-//       title:    'Название тура',
-//       location: 'Тирасполь',    // (опционально)
-//       price:    250,             // число, (опционально)
-//       currency: 'MDL',          // (опционально, default 'MDL')
-//     }
-//   ]
-// }
-//
-// ─── ПРИМЕР ВЫЗОВА ──────────────────────────────────────────────────────────
-//
-// const blob = await fetch('/api/og/calendar', {
-//   method: 'POST',
-//   headers: { 'Content-Type': 'application/json' },
-//   body: JSON.stringify({
-//     format: 'story',
-//     period: 'month',
-//     brandColor: 'teal',
-//     events: [
-//       { date: '2026-04-25', category: 'МЕСТНОЕ', color: 'teal', duration: '1 ДЕНЬ',
-//         title: 'Валя Адынкэ. Новые горизонты', location: 'Валя-Адынкэ', price: 250 },
-//       { date: '2026-04-26', category: 'SUP', color: 'teal', duration: '3-4 ЧАСА',
-//         title: 'Сплав на SUP-досках', location: 'Тирасполь', price: 350 },
-//     ]
-//   })
-// }).then(r => r.blob());
 
 import { ImageResponse } from 'next/og';
 
@@ -49,7 +11,7 @@ export const runtime = 'edge';
 
 // ─── ШРИФТ НА УРОВНЕ МОДУЛЯ ─────────────────────────────────────────────────
 const fontPromise: Promise<ArrayBuffer | null> = fetch(
-  new URL('/fonts/Montserrat-Black.ttf', process.env.NEXT_PUBLIC_SITE_URL)
+  new URL('/fonts/Montserrat-Black.ttf', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
 )
   .then((r) => (r.ok ? r.arrayBuffer() : null))
   .catch(() => null);
@@ -84,8 +46,6 @@ interface FontConfig {
 }
 
 // ─── ЦВЕТОВАЯ ПАЛИТРА ───────────────────────────────────────────────────────
-// Дублируем здесь — calendar роут независим от основного route.tsx.
-// При желании вынести в /lib/og-colors.ts и импортировать из обоих файлов.
 const COLOR_MAP: Record<string, string> = {
   teal:    '#14b8a6',
   amber:   '#f59e0b',
@@ -136,7 +96,6 @@ function parseDateParts(iso: string): { dayNum: string; weekday: string; monthLa
     if (isNaN(d.getTime())) return { dayNum: '', weekday: '', monthLabel: '' };
 
     const WEEKDAYS     = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
-    const MONTHS_SHORT = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
     const MONTHS_FULL  = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
 
     return {
@@ -335,8 +294,19 @@ function renderCalendar(
 
   const [width, height] = SIZES[format] ?? SIZES.story;
 
-  // scale: story (1920) = 1.0 | feed (1350) ≈ 0.70
-  const s = height / 1920;
+  // Базовый масштаб
+  let s = height / 1920;
+
+  // ✅ АГРЕССИВНЫЙ МАСШТАБ
+  if (events.length <= 2) {
+    s *= 1.7;  // Увеличиваем на 70%
+  } else if (events.length === 3) {
+    s *= 1.55; // Увеличиваем на 55% (как на скрине-референсе)
+  } else if (events.length === 4) {
+    s *= 1.35; // Увеличиваем на 35%
+  } else {
+    s *= 1.1;  // Базовое увеличение на 10%
+  }
 
   const brandColorHex = COLOR_MAP[rawBrandColor] ?? COLOR_MAP['teal']!;
   const periodLabel   = PERIOD_LABELS[period] ?? 'АФИША';
@@ -345,6 +315,10 @@ function renderCalendar(
   const grouped = groupByMonth(events);
   const hasMultipleMonths = grouped.size > 1;
 
+  // ✅ ГИГАНТСКИЕ ОТСТУПЫ для равномерного заполнения
+  const parentGap = events.length <= 3 ? 100 * s : events.length === 4 ? 60 * s : 30 * s;
+  const childGap  = events.length <= 3 ? 80 * s : events.length === 4 ? 40 * s : 20 * s;
+
   return new ImageResponse(
     (
       <div style={{
@@ -352,12 +326,12 @@ function renderCalendar(
         width: '100%', height: '100%',
         backgroundColor: '#0b1120',
         fontFamily: 'Montserrat',
-        padding: `${72 * s}px ${64 * s}px ${56 * s}px`,
+        padding: `${80 * s}px ${60 * s}px`,
       }}>
 
         {/* ── Заголовок афиши ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: `${36 * s}px` }}>
-          <div style={{ height: '2px', flex: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: `${60 * s}px` }}>
+          <div style={{ height: '3px', flex: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
           <div style={{
             display: 'flex', alignItems: 'center', gap: `${10 * s}px`,
             paddingLeft: `${28 * s}px`, paddingRight: `${28 * s}px`,
@@ -376,24 +350,31 @@ function renderCalendar(
               {periodLabel}
             </span>
           </div>
-          <div style={{ height: '2px', flex: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ height: '3px', flex: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
         </div>
 
         {/* ── События ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: `${12 * s}px`, overflow: 'hidden' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          flex: 1, 
+          justifyContent: 'center', // ✅ Жесткая центровка (отступы раздвинут элементы равномерно)
+          gap: `${parentGap}px`, 
+          overflow: 'hidden' 
+        }}>
           {hasMultipleMonths
-            ? // Многомесячная афиша — показываем разделители месяцев
+            ? // Многомесячная афиша
               Array.from(grouped.entries()).map(([monthLabel, monthEvents]) => (
                 <div key={monthLabel} style={{ display: 'flex', flexDirection: 'column' }}>
                   <MonthHeader label={monthLabel} brandColor={brandColorHex} s={s} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: `${10 * s}px` }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: `${childGap}px` }}>
                     {monthEvents.map((ev, i) => (
                       <EventCard key={`${ev.date}-${i}`} ev={ev} brandColor={brandColorHex} s={s} />
                     ))}
                   </div>
                 </div>
               ))
-            : // Один месяц — просто карточки
+            : // Один месяц
               events.map((ev, i) => (
                 <EventCard key={`${ev.date}-${i}`} ev={ev} brandColor={brandColorHex} s={s} />
               ))
@@ -401,8 +382,8 @@ function renderCalendar(
         </div>
 
         {/* ── Футер ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: `${24 * s}px`, opacity: 0.2 }}>
-          <span style={{ color: 'white', fontSize: `${18 * s}px`, fontWeight: 900, letterSpacing: `${7 * s}px` }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: `${40 * s}px`, opacity: 0.2 }}>
+          <span style={{ color: 'white', fontSize: `${20 * s}px`, fontWeight: 900, letterSpacing: `${8 * s}px` }}>
             EVATUR.CLUB
           </span>
         </div>
@@ -422,7 +403,6 @@ function renderCalendar(
 
 export async function POST(request: Request) {
   try {
-    // Валидация Content-Type
     const contentType = request.headers.get('content-type') ?? '';
     if (!contentType.includes('application/json')) {
       return new Response(
@@ -431,7 +411,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Парсинг тела
     let body: CalendarOgRequest;
     try {
       body = await request.json();
@@ -442,7 +421,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Валидация обязательных полей
     if (!body.events || !Array.isArray(body.events) || body.events.length === 0) {
       return new Response(
         JSON.stringify({ error: 'events[] is required and must not be empty' }),
@@ -450,14 +428,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Нормализация формата и периода
     const format: CalendarFormat =
       body.format === 'story' || body.format === 'feed' ? body.format : 'story';
     const period: CalendarPeriod =
       body.period === 'week' || body.period === '2weeks' || body.period === 'month'
         ? body.period : 'month';
 
-    // Фильтруем события без названия, сортируем по дате
     const events: CalendarEvent[] = body.events
       .filter(ev => ev.title && ev.date)
       .sort((a, b) => {
