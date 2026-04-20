@@ -42,6 +42,15 @@ export type SmmSource = {
   date?: Date | string | null;
   program?: any;        // Для мгновенной автосборки слайдов
   included?: string[];  // Для мгновенной автосборки слайдов
+  author?: string;      // ✅ Добавили для блога
+  read_time?: number;
+  highlights?: any;
+  route?: string | null;
+  meetingPoint?: string | null;
+  priceChild?: number | null;
+  guide?: { name: string; role: string; image?: string | null } | null;
+  spots?: number;
+  spotsLeft?: number;
 };
 
 export type SaveScheduledPostPayload = {
@@ -79,17 +88,22 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
           title: true, 
           coverImage: true, 
           price: true,
+          priceChild: true,
           currency: true,
           location: true,
           duration: true,
           tags: true,
           program: true,
           included: true,
+          highlights: true,      // ✅ Добавили впечатления
+          route: true,           // ✅ Добавили маршрут
+          meetingPoint: true,    // ✅ Добавили место сбора
+          guide: { select: { name: true, role: true, image: true } },
           tourDates: {
             where: { startDate: { gte: new Date() }, isActive: true },
             orderBy: { startDate: 'asc' },
             take: 1,
-            select: { startDate: true }
+            select: { startDate: true, spots: true, spotsLeft: true }
           },
           category: { select: { color: true, title: true } }
         },
@@ -102,15 +116,19 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
           id: true, 
           title: true, 
           image: true,
-          blogCategory: { select: { slug: true } }
+          tags: true,          // ✅ Забираем теги
+          read_time: true,     // ✅ Забираем время чтения
+          author_name: true,   // ✅ Забираем автора
+          blogCategory: { select: { title: true } } // ✅ Берем реальное название рубрики
         },
         orderBy: { date: 'desc' },
         take: 50,
       }),
     ]);
 
-    const tourSources: SmmSource[] = tours.map(t => {
-      const firstDate = t.tourDates?.[0]?.startDate || null;
+ const tourSources: SmmSource[] = tours.map(t => {
+      const firstDateObj = t.tourDates?.[0];
+      const firstDate = firstDateObj?.startDate || null;
       
       let parsedTags: string[] = [];
       if (Array.isArray(t.tags)) {
@@ -125,6 +143,7 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
         type: 'tour',
         image: t.coverImage,
         price: t.price ? Number(t.price) : undefined,
+        priceChild: t.priceChild ? Number(t.priceChild) : undefined, // ✅
         gallery: t.coverImage ? [t.coverImage] : [],
         currency: t.currency || 'MDL',
         location: t.location || '',
@@ -135,17 +154,27 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
         categoryTitle: t.category?.title || 'ТУР',
         program: t.program,
         included: t.included,
+        highlights: t.highlights,           // ✅
+        route: t.route,                     // ✅
+        meetingPoint: t.meetingPoint,       // ✅
+        guide: t.guide as any,              // ✅ Приводим к any, чтобы TS не конфликтовал с типом Prisma
+        spots: firstDateObj?.spots,         // ✅
+        spotsLeft: firstDateObj?.spotsLeft, // ✅
       };
     });
-
-    const blogSources: SmmSource[] = posts.map(p => ({
+    
+const blogSources: SmmSource[] = posts.map((p: any) => ({
       id: p.id,
       title: p.title,
       type: 'blog',
       image: p.image,
       categoryColor: 'violet',
-      categoryTitle: 'БЛОГ'
-    }));
+      // ✅ Теперь подставляем реальные данные из БД, а фоллбэки сработают только если поле пустое
+      categoryTitle: p.blogCategory?.title || 'БЛОГ',
+      tags: p.tags || [],
+      author: p.author_name || 'ЭВА',
+      read_time: p.read_time || 5
+     }));
 
     const calendarSource: SmmSource = {
       id: 'monthly_calendar',

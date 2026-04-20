@@ -109,29 +109,45 @@ const getAspectClass = (fmt: string) => {
   return f ? f.aspect : 'aspect-[4/5]';
 };
 
-const generateGetOgUrl = (source: SmmSource, format: string, index: number, slideTitle?: string, slideText?: string, trigger?: string) => {
+const generateGetOgUrl = (source: SmmSource, format: string, index: number, slideTitle?: string, slideText?: string, trigger?: string, slideType?: string) => {
   const params = new URLSearchParams();
   params.append('format', format);
   params.append('slide', index.toString());
-  params.append('type', source.type); // Передаем тип для разделения Блог/Тур
+  params.append('type', source.type); 
   params.append('title', source.title);
   params.append('image', source.image || '');
   params.append('categoryColor', source.categoryColor);
   params.append('categoryTitle', source.categoryTitle || (source.type === 'blog' ? 'БЛОГ' : 'ТУР'));
+  params.append('tags', (source.tags || []).join(',')); 
   
   if (source.type === 'tour') {
     params.append('location', source.location || '');
     params.append('duration', source.duration || '');
     params.append('price', source.price?.toString() || '');
-    // Добавлены дополнительные цены и дата для обложек
     params.append('priceMember', (source as any).priceMember?.toString() || '');
-    params.append('priceChild', (source as any).priceChild?.toString() || '');
+    params.append('priceChild', source.priceChild?.toString() || '');
     params.append('currency', source.currency || 'MDL');
+    
+    // ✅ Новые поля для журнальной карусели
+    if (source.route) params.append('route', source.route);
+    if (source.meetingPoint) params.append('meetingPoint', source.meetingPoint);
+    if (source.spots) params.append('spots', source.spots.toString());
+    if (source.spotsLeft !== undefined) params.append('spotsLeft', source.spotsLeft.toString());
+    
+    if (source.guide) {
+      if (source.guide.name) params.append('guideName', source.guide.name);
+      if (source.guide.role) params.append('guideRole', source.guide.role);
+      if (source.guide.image) params.append('guideImage', source.guide.image);
+    }
+    
+    if (source.highlights) {
+       params.append('highlights', typeof source.highlights === 'string' ? source.highlights : JSON.stringify(source.highlights));
+    }
+
     if (source.date) {
       params.append('date', new Date(source.date).toISOString());
     }
   } else if (source.type === 'blog') {
-    // Поля специчные для блога
     params.append('author', (source as any).author || 'ЭВА');
     params.append('readTime', (source as any).read_time || '');
   }
@@ -139,6 +155,7 @@ const generateGetOgUrl = (source: SmmSource, format: string, index: number, slid
   if (trigger) params.append('trigger', trigger);
   if (slideTitle) params.append('slideTitle', slideTitle);
   if (slideText) params.append('slideText', slideText);
+  if (slideType) params.append('slideType', slideType); // ✅ Прокидываем тип слайда!
 
   return `/api/og?${params.toString()}`;
 };
@@ -172,8 +189,8 @@ export default function SmmTab() {
   const [scheduledAt, setScheduledAt] = useState('');
 
   // --- РЕЗУЛЬТАТЫ И ИНЛАЙН-ФОРМЫ ---
-  const [generatedCaption, setGeneratedCaption] = useState('');
-  const [generatedSlides, setGeneratedSlides] = useState<{ title: string; text: string }[]>([]);
+ const [generatedCaption, setGeneratedCaption] = useState('');
+  const [generatedSlides, setGeneratedSlides] = useState<{ title: string; text: string; type?: string }[]>([]); // ✅ Добавили type
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [calendarBlobUrls, setCalendarBlobUrls] = useState<string[]>([]);
 
@@ -188,6 +205,12 @@ export default function SmmTab() {
   
   const [deleteConfirmHistoryId, setDeleteConfirmHistoryId] = useState<string | null>(null);
   const [deleteConfirmPromptId, setDeleteConfirmPromptId] = useState<string | null>(null);
+
+  // ✅ ДОБАВЛЕНО: Стейты Нейро-студии (Генерация картинок)
+  const [studioPrompt, setStudioPrompt] = useState('');
+  const [studioStyle, setStudioStyle] = useState('Cinematic travel photography, hyperrealistic, epic lighting');
+  const [studioResultUrl, setStudioResultUrl] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // --- ЛАЙТБОКС ---
   const [previewPost, setPreviewPost] = useState<ScheduledPost | null>(null);
@@ -212,15 +235,18 @@ useEffect(() => {
       if (srcRes.success) setSources(srcRes.data || []);
       if (histRes.success) setHistory(histRes.data || []);
       
-      // Надежный маппинг Нейро-студии (решает проблему пустой вкладки)
-      if (promptsRes.success && promptsRes.data) {
-        const mappedPrompts = promptsRes.data.map(p => ({
+   // Надежный маппинг Нейро-студии + Защита от пустых данных
+      if (promptsRes.success && Array.isArray(promptsRes.data)) {
+        const mappedPrompts = promptsRes.data.map((p: any) => ({
           id: p.id,
-          title: p.title,
-          prompt: p.prompt || p.promptText || '',
-          createdAt: p.createdAt
+          title: p.title || 'Без названия',
+          // Строго маппим поле prompt из Prisma, с подстраховкой
+          prompt: p.prompt || p.content || 'Текст шаблона не найден',
+          createdAt: p.createdAt || new Date()
         }));
         setPrompts(mappedPrompts);
+      } else {
+        console.error('Ошибка загрузки промптов Нейро-студии:', promptsRes);
       }
     } catch (err) {
       showToast('Ошибка при обновлении данных', 'error');
@@ -296,22 +322,35 @@ useEffect(() => {
 
     if (!selectedSource) return showToast('Сначала выбери источник', 'error');
     
-    setIsAssembling(true);
-    const slides: { title: string; text: string }[] = [];
+   setIsAssembling(true);
+    // ✅ Добавили type?: string, чтобы TypeScript разрешил класть туда типы слайдов
+    const slides: { title: string; text: string; type?: string }[] = [];
 
-    if (isCarousel) {
-      if (selectedSource.type === 'tour') {
-        // Логика сборки ТУРА
-        if (selectedSource.program && Array.isArray(selectedSource.program)) {
-          const progText = selectedSource.program.slice(0, 5).map((p: any) => `• ${p.title || p.activities?.[0]?.title || 'Активность'}`).join('\n');
-          slides.push({ title: 'ПРОГРАММА ТУРА', text: progText });
+  if (isCarousel) {
+     if (selectedSource.type === 'tour') {
+        // ✅ Формируем строгую маркетинговую воронку (Журнальная верстка)
+        
+        // 1. Слайд "Логистика" (Рисует генератор сам из данных URL)
+        slides.push({ title: 'ЛОГИСТИКА', text: '', type: 'logistics' });
+        
+        // 2. Слайд "Впечатления"
+        if (selectedSource.highlights && (!Array.isArray(selectedSource.highlights) || selectedSource.highlights.length > 0)) {
+           slides.push({ title: 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ', text: '', type: 'highlights' });
         }
-        if (selectedSource.included && Array.isArray(selectedSource.included)) {
-          const incText = selectedSource.included.slice(0, 6).map((i: string) => `- ${i}`).join('\n');
-          slides.push({ title: 'В СТОИМОСТЬ ВХОДИТ', text: incText });
+        
+        // 3. В стоимость входит
+        if (selectedSource.included && selectedSource.included.length > 0) {
+           slides.push({ title: 'В СТОИМОСТЬ ВХОДИТ', text: selectedSource.included.join('\n'), type: 'included' });
         }
-        const priceText = `Цена: ${selectedSource.price} ${selectedSource.currency}\nЛокация: ${selectedSource.location}\nСложность: ${selectedSource.tags?.[0] || 'Средняя'}`;
-        slides.push({ title: 'БРОНИРОВАНИЕ', text: priceText });
+        
+        // 4. Что взять с собой (Генератор добавит чекбоксы [ ✔️ ])
+        slides.push({ title: 'ЧТО ВЗЯТЬ С СОБОЙ', text: 'Одежда по погоде\nУдобная обувь для прогулок\nНебольшой рюкзак\nПитьевая вода', type: 'checklist' });
+        
+        // 5. Цена и Запись (Огромная карточка с тарифами и свободной датой)
+        slides.push({ title: 'СТОИМОСТЬ УЧАСТИЯ', text: '', type: 'price' });
+        
+        showToast('Воронка тура собрана!', 'success');
+
       } else if (selectedSource.type === 'blog') {
         // Логика сборки БЛОГА
         slides.push({ title: 'О ЧЕМ СТАТЬЯ', text: selectedSource.title });
@@ -377,8 +416,8 @@ useEffect(() => {
    try {
       const allImages = entityType === 'calendar' 
        ? calendarBlobUrls
-        : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText), 
-           ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText))];
+        : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText, 'cover'), 
+           ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText, s.type))];
 
       const res = (await saveScheduledPostAction({
         platform,
@@ -411,8 +450,8 @@ useEffect(() => {
     try {
       const allImages = entityType === 'calendar' 
        ? calendarBlobUrls
-        : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText), 
-           ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText))];
+        : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText, 'cover'), 
+           ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText, s.type))];
 
     const res = (await freezeAndPublishSmmAction({
         imageUrls: allImages,
@@ -485,6 +524,32 @@ useEffect(() => {
     setViewMode('generator');
     showToast('Шаблон применен', 'success');
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+
+  // ── ГЕНЕРАЦИЯ КАРТИНКИ (НЕЙРО-СТУДИЯ) ──
+  const handleGenerateImage = async () => {
+    if (!studioPrompt) return showToast('Опиши, что нужно нарисовать', 'error');
+    setIsGeneratingImage(true);
+    
+    try {
+      const { performAiTask } = await import('@/features/admin/actions/ai');
+      
+      const res = await performAiTask({ 
+        mode: 'generate_image', 
+        prompt: `${studioStyle}. Subject: ${studioPrompt}.` 
+      }) as { success: boolean; data?: any; error?: string };
+
+      if (res.success && res.data) {
+        setStudioResultUrl(res.data);
+        showToast('Шедевр готов! 🎨', 'success');
+      } else {
+        showToast(res.error || 'Ошибка DALL-E 3', 'error');
+      }
+    } catch (e) {
+      showToast('Ошибка сети при генерации', 'error');
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   return (
@@ -726,8 +791,9 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ─── ПРАВАЯ КОЛОНКА: КАНВАС ─── */}
-          <div className="lg:col-span-8 space-y-6" ref={resultRef}>
+         {/* ─── ПРАВАЯ КОЛОНКА: КАНВАС ─── */}
+          {/* Добавлен min-w-0 для починки горизонтального скролла на широких экранах */}
+          <div className="lg:col-span-8 space-y-6 min-w-0" ref={resultRef}>
              
              {/* МОНТАЖНЫЙ СТОЛ */}
              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm overflow-hidden">
@@ -788,11 +854,12 @@ useEffect(() => {
                         {/* КОНТЕНТНЫЕ СЛАЙДЫ */}
                         {isCarousel && generatedSlides.map((slide, idx) => (
                           <div key={idx} className="shrink-0 w-80 snap-start flex flex-col gap-6">
-                             <div className={clsx(
+                            <div className={clsx(
                                "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-50 dark:border-slate-800 shadow-2xl",
                                getAspectClass(format)
                              )}>
-                                <img src={generateGetOgUrl(selectedSource!, format, idx+1, slide.title, slide.text, triggerText)} className="w-full h-full object-cover" />
+                                {/* ✅ Добавлен slide.type в конец вызова функции */}
+                                <img src={generateGetOgUrl(selectedSource!, format, idx+1, slide.title, slide.text, triggerText, slide.type)} className="w-full h-full object-cover" />
                              </div>
                              {/* Отступы увеличены через space-y-4 для предотвращения наслоения */}
                              <div className="space-y-4">
@@ -1032,49 +1099,112 @@ useEffect(() => {
         </div>
       )}
 
-      {/* ─── НЕЙРО-СТУДИЯ (ПРОМПТЫ) ─── */}
+     {/* ─── НЕЙРО-СТУДИЯ (ГЕНЕРАЦИЯ И ШАБЛОНЫ) ─── */}
       {viewMode === 'prompts' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-          {prompts.length > 0 ? prompts.map(prompt => (
-            <div key={prompt.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm flex flex-col hover:shadow-xl transition-shadow">
-               <div className="flex items-start justify-between mb-4">
-                  <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                    <FileText size={18} className="text-teal-500"/> {prompt.title}
-                  </h3>
-               </div>
-               
-               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-8 leading-relaxed line-clamp-5 italic">
-                {prompt.prompt}
-               </p>
-               
-               <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
-                  <button 
-                    onClick={() => applyPrompt(prompt)}
-                    className="px-6 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-teal-600 dark:hover:bg-teal-500 dark:hover:text-white transition-colors"
-                  >
-                    Использовать
-                  </button>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300">
+          
+          {/* Левая панель: Пульт управления */}
+          <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm flex flex-col gap-8">
+             <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <Wand2 size={16} className="text-fuchsia-500"/> Что рисуем?
+                  </label>
                   
-                  <div className="relative">
-                    {deleteConfirmPromptId === prompt.id ? (
-                      <div className="absolute bottom-0 right-0 flex gap-1 animate-in slide-in-from-right-2">
-                         <button onClick={() => handleDeletePrompt(prompt.id)} className="p-2.5 bg-rose-500 text-white rounded-xl shadow-lg"><CheckCircle2 size={16}/></button>
-                         <button onClick={() => setDeleteConfirmPromptId(null)} className="p-2.5 bg-slate-100 text-slate-700 rounded-xl"><X size={16}/></button>
+                  {/* Кнопка сохранения в базу */}
+                  {studioPrompt.length > 5 && (
+                    <button 
+                      onClick={async () => {
+                        const title = window.prompt("Название шаблона (например: Дети у костра):");
+                        if (title) {
+                          const res = (await saveAiPromptAction(title, studioPrompt)) as { success: boolean; error?: string };
+                          if (res.success) { showToast("Шаблон сохранен", "success"); loadData(); } 
+                          else { showToast(res.error || "Ошибка сохранения", "error"); }
+                        }
+                      }}
+                      className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-fuchsia-500 transition-colors uppercase tracking-widest"
+                    >
+                      <Save size={12} /> Сохранить
+                    </button>
+                  )}
+                </div>
+
+                {/* Быстрые шаблоны из базы */}
+                {prompts.length > 0 && (
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
+                    {prompts.map((p) => (
+                      <div key={p.id} className="group relative flex items-center">
+                        <button
+                          onClick={() => setStudioPrompt(p.prompt)}
+                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-all uppercase tracking-tighter truncate max-w-[150px]"
+                          title={p.prompt}
+                        >
+                          {p.title}
+                        </button>
+                        <button
+                          onClick={() => handleDeletePrompt(p.id)}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                        >
+                          <X size={10} />
+                        </button>
                       </div>
-                    ) : (
-                      <button onClick={() => setDeleteConfirmPromptId(prompt.id)} className="p-2.5 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
-                         <Trash2 size={18}/>
-                      </button>
-                    )}
+                    ))}
                   </div>
+                )}
+
+                <textarea 
+                  value={studioPrompt} 
+                  onChange={(e) => setStudioPrompt(e.target.value)} 
+                  placeholder="Счастливая пара плывет на SUP-досках по живописной реке на рассвете..."
+                  className="w-full h-32 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm focus:ring-2 focus:ring-fuchsia-500/20 text-slate-900 dark:text-white resize-none outline-none font-medium custom-scrollbar" 
+                />
+             </div>
+
+             <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Стиль (Промпт-инъекция)</label>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => setStudioStyle('Cinematic travel photography, hyperrealistic, epic lighting')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('Cinematic') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🎬 Кинематограф (Реализм)</button>
+                  <button onClick={() => setStudioStyle('Beautiful watercolor painting, soft colors, artistic')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('watercolor') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🎨 Акварель (Арт)</button>
+                  <button onClick={() => setStudioStyle('3D Pixar style animation, vibrant colors, cute')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('Pixar') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🦄 3D Мультфильм</button>
+                </div>
+             </div>
+
+             <button 
+                onClick={handleGenerateImage}
+                disabled={isGeneratingImage || !studioPrompt}
+                className="w-full mt-auto py-5 bg-slate-900 dark:bg-fuchsia-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 shadow-xl hover:bg-slate-800 dark:hover:bg-fuchsia-500 disabled:opacity-50 transition-all active:scale-95"
+              >
+                {isGeneratingImage ? <RefreshCw className="animate-spin" size={16}/> : <ImageIcon size={16}/>}
+                Создать изображение
+              </button>
+          </div>
+
+          {/* Правая панель: Холст (Результат) */}
+          <div className="lg:col-span-8 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 min-h-[600px] relative overflow-hidden shadow-inner">
+             {isGeneratingImage ? (
+               <div className="flex flex-col items-center gap-4 animate-pulse">
+                 <Wand2 size={48} className="text-fuchsia-500 animate-bounce"/>
+                 <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Нейросеть рисует...</p>
                </div>
-            </div>
-          )) : (
-            <div className="col-span-full py-40 text-center opacity-10">
-               <Wand2 size={100} className="mx-auto mb-6" strokeWidth={1}/>
-               <p className="text-2xl font-black uppercase tracking-[0.5em]">Шаблонов нет</p>
-            </div>
-          )}
+             ) : studioResultUrl ? (
+               <div className="flex flex-col items-center gap-6 w-full h-full animate-in zoom-in-95 duration-300">
+                 <img src={studioResultUrl} alt="Generated" className="max-h-[500px] w-auto object-contain rounded-2xl shadow-2xl border border-white/10" />
+                 <div className="flex gap-4">
+                   <button onClick={() => window.open(studioResultUrl, '_blank')} className="px-6 py-3 bg-white dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition-all text-slate-700 dark:text-slate-300">
+                     <Eye size={16}/> Открыть оригинал
+                   </button>
+                   <button onClick={() => { navigator.clipboard.writeText(studioResultUrl); showToast('URL скопирован', 'success'); }} className="px-6 py-3 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-teal-700 shadow-lg shadow-teal-500/30 transition-all">
+                     <Copy size={16}/> Копировать URL
+                   </button>
+                 </div>
+               </div>
+             ) : (
+               <div className="flex flex-col items-center gap-4 opacity-30">
+                 <ImageIcon size={64} className="text-slate-400"/>
+                 <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">Холст пуст</p>
+               </div>
+             )}
+          </div>
         </div>
       )}
 

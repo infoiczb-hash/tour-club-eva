@@ -294,18 +294,17 @@ function renderCalendar(
 
   const [width, height] = SIZES[format] ?? SIZES.story;
 
-  // Базовый масштаб
-  let s = height / 1920;
+// ✅ ПРАВИЛЬНАЯ МАТЕМАТИКА: Масштаб привязан к ширине (1080px), поэтому в Ленте (4:5) карточки не будут сжиматься.
+  // Базовый масштаб + 15% укрупнения
+  let s = (width / 1080) * 1.15;
 
-  // ✅ АГРЕССИВНЫЙ МАСШТАБ
+  // Умный множитель от количества событий (так как база уже крупнее, множители чуть мягче)
   if (events.length <= 2) {
-    s *= 1.7;  // Увеличиваем на 70%
+    s *= 1.35; // Очень крупные (для 1-2 событий)
   } else if (events.length === 3) {
-    s *= 1.55; // Увеличиваем на 55% (как на скрине-референсе)
-  } else if (events.length === 4) {
-    s *= 1.35; // Увеличиваем на 35%
+    s *= 1.20; // Идеально плотные (для 3 событий, как на скрине)
   } else {
-    s *= 1.1;  // Базовое увеличение на 10%
+    s *= 1.0;  // Базовые (4-6 событий)
   }
 
   const brandColorHex = COLOR_MAP[rawBrandColor] ?? COLOR_MAP['teal']!;
@@ -325,8 +324,9 @@ function renderCalendar(
         display: 'flex', flexDirection: 'column',
         width: '100%', height: '100%',
         backgroundColor: '#0b1120',
-        fontFamily: 'Montserrat',
-        padding: `${80 * s}px ${60 * s}px`,
+      fontFamily: 'Montserrat',
+        // Уменьшили боковые поля (с 60 до 30), чтобы карточки растянулись на всю ширину!
+        padding: `${80 * s}px ${30 * s}px`,
       }}>
 
         {/* ── Заголовок афиши ── */}

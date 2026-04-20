@@ -15,7 +15,8 @@ const fontPromise: Promise<ArrayBuffer | null> = fetch(
 
 type SmmFormat = 'story' | 'feed' | 'post' | 'event';
 
-type SlideType = 'details' | 'program' | 'checklist' | 'default';
+// ✅ Расширили типы слайдов под нашу воронку
+type SlideType = 'logistics' | 'highlights' | 'included' | 'checklist' | 'price' | 'program' | 'default';
 
 interface FontConfig {
   name:   string;
@@ -51,6 +52,12 @@ interface OgParams {
   rubric:         string;
   width:          number;
   height:         number;
+  // ✅ НОВЫЕ ПОЛЯ ИЗ ПУЛЬТА
+  route:          string | null;
+  meetingPoint:   string | null;
+  guideName:      string | null;
+  spotsLeft:      string | null;
+  highlightsRaw:  string | null;
 }
 
 // ─── ЦВЕТОВАЯ ПАЛИТРА ───────────────────────────────────────────────────────
@@ -115,12 +122,19 @@ export function formatFullDate(raw: string): string {
 
 /** Определяет SlideType из явного параметра или по slideTitle */
 function resolveSlideType(explicit: string | null, title: string): SlideType {
-  const VALID: SlideType[] = ['details', 'program', 'checklist', 'default'];
+  // ✅ Обновили массив валидных типов до наших новых
+  const VALID: SlideType[] = ['logistics', 'highlights', 'included', 'checklist', 'price', 'program', 'default'];
   if (explicit && VALID.includes(explicit as SlideType)) return explicit as SlideType;
+  
   const t = title.toUpperCase();
-  if (t.includes('ДЕТАЛИ'))                                                          return 'details';
-  if (t.includes('ПРОГРАММА'))                                                       return 'program';
-  if (t.includes('ВПЕЧАТЛЕНИЯ') || t.includes('ВКЛЮЧЕНО') || t.includes('С СОБОЙ')) return 'checklist';
+  // ✅ Обновили fallback-логику, чтобы она узнавала новые заголовки
+  if (t.includes('ЛОГИСТИКА') || t.includes('ДЕТАЛИ')) return 'logistics';
+  if (t.includes('ПРОГРАММА'))                         return 'program';
+  if (t.includes('ВПЕЧАТЛЕНИЯ'))                       return 'highlights';
+  if (t.includes('ВКЛЮЧЕНО'))                          return 'included';
+  if (t.includes('С СОБОЙ'))                           return 'checklist';
+  if (t.includes('СТОИМОСТЬ') || t.includes('ЦЕНА'))   return 'price';
+  
   return 'default';
 }
 
@@ -166,15 +180,24 @@ function parseParams(searchParams: URLSearchParams): OgParams {
   const priceMemberStr= formatPrice(searchParams.get('priceMember'));
   const priceFamilyStr= formatPrice(searchParams.get('priceFamily'));
 
-  const [width, height] = format ? (SIZES[format] ?? [1080, 1350]) : [1080, 1350];
+
+const [width, height] = format ? (SIZES[format] ?? [1080, 1350]) : [1080, 1350];
+
+  // ✅ Достаем новые поля для карусели
+  const route = searchParams.get('route');
+  const meetingPoint = searchParams.get('meetingPoint');
+  const guideName = searchParams.get('guideName');
+  const spotsLeft = searchParams.get('spotsLeft');
+  const highlightsRaw = searchParams.get('highlights');
 
   return {
-    format, type, slide, slideType, slideTitle, slideText,
+    format, type, slide, slideType: searchParams.get('slideType') as SlideType || slideType, slideTitle, slideText,
     title, currency, rawDate, imageUrl, categoryColor, categoryTitle,
     trigger, location, duration, tags, brandColor, formattedDate,
     priceStr, priceChildStr, priceMemberStr, priceFamilyStr,
     author, readTime, rubric,
     width, height,
+    route, meetingPoint, guideName, spotsLeft, highlightsRaw // ✅ Отдаем их в рендерер
   };
 }
 
@@ -194,6 +217,14 @@ export const CalendarIcon = ({ color, size = 32 }: { color: string; size?: numbe
 
 export const ArrowRightIcon = ({ color, size = 40 }: { color: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+);
+
+export const CompassIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+);
+
+export const UserIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 );
 
 const SparklesIcon = ({ color, size = 48 }: { color: string; size?: number }) => (
@@ -295,75 +326,136 @@ function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFo
 
 // ─── РЕНДЕРЕРЫ СЛАЙДОВ ───────────────────────────────────────────────────────
 
-function renderDetailsSlide(p: OgParams) {
+// 1. СЛАЙД "ЛОГИСТИКА"
+function renderLogisticsSlide(p: OgParams) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, marginBottom: '48px' }}>
-        {p.slideTitle}
+      <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, marginBottom: '48px', textTransform: 'uppercase' }}>
+        {p.slideTitle || 'ЛОГИСТИКА'}
       </span>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
-        {p.slideText.split('|').map((item, i) => {
-          const parts = item.split(':');
-          if (parts.length < 2) return null;
-          return (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', width: '46%', backgroundColor: '#1e293b', padding: '36px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <span style={{ color: '#94a3b8', fontSize: '22px', fontWeight: 900, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '2px' }}>{parts[0].trim()}</span>
-              <span style={{ color: 'white', fontSize: '40px', fontWeight: 900, lineHeight: 1.2 }}>{parts[1].trim()}</span>
-            </div>
-          );
-        })}
+      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(30,41,59,0.95)', padding: '48px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.06)', gap: '40px' }}>
+        {p.meetingPoint && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <MapPinIcon color={p.brandColor} size={48} />
+            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Место сбора: {p.meetingPoint}</span>
+          </div>
+        )}
+        {p.duration && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <ClockIcon color={p.brandColor} size={48} />
+            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Длительность: {p.duration}</span>
+          </div>
+        )}
+        {p.route && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <CompassIcon color={p.brandColor} size={48} />
+            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Маршрут: {p.route}</span>
+          </div>
+        )}
+        {p.guideName && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <UserIcon color={p.brandColor} size={48} />
+            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Гид: {p.guideName}</span>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function renderProgramSlide(p: OgParams) {
-  const items = p.slideText.split('|').filter(Boolean);
+// 2. СЛАЙД "ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ"
+function renderHighlightsSlide(p: OgParams) {
+  let items: any[] = [];
+  try { if (p.highlightsRaw) items = JSON.parse(p.highlightsRaw); } catch (e) {}
+  if (!Array.isArray(items) || items.length === 0) return renderDefaultSlide(p);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, marginBottom: '48px' }}>
-        {p.slideTitle}
-      </span>
-      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1e293b', padding: '44px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.06)', gap: '32px' }}>
-        {items.map((item, i) => {
-          const parts = item.split('-');
-          if (parts.length < 2) return null;
-          return (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
-                <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: p.brandColor }} />
-                {i < items.length - 1 && <div style={{ width: '2px', flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', marginTop: '8px', minHeight: '36px' }} />}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <span style={{ color: p.brandColor, fontSize: '26px', fontWeight: 900, marginBottom: '6px' }}>{parts[0].trim()}</span>
-                <span style={{ color: 'white', fontSize: '32px', fontWeight: 700, lineHeight: 1.35 }}>{parts.slice(1).join('-').trim()}</span>
-              </div>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
+        <SparklesIcon color={p.brandColor} size={48} />
+        <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, marginLeft: '18px' }}>{p.slideTitle || 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ'}</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {items.slice(0, 3).map((item, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '24px', flexShrink: 0, width: '64px', height: '64px', backgroundColor: 'rgba(15,23,42,1)', borderRadius: '16px' }}>
+              <CheckIcon color={p.brandColor} size={32} />
             </div>
-          );
-        })}
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <span style={{ color: 'white', fontSize: '32px', fontWeight: 900, marginBottom: '12px' }}>{item.title || 'Впечатление'}</span>
+              <span style={{ color: '#94a3b8', fontSize: '24px', fontWeight: 700, lineHeight: 1.4 }}>{item.description || item.desc || ''}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function renderChecklistSlide(p: OgParams) {
+// 3. СЛАЙД "ЧТО ВЗЯТЬ С СОБОЙ" / "ВКЛЮЧЕНО" (Чекбоксы с разбивкой по \n)
+function renderListSlide(p: OgParams) {
+  const lines = p.slideText.split('\n').filter(Boolean);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '48px' }}>
-        <SparklesIcon color={p.brandColor} size={48} />
-        <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, marginLeft: '18px' }}>
-          {p.slideTitle}
-        </span>
+         <SparklesIcon color={p.brandColor} size={48} />
+         <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, marginLeft: '18px' }}>{p.slideTitle}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-        {p.slideText.split('-').filter(t => t.trim()).map((t, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#1e293b', borderRadius: '16px', padding: '14px', marginRight: '24px', flexShrink: 0 }}>
-              <CheckIcon color={p.brandColor} size={30} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {lines.map((line, i) => {
+          const cleanLine = line.replace(/^[\u2022\-\*]\s*/, '').trim();
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '24px', padding: '20px 24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '24px', flexShrink: 0 }}>
+                <CheckIcon color={p.brandColor} size={36} />
+              </div>
+              <span style={{ color: '#e2e8f0', fontSize: '32px', fontWeight: 700, lineHeight: 1.4, flex: 1 }}>{cleanLine}</span>
             </div>
-            <span style={{ color: '#e2e8f0', fontSize: '36px', fontWeight: 700, lineHeight: 1.4, flex: 1 }}>{t.trim()}</span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// 4. СЛАЙД "СТОИМОСТЬ И ЗАПИСЬ"
+function renderPriceSlide(p: OgParams) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '32px', padding: '48px', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px', borderBottom: '2px solid rgba(255,255,255,0.1)', paddingBottom: '32px' }}>
+           <div style={{ display: 'flex', flexDirection: 'column' }}>
+             <span style={{ fontSize: '24px', color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px' }}>СТОИМОСТЬ УЧАСТИЯ</span>
+             <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
+               <span style={{ fontSize: '96px', color: 'white', fontWeight: 900, lineHeight: 1 }}>{p.priceStr || '???'}</span>
+               <span style={{ fontSize: '40px', color: p.brandColor, fontWeight: 900 }}>{p.currency}</span>
+             </div>
+           </div>
+           {p.spotsLeft && (
+             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+               <span style={{ fontSize: '24px', color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px' }}>СВОБОДНЫХ МЕСТ</span>
+               <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, lineHeight: 1 }}>{p.spotsLeft}</span>
+             </div>
+           )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '48px' }}>
+          <span style={{ fontSize: '24px', color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>ДОСТУПНЫЕ ТАРИФЫ</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '32px', color: '#e2e8f0', fontWeight: 700 }}>🎟️ Взрослый</span>
+            <span style={{ fontSize: '32px', color: 'white', fontWeight: 900 }}>{p.priceStr || '???'} {p.currency}</span>
           </div>
-        ))}
+          {p.priceChildStr && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '32px', color: '#f472b6', fontWeight: 700 }}>👶 Детский (до 13 лет)</span>
+              <span style={{ fontSize: '32px', color: 'white', fontWeight: 900 }}>{p.priceChildStr} {p.currency}</span>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: p.brandColor, borderRadius: '24px', padding: '32px', marginTop: 'auto' }}>
+           <span style={{ fontSize: '40px', color: '#020617', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>ЗАПИСАТЬСЯ В ГРУППУ</span>
+        </div>
       </div>
     </div>
   );
@@ -384,10 +476,12 @@ function renderDefaultSlide(p: OgParams) {
 function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
   let content: React.ReactNode;
   switch (p.slideType) {
-    case 'details':   content = renderDetailsSlide(p);   break;
-    case 'program':   content = renderProgramSlide(p);   break;
-    case 'checklist': content = renderChecklistSlide(p); break;
-    default:          content = renderDefaultSlide(p);   break;
+    case 'logistics':  content = renderLogisticsSlide(p);   break;
+    case 'highlights': content = renderHighlightsSlide(p);  break;
+    case 'included':   // fall-through
+    case 'checklist':  content = renderListSlide(p);        break;
+    case 'price':      content = renderPriceSlide(p);       break;
+    default:           content = renderDefaultSlide(p);     break;
   }
 
   return new ImageResponse(
@@ -396,7 +490,8 @@ function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
         {p.imageUrl && (
           <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15,23,42,0.88)' }} />
+        {/* ✅ ЭФФЕКТ ТЕМНОГО ПЛАНШЕТА (0.96) для идеальной читаемости */}
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(11, 17, 32, 0.96)' }} />
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '80px', position: 'relative', zIndex: 10 }}>
           {content}
         </div>
@@ -453,11 +548,12 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
 
           <div style={{ display: 'flex', flex: 1 }} />
 
-          {/* Заголовок + теги */}
+        {/* Заголовок + теги */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <h1 style={{
               color: 'white',
-              fontSize: isBlog ? '128px' : '112px',
+              // Динамический размер: если букв больше 60, делаем 72px, если больше 35 — 96px, иначе 128px.
+              fontSize: isBlog ? (title.length > 60 ? '72px' : title.length > 35 ? '96px' : '128px') : '112px',
               fontWeight: 900, lineHeight: 0.95,
               margin: '0 0 48px 0',
               textTransform: 'uppercase',
@@ -687,11 +783,15 @@ export async function GET(request: Request) {
 
     const p = parseParams(searchParams);
 
-    // 1. ПРОВЕРЯЕМ, ЗАПРОСИЛИ ЛИ МЫ ДИНАМИЧЕСКИЙ СЛАЙД ТУРА ПО ID
+  // 1. ПРОВЕРЯЕМ, ЗАПРОСИЛИ ЛИ МЫ ДИНАМИЧЕСКИЙ СЛАЙД ТУРА ПО ID
     const tourId = searchParams.get('tourId');
     const explicitSlideType = searchParams.get('slideType');
 
-    if (tourId && explicitSlideType && p.slide !== '0') {
+    // ПРИОРИТЕТ: Если SMM-щик прислал отредактированный текст с пульта (slideText), 
+    // мы НЕ идем в базу, мы будем рендерить то, что нам прислали.
+    const hasManualText = p.slideText && p.slideText.trim().length > 0;
+
+    if (tourId && explicitSlideType && p.slide !== '0' && !hasManualText) {
       try {
         // Делаем fetch к нашему безопасному Node.js API (с кэшированием)
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -714,7 +814,7 @@ export async function GET(request: Request) {
           let slideText = '';
           let mappedSlideType: SlideType = 'default';
 
-          // Маппинг новых типов данных на наши существующие дизайны
+          // ✅ Маппинг типов данных на наши НОВЫЕ журнальные дизайны
           switch (explicitSlideType) {
             case 'program':
               slideTitle = 'ПРОГРАММА ТУРА';
@@ -729,12 +829,19 @@ export async function GET(request: Request) {
             case 'included':
               slideTitle = 'В СТОИМОСТЬ ВХОДИТ';
               slideText = formatIncludedForSlide(tour.includedDetailed, tour.included);
-              mappedSlideType = 'checklist'; // Переиспользуем дизайн с галочками
+              mappedSlideType = 'included'; // ✅ Теперь направляем прямо в наш новый обработчик
               break;
             case 'logistics':
               slideTitle = 'ЛОГИСТИКА';
-              slideText = formatLogisticsForSlide(tour);
-              mappedSlideType = 'details'; // Переиспользуем дизайн с плитками "Ключ:Значение"
+              mappedSlideType = 'logistics'; // ✅ Теперь у нас есть отдельный красивый дизайн с иконками!
+              break;
+            case 'highlights':
+              slideTitle = 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ';
+              mappedSlideType = 'highlights'; // ✅ Добавили впечатления
+              break;
+            case 'price':
+              slideTitle = 'СТОИМОСТЬ УЧАСТИЯ';
+              mappedSlideType = 'price'; // ✅ Добавили слайд с тарифами
               break;
           }
 
