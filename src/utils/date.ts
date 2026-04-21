@@ -57,9 +57,9 @@ export function getTourDuration(tour: TourDurationInput): string {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     
     // Если разница 0 (один день), пишем 1 день. Иначе +1 (включительно)
-    const totalDays = diffDays < 1 ? 1 : diffDays + 1;
-    
-    return `${totalDays} дн.`;
+   const totalDays = diffDays < 1 ? 1 : diffDays + 1;
+
+return totalDays === 1 ? '1 день' : `${totalDays} дн.`;
   }
 
   return '1 день';

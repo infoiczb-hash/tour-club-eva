@@ -6,6 +6,7 @@ import { NotificationHub } from '@/lib/notifications/hub';
 import { revalidatePath } from 'next/cache';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ ВОЗВРАЩЕН
+import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
@@ -61,17 +62,19 @@ async function handler(req: Request) {
           cancelledCount++;
 
           // Добавляем отправку уведомления в массив задач (не ждем через await прямо тут)
-          if (booking.memberId) {
+         if (booking.memberId) {
             notificationPromises.push(
               NotificationHub.dispatch({
                 eventId: 'BOOKING_AUTO_CANCELLED',
                 memberId: booking.memberId,
-                data: {
-                  bookingId: booking.id,
-                  shortId: shortId,
-                  tourTitle: booking.tour.title,
-                }
+                data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
               })
+            );
+          } else if (booking.payerTgChatId) {
+            // 🔥 ДОБАВЛЕНО: Уведомление для гостей без аккаунта
+            const msg = `🚫 <b>Бронь аннулирована</b>\n\nВаша заявка <b>#${shortId}</b> на тур «${booking.tour.title}» была отменена из-за отсутствия оплаты в течение 48 часов.\n\nЕсли вы хотите поехать, пожалуйста, оформите новую заявку на сайте.`;
+            notificationPromises.push(
+              sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
             );
           }
 
@@ -83,20 +86,21 @@ async function handler(req: Request) {
         else if (ageInHours >= REMINDER_HOURS) {
           const redisKey = `reminder_sent:${booking.id}`;
           const isReminded = await redis.get(redisKey);
-
-          if (!isReminded) {
+if (!isReminded) {
             // Добавляем напоминание в массив задач
             if (booking.memberId) {
                notificationPromises.push(
                  NotificationHub.dispatch({
                    eventId: 'PAYMENT_REMINDER_24H',
                    memberId: booking.memberId,
-                   data: {
-                     bookingId: booking.id,
-                     shortId: shortId,
-                     tourTitle: booking.tour.title,
-                   }
+                   data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
                  })
+               );
+            } else if (booking.payerTgChatId) {
+               // 🔥 ДОБАВЛЕНО: Напоминание для гостей без аккаунта
+               const msg = `⚠️ <b>Ожидается оплата</b>\n\nНапоминаем, что у вас осталось 24 часа на оплату заявки <b>#${shortId}</b> на тур «${booking.tour.title}».\n\nПожалуйста, отправьте скриншот перевода или файл билета BiletPMR в этот чат, иначе бронь будет автоматически отменена.`;
+               notificationPromises.push(
+                 sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
                );
             }
             

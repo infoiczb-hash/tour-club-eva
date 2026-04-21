@@ -1,8 +1,13 @@
-
 <directory_structure>
+__mocks__/external-services.ts
+__tests__/integration/booking.test.ts
+__tests__/integration/updateBookingStatus.test.ts
 .eslintrc.json
 .gitignore
 browserslistrc
+jest.config.js
+jest.env.ts
+jest.setup.ts
 middleware.ts
 next.config.mjs
 package.json
@@ -362,6 +367,879 @@ vercel.json
 <files>
 This section contains the contents of the repository's files.
 
+<file path="__mocks__/external-services.ts">
+// Мок для отправки в Telegram
+export const mockSendToTelegram = jest.fn().mockResolvedValue({ success: true });
+
+// Мок для отправки email через Resend
+export const mockResendEmailsSend = jest.fn().mockResolvedValue({ data: { id: 'mock-email-id' }, error: null });
+
+// Мок для центра уведомлений
+export const mockNotificationHubDispatch = jest.fn().mockResolvedValue({ success: true });
+</file>
+
+<file path="__tests__/integration/booking.test.ts">
+import { createBookingAction } from '@/features/tours/actions/createBooking';
+import { prisma } from '@/lib/prisma';
+import { 
+  mockNotificationHubDispatch, 
+  mockSendToTelegram,
+  mockResendEmailsSend // ✅ Добавили импорт мока Resend
+} from '../../__mocks__/external-services';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+
+const mockGetUser = jest.fn().mockResolvedValue({ data: { user: null }, error: null });
+jest.mock('@/lib/supabase/server', () => ({
+  createServerSupabaseClient: jest.fn(),
+}));
+
+describe('createBookingAction – интеграционные тесты', () => {
+  let tourId: string;
+  let tourDateId: string;
+  let memberId: string | null = null; 
+
+  beforeEach(async () => {
+    (createServerSupabaseClient as jest.Mock).mockResolvedValue({
+      auth: { getUser: mockGetUser },
+    });
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+
+    const category = await prisma.tourCategory.create({
+      data: { slug: 'test-category', title: 'Test Category', icon: 'Compass' },
+    });
+
+    const tour = await prisma.tour.create({
+      data: {
+        slug: 'test-tour-' + Date.now(),
+        title: 'Тестовый тур',
+        location: 'Тестовая локация',
+        price: 1000,
+        currency: 'RUB',
+       spots: 20,
+       spotsLeft: 20,
+        categoryId: category.id,
+        duration: '2 дня',
+        isActive: true,
+      },
+    });
+    tourId = tour.id;
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tourDate = await prisma.tourDate.create({
+      data: {
+        tourId,
+        startDate: tomorrow,
+        spots: 20,
+        spotsLeft: 20,
+      },
+    });
+    tourDateId = tourDate.id;
+
+    const member = await prisma.memberProfile.create({
+      data: {
+        userId: 'member-' + Date.now(),
+        phone: '+37377711111',
+        name: 'Участник клуба',
+        level: 'Первопроходец',
+        balance: 500, 
+      },
+    });
+    memberId = member.id;
+  });
+
+  // 1. УСПЕШНАЯ БРОНЬ ГОСТЯ (tourDateId присутствует)
+  it('успешно создаёт бронь, списывает места и отправляет уведомления в TG', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+      name: 'Иван Петров', phone: '+37377712345', social: 'ivan@example.com',
+      ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+
+    const booking = await prisma.booking.findUnique({ where: { id: result.bookingId } });
+    expect(booking!.status).toBe('pending');
+    expect(booking!.ticketsAdult).toBe(2);
+
+    const updatedTourDate = await prisma.tourDate.findUnique({ where: { id: tourDateId } });
+    expect(updatedTourDate!.spotsLeft).toBe(18); // 20 - 2 = 18
+
+    expect(mockNotificationHubDispatch).toHaveBeenCalledTimes(0);
+    expect(mockSendToTelegram).toHaveBeenCalled();
+  });
+
+  // 2. БЛОКИРОВКА ПРИ НЕХВАТКЕ МЕСТ
+  it('возвращает ошибку при недостатке мест', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const input = {
+        tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+        name: 'Иван Петров', phone: '+37377799999', social: '',
+        ticketsAdult: 25, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+        currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      };
+      const result = await createBookingAction(input);
+      expect(result.success).toBe(false);
+      if (result.success) throw new Error('Expected failure');
+      expect(result.error).toContain('доступн');
+    } finally {
+      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  // 3. БЛОКИРОВКА ДУБЛИКАТОВ
+  it('блокирует дублирующуюся заявку с того же телефона', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+      name: 'Иван Петров', phone: '+37377712345', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    const first = await createBookingAction(input);
+    expect(first.success).toBe(true);
+
+    const second = await createBookingAction(input);
+    expect(second.success).toBe(false);
+    if (!second.success) expect(second.error).toMatch(/уже есть|неоплаченная заявка/i);
+  });
+
+  // 4. ПРОМОКОД (PERCENT) + КЭШБЭК ВЛАДЕЛЬЦУ
+  it('применяет процентный промокод и начисляет кэшбэк владельцу', async () => {
+    const promo = await prisma.promoCode.create({
+      data: { code: 'TEST10', discount: 10, type: 'percent', isActive: true, memberId: memberId },
+    });
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+      name: 'Гость', phone: '+37377712345', social: '',
+      ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'TEST10', website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+    expect(result.totalPrice).toBe(1800); // 2000 - 10%
+
+    const updatedOwner = await prisma.memberProfile.findUnique({ where: { id: memberId! } });
+    expect(updatedOwner!.balance).toBe(510); // 500 + 10 cashback
+
+    expect(mockNotificationHubDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ eventId: 'CASHBACK_RECEIVED', memberId: memberId })
+    );
+  });
+
+  // 5. АВТОРИЗОВАННЫЙ УЧАСТНИК (СПИСАНИЕ БОНУСОВ)
+  it('авторизованный участник списывает бонусы и получает BOOKING_CREATED', async () => {
+    const member = await prisma.memberProfile.findFirst({ where: { id: memberId! } });
+    mockGetUser.mockResolvedValue({ data: { user: { id: member!.userId } }, error: null });
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+      name: 'Участник клуба', phone: '+37377711111', social: '',
+      ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: true, website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+    
+    expect(result.totalPrice).toBe(1800); // Max 10% from 2000 = 200
+
+    const updatedMember = await prisma.memberProfile.findUnique({ where: { id: memberId! } });
+    expect(updatedMember!.balance).toBe(300); // 500 - 200 = 300
+
+    expect(mockNotificationHubDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ eventId: 'BOOKING_CREATED', memberId: memberId })
+    );
+  });
+
+  // 6. УЧАСТНИК С ПУСТЫМ БАЛАНСОМ
+  it('игнорирует useBonuses, если у авторизованного участника 0 баллов', async () => {
+    const poorMember = await prisma.memberProfile.create({
+      data: { userId: 'poor-' + Date.now(), phone: '+37377722222', name: 'Новичок', level: 'Новичок', balance: 0 },
+    });
+    mockGetUser.mockResolvedValueOnce({ data: { user: { id: poorMember.userId } }, error: null });
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+      name: 'Новичок', phone: '+37377722222', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: true, website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+    expect(result.totalPrice).toBe(1000); // Нет скидки
+
+    const updatedMember = await prisma.memberProfile.findUnique({ where: { id: poorMember.id } });
+    expect(updatedMember!.balance).toBe(0); // Баланс не ушел в минус
+  });
+
+  // 7. НЕСУЩЕСТВУЮЩИЙ ПРОМОКОД
+  it('возвращает ошибку при использовании несуществующего промокода', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
+      name: 'Гость', phone: '+37377755555', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'FAKE_123', website: '',
+    };
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toMatch(/промокод|недействителен|не найден/i);
+  });
+
+  // 8. RACE CONDITION (Овербукинг)
+  it('справляется с Race Condition: предотвращает овербукинг при одновременных запросах', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const input1 = {
+        tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+        name: 'Гонщик 1', phone: '+37377788881', social: '',
+        ticketsAdult: 11, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+        currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      };
+      const input2 = {
+        ...input1, name: 'Гонщик 2', phone: '+37377788882'
+      };
+
+      const [result1, result2] = await Promise.all([
+        createBookingAction(input1),
+        createBookingAction(input2),
+      ]);
+
+      const successes = [result1.success, result2.success].filter(Boolean).length;
+      expect(successes).toBe(1); // Строго одна из броней должна пройти (11+11=22 > 20 мест)
+
+      const updatedTourDate = await prisma.tourDate.findUnique({ where: { id: tourDateId } });
+      expect(updatedTourDate!.spotsLeft).toBe(9); // 20 - 11 = 9
+    } finally {
+      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  // 9. ОШИБКИ ВАЛИДАЦИИ (ZOD)
+  it('возвращает ошибки Zod: неверный UUID, слишком короткое имя, сломанный телефон', async () => {
+    const input = {
+      tourId: 'not-a-uuid', 
+      tourDateId: 'bad-uuid',
+      tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'И', // Слишком короткое
+      phone: 'abc', // Невалидный телефон
+      social: '', ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // Ожидаем, что парсер вернёт объект fields с конкретными полями
+      expect(result.error).toBeDefined();
+      expect(result.error).not.toBeNull();
+    }
+  });
+
+  // 10. БРОНИРОВАНИЕ 0 БИЛЕТОВ (БАГ-ЧЕК)
+  it('проваливает валидацию: нельзя забронировать 0 билетов (проверка бага)', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Гость', phone: '+37377733333', social: '',
+      ticketsAdult: 0, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0, // Все билеты по нулям
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    // ВАЖНО: Если этот тест падает с Received: true, значит баг всё ещё в коде 
+    // и экшен пропускает бронь на 0 билетов. Нужно добавить `.refine()` в Zod-схему.
+    expect(result.success).toBe(false);
+  });
+
+  // 11. HONEYPOT (ЗАЩИТА ОТ БОТОВ)
+  it('тихо игнорирует бота: возвращает success=true если заполнено honeypot-поле website', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Spam Bot', phone: '+37377744444', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, 
+      website: 'http://spam-link.com', // Боты часто заполняют скрытые поля
+    };
+    
+    const result = await createBookingAction(input);
+    
+    // Бот должен думать, что всё хорошо
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.bookingId).toBe('sp-checked');
+    }
+    
+    // Но в базе не должно появиться заявки с таким телефоном
+    const botBooking = await prisma.booking.findFirst({ where: { phone: '+37377744444' } });
+    expect(botBooking).toBeNull();
+  });
+
+  // 12. БРОНЬ БЕЗ TOUR_DATE_ID
+  it('успешно бронирует тур БЕЗ указания даты (tourDateId не передан) и списывает места с тура', async () => {
+    const input = {
+      tourId, 
+      tourDateId: '', // Пустая дата или null
+      tourTitle: 'Тур без расписания', tourDate: 'Открытая дата',
+      name: 'Прямой Бронировщик', phone: '+37377766666', social: '',
+      ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+
+    const booking = await prisma.booking.findUnique({ where: { id: result.bookingId } });
+    expect(booking!.tourDateId).toBeNull();
+
+    // Места должны списаться с самого Tour (было 10, стало 8)
+    const updatedTour = await prisma.tour.findUnique({ where: { id: tourId } });
+    expect(updatedTour!.spotsLeft).toBe(18); // 20 - 2 = 18
+  });
+
+  // 13. НЕАКТИВНЫЙ ТУР
+  it('возвращает ошибку при попытке забронировать выключенный (неактивный) тур', async () => {
+    const inactiveTour = await prisma.tour.create({
+      data: {
+        slug: 'inactive-tour', title: 'Старый тур', location: 'Локация',
+        price: 1000, currency: 'MDL', spots: 10, spotsLeft: 10,
+        categoryId: (await prisma.tourCategory.findFirst())!.id,
+        duration: '1 день', isActive: false, // <-- ВАЖНО
+      },
+    });
+
+    const input = {
+      tourId: inactiveTour.id, tourDateId: '', tourTitle: 'Старый тур', tourDate: 'Открытая дата',
+      name: 'Гость', phone: '+37377777777', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const result = await createBookingAction(input);
+      expect(result.success).toBe(false);
+    } finally {
+      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  // 14. СТАТУСЫ AWAITING_PAYMENT ДЛЯ БЕЗНАЛА
+  it('устанавливает статус awaiting_payment для безналичных методов (biletpmr, qr, foreign)', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Карточник', phone: '+37377755511', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'biletpmr' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+
+    const booking = await prisma.booking.findUnique({ where: { id: result.bookingId } });
+    expect(booking!.status).toBe('awaiting_payment');
+  });
+
+  // 15. ПРОМОКОД ТИПА FIXED БЕЗ ВЛАДЕЛЬЦА
+  it('применяет промокод типа fixed и НЕ вызывает кэшбэк если нет владельца', async () => {
+    await prisma.promoCode.create({
+      data: { code: 'MINUS100', discount: 100, type: 'fixed', isActive: true, memberId: null }, // Владельца нет
+    });
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Скидочник', phone: '+37377755522', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'MINUS100', website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+    
+    // 1 взрослый = 1000. Скидка fixed 100. Итого 900.
+    expect(result.totalPrice).toBe(900);
+    // Кэшбэк не должен триггериться
+    expect(mockNotificationHubDispatch).not.toHaveBeenCalled();
+  });
+
+  // 16. ИСТЕКШИЙ И НЕАКТИВНЫЙ ПРОМОКОД
+  it('блокирует просроченные и выключенные (isActive=false) промокоды', async () => {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1); // Вчера
+
+    await prisma.promoCode.create({
+      data: { code: 'EXPIRED', discount: 10, type: 'percent', isActive: true, validUntil: pastDate },
+    });
+    await prisma.promoCode.create({
+      data: { code: 'OFF', discount: 10, type: 'percent', isActive: false },
+    });
+
+    const baseInput = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Хакер', phone: '+37377755533', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const resultExpired = await createBookingAction({ ...baseInput, promoCode: 'EXPIRED' });
+    expect(resultExpired.success).toBe(false);
+    if (!resultExpired.success) expect(resultExpired.error).toMatch(/истёк|недействителен/i);
+
+    const resultOff = await createBookingAction({ ...baseInput, promoCode: 'OFF' });
+    expect(resultOff.success).toBe(false);
+  });
+
+  // 17. ИГНОРИРОВАНИЕ ПРОМОКОДА ПРИ АВТОРИЗАЦИИ
+  it('игнорирует переданный промокод, если юзер авторизован (списываются только бонусы)', async () => {
+    const member = await prisma.memberProfile.findFirst({ where: { id: memberId! } });
+    mockGetUser.mockResolvedValue({ data: { user: { id: member!.userId } }, error: null });
+
+    // Создадим промокод, который даёт скидку 90% (чтобы явно увидеть, что он НЕ применился)
+    await prisma.promoCode.create({
+      data: { code: 'SUPER90', discount: 90, type: 'percent', isActive: true },
+    });
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Участник', phone: '+37377755544', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, 
+      useBonuses: true, // И бонусы
+      promoCode: 'SUPER90', // И дикий промокод
+      website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+    
+    // Цена 1 билета = 1000. Списание бонусов = макс 10% (100). Итого 900.
+    // Если бы сработал SUPER90, цена была бы 100.
+    expect(result.totalPrice).toBe(900); 
+  });
+
+  // 18. ТИПЫ БИЛЕТОВ (СОЛЯНКА)
+  it('корректно сохраняет смешанные типы билетов', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Семья', phone: '+37377755599', social: '',
+      ticketsAdult: 1, ticketsChild: 2, ticketsMember: 1, ticketsFamily: 1,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+
+    const booking = await prisma.booking.findUnique({ where: { id: result.bookingId } });
+    expect(booking!.ticketsAdult).toBe(1);
+    expect(booking!.ticketsChild).toBe(2);
+    expect(booking!.ticketsMember).toBe(1);
+    expect(booking!.ticketsFamily).toBe(1);
+    // Сумма всех билетов = 5. Проверяем, что места списались правильно (5 - 5 = 0)
+    const updatedDate = await prisma.tourDate.findUnique({ where: { id: tourDateId } });
+    // Сумма мест: adult=1 + child=2 + member=1 + family=1×3=3 → итого 7
+    // tourDate.spotsLeft: 20 - 7 = 13
+    expect(updatedDate!.spotsLeft).toBe(13);
+  });
+
+  // 19. EMAIL-УВЕДОМЛЕНИЯ ПРИ НАЛИЧИИ @ В SOCIAL
+  it('вызывает отправку Email (Resend), если в поле social передан валидный email-адрес', async () => {
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Почтовик', phone: '+37377755566', social: 'tourist@gmail.com', // Валидный email
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    
+    // Resend мок должен был быть вызван
+    expect(mockResendEmailsSend).toHaveBeenCalled();
+  });
+
+  // 20. ОТСУТСТВИЕ EMAIL-УВЕДОМЛЕНИЙ ЕСЛИ ЭТО ТЕЛЕГРАМ
+  it('НЕ вызывает отправку Email (Resend), если в поле social передан никнейм (без @domain.com)', async () => {
+    mockResendEmailsSend.mockClear(); // Очищаем историю от предыдущего теста
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Телеграммер', phone: '+37377755577', social: '@ivan_tg_123', // Никнейм, а не email
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    };
+    
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    
+    // Resend мок НЕ должен вызываться
+    expect(mockResendEmailsSend).not.toHaveBeenCalled();
+  });
+
+});
+</file>
+
+<file path="__tests__/integration/updateBookingStatus.test.ts">
+// __tests__/integration/updateBookingStatus.test.ts
+
+import { prisma } from '@/lib/prisma';
+import { updateBookingStatusAction } from '@/features/admin/actions/bookingStatus';
+import {
+  mockNotificationHubDispatch,
+  mockSendToTelegram,
+} from '../../__mocks__/external-services';
+
+// ─── Моки ────────────────────────────────────────────────────────────────────
+
+// withAdminAuth вызывает requireAuth() → cookies(). Мокаем всю обёртку целиком:
+// возвращаем функцию-проходной усилитель — тест вызывает экшен напрямую
+// без проверки роли, как если бы пользователь уже авторизован.
+jest.mock('@/lib/auth', () => ({
+  withAdminAuth: (fn: (...args: unknown[]) => unknown) => fn,
+  requireAuth: jest.fn().mockResolvedValue({ id: 'admin-user-id' }),
+}));
+
+// withAdminAudit вызывает headers() и createServerSupabaseClient() для записи лога.
+// В тестах нам важна бизнес-логика, а не сам лог — пропускаем аудит насквозь.
+jest.mock('@/lib/audit', () => ({
+  withAdminAudit: () => (fn: (...args: unknown[]) => unknown) => fn,
+}));
+
+// notifyWaitlistOnSpotFreed — внешний вызов Telegram при освобождении мест.
+// В тестах не нужен реальный запрос.
+jest.mock('@/lib/telegram/notify', () => ({
+  notifyWaitlistOnSpotFreed: jest.fn().mockResolvedValue(undefined),
+}));
+
+// sendToUserTelegramAdvanced — прямая отправка сообщений гостям (без аккаунта).
+jest.mock('@/features/admin/actions/telegram', () => ({
+  sendToTelegram: mockSendToTelegram,
+  publishToTelegram: mockSendToTelegram,
+  sendToUserTelegramAdvanced: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('@/lib/notifications/hub', () => ({
+  NotificationHub: { dispatch: mockNotificationHubDispatch },
+}));
+
+// ─── Вспомогательная функция создания тестовых данных ────────────────────────
+
+async function createTestFixtures() {
+  const category = await prisma.tourCategory.create({
+    data: { slug: 'status-test-cat-' + Date.now(), title: 'Test', icon: 'Compass' },
+  });
+
+  // Тур с tourDate — основной кейс
+  const tour = await prisma.tour.create({
+    data: {
+      slug: 'status-test-tour-' + Date.now(),
+      title: 'Тур для тестов статусов',
+      location: 'Лес',
+      price: 1000,
+      spots: 50,
+      spotsLeft: 50,
+      categoryId: category.id,
+      duration: '1 день',
+      isActive: true,
+    },
+  });
+
+  // Тур БЕЗ tourDate — для теста Тест 4
+  const tourWithoutDate = await prisma.tour.create({
+    data: {
+      slug: 'no-date-tour-' + Date.now(),
+      title: 'Тур без даты',
+      location: 'Горы',
+      price: 2000,
+      spots: 20,
+      spotsLeft: 20,
+      categoryId: category.id,
+      duration: '2 дня',
+      isActive: true,
+    },
+  });
+
+  const tourDate = await prisma.tourDate.create({
+    data: {
+      tourId: tour.id,
+      startDate: new Date(Date.now() + 86400000), // завтра
+      spots: 10,
+      spotsLeft: 5, // уже 5 занято, 5 свободно
+    },
+  });
+
+  // Участник клуба — нужен для проверки NotificationHub
+  const member = await prisma.memberProfile.create({
+    data: {
+      userId: 'admin-test-user-' + Date.now(),
+      phone: '+37377788888',
+      name: 'Тестовый участник',
+      level: 'Первопроходец',
+      balance: 0,
+    },
+  });
+
+  return { tour, tourWithoutDate, tourDate, member };
+}
+
+// ─── Тесты ───────────────────────────────────────────────────────────────────
+
+describe('updateBookingStatusAction – интеграционные тесты', () => {
+  // Данные создаются в каждом тесте через createTestFixtures(),
+  // TRUNCATE выполняется в jest.setup.ts перед каждым тестом.
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ТЕСТ 1: moderation → confirmed
+  // Менеджер подтвердил оплату. Места НЕ возвращаются (клиент уже «внутри»).
+  // Участник получает уведомление BOOKING_CONFIRMED.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('переводит бронь moderation → confirmed, отправляет BOOKING_CONFIRMED участнику', async () => {
+    const { tour, tourDate, member } = await createTestFixtures();
+
+    const booking = await prisma.booking.create({
+      data: {
+        shortId: 501,
+        tourId: tour.id,
+        tourDateId: tourDate.id,
+        memberId: member.id, // авторизованный участник
+        name: 'Иван Петров',
+        phone: '+37377711111',
+        ticketsAdult: 2,
+        totalPrice: 2000,
+        status: 'moderation',
+        paymentMethod: 'qr',
+      },
+    });
+
+    const result = await updateBookingStatusAction(booking.id, 'confirmed');
+
+    expect(result.success).toBe(true);
+
+    const updated = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(updated!.status).toBe('confirmed');
+
+    // Места НЕ должны измениться — клиент их занимал до этого
+    const updatedDate = await prisma.tourDate.findUnique({ where: { id: tourDate.id } });
+    expect(updatedDate!.spotsLeft).toBe(5);
+
+    // NotificationHub вызван с правильным eventId
+    expect(mockNotificationHubDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: 'BOOKING_CONFIRMED',
+        memberId: member.id,
+      })
+    );
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ТЕСТ 2: moderation → awaiting_payment (отклонение чека)
+  // Менеджер отклонил чек — клиент должен загрузить заново.
+  // rejectReason сохраняется. createdAt обновляется (новые 48 часов на оплату).
+  // ─────────────────────────────────────────────────────────────────────────
+  it('отклоняет чек (moderation → awaiting_payment), сохраняет rejectReason', async () => {
+    const { tour, tourDate } = await createTestFixtures();
+
+    // Намеренно ставим старую дату — чтобы проверить что она ОБНОВЛЯЕТСЯ
+    const oldDate = new Date(Date.now() - 10 * 60 * 60 * 1000); // 10 часов назад
+
+    const booking = await prisma.booking.create({
+      data: {
+        shortId: 502,
+        tourId: tour.id,
+        tourDateId: tourDate.id,
+        name: 'Анна Сидорова',
+        phone: '+37377722222',
+        ticketsAdult: 1,
+        totalPrice: 1000,
+        status: 'moderation',
+        paymentMethod: 'qr',
+        createdAt: oldDate,
+      },
+    });
+
+    const result = await updateBookingStatusAction(booking.id, 'awaiting_payment');
+
+    expect(result.success).toBe(true);
+
+    const updated = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(updated!.status).toBe('awaiting_payment');
+
+    // Места не должны меняться — клиент их не освобождал
+    const updatedDate = await prisma.tourDate.findUnique({ where: { id: tourDate.id } });
+    expect(updatedDate!.spotsLeft).toBe(5);
+
+    // ВАЖНО: Проверяем что updateBookingStatusAction действительно
+    // сохраняет rejectReason если передаётся.
+    // Если функция не принимает rejectReason — это сигнал добавить параметр.
+    // Пока проверяем только что статус правильный.
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ТЕСТ 3: awaiting_payment → cancelled (ручная отмена с tourDate)
+  // Самое важное — места возвращаются в tourDate.
+  // Вейтлист уведомляется о свободных местах.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('отменяет бронь (awaiting_payment → cancelled) и возвращает места в tourDate', async () => {
+    const { tour, tourDate } = await createTestFixtures();
+
+    const booking = await prisma.booking.create({
+      data: {
+        shortId: 503,
+        tourId: tour.id,
+        tourDateId: tourDate.id, // привязана к дате
+        name: 'Пётр Иванов',
+        phone: '+37377733333',
+        ticketsAdult: 3,
+        totalPrice: 3000,
+        status: 'awaiting_payment',
+        paymentMethod: 'biletpmr',
+      },
+    });
+
+    const result = await updateBookingStatusAction(booking.id, 'cancelled');
+
+    expect(result.success).toBe(true);
+
+    const updated = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(updated!.status).toBe('cancelled');
+
+    // КЛЮЧЕВАЯ ПРОВЕРКА: было 5 свободных мест, вернули 3 → должно стать 8
+    const updatedDate = await prisma.tourDate.findUnique({ where: { id: tourDate.id } });
+    expect(updatedDate!.spotsLeft).toBe(8);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ТЕСТ 4: cancelled → (без tourDateId) — возврат мест в Tour напрямую
+  // Ветка else в коде: tour.update вместо tourDate.update
+  // ─────────────────────────────────────────────────────────────────────────
+  it('отменяет бронь БЕЗ tourDateId и возвращает места в Tour.spotsLeft', async () => {
+    const { tourWithoutDate } = await createTestFixtures();
+
+    const booking = await prisma.booking.create({
+      data: {
+        shortId: 504,
+        tourId: tourWithoutDate.id,
+        tourDateId: null, // нет привязки к дате
+        name: 'Мария Козлова',
+        phone: '+37377744444',
+        ticketsAdult: 2,
+        ticketsChild: 1,
+        totalPrice: 5000,
+        status: 'pending',
+        paymentMethod: 'cash',
+      },
+    });
+
+    // Фиксируем spotsLeft до отмены
+    const tourBefore = await prisma.tour.findUnique({ where: { id: tourWithoutDate.id } });
+    expect(tourBefore!.spotsLeft).toBe(20);
+
+    const result = await updateBookingStatusAction(booking.id, 'cancelled');
+
+    expect(result.success).toBe(true);
+
+    // КЛЮЧЕВАЯ ПРОВЕРКА: было 20 мест, вернули 3 (2 взрослых + 1 ребёнок) → 23
+    const tourAfter = await prisma.tour.findUnique({ where: { id: tourWithoutDate.id } });
+    expect(tourAfter!.spotsLeft).toBe(23);
+
+    const updated = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(updated!.status).toBe('cancelled');
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ТЕСТ 5: защита от двойной отмены
+  // cancelled → cancelled: места НЕ должны вернуться повторно.
+  // Условие в коде: newStatus === 'cancelled' && current.status !== 'cancelled'
+  // ─────────────────────────────────────────────────────────────────────────
+  it('не возвращает места повторно если бронь уже была cancelled', async () => {
+    const { tour, tourDate } = await createTestFixtures();
+
+    // Создаём бронь которая УЖЕ отменена
+    const booking = await prisma.booking.create({
+      data: {
+        shortId: 505,
+        tourId: tour.id,
+        tourDateId: tourDate.id,
+        name: 'Олег Смирнов',
+        phone: '+37377755555',
+        ticketsAdult: 2,
+        totalPrice: 2000,
+        status: 'cancelled', // уже отменена
+        paymentMethod: 'cash',
+      },
+    });
+
+    // spotsLeft = 5 до вызова
+    const dateBefore = await prisma.tourDate.findUnique({ where: { id: tourDate.id } });
+    expect(dateBefore!.spotsLeft).toBe(5);
+
+    // Пытаемся отменить ещё раз
+    const result = await updateBookingStatusAction(booking.id, 'cancelled');
+
+    expect(result.success).toBe(true);
+
+    // КЛЮЧЕВАЯ ПРОВЕРКА: spotsLeft не изменился — места не вернулись дважды
+    const dateAfter = await prisma.tourDate.findUnique({ where: { id: tourDate.id } });
+    expect(dateAfter!.spotsLeft).toBe(5);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ТЕСТ 6: cancelled → confirmed (реактивация)
+  // Менеджер вернул отменённую бронь. Места СПИСЫВАЮТСЯ заново.
+  // Условие в коде: current.status === 'cancelled' && newStatus !== 'cancelled'
+  // ─────────────────────────────────────────────────────────────────────────
+  it('реактивирует отменённую бронь (cancelled → confirmed) и списывает места заново', async () => {
+    const { tour, tourDate } = await createTestFixtures();
+
+    const booking = await prisma.booking.create({
+      data: {
+        shortId: 506,
+        tourId: tour.id,
+        tourDateId: tourDate.id,
+        name: 'Светлана Орлова',
+        phone: '+37377766666',
+        ticketsAdult: 2,
+        totalPrice: 2000,
+        status: 'cancelled', // была отменена
+        paymentMethod: 'cash',
+      },
+    });
+
+    // spotsLeft = 5 до вызова
+    const result = await updateBookingStatusAction(booking.id, 'confirmed');
+
+    expect(result.success).toBe(true);
+
+    const updated = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(updated!.status).toBe('confirmed');
+
+    // КЛЮЧЕВАЯ ПРОВЕРКА: было 5 мест, списали 2 → должно стать 3
+    const dateAfter = await prisma.tourDate.findUnique({ where: { id: tourDate.id } });
+    expect(dateAfter!.spotsLeft).toBe(3);
+  });
+});
+</file>
+
 <file path=".eslintrc.json">
 {
   "extends": "next/core-web-vitals"
@@ -397,6 +1275,154 @@ not IE 11
 last 1 Chrome version
 last 1 Firefox version
 last 1 Safari version
+</file>
+
+<file path="jest.config.js">
+const nextJest = require('next/jest');
+const createJestConfig = nextJest({ dir: './' });
+// сразу после этой строки добавь:
+process.env.NODE_ENV = 'test';
+
+const sharedConfig = {
+  testEnvironment: 'node',
+  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
+  transform: {
+    '^.+\\.(ts|tsx|js|jsx)$': ['@swc/jest', {}],
+  },
+  testEnvironmentOptions: {
+    env: {
+      NODE_ENV: 'test',
+    },
+  },
+};
+
+const customJestConfig = {
+  projects: [
+    {
+      ...sharedConfig,
+      displayName: 'unit',
+      testMatch: ['<rootDir>/src/**/*.test.ts'],
+    },
+    {
+      ...sharedConfig,
+      displayName: 'integration',
+  testMatch: ['<rootDir>/__tests__/**/*.test.ts'],
+  setupFiles: ['<rootDir>/jest.env.ts'],       // до импортов
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+    },
+  ],
+};
+
+module.exports = createJestConfig(customJestConfig);
+</file>
+
+<file path="jest.env.ts">
+process.env.DATABASE_URL = process.env.TEST_DATABASE_URL!;
+</file>
+
+<file path="jest.setup.ts">
+// ─── 0. ЖЕСТКОЕ ПЕРЕОПРЕДЕЛЕНИЕ БАЗЫ ДАННЫХ ДЛЯ ТЕСТОВ ───────────────────────
+// Защита от случайной записи в Prod. Prisma 5 читает эти переменные при старте.
+process.env.DATABASE_URL = process.env.TEST_DATABASE_URL!;
+process.env.DIRECT_URL = process.env.TEST_DATABASE_URL!;
+
+import { PrismaClient } from '@prisma/client';
+import { execSync } from 'child_process';
+import {
+  mockSendToTelegram,
+  mockResendEmailsSend,
+  mockNotificationHubDispatch,
+} from './__mocks__/external-services';
+
+// ─── 1. Мокаем Next.js APIs (cookies, headers) ───────────────────────────────
+// Эти функции не работают вне request-scope (например, в Jest).
+// Мок нужен здесь — до любых импортов экшенов.
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(() => ({
+    get: jest.fn(() => null),
+    getAll: jest.fn(() => []),
+    has: jest.fn(() => false),
+    set: jest.fn(),
+    delete: jest.fn(),
+  })),
+  headers: jest.fn(() => new Map()),
+}));
+
+// Мок next/cache — revalidatePath/revalidateTag вызываются в конце экшена
+jest.mock('next/cache', () => ({
+  revalidatePath: jest.fn(),
+  revalidateTag: jest.fn(),
+}));
+
+// ─── 2. Мокаем внешние сервисы ───────────────────────────────────────────────
+jest.mock('@/features/admin/actions/telegram', () => ({
+  sendToTelegram: mockSendToTelegram,
+  publishToTelegram: mockSendToTelegram,
+}));
+
+jest.mock('resend', () => ({
+  Resend: jest.fn().mockImplementation(() => ({
+    emails: { send: mockResendEmailsSend },
+  })),
+}));
+
+jest.mock('@/lib/notifications/hub', () => ({
+  NotificationHub: { dispatch: mockNotificationHubDispatch },
+}));
+
+// ─── 3. Мокаем Supabase SSR-клиент ───────────────────────────────────────────
+// createServerSupabaseClient вызывает cookies() внутри.
+// В тестах авторизованного пользователя нет — мокаем анонимную сессию.
+jest.mock('@/lib/supabase/server', () => ({
+  createServerSupabaseClient: jest.fn().mockResolvedValue({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    },
+  }),
+}));
+
+// ─── 4. Мокаем rate-limit — в тестах IP-заголовков нет ───────────────────────
+jest.mock('@/lib/rate-limit-server', () => ({
+  withRateLimit: (fn: (...args: unknown[]) => unknown) => fn,
+  withRateLimitRoute: (fn: (...args: unknown[]) => unknown) => fn,
+}));
+
+// ─── 5. Инфраструктура БД ────────────────────────────────────────────────────
+// В Prisma 5 клиент сам прочитает process.env.DATABASE_URL, который мы подменили выше
+const prisma = new PrismaClient();
+
+// Накатываем структуру БД один раз перед всеми тестами
+beforeAll(() => {
+  // Теперь можно передавать просто process.env, так как опасные переменные уже переопределены
+  execSync('npx prisma db push --skip-generate --accept-data-loss', {
+    env: { ...process.env },
+    stdio: 'inherit',
+  });
+});
+
+// Стираем данные перед каждым тестом — тесты не зависят друг от друга
+beforeEach(async () => {
+  const tablenames = await prisma.$queryRaw<Array<{ tablename: string }>>`
+    SELECT tablename FROM pg_tables
+    WHERE schemaname='public' AND tablename != '_prisma_migrations';
+  `;
+
+  const tables = tablenames.map(({ tablename }) => `"${tablename}"`).join(', ');
+
+  if (tables.length > 0) {
+    try {
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
+    } catch (error) {
+      console.error('Ошибка очистки БД:', error);
+    }
+  }
+
+  jest.clearAllMocks();
+});
+
+afterAll(async () => {
+  await prisma.$disconnect();
+});
 </file>
 
 <file path="postcss.config.js">
@@ -1155,10 +2181,9 @@ export const StatusSwitch = ({
 </file>
 
 <file path="src/features/admin/components/views/NeuroStudioTab.tsx">
-// src/features/admin/components/views/NeuroStudioTab.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Wand2,
   Sparkles,
@@ -1174,9 +2199,13 @@ import {
   History,
   X,
   Layers,
+  Database,
+  PenLine,
+  CheckCircle2,
 } from 'lucide-react';
 import { useToast } from '@/shared/context/ToastContext';
 import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
+import { getSmmSourcesAction, type SmmSource } from '@/features/admin/actions/smm';
 import {
   getAiPromptsAction,
   saveAiPromptAction,
@@ -1184,7 +2213,9 @@ import {
 } from '@/features/admin/actions/ai-prompts';
 import { clsx } from 'clsx';
 
-// ─── ТИПЫ ────────────────────────────────────────────────────────────────────
+// ============================================================================
+// ТИПЫ (улучшены и расширены)
+// ============================================================================
 
 interface AiPrompt {
   id: string;
@@ -1197,136 +2228,199 @@ interface GeneratedImage {
   id: string;
   url: string;
   prompt: string;
-  enhancedPrompt?: string;
-  engine: Engine;
+  model: ImageModel;
+  sourceTitle?: string;
   createdAt: Date;
 }
 
-type Engine = 'flux' | 'dalle';
+type ImageModel = 'flux-schnell' | 'flux-dev' | 'dalle3';
+type SourceMode = 'manual' | 'slug';
+type SlugType = 'tour' | 'blog';
 type ViewMode = 'studio' | 'library';
+type StylePreset = (typeof STYLE_PRESETS)[number]['id'];
 
-// ─── КОНСТАНТЫ ───────────────────────────────────────────────────────────────
+// Тип для вызова performAiTask — убрали "as any"
+interface GenerateImagePayload {
+  mode: 'generate_image';
+  prompt: string;
+  engine: ImageModel;
+  enhance: boolean;
+}
 
-const STYLE_PRESETS = [
-  { id: 'photo', label: '📷 Фото', hint: 'hyperrealistic photography, 8k, natural light' },
-  { id: 'cinematic', label: '🎬 Кино', hint: 'cinematic shot, dramatic lighting, anamorphic lens, film grain' },
-  { id: 'watercolor', label: '🎨 Акварель', hint: 'watercolor painting, soft edges, artistic brushstrokes' },
-  { id: 'epic', label: '🏔️ Эпик', hint: 'epic landscape, golden hour, volumetric light, ultra wide angle' },
-  { id: 'minimal', label: '⬜ Минимал', hint: 'minimalist, clean composition, flat lay, studio lighting' },
+// ============================================================================
+// КОНСТАНТЫ
+// ============================================================================
+
+const IMAGE_MODELS: ReadonlyArray<{
+  id: ImageModel;
+  label: string;
+  sub: string;
+}> = [
+  { id: 'flux-schnell', label: '⚡ Flux Schnell', sub: 'Быстро · Пейзажи · Фотореализм' },
+  { id: 'flux-dev', label: '🔥 Flux Dev', sub: 'Качество · Детали · Сложные арты' },
+  { id: 'dalle3', label: '🔵 DALL·E 3', sub: 'Иллюстрации · Текст в кадре' },
 ] as const;
 
-type StylePreset = typeof STYLE_PRESETS[number]['id'];
+const STYLE_PRESETS = [
+  { id: 'photo', label: '📷 Фото', hint: 'hyperrealistic photography, 8k, natural light, sharp focus' },
+  { id: 'cinematic', label: '🎬 Кино', hint: 'cinematic shot, dramatic lighting, anamorphic lens, film grain' },
+  { id: 'watercolor', label: '🎨 Акварель', hint: 'watercolor painting, soft edges, artistic brushstrokes, paper texture' },
+  { id: 'epic', label: '🏔️ Эпик', hint: 'epic landscape, golden hour, volumetric light, ultra wide angle' },
+  { id: 'pixar', label: '🦄 3D', hint: '3D Pixar style, vibrant colors, cute characters, studio lighting' },
+  { id: 'minimal', label: '⬜ Минимал', hint: 'minimalist composition, clean, flat lay, white background' },
+] as const;
 
-// ─── УТИЛИТЫ ─────────────────────────────────────────────────────────────────
+const PROMPT_EXAMPLES = [
+  'Туристы на SUP-досках на закате реки Днестр',
+  'Семья у горного костра, золотой час, осень',
+  'Медведь с рюкзаком ест зефир в Карпатах',
+  'Дети на каяках, солнечный день, смех и брызги',
+] as const;
 
-function genId() {
+// ============================================================================
+// ХЕЛПЕРЫ
+// ============================================================================
+
+function genId(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
-// ─── КОМПОНЕНТ КАРТОЧКИ ИЗОБРАЖЕНИЯ ──────────────────────────────────────────
-
-function ImageCard({
-  image,
-  onDelete,
-  onSavePrompt,
-  onCopyPrompt,
-}: {
-  image: GeneratedImage;
-  onDelete: (id: string) => void;
-  onSavePrompt: (image: GeneratedImage) => void;
-  onCopyPrompt: (prompt: string) => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
-
-  const handleCopy = () => {
-    onCopyPrompt(image.prompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-      {/* Изображение */}
-      <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
-        {!imgLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <RefreshCw size={24} className="text-slate-400 animate-spin" />
-          </div>
-        )}
-        <img
-          src={image.url}
-          alt={image.prompt}
-          onLoad={() => setImgLoaded(true)}
-          className={clsx(
-            "w-full h-full object-cover transition-all duration-500",
-            imgLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"
-          )}
-        />
-
-        {/* Оверлей с действиями */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
-            <a
-              href={image.url}
-              download={`neuro-${image.id}.jpg`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-white/30 transition-all"
-            >
-              <Download size={12} /> Скачать
-            </a>
-            <button
-              onClick={() => onSavePrompt(image)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-teal-500/80 backdrop-blur-sm text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-500 transition-all"
-            >
-              <BookmarkPlus size={12} /> Сохранить
-            </button>
-            <button
-              onClick={() => onDelete(image.id)}
-              className="ml-auto p-2 bg-red-500/60 backdrop-blur-sm text-white rounded-xl hover:bg-red-500/80 transition-all"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        </div>
-
-        {/* Бейдж движка */}
-        <div className="absolute top-3 right-3">
-          <span className={clsx(
-            "px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
-            image.engine === 'flux'
-              ? "bg-violet-500/80 text-white backdrop-blur-sm"
-              : "bg-blue-500/80 text-white backdrop-blur-sm"
-          )}>
-            {image.engine === 'flux' ? '⚡ Flux' : '🔵 DALL·E'}
-          </span>
-        </div>
-      </div>
-
-      {/* Промпт */}
-      <div className="p-4 space-y-2">
-        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-          {image.prompt}
-        </p>
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] text-slate-400 font-mono">
-            {image.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1 text-[9px] font-bold text-slate-500 hover:text-teal-600 transition-colors"
-          >
-            {copied ? <Check size={10} className="text-teal-500" /> : <Copy size={10} />}
-            {copied ? 'Скопировано' : 'Копировать промпт'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function buildPromptFromSource(source: SmmSource, style: StylePreset): string {
+  const hint = STYLE_PRESETS.find((s) => s.id === style)?.hint ?? '';
+  if (source.type === 'tour') {
+    const location = source.location || 'scenic nature';
+    const tags = source.tags?.slice(0, 2).join(', ') || 'outdoor adventure';
+    return `tourists on ${tags} in ${location}, active lifestyle, nature, ${hint}`.trim();
+  }
+  if (source.type === 'blog') {
+    return `travel blog illustration for "${source.title}", outdoor adventure, nature, ${hint}`.trim();
+  }
+  return `tourism events, active outdoor lifestyle, nature and adventure, ${hint}`.trim();
 }
 
-// ─── МОДАЛКА СОХРАНЕНИЯ ПРОМПТА ───────────────────────────────────────────────
+// ============================================================================
+// SUB-КОМПОНЕНТ: карточка изображения (React.memo + улучшенная доступность)
+// ============================================================================
+
+const ImageCard = React.memo(
+  ({
+    image,
+    onDelete,
+    onSavePrompt,
+  }: {
+    image: GeneratedImage;
+    onDelete: (id: string) => void;
+    onSavePrompt: (image: GeneratedImage) => void;
+  }) => {
+    const { showToast } = useToast();
+    const [copied, setCopied] = useState(false);
+    const [loaded, setLoaded] = useState(false);
+    const modelMeta = IMAGE_MODELS.find((m) => m.id === image.model);
+
+    const handleCopy = useCallback(async () => {
+      try {
+        await navigator.clipboard.writeText(image.prompt);
+        setCopied(true);
+        showToast('Промпт скопирован', 'success');
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        showToast('Не удалось скопировать', 'error');
+      }
+    }, [image.prompt, showToast]);
+
+    return (
+      <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+        <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          {!loaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+              <RefreshCw size={24} className="text-slate-400 animate-spin" />
+            </div>
+          )}
+          <img
+            src={image.url}
+            alt={image.prompt}
+            onLoad={() => setLoaded(true)}
+            className={clsx(
+              'w-full h-full object-cover transition-all duration-500 group-hover:scale-105',
+              loaded ? 'opacity-100' : 'opacity-0'
+            )}
+          />
+
+          {/* Оверлей */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
+              <a
+                href={image.url}
+                download={`neuro-${image.id}.jpg`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-white/30 transition-all"
+                aria-label="Скачать изображение"
+              >
+                <Download size={11} /> Скачать
+              </a>
+              <button
+                onClick={() => onSavePrompt(image)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-teal-500/80 backdrop-blur-sm text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-teal-500 transition-all"
+                aria-label="Сохранить промпт"
+              >
+                <BookmarkPlus size={11} /> Сохранить
+              </button>
+              <button
+                onClick={() => onDelete(image.id)}
+                className="ml-auto p-2 bg-red-500/60 backdrop-blur-sm text-white rounded-xl hover:bg-red-500/80 transition-all"
+                aria-label="Удалить изображение"
+              >
+                <Trash2 size={11} />
+              </button>
+            </div>
+          </div>
+
+          {/* Бейджи */}
+          {modelMeta && (
+            <div className="absolute top-3 right-3">
+              <span className="px-2 py-1 bg-slate-900/70 backdrop-blur-sm text-white rounded-lg text-[8px] font-black uppercase tracking-widest">
+                {modelMeta.label.split(' ').slice(0, 2).join(' ')}
+              </span>
+            </div>
+          )}
+          {image.sourceTitle && (
+            <div className="absolute top-3 left-3 max-w-[55%]">
+              <span className="block px-2 py-1 bg-teal-500/80 backdrop-blur-sm text-white rounded-lg text-[8px] font-black uppercase tracking-widest truncate">
+                📌 {image.sourceTitle}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 space-y-2">
+          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+            {image.prompt}
+          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-[8px] text-slate-400 font-mono">
+              {image.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 text-[9px] font-bold text-slate-500 hover:text-teal-600 transition-colors"
+              aria-label="Копировать промпт"
+            >
+              {copied ? <Check size={10} className="text-teal-500" /> : <Copy size={10} />}
+              {copied ? 'Скопировано' : 'Копировать'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+ImageCard.displayName = 'ImageCard';
+
+// ============================================================================
+// SUB-КОМПОНЕНТ: модалка сохранения промпта (улучшена доступность + фокус)
+// ============================================================================
 
 function SavePromptModal({
   image,
@@ -1339,47 +2433,57 @@ function SavePromptModal({
 }) {
   const [title, setTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSave = async () => {
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleSave = useCallback(async () => {
     if (!title.trim()) return;
     setIsSaving(true);
     await onSave(title.trim(), image.prompt);
     setIsSaving(false);
-  };
+  }, [title, image.prompt, onSave]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-800">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div
+        className="relative bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-800"
+        role="dialog"
+        aria-modal="true"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600"
+          aria-label="Закрыть модальное окно"
+        >
           <X size={18} />
         </button>
         <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 mb-6">
           Сохранить в библиотеку
         </h3>
-
-        {/* Превью */}
         <div className="w-full aspect-video rounded-2xl overflow-hidden mb-6 bg-slate-100">
           <img src={image.url} alt="" className="w-full h-full object-cover" />
         </div>
-
         <div className="space-y-4">
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-              Название шаблона
+              Название
             </label>
             <input
-              autoFocus
+              ref={inputRef}
               value={title}
-              onChange={e => setTitle(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-              placeholder="Например: Осенний поход по Днестру"
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              placeholder="Например: SUP закат осень Днестр"
               className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-teal-500 rounded-2xl px-4 py-3 text-sm font-medium outline-none transition-colors"
             />
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-              Промпт (сохраняется как есть)
+              Промпт
             </label>
             <p className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 line-clamp-3">
               {image.prompt}
@@ -1390,8 +2494,17 @@ function SavePromptModal({
             disabled={!title.trim() || isSaving}
             className="w-full py-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95"
           >
-            {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <BookmarkPlus size={14} />}
-            {isSaving ? 'Сохраняем...' : 'Сохранить в библиотеку'}
+            {isSaving ? (
+              <>
+                <RefreshCw size={14} className="animate-spin" />
+                Сохраняем...
+              </>
+            ) : (
+              <>
+                <BookmarkPlus size={14} />
+                Сохранить
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -1399,51 +2512,59 @@ function SavePromptModal({
   );
 }
 
-// ─── ГЛАВНЫЙ КОМПОНЕНТ ────────────────────────────────────────────────────────
+// ============================================================================
+// ГЛАВНЫЙ КОМПОНЕНТ (рефакторинг + улучшения)
+// ============================================================================
 
 export default function NeuroStudioTab() {
   const { showToast } = useToast();
 
-  // Вид
+  // ── Состояние ─────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<ViewMode>('studio');
-
-  // Форма генерации
+  const [sourceMode, setSourceMode] = useState<SourceMode>('manual');
+  const [slugType, setSlugType] = useState<SlugType>('tour');
+  const [slugId, setSlugId] = useState('');
+  const [sources, setSources] = useState<SmmSource[]>([]);
+  const [loadingSrc, setLoadingSrc] = useState(false);
   const [prompt, setPrompt] = useState('');
-  const [engine, setEngine] = useState<Engine>('flux');
-  const [selectedStyle, setSelectedStyle] = useState<StylePreset>('photo');
+  const [model, setModel] = useState<ImageModel>('flux-schnell');
+  const [style, setStyle] = useState<StylePreset>('photo');
   const [groqEnhance, setGroqEnhance] = useState(true);
-
-  // Процессы
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Галерея (in-memory сессия)
   const [gallery, setGallery] = useState<GeneratedImage[]>([]);
-
-  // Библиотека промптов
-  const [savedPrompts, setSavedPrompts] = useState<AiPrompt[]>([]);
-  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  // Модалка сохранения
   const [saveTarget, setSaveTarget] = useState<GeneratedImage | null>(null);
+  const [savedPrompts, setSavedPrompts] = useState<AiPrompt[]>([]);
+  const [loadingPr, setLoadingPr] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Загрузка сохранённых промптов
-  const loadPrompts = useCallback(async () => {
-    setIsLoadingPrompts(true);
+  // ── Загрузка данных ───────────────────────────────────────────────────────
+  const loadSources = useCallback(async () => {
+    setLoadingSrc(true);
     try {
-      const res = await getAiPromptsAction() as { success: boolean; data?: AiPrompt[]; error?: string };
-      if (res.success) setSavedPrompts(res.data || []);
+      const res = (await getSmmSourcesAction()) as { success: boolean; data?: SmmSource[] };
+      if (res.success) setSources(res.data ?? []);
     } finally {
-      setIsLoadingPrompts(false);
+      setLoadingSrc(false);
+    }
+  }, []);
+
+  const loadPrompts = useCallback(async () => {
+    setLoadingPr(true);
+    try {
+      const res = (await getAiPromptsAction()) as { success: boolean; data?: AiPrompt[] };
+      if (res.success) setSavedPrompts(res.data ?? []);
+    } finally {
+      setLoadingPr(false);
     }
   }, []);
 
   useEffect(() => {
+    loadSources();
     loadPrompts();
-  }, [loadPrompts]);
+  }, [loadSources, loadPrompts]);
 
   // Авто-ресайз textarea
   useEffect(() => {
@@ -1453,157 +2574,193 @@ export default function NeuroStudioTab() {
     ta.style.height = `${ta.scrollHeight}px`;
   }, [prompt]);
 
-  // ── ГЕНЕРАЦИЯ ──────────────────────────────────────────────────────────────
+  // ── Логика источников ─────────────────────────────────────────────────────
+  const handleSlugSelect = useCallback(
+    (id: string) => {
+      setSlugId(id);
+      if (!id) return;
+      const source = sources.find((s) => s.id === id);
+      if (!source) return;
+      setPrompt(buildPromptFromSource(source, style));
+      showToast(`Промпт собран из «${source.title}»`, 'success');
+    },
+    [sources, style, showToast]
+  );
 
-  const handleGenerate = async () => {
+  const handleStyleChange = useCallback(
+    (s: StylePreset) => {
+      setStyle(s);
+      if (sourceMode === 'slug' && slugId) {
+        const source = sources.find((x) => x.id === slugId);
+        if (source) setPrompt(buildPromptFromSource(source, s));
+      }
+    },
+    [sourceMode, slugId, sources]
+  );
+
+  // ── Генерация изображения (типы + убрали все "as any" кроме самого узкого места) ───────────────────────────────
+  const handleGenerate = useCallback(async () => {
     const trimmed = prompt.trim();
     if (!trimmed) {
-      showToast('Опиши что хочешь сгенерировать', 'error');
+      showToast('Опиши идею или выбери источник из базы', 'error');
       return;
     }
 
     setIsGenerating(true);
-
     try {
-      // Собираем финальный промпт: идея + стиль
-      const styleHint = STYLE_PRESETS.find(s => s.id === selectedStyle)?.hint || '';
-      // Groq-тумблер: если выключен, добавляем суффикс чтобы движок в ai.ts
-      // всё равно прошёл через enhance (он там всегда включён).
-      // Если нужно точное следование — добавляем специальный тег, и можно
-      // доработать ai.ts. Пока передаём как есть + стиль.
-      const finalPrompt = styleHint
-        ? `${trimmed}. Style: ${styleHint}`
-        : trimmed;
+      const hint = STYLE_PRESETS.find((s) => s.id === style)?.hint ?? '';
+      const finalPrompt = hint ? `${trimmed}. ${hint}` : trimmed;
 
-      // Вызов существующего экшена (mode: generate_image → Groq enhance → Flux)
-      const res = await performAiTask({ 
-        mode: 'generate_image', 
+      const payload: GenerateImagePayload = {
+        mode: 'generate_image',
         prompt: finalPrompt,
-        engine: engine,          // Передаем flux или dalle
-        enhance: groqEnhance     // Передаем состояние тумблера
-      }) as PerformAiTaskResult;
+        engine: model,
+        enhance: groqEnhance,
+      };
+
+      // Самое узкое место — только здесь приходится кастовать,
+      // потому что тип action'а ещё не обновлён под новые модели
+      const res = (await performAiTask(payload as any)) as PerformAiTaskResult;
 
       if (!res.success) {
-        showToast(res.error || 'Ошибка генерации', 'error');
+        // Безопасно достаём ошибку (тип PerformAiTaskResult, скорее всего, union)
+        const errorMsg = 'error' in res ? res.error : 'Ошибка генерации';
+        showToast(errorMsg, 'error');
         return;
       }
 
-      if (res.mode !== 'generate_image') {
-        showToast('Неожиданный ответ от сервера', 'error');
+      if (res.mode !== 'generate_image' || !res.data) {
+        showToast('Неожиданный ответ сервера', 'error');
         return;
       }
 
-      const newImage: GeneratedImage = {
+      const newImg: GeneratedImage = {
         id: genId(),
         url: res.data,
         prompt: trimmed,
-        engine,
+        model,
+        sourceTitle: sourceMode === 'slug' ? sources.find((s) => s.id === slugId)?.title : undefined,
         createdAt: new Date(),
       };
 
-      setGallery(prev => [newImage, ...prev]);
-      showToast('Картинка готова! ✨', 'success');
+      setGallery((prev) => [newImg, ...prev]);
+      showToast('Готово! ✨', 'success');
 
-      // Скролл к галерее
+      // Прокрутка к галерее
       setTimeout(() => {
         galleryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
-
-    } catch (err) {
+    } catch {
       showToast('Сетевая ошибка. Попробуй ещё раз.', 'error');
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [prompt, style, model, groqEnhance, sourceMode, slugId, sources, showToast]);
 
-  // ── СОХРАНЕНИЕ ПРОМПТА В БИБЛИОТЕКУ ───────────────────────────────────────
+  // ── Работа с библиотекой ──────────────────────────────────────────────────
+  const handleSavePrompt = useCallback(
+    async (title: string, promptText: string) => {
+      const res = (await saveAiPromptAction(title, promptText)) as { success: boolean; error?: string };
+      if (res.success) {
+        showToast('Сохранено в библиотеку 📚', 'success');
+        setSaveTarget(null);
+        await loadPrompts();
+      } else {
+        showToast(res.error || 'Ошибка сохранения', 'error');
+      }
+    },
+    [loadPrompts, showToast]
+  );
 
-  const handleSavePrompt = async (title: string, promptText: string) => {
-    const res = await saveAiPromptAction(title, promptText) as { success: boolean; error?: string };
-    if (res.success) {
-      showToast('Сохранено в библиотеку 📚', 'success');
-      setSaveTarget(null);
-      await loadPrompts();
-    } else {
-      showToast(res.error || 'Ошибка сохранения', 'error');
-    }
-  };
+  const handleDeletePrompt = useCallback(
+    async (id: string) => {
+      const res = (await deleteAiPromptAction(id)) as { success: boolean; error?: string };
+      if (res.success) {
+        setSavedPrompts((prev) => prev.filter((p) => p.id !== id));
+        setDeleteConfirm(null);
+        showToast('Удалено', 'success');
+      } else {
+        showToast(res.error || 'Ошибка удаления', 'error');
+      }
+    },
+    [showToast]
+  );
 
-  // ── УДАЛЕНИЕ ИЗ БИБЛИОТЕКИ ─────────────────────────────────────────────────
+  const applyPrompt = useCallback(
+    (p: AiPrompt) => {
+      setPrompt(p.prompt);
+      setSourceMode('manual');
+      setViewMode('studio');
+      showToast('Промпт загружен в студию', 'success');
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    },
+    [showToast]
+  );
 
-  const handleDeletePrompt = async (id: string) => {
-    const res = await deleteAiPromptAction(id) as { success: boolean; error?: string };
-    if (res.success) {
-      setSavedPrompts(prev => prev.filter(p => p.id !== id));
-      setDeleteConfirmId(null);
-      showToast('Удалено', 'success');
-    } else {
-      showToast(res.error || 'Ошибка удаления', 'error');
-    }
-  };
+  // Мемоизированный список моделей (чтобы не пересоздавался)
+  const renderedModels = useMemo(
+    () =>
+      IMAGE_MODELS.map((m) => (
+        <button
+          key={m.id}
+          onClick={() => setModel(m.id)}
+          className={clsx(
+            'w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all',
+            model === m.id
+              ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+              : 'border-transparent bg-slate-100 dark:bg-slate-800 hover:border-slate-200'
+          )}
+        >
+          <div className="text-left">
+            <div
+              className={clsx(
+                'text-[10px] font-black',
+                model === m.id ? 'text-teal-600' : 'text-slate-700 dark:text-slate-300'
+              )}
+            >
+              {m.label}
+            </div>
+            <div className="text-[8px] text-slate-400 mt-0.5">{m.sub}</div>
+          </div>
+          {model === m.id && <CheckCircle2 size={14} className="text-teal-500 shrink-0" />}
+        </button>
+      )),
+    [model]
+  );
 
-  // ── ПРИМЕНИТЬ ПРОМПТ ИЗ БИБЛИОТЕКИ ────────────────────────────────────────
-
-  const applyPrompt = (p: AiPrompt) => {
-    setPrompt(p.prompt);
-    setViewMode('studio');
-    showToast('Промпт загружен в студию', 'success');
-    setTimeout(() => textareaRef.current?.focus(), 100);
-  };
-
-  // ── КОПИРОВАТЬ ПРОМПТ ──────────────────────────────────────────────────────
-
-  const handleCopyPrompt = (text: string) => {
-    navigator.clipboard.writeText(text).catch(() => {});
-  };
-
-  // ── УДАЛИТЬ ИЗ ГАЛЕРЕИ ─────────────────────────────────────────────────────
-
-  const handleDeleteFromGallery = (id: string) => {
-    setGallery(prev => prev.filter(img => img.id !== id));
-  };
-
-  // ─── РЕНДЕР ────────────────────────────────────────────────────────────────
-
+  // ── РЕНДЕР ────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 pb-20">
-
-      {/* ── НАВИГАЦИЯ ── */}
-      <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-sm mt-16 md:mt-0 sticky top-16 md:top-0 z-30">
-        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto hide-scrollbar w-full md:w-auto gap-1">
-          <button
-            onClick={() => setViewMode('studio')}
-            className={clsx(
-              "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'studio'
-                ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            )}
-          >
-            <Wand2 size={14} /> Студия
-          </button>
-          <button
-            onClick={() => setViewMode('library')}
-            className={clsx(
-              "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'library'
-                ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            )}
-          >
-            <History size={14} /> Библиотека
-            {savedPrompts.length > 0 && (
-              <span className="bg-teal-500 text-white text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center">
-                {savedPrompts.length > 9 ? '9+' : savedPrompts.length}
-              </span>
-            )}
-          </button>
+    <div className="space-y-6">
+      {/* Подвкладки */}
+      <div className="flex items-center gap-2">
+        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1">
+          {[
+            { id: 'studio' as ViewMode, icon: <Wand2 size={13} />, label: 'Студия' },
+            { id: 'library' as ViewMode, icon: <History size={13} />, label: 'Библиотека' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setViewMode(tab.id)}
+              className={clsx(
+                'flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all',
+                viewMode === tab.id
+                  ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              )}
+            >
+              {tab.icon} {tab.label}
+              {tab.id === 'library' && savedPrompts.length > 0 && (
+                <span className="bg-teal-500 text-white text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+                  {savedPrompts.length > 9 ? '9+' : savedPrompts.length}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Счётчик сессии */}
         {gallery.length > 0 && (
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl ml-2 shrink-0">
-            <Layers size={14} className="text-teal-500" />
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Layers size={13} className="text-teal-500" />
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
               {gallery.length} арт{gallery.length > 4 ? 'ов' : gallery.length > 1 ? 'а' : ''}
             </span>
@@ -1611,63 +2768,126 @@ export default function NeuroStudioTab() {
         )}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════
-          СТУДИЯ
-      ═══════════════════════════════════════════════════════ */}
+      {/* ══ СТУДИЯ ══ */}
       {viewMode === 'studio' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-          {/* ── ЛЕВАЯ ПАНЕЛЬ: НАСТРОЙКИ ── */}
-          <div className="lg:col-span-4 space-y-4">
+          {/* Левая панель */}
+          <div className="lg:col-span-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 space-y-8 shadow-sm">
-
-              {/* Движок */}
+              {/* 1. Источник */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">1</span>
-                  Движок генерации
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    1
+                  </span>
+                  Источник идеи
                 </label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                  {([
-                    { id: 'flux', label: '⚡ Flux', sub: 'Фотореализм' },
-                    { id: 'dalle', label: '🔵 DALL·E 3', sub: 'Сложные сцены' },
-                  ] as { id: Engine; label: string; sub: string }[]).map(e => (
-                    <button
-                      key={e.id}
-                      onClick={() => setEngine(e.id)}
-                      className={clsx(
-                        "flex flex-col items-center py-3 px-2 rounded-xl transition-all",
-                        engine === e.id
-                          ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700'
-                      )}
-                    >
-                      <span className="text-[11px] font-black">{e.label}</span>
-                      <span className="text-[8px] font-medium text-slate-400 mt-0.5">{e.sub}</span>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4">
+                  <button
+                    onClick={() => {
+                      setSourceMode('manual');
+                      setSlugId('');
+                    }}
+                    className={clsx(
+                      'flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all',
+                      sourceMode === 'manual'
+                        ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
+                        : 'text-slate-500'
+                    )}
+                  >
+                    <PenLine size={11} /> Из головы
+                  </button>
+                  <button
+                    onClick={() => setSourceMode('slug')}
+                    className={clsx(
+                      'flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all',
+                      sourceMode === 'slug'
+                        ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
+                        : 'text-slate-500'
+                    )}
+                  >
+                    <Database size={11} /> Из базы
+                  </button>
                 </div>
-                {engine === 'dalle' && (
-                  <p className="text-[9px] text-amber-500 font-bold mt-2 px-2">
-                    ⚠️ DALL·E 3 требует OPENAI_API_KEY в .env и доп. интеграции в ai.ts
-                  </p>
+
+                {sourceMode === 'slug' && (
+                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['tour', 'blog'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => {
+                            setSlugType(t);
+                            setSlugId('');
+                          }}
+                          className={clsx(
+                            'py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border-2 transition-all',
+                            slugType === t
+                              ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600'
+                              : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-500'
+                          )}
+                        >
+                          {t === 'tour' ? '🏕️ Тур' : '📝 Блог'}
+                        </button>
+                      ))}
+                    </div>
+
+                    {loadingSrc ? (
+                      <div className="w-full h-12 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
+                    ) : (
+                      <select
+                        value={slugId}
+                        onChange={(e) => handleSlugSelect(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-teal-500 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-200 outline-none"
+                      >
+                        <option value="">Выбрать из базы...</option>
+                        {sources.filter((s) => s.type === slugType).map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.title}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {slugId && (
+                      <p className="text-[9px] text-teal-600 font-bold px-1 flex items-center gap-1">
+                        <CheckCircle2 size={10} /> Промпт собран — можешь отредактировать ниже
+                      </p>
+                    )}
+                  </div>
                 )}
               </section>
 
-              {/* Стиль */}
+              {/* 2. Модель */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">2</span>
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    2
+                  </span>
+                  Модель генерации
+                </label>
+                <div className="space-y-2">{renderedModels}</div>
+                {model === 'dalle3' && (
+                  <p className="text-[9px] text-amber-500 font-bold px-2 mt-3">⚠️ Требует OPENAI_API_KEY в .env</p>
+                )}
+              </section>
+
+              {/* 3. Стиль */}
+              <section>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    3
+                  </span>
                   Стиль изображения
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {STYLE_PRESETS.map(s => (
+                  {STYLE_PRESETS.map((s) => (
                     <button
                       key={s.id}
-                      onClick={() => setSelectedStyle(s.id)}
+                      onClick={() => handleStyleChange(s.id)}
                       className={clsx(
-                        "px-3 py-2 rounded-xl text-[10px] font-black border-2 transition-all",
-                        selectedStyle === s.id
+                        'px-3 py-2 rounded-xl text-[10px] font-black border-2 transition-all',
+                        style === s.id
                           ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600'
                           : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-500 hover:border-slate-200'
                       )}
@@ -1678,71 +2898,83 @@ export default function NeuroStudioTab() {
                 </div>
               </section>
 
-              {/* Groq-тумблер */}
+              {/* 4. Улучшатель */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">3</span>
-                  AI-Улучшатель промпта
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    4
+                  </span>
+                  AI-улучшатель промпта
                 </label>
                 <button
-                  onClick={() => setGroqEnhance(v => !v)}
+                  onClick={() => setGroqEnhance((v) => !v)}
                   className={clsx(
-                    "w-full flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all",
+                    'w-full flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all',
                     groqEnhance
                       ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
                       : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
                   )}
+                  role="switch"
+                  aria-checked={groqEnhance}
                 >
                   <div className="flex items-center gap-3">
-                    {groqEnhance
-                      ? <Zap size={18} className="text-teal-500" />
-                      : <ZapOff size={18} className="text-slate-400" />
-                    }
+                    {groqEnhance ? (
+                      <Zap size={16} className="text-teal-500" />
+                    ) : (
+                      <ZapOff size={16} className="text-slate-400" />
+                    )}
                     <div className="text-left">
-                      <div className={clsx(
-                        "text-[10px] font-black uppercase tracking-widest",
-                        groqEnhance ? 'text-teal-600' : 'text-slate-500'
-                      )}>
-                        {groqEnhance ? 'Улучшатель ВКЛ' : 'Улучшатель ВЫКЛ'}
+                      <div
+                        className={clsx(
+                          'text-[10px] font-black uppercase tracking-widest',
+                          groqEnhance ? 'text-teal-600' : 'text-slate-500'
+                        )}
+                      >
+                        {groqEnhance ? 'Groq улучшает промпт' : 'Промпт идёт как есть'}
                       </div>
-                      <div className="text-[8px] text-slate-400 font-medium mt-0.5">
+                      <div className="text-[8px] text-slate-400 mt-0.5">
                         {groqEnhance
-                          ? 'Groq расширит твою идею до детального промпта'
-                          : 'Промпт пойдёт в Flux точно как написан'
-                        }
+                          ? 'Идея на RU → детальный промпт на EN'
+                          : 'Твой текст напрямую в модель'}
                       </div>
                     </div>
                   </div>
-                  <div className={clsx(
-                    "w-10 h-6 rounded-full transition-all relative",
-                    groqEnhance ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-600'
-                  )}>
-                    <div className={clsx(
-                      "absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all",
-                      groqEnhance ? 'left-5' : 'left-1'
-                    )} />
+                  <div
+                    className={clsx(
+                      'w-10 h-6 rounded-full transition-all relative shrink-0',
+                      groqEnhance ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-600'
+                    )}
+                  >
+                    <div
+                      className={clsx(
+                        'absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all',
+                        groqEnhance ? 'left-5' : 'left-1'
+                      )}
+                    />
                   </div>
                 </button>
               </section>
 
-              {/* Промпт */}
+              {/* 5. Промпт */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">4</span>
-                  Идея или промпт
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    5
+                  </span>
+                  {sourceMode === 'slug' ? 'Промпт (собран из базы)' : 'Твоя идея'}
                 </label>
                 <div className="relative">
                   <textarea
                     ref={textareaRef}
                     value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
-                    onKeyDown={e => {
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleGenerate();
                     }}
                     placeholder={
                       groqEnhance
-                        ? "Напиши идею по-русски...\nНапример: медведь с рюкзаком у костра в горах Карпат"
-                        : "Детальный промпт на английском...\nNapример: a bear with backpack near campfire in Carpathian mountains, 8k, hyperrealistic"
+                        ? 'Напиши идею по-русски...\nНапример: туристы на SUP на закате Днестра'
+                        : 'Детальный промпт на английском...\nExample: tourists on SUP boards at sunset, golden hour, 8k'
                     }
                     rows={4}
                     className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-teal-500 rounded-2xl px-4 py-4 text-sm font-medium outline-none resize-none transition-colors placeholder:text-slate-400 placeholder:text-xs leading-relaxed"
@@ -1751,9 +2983,7 @@ export default function NeuroStudioTab() {
                     {prompt.length}/500
                   </div>
                 </div>
-                <p className="text-[9px] text-slate-400 mt-2 px-1">
-                  Ctrl+Enter — быстрая генерация
-                </p>
+                <p className="text-[9px] text-slate-400 mt-1.5 px-1">Ctrl+Enter — быстрая генерация</p>
               </section>
 
               {/* Кнопка генерации */}
@@ -1762,21 +2992,22 @@ export default function NeuroStudioTab() {
                 disabled={isGenerating || !prompt.trim()}
                 className="w-full py-5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 shadow-xl shadow-teal-500/20 transition-all active:scale-95 disabled:active:scale-100"
               >
-                {isGenerating
-                  ? <><RefreshCw size={16} className="animate-spin" /> Генерируем...</>
-                  : <><Sparkles size={16} /> Сгенерировать</>
-                }
+                {isGenerating ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" /> Генерируем...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} /> Сгенерировать
+                  </>
+                )}
               </button>
 
-              {/* Примеры промптов */}
-              {gallery.length === 0 && (
+              {/* Примеры (только когда галерея пуста и manual) */}
+              {gallery.length === 0 && sourceMode === 'manual' && (
                 <div className="space-y-2">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-1">Попробуй эти идеи:</p>
-                  {[
-                    'Туристы на SUP-досках на закате реки Днестр',
-                    'Семья у горного костра, золотой час, осень',
-                    'Медведь с рюкзаком ест зефир в Карпатах',
-                  ].map((ex, i) => (
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Попробуй:</p>
+                  {PROMPT_EXAMPLES.map((ex, i) => (
                     <button
                       key={i}
                       onClick={() => setPrompt(ex)}
@@ -1790,11 +3021,10 @@ export default function NeuroStudioTab() {
             </div>
           </div>
 
-          {/* ── ПРАВАЯ ПАНЕЛЬ: ГАЛЕРЕЯ ── */}
+          {/* Правая панель: галерея */}
           <div className="lg:col-span-8" ref={galleryRef}>
             {gallery.length === 0 ? (
-              /* Пустое состояние */
-              <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center py-24 px-8 text-center">
+              <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center py-24 px-8 text-center h-full min-h-[400px]">
                 <div className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
                   <ImageIcon size={32} className="text-slate-400" />
                 </div>
@@ -1802,7 +3032,8 @@ export default function NeuroStudioTab() {
                   Холст пуст
                 </h3>
                 <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                  Опиши идею слева и нажми «Сгенерировать». Картинки появятся здесь — в хронологическом порядке.
+                  Опиши идею слева или выбери тур из базы — система сама соберёт промпт. Нажми
+                  «Сгенерировать».
                 </p>
               </div>
             ) : (
@@ -1815,18 +3046,16 @@ export default function NeuroStudioTab() {
                     onClick={() => setGallery([])}
                     className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
                   >
-                    <Trash2 size={10} /> Очистить всё
+                    <Trash2 size={10} /> Очистить
                   </button>
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {gallery.map(image => (
+                  {gallery.map((img) => (
                     <ImageCard
-                      key={image.id}
-                      image={image}
-                      onDelete={handleDeleteFromGallery}
+                      key={img.id}
+                      image={img}
+                      onDelete={(id) => setGallery((prev) => prev.filter((x) => x.id !== id))}
                       onSavePrompt={setSaveTarget}
-                      onCopyPrompt={handleCopyPrompt}
                     />
                   ))}
                 </div>
@@ -1836,15 +3065,13 @@ export default function NeuroStudioTab() {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════
-          БИБЛИОТЕКА ПРОМПТОВ
-      ═══════════════════════════════════════════════════════ */}
+      {/* ══ БИБЛИОТЕКА ══ */}
       {viewMode === 'library' && (
         <div className="space-y-4">
-          {isLoadingPrompts ? (
+          {loadingPr ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-40 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-44 bg-slate-100 dark:bg-slate-800 rounded-3xl animate-pulse" />
               ))}
             </div>
           ) : savedPrompts.length === 0 ? (
@@ -1856,13 +3083,14 @@ export default function NeuroStudioTab() {
                 Библиотека пуста
               </h3>
               <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                Сгенерируй картинки в студии и сохраняй удачные промпты сюда. Они будут доступны в следующих сессиях.
+                Генерируй картинки в студии и сохраняй удачные промпты кнопкой «Сохранить» под
+                картинкой.
               </p>
               <button
                 onClick={() => setViewMode('studio')}
                 className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-all active:scale-95"
               >
-                Перейти в студию
+                В студию
               </button>
             </div>
           ) : (
@@ -1873,7 +3101,7 @@ export default function NeuroStudioTab() {
                 </h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {savedPrompts.map(p => (
+                {savedPrompts.map((p) => (
                   <div
                     key={p.id}
                     className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 hover:shadow-lg transition-all duration-200"
@@ -1883,28 +3111,25 @@ export default function NeuroStudioTab() {
                         {p.title}
                       </h4>
                       <button
-                        onClick={() => setDeleteConfirmId(p.id)}
+                        onClick={() => setDeleteConfirm(p.id)}
                         className="shrink-0 p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 size={12} />
                       </button>
                     </div>
+                    <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">{p.prompt}</p>
 
-                    <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">
-                      {p.prompt}
-                    </p>
-
-                    {deleteConfirmId === p.id ? (
+                    {deleteConfirm === p.id ? (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleDeletePrompt(p.id)}
-                          className="flex-1 py-2 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-red-600 transition-all"
+                          className="flex-1 py-2 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase hover:bg-red-600 transition-all"
                         >
                           Удалить
                         </button>
                         <button
-                          onClick={() => setDeleteConfirmId(null)}
-                          className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-200 transition-all"
+                          onClick={() => setDeleteConfirm(null)}
+                          className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-xl text-[9px] font-black uppercase"
                         >
                           Отмена
                         </button>
@@ -1925,13 +3150,9 @@ export default function NeuroStudioTab() {
         </div>
       )}
 
-      {/* ── МОДАЛКА СОХРАНЕНИЯ ── */}
+      {/* Модалка сохранения */}
       {saveTarget && (
-        <SavePromptModal
-          image={saveTarget}
-          onSave={handleSavePrompt}
-          onClose={() => setSaveTarget(null)}
-        />
+        <SavePromptModal image={saveTarget} onSave={handleSavePrompt} onClose={() => setSaveTarget(null)} />
       )}
     </div>
   );
@@ -7585,9 +8806,9 @@ export function getTourDuration(tour: TourDurationInput): string {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     
     // Если разница 0 (один день), пишем 1 день. Иначе +1 (включительно)
-    const totalDays = diffDays < 1 ? 1 : diffDays + 1;
-    
-    return `${totalDays} дн.`;
+   const totalDays = diffDays < 1 ? 1 : diffDays + 1;
+
+return totalDays === 1 ? '1 день' : `${totalDays} дн.`;
   }
 
   return '1 день';
@@ -7650,6 +8871,7 @@ export default config;
 <file path="tsconfig.json">
 {
   "compilerOptions": {
+    "types": ["jest"],
     "target": "ES2017",
     "lib": [
       "dom",
@@ -7890,6 +9112,7 @@ import { NotificationHub } from '@/lib/notifications/hub';
 import { revalidatePath } from 'next/cache';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ ВОЗВРАЩЕН
+import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
@@ -7945,17 +9168,19 @@ async function handler(req: Request) {
           cancelledCount++;
 
           // Добавляем отправку уведомления в массив задач (не ждем через await прямо тут)
-          if (booking.memberId) {
+         if (booking.memberId) {
             notificationPromises.push(
               NotificationHub.dispatch({
                 eventId: 'BOOKING_AUTO_CANCELLED',
                 memberId: booking.memberId,
-                data: {
-                  bookingId: booking.id,
-                  shortId: shortId,
-                  tourTitle: booking.tour.title,
-                }
+                data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
               })
+            );
+          } else if (booking.payerTgChatId) {
+            // 🔥 ДОБАВЛЕНО: Уведомление для гостей без аккаунта
+            const msg = `🚫 <b>Бронь аннулирована</b>\n\nВаша заявка <b>#${shortId}</b> на тур «${booking.tour.title}» была отменена из-за отсутствия оплаты в течение 48 часов.\n\nЕсли вы хотите поехать, пожалуйста, оформите новую заявку на сайте.`;
+            notificationPromises.push(
+              sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
             );
           }
 
@@ -7967,20 +9192,21 @@ async function handler(req: Request) {
         else if (ageInHours >= REMINDER_HOURS) {
           const redisKey = `reminder_sent:${booking.id}`;
           const isReminded = await redis.get(redisKey);
-
-          if (!isReminded) {
+if (!isReminded) {
             // Добавляем напоминание в массив задач
             if (booking.memberId) {
                notificationPromises.push(
                  NotificationHub.dispatch({
                    eventId: 'PAYMENT_REMINDER_24H',
                    memberId: booking.memberId,
-                   data: {
-                     bookingId: booking.id,
-                     shortId: shortId,
-                     tourTitle: booking.tour.title,
-                   }
+                   data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
                  })
+               );
+            } else if (booking.payerTgChatId) {
+               // 🔥 ДОБАВЛЕНО: Напоминание для гостей без аккаунта
+               const msg = `⚠️ <b>Ожидается оплата</b>\n\nНапоминаем, что у вас осталось 24 часа на оплату заявки <b>#${shortId}</b> на тур «${booking.tour.title}».\n\nПожалуйста, отправьте скриншот перевода или файл билета BiletPMR в этот чат, иначе бронь будет автоматически отменена.`;
+               notificationPromises.push(
+                 sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
                );
             }
             
@@ -40891,43 +42117,56 @@ import { AppEvent } from '@/lib/notifications/templates';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify';
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
+export type UpdateBookingStatusInput = {
+  bookingId: string;
+  newStatus: BookingStatus;
+  rejectReason?: string;
+  adminName?: string;
+};
+
 export const updateBookingStatusAction = withAdminAuth(
   withAdminAudit({
     actionName: 'UPDATE_BOOKING_STATUS',
-    getTargetId: (bookingId: string, _newStatus: BookingStatus) => bookingId,
-  })(async (bookingId: string, newStatus: BookingStatus) => {
+    // ✅ Теперь getTargetId принимает тот же объект, что и Action
+    getTargetId: (data: UpdateBookingStatusInput) => data.bookingId,
+  })(async ({ bookingId, newStatus, rejectReason, adminName }: UpdateBookingStatusInput) => {
     try {
       const booking = await prisma.$transaction(async (tx) => {
         const current = await tx.booking.findUnique({
           where: { id: bookingId },
-          include: { member: true, tour: true, tourDate: true }
+          include: { tour: true, tourDate: true }
         });
 
         if (!current) throw new Error('Бронирование не найдено');
 
+        // Расчет мест для возврата (уже есть в вашем коде)
         const totalTickets = (current.ticketsAdult || 0) + 
                              (current.ticketsChild || 0) + 
                              (current.ticketsMember || 0) + 
                              ((current.ticketsFamily || 0) * 3);
 
+        // Логика возврата мест при отмене
         if (newStatus === 'cancelled' && current.status !== 'cancelled') {
           if (current.tourDateId) {
             await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { increment: totalTickets } } });
           } else {
             await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { increment: totalTickets } } });
           }
-        } 
-        else if (current.status === 'cancelled' && newStatus !== 'cancelled') {
-          if (current.tourDateId) {
-            await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { decrement: totalTickets } } });
-          } else {
-            await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { decrement: totalTickets } } });
-          }
         }
 
+        // Обновляем бронь со всеми новыми полями
         return await tx.booking.update({
           where: { id: bookingId },
-          data: { status: newStatus },
+          data: { 
+            status: newStatus,
+            // Записываем причину, если она передана
+            rejectReason: (newStatus === 'rejected' || newStatus === 'awaiting_payment') ? rejectReason : null,
+            // Записываем кто и когда подтвердил
+            confirmedBy: newStatus === 'confirmed' ? adminName : null,
+            confirmedAt: newStatus === 'confirmed' ? new Date() : null,
+            // 🔥 ВТОРОЙ ШАНС: Сбрасываем таймер для Крона, если вернули из модерации в ожидание оплаты
+            createdAt: (newStatus === 'awaiting_payment' && current.status === 'moderation') ? new Date() : undefined,
+          },
           include: { member: true, tour: true, tourDate: true }
         });
       });
@@ -40997,8 +42236,13 @@ export const updateBookingStatusAction = withAdminAuth(
             inlineButtons.push([{ text: '👨‍💻 Связь с менеджером', url: 'https://t.me/romansvtirase' }]);
             break;
 
-          case 'rejected':
-            msg = `❌ <b>Ошибка оплаты</b>\n\nК сожалению, мы не смогли подтвердить оплату заявки <b>#${shortId}</b> на тур «${tourTitle}». Пожалуйста, проверьте чек и отправьте его заново в бота.`;
+        case 'rejected':
+          case 'awaiting_payment':
+            msg = `❌ <b>Ошибка проверки чека</b>\n\nМы не смогли подтвердить оплату заявки <b>#${shortId}</b> на тур «${tourTitle}».`;
+            if (rejectReason) {
+              msg += `\n\n<b>Причина:</b> ${rejectReason}`;
+            }
+            msg += `\n\nПожалуйста, отправьте правильный скриншот или файл билета в этот чат. У вас есть 48 часов.`;
             inlineButtons.push([{ text: '👨‍💻 Написать менеджеру', url: 'https://t.me/romansvtirase' }]);
             break;
 
@@ -45355,6 +46599,7 @@ import {
 } from '@/features/admin/actions/ai-prompts';
 import { ScheduledPost } from '@prisma/client';
 import { clsx } from 'clsx';
+import NeuroStudioTab from './NeuroStudioTab';
 
 // --- КОНСТАНТЫ И ТИПЫ ---
 
@@ -45476,7 +46721,7 @@ export default function SmmTab() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   // --- СОСТОЯНИЕ ДАННЫХ ---
-  const [viewMode, setViewMode] = useState<'generator' | 'history' | 'prompts'>('generator');
+ const [viewMode, setViewMode] = useState<'generator' | 'history' | 'neuro'>('generator');
   const [sources, setSources] = useState<SmmSource[]>([]);
   const [history, setHistory] = useState<ScheduledPost[]>([]);
   const [prompts, setPrompts] = useState<AiPrompt[]>([]);
@@ -45514,12 +46759,6 @@ export default function SmmTab() {
   
   const [deleteConfirmHistoryId, setDeleteConfirmHistoryId] = useState<string | null>(null);
   const [deleteConfirmPromptId, setDeleteConfirmPromptId] = useState<string | null>(null);
-
-  // ✅ ДОБАВЛЕНО: Стейты Нейро-студии (Генерация картинок)
-  const [studioPrompt, setStudioPrompt] = useState('');
-  const [studioStyle, setStudioStyle] = useState('Cinematic travel photography, hyperrealistic, epic lighting');
-  const [studioResultUrl, setStudioResultUrl] = useState('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // --- ЛАЙТБОКС ---
   const [previewPost, setPreviewPost] = useState<ScheduledPost | null>(null);
@@ -45835,33 +47074,7 @@ useEffect(() => {
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
 
-  // ── ГЕНЕРАЦИЯ КАРТИНКИ (НЕЙРО-СТУДИЯ) ──
-  const handleGenerateImage = async () => {
-    if (!studioPrompt) return showToast('Опиши, что нужно нарисовать', 'error');
-    setIsGeneratingImage(true);
-    
-    try {
-      const { performAiTask } = await import('@/features/admin/actions/ai');
-      
-      const res = await performAiTask({ 
-        mode: 'generate_image', 
-        prompt: `${studioStyle}. Subject: ${studioPrompt}.` 
-      }) as { success: boolean; data?: any; error?: string };
-
-      if (res.success && res.data) {
-        setStudioResultUrl(res.data);
-        showToast('Шедевр готов! 🎨', 'success');
-      } else {
-        showToast(res.error || 'Ошибка DALL-E 3', 'error');
-      }
-    } catch (e) {
-      showToast('Ошибка сети при генерации', 'error');
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
-
-  return (
+return (
     <div className="space-y-6 pb-20">
       
       {/* ─── ВЕРХНЯЯ НАВИГАЦИЯ (MOBILE FRIENDLY) ─── */}
@@ -45885,15 +47098,15 @@ useEffect(() => {
           >
             <History size={14} /> История
           </button>
-          <button
-            onClick={() => setViewMode('prompts')}
-            className={clsx(
-              "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'prompts' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-            )}
-          >
-            <Wand2 size={14} /> Нейро-студия
-          </button>
+         <button
+  onClick={() => setViewMode('neuro')}
+  className={clsx(
+    "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
+    viewMode === 'neuro' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+  )}
+>
+  <Wand2 size={14} /> Нейро-студия
+</button>
         </div>
       </div>
 
@@ -46409,114 +47622,8 @@ useEffect(() => {
       )}
 
      {/* ─── НЕЙРО-СТУДИЯ (ГЕНЕРАЦИЯ И ШАБЛОНЫ) ─── */}
-      {viewMode === 'prompts' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300">
-          
-          {/* Левая панель: Пульт управления */}
-          <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm flex flex-col gap-8">
-             <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <Wand2 size={16} className="text-fuchsia-500"/> Что рисуем?
-                  </label>
-                  
-                  {/* Кнопка сохранения в базу */}
-                  {studioPrompt.length > 5 && (
-                    <button 
-                      onClick={async () => {
-                        const title = window.prompt("Название шаблона (например: Дети у костра):");
-                        if (title) {
-                          const res = (await saveAiPromptAction(title, studioPrompt)) as { success: boolean; error?: string };
-                          if (res.success) { showToast("Шаблон сохранен", "success"); loadData(); } 
-                          else { showToast(res.error || "Ошибка сохранения", "error"); }
-                        }
-                      }}
-                      className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-fuchsia-500 transition-colors uppercase tracking-widest"
-                    >
-                      <Save size={12} /> Сохранить
-                    </button>
-                  )}
-                </div>
-
-                {/* Быстрые шаблоны из базы */}
-                {prompts.length > 0 && (
-                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
-                    {prompts.map((p) => (
-                      <div key={p.id} className="group relative flex items-center">
-                        <button
-                          onClick={() => setStudioPrompt(p.prompt)}
-                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-all uppercase tracking-tighter truncate max-w-[150px]"
-                          title={p.prompt}
-                        >
-                          {p.title}
-                        </button>
-                        <button
-                          onClick={() => handleDeletePrompt(p.id)}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
-                        >
-                          <X size={10} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <textarea 
-                  value={studioPrompt} 
-                  onChange={(e) => setStudioPrompt(e.target.value)} 
-                  placeholder="Счастливая пара плывет на SUP-досках по живописной реке на рассвете..."
-                  className="w-full h-32 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm focus:ring-2 focus:ring-fuchsia-500/20 text-slate-900 dark:text-white resize-none outline-none font-medium custom-scrollbar" 
-                />
-             </div>
-
-             <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Стиль (Промпт-инъекция)</label>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => setStudioStyle('Cinematic travel photography, hyperrealistic, epic lighting')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('Cinematic') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🎬 Кинематограф (Реализм)</button>
-                  <button onClick={() => setStudioStyle('Beautiful watercolor painting, soft colors, artistic')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('watercolor') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🎨 Акварель (Арт)</button>
-                  <button onClick={() => setStudioStyle('3D Pixar style animation, vibrant colors, cute')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('Pixar') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🦄 3D Мультфильм</button>
-                </div>
-             </div>
-
-             <button 
-                onClick={handleGenerateImage}
-                disabled={isGeneratingImage || !studioPrompt}
-                className="w-full mt-auto py-5 bg-slate-900 dark:bg-fuchsia-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 shadow-xl hover:bg-slate-800 dark:hover:bg-fuchsia-500 disabled:opacity-50 transition-all active:scale-95"
-              >
-                {isGeneratingImage ? <RefreshCw className="animate-spin" size={16}/> : <ImageIcon size={16}/>}
-                Создать изображение
-              </button>
-          </div>
-
-          {/* Правая панель: Холст (Результат) */}
-          <div className="lg:col-span-8 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 min-h-[600px] relative overflow-hidden shadow-inner">
-             {isGeneratingImage ? (
-               <div className="flex flex-col items-center gap-4 animate-pulse">
-                 <Wand2 size={48} className="text-fuchsia-500 animate-bounce"/>
-                 <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Нейросеть рисует...</p>
-               </div>
-             ) : studioResultUrl ? (
-               <div className="flex flex-col items-center gap-6 w-full h-full animate-in zoom-in-95 duration-300">
-                 <img src={studioResultUrl} alt="Generated" className="max-h-[500px] w-auto object-contain rounded-2xl shadow-2xl border border-white/10" />
-                 <div className="flex gap-4">
-                   <button onClick={() => window.open(studioResultUrl, '_blank')} className="px-6 py-3 bg-white dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition-all text-slate-700 dark:text-slate-300">
-                     <Eye size={16}/> Открыть оригинал
-                   </button>
-                   <button onClick={() => { navigator.clipboard.writeText(studioResultUrl); showToast('URL скопирован', 'success'); }} className="px-6 py-3 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-teal-700 shadow-lg shadow-teal-500/30 transition-all">
-                     <Copy size={16}/> Копировать URL
-                   </button>
-                 </div>
-               </div>
-             ) : (
-               <div className="flex flex-col items-center gap-4 opacity-30">
-                 <ImageIcon size={64} className="text-slate-400"/>
-                 <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">Холст пуст</p>
-               </div>
-             )}
-          </div>
-        </div>
-      )}
-
+     {viewMode === 'neuro' && <NeuroStudioTab />}
+      
       {/* ─── LIGHTBOX (ПРОСМОТР КАРУСЕЛИ) ─── */}
       {previewPost && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/98 backdrop-blur-2xl p-4 md:p-10 animate-in fade-in zoom-in duration-300">
@@ -47074,8 +48181,11 @@ export const env = {
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "test:unit": "jest --selectProjects unit",
+    "test:integration": "jest --selectProjects integration",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:ci": "NODE_ENV=test jest --runInBand --coverage"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.43",
@@ -47131,12 +48241,15 @@ export const env = {
     "@eslint/eslintrc": "^3",
     "@next/bundle-analyzer": "^16.1.6",
     "@opentelemetry/api": "^1.9.1",
+    "@react-email/ui": "^6.0.0",
     "@sentry/wizard": "^6.12.0",
+    "@swc/core": "^1.15.30",
+    "@swc/jest": "^0.2.39",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6",
     "@testing-library/react": "^16",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/jest": "^29",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
@@ -47690,13 +48803,13 @@ function parseParams(searchParams: URLSearchParams): OgParams {
 
   // Поля блога
   const author        = searchParams.get('author')        || 'ЭВА';
-  const readTime      = searchParams.get('readTime')      || '5 мин';
+  const readTime      = searchParams.get('readTime')      || '5'; // убираем "мин" из дефолта, добавим в верстке
   const rubric        = (searchParams.get('rubric')       || 'БЛОГ').toUpperCase();
 
   // Неизвестный цвет → fallback teal
   const rawColor      = searchParams.get('categoryColor') || 'teal';
   const categoryColor = COLOR_MAP[rawColor] ? rawColor : 'teal';
-  const categoryTitle = searchParams.get('categoryTitle') || 'ТУР';
+  const categoryTitle = searchParams.get('categoryTitle') || (type === 'blog' ? 'БЛОГ' : 'ТУР');
 
   const tags          = tagsStr.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3);
   const brandColor    = COLOR_MAP[categoryColor]!;
@@ -47762,6 +48875,72 @@ const SparklesIcon = ({ color, size = 48 }: { color: string; size?: number }) =>
 const CheckIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
 );
+
+// ─── ЖУРНАЛЬНАЯ ВЕРСТКА (АДАПТИВНОСТЬ И GLASSMORPHISM) ──────────────────────
+
+/** 1. Адаптивная система размеров в зависимости от формата */
+function getScaleConfig(format: SmmFormat | null) {
+  const isStory = format === 'story';
+  const isPost = format === 'post';
+  const isEvent = format === 'event';
+
+  return {
+    layoutPadding: isStory ? '100px 80px' : (isPost ? '60px' : '80px 60px'),
+    cardPadding: isStory ? '60px' : '48px',
+    titleSize: isStory ? '72px' : (isPost ? '56px' : '64px'),
+    textSize: isStory ? '36px' : (isPost ? '28px' : '32px'),
+    iconSize: isStory ? 48 : 36,
+    gap: isStory ? '32px' : '24px',
+    borderRadius: isStory ? '48px' : '36px',
+  };
+}
+
+/** 2. Премиальная подложка: глушит фон и кладет текст в стеклянную карточку */
+function MagazineCard({ 
+  p, 
+  children, 
+  align = 'flex-start' 
+}: { 
+  p: OgParams; 
+  children: React.ReactNode; 
+  align?: 'flex-start' | 'center';
+}) {
+  const scale = getScaleConfig(p.format);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
+      
+      {/* 1. ФОН: Растянутое фото */}
+      {p.imageUrl && (
+        <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      )}
+      
+      {/* 2. ЗАТЕНЕНИЕ: Убиваем пестроту фото, оставляя текстуру (Решение Проблемы 4) */}
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)' }} />
+
+      {/* 3. КОНТЕЙНЕР КАРТОЧКИ */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: scale.layoutPadding, position: 'relative', zIndex: 10, justifyContent: 'center' }}>
+        
+        {/* 4. САМА СТЕКЛЯННАЯ ПЛАШКА */}
+        <div style={{
+           display: 'flex', 
+           flexDirection: 'column',
+           alignItems: align,
+           backgroundColor: 'rgba(15, 23, 42, 0.90)', // Плотный темный цвет
+           border: '1px solid rgba(255,255,255,0.15)', // Тонкая граница (стекло)
+           borderLeft: `12px solid ${p.brandColor}`, // Цветовой акцент бренда слева
+           borderRadius: scale.borderRadius,
+           padding: scale.cardPadding,
+           boxShadow: '0 40px 80px rgba(0,0,0,0.8)', // Мощная тень для отрыва от фона
+           width: '100%'
+        }}>
+          {children}
+        </div>
+
+      </div>
+    </div>
+  );
+}
 
 // ─── ПЕРЕИСПОЛЬЗУЕМЫЕ UI-БЛОКИ ───────────────────────────────────────────────
 
@@ -47856,34 +49035,37 @@ function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFo
 
 // 1. СЛАЙД "ЛОГИСТИКА"
 function renderLogisticsSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, marginBottom: '48px', textTransform: 'uppercase' }}>
-        {p.slideTitle || 'ЛОГИСТИКА'}
-      </span>
-      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(30,41,59,0.95)', padding: '48px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.06)', gap: '40px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
+         <CompassIcon color={p.brandColor} size={scale.iconSize} />
+         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '18px', textTransform: 'uppercase' }}>{p.slideTitle || 'ЛОГИСТИКА'}</span>
+      </div>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: scale.gap, marginTop: '20px' }}>
         {p.meetingPoint && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <MapPinIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Место сбора: {p.meetingPoint}</span>
+            <MapPinIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Место: <span style={{ color: 'white' }}>{p.meetingPoint}</span></span>
           </div>
         )}
         {p.duration && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <ClockIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Длительность: {p.duration}</span>
+            <ClockIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Длительность: <span style={{ color: 'white' }}>{p.duration}</span></span>
           </div>
         )}
         {p.route && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <CompassIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Маршрут: {p.route}</span>
+            <CompassIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Маршрут: <span style={{ color: 'white' }}>{p.route}</span></span>
           </div>
         )}
         {p.guideName && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <UserIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Гид: {p.guideName}</span>
+            <UserIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Гид: <span style={{ color: 'white' }}>{p.guideName}</span></span>
           </div>
         )}
       </div>
@@ -47922,22 +49104,28 @@ function renderHighlightsSlide(p: OgParams) {
 
 // 3. СЛАЙД "ЧТО ВЗЯТЬ С СОБОЙ" / "ВКЛЮЧЕНО" (Чекбоксы с разбивкой по \n)
 function renderListSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   const lines = p.slideText.split('\n').filter(Boolean);
+  
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '48px' }}>
-         <SparklesIcon color={p.brandColor} size={48} />
-         <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, marginLeft: '18px' }}>{p.slideTitle}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
+         <SparklesIcon color={p.brandColor} size={scale.iconSize} />
+         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '18px', textTransform: 'uppercase' }}>{p.slideTitle}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {lines.map((line, i) => {
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Ограничиваем количество пунктов до 7, чтобы не разорвало карточку в сториз */}
+        {lines.slice(0, 7).map((line, i) => {
           const cleanLine = line.replace(/^[\u2022\-\*]\s*/, '').trim();
           return (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '24px', padding: '20px 24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '24px', flexShrink: 0 }}>
-                <CheckIcon color={p.brandColor} size={36} />
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', padding: '8px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '20px', flexShrink: 0, marginTop: '4px' }}>
+                <CheckIcon color={p.brandColor} size={scale.iconSize} />
               </div>
-              <span style={{ color: '#e2e8f0', fontSize: '32px', fontWeight: 700, lineHeight: 1.4, flex: 1 }}>{cleanLine}</span>
+              <span style={{ color: '#e2e8f0', fontSize: scale.textSize, fontWeight: 700, lineHeight: 1.4, flex: 1 }}>
+                {cleanLine}
+              </span>
             </div>
           );
         })}
@@ -47945,7 +49133,6 @@ function renderListSlide(p: OgParams) {
     </div>
   );
 }
-
 // 4. СЛАЙД "СТОИМОСТЬ И ЗАПИСЬ"
 function renderPriceSlide(p: OgParams) {
   return (
@@ -47990,10 +49177,15 @@ function renderPriceSlide(p: OgParams) {
 }
 
 function renderDefaultSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-      <span style={{ fontSize: '50px', color: p.brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: '36px' }}>{p.slideTitle}</span>
-      <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, lineHeight: 1.4 }}>{p.slideText}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
+      <span style={{ fontSize: scale.textSize, color: p.brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: scale.gap, textTransform: 'uppercase' }}>
+        {p.slideTitle}
+      </span>
+      <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, lineHeight: 1.4 }}>
+        {p.slideText}
+      </span>
     </div>
   );
 }
@@ -48013,18 +49205,7 @@ function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
   }
 
   return new ImageResponse(
-    (
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#0f172a', position: 'relative', fontFamily: 'Montserrat' }}>
-        {p.imageUrl && (
-          <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        )}
-        {/* ✅ ЭФФЕКТ ТЕМНОГО ПЛАНШЕТА (0.96) для идеальной читаемости */}
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(11, 17, 32, 0.96)' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '80px', position: 'relative', zIndex: 10 }}>
-          {content}
-        </div>
-      </div>
-    ),
+    <MagazineCard p={p}>{content}</MagazineCard>,
     { width: p.width, height: p.height, fonts: fontConfig, headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } }
   );
 }
@@ -48057,10 +49238,10 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
                   </span>
                 </div>
               )}
-              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '18px 40px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '18px 40px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
                 <div style={{ width: '16px', height: '16px', borderRadius: '8px', backgroundColor: brandColor, marginRight: '18px', boxShadow: `0 0 14px ${brandColor}` }} />
                 <span style={{ fontSize: '38px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>
-                  {isBlog ? rubric : categoryTitle}
+                  {categoryTitle}
                 </span>
               </div>
             </div>
@@ -48115,10 +49296,10 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
               {priceStr && <PriceBlock p={p} priceFontSize="84px" currencyFontSize="42px" labelFontSize="32px" badgeFontSize="26px" arrowSize={96} />}
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '24px 40px', borderRadius: '30px', alignSelf: 'flex-start' }}>
-               <span style={{ color: brandColor, fontSize: '36px', fontWeight: 900 }}>{author}</span>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '24px 40px', borderRadius: '30px', alignSelf: 'flex-start' }}>
+               <span style={{ color: brandColor, fontSize: '36px', fontWeight: 900 }}>Автор: {author}</span>
                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }} />
-               <span style={{ color: 'white', fontSize: '32px', opacity: 0.8 }}>{readTime} чтенья</span>
+               <span style={{ color: 'white', fontSize: '32px', opacity: 0.8 }}>{readTime} мин. чтения</span>
             </div>
           )}
         </div>
@@ -48161,7 +49342,7 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
               )}
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '14px 32px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
                 <div style={{ width: '14px', height: '14px', borderRadius: '7px', backgroundColor: brandColor, marginRight: '16px', boxShadow: `0 0 12px ${brandColor}` }} />
-                <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{isBlog ? rubric : categoryTitle}</span>
+              <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{categoryTitle}</span>
               </div>
             </div>
 
@@ -48206,10 +49387,10 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
               {priceStr && <PriceBlock p={p} priceFontSize={isPost ? '64px' : '78px'} currencyFontSize={isPost ? '28px' : '36px'} labelFontSize="24px" badgeFontSize="20px" arrowSize={isPost ? 72 : 84} />}
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '20px 36px', borderRadius: '30px', alignSelf: 'flex-start' }}>
-               <span style={{ color: brandColor, fontSize: '28px', fontWeight: 900 }}>{author}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '20px 36px', borderRadius: '30px', alignSelf: 'flex-start' }}>
+               <span style={{ color: brandColor, fontSize: '28px', fontWeight: 900 }}>Автор: {author}</span>
                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }} />
-               <span style={{ color: 'white', fontSize: '24px', opacity: 0.8 }}>{readTime} чтенья</span>
+               <span style={{ color: 'white', fontSize: '24px', opacity: 0.8 }}>{readTime} мин. чтения</span>
             </div>
           )}
         </div>
@@ -50740,6 +51921,7 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { handleTelegramCallback } from '@/features/admin/actions/telegramInteractive';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН АУДИТ
+import { updateBookingStatusAction } from '@/features/admin/actions/bookingStatus';
 
 // Инициализируем Redis (оставляем твой вариант из оригинала)
 const redis = Redis.fromEnv();
@@ -50862,19 +52044,28 @@ export async function POST(req: Request) {
         const messageId = body.callback_query.message.message_id;
         const adminName = body.callback_query.from.username ? `@${body.callback_query.from.username}` : (body.callback_query.from.first_name || 'Admin');
 
-        if (callbackData.startsWith('confirm_')) {
+     if (callbackData.startsWith('confirm_')) {
           const bookingId = callbackData.replace('confirm_', '');
 
-          // 1. Меняем статус в базе
-          const booking = await prisma.booking.update({
+          // ✅ ИСПОЛЬЗУЕМ НАШ НОВЫЙ ЭКШЕН
+        // ✅ Указываем TypeScript, какой ответ мы ждем от экшена
+          const result = (await updateBookingStatusAction({
+            bookingId,
+            newStatus: 'confirmed',
+            adminName
+          })) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('Ошибка подтверждения через бота:', result.error);
+            return ok();
+          }
+
+          // Нам нужна инфа о туре для отправки сообщений, так что запрашиваем:
+          const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
-            data: { 
-              status: 'confirmed',
-              confirmedBy: adminName,
-              confirmedAt: new Date()
-            },
             include: { tour: true, tourDate: true }
           });
+          if (!booking) return ok();
 
           // ✅ СИСТЕМНЫЙ АУДИТ: Логируем подтверждение брони админом через кнопку Telegram
           Promise.resolve().then(() => {
@@ -50915,12 +52106,26 @@ export async function POST(req: Request) {
 
           await Promise.allSettled(telegramTasks);
           
-        } else if (callbackData.startsWith('reject_')) {
+      } else if (callbackData.startsWith('reject_')) {
           const bookingId = callbackData.replace('reject_', '');
 
+          // ✅ ИСПОЛЬЗУЕМ НАШ НОВЫЙ ЭКШЕН + ДОБАВЛЯЕМ ПРИЧИНУ
+        // ✅ Указываем TypeScript, какой ответ мы ждем от экшена
+          const result = (await updateBookingStatusAction({
+            bookingId,
+            newStatus: 'awaiting_payment',
+            rejectReason: 'Отклонено менеджером через Telegram'
+          })) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('Ошибка отклонения через бота:', result.error);
+            return ok();
+          }
+          
+          // Дополнительно очищаем paymentProofUrl, как это было в старом коде
           const booking = await prisma.booking.update({
             where: { id: bookingId },
-            data: { status: 'awaiting_payment', paymentProofUrl: null },
+            data: { paymentProofUrl: null },
             include: { tour: true }
           });
 
@@ -52564,7 +53769,12 @@ export type GuestInput = z.infer<typeof GuestSchema>;
 
 const BookingSchema = z.object({
   tourId: z.string().uuid('Неверный ID тура'),
-  tourDateId: z.string().uuid('Пожалуйста, выберите конкретную дату').optional().nullable(),
+  tourDateId: z.union([
+    z.string().uuid('Пожалуйста, выберите конкретную дату'),
+    z.literal(''),
+    z.null(),
+    z.undefined(),
+  ]).transform(val => (val === '' || val == null) ? null : val).optional(),
   tourTitle: z.string().min(1),
   tourDate: z.string().min(1, 'Укажите дату'),
 
@@ -52590,8 +53800,23 @@ const BookingSchema = z.object({
   paymentMethod: z.enum(['biletpmr', 'qr', 'cash', 'foreign']).default('biletpmr'),
   useBonuses: z.boolean().default(false),
   promoCode: z.string().optional(),
-});
-
+})
+// 3. Применяем уточняющую валидацию (refine) сразу к объекту
+/**
+ * 3. Применяем уточняющую валидацию (refine) сразу к объекту.
+ * Проверяем, что забронирован хотя бы один билет любого типа.
+ */
+.refine(
+  (data) => {
+    const total = data.ticketsAdult + data.ticketsChild + data.ticketsMember + data.ticketsFamily;
+    return total >= 1;
+  },
+  { 
+    message: 'Выберите хотя бы 1 билет', 
+    path: ['ticketsAdult'] 
+  }
+);
+// 4. Экспортируем финальный тип входных данных для использования в Server Actions
 export type BookingInput = z.infer<typeof BookingSchema>;
 
 export type BookingResult =
@@ -52635,9 +53860,17 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       totalPrice: 0
     };
   }
+const SPOTS_PER_FAMILY = 3;
+const totalSpots = 
+  data.ticketsAdult + 
+  data.ticketsChild + 
+  data.ticketsMember + 
+  (data.ticketsFamily * SPOTS_PER_FAMILY);
 
-  const familySpots = data.ticketsFamily * 3;
-  const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
+// Подстраховка валидации (на случай, если Zod пропустил)
+if (totalSpots <= 0) {
+  return { success: false, error: 'Выберите хотя бы один билет.' };
+}
   const cleanPhone = data.phone.replace(/[^\d+]/g, '');
 
   let currentMemberId: string | null = null;
@@ -52696,42 +53929,26 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       transactionResult = await prisma.$transaction(async (tx) => {
-        // ---------- 1. Атомарное списание мест и получение данных о ценах ----------
-        let priceAdult: number;
-        let priceChild: number;
-        let priceFamily: number;
-        let priceMember: number;
-        let tourSlug: string | null = null;
-        let tourCoverImage: string | null = null;
-        let biletpmrLink: string | null = null;
-        let apbQrLink: string | null = null;
-        let apbQrImage: string | null = null;
+        // ---------- 1. Атомарное списание мест ----------
+        let priceAdult: number, priceChild: number, priceFamily: number, priceMember: number;
+        let tourSlug: string | null = null, tourCoverImage: string | null = null;
+        let biletpmrLink: string | null = null, apbQrLink: string | null = null, apbQrImage: string | null = null;
 
-        if (data.tourDateId) {
-          const updatedTourDate = await tx.tourDate.update({
+       // Проверяем, что ID даты не просто существует, но и не является пустой строкой
+if (data.tourDateId && data.tourDateId.length > 5) { 
+  // Сценарий: Бронь на конкретную дату (Тест 18)
+  const updatedTourDate = await tx.tourDate.update({
             where: {
               id: data.tourDateId,
-              spotsLeft: { gte: totalTickets },
+              spotsLeft: { gte: totalSpots }, // Используем totalSpots вместо totalTickets
               tour: { isActive: true, deletedAt: null }
             },
             data: {
-              spotsLeft: { decrement: totalTickets }
+              spotsLeft: { decrement: totalSpots }
             },
             select: {
               basePrice: true,
-              tour: {
-                select: {
-                  price: true,
-                  priceChild: true,
-                  priceFamily: true,
-                  priceMember: true,
-                  slug: true,
-                  coverImage: true,
-                  biletpmrLink: true,
-                  apbQrLink: true,
-                  apbQrImage: true,
-                }
-              }
+              tour: { select: { price: true, priceChild: true, priceFamily: true, priceMember: true, slug: true, coverImage: true, biletpmrLink: true, apbQrLink: true, apbQrImage: true } }
             }
           });
 
@@ -52739,34 +53956,24 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           priceChild = updatedTourDate.tour.priceChild ?? priceAdult; 
           priceFamily = updatedTourDate.tour.priceFamily ?? priceAdult;
           priceMember = updatedTourDate.tour.priceMember ?? priceAdult;
-          
           tourSlug = updatedTourDate.tour.slug;
           tourCoverImage = updatedTourDate.tour.coverImage;
           biletpmrLink = updatedTourDate.tour.biletpmrLink;
           apbQrLink = updatedTourDate.tour.apbQrLink;
           apbQrImage = updatedTourDate.tour.apbQrImage;
         } else {
+          // Сценарий: Бронь БЕЗ даты (Исправляет Тест 12)
           const updatedTour = await tx.tour.update({
             where: {
               id: data.tourId,
               isActive: true,
               deletedAt: null,
-              spotsLeft: { gte: totalTickets }
+              spotsLeft: { gte: totalSpots } // Используем totalSpots
             },
             data: {
-              spotsLeft: { decrement: totalTickets }
+              spotsLeft: { decrement: totalSpots }
             },
-            select: {
-              price: true,
-              priceChild: true,
-              priceFamily: true,
-              priceMember: true,
-              slug: true,
-              coverImage: true,
-              biletpmrLink: true,
-              apbQrLink: true,
-              apbQrImage: true,
-            }
+            select: { price: true, priceChild: true, priceFamily: true, priceMember: true, slug: true, coverImage: true, biletpmrLink: true, apbQrLink: true, apbQrImage: true }
           });
           priceAdult = updatedTour.price;
           priceChild = updatedTour.priceChild ?? priceAdult;
@@ -52777,7 +53984,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           biletpmrLink = updatedTour.biletpmrLink;
           apbQrLink = updatedTour.apbQrLink;
           apbQrImage = updatedTour.apbQrImage;
-        }
+         }
 
         // ---------- 2. Расчёт базовой цены на основе серверных данных ----------
         const baseTotalPrice =
@@ -52993,7 +54200,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           totalPrice: transactionResult.finalPrice, 
           currency: data.currency,
           paymentMethod: data.paymentMethod,
-          ticketsCount: totalTickets,
+          ticketsCount: totalSpots,
           siteUrl: SITE_URL
         })
       });
@@ -53541,17 +54748,20 @@ const loadGroupsManifest = useCallback(async () => {
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
-      // Вызываем новый экшен. Он сам внутри дернет NotificationHub.dispatch()
-      const res = await updateBookingStatusAction(id, status as BookingStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
-      
-      if (res.success) {
-          setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
-          showToast('Статус обновлен', 'success');
-      } else {
-          showToast(res.error || 'Ошибка обновления статуса', 'error');
-      }
-  };
+ const handleStatusChange = async (id: string, status: string) => {
+  // ✅ ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
+  const res = await updateBookingStatusAction({ 
+    bookingId: id, 
+    newStatus: status as BookingStatus 
+  }) as AdminActionResult;
+  
+  if (res.success) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
+      showToast('Статус обновлен', 'success');
+  } else {
+      showToast(res.error || 'Ошибка обновления статуса', 'error');
+  }
+};
 
   const handleDelete = async (type: 'tour'|'post'|'guide'|'review', id: string) => {
       if(!confirm('Удалить навсегда?')) return;

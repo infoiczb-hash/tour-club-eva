@@ -437,7 +437,7 @@ export default function NeuroStudioTab() {
 
       // Самое узкое место — только здесь приходится кастовать,
       // потому что тип action'а ещё не обновлён под новые модели
-      const res = (await performAiTask(payload as any)) as PerformAiTaskResult;
+  const res = await performAiTask(payload) as PerformAiTaskResult;
 
       if (!res.success) {
         // Безопасно достаём ошибку (тип PerformAiTaskResult, скорее всего, union)

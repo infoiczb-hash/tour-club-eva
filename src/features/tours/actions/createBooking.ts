@@ -30,7 +30,12 @@ export type GuestInput = z.infer<typeof GuestSchema>;
 
 const BookingSchema = z.object({
   tourId: z.string().uuid('Неверный ID тура'),
-  tourDateId: z.string().uuid('Пожалуйста, выберите конкретную дату').optional().nullable(),
+  tourDateId: z.union([
+    z.string().uuid('Пожалуйста, выберите конкретную дату'),
+    z.literal(''),
+    z.null(),
+    z.undefined(),
+  ]).transform(val => (val === '' || val == null) ? null : val).optional(),
   tourTitle: z.string().min(1),
   tourDate: z.string().min(1, 'Укажите дату'),
 
@@ -56,8 +61,23 @@ const BookingSchema = z.object({
   paymentMethod: z.enum(['biletpmr', 'qr', 'cash', 'foreign']).default('biletpmr'),
   useBonuses: z.boolean().default(false),
   promoCode: z.string().optional(),
-});
-
+})
+// 3. Применяем уточняющую валидацию (refine) сразу к объекту
+/**
+ * 3. Применяем уточняющую валидацию (refine) сразу к объекту.
+ * Проверяем, что забронирован хотя бы один билет любого типа.
+ */
+.refine(
+  (data) => {
+    const total = data.ticketsAdult + data.ticketsChild + data.ticketsMember + data.ticketsFamily;
+    return total >= 1;
+  },
+  { 
+    message: 'Выберите хотя бы 1 билет', 
+    path: ['ticketsAdult'] 
+  }
+);
+// 4. Экспортируем финальный тип входных данных для использования в Server Actions
 export type BookingInput = z.infer<typeof BookingSchema>;
 
 export type BookingResult =
@@ -101,9 +121,17 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       totalPrice: 0
     };
   }
+const SPOTS_PER_FAMILY = 3;
+const totalSpots = 
+  data.ticketsAdult + 
+  data.ticketsChild + 
+  data.ticketsMember + 
+  (data.ticketsFamily * SPOTS_PER_FAMILY);
 
-  const familySpots = data.ticketsFamily * 3;
-  const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
+// Подстраховка валидации (на случай, если Zod пропустил)
+if (totalSpots <= 0) {
+  return { success: false, error: 'Выберите хотя бы один билет.' };
+}
   const cleanPhone = data.phone.replace(/[^\d+]/g, '');
 
   let currentMemberId: string | null = null;
@@ -162,42 +190,26 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       transactionResult = await prisma.$transaction(async (tx) => {
-        // ---------- 1. Атомарное списание мест и получение данных о ценах ----------
-        let priceAdult: number;
-        let priceChild: number;
-        let priceFamily: number;
-        let priceMember: number;
-        let tourSlug: string | null = null;
-        let tourCoverImage: string | null = null;
-        let biletpmrLink: string | null = null;
-        let apbQrLink: string | null = null;
-        let apbQrImage: string | null = null;
+        // ---------- 1. Атомарное списание мест ----------
+        let priceAdult: number, priceChild: number, priceFamily: number, priceMember: number;
+        let tourSlug: string | null = null, tourCoverImage: string | null = null;
+        let biletpmrLink: string | null = null, apbQrLink: string | null = null, apbQrImage: string | null = null;
 
-        if (data.tourDateId) {
-          const updatedTourDate = await tx.tourDate.update({
+       // Проверяем, что ID даты не просто существует, но и не является пустой строкой
+if (data.tourDateId && data.tourDateId.length > 5) { 
+  // Сценарий: Бронь на конкретную дату (Тест 18)
+  const updatedTourDate = await tx.tourDate.update({
             where: {
               id: data.tourDateId,
-              spotsLeft: { gte: totalTickets },
+              spotsLeft: { gte: totalSpots }, // Используем totalSpots вместо totalTickets
               tour: { isActive: true, deletedAt: null }
             },
             data: {
-              spotsLeft: { decrement: totalTickets }
+              spotsLeft: { decrement: totalSpots }
             },
             select: {
               basePrice: true,
-              tour: {
-                select: {
-                  price: true,
-                  priceChild: true,
-                  priceFamily: true,
-                  priceMember: true,
-                  slug: true,
-                  coverImage: true,
-                  biletpmrLink: true,
-                  apbQrLink: true,
-                  apbQrImage: true,
-                }
-              }
+              tour: { select: { price: true, priceChild: true, priceFamily: true, priceMember: true, slug: true, coverImage: true, biletpmrLink: true, apbQrLink: true, apbQrImage: true } }
             }
           });
 
@@ -205,34 +217,24 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           priceChild = updatedTourDate.tour.priceChild ?? priceAdult; 
           priceFamily = updatedTourDate.tour.priceFamily ?? priceAdult;
           priceMember = updatedTourDate.tour.priceMember ?? priceAdult;
-          
           tourSlug = updatedTourDate.tour.slug;
           tourCoverImage = updatedTourDate.tour.coverImage;
           biletpmrLink = updatedTourDate.tour.biletpmrLink;
           apbQrLink = updatedTourDate.tour.apbQrLink;
           apbQrImage = updatedTourDate.tour.apbQrImage;
         } else {
+          // Сценарий: Бронь БЕЗ даты (Исправляет Тест 12)
           const updatedTour = await tx.tour.update({
             where: {
               id: data.tourId,
               isActive: true,
               deletedAt: null,
-              spotsLeft: { gte: totalTickets }
+              spotsLeft: { gte: totalSpots } // Используем totalSpots
             },
             data: {
-              spotsLeft: { decrement: totalTickets }
+              spotsLeft: { decrement: totalSpots }
             },
-            select: {
-              price: true,
-              priceChild: true,
-              priceFamily: true,
-              priceMember: true,
-              slug: true,
-              coverImage: true,
-              biletpmrLink: true,
-              apbQrLink: true,
-              apbQrImage: true,
-            }
+            select: { price: true, priceChild: true, priceFamily: true, priceMember: true, slug: true, coverImage: true, biletpmrLink: true, apbQrLink: true, apbQrImage: true }
           });
           priceAdult = updatedTour.price;
           priceChild = updatedTour.priceChild ?? priceAdult;
@@ -243,7 +245,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           biletpmrLink = updatedTour.biletpmrLink;
           apbQrLink = updatedTour.apbQrLink;
           apbQrImage = updatedTour.apbQrImage;
-        }
+         }
 
         // ---------- 2. Расчёт базовой цены на основе серверных данных ----------
         const baseTotalPrice =
@@ -459,7 +461,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           totalPrice: transactionResult.finalPrice, 
           currency: data.currency,
           paymentMethod: data.paymentMethod,
-          ticketsCount: totalTickets,
+          ticketsCount: totalSpots,
           siteUrl: SITE_URL
         })
       });

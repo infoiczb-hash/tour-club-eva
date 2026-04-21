@@ -443,17 +443,20 @@ const loadGroupsManifest = useCallback(async () => {
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
-      // Вызываем новый экшен. Он сам внутри дернет NotificationHub.dispatch()
-      const res = await updateBookingStatusAction(id, status as BookingStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
-      
-      if (res.success) {
-          setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
-          showToast('Статус обновлен', 'success');
-      } else {
-          showToast(res.error || 'Ошибка обновления статуса', 'error');
-      }
-  };
+ const handleStatusChange = async (id: string, status: string) => {
+  // ✅ ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
+  const res = await updateBookingStatusAction({ 
+    bookingId: id, 
+    newStatus: status as BookingStatus 
+  }) as AdminActionResult;
+  
+  if (res.success) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
+      showToast('Статус обновлен', 'success');
+  } else {
+      showToast(res.error || 'Ошибка обновления статуса', 'error');
+  }
+};
 
   const handleDelete = async (type: 'tour'|'post'|'guide'|'review', id: string) => {
       if(!confirm('Удалить навсегда?')) return;

@@ -7,6 +7,7 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { handleTelegramCallback } from '@/features/admin/actions/telegramInteractive';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН АУДИТ
+import { updateBookingStatusAction } from '@/features/admin/actions/bookingStatus';
 
 // Инициализируем Redis (оставляем твой вариант из оригинала)
 const redis = Redis.fromEnv();
@@ -129,19 +130,28 @@ export async function POST(req: Request) {
         const messageId = body.callback_query.message.message_id;
         const adminName = body.callback_query.from.username ? `@${body.callback_query.from.username}` : (body.callback_query.from.first_name || 'Admin');
 
-        if (callbackData.startsWith('confirm_')) {
+     if (callbackData.startsWith('confirm_')) {
           const bookingId = callbackData.replace('confirm_', '');
 
-          // 1. Меняем статус в базе
-          const booking = await prisma.booking.update({
+          // ✅ ИСПОЛЬЗУЕМ НАШ НОВЫЙ ЭКШЕН
+        // ✅ Указываем TypeScript, какой ответ мы ждем от экшена
+          const result = (await updateBookingStatusAction({
+            bookingId,
+            newStatus: 'confirmed',
+            adminName
+          })) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('Ошибка подтверждения через бота:', result.error);
+            return ok();
+          }
+
+          // Нам нужна инфа о туре для отправки сообщений, так что запрашиваем:
+          const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
-            data: { 
-              status: 'confirmed',
-              confirmedBy: adminName,
-              confirmedAt: new Date()
-            },
             include: { tour: true, tourDate: true }
           });
+          if (!booking) return ok();
 
           // ✅ СИСТЕМНЫЙ АУДИТ: Логируем подтверждение брони админом через кнопку Telegram
           Promise.resolve().then(() => {
@@ -182,12 +192,26 @@ export async function POST(req: Request) {
 
           await Promise.allSettled(telegramTasks);
           
-        } else if (callbackData.startsWith('reject_')) {
+      } else if (callbackData.startsWith('reject_')) {
           const bookingId = callbackData.replace('reject_', '');
 
+          // ✅ ИСПОЛЬЗУЕМ НАШ НОВЫЙ ЭКШЕН + ДОБАВЛЯЕМ ПРИЧИНУ
+        // ✅ Указываем TypeScript, какой ответ мы ждем от экшена
+          const result = (await updateBookingStatusAction({
+            bookingId,
+            newStatus: 'awaiting_payment',
+            rejectReason: 'Отклонено менеджером через Telegram'
+          })) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('Ошибка отклонения через бота:', result.error);
+            return ok();
+          }
+          
+          // Дополнительно очищаем paymentProofUrl, как это было в старом коде
           const booking = await prisma.booking.update({
             where: { id: bookingId },
-            data: { status: 'awaiting_payment', paymentProofUrl: null },
+            data: { paymentProofUrl: null },
             include: { tour: true }
           });
 

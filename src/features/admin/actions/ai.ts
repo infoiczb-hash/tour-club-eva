@@ -138,7 +138,7 @@ const SmmPostSchema = z.object({
 export type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
   | { mode: 'generate_blog'; topic: string }
- | { mode: 'generate_image'; prompt: string; engine?: 'flux' | 'dalle'; enhance?: boolean }
+ | { mode: 'generate_image'; prompt: string; engine?: 'flux-schnell' | 'flux-dev' | 'dalle3' | 'flux' | 'dalle'; enhance?: boolean }
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
@@ -367,12 +367,12 @@ export const performAiTask = withAdminAuth(
 
     try {
 
-     // ─────────────────────────────────────────────
-      // GENERATE IMAGE (Flux / DALL-E 3 + Enhancer)
+           // ─────────────────────────────────────────────
+      // GENERATE IMAGE (Flux Schnell / Flux Dev / DALL·E 3)
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_image') {
         try {
-          const engine = task.engine || 'flux';
+          const engine = task.engine || 'flux-schnell';
           const shouldEnhance = task.enhance !== false; // По умолчанию включено
 
           let finalPrompt = task.prompt;
@@ -385,7 +385,7 @@ export const performAiTask = withAdminAuth(
               async (model) => {
                 const { text } = await generateText({
                   model,
-                  temperature: 0.7, // Креативность
+                  temperature: 0.7,
                   system: `You are an expert image generation prompt engineer.
 The user will give you a simple idea in Russian or English.
 
@@ -408,43 +408,60 @@ Otherwise:
           }
 
           // 2. МАРШРУТИЗАЦИЯ ПО ДВИЖКАМ
-          if (engine === 'dalle') {
-            // === Логика DALL-E 3 ===
+          if (engine === 'dalle3' || engine === 'dalle') {
+            // === DALL·E 3 ===
+            if (!process.env.OPENAI_API_KEY) {
+              return { success: false, error: 'Нет ключа OPENAI_API_KEY в .env' };
+            }
+
             const { OpenAI } = await import('openai');
             const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-            
+
             const response = await openai.images.generate({
               model: "dall-e-3",
-              prompt: finalPrompt.substring(0, 4000), // Лимит DALL-E
+              prompt: finalPrompt.substring(0, 4000),
               n: 1,
               size: "1024x1024",
               quality: "standard",
             });
 
-        const imageUrl = response.data?.[0]?.url; // ✅ Сначала безопасно достаем URL
-            
-            if (!imageUrl) throw new Error('DALL-E не вернул картинку');
-            
-            // ✅ Теперь TypeScript точно знает, что imageUrl существует и это строка
+            const imageUrl = response.data?.[0]?.url;
+            if (!imageUrl) throw new Error('DALL·E 3 не вернул изображение');
+
             return { success: true, mode: 'generate_image', data: imageUrl };
 
           } else {
-            // === Логика Flux (Fal.ai) ===
+            // === FLUX (Schnell или Dev) ===
             const falKey = process.env.FAL_KEY;
             if (!falKey) {
               return { success: false, error: 'Нет ключа FAL_KEY (.env)' };
             }
 
-            const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+            const falEndpoint = engine === 'flux-dev' 
+              ? 'fal-ai/flux/dev' 
+              : 'fal-ai/flux/schnell';
+
+            const numSteps = engine === 'flux-dev' ? 20 : 4;
+
+            const falRes = await fetch(`https://fal.run/${falEndpoint}`, {
               method: 'POST',
-              headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: finalPrompt, image_size: 'landscape_4_3', num_inference_steps: 4 })
+              headers: { 
+                'Authorization': `Key ${falKey}`, 
+                'Content-Type': 'application/json' 
+              },
+              body: JSON.stringify({ 
+                prompt: finalPrompt, 
+                image_size: 'landscape_4_3', 
+                num_inference_steps: numSteps 
+              })
             });
 
-            // ✅ Сохранено твое детальное логирование ошибок!
             if (!falRes.ok) {
               const errText = await falRes.text();
-              logAiError('generate_image:fal', errText, { status: falRes.status });
+              logAiError('generate_image:fal', errText, { 
+                status: falRes.status, 
+                engine 
+              });
               throw new Error('Fal.ai API error');
             }
 
@@ -456,11 +473,13 @@ Otherwise:
           }
 
         } catch (e) {
-          logAiError('generate_image', e, { promptLength: task.prompt.length });
+          logAiError('generate_image', e, { 
+            promptLength: task.prompt.length,
+            engine: task.engine 
+          });
           return { success: false, error: 'Ошибка при генерации картинки' };
         }
       }
-
       // ─────────────────────────────────────────────
       // GENERATE TOUR
       // ─────────────────────────────────────────────
