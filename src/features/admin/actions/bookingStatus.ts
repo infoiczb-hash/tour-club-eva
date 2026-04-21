@@ -141,6 +141,7 @@ export const updateBookingStatusAction = withAdminAuth(
       
       revalidatePath('/admin');
       revalidatePath('/account/bookings');
+      revalidatePath('/account/dashboard');
       
       return { success: true };
     // 🔥 ИСПРАВЛЕНО: Убрали any, используем unknown

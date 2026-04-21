@@ -128,7 +128,7 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
       prisma.booking.findMany({
         where,
         include: {
-          tour: { select: { title: true, dates: true } },
+          tour: { select: { title: true } }, 
           tourDate: { select: { startDate: true } },
           member: true,
         },
@@ -140,9 +140,7 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
     ]);
 
     const data = bookingsRaw.map((item) => {
-      const legacyDates = (item.tour?.dates as TourDatesJson[]) || [];
-      const firstLegacyDate = legacyDates[0]?.start ? new Date(legacyDates[0].start) : null;
-      const actualDate = item.tourDate?.startDate || item.bookedDate || firstLegacyDate;
+    const actualDate = item.tourDate?.startDate || item.bookedDate || null;
 
       return {
         id: item.id,

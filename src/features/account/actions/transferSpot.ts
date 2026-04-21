@@ -122,6 +122,7 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
     }
 
     revalidatePath('/account/bookings');
+    revalidatePath('/account/bookings/[id]');
     return { success: true };
 
    } catch (err) {

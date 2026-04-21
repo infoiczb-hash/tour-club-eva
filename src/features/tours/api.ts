@@ -69,8 +69,7 @@ export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
     lastMinuteTrigger: td.lastMinuteTrigger,
   })) || [];
 
-  const legacyDates = ensureArray(item.dates as any);
-  const datesToUse = relationalDates.length > 0 ? relationalDates : legacyDates;
+  const datesToUse = relationalDates;
   const nearestDate = getNearestFutureDate(datesToUse) ?? datesToUse[0] ?? null;
 
   const nearestSpots = nearestDate && (nearestDate as any).spots != null

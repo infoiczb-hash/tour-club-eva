@@ -78,5 +78,3 @@ export const QUIZ_VISUAL_CONFIG: Record<string, QuizVisual> = {
     borderColor: "group-hover:border-teal-500/50"
   },
 };
-
-export const VISUAL_REGISTRY = QUIZ_VISUAL_CONFIG;

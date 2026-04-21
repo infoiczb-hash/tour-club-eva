@@ -46,6 +46,7 @@ import {
 } from '@/features/admin/actions/ai-prompts';
 import { ScheduledPost } from '@prisma/client';
 import { clsx } from 'clsx';
+import NeuroStudioTab from './NeuroStudioTab';
 
 // --- КОНСТАНТЫ И ТИПЫ ---
 
@@ -167,7 +168,7 @@ export default function SmmTab() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   // --- СОСТОЯНИЕ ДАННЫХ ---
-  const [viewMode, setViewMode] = useState<'generator' | 'history' | 'prompts'>('generator');
+ const [viewMode, setViewMode] = useState<'generator' | 'history' | 'neuro'>('generator');
   const [sources, setSources] = useState<SmmSource[]>([]);
   const [history, setHistory] = useState<ScheduledPost[]>([]);
   const [prompts, setPrompts] = useState<AiPrompt[]>([]);
@@ -205,12 +206,6 @@ export default function SmmTab() {
   
   const [deleteConfirmHistoryId, setDeleteConfirmHistoryId] = useState<string | null>(null);
   const [deleteConfirmPromptId, setDeleteConfirmPromptId] = useState<string | null>(null);
-
-  // ✅ ДОБАВЛЕНО: Стейты Нейро-студии (Генерация картинок)
-  const [studioPrompt, setStudioPrompt] = useState('');
-  const [studioStyle, setStudioStyle] = useState('Cinematic travel photography, hyperrealistic, epic lighting');
-  const [studioResultUrl, setStudioResultUrl] = useState('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // --- ЛАЙТБОКС ---
   const [previewPost, setPreviewPost] = useState<ScheduledPost | null>(null);
@@ -526,33 +521,7 @@ useEffect(() => {
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
 
-  // ── ГЕНЕРАЦИЯ КАРТИНКИ (НЕЙРО-СТУДИЯ) ──
-  const handleGenerateImage = async () => {
-    if (!studioPrompt) return showToast('Опиши, что нужно нарисовать', 'error');
-    setIsGeneratingImage(true);
-    
-    try {
-      const { performAiTask } = await import('@/features/admin/actions/ai');
-      
-      const res = await performAiTask({ 
-        mode: 'generate_image', 
-        prompt: `${studioStyle}. Subject: ${studioPrompt}.` 
-      }) as { success: boolean; data?: any; error?: string };
-
-      if (res.success && res.data) {
-        setStudioResultUrl(res.data);
-        showToast('Шедевр готов! 🎨', 'success');
-      } else {
-        showToast(res.error || 'Ошибка DALL-E 3', 'error');
-      }
-    } catch (e) {
-      showToast('Ошибка сети при генерации', 'error');
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
-
-  return (
+return (
     <div className="space-y-6 pb-20">
       
       {/* ─── ВЕРХНЯЯ НАВИГАЦИЯ (MOBILE FRIENDLY) ─── */}
@@ -576,15 +545,15 @@ useEffect(() => {
           >
             <History size={14} /> История
           </button>
-          <button
-            onClick={() => setViewMode('prompts')}
-            className={clsx(
-              "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-              viewMode === 'prompts' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-            )}
-          >
-            <Wand2 size={14} /> Нейро-студия
-          </button>
+         <button
+  onClick={() => setViewMode('neuro')}
+  className={clsx(
+    "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
+    viewMode === 'neuro' ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+  )}
+>
+  <Wand2 size={14} /> Нейро-студия
+</button>
         </div>
       </div>
 
@@ -1100,114 +1069,8 @@ useEffect(() => {
       )}
 
      {/* ─── НЕЙРО-СТУДИЯ (ГЕНЕРАЦИЯ И ШАБЛОНЫ) ─── */}
-      {viewMode === 'prompts' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300">
-          
-          {/* Левая панель: Пульт управления */}
-          <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm flex flex-col gap-8">
-             <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <Wand2 size={16} className="text-fuchsia-500"/> Что рисуем?
-                  </label>
-                  
-                  {/* Кнопка сохранения в базу */}
-                  {studioPrompt.length > 5 && (
-                    <button 
-                      onClick={async () => {
-                        const title = window.prompt("Название шаблона (например: Дети у костра):");
-                        if (title) {
-                          const res = (await saveAiPromptAction(title, studioPrompt)) as { success: boolean; error?: string };
-                          if (res.success) { showToast("Шаблон сохранен", "success"); loadData(); } 
-                          else { showToast(res.error || "Ошибка сохранения", "error"); }
-                        }
-                      }}
-                      className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-fuchsia-500 transition-colors uppercase tracking-widest"
-                    >
-                      <Save size={12} /> Сохранить
-                    </button>
-                  )}
-                </div>
-
-                {/* Быстрые шаблоны из базы */}
-                {prompts.length > 0 && (
-                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
-                    {prompts.map((p) => (
-                      <div key={p.id} className="group relative flex items-center">
-                        <button
-                          onClick={() => setStudioPrompt(p.prompt)}
-                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-all uppercase tracking-tighter truncate max-w-[150px]"
-                          title={p.prompt}
-                        >
-                          {p.title}
-                        </button>
-                        <button
-                          onClick={() => handleDeletePrompt(p.id)}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
-                        >
-                          <X size={10} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <textarea 
-                  value={studioPrompt} 
-                  onChange={(e) => setStudioPrompt(e.target.value)} 
-                  placeholder="Счастливая пара плывет на SUP-досках по живописной реке на рассвете..."
-                  className="w-full h-32 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm focus:ring-2 focus:ring-fuchsia-500/20 text-slate-900 dark:text-white resize-none outline-none font-medium custom-scrollbar" 
-                />
-             </div>
-
-             <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Стиль (Промпт-инъекция)</label>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => setStudioStyle('Cinematic travel photography, hyperrealistic, epic lighting')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('Cinematic') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🎬 Кинематограф (Реализм)</button>
-                  <button onClick={() => setStudioStyle('Beautiful watercolor painting, soft colors, artistic')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('watercolor') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🎨 Акварель (Арт)</button>
-                  <button onClick={() => setStudioStyle('3D Pixar style animation, vibrant colors, cute')} className={`text-left px-4 py-3 rounded-xl text-[11px] font-bold transition-all border-2 ${studioStyle.includes('Pixar') ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20' : 'bg-slate-50 text-slate-600 border-transparent dark:bg-slate-800 dark:text-slate-400'}`}>🦄 3D Мультфильм</button>
-                </div>
-             </div>
-
-             <button 
-                onClick={handleGenerateImage}
-                disabled={isGeneratingImage || !studioPrompt}
-                className="w-full mt-auto py-5 bg-slate-900 dark:bg-fuchsia-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 shadow-xl hover:bg-slate-800 dark:hover:bg-fuchsia-500 disabled:opacity-50 transition-all active:scale-95"
-              >
-                {isGeneratingImage ? <RefreshCw className="animate-spin" size={16}/> : <ImageIcon size={16}/>}
-                Создать изображение
-              </button>
-          </div>
-
-          {/* Правая панель: Холст (Результат) */}
-          <div className="lg:col-span-8 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 min-h-[600px] relative overflow-hidden shadow-inner">
-             {isGeneratingImage ? (
-               <div className="flex flex-col items-center gap-4 animate-pulse">
-                 <Wand2 size={48} className="text-fuchsia-500 animate-bounce"/>
-                 <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Нейросеть рисует...</p>
-               </div>
-             ) : studioResultUrl ? (
-               <div className="flex flex-col items-center gap-6 w-full h-full animate-in zoom-in-95 duration-300">
-                 <img src={studioResultUrl} alt="Generated" className="max-h-[500px] w-auto object-contain rounded-2xl shadow-2xl border border-white/10" />
-                 <div className="flex gap-4">
-                   <button onClick={() => window.open(studioResultUrl, '_blank')} className="px-6 py-3 bg-white dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm transition-all text-slate-700 dark:text-slate-300">
-                     <Eye size={16}/> Открыть оригинал
-                   </button>
-                   <button onClick={() => { navigator.clipboard.writeText(studioResultUrl); showToast('URL скопирован', 'success'); }} className="px-6 py-3 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-teal-700 shadow-lg shadow-teal-500/30 transition-all">
-                     <Copy size={16}/> Копировать URL
-                   </button>
-                 </div>
-               </div>
-             ) : (
-               <div className="flex flex-col items-center gap-4 opacity-30">
-                 <ImageIcon size={64} className="text-slate-400"/>
-                 <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">Холст пуст</p>
-               </div>
-             )}
-          </div>
-        </div>
-      )}
-
+     {viewMode === 'neuro' && <NeuroStudioTab />}
+      
       {/* ─── LIGHTBOX (ПРОСМОТР КАРУСЕЛИ) ─── */}
       {previewPost && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/98 backdrop-blur-2xl p-4 md:p-10 animate-in fade-in zoom-in duration-300">

@@ -6,7 +6,7 @@ import { ImageUploader } from '../ui/ImageUploader';
 import { AlignLeft, Plus, X, RefreshCw } from 'lucide-react'; 
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
-import { slugify } from '@/lib/slugify'; 
+import { slugify } from '@/lib/utils';
 import { TourCategory } from '@prisma/client'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
 
 type CategoryOption = Pick<TourCategory, 'id' | 'title'>;

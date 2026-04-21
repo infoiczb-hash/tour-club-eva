@@ -88,7 +88,7 @@ export const saveTour = withAdminAuth(
         distance: data.distance ?? null,
         duration: data.duration ?? null,
         meetingPoint: data.meetingPoint ?? null,
-        dates: data.dates as unknown as Prisma.InputJsonValue,
+        dates: Prisma.JsonNull,
         guideId: mainGuideId,
         currency: data.currency,
         price: data.price,
@@ -212,6 +212,7 @@ export const saveTour = withAdminAuth(
       revalidatePath('/tour');
       revalidatePath(`/tour/${slug}`);
       revalidatePath('/');
+      revalidatePath('/account/wishlist'); 
 
       // Отправка в общий паблик
       if (!formData.id && data.isActive) {

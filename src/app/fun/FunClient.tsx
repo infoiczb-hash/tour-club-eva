@@ -41,17 +41,6 @@ const CATEGORY_UI_CONFIG: Record<string, { label: string; icon: React.ReactNode;
   "Другое":                { label: "Интерактивы",           icon: <Gamepad2 size={24} />, color: "teal"    },
 };
 
-// 3. РЕЕСТР ВИЗУАЛА КАРТОЧЕК
-const VISUAL_REGISTRY: Record<string, { color: string; icon: React.ReactNode; badge?: string }> = {
-  'fears':        { color: "blue",    icon: <Shield size={24} strokeWidth={2.5} />,   badge: "AI Powered" },
-  'physical':     { color: "emerald", icon: <Dumbbell size={24} strokeWidth={2.5} />, badge: "AI Powered" },
-  'signals':      { color: "rose",    icon: <Activity size={24} strokeWidth={2.5} />, badge: "AI Powered" },
-  'debrief':      { color: "purple",  icon: <BookOpen size={24} strokeWidth={2.5} />, badge: "AI Powered" },
-  'tourist-type': { color: "amber",   icon: <Compass size={24} strokeWidth={2.5} />  },
-  'backpack':     { color: "orange",  icon: <Backpack size={24} strokeWidth={2.5} />  },
-  'default':      { color: "teal",    icon: <Sparkles size={24} strokeWidth={2.5} /> },
-};
-
 // ====================== QUIZ MODAL MANAGER ======================
 function QuizModalManager() {
   const searchParams = useSearchParams();
@@ -251,6 +240,9 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
     amber:   "bg-amber-500 shadow-amber-500/20 text-amber-400 group-hover:border-amber-500/50",
     rose:    "bg-rose-500 shadow-rose-500/20 text-rose-400 group-hover:border-rose-500/50",
     teal:    "bg-teal-500 shadow-teal-500/20 text-teal-400 group-hover:border-teal-500/50",
+    fuchsia: "bg-fuchsia-500 shadow-fuchsia-500/20 text-fuchsia-400 group-hover:border-fuchsia-500/50",
+    indigo:  "bg-indigo-500 shadow-indigo-500/20 text-indigo-400 group-hover:border-indigo-500/50",
+    red:     "bg-red-500 shadow-red-500/20 text-red-400 group-hover:border-red-500/50",
   };
   const activeColor = colors[color] || colors.teal;
 

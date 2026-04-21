@@ -64,7 +64,7 @@ model Tour {
   documents          Json?    @default("[]")
   highlights         Json?    @default("[]")
   checklist          Json?    @default("[]")
-  dates              Json     @default("[]")
+  dates              Json?    @default("[]")
 
   includedDetailed Json?   @map("included_detailed")
   excludedDetailed Json?   @map("excluded_detailed")

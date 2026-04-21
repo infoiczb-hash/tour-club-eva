@@ -169,7 +169,7 @@ function MonthHeader({ label, brandColor, s }: { label: string; brandColor: stri
   );
 }
 
-/** Карточка одного события */
+/** Карточка одного события (ОГРОМНЫЕ ШРИФТЫ) */
 function EventCard({ ev, brandColor, s }: { ev: CalendarEvent; brandColor: string; s: number }) {
   const { dayNum, weekday } = parseDateParts(ev.date);
   const evColorHex  = COLOR_MAP[ev.color] ?? brandColor;
@@ -181,68 +181,70 @@ function EventCard({ ev, brandColor, s }: { ev: CalendarEvent; brandColor: strin
     <div style={{
       display: 'flex', alignItems: 'stretch',
       backgroundColor: '#0d131a',
-      borderRadius: `${20 * s}px`,
-      border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: `${24 * s}px`, // Скруглили углы чуть больше
+      border: '2px solid rgba(255,255,255,0.06)', // Граница жирнее
       overflow: 'hidden',
       flexShrink: 0,
+      width: '100%',
     }}>
-      {/* Дата */}
+      {/* Дата (Гигантский календарный блок) */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        width: `${80 * s}px`, flexShrink: 0,
+        width: `${110 * s}px`, flexShrink: 0, // Блок даты стал шире
         backgroundColor: 'rgba(15,23,42,0.6)',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
-        padding: `${14 * s}px ${10 * s}px`,
+        borderRight: '2px solid rgba(255,255,255,0.05)',
+        padding: `${20 * s}px ${10 * s}px`,
       }}>
-        <span style={{ color: 'white', fontSize: `${34 * s}px`, fontWeight: 900, lineHeight: 1 }}>
+        <span style={{ color: 'white', fontSize: `${54 * s}px`, fontWeight: 900, lineHeight: 1 }}>
           {dayNum}
         </span>
-        <span style={{ color: '#64748b', fontSize: `${14 * s}px`, fontWeight: 900, marginTop: `${4 * s}px`, letterSpacing: '0.1em' }}>
+        <span style={{ color: '#64748b', fontSize: `${20 * s}px`, fontWeight: 900, marginTop: `${6 * s}px`, letterSpacing: '0.15em' }}>
           {weekday}
         </span>
       </div>
 
       {/* Основной контент */}
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, padding: `${14 * s}px ${18 * s}px`, minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, padding: `${24 * s}px ${24 * s}px`, minWidth: 0 }}>
         {/* Бейджи: категория + длительность */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: `${8 * s}px`, marginBottom: `${6 * s}px`, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: `${12 * s}px`, marginBottom: `${12 * s}px`, flexWrap: 'wrap' }}>
           {ev.category && (
             <span style={{
               display: 'flex',
               backgroundColor: evBadgeBg,
               border: `1px solid ${evColorHex}40`,
               color: evColorHex,
-              fontSize: `${14 * s}px`, fontWeight: 900,
-              paddingLeft: `${10 * s}px`, paddingRight: `${10 * s}px`,
-              paddingTop: `${3 * s}px`, paddingBottom: `${3 * s}px`,
-              borderRadius: `${6 * s}px`,
-              textTransform: 'uppercase', letterSpacing: '0.05em',
+              fontSize: `${18 * s}px`, fontWeight: 900, // Увеличили бейдж
+              paddingLeft: `${14 * s}px`, paddingRight: `${14 * s}px`,
+              paddingTop: `${6 * s}px`, paddingBottom: `${6 * s}px`,
+              borderRadius: `${8 * s}px`,
+              textTransform: 'uppercase', letterSpacing: '0.1em',
               flexShrink: 0,
             }}>
               {ev.category}
             </span>
           )}
           {ev.duration && (
-            <span style={{ color: '#64748b', fontSize: `${14 * s}px`, fontWeight: 700, flexShrink: 0 }}>
+            <span style={{ color: '#64748b', fontSize: `${18 * s}px`, fontWeight: 700, flexShrink: 0 }}>
               {ev.duration}
             </span>
           )}
         </div>
 
-        {/* Название */}
+        {/* Название тура (Огромный шрифт) */}
         <span style={{
-          color: 'white', fontSize: `${22 * s}px`, fontWeight: 900,
-          lineHeight: 1.25, marginBottom: `${6 * s}px`,
+          color: 'white', fontSize: `${32 * s}px`, fontWeight: 900, // С 22 до 32!
+          lineHeight: 1.25, marginBottom: `${12 * s}px`,
           overflow: 'hidden',
+          textTransform: 'uppercase',
         }}>
           {ev.title}
         </span>
 
         {/* Локация */}
         {ev.location && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: `${5 * s}px` }}>
-            <MapPinIcon color={`${evColorHex}70`} size={13 * s} />
-            <span style={{ color: '#64748b', fontSize: `${14 * s}px`, fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: `${8 * s}px` }}>
+            <MapPinIcon color={`${evColorHex}90`} size={20 * s} />
+            <span style={{ color: '#94a3b8', fontSize: `${20 * s}px`, fontWeight: 700 }}>
               {ev.location}
             </span>
           </div>
@@ -252,20 +254,20 @@ function EventCard({ ev, brandColor, s }: { ev: CalendarEvent; brandColor: strin
       {/* Цена + стрелка */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center',
-        padding: `${14 * s}px ${16 * s}px`,
-        borderLeft: '1px solid rgba(255,255,255,0.05)',
-        flexShrink: 0, gap: `${8 * s}px`,
+        padding: `${20 * s}px ${24 * s}px`,
+        borderLeft: '2px solid rgba(255,255,255,0.05)',
+        flexShrink: 0, gap: `${12 * s}px`,
       }}>
         {priceFormatted && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <span style={{ color: '#475569', fontSize: `${11 * s}px`, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <span style={{ color: '#475569', fontSize: `${14 * s}px`, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Билет от
             </span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: `${3 * s}px` }}>
-              <span style={{ color: 'white', fontSize: `${24 * s}px`, fontWeight: 900, lineHeight: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: `${4 * s}px` }}>
+              <span style={{ color: 'white', fontSize: `${40 * s}px`, fontWeight: 900, lineHeight: 1 }}>
                 {priceFormatted}
               </span>
-              <span style={{ color: evColorHex, fontSize: `${12 * s}px`, fontWeight: 900 }}>
+              <span style={{ color: evColorHex, fontSize: `${18 * s}px`, fontWeight: 900 }}>
                 {currency}
               </span>
             </div>
@@ -273,11 +275,11 @@ function EventCard({ ev, brandColor, s }: { ev: CalendarEvent; brandColor: strin
         )}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: `${34 * s}px`, height: `${34 * s}px`, borderRadius: '50%',
+          width: `${48 * s}px`, height: `${48 * s}px`, borderRadius: '50%',
           backgroundColor: 'rgba(30,41,59,1)',
           border: '1px solid rgba(255,255,255,0.07)',
         }}>
-          <ArrowRightIcon color="#475569" size={15 * s} />
+          <ArrowRightIcon color="#64748b" size={22 * s} />
         </div>
       </div>
     </div>
@@ -285,7 +287,6 @@ function EventCard({ ev, brandColor, s }: { ev: CalendarEvent; brandColor: strin
 }
 
 // ─── РЕНДЕРЕР ────────────────────────────────────────────────────────────────
-
 function renderCalendar(
   body: CalendarOgRequest,
   fontConfig: FontConfig[] | undefined
@@ -294,39 +295,37 @@ function renderCalendar(
 
   const [width, height] = SIZES[format] ?? SIZES.story;
 
-// ✅ ПРАВИЛЬНАЯ МАТЕМАТИКА: Масштаб привязан к ширине (1080px), поэтому в Ленте (4:5) карточки не будут сжиматься.
-  // Базовый масштаб + 15% укрупнения
-  let s = (width / 1080) * 1.15;
+  // Жестко фиксируем базовый масштаб на 1.3, чтобы всё было огромным
+  let s = (width / 1080) * 1.3;
 
-  // Умный множитель от количества событий (так как база уже крупнее, множители чуть мягче)
+  // Дополнительно раздуваем, если туров мало (как на твоем скрине их 3)
   if (events.length <= 2) {
-    s *= 1.35; // Очень крупные (для 1-2 событий)
+    s *= 1.3; // Гигантские
   } else if (events.length === 3) {
-    s *= 1.20; // Идеально плотные (для 3 событий, как на скрине)
-  } else {
-    s *= 1.0;  // Базовые (4-6 событий)
+    s *= 1.15; // Очень крупные (для 3)
+  } else if (events.length > 5) {
+    s *= 0.85; // Уменьшаем, только если их больше 5, чтобы влезло
   }
 
   const brandColorHex = COLOR_MAP[rawBrandColor] ?? COLOR_MAP['teal']!;
   const periodLabel   = PERIOD_LABELS[period] ?? 'АФИША';
 
-  // Группируем по месяцам для многомесячных афиш
   const grouped = groupByMonth(events);
   const hasMultipleMonths = grouped.size > 1;
 
-  // ✅ ГИГАНТСКИЕ ОТСТУПЫ для равномерного заполнения
-  const parentGap = events.length <= 3 ? 100 * s : events.length === 4 ? 60 * s : 30 * s;
-  const childGap  = events.length <= 3 ? 80 * s : events.length === 4 ? 40 * s : 20 * s;
+  // Динамические отступы (растягиваем по высоте)
+  const parentGap = events.length <= 3 ? 140 * s : events.length === 4 ? 80 * s : 40 * s;
+  const childGap  = events.length <= 3 ? 100 * s : events.length === 4 ? 60 * s : 30 * s;
 
   return new ImageResponse(
     (
-      <div style={{
+    <div style={{
         display: 'flex', flexDirection: 'column',
         width: '100%', height: '100%',
         backgroundColor: '#0b1120',
-      fontFamily: 'Montserrat',
-        // Уменьшили боковые поля (с 60 до 30), чтобы карточки растянулись на всю ширину!
-        padding: `${80 * s}px ${30 * s}px`,
+        fontFamily: 'Montserrat',
+        // Боковые поля стали 40 (с учетом масштаба), чтобы карточки были от края до края
+        padding: `${80 * s}px ${40 * s}px`,
       }}>
 
         {/* ── Заголовок афиши ── */}

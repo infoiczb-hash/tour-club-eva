@@ -162,13 +162,13 @@ function parseParams(searchParams: URLSearchParams): OgParams {
 
   // Поля блога
   const author        = searchParams.get('author')        || 'ЭВА';
-  const readTime      = searchParams.get('readTime')      || '5 мин';
+  const readTime      = searchParams.get('readTime')      || '5'; // убираем "мин" из дефолта, добавим в верстке
   const rubric        = (searchParams.get('rubric')       || 'БЛОГ').toUpperCase();
 
   // Неизвестный цвет → fallback teal
   const rawColor      = searchParams.get('categoryColor') || 'teal';
   const categoryColor = COLOR_MAP[rawColor] ? rawColor : 'teal';
-  const categoryTitle = searchParams.get('categoryTitle') || 'ТУР';
+  const categoryTitle = searchParams.get('categoryTitle') || (type === 'blog' ? 'БЛОГ' : 'ТУР');
 
   const tags          = tagsStr.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3);
   const brandColor    = COLOR_MAP[categoryColor]!;
@@ -234,6 +234,72 @@ const SparklesIcon = ({ color, size = 48 }: { color: string; size?: number }) =>
 const CheckIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
 );
+
+// ─── ЖУРНАЛЬНАЯ ВЕРСТКА (АДАПТИВНОСТЬ И GLASSMORPHISM) ──────────────────────
+
+/** 1. Адаптивная система размеров в зависимости от формата */
+function getScaleConfig(format: SmmFormat | null) {
+  const isStory = format === 'story';
+  const isPost = format === 'post';
+  const isEvent = format === 'event';
+
+  return {
+    layoutPadding: isStory ? '100px 80px' : (isPost ? '60px' : '80px 60px'),
+    cardPadding: isStory ? '60px' : '48px',
+    titleSize: isStory ? '72px' : (isPost ? '56px' : '64px'),
+    textSize: isStory ? '36px' : (isPost ? '28px' : '32px'),
+    iconSize: isStory ? 48 : 36,
+    gap: isStory ? '32px' : '24px',
+    borderRadius: isStory ? '48px' : '36px',
+  };
+}
+
+/** 2. Премиальная подложка: глушит фон и кладет текст в стеклянную карточку */
+function MagazineCard({ 
+  p, 
+  children, 
+  align = 'flex-start' 
+}: { 
+  p: OgParams; 
+  children: React.ReactNode; 
+  align?: 'flex-start' | 'center';
+}) {
+  const scale = getScaleConfig(p.format);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
+      
+      {/* 1. ФОН: Растянутое фото */}
+      {p.imageUrl && (
+        <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      )}
+      
+      {/* 2. ЗАТЕНЕНИЕ: Убиваем пестроту фото, оставляя текстуру (Решение Проблемы 4) */}
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)' }} />
+
+      {/* 3. КОНТЕЙНЕР КАРТОЧКИ */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: scale.layoutPadding, position: 'relative', zIndex: 10, justifyContent: 'center' }}>
+        
+        {/* 4. САМА СТЕКЛЯННАЯ ПЛАШКА */}
+        <div style={{
+           display: 'flex', 
+           flexDirection: 'column',
+           alignItems: align,
+           backgroundColor: 'rgba(15, 23, 42, 0.90)', // Плотный темный цвет
+           border: '1px solid rgba(255,255,255,0.15)', // Тонкая граница (стекло)
+           borderLeft: `12px solid ${p.brandColor}`, // Цветовой акцент бренда слева
+           borderRadius: scale.borderRadius,
+           padding: scale.cardPadding,
+           boxShadow: '0 40px 80px rgba(0,0,0,0.8)', // Мощная тень для отрыва от фона
+           width: '100%'
+        }}>
+          {children}
+        </div>
+
+      </div>
+    </div>
+  );
+}
 
 // ─── ПЕРЕИСПОЛЬЗУЕМЫЕ UI-БЛОКИ ───────────────────────────────────────────────
 
@@ -328,34 +394,37 @@ function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFo
 
 // 1. СЛАЙД "ЛОГИСТИКА"
 function renderLogisticsSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, marginBottom: '48px', textTransform: 'uppercase' }}>
-        {p.slideTitle || 'ЛОГИСТИКА'}
-      </span>
-      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(30,41,59,0.95)', padding: '48px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.06)', gap: '40px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
+         <CompassIcon color={p.brandColor} size={scale.iconSize} />
+         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '18px', textTransform: 'uppercase' }}>{p.slideTitle || 'ЛОГИСТИКА'}</span>
+      </div>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: scale.gap, marginTop: '20px' }}>
         {p.meetingPoint && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <MapPinIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Место сбора: {p.meetingPoint}</span>
+            <MapPinIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Место: <span style={{ color: 'white' }}>{p.meetingPoint}</span></span>
           </div>
         )}
         {p.duration && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <ClockIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Длительность: {p.duration}</span>
+            <ClockIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Длительность: <span style={{ color: 'white' }}>{p.duration}</span></span>
           </div>
         )}
         {p.route && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <CompassIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Маршрут: {p.route}</span>
+            <CompassIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Маршрут: <span style={{ color: 'white' }}>{p.route}</span></span>
           </div>
         )}
         {p.guideName && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <UserIcon color={p.brandColor} size={48} />
-            <span style={{ color: 'white', fontSize: '36px', fontWeight: 700 }}>Гид: {p.guideName}</span>
+            <UserIcon color={p.brandColor} size={scale.iconSize} />
+            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Гид: <span style={{ color: 'white' }}>{p.guideName}</span></span>
           </div>
         )}
       </div>
@@ -394,22 +463,28 @@ function renderHighlightsSlide(p: OgParams) {
 
 // 3. СЛАЙД "ЧТО ВЗЯТЬ С СОБОЙ" / "ВКЛЮЧЕНО" (Чекбоксы с разбивкой по \n)
 function renderListSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   const lines = p.slideText.split('\n').filter(Boolean);
+  
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '48px' }}>
-         <SparklesIcon color={p.brandColor} size={48} />
-         <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, marginLeft: '18px' }}>{p.slideTitle}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
+         <SparklesIcon color={p.brandColor} size={scale.iconSize} />
+         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '18px', textTransform: 'uppercase' }}>{p.slideTitle}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {lines.map((line, i) => {
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Ограничиваем количество пунктов до 7, чтобы не разорвало карточку в сториз */}
+        {lines.slice(0, 7).map((line, i) => {
           const cleanLine = line.replace(/^[\u2022\-\*]\s*/, '').trim();
           return (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '24px', padding: '20px 24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '24px', flexShrink: 0 }}>
-                <CheckIcon color={p.brandColor} size={36} />
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', padding: '8px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '20px', flexShrink: 0, marginTop: '4px' }}>
+                <CheckIcon color={p.brandColor} size={scale.iconSize} />
               </div>
-              <span style={{ color: '#e2e8f0', fontSize: '32px', fontWeight: 700, lineHeight: 1.4, flex: 1 }}>{cleanLine}</span>
+              <span style={{ color: '#e2e8f0', fontSize: scale.textSize, fontWeight: 700, lineHeight: 1.4, flex: 1 }}>
+                {cleanLine}
+              </span>
             </div>
           );
         })}
@@ -417,7 +492,6 @@ function renderListSlide(p: OgParams) {
     </div>
   );
 }
-
 // 4. СЛАЙД "СТОИМОСТЬ И ЗАПИСЬ"
 function renderPriceSlide(p: OgParams) {
   return (
@@ -462,10 +536,15 @@ function renderPriceSlide(p: OgParams) {
 }
 
 function renderDefaultSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-      <span style={{ fontSize: '50px', color: p.brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: '36px' }}>{p.slideTitle}</span>
-      <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, lineHeight: 1.4 }}>{p.slideText}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
+      <span style={{ fontSize: scale.textSize, color: p.brandColor, fontWeight: 900, letterSpacing: '2px', marginBottom: scale.gap, textTransform: 'uppercase' }}>
+        {p.slideTitle}
+      </span>
+      <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, lineHeight: 1.4 }}>
+        {p.slideText}
+      </span>
     </div>
   );
 }
@@ -485,18 +564,7 @@ function renderSlide(p: OgParams, fontConfig: FontConfig[] | undefined) {
   }
 
   return new ImageResponse(
-    (
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#0f172a', position: 'relative', fontFamily: 'Montserrat' }}>
-        {p.imageUrl && (
-          <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        )}
-        {/* ✅ ЭФФЕКТ ТЕМНОГО ПЛАНШЕТА (0.96) для идеальной читаемости */}
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(11, 17, 32, 0.96)' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '80px', position: 'relative', zIndex: 10 }}>
-          {content}
-        </div>
-      </div>
-    ),
+    <MagazineCard p={p}>{content}</MagazineCard>,
     { width: p.width, height: p.height, fonts: fontConfig, headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } }
   );
 }
@@ -529,10 +597,10 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
                   </span>
                 </div>
               )}
-              <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '18px 40px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '18px 40px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
                 <div style={{ width: '16px', height: '16px', borderRadius: '8px', backgroundColor: brandColor, marginRight: '18px', boxShadow: `0 0 14px ${brandColor}` }} />
                 <span style={{ fontSize: '38px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>
-                  {isBlog ? rubric : categoryTitle}
+                  {categoryTitle}
                 </span>
               </div>
             </div>
@@ -587,10 +655,10 @@ function renderStory(p: OgParams, fontConfig: FontConfig[] | undefined) {
               {priceStr && <PriceBlock p={p} priceFontSize="84px" currencyFontSize="42px" labelFontSize="32px" badgeFontSize="26px" arrowSize={96} />}
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '24px 40px', borderRadius: '30px', alignSelf: 'flex-start' }}>
-               <span style={{ color: brandColor, fontSize: '36px', fontWeight: 900 }}>{author}</span>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '24px 40px', borderRadius: '30px', alignSelf: 'flex-start' }}>
+               <span style={{ color: brandColor, fontSize: '36px', fontWeight: 900 }}>Автор: {author}</span>
                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }} />
-               <span style={{ color: 'white', fontSize: '32px', opacity: 0.8 }}>{readTime} чтенья</span>
+               <span style={{ color: 'white', fontSize: '32px', opacity: 0.8 }}>{readTime} мин. чтения</span>
             </div>
           )}
         </div>
@@ -633,7 +701,7 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
               )}
               <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.65)', border: `2px solid ${brandColor}`, padding: '14px 32px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
                 <div style={{ width: '14px', height: '14px', borderRadius: '7px', backgroundColor: brandColor, marginRight: '16px', boxShadow: `0 0 12px ${brandColor}` }} />
-                <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{isBlog ? rubric : categoryTitle}</span>
+              <span style={{ fontSize: '32px', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '4px' }}>{categoryTitle}</span>
               </div>
             </div>
 
@@ -678,10 +746,10 @@ function renderFeed(p: OgParams, fontConfig: FontConfig[] | undefined) {
               {priceStr && <PriceBlock p={p} priceFontSize={isPost ? '64px' : '78px'} currencyFontSize={isPost ? '28px' : '36px'} labelFontSize="24px" badgeFontSize="20px" arrowSize={isPost ? 72 : 84} />}
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '20px 36px', borderRadius: '30px', alignSelf: 'flex-start' }}>
-               <span style={{ color: brandColor, fontSize: '28px', fontWeight: 900 }}>{author}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(15,23,42,0.8)', padding: '20px 36px', borderRadius: '30px', alignSelf: 'flex-start' }}>
+               <span style={{ color: brandColor, fontSize: '28px', fontWeight: 900 }}>Автор: {author}</span>
                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }} />
-               <span style={{ color: 'white', fontSize: '24px', opacity: 0.8 }}>{readTime} чтенья</span>
+               <span style={{ color: 'white', fontSize: '24px', opacity: 0.8 }}>{readTime} мин. чтения</span>
             </div>
           )}
         </div>

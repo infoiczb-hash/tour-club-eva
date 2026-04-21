@@ -138,7 +138,7 @@ const SmmPostSchema = z.object({
 export type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
   | { mode: 'generate_blog'; topic: string }
-  | { mode: 'generate_image'; prompt: string }
+ | { mode: 'generate_image'; prompt: string; engine?: 'flux' | 'dalle'; enhance?: boolean }
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
@@ -368,60 +368,93 @@ export const performAiTask = withAdminAuth(
     try {
 
      // ─────────────────────────────────────────────
-      // GENERATE IMAGE (Fal.ai + AI Fallback)
+      // GENERATE IMAGE (Flux / DALL-E 3 + Enhancer)
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_image') {
-        const falKey = process.env.FAL_KEY;
-        if (!falKey) {
-          return { success: false, error: 'Нет ключа FAL_KEY (.env)' };
-        }
-        
         try {
-          // ✅ Обернули в withAiFallback: сначала пробуем Gemini, при ошибке - Groq + Кэш
-          const enhancedPrompt = await withAiFallback(
-            'enhance_image_prompt',
-            { prompt: task.prompt },
-            async (model) => {
-              const { text } = await generateText({
-                model,
-                temperature: 0.7, // ✅ Добавили креативности для промптов
-                system: `You are an expert Flux image generation prompt engineer.
+          const engine = task.engine || 'flux';
+          const shouldEnhance = task.enhance !== false; // По умолчанию включено
+
+          let finalPrompt = task.prompt;
+
+          // 1. Улучшаем промпт через LLM, если тумблер включен
+          if (shouldEnhance) {
+            finalPrompt = await withAiFallback(
+              'enhance_image_prompt',
+              { prompt: task.prompt },
+              async (model) => {
+                const { text } = await generateText({
+                  model,
+                  temperature: 0.7, // Креативность
+                  system: `You are an expert image generation prompt engineer.
 The user will give you a simple idea in Russian or English.
 
 SAFETY CHECK: If the idea contains harmful, violent, adult, or illegal content — respond with exactly the word: BLOCKED
 
 Otherwise:
 - Translate the idea to English
-- Expand it into a detailed, cinematic, hyperrealistic photography prompt for Flux
+- Expand it into a detailed, cinematic, hyperrealistic photography prompt
 - Include: lighting, composition, mood, camera angle, style
 - Return ONLY the English prompt. No explanations, no preamble.`,
-                prompt: task.prompt
-              });
-              return text;
+                  prompt: task.prompt
+                });
+                return text;
+              }
+            );
+
+            if (finalPrompt.trim() === 'BLOCKED') {
+              return { success: false, error: 'Запрос содержит недопустимый контент и заблокирован.' };
             }
-          );
-
-          if (enhancedPrompt.trim() === 'BLOCKED') {
-            return { success: false, error: 'Запрос содержит недопустимый контент и заблокирован.' };
           }
 
-          const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
-            method: 'POST',
-            headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: enhancedPrompt, image_size: 'landscape_4_3', num_inference_steps: 4 })
-          });
+          // 2. МАРШРУТИЗАЦИЯ ПО ДВИЖКАМ
+          if (engine === 'dalle') {
+            // === Логика DALL-E 3 ===
+            const { OpenAI } = await import('openai');
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            
+            const response = await openai.images.generate({
+              model: "dall-e-3",
+              prompt: finalPrompt.substring(0, 4000), // Лимит DALL-E
+              n: 1,
+              size: "1024x1024",
+              quality: "standard",
+            });
 
-          if (!falRes.ok) {
-            const errText = await falRes.text();
-            logAiError('generate_image:fal', errText, { status: falRes.status });
-            throw new Error('Fal.ai API error');
+        const imageUrl = response.data?.[0]?.url; // ✅ Сначала безопасно достаем URL
+            
+            if (!imageUrl) throw new Error('DALL-E не вернул картинку');
+            
+            // ✅ Теперь TypeScript точно знает, что imageUrl существует и это строка
+            return { success: true, mode: 'generate_image', data: imageUrl };
+
+          } else {
+            // === Логика Flux (Fal.ai) ===
+            const falKey = process.env.FAL_KEY;
+            if (!falKey) {
+              return { success: false, error: 'Нет ключа FAL_KEY (.env)' };
+            }
+
+            const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+              method: 'POST',
+              headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: finalPrompt, image_size: 'landscape_4_3', num_inference_steps: 4 })
+            });
+
+            // ✅ Сохранено твое детальное логирование ошибок!
+            if (!falRes.ok) {
+              const errText = await falRes.text();
+              logAiError('generate_image:fal', errText, { status: falRes.status });
+              throw new Error('Fal.ai API error');
+            }
+
+            const falData = await falRes.json();
+            const imageUrl = falData.images?.[0]?.url;
+            if (!imageUrl) return { success: false, error: 'Провайдер не вернул изображение' };
+
+            return { success: true, mode: 'generate_image', data: imageUrl };
           }
 
-          const falData = await falRes.json();
-          const imageUrl = falData.images?.[0]?.url;
-          if (!imageUrl) return { success: false, error: 'Провайдер не вернул изображение' };
-
-          return { success: true, mode: 'generate_image', data: imageUrl };
         } catch (e) {
           logAiError('generate_image', e, { promptLength: task.prompt.length });
           return { success: false, error: 'Ошибка при генерации картинки' };

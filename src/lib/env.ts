@@ -21,6 +21,7 @@ const serverSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY:  z.string().optional(),
   GROQ_API_KEY:                  z.string().optional(),
   FAL_KEY:                       z.string().optional(),
+  OPENAI_API_KEY:                z.string().optional(),
   
   // Upstash Redis
   UPSTASH_REDIS_REST_URL:        z.string().url('Некорректный URL Upstash Redis'),
@@ -67,6 +68,7 @@ const parsedServer = isServer
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       GROQ_API_KEY:                  process.env.GROQ_API_KEY,
       FAL_KEY:                       process.env.FAL_KEY,
+      OPENAI_API_KEY:                  process.env.OPENAI_API_KEY,
       UPSTASH_REDIS_REST_URL:        process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN:      process.env.UPSTASH_REDIS_REST_TOKEN,
       RESEND_API_KEY:                process.env.RESEND_API_KEY,

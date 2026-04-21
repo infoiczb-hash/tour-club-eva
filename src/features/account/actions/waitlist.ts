@@ -19,15 +19,16 @@ export async function cancelWaitlistAction(waitlistId: string) {
     }
 
     // Проверяем, что заявка принадлежит именно этому пользователю
-    const waitlist = await prisma.waitlist.findUnique({ 
-      where: { id: waitlistId } 
-    });
-
-    if (!waitlist || waitlist.phone !== profile.phone) {
-      return { success: false, error: 'Заявка не найдена или вам не принадлежит' };
-    }
-
-    await prisma.waitlist.delete({ where: { id: waitlistId } });
+   const waitlist = await prisma.waitlist.findUnique({
+  where: { 
+    id: waitlistId,
+    memberId: profile.id  // ← проверка через memberId, не phone
+  }
+});
+if (!waitlist) {
+  return { success: false, error: 'Заявка не найдена или вам не принадлежит' };
+}
+await prisma.waitlist.delete({ where: { id: waitlistId } });
     
     // Сбрасываем кэш страницы броней
     revalidatePath('/account/bookings');
