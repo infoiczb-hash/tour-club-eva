@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-// 🔥 УБРАЛИ QStash: import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
+import { Redis } from '@upstash/redis'; // ✅ ДОБАВИЛИ ИМПОРТ REDIS
+
+const redis = Redis.fromEnv(); // ✅ ИНИЦИАЛИЗАЦИЯ REDIS
 
 export async function GET(req: Request) {
   try {
@@ -28,22 +30,14 @@ export async function GET(req: Request) {
     const tomorrowRange = getDayRange(1);
     const in3DaysRange = getDayRange(3);
 
-    // ИСПРАВЛЕННЫЙ ЗАПРОС PRISMA (Правильный OR на верхнем уровне)
+    // ИСПРАВЛЕННЫЙ ЗАПРОС PRISMA
     const bookings = await prisma.booking.findMany({
       where: {
         status: { in: ['pending', 'confirmed'] },
         memberId: { not: null },
         OR: [
-          {
-            tourDate: {
-              startDate: { gte: tomorrowRange.gte, lt: tomorrowRange.lt }
-            }
-          },
-          {
-            tourDate: {
-              startDate: { gte: in3DaysRange.gte, lt: in3DaysRange.lt }
-            }
-          }
+          { tourDate: { startDate: { gte: tomorrowRange.gte, lt: tomorrowRange.lt } } },
+          { tourDate: { startDate: { gte: in3DaysRange.gte, lt: in3DaysRange.lt } } }
         ]
       },
       include: { tour: true, tourDate: true }
@@ -60,6 +54,14 @@ export async function GET(req: Request) {
 
       const isTomorrow = booking.tourDate.startDate < tomorrowRange.lt;
       const eventId = isTomorrow ? 'TOUR_TOMORROW_REMINDER' : 'TOUR_3DAY_REMINDER';
+
+      // ✅ ИСПРАВЛЕНИЕ 6: Защита от дублей при случайном двойном вызове крона (TTL 20 часов)
+      const redisKey = `reminder_sent:${eventId}:${booking.id}`;
+      // Пытаемся записать ключ. nx: true гарантирует, что запись произойдет ТОЛЬКО если ключа еще нет
+      const isSent = await redis.set(redisKey, '1', { ex: 20 * 60 * 60, nx: true });
+      
+      // Если ключ уже был в Redis (isSent === null), значит сегодня этому клиенту уже отправляли это напоминание
+      if (!isSent) continue;
 
       notificationPromises.push(
         NotificationHub.dispatch({
@@ -78,7 +80,12 @@ export async function GET(req: Request) {
           }
         })
         .then(() => { sentCount++; })
-        .catch((e) => { console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e); })
+        .catch(async (e) => { 
+          console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e);
+          // ✅ ОТКАТ REDIS: Если Хаб упал и сообщение не ушло, удаляем ключ в Redis, 
+          // чтобы попытаться снова при следующем запуске (или ручном ретрае Vercel)
+          await redis.del(redisKey);
+        })
       );
     }
 

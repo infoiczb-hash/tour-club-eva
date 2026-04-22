@@ -138,7 +138,15 @@ const SmmPostSchema = z.object({
 export type AiTaskType =
   | { mode: 'generate_tour'; prompt: string }
   | { mode: 'generate_blog'; topic: string }
- | { mode: 'generate_image'; prompt: string; engine?: 'flux-schnell' | 'flux-dev' | 'dalle3' | 'flux' | 'dalle'; enhance?: boolean }
+  | { 
+      mode: 'generate_image'; 
+      prompt: string;
+      engine?: 'dalle3' | 'flux-schnell' | 'flux-dev' | 'flux' | 'dalle';
+      enhance?: boolean;
+      imageUrl?: string;        // URL исходного фото для i2i
+      promptStrength?: number;  // Сила изменения (0.1 - 1.0)
+      aspectRatio?: string;     // Формат: '1:1', '16:9', '9:16', '4:5', '3:2'
+    }
   | { mode: 'parse_tour_text'; text: string }
   | { mode: 'generate_checklist'; location: string; season: string; type: string }
   | { mode: 'improve_text'; text: string; tone?: 'selling' | 'fix' | 'casual' }
@@ -367,13 +375,18 @@ export const performAiTask = withAdminAuth(
 
     try {
 
-           // ─────────────────────────────────────────────
+      // ─────────────────────────────────────────────
       // GENERATE IMAGE (Flux Schnell / Flux Dev / DALL·E 3)
       // ─────────────────────────────────────────────
       if (task.mode === 'generate_image') {
         try {
           const engine = task.engine || 'flux-schnell';
           const shouldEnhance = task.enhance !== false; // По умолчанию включено
+          
+          // НОВЫЕ ПАРАМЕТРЫ
+          const imageUrl = task.imageUrl; 
+          const strength = task.promptStrength || 0.75; 
+          const aspectRatio = task.aspectRatio || '1:1'; 
 
           let finalPrompt = task.prompt;
 
@@ -410,9 +423,18 @@ Otherwise:
           // 2. МАРШРУТИЗАЦИЯ ПО ДВИЖКАМ
           if (engine === 'dalle3' || engine === 'dalle') {
             // === DALL·E 3 ===
+            if (imageUrl) {
+              return { success: false, error: 'DALL-E 3 не поддерживает модификацию фото. Пожалуйста, выберите модель Flux.' };
+            }
+
             if (!process.env.OPENAI_API_KEY) {
               return { success: false, error: 'Нет ключа OPENAI_API_KEY в .env' };
             }
+
+            // Адаптер форматов для DALL-E 3
+            let dalleSize: "1024x1024" | "1024x1792" | "1792x1024" = "1024x1024";
+            if (aspectRatio === '16:9' || aspectRatio === '3:2') dalleSize = "1792x1024";
+            if (aspectRatio === '9:16' || aspectRatio === '4:5') dalleSize = "1024x1792";
 
             const { OpenAI } = await import('openai');
             const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -421,14 +443,14 @@ Otherwise:
               model: "dall-e-3",
               prompt: finalPrompt.substring(0, 4000),
               n: 1,
-              size: "1024x1024",
+              size: dalleSize,
               quality: "standard",
             });
 
-            const imageUrl = response.data?.[0]?.url;
-            if (!imageUrl) throw new Error('DALL·E 3 не вернул изображение');
+            const generatedUrl = response.data?.[0]?.url;
+            if (!generatedUrl) throw new Error('DALL·E 3 не вернул изображение');
 
-            return { success: true, mode: 'generate_image', data: imageUrl };
+            return { success: true, mode: 'generate_image', data: generatedUrl };
 
           } else {
             // === FLUX (Schnell или Dev) ===
@@ -437,11 +459,35 @@ Otherwise:
               return { success: false, error: 'Нет ключа FAL_KEY (.env)' };
             }
 
-            const falEndpoint = engine === 'flux-dev' 
-              ? 'fal-ai/flux/dev' 
-              : 'fal-ai/flux/schnell';
+            // Адаптер форматов для Fal.ai (Flux)
+            const falSizeMap: Record<string, string> = {
+              '1:1': 'square_1_1',
+              '16:9': 'landscape_16_9',
+              '9:16': 'portrait_9_16',
+              '4:5': 'portrait_4_5',
+              '3:2': 'landscape_3_2'
+            };
+            const falSize = falSizeMap[aspectRatio] || 'square_1_1';
 
-            const numSteps = engine === 'flux-dev' ? 20 : 4;
+            // Базовый эндпоинт и payload (Text-to-Image)
+            let falEndpoint = engine === 'flux-dev' ? 'fal-ai/flux/dev' : 'fal-ai/flux/schnell';
+            let falBody: Record<string, any> = { 
+              prompt: finalPrompt, 
+              image_size: falSize, 
+              num_inference_steps: engine === 'flux-dev' ? 20 : 4 
+            };
+
+            // Если передана картинка -> Переключаемся на Image-to-Image
+            if (imageUrl) {
+              falEndpoint = engine === 'flux-dev' ? 'fal-ai/flux/dev/image-to-image' : 'fal-ai/flux/schnell/image-to-image';
+              falBody = {
+                prompt: finalPrompt,
+                image_url: imageUrl,
+                strength: strength,
+                num_inference_steps: engine === 'flux-dev' ? 20 : 4
+              };
+              // В i2i пропорции обычно наследуются от исходного фото, поэтому image_size опускаем
+            }
 
             const falRes = await fetch(`https://fal.run/${falEndpoint}`, {
               method: 'POST',
@@ -449,27 +495,24 @@ Otherwise:
                 'Authorization': `Key ${falKey}`, 
                 'Content-Type': 'application/json' 
               },
-              body: JSON.stringify({ 
-                prompt: finalPrompt, 
-                image_size: 'landscape_4_3', 
-                num_inference_steps: numSteps 
-              })
+              body: JSON.stringify(falBody)
             });
 
             if (!falRes.ok) {
               const errText = await falRes.text();
               logAiError('generate_image:fal', errText, { 
                 status: falRes.status, 
-                engine 
+                engine,
+                isI2i: !!imageUrl 
               });
               throw new Error('Fal.ai API error');
             }
 
             const falData = await falRes.json();
-            const imageUrl = falData.images?.[0]?.url;
-            if (!imageUrl) return { success: false, error: 'Провайдер не вернул изображение' };
+            const generatedUrl = falData.images?.[0]?.url;
+            if (!generatedUrl) return { success: false, error: 'Провайдер не вернул изображение' };
 
-            return { success: true, mode: 'generate_image', data: imageUrl };
+            return { success: true, mode: 'generate_image', data: generatedUrl };
           }
 
         } catch (e) {
@@ -480,6 +523,7 @@ Otherwise:
           return { success: false, error: 'Ошибка при генерации картинки' };
         }
       }
+
       // ─────────────────────────────────────────────
       // GENERATE TOUR
       // ─────────────────────────────────────────────

@@ -1,0 +1,757 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: src/app/api/cron/**/*.ts
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/app/api/cron/cancel-unpaid/route.ts
+src/app/api/cron/payment-report/route.ts
+src/app/api/cron/post-tour-reviews/route.ts
+src/app/api/cron/reminders/route.ts
+src/app/api/cron/rollover/route.ts
+src/app/api/cron/sales-bot/route.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/app/api/cron/payment-report/route.ts">
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { sendTelegramMessage } from '@/lib/telegram/notify';
+
+export async function GET(request: Request) {
+  // 1. Проверка авторизации для Vercel Cron
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  try {
+    // 2. Ищем все брони в статусе pending
+    const pendingBookings = await prisma.booking.findMany({
+      where: { 
+        status: 'pending',
+      },
+      include: {
+        tour: { select: { title: true, currency: true } },
+        tourDate: { select: { startDate: true } }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    if (pendingBookings.length === 0) {
+      return NextResponse.json({ message: 'No pending bookings found' });
+    }
+
+    // 3. Формируем текст сообщения в формате HTML
+    let message = `🔔 <b>ЕЖЕДНЕВНЫЙ ОТЧЕТ: ОЖИДАЮТ ОПЛАТЫ</b>\n`;
+    message += `Всего броней на проверку: <b>${pendingBookings.length}</b>\n\n`;
+
+    pendingBookings.forEach((b, i) => {
+      const tourDate = b.tourDate?.startDate 
+        ? new Date(b.tourDate.startDate).toLocaleDateString('ru-RU') 
+        : 'Дата открыта';
+      
+      message += `${i + 1}. 👤 <b>${b.name}</b>\n`;
+      message += `📞 <code>${b.phone}</code>\n`; 
+      message += `🗺 Тур: ${b.tour.title}\n`;
+      message += `📅 Дата: ${tourDate}\n`;
+      message += `💰 К оплате: <b>${b.totalPrice} ${b.tour.currency || 'MDL'}</b>\n`;
+      message += `──────────────────\n`;
+    });
+
+    // 4. Отправляем в админский чат
+    const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    
+    if (!adminChatId) {
+      throw new Error('TELEGRAM_ADMIN_CHAT_ID is not defined in env');
+    }
+
+    // ✅ ИСПРАВЛЕНО: передаем ровно 2 аргумента!
+    await sendTelegramMessage(adminChatId, message);
+
+    return NextResponse.json({ success: true, sent: pendingBookings.length });
+  } catch (error) {
+    console.error('[CRON_PAYMENT_REPORT_ERROR]:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+</file>
+
+<file path="src/app/api/cron/post-tour-reviews/route.ts">
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
+import { NotificationHub } from '@/lib/notifications/hub';
+// 🔥 УБРАЛИ QStash: import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
+
+export async function GET(req: Request) {
+  try {
+    // 🛡 НОВАЯ ЗАЩИТА: Нативная проверка Vercel Cron
+    const authHeader = req.headers.get('authorization');
+    if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Определяем вчерашние сутки
+    const yesterdayStart = new Date();
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    yesterdayStart.setHours(0, 0, 0, 0);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Ищем брони со вчерашних туров
+    const bookings = await prisma.booking.findMany({
+      where: {
+        status: 'confirmed',
+        OR: [
+          // Если есть дата конца, и она была вчера
+          { tourDate: { endDate: { gte: yesterdayStart, lt: todayStart } } },
+          // Если даты конца нет (однодневный тур), то старт был вчера
+          { tourDate: { endDate: null, startDate: { gte: yesterdayStart, lt: todayStart } } }
+        ]
+      },
+      include: { tour: true, member: true } 
+    });
+
+    let sentCount = 0;
+
+    for (const booking of bookings) {
+      // Игнорируем заявки, где нет ни аккаунта, ни Telegram-чата
+      if (!booking.memberId && !booking.payerTgChatId) continue;
+
+      // Проверяем, не оставил ли он уже отзыв (чтобы не спамить)
+      let existingReview = null;
+      if (booking.memberId) {
+        existingReview = await prisma.review.findFirst({
+          where: { tourId: booking.tourId, memberId: booking.memberId }
+        });
+      } else if (booking.name) {
+        existingReview = await prisma.review.findFirst({
+          where: { tourId: booking.tourId, name: booking.name }
+        });
+      }
+
+      if (!existingReview) {
+        try {
+          if (booking.memberId) {
+            // 🌟 СЦЕНАРИЙ А: ЗАГРУЖАЕМ ГЕЙМИФИКАЦИЮ (С ЛИЧНЫМ КАБИНЕТОМ)
+            const points = booking.member?.balance || 0;
+            const level = booking.member?.level || 'Первопроходец';
+            const nextLevelPoints = points < 500 ? 500 : (points < 1500 ? 1500 : points + 1000);
+
+            await NotificationHub.dispatch({
+              eventId: 'POST_TOUR_REVIEW', 
+              memberId: booking.memberId,
+              data: {
+                bookingId: booking.id,
+                tourTitle: booking.tour.title,
+                points: points,
+                level: level,
+                nextLevelPoints: nextLevelPoints
+              }
+            });
+          } else if (booking.payerTgChatId) {
+            // 🔥 СЦЕНАРИЙ Б: УВЕДОМЛЕНИЕ ГОСТЯМ БЕЗ АККАУНТА НАПРЯМУЮ В ТГ
+            await sendGuestReviewRequest(
+                booking.payerTgChatId, 
+                booking.id, 
+                booking.tour.title, 
+                booking.name
+            );
+          }
+          
+          sentCount++;
+        } catch (e) {
+          console.error(`[Cron Review] Ошибка для брони ${booking.id}:`, e);
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, sent: sentCount, processed: bookings.length });
+
+  } catch (error) {
+    console.error('Cron review error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// ==========================================
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ГОСТЕЙ (БЕЗ ЛК)
+// ==========================================
+async function sendGuestReviewRequest(chatId: string, bookingId: string, tourTitle: string, name: string) {
+    const token = env.TELEGRAM_AUTH_BOT;
+    const text = `🏕 <b>${name}, с возвращением!</b>\n\nНадеемся, наше приключение «<b>${tourTitle}</b>» прошло отлично.\n\nПомогите нам стать еще лучше — поделитесь впечатлениями о работе гида и организации. 👇`;
+    
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        chat_id: chatId, 
+        text: text, 
+        parse_mode: 'HTML',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '✍️ Написать отзыв', callback_data: `write_review_${bookingId}` }]
+            ]
+        }
+      })
+    });
+}
+</file>
+
+<file path="src/app/api/cron/sales-bot/route.ts">
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
+import { Redis } from '@upstash/redis';
+import { NotificationHub } from '@/lib/notifications/hub';
+import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВИЛИ ИМПОРТ АУДИТА
+
+const redis = Redis.fromEnv();
+
+export async function GET(req: Request) {
+  try {
+    // 🛡 ЗАЩИТА VERCEL CRON: Проверяем секретный ключ
+    const authHeader = req.headers.get('authorization');
+    if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const notificationPromises: Promise<any>[] = [];
+    let winbackCount = 0;
+    let crosssellCount = 0;
+
+    // ==========================================
+    // СЦЕНАРИЙ А: WIN-BACK (90 ДНЕЙ)
+    // ==========================================
+    const target90DaysStart = new Date(today);
+    target90DaysStart.setDate(target90DaysStart.getDate() - 90);
+    
+    const target90DaysEnd = new Date(target90DaysStart);
+    target90DaysEnd.setHours(23, 59, 59, 999);
+
+    const sleepingBookings = await prisma.booking.findMany({
+      where: {
+        status: 'confirmed',
+        memberId: { not: null },
+        OR: [
+          { tourDate: { endDate: { gte: target90DaysStart, lte: target90DaysEnd } } },
+          { tourDate: { endDate: null, startDate: { gte: target90DaysStart, lte: target90DaysEnd } } }
+        ]
+      },
+      include: { tour: true, member: true }
+    });
+
+    for (const booking of sleepingBookings) {
+      if (!booking.memberId || !booking.member) continue;
+
+      const recentBooking = await prisma.booking.findFirst({
+        where: {
+          memberId: booking.memberId,
+          status: { in: ['confirmed', 'awaiting_payment', 'pending'] },
+          createdAt: { gt: booking.createdAt }
+        }
+      });
+
+      if (!recentBooking) {
+        const redisKey = `winback_sent:${booking.memberId}`;
+        const isSent = await redis.set(redisKey, '1', { ex: 180 * 24 * 60 * 60, nx: true });
+
+        if (isSent) {
+          const namePart = booking.member.name ? booking.member.name.split(' ')[0].toUpperCase() : 'FRIEND';
+          const promoCodeString = `COMEBACK-${namePart}-${Math.floor(100 + Math.random() * 900)}`;
+          const discountValue = 50; 
+          
+          const validUntil = new Date();
+          validUntil.setDate(validUntil.getDate() + 14);
+
+          await prisma.promoCode.create({
+            data: {
+              code: promoCodeString,
+              discount: discountValue,
+              type: 'fixed',
+              validUntil: validUntil,
+              usageCount: 0,
+              isActive: true,
+              memberId: booking.memberId
+            }
+          });
+
+          notificationPromises.push(
+            NotificationHub.dispatch({
+              eventId: 'WIN_BACK_OFFER',
+              memberId: booking.memberId,
+              data: {
+                lastTourTitle: booking.tour.title,
+                promoCode: promoCodeString,
+                discount: discountValue
+              }
+            })
+          );
+          winbackCount++;
+        }
+      }
+    }
+
+    // ==========================================
+    // СЦЕНАРИЙ Б: CROSS-SELL (7 ДНЕЙ)
+    // ==========================================
+    const target7DaysStart = new Date(today);
+    target7DaysStart.setDate(target7DaysStart.getDate() - 7);
+    
+    const target7DaysEnd = new Date(target7DaysStart);
+    target7DaysEnd.setHours(23, 59, 59, 999);
+
+    const freshBookings = await prisma.booking.findMany({
+      where: {
+        status: 'confirmed',
+        memberId: { not: null },
+        OR: [
+          { tourDate: { endDate: { gte: target7DaysStart, lte: target7DaysEnd } } },
+          { tourDate: { endDate: null, startDate: { gte: target7DaysStart, lte: target7DaysEnd } } }
+        ]
+      },
+      include: { tour: { include: { category: true } }, member: true }
+    });
+
+    for (const booking of freshBookings) {
+      if (!booking.memberId) continue;
+
+      const redisKey = `crosssell_sent:${booking.memberId}`;
+      const isSent = await redis.set(redisKey, '1', { ex: 30 * 24 * 60 * 60, nx: true });
+      
+      if (isSent) {
+        const categorySlug = booking.tour.category?.slug || '';
+        let categoryTransitionText = 'Самое время попробовать новый формат отдыха!';
+
+        if (categorySlug === 'kayaking') {
+            categoryTransitionText = 'Вы отлично справились с байдарками! Как насчет того, чтобы поймать баланс и встретить рассвет на SUP-бордах?';
+        } else if (categorySlug === 'hiking') {
+            categoryTransitionText = 'Горы покорены! Но наши водные маршруты не менее живописны. Попробуйте сплав на байдарках!';
+        } else if (categorySlug === 'sup') {
+            categoryTransitionText = 'Вода — ваша стихия! Предлагаем сменить обстановку и отправиться в легкий трекинг по живописным лесам.';
+        }
+
+        notificationPromises.push(
+          NotificationHub.dispatch({
+            eventId: 'CROSS_SELL_OFFER',
+            memberId: booking.memberId,
+            data: {
+              lastTourTitle: booking.tour.title,
+              categoryTransitionText: categoryTransitionText
+            }
+          })
+        );
+        crosssellCount++;
+      }
+    }
+
+    if (notificationPromises.length > 0) {
+      await Promise.allSettled(notificationPromises);
+    }
+
+    // ✅ СИСТЕМНЫЙ АУДИТ: Успешное выполнение
+    Promise.resolve().then(() => {
+      logSystemAction('CRON_SALES_BOT_EXECUTED', {
+        changes: { winbackSent: winbackCount, crosssellSent: crosssellCount }
+      }).catch(console.error);
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      winbackSent: winbackCount, 
+      crosssellSent: crosssellCount 
+    });
+
+  // ✅ ИСПРАВЛЕНИЕ ТИПОВ: Заменили error на error: unknown
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('[Sales Bot Error]:', err);
+    
+    // ✅ СИСТЕМНЫЙ АУДИТ: Логируем ошибку CRON-задачи
+    Promise.resolve().then(() => {
+      logSystemAction('CRON_SALES_BOT_ERROR', {
+        changes: { error: err.message, stack: err.stack }
+      }).catch(console.error);
+    });
+
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+</file>
+
+<file path="src/app/api/cron/cancel-unpaid/route.ts">
+// src/app/api/cron/cancel-unpaid/route.ts
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { Redis } from '@upstash/redis';
+import { NotificationHub } from '@/lib/notifications/hub';
+import { revalidatePath } from 'next/cache';
+import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ ВОЗВРАЩЕН
+import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
+
+const redis = Redis.fromEnv();
+const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
+const MIN_INTERVAL_MS = 55 * 60 * 1000; // 55 минут защита от двойного запуска
+
+// Временные рамки (в часах)
+const REMINDER_HOURS = 24; 
+const CANCEL_HOURS = 48;   
+
+// Внутренняя функция-обработчик
+async function handler(req: Request) {
+  try {
+    const lastRun = await redis.get<number>(RATE_LIMIT_KEY);
+    if (lastRun && Date.now() - lastRun < MIN_INTERVAL_MS) {
+      return NextResponse.json({ skipped: true, reason: 'Too soon' });
+    }
+
+    const deadline24h = new Date(Date.now() - REMINDER_HOURS * 60 * 60 * 1000);
+    
+    const deadSouls = await prisma.booking.findMany({
+      where: {
+        status: 'awaiting_payment',
+        createdAt: { lt: deadline24h }
+      },
+      include: { member: true, tour: true }
+    });
+
+    let cancelledCount = 0;
+    let remindedCount = 0;
+
+    // 🔥 ОПТИМИЗАЦИЯ: Собираем все долгие задачи (уведомления) в массив, чтобы выполнить параллельно
+    const notificationPromises: Promise<any>[] = [];
+
+    for (const booking of deadSouls) {
+      try {
+        const ageInHours = (Date.now() - booking.createdAt.getTime()) / (1000 * 60 * 60);
+        const shortId = booking.shortId || parseInt(booking.id.substring(0, 4), 16); // Фолбэк
+
+        // --- ЛОГИКА 1: ПРОШЛО 48 ЧАСОВ (ОТМЕНА) ---
+        if (ageInHours >= CANCEL_HOURS) {
+          await prisma.$transaction(async (tx) => {
+            const totalTickets = (booking.ticketsAdult || 0) + (booking.ticketsChild || 0) + (booking.ticketsMember || 0) + ((booking.ticketsFamily || 0) * 3);
+
+            if (booking.tourDateId) {
+              await tx.tourDate.update({ where: { id: booking.tourDateId }, data: { spotsLeft: { increment: totalTickets } } });
+            } else {
+              await tx.tour.update({ where: { id: booking.tourId }, data: { spotsLeft: { increment: totalTickets } } });
+            }
+
+            await tx.booking.update({ where: { id: booking.id }, data: { status: 'cancelled' } });
+          });
+
+          cancelledCount++;
+
+          // Добавляем отправку уведомления в массив задач (не ждем через await прямо тут)
+         if (booking.memberId) {
+            notificationPromises.push(
+              NotificationHub.dispatch({
+                eventId: 'BOOKING_AUTO_CANCELLED',
+                memberId: booking.memberId,
+                data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
+              })
+            );
+          } else if (booking.payerTgChatId) {
+            // 🔥 ДОБАВЛЕНО: Уведомление для гостей без аккаунта
+            const msg = `🚫 <b>Бронь аннулирована</b>\n\nВаша заявка <b>#${shortId}</b> на тур «${booking.tour.title}» была отменена из-за отсутствия оплаты в течение 48 часов.\n\nЕсли вы хотите поехать, пожалуйста, оформите новую заявку на сайте.`;
+            notificationPromises.push(
+              sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
+            );
+          }
+
+          // 🔥 Снайпинг: места физически освободились, зовем ждунов
+          notificationPromises.push(notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId));
+        }
+
+        // --- ЛОГИКА 2: ПРОШЛО ОТ 24 ДО 48 ЧАСОВ (НАПОМИНАНИЕ) ---
+        else if (ageInHours >= REMINDER_HOURS) {
+          const redisKey = `reminder_sent:${booking.id}`;
+          const isReminded = await redis.get(redisKey);
+if (!isReminded) {
+            // Добавляем напоминание в массив задач
+            if (booking.memberId) {
+               notificationPromises.push(
+                 NotificationHub.dispatch({
+                   eventId: 'PAYMENT_REMINDER_24H',
+                   memberId: booking.memberId,
+                   data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
+                 })
+               );
+            } else if (booking.payerTgChatId) {
+               // 🔥 ДОБАВЛЕНО: Напоминание для гостей без аккаунта
+               const msg = `⚠️ <b>Ожидается оплата</b>\n\nНапоминаем, что у вас осталось 24 часа на оплату заявки <b>#${shortId}</b> на тур «${booking.tour.title}».\n\nПожалуйста, отправьте скриншот перевода или файл билета BiletPMR в этот чат, иначе бронь будет автоматически отменена.`;
+               notificationPromises.push(
+                 sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
+               );
+            }
+            
+            await redis.set(redisKey, '1', { ex: 48 * 60 * 60 });
+            remindedCount++;
+          }
+        }
+
+      } catch (err) {
+        console.error(`Ошибка обработки брони ${booking.id}:`, err);
+      }
+    }
+
+    // 🔥 Выполняем все сетевые запросы Хаба и Листа ожидания параллельно! Это спасет от таймаута.
+    if (notificationPromises.length > 0) {
+      await Promise.allSettled(notificationPromises);
+    }
+
+    if (cancelledCount > 0) {
+      revalidatePath('/tour');
+      revalidatePath('/admin');
+    }
+
+    await redis.set(RATE_LIMIT_KEY, Date.now(), { ex: 60 * 60 });
+
+    return NextResponse.json({ 
+      success: true,
+      processed: deadSouls.length,
+      reminded: remindedCount,
+      cancelled: cancelledCount 
+    });
+
+  } catch (error) {
+    console.error('Cron error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// 🔥 Оборачиваем обработчик в HOC от Qstash для безопасного вызова
+export const GET = verifySignatureAppRouter(handler);
+export const POST = verifySignatureAppRouter(handler);
+</file>
+
+<file path="src/app/api/cron/rollover/route.ts">
+// src/app/api/cron/rollover/route.ts
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
+import { Redis } from '@upstash/redis';
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ
+
+const redis = Redis.fromEnv();
+const RATE_LIMIT_KEY = 'cron:rollover:last_run';
+const MIN_INTERVAL_MS = 25 * 60 * 1000; // 25 минут
+
+// Внутренняя функция-обработчик
+async function handler(req: Request) {
+  try {
+    // 🛡 Ручная проверка CRON_SECRET убрана. 
+
+    // Rate limiting через Redis — не запускаем чаще чем раз в 25 минут
+    const lastRun = await redis.get<number>(RATE_LIMIT_KEY);
+    if (lastRun && Date.now() - lastRun < MIN_INTERVAL_MS) {
+      return NextResponse.json({ 
+        skipped: true, 
+        reason: 'Too soon',
+        nextRunIn: `${Math.round((MIN_INTERVAL_MS - (Date.now() - lastRun)) / 1000 / 60)} мин`
+      });
+    }
+
+    const now = new Date();
+
+    // Туры у которых есть даты но все прошли
+    const toursWithAllDatesPast = await prisma.tour.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+        tourDates: {
+          every: { startDate: { lt: now } },
+        },
+        NOT: { tourDates: { none: {} } },
+      },
+      select: { id: true, slug: true },
+    });
+
+    let deactivatedCount = 0;
+
+    if (toursWithAllDatesPast.length > 0) {
+      await prisma.tour.updateMany({
+        where: { id: { in: toursWithAllDatesPast.map(t => t.id) } },
+        data: { isActive: false },
+      });
+      deactivatedCount = toursWithAllDatesPast.length;
+
+      // Ревалидируем страницы конкретных туров
+      for (const tour of toursWithAllDatesPast) {
+        revalidatePath(`/tour/${tour.slug}`);
+      }
+    }
+
+    // Всегда ревалидируем главную и каталог
+    revalidatePath('/');
+    revalidatePath('/tour');
+
+    // Записываем время последнего запуска в Redis
+    await redis.set(RATE_LIMIT_KEY, Date.now(), { ex: 60 * 60 }); // TTL 1 час
+
+    return NextResponse.json({ 
+      success: true,
+      deactivated: deactivatedCount,
+      tours: toursWithAllDatesPast.map(t => t.slug),
+    });
+
+  } catch (error) {
+    console.error('Cron rollover error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// 🔥 Оборачиваем обработчик в HOC от Qstash
+export const GET = verifySignatureAppRouter(handler);
+export const POST = verifySignatureAppRouter(handler);
+</file>
+
+<file path="src/app/api/cron/reminders/route.ts">
+// src/app/api/cron/reminders/route.ts
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
+import { NotificationHub } from '@/lib/notifications/hub';
+// 🔥 УБРАЛИ QStash: import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
+
+export async function GET(req: Request) {
+  try {
+    // 🛡 ЗАЩИТА VERCEL CRON: Проверяем секретный ключ
+    const authHeader = req.headers.get('authorization');
+    if (env.CRON_SECRET && authHeader !== `Bearer ${env.CRON_SECRET}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // Функция для создания временного окна (целые сутки)
+    const getDayRange = (daysOffset: number) => {
+      const start = new Date(now);
+      start.setDate(start.getDate() + daysOffset);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return { gte: start, lt: end };
+    };
+
+    const tomorrowRange = getDayRange(1);
+    const in3DaysRange = getDayRange(3);
+
+    // ИСПРАВЛЕННЫЙ ЗАПРОС PRISMA (Правильный OR на верхнем уровне)
+    const bookings = await prisma.booking.findMany({
+      where: {
+        status: { in: ['pending', 'confirmed'] },
+        memberId: { not: null },
+        OR: [
+          {
+            tourDate: {
+              startDate: { gte: tomorrowRange.gte, lt: tomorrowRange.lt }
+            }
+          },
+          {
+            tourDate: {
+              startDate: { gte: in3DaysRange.gte, lt: in3DaysRange.lt }
+            }
+          }
+        ]
+      },
+      include: { tour: true, tourDate: true }
+    });
+
+    let sentCount = 0;
+    
+    // 🔥 ОПТИМИЗАЦИЯ: Собираем задачи в массив для параллельной отправки
+    const notificationPromises: Promise<any>[] = [];
+
+    for (const booking of bookings) {
+      // Безопасная проверка для TypeScript (убираем ошибки null)
+      if (!booking.tourDate || !booking.memberId) continue;
+
+      const isTomorrow = booking.tourDate.startDate < tomorrowRange.lt;
+      const eventId = isTomorrow ? 'TOUR_TOMORROW_REMINDER' : 'TOUR_3DAY_REMINDER';
+
+      notificationPromises.push(
+        NotificationHub.dispatch({
+          eventId,
+          memberId: booking.memberId,
+          data: {
+            bookingId: booking.id,
+            tourTitle: booking.tour.title,
+            meetingPoint: booking.tourDate.meetingPoint || booking.tour.meetingPoint,
+            meetingTime: booking.tourDate.time,
+            paymentMethod: booking.paymentMethod,
+            totalPrice: booking.totalPrice,
+            currency: booking.tour.currency,
+            checklist: booking.tour.checklist,
+            groupChatUrl: booking.tourDate.groupChatUrl
+          }
+        })
+        .then(() => { sentCount++; })
+        .catch((e) => { console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e); })
+      );
+    }
+
+    // Выполняем все запросы Хаба параллельно!
+    if (notificationPromises.length > 0) {
+      await Promise.allSettled(notificationPromises);
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      sent: sentCount, 
+      processed: bookings.length 
+    });
+
+  } catch (error) {
+    console.error('Cron reminder error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+</file>
+
+</files>

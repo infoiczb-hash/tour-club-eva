@@ -30,6 +30,10 @@ import {
 } from '@/features/admin/actions/ai-prompts';
 import { clsx } from 'clsx';
 
+// ⚠️ УБЕДИСЬ, ЧТО ИМПОРТ СОВПАДАЕТ С ЭКСПОРТОМ В ТВОЕМ ФАЙЛЕ upload.ts
+// Если там написано `export async function uploadFile`, поменяй на import { uploadFile }
+import { uploadFile } from '@/features/admin/upload';
+
 // ============================================================================
 // ТИПЫ (улучшены и расширены)
 // ============================================================================
@@ -55,13 +59,17 @@ type SourceMode = 'manual' | 'slug';
 type SlugType = 'tour' | 'blog';
 type ViewMode = 'studio' | 'library';
 type StylePreset = (typeof STYLE_PRESETS)[number]['id'];
+type AspectRatio = (typeof ASPECT_RATIOS)[number]['id'];
 
-// Тип для вызова performAiTask — убрали "as any"
+// ✅ ОБНОВЛЕНО: Добавлены новые поля для форматов и Image-to-Image
 interface GenerateImagePayload {
   mode: 'generate_image';
   prompt: string;
   engine: ImageModel;
   enhance: boolean;
+  imageUrl?: string;
+  promptStrength?: number;
+  aspectRatio?: string;
 }
 
 // ============================================================================
@@ -85,6 +93,15 @@ const STYLE_PRESETS = [
   { id: 'epic', label: '🏔️ Эпик', hint: 'epic landscape, golden hour, volumetric light, ultra wide angle' },
   { id: 'pixar', label: '🦄 3D', hint: '3D Pixar style, vibrant colors, cute characters, studio lighting' },
   { id: 'minimal', label: '⬜ Минимал', hint: 'minimalist composition, clean, flat lay, white background' },
+] as const;
+
+// ✅ ДОБАВЛЕНО: Пресеты форматов
+const ASPECT_RATIOS = [
+  { id: '1:1', label: '1:1', sub: 'Квадрат' },
+  { id: '16:9', label: '16:9', sub: 'Обложка' },
+  { id: '9:16', label: '9:16', sub: 'Сториз' },
+  { id: '4:5', label: '4:5', sub: 'Пост' },
+  { id: '3:2', label: '3:2', sub: 'Галерея' },
 ] as const;
 
 const PROMPT_EXAMPLES = [
@@ -236,7 +253,7 @@ const ImageCard = React.memo(
 ImageCard.displayName = 'ImageCard';
 
 // ============================================================================
-// SUB-КОМПОНЕНТ: модалка сохранения промпта (улучшена доступность + фокус)
+// SUB-КОМПОНЕНТ: модалка сохранения промпта
 // ============================================================================
 
 function SavePromptModal({
@@ -330,7 +347,7 @@ function SavePromptModal({
 }
 
 // ============================================================================
-// ГЛАВНЫЙ КОМПОНЕНТ (рефакторинг + улучшения)
+// ГЛАВНЫЙ КОМПОНЕНТ
 // ============================================================================
 
 export default function NeuroStudioTab() {
@@ -343,10 +360,18 @@ export default function NeuroStudioTab() {
   const [slugId, setSlugId] = useState('');
   const [sources, setSources] = useState<SmmSource[]>([]);
   const [loadingSrc, setLoadingSrc] = useState(false);
+  
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState<ImageModel>('flux-schnell');
   const [style, setStyle] = useState<StylePreset>('photo');
   const [groqEnhance, setGroqEnhance] = useState(true);
+  
+  // ✅ НОВЫЕ СТЕЙТЫ
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [promptStrength, setPromptStrength] = useState(0.75);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [gallery, setGallery] = useState<GeneratedImage[]>([]);
   const [saveTarget, setSaveTarget] = useState<GeneratedImage | null>(null);
@@ -415,7 +440,45 @@ export default function NeuroStudioTab() {
     [sourceMode, slugId, sources]
   );
 
-  // ── Генерация изображения (типы + убрали все "as any" кроме самого узкого места) ───────────────────────────────
+  // ✅ ДОБАВЛЕНО: Обработчик загрузки фото (Image-to-Image)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (model === 'dalle3') {
+      showToast('Для модификации фото переключитесь на модель Flux', 'error');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Вызов серверного экшена напрямую из импорта
+   const res = await uploadFile(formData);
+
+      // Сначала проверяем, есть ли ошибка (от auth или от загрузчика)
+      if ('error' in res && res.error) {
+        showToast(res.error, 'error');
+      } 
+      // Затем безопасно проверяем url, так как TypeScript теперь знает, что это не ошибка auth
+      else if ('url' in res && res.url) {
+        setSourceImageUrl(res.url);
+        showToast('Фото загружено', 'success');
+      } 
+      else {
+        showToast('Ошибка загрузки фото', 'error');
+      }
+    } catch (error) {
+      showToast('Сетевая ошибка при загрузке', 'error');
+      console.error(error);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  // ── Генерация изображения ─────────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
     const trimmed = prompt.trim();
     if (!trimmed) {
@@ -428,19 +491,20 @@ export default function NeuroStudioTab() {
       const hint = STYLE_PRESETS.find((s) => s.id === style)?.hint ?? '';
       const finalPrompt = hint ? `${trimmed}. ${hint}` : trimmed;
 
+      // ✅ ДОБАВЛЕНО: В Payload передаем новые поля
       const payload: GenerateImagePayload = {
         mode: 'generate_image',
         prompt: finalPrompt,
         engine: model,
         enhance: groqEnhance,
+        imageUrl: sourceImageUrl || undefined,
+        promptStrength: sourceImageUrl ? promptStrength : undefined,
+        aspectRatio: aspectRatio,
       };
 
-      // Самое узкое место — только здесь приходится кастовать,
-      // потому что тип action'а ещё не обновлён под новые модели
-  const res = await performAiTask(payload) as PerformAiTaskResult;
+      const res = await performAiTask(payload) as PerformAiTaskResult;
 
       if (!res.success) {
-        // Безопасно достаём ошибку (тип PerformAiTaskResult, скорее всего, union)
         const errorMsg = 'error' in res ? res.error : 'Ошибка генерации';
         showToast(errorMsg, 'error');
         return;
@@ -453,7 +517,7 @@ export default function NeuroStudioTab() {
 
       const newImg: GeneratedImage = {
         id: genId(),
-        url: res.data,
+        url: res.data as string,
         prompt: trimmed,
         model,
         sourceTitle: sourceMode === 'slug' ? sources.find((s) => s.id === slugId)?.title : undefined,
@@ -463,7 +527,6 @@ export default function NeuroStudioTab() {
       setGallery((prev) => [newImg, ...prev]);
       showToast('Готово! ✨', 'success');
 
-      // Прокрутка к галерее
       setTimeout(() => {
         galleryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -472,7 +535,7 @@ export default function NeuroStudioTab() {
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, style, model, groqEnhance, sourceMode, slugId, sources, showToast]);
+  }, [prompt, style, model, groqEnhance, sourceMode, slugId, sources, sourceImageUrl, promptStrength, aspectRatio, showToast]);
 
   // ── Работа с библиотекой ──────────────────────────────────────────────────
   const handleSavePrompt = useCallback(
@@ -514,7 +577,6 @@ export default function NeuroStudioTab() {
     [showToast]
   );
 
-  // Мемоизированный список моделей (чтобы не пересоздавался)
   const renderedModels = useMemo(
     () =>
       IMAGE_MODELS.map((m) => (
@@ -591,6 +653,7 @@ export default function NeuroStudioTab() {
           {/* Левая панель */}
           <div className="lg:col-span-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 space-y-8 shadow-sm">
+              
               {/* 1. Источник */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
@@ -689,11 +752,105 @@ export default function NeuroStudioTab() {
                 )}
               </section>
 
-              {/* 3. Стиль */}
+              {/* ✅ 3. ФОРМАТ (Aspect Ratio) */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     3
+                  </span>
+                  Формат изображения
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {ASPECT_RATIOS.map((ar) => (
+                    <button
+                      key={ar.id}
+                      onClick={() => setAspectRatio(ar.id)}
+                      className={clsx(
+                        'py-3 px-1 rounded-xl flex flex-col items-center justify-center gap-1 border-2 transition-all',
+                        aspectRatio === ar.id
+                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600'
+                          : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-500 hover:border-slate-300'
+                      )}
+                    >
+                      <span className="text-xs font-black">{ar.id}</span>
+                      <span className="text-[8px] uppercase tracking-widest opacity-70">{ar.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* ✅ 4. ЗАГРУЗКА ФОТО (Image-to-Image) */}
+              <section>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    4
+                  </span>
+                  Модификация фото (Опционально)
+                </label>
+                
+                {model === 'dalle3' ? (
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center gap-3">
+                     <ZapOff className="text-amber-500 shrink-0" size={20} />
+                     <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed font-bold">
+                       DALL-E 3 не поддерживает модификацию фото. Выберите модель Flux выше.
+                     </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {!sourceImageUrl ? (
+                      <label className={clsx(
+                        "flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-2xl cursor-pointer transition-colors",
+                        isUploadingPhoto ? "border-teal-500 bg-teal-50 dark:bg-teal-900/10" : "border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      )}>
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {isUploadingPhoto ? (
+                            <RefreshCw className="w-6 h-6 text-teal-500 animate-spin mb-2" />
+                          ) : (
+                            <ImageIcon className="w-6 h-6 text-slate-400 mb-2" />
+                          )}
+                          <p className="text-xs text-slate-500 font-bold">
+                            {isUploadingPhoto ? 'Загружаем...' : 'Перетащи или выбери фото'}
+                          </p>
+                        </div>
+                        <input type="file" className="hidden" accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} disabled={isUploadingPhoto} />
+                      </label>
+                    ) : (
+                      <div className="relative w-full h-40 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                        <img src={sourceImageUrl} alt="Source" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 transition-opacity" />
+                        
+                        <button 
+                          onClick={() => setSourceImageUrl(null)}
+                          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-lg z-10"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                        
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 to-transparent">
+                          <div className="flex items-center justify-between text-white mb-2">
+                            <span className="text-[9px] font-black uppercase tracking-widest">
+                              Сила изменения: {Math.round(promptStrength * 100)}%
+                            </span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0.1" max="1.0" step="0.05" 
+                            value={promptStrength} 
+                            onChange={(e) => setPromptStrength(parseFloat(e.target.value))}
+                            className="w-full accent-teal-500 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              {/* 5. Стиль */}
+              <section>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
+                    5
                   </span>
                   Стиль изображения
                 </label>
@@ -715,11 +872,11 @@ export default function NeuroStudioTab() {
                 </div>
               </section>
 
-              {/* 4. Улучшатель */}
+              {/* 6. Улучшатель */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
-                    4
+                    6
                   </span>
                   AI-улучшатель промпта
                 </label>
@@ -772,11 +929,11 @@ export default function NeuroStudioTab() {
                 </button>
               </section>
 
-              {/* 5. Промпт */}
+              {/* 7. Промпт */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
-                    5
+                    7
                   </span>
                   {sourceMode === 'slug' ? 'Промпт (собран из базы)' : 'Твоя идея'}
                 </label>

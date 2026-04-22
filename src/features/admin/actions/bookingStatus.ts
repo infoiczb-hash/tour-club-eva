@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { BookingStatus } from '@prisma/client';
 import { withAdminAuth } from '@/lib/auth';
-import { withAdminAudit } from '@/lib/audit'; // ✅ ИМПОРТ АУДИТА
+import { withAdminAudit } from '@/lib/audit';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { AppEvent } from '@/lib/notifications/templates';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify';
@@ -20,7 +20,6 @@ export type UpdateBookingStatusInput = {
 export const updateBookingStatusAction = withAdminAuth(
   withAdminAudit({
     actionName: 'UPDATE_BOOKING_STATUS',
-    // ✅ Теперь getTargetId принимает тот же объект, что и Action
     getTargetId: (data: UpdateBookingStatusInput) => data.bookingId,
   })(async ({ bookingId, newStatus, rejectReason, adminName }: UpdateBookingStatusInput) => {
     try {
@@ -32,39 +31,57 @@ export const updateBookingStatusAction = withAdminAuth(
 
         if (!current) throw new Error('Бронирование не найдено');
 
-        // Расчет мест для возврата (уже есть в вашем коде)
         const totalTickets = (current.ticketsAdult || 0) + 
                              (current.ticketsChild || 0) + 
                              (current.ticketsMember || 0) + 
                              ((current.ticketsFamily || 0) * 3);
 
-        // Логика возврата мест при отмене
+        // -------------------------------------------------------------
+        // Логика пересчета мест (Возврат и Повторное списание)
+        // -------------------------------------------------------------
         if (newStatus === 'cancelled' && current.status !== 'cancelled') {
+          // Отмена брони (возвращаем места)
           if (current.tourDateId) {
             await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { increment: totalTickets } } });
           } else {
             await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { increment: totalTickets } } });
           }
+        } else if (current.status === 'cancelled' && newStatus !== 'cancelled') {
+          // Реактивация отмененной брони (списываем места заново)
+          if (current.tourDateId) {
+            const date = await tx.tourDate.findUnique({ where: { id: current.tourDateId } });
+            if (!date || date.spotsLeft < totalTickets) {
+              throw new Error('Невозможно восстановить бронь: недостаточно свободных мест');
+            }
+            await tx.tourDate.update({ where: { id: current.tourDateId }, data: { spotsLeft: { decrement: totalTickets } } });
+          } else {
+            const tour = await tx.tour.findUnique({ where: { id: current.tourId } });
+            if (!tour || tour.spotsLeft < totalTickets) {
+              throw new Error('Невозможно восстановить бронь: недостаточно свободных мест');
+            }
+            await tx.tour.update({ where: { id: current.tourId }, data: { spotsLeft: { decrement: totalTickets } } });
+          }
         }
 
-        // Обновляем бронь со всеми новыми полями
+        // -------------------------------------------------------------
+        // Обновление самой брони
+        // -------------------------------------------------------------
         return await tx.booking.update({
           where: { id: bookingId },
           data: { 
             status: newStatus,
-            // Записываем причину, если она передана
             rejectReason: (newStatus === 'rejected' || newStatus === 'awaiting_payment') ? rejectReason : null,
-            // Записываем кто и когда подтвердил
             confirmedBy: newStatus === 'confirmed' ? adminName : null,
             confirmedAt: newStatus === 'confirmed' ? new Date() : null,
-            // 🔥 ВТОРОЙ ШАНС: Сбрасываем таймер для Крона, если вернули из модерации в ожидание оплаты
             createdAt: (newStatus === 'awaiting_payment' && current.status === 'moderation') ? new Date() : undefined,
           },
           include: { member: true, tour: true, tourDate: true }
         });
       });
 
-      // 🔥 ДИСПЕТЧЕРИЗАЦИЯ УВЕДОМЛЕНИЙ ЧЕРЕЗ ХАБ ИЛИ НАПРЯМУЮ ГОСТЯМ
+      // -------------------------------------------------------------
+      // Уведомления Гостям (Хаб)
+      // -------------------------------------------------------------
       if (booking.memberId) {
         let eventId: AppEvent | null = null;
         
@@ -98,20 +115,20 @@ export const updateBookingStatusAction = withAdminAuth(
           });
         }
       } else if (booking.payerTgChatId) {
-        // 🔥 РЕШЕНИЕ 3: Ручная отправка для Гостей
+        // -------------------------------------------------------------
+        // Уведомления неавторизованным Гостям (Telegram Bot)
+        // -------------------------------------------------------------
         const meetingInfo = booking.tourDate?.meetingPoint || booking.tour.meetingPoint || 'Будет уточнено гидом';
         const meetingTime = booking.tourDate?.time || '08:30';
         const tourTitle = booking.tour.title;
         const shortId = booking.shortId;
 
         let msg = '';
-        let inlineButtons: any[] = []; // 🔥 ДОБАВЛЕНО: Массив для кнопок
+        let inlineButtons: any[] = [];
 
         switch (newStatus) {
           case 'confirmed':
             msg = `🎉 <b>Оплата получена!</b>\n\nВаше место в туре «${tourTitle}» официально забронировано.\n\n📍 <b>Место сбора:</b> ${meetingInfo}\n⏰ <b>Время:</b> ${meetingTime}`;
-            
-            // 🔥 ДОБАВЛЕНО: Детальный чек-лист как для зарегистрированных пользователей
             const checklist = booking.tour.checklist;
             if (Array.isArray(checklist) && checklist.length > 0) {
               msg += `\n\n🎒 <b>Список снаряжения:</b>\n` + checklist.map((c: any) => `• <b>${c.title}</b>: ${c.items}`).join('\n');
@@ -122,14 +139,13 @@ export const updateBookingStatusAction = withAdminAuth(
               msg += `\n\n🎒 <b>Важно:</b> ${booking.tour.importantInfo}`;
             }
 
-            // 🔥 ДОБАВЛЕНО: Добавляем ссылку на чат группы и связь с менеджером
             if (booking.tourDate?.groupChatUrl) {
               inlineButtons.push([{ text: '💬 Вступить в чат группы', url: booking.tourDate.groupChatUrl }]);
             }
             inlineButtons.push([{ text: '👨‍💻 Связь с менеджером', url: 'https://t.me/romansvtirase' }]);
             break;
 
-        case 'rejected':
+          case 'rejected':
           case 'awaiting_payment':
             msg = `❌ <b>Ошибка проверки чека</b>\n\nМы не смогли подтвердить оплату заявки <b>#${shortId}</b> на тур «${tourTitle}».`;
             if (rejectReason) {
@@ -153,6 +169,8 @@ export const updateBookingStatusAction = withAdminAuth(
           );
         }
       }
+
+      // Уведомление листа ожидания
       if (newStatus === 'cancelled') {
         await notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId);
       }
@@ -162,7 +180,6 @@ export const updateBookingStatusAction = withAdminAuth(
       revalidatePath('/account/dashboard');
       
       return { success: true };
-    // 🔥 ИСПРАВЛЕНО: Убрали any, используем unknown
     } catch (error: unknown) {
       const err = error as Error;
       console.error('Update Booking Status Error:', err);

@@ -12,10 +12,10 @@ import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 function escapeHtml(str: string | null | undefined): string {
   if (!str) return "";
   return str
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 export async function submitInquiry(data: InquiryInput) {

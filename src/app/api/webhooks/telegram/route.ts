@@ -57,32 +57,16 @@ export async function POST(req: Request) {
         return ok(); // Отдаем 200, чтобы Telegram перестал слать этот запрос
       }
     }
-    // ==========================================
-
-    // ==========================================
+      // ==========================================
     // СЦЕНАРИЙ 3: ОБРАБОТКА НАЖАТИЙ КНОПОК В TELEGRAM
     // ==========================================
     if (body.callback_query) {
       const callbackData = body.callback_query.data;
       if (!callbackData) return ok();
 
-      // 🔥 НОВОЕ: СЦЕНАРИЙ КЛИЕНТ ПОДТВЕРЖДАЕТ ИЛИ ОТМЕНЯЕТ УЧАСТИЕ (НАЛИЧНЫЕ/ИНОСТРАНЦЫ)
-      if (callbackData.startsWith('cash_confirm_') || callbackData.startsWith('cash_cancel_')) {
-        const bookingId = callbackData.replace(/cash_confirm_|cash_cancel_/, '');
-        const action = callbackData.startsWith('cash_confirm_') ? 'confirm' : 'cancel';
-        
-        const clientChatId = String(body.callback_query.message.chat.id);
-        const messageId = body.callback_query.message.message_id;
-        const originalText = body.callback_query.message.text || ''; // Забираем старый текст, чтобы он не пропал
-
-        if (action === 'confirm') {
-           // Клиент подтвердил: просто убираем кнопки и пишем "Успех"
-           const newText = originalText + '\n\n✅ <b>Участие подтверждено! Ждем вас!</b>';
-           await editClientMessage(clientChatId, messageId, newText);
-        } else {
-           // 🔥 НЕ отменяем автоматически. Переводим на менеджера.
-          
-          // 🔥 НОВОЕ: СЦЕНАРИЙ КЛИЕНТ НАЖАЛ "НАПИСАТЬ ОТЗЫВ"
+      // ==========================================
+      // 🔥 СЦЕНАРИЙ 1: КЛИЕНТ НАЖАЛ "НАПИСАТЬ ОТЗЫВ"
+      // ==========================================
       if (callbackData.startsWith('write_review_')) {
         const bookingId = callbackData.replace('write_review_', '');
         const clientChatId = String(body.callback_query.message.chat.id);
@@ -98,22 +82,28 @@ export async function POST(req: Request) {
         await answerClientCallbackQuery(body.callback_query.id);
         return ok();
       }
-          const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tour: true }});
+
+      // ==========================================
+      // 🔥 СЦЕНАРИЙ 2: КЛИЕНТ ПОДТВЕРЖДАЕТ ИЛИ ОТМЕНЯЕТ УЧАСТИЕ (НАЛИЧНЫЕ)
+      // ==========================================
+      if (callbackData.startsWith('cash_confirm_') || callbackData.startsWith('cash_cancel_')) {
+        const bookingId = callbackData.replace(/cash_confirm_|cash_cancel_/, '');
+        const action = callbackData.startsWith('cash_confirm_') ? 'confirm' : 'cancel';
+        
+        const clientChatId = String(body.callback_query.message.chat.id);
+        const messageId = body.callback_query.message.message_id;
+        const originalText = body.callback_query.message.text || '';
+
+        if (action === 'confirm') {
+           const newText = originalText + '\n\n✅ <b>Участие подтверждено! Ждем вас!</b>';
+           await editClientMessage(clientChatId, messageId, newText);
+        } else {
+           const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tour: true }});
            
            if (booking && booking.status !== 'cancelled') {
-               // 1. Уведомляем Администратора о запросе на отмену
                const adminMsg = `🚨 <b>ЗАПРОС НА ОТМЕНУ (Менее 24ч / 3 дней)</b>\nБронь #${booking.shortId} на тур «${booking.tour.title}».\n👤 Клиент: ${booking.name} (${booking.phone})\n\n⚠️ <b>Места ПОКА НЕ ОСВОБОЖДЕНЫ.</b>\nКлиент нажал кнопку отмены. Свяжитесь с ним для выяснения причин. Если отмена подтверждается — отмените бронь вручную в CRM (это автоматически вернет места в продажу и запустит Лист Ожидания).`;
-               
-               // Используем publishToTelegram (он уже импортирован в самом верху твоего файла)
-               await publishToTelegram(
-                 adminMsg,
-                 undefined,
-                 undefined,
-                 false,
-                 { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS } // Уйдет в топик с бронями
-               ); 
+               await publishToTelegram(adminMsg, undefined, undefined, false, { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS }); 
 
-               // 2. Меняем сообщение клиенту, направляя к менеджеру
                const newText = originalText + '\n\n⚠️ <b>Мы получили ваш запрос.</b>\nТак как до старта осталось мало времени, пожалуйста, напишите нашему менеджеру для решения этого вопроса: @romansvtirase';
                await editClientMessage(clientChatId, messageId, newText);
            } else {

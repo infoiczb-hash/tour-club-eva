@@ -7,9 +7,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
+    "test": "jest --runInBand",
     "test:unit": "jest --selectProjects unit",
-    "test:integration": "jest --selectProjects integration",
+    "test:integration": "jest --selectProjects integration --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "NODE_ENV=test jest --runInBand --coverage"

@@ -73,7 +73,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
       name: 'Иван Петров', phone: '+37377712345', social: 'ivan@example.com',
       ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
 
     const result = await createBookingAction(input);
@@ -101,7 +101,7 @@ describe('createBookingAction – интеграционные тесты', () =
         tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
         name: 'Иван Петров', phone: '+37377799999', social: '',
         ticketsAdult: 25, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-        currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+        currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
       };
       const result = await createBookingAction(input);
       expect(result.success).toBe(false);
@@ -119,7 +119,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
       name: 'Иван Петров', phone: '+37377712345', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     const first = await createBookingAction(input);
     expect(first.success).toBe(true);
@@ -138,7 +138,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
       name: 'Гость', phone: '+37377712345', social: '',
       ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'TEST10', website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'TEST10', website: '',
     };
 
     const result = await createBookingAction(input);
@@ -163,7 +163,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
       name: 'Участник клуба', phone: '+37377711111', social: '',
       ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: true, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: true, website: '',
     };
 
     const result = await createBookingAction(input);
@@ -191,7 +191,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
       name: 'Новичок', phone: '+37377722222', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: true, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: true, website: '',
     };
 
     const result = await createBookingAction(input);
@@ -209,7 +209,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тестовый тур', tourDate: 'завтра',
       name: 'Гость', phone: '+37377755555', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'FAKE_123', website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'FAKE_123', website: '',
     };
     const result = await createBookingAction(input);
     expect(result.success).toBe(false);
@@ -226,7 +226,7 @@ describe('createBookingAction – интеграционные тесты', () =
         tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
         name: 'Гонщик 1', phone: '+37377788881', social: '',
         ticketsAdult: 11, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-        currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+        currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
       };
       const input2 = {
         ...input1, name: 'Гонщик 2', phone: '+37377788882'
@@ -257,7 +257,7 @@ describe('createBookingAction – интеграционные тесты', () =
       name: 'И', // Слишком короткое
       phone: 'abc', // Невалидный телефон
       social: '', ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -275,7 +275,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Гость', phone: '+37377733333', social: '',
       ticketsAdult: 0, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0, // Все билеты по нулям
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -290,7 +290,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Spam Bot', phone: '+37377744444', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, 
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, 
       website: 'http://spam-link.com', // Боты часто заполняют скрытые поля
     };
     
@@ -315,7 +315,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourTitle: 'Тур без расписания', tourDate: 'Открытая дата',
       name: 'Прямой Бронировщик', phone: '+37377766666', social: '',
       ticketsAdult: 2, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -335,7 +335,7 @@ describe('createBookingAction – интеграционные тесты', () =
     const inactiveTour = await prisma.tour.create({
       data: {
         slug: 'inactive-tour', title: 'Старый тур', location: 'Локация',
-        price: 1000, currency: 'MDL', spots: 10, spotsLeft: 10,
+        price: 1000, currency: 'RUB', spots: 10, spotsLeft: 10,
         categoryId: (await prisma.tourCategory.findFirst())!.id,
         duration: '1 день', isActive: false, // <-- ВАЖНО
       },
@@ -345,7 +345,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId: inactiveTour.id, tourDateId: '', tourTitle: 'Старый тур', tourDate: 'Открытая дата',
       name: 'Гость', phone: '+37377777777', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -366,7 +366,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Карточник', phone: '+37377755511', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'biletpmr' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'biletpmr' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -387,7 +387,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Скидочник', phone: '+37377755522', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'MINUS100', website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, promoCode: 'MINUS100', website: '',
     };
     
     const result = await createBookingAction(input);
@@ -416,7 +416,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Хакер', phone: '+37377755533', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const resultExpired = await createBookingAction({ ...baseInput, promoCode: 'EXPIRED' });
@@ -441,7 +441,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Участник', phone: '+37377755544', social: '',
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, 
+      currency: 'RUB', paymentMethod: 'cash' as const, 
       useBonuses: true, // И бонусы
       promoCode: 'SUPER90', // И дикий промокод
       website: '',
@@ -462,7 +462,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Семья', phone: '+37377755599', social: '',
       ticketsAdult: 1, ticketsChild: 2, ticketsMember: 1, ticketsFamily: 1,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -487,7 +487,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Почтовик', phone: '+37377755566', social: 'tourist@gmail.com', // Валидный email
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -505,7 +505,7 @@ describe('createBookingAction – интеграционные тесты', () =
       tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
       name: 'Телеграммер', phone: '+37377755577', social: '@ivan_tg_123', // Никнейм, а не email
       ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'MDL', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
     
     const result = await createBookingAction(input);
@@ -513,6 +513,77 @@ describe('createBookingAction – интеграционные тесты', () =
     
     // Resend мок НЕ должен вызываться
     expect(mockResendEmailsSend).not.toHaveBeenCalled();
+  });
+
+  // 21. ПРОМОКОД FIXED БОЛЬШЕ СУММЫ ЗАКАЗА
+  it('промокод fixed со скидкой больше суммы заказа: totalPrice не уходит в минус', async () => {
+    await prisma.promoCode.create({
+      data: { code: 'BIGDISCOUNT', discount: 9999, type: 'fixed', isActive: true },
+    });
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Гость', phone: '+37377756001', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false,
+      promoCode: 'BIGDISCOUNT', website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+
+    expect(result.totalPrice).toBe(0);
+    const booking = await prisma.booking.findUnique({ where: { id: result.bookingId } });
+    expect(booking!.totalPrice).toBe(0);
+    expect(booking!.discount).toBe(1000); // списалось не больше суммы заказа
+  });
+
+  // 22. CAP 10% НА БОНУСЫ
+  it('списывает бонусы не более 10% от суммы заказа, даже если баланс больше', async () => {
+    const member = await prisma.memberProfile.findFirst({ where: { id: memberId! } });
+    mockGetUser.mockResolvedValue({ data: { user: { id: member!.userId } }, error: null });
+
+    const input = {
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Участник', phone: '+37377756002', social: '',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: true, website: '',
+    };
+
+    const result = await createBookingAction(input);
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('Expected success');
+
+    // 1 билет = 1000, 10% = 100, баланс 500 → спишется 100, останется 400
+    expect(result.totalPrice).toBe(900);
+    const updatedMember = await prisma.memberProfile.findUnique({ where: { id: memberId! } });
+    expect(updatedMember!.balance).toBe(400);
+  });
+
+  // 23. ПОЛЕ EMAIL КОРРЕКТНО ЗАПИСЫВАЕТСЯ В БРОНЬ
+  it('сохраняет email в booking.email если social валидный адрес, иначе null', async () => {
+    const r1 = await createBookingAction({
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Почтовик', phone: '+37377756003', social: 'client@mail.com',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    });
+    expect(r1.success).toBe(true);
+    if (!r1.success) throw new Error('Expected success');
+    const b1 = await prisma.booking.findUnique({ where: { id: r1.bookingId } });
+    expect(b1!.email).toBe('client@mail.com');
+
+    const r2 = await createBookingAction({
+      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+      name: 'Телеграммер', phone: '+37377756004', social: '@tg_user',
+      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+      currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
+    });
+    expect(r2.success).toBe(true);
+    if (!r2.success) throw new Error('Expected success');
+    const b2 = await prisma.booking.findUnique({ where: { id: r2.bookingId } });
+    expect(b2!.email).toBeNull();
   });
 
 });

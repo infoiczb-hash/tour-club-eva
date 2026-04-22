@@ -5,14 +5,14 @@ import { Redis } from '@upstash/redis';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { revalidatePath } from 'next/cache';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ ВОЗВРАЩЕН
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 QStash вернулся на место
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
+import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН ИМПОРТ АУДИТА
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
 const MIN_INTERVAL_MS = 55 * 60 * 1000; // 55 минут защита от двойного запуска
 
-// Временные рамки (в часах)
 const REMINDER_HOURS = 24; 
 const CANCEL_HOURS = 48;   
 
@@ -37,13 +37,13 @@ async function handler(req: Request) {
     let cancelledCount = 0;
     let remindedCount = 0;
 
-    // 🔥 ОПТИМИЗАЦИЯ: Собираем все долгие задачи (уведомления) в массив, чтобы выполнить параллельно
+    // 🔥 ОПТИМИЗАЦИЯ: Массив для параллельной отправки (чтобы уложиться в 10 сек лимита Vercel)
     const notificationPromises: Promise<any>[] = [];
 
     for (const booking of deadSouls) {
       try {
         const ageInHours = (Date.now() - booking.createdAt.getTime()) / (1000 * 60 * 60);
-        const shortId = booking.shortId || parseInt(booking.id.substring(0, 4), 16); // Фолбэк
+        const shortId = booking.shortId || parseInt(booking.id.substring(0, 4), 16); 
 
         // --- ЛОГИКА 1: ПРОШЛО 48 ЧАСОВ (ОТМЕНА) ---
         if (ageInHours >= CANCEL_HOURS) {
@@ -61,7 +61,15 @@ async function handler(req: Request) {
 
           cancelledCount++;
 
-          // Добавляем отправку уведомления в массив задач (не ждем через await прямо тут)
+          // ✅ ИСПРАВЛЕНИЕ 2: АУДИТ ОТМЕНЫ
+          // Добавили асинхронное логирование, чтобы оно не тормозило основной цикл
+          Promise.resolve().then(() => {
+            logSystemAction('BOOKING_AUTO_CANCELLED_BY_CRON', {
+              targetId: booking.id,
+              changes: { shortId, ageInHours: Math.round(ageInHours), tourTitle: booking.tour.title }
+            }).catch(console.error);
+          });
+
          if (booking.memberId) {
             notificationPromises.push(
               NotificationHub.dispatch({
@@ -71,14 +79,12 @@ async function handler(req: Request) {
               })
             );
           } else if (booking.payerTgChatId) {
-            // 🔥 ДОБАВЛЕНО: Уведомление для гостей без аккаунта
             const msg = `🚫 <b>Бронь аннулирована</b>\n\nВаша заявка <b>#${shortId}</b> на тур «${booking.tour.title}» была отменена из-за отсутствия оплаты в течение 48 часов.\n\nЕсли вы хотите поехать, пожалуйста, оформите новую заявку на сайте.`;
             notificationPromises.push(
               sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
             );
           }
 
-          // 🔥 Снайпинг: места физически освободились, зовем ждунов
           notificationPromises.push(notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId));
         }
 
@@ -86,8 +92,7 @@ async function handler(req: Request) {
         else if (ageInHours >= REMINDER_HOURS) {
           const redisKey = `reminder_sent:${booking.id}`;
           const isReminded = await redis.get(redisKey);
-if (!isReminded) {
-            // Добавляем напоминание в массив задач
+          if (!isReminded) {
             if (booking.memberId) {
                notificationPromises.push(
                  NotificationHub.dispatch({
@@ -97,7 +102,6 @@ if (!isReminded) {
                  })
                );
             } else if (booking.payerTgChatId) {
-               // 🔥 ДОБАВЛЕНО: Напоминание для гостей без аккаунта
                const msg = `⚠️ <b>Ожидается оплата</b>\n\nНапоминаем, что у вас осталось 24 часа на оплату заявки <b>#${shortId}</b> на тур «${booking.tour.title}».\n\nПожалуйста, отправьте скриншот перевода или файл билета BiletPMR в этот чат, иначе бронь будет автоматически отменена.`;
                notificationPromises.push(
                  sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
@@ -108,13 +112,11 @@ if (!isReminded) {
             remindedCount++;
           }
         }
-
       } catch (err) {
         console.error(`Ошибка обработки брони ${booking.id}:`, err);
       }
     }
 
-    // 🔥 Выполняем все сетевые запросы Хаба и Листа ожидания параллельно! Это спасет от таймаута.
     if (notificationPromises.length > 0) {
       await Promise.allSettled(notificationPromises);
     }
@@ -139,6 +141,6 @@ if (!isReminded) {
   }
 }
 
-// 🔥 Оборачиваем обработчик в HOC от Qstash для безопасного вызова
+// 🔥 Оборачиваем обработчик обратно в Qstash
 export const GET = verifySignatureAppRouter(handler);
 export const POST = verifySignatureAppRouter(handler);

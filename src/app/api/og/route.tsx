@@ -240,21 +240,20 @@ const CheckIcon = ({ color, size = 32 }: { color: string; size?: number }) => (
 /** 1. Адаптивная система размеров в зависимости от формата */
 function getScaleConfig(format: SmmFormat | null) {
   const isStory = format === 'story';
-  const isPost = format === 'post';
-  const isEvent = format === 'event';
-
+  
   return {
-    layoutPadding: isStory ? '100px 80px' : (isPost ? '60px' : '80px 60px'),
-    cardPadding: isStory ? '60px' : '48px',
-    titleSize: isStory ? '72px' : (isPost ? '56px' : '64px'),
-    textSize: isStory ? '36px' : (isPost ? '28px' : '32px'),
-    iconSize: isStory ? 48 : 36,
-    gap: isStory ? '32px' : '24px',
-    borderRadius: isStory ? '48px' : '36px',
+    layoutPadding: isStory ? '100px 60px' : '60px 40px',
+    cardPadding: isStory ? '80px 60px' : '60px 40px',
+    titleSize: isStory ? '96px' : '82px',      // Гигантские заголовки
+    textSize: isStory ? '54px' : '46px',       // Читаемый основной текст
+    subTextSize: isStory ? '38px' : '32px',    // Крупные подписи
+    iconSize: isStory ? 72 : 60,               // Большие иконки
+    gap: isStory ? '50px' : '36px',
+    borderRadius: isStory ? '60px' : '44px',
   };
 }
 
-/** 2. Премиальная подложка: глушит фон и кладет текст в стеклянную карточку */
+/** 2. Премиальная подложка: 100% контрастность для текста */
 function MagazineCard({ 
   p, 
   children, 
@@ -269,33 +268,31 @@ function MagazineCard({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: '#020617', position: 'relative', fontFamily: 'Montserrat' }}>
       
-      {/* 1. ФОН: Растянутое фото */}
+      {/* 1. ФОН: Фото с прозрачностью 15% (только намек на текстуру) */}
       {p.imageUrl && (
-        <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={getSafeImageUrl(p.imageUrl)} width={p.width} height={p.height} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.15 }} />
       )}
       
-      {/* 2. ЗАТЕНЕНИЕ: Убиваем пестроту фото, оставляя текстуру (Решение Проблемы 4) */}
-      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)' }} />
+      {/* 2. ПОДЛОЖКА: Глухой темный цвет для читаемости */}
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(2, 6, 23, 0.85)' }} />
 
-      {/* 3. КОНТЕЙНЕР КАРТОЧКИ */}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: scale.layoutPadding, position: 'relative', zIndex: 10, justifyContent: 'center' }}>
         
-        {/* 4. САМА СТЕКЛЯННАЯ ПЛАШКА */}
+        {/* 3. КОНТЕЙНЕР: Без прозрачности, белый текст на темном */}
         <div style={{
            display: 'flex', 
            flexDirection: 'column',
            alignItems: align,
-           backgroundColor: 'rgba(15, 23, 42, 0.90)', // Плотный темный цвет
-           border: '1px solid rgba(255,255,255,0.15)', // Тонкая граница (стекло)
-           borderLeft: `12px solid ${p.brandColor}`, // Цветовой акцент бренда слева
+           backgroundColor: '#0f172a', 
+           border: '2px solid rgba(255,255,255,0.1)',
+           borderLeft: `20px solid ${p.brandColor}`, // Акцентная полоса
            borderRadius: scale.borderRadius,
            padding: scale.cardPadding,
-           boxShadow: '0 40px 80px rgba(0,0,0,0.8)', // Мощная тень для отрыва от фона
+           boxShadow: '0 50px 100px rgba(0,0,0,0.9)',
            width: '100%'
         }}>
           {children}
         </div>
-
       </div>
     </div>
   );
@@ -395,38 +392,29 @@ function PriceBlock({ p, priceFontSize, currencyFontSize, labelFontSize, badgeFo
 // 1. СЛАЙД "ЛОГИСТИКА"
 function renderLogisticsSlide(p: OgParams) {
   const scale = getScaleConfig(p.format);
+  const items = [
+    { icon: <MapPinIcon color={p.brandColor} size={scale.iconSize} />, label: 'МЕСТО ВСТРЕЧИ', value: p.meetingPoint || p.location },
+    { icon: <ClockIcon color={p.brandColor} size={scale.iconSize} />, label: 'ВРЕМЯ', value: p.duration },
+    { icon: <CompassIcon color={p.brandColor} size={scale.iconSize} />, label: 'МАРШРУТ', value: p.route },
+    // ✅ ДОБАВЛЕНО: Вывод гида
+    { icon: <UserIcon color={p.brandColor} size={scale.iconSize} />, label: 'ГИД', value: p.guideName },
+  ].filter(i => i.value);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', flex: 1 }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
-         <CompassIcon color={p.brandColor} size={scale.iconSize} />
-         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '18px', textTransform: 'uppercase' }}>{p.slideTitle || 'ЛОГИСТИКА'}</span>
-      </div>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: scale.gap, marginTop: '20px' }}>
-        {p.meetingPoint && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <MapPinIcon color={p.brandColor} size={scale.iconSize} />
-            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Место: <span style={{ color: 'white' }}>{p.meetingPoint}</span></span>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+      <span style={{ fontSize: scale.subTextSize, color: p.brandColor, fontWeight: 900, marginBottom: '24px', letterSpacing: '4px' }}>ЛОГИСТИКА</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: scale.gap }}>
+        {items.map((item, i) => (
+          // ✅ ДОБАВЛЕНО: Полупрозрачный фон карточки (glassmorphism) и отступы
+          <div key={i} style={{ display: 'flex', alignItems: 'center', width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '24px 32px' }}>
+            <div style={{ display: 'flex', marginRight: '30px' }}>{item.icon}</div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              // ✅ ДОБАВЛЕНО: Вывод label
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '28px', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '2px' }}>{item.label}</span>
+              <span style={{ color: 'white', fontSize: scale.textSize, fontWeight: 900, textTransform: 'uppercase' }}>{item.value}</span>
+            </div>
           </div>
-        )}
-        {p.duration && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <ClockIcon color={p.brandColor} size={scale.iconSize} />
-            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Длительность: <span style={{ color: 'white' }}>{p.duration}</span></span>
-          </div>
-        )}
-        {p.route && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <CompassIcon color={p.brandColor} size={scale.iconSize} />
-            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Маршрут: <span style={{ color: 'white' }}>{p.route}</span></span>
-          </div>
-        )}
-        {p.guideName && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <UserIcon color={p.brandColor} size={scale.iconSize} />
-            <span style={{ color: '#94a3b8', fontSize: scale.textSize, fontWeight: 700 }}>Гид: <span style={{ color: 'white' }}>{p.guideName}</span></span>
-          </div>
-        )}
+        ))}
       </div>
     </div>
   );
@@ -434,25 +422,34 @@ function renderLogisticsSlide(p: OgParams) {
 
 // 2. СЛАЙД "ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ"
 function renderHighlightsSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
   let items: any[] = [];
   try { if (p.highlightsRaw) items = JSON.parse(p.highlightsRaw); } catch (e) {}
   if (!Array.isArray(items) || items.length === 0) return renderDefaultSlide(p);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
-        <SparklesIcon color={p.brandColor} size={48} />
-        <span style={{ fontSize: '60px', color: 'white', fontWeight: 900, marginLeft: '18px' }}>{p.slideTitle || 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ'}</span>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
+        <SparklesIcon color={p.brandColor} size={scale.iconSize} />
+        <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '24px', textTransform: 'uppercase' }}>{p.slideTitle || 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ'}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
         {items.slice(0, 3).map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '24px', flexShrink: 0, width: '64px', height: '64px', backgroundColor: 'rgba(15,23,42,1)', borderRadius: '16px' }}>
-              <CheckIcon color={p.brandColor} size={32} />
+          // ✅ ИЗМЕНЕНО: Заменили нижнее подчеркивание на полноценную карточку
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', width: '100%', padding: '32px', backgroundColor: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '30px', flexShrink: 0, marginTop: '4px' }}>
+              <CheckIcon color={p.brandColor} size={Math.round(scale.iconSize * 0.9)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <span style={{ color: 'white', fontSize: '32px', fontWeight: 900, marginBottom: '12px' }}>{item.title || 'Впечатление'}</span>
-              <span style={{ color: '#94a3b8', fontSize: '24px', fontWeight: 700, lineHeight: 1.4 }}>{item.description || item.desc || ''}</span>
+              <span style={{ color: 'white', fontSize: scale.textSize, fontWeight: 900, marginBottom: '12px', lineHeight: 1.2 }}>
+                {item.title || 'Впечатление'}
+              </span>
+              {(item.description || item.desc) && (
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: scale.subTextSize, fontWeight: 600, lineHeight: 1.4 }}>
+                  {item.description || item.desc}
+                </span>
+              )}
             </div>
           </div>
         ))}
@@ -467,69 +464,84 @@ function renderListSlide(p: OgParams) {
   const lines = p.slideText.split('\n').filter(Boolean);
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', justifyContent: 'center', flex: 1 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: scale.gap }}>
          <SparklesIcon color={p.brandColor} size={scale.iconSize} />
-         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '18px', textTransform: 'uppercase' }}>{p.slideTitle}</span>
+         <span style={{ fontSize: scale.titleSize, color: 'white', fontWeight: 900, marginLeft: '24px' }}>{p.slideTitle}</span>
       </div>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Ограничиваем количество пунктов до 7, чтобы не разорвало карточку в сториз */}
-        {lines.slice(0, 7).map((line, i) => {
-          const cleanLine = line.replace(/^[\u2022\-\*]\s*/, '').trim();
-          return (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', padding: '8px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '20px', flexShrink: 0, marginTop: '4px' }}>
-                <CheckIcon color={p.brandColor} size={scale.iconSize} />
-              </div>
-              <span style={{ color: '#e2e8f0', fontSize: scale.textSize, fontWeight: 700, lineHeight: 1.4, flex: 1 }}>
-                {cleanLine}
-              </span>
+     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+        {lines.slice(0, 6).map((line, i) => (
+          // ✅ ИЗМЕНЕНО: Обернули в карточку, добавили контрастности тексту
+          <div key={i} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '24px 32px', backgroundColor: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CheckIcon color={p.brandColor} size={Math.round(scale.iconSize * 0.8)} />
             </div>
-          );
-        })}
+            <span style={{ color: 'white', fontSize: scale.textSize, fontWeight: 800, marginLeft: '25px', lineHeight: 1.3 }}>
+              {line.replace(/^[\u2022\-\*]\s*/, '').trim()}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
+
+
 // 4. СЛАЙД "СТОИМОСТЬ И ЗАПИСЬ"
 function renderPriceSlide(p: OgParams) {
+  const scale = getScaleConfig(p.format);
+  const isStory = p.format === 'story';
+  const badgeSize = isStory ? '36px' : '28px';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', justifyContent: 'center' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(30,41,59,0.95)', borderRadius: '32px', padding: '48px', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px', borderBottom: '2px solid rgba(255,255,255,0.1)', paddingBottom: '32px' }}>
-           <div style={{ display: 'flex', flexDirection: 'column' }}>
-             <span style={{ fontSize: '24px', color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px' }}>СТОИМОСТЬ УЧАСТИЯ</span>
-             <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
-               <span style={{ fontSize: '96px', color: 'white', fontWeight: 900, lineHeight: 1 }}>{p.priceStr || '???'}</span>
-               <span style={{ fontSize: '40px', color: p.brandColor, fontWeight: 900 }}>{p.currency}</span>
-             </div>
-           </div>
-           {p.spotsLeft && (
-             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-               <span style={{ fontSize: '24px', color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '12px' }}>СВОБОДНЫХ МЕСТ</span>
-               <span style={{ fontSize: '64px', color: p.brandColor, fontWeight: 900, lineHeight: 1 }}>{p.spotsLeft}</span>
-             </div>
-           )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '48px' }}>
-          <span style={{ fontSize: '24px', color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>ДОСТУПНЫЕ ТАРИФЫ</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '32px', color: '#e2e8f0', fontWeight: 700 }}>🎟️ Взрослый</span>
-            <span style={{ fontSize: '32px', color: 'white', fontWeight: 900 }}>{p.priceStr || '???'} {p.currency}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+      
+      {/* Контент слайда */}
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: scale.gap }}>
+         <span style={{ fontSize: scale.subTextSize, color: '#94a3b8', fontWeight: 900, marginBottom: '10px' }}>СТОИМОСТЬ УЧАСТИЯ</span>
+         <div style={{ display: 'flex', alignItems: 'baseline', gap: '20px' }}>
+           <span style={{ fontSize: isStory ? '140px' : '110px', color: 'white', fontWeight: 900 }}>{p.priceStr}</span>
+           <span style={{ fontSize: '50px', color: p.brandColor, fontWeight: 900 }}>{p.currency}</span>
+         </div>
+         
+         {/* ✅ ДОБАВЛЕНО: Вывод дополнительных категорий билетов */}
+         {(p.priceChildStr || p.priceMemberStr || p.priceFamilyStr) && (
+          <div style={{ display: 'flex', gap: '16px', marginTop: '24px', flexWrap: 'wrap' }}>
+            {p.priceChildStr && (
+              <span style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 24px', borderRadius: '20px', fontSize: badgeSize, color: '#e2e8f0', fontWeight: 700 }}>
+                👶 ДЕТИ {p.priceChildStr} {p.currency}
+              </span>
+            )}
+            {p.priceMemberStr && (
+              <span style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)', border: '1px solid #14b8a6', padding: '12px 24px', borderRadius: '20px', fontSize: badgeSize, color: '#5eead4', fontWeight: 700 }}>
+                👑 КЛУБ {p.priceMemberStr} {p.currency}
+              </span>
+            )}
+            {p.priceFamilyStr && (
+              <span style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 24px', borderRadius: '20px', fontSize: badgeSize, color: '#e2e8f0', fontWeight: 700 }}>
+                👨‍👩‍👧 СЕМЬЯ {p.priceFamilyStr} {p.currency}
+              </span>
+            )}
           </div>
-          {p.priceChildStr && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '32px', color: '#f472b6', fontWeight: 700 }}>👶 Детский (до 13 лет)</span>
-              <span style={{ fontSize: '32px', color: 'white', fontWeight: 900 }}>{p.priceChildStr} {p.currency}</span>
-            </div>
-          )}
-        </div>
+        )}
+      </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: p.brandColor, borderRadius: '24px', padding: '32px', marginTop: 'auto' }}>
-           <span style={{ fontSize: '40px', color: '#020617', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>ЗАПИСАТЬСЯ В ГРУППУ</span>
+      {p.spotsLeft && (
+        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px 40px', borderRadius: '20px', marginBottom: scale.gap }}>
+          <span style={{ fontSize: scale.textSize, color: 'white', fontWeight: 900 }}>Свободных мест: </span>
+          <span style={{ fontSize: scale.textSize, color: p.brandColor, fontWeight: 900, marginLeft: '15px' }}>{p.spotsLeft}</span>
         </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: p.brandColor, borderRadius: '24px', padding: '35px', marginBottom: 'auto' }}>
+         <span style={{ fontSize: isStory ? '48px' : '40px', color: '#020617', fontWeight: 900, textTransform: 'uppercase' }}>ЗАПИСАТЬСЯ В ГРУППУ</span>
+      </div>
+
+      {/* ✅ ДОБАВЛЕНО: Хардкод-футер, прибитый к низу */}
+      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '40px', padding: '24px', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px' }}>
+        <span style={{ fontSize: isStory ? '32px' : '26px', color: '#94a3b8', fontWeight: 600, textAlign: 'center', lineHeight: 1.4 }}>
+          Билеты на мероприятия по ссылке в шапке профиля<br />или на сайте <span style={{ color: 'white', fontWeight: 800 }}>evatur.club</span>
+        </span>
       </div>
     </div>
   );

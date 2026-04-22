@@ -329,6 +329,10 @@ if (data.tourDateId && data.tourDateId.length > 5) {
         }
 
         // ---------- 6. Создаём бронь ----------
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const validEmail = (data.social && emailRegex.test(data.social.trim())) ? data.social.trim() : null;
+        
         const newBooking = await tx.booking.create({
           data: {
             shortId: newShortId,
@@ -337,7 +341,7 @@ if (data.tourDateId && data.tourDateId.length > 5) {
             memberId: currentMemberId,
             name: data.name,
             phone: cleanPhone,
-            email: data.social?.includes('@') ? data.social : null,
+            email: validEmail,
             social: data.social || null,
             ticketsAdult: data.ticketsAdult,
             ticketsChild: data.ticketsChild,

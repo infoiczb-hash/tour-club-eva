@@ -20,7 +20,10 @@ export async function GET(req: Request) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    // Ищем брони со вчерашних туров
+    // ✅ ИСПРАВЛЕНИЕ 5: Документируем edge-case для однодневных туров
+    // ВНИМАНИЕ: Если однодневный тур закончился сегодня глубокой ночью (напр. в 02:00), 
+    // но администратор не указал endDate в БД, крон запросит отзыв по startDate (вчерашнему дню).
+    // Правило для контент-менеджеров: Для туров с ночными возвратами ВСЕГДА указывать endDate!
     const bookings = await prisma.booking.findMany({
       where: {
         status: 'confirmed',

@@ -361,29 +361,9 @@ export const deletePostAction = withAdminAuth(
 );
 
 // ==========================================
-// 4. ТУРЫ (SOFT DELETE + АУДИТ)
+// 4. ТУРЫ (SOFT DELETE + АУДИТ) УДАЛЕН такая функция есть tours/ts
 // ==========================================
 
-export const deleteTourAction = withAdminAuth(
-  withAdminAudit({
-    actionName: 'DELETE_TOUR',
-    getTargetId: (id: string) => id,
-  })(async (id: string) => {
-    try {
-      const tour = await prisma.tour.findUnique({ where: { id }, select: { slug: true } });
-      await prisma.tour.update({ 
-        where: { id },
-        data: { deletedAt: new Date(), isActive: false }
-      });
-      revalidatePath('/admin');
-      revalidatePath('/tour');
-      if (tour?.slug) revalidatePath(`/tour/${tour.slug}`); 
-      return { success: true };
-    } catch (error) {
-      return { error: 'Ошибка при удалении тура' };
-    }
-  })
-);
 
 // ==========================================
 // 5. КОНТЕНТ-БЛОКИ И CRM (АУДИТ)
