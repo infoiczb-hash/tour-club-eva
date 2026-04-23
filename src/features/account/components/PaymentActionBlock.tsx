@@ -164,7 +164,7 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
                     </Link>
                     <label className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-600 shadow-lg active:scale-95">
                       {isUploading ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
-                      <span>{isUploading ? 'Загрузка...' : 'На сайт'}</span>
+                      <span>{isUploading ? 'Загрузка...' : 'Загрузить чек'}</span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
                     </label>
                   </div>
@@ -189,7 +189,7 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
                     </Link>
                     <label className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-600 shadow-lg active:scale-95">
                       {isUploading ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
-                      <span>{isUploading ? 'Загрузка...' : 'На сайт'}</span>
+                      <span>{isUploading ? 'Загрузка...' : 'Загрузить чек'}</span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
                     </label>
                   </div>
@@ -209,7 +209,7 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
                   </Link>
                   <label className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-600 shadow-lg active:scale-95">
                     {isUploading ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
-                    <span>{isUploading ? 'Загрузка...' : 'На сайт'}</span>
+                    <span>{isUploading ? 'Загрузка...' : 'Загрузить чек'}</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
                   </label>
                 </div>

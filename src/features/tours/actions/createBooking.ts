@@ -437,12 +437,16 @@ if (data.tourDateId && data.tourDateId.length > 5) {
           bookingId: transactionResult.booking.id,
           shortId: transactionResult.shortId,
           tourTitle: data.tourTitle,
+          tourDate:  data.tourDate,
           tourSlug: transactionResult.tourSlug,
           totalPrice: transactionResult.finalPrice,
           currency: data.currency,
           paymentMethod: data.paymentMethod,
           biletpmrLink: transactionResult.paymentLinks.biletpmrLink,
           apbQrLink: transactionResult.paymentLinks.apbQrLink,
+          guests:          data.guests,             // ← ДОБАВИТЬ
+          name:            data.name,               // ← ДОБАВИТЬ (фолбэк)
+          appliedDiscount: transactionResult.appliedDiscount, // ← ДОБАВИТЬ
         }
       });
     }

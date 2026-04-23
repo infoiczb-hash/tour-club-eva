@@ -381,7 +381,9 @@ export async function POST(req: Request) {
           where: { id: booking.id },
           data: { 
             status: 'moderation', 
-            paymentProofUrl: receiptUrl 
+            paymentProofUrl: receiptUrl,
+            rejectReason: null,
+            createdAt: new Date()
           }
         });
 

@@ -46,7 +46,6 @@ export type ScanResult =
  */
 function parseQrUrl(rawText: string): { type: 'booking' | 'member' | null, value: string | null } {
   try {
-    // Пытаемся распарсить как URL (даже если передали просто путь /admin/scan?b=123)
     const url = new URL(rawText, process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club');
     const b = url.searchParams.get('b');
     const m = url.searchParams.get('m');
@@ -54,12 +53,19 @@ function parseQrUrl(rawText: string): { type: 'booking' | 'member' | null, value
     if (b) return { type: 'booking', value: b };
     if (m) return { type: 'member', value: m };
   } catch {
-    // Fallback: если вдруг это не URL, а просто строка (например, ввели вручную "123")
-    // Если состоит только из цифр - считаем, что это shortId брони
+    // Если это не URL, а просто строка (например, ввели вручную "123")
     if (/^\d+$/.test(rawText.trim())) return { type: 'booking', value: rawText.trim() };
   }
   
   return { type: null, value: null };
+}
+
+/**
+ * Проверяет, является ли строка валидным UUID
+ */
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 }
 
 /**
@@ -79,23 +85,32 @@ export const processScanAction = withAdminAuth(async (qrText: string): Promise<S
 
     // --- СЦЕНАРИЙ А: БИЛЕТ (БРОНЬ) ---
     if (type === 'booking') {
+      let booking = null;
       const shortIdNum = parseInt(value, 10);
-      
-      const booking = await prisma.booking.findFirst({
-        where: {
-          OR: [
-            { id: value }, // Если передали UUID
-            ...(isNaN(shortIdNum) ? [] : [{ shortId: shortIdNum }]) // Если передали короткий номер
-          ]
-        },
-        include: {
-          tour: { select: { title: true, currency: true } },
-          tourDate: { select: { startDate: true, time: true } }
-        }
-      });
+
+      // 1. Поиск по shortId (число)
+      if (!isNaN(shortIdNum)) {
+        booking = await prisma.booking.findFirst({
+          where: { shortId: shortIdNum },
+          include: {
+            tour: { select: { title: true, currency: true } },
+            tourDate: { select: { startDate: true, time: true } }
+          }
+        });
+      }
+
+      // 2. Если не нашли и value похож на UUID — поиск по id
+      if (!booking && isValidUUID(value)) {
+        booking = await prisma.booking.findFirst({
+          where: { id: value },
+          include: {
+            tour: { select: { title: true, currency: true } },
+            tourDate: { select: { startDate: true, time: true } }
+          }
+        });
+      }
 
       if (booking) {
-        // Подсчитываем людей (взрослые + дети + клубники + семья*3)
         const totalTickets = 
           (booking.ticketsAdult || 0) + 
           (booking.ticketsChild || 0) + 
@@ -117,11 +132,12 @@ export const processScanAction = withAdminAuth(async (qrText: string): Promise<S
             discount: booking.discount,
             currency: booking.tour.currency || 'MDL',
             paymentMethod: booking.paymentMethod,
-            // Те самые новые поля из схемы Prisma:
-            checkedIn: (booking as any).checkedIn || false, 
-            checkedInAt: (booking as any).checkedInAt || null,
-            tour: booking.tour,
+            checkedIn: (booking).checkedIn || false, 
+            checkedInAt: (booking).checkedInAt || null,
+            tour: { title: booking.tour.title },
             tourDate: booking.tourDate
+              ? { startDate: booking.tourDate.startDate, time: booking.tourDate.time }
+              : null
           } 
         };
       }
@@ -129,6 +145,10 @@ export const processScanAction = withAdminAuth(async (qrText: string): Promise<S
 
     // --- СЦЕНАРИЙ Б: УЧАСТНИК КЛУБА (MEMBER) ---
     if (type === 'member') {
+      // memberId всегда UUID
+      if (!isValidUUID(value)) {
+        return { success: false, error: 'Неверный формат ID участника' };
+      }
       const member = await prisma.memberProfile.findUnique({
         where: { id: value },
         select: {
@@ -151,7 +171,6 @@ export const processScanAction = withAdminAuth(async (qrText: string): Promise<S
 
 /**
  * 2. Отметка присутствия (Чекин)
- * Завернуто в Аудит, так как это мутация данных!
  */
 export const checkInBookingAction = withAdminAuth(
   withAdminAudit({
@@ -162,16 +181,14 @@ export const checkInBookingAction = withAdminAuth(
       const booking = await prisma.booking.findUnique({ where: { id: bookingId }});
       if (!booking) throw new Error('Бронь не найдена');
 
-      // Если уже отмечен - снимаем отметку (тоггл), если нет - ставим
-      // Мы используем as any, пока Prisma Client не сгенерируется заново с твоими новыми полями
-      const isCurrentlyCheckedIn = (booking as any).checkedIn || false;
+      const isCurrentlyCheckedIn = (booking ).checkedIn || false;
 
       await prisma.booking.update({
         where: { id: bookingId },
         data: { 
           checkedIn: !isCurrentlyCheckedIn, 
           checkedInAt: !isCurrentlyCheckedIn ? new Date() : null 
-        } as any // as any временно для жесткой компиляции
+        } 
       });
       
       revalidatePath('/admin');

@@ -144,7 +144,7 @@ const [currentState, setCurrentState] = useState<ScannerState>('SCANNING');
   // ─── UI РЕНДЕРЫ ПО СОСТОЯНИЯМ ───
   
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
+<div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300 pb-24 pt-4 md:pt-0">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -159,7 +159,12 @@ const [currentState, setCurrentState] = useState<ScannerState>('SCANNING');
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm flex flex-col relative min-h-[60vh] md:min-h-[500px]">
+   <div className={clsx(
+  "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col relative",
+  currentState === 'RESULT' 
+    ? "overflow-visible min-h-0" 
+    : "overflow-hidden min-h-[50vh] md:min-h-[500px]"
+)}>
         
         {/* 1. STATE: SCANNING */}
         <div className={clsx("absolute inset-0 bg-black flex items-center justify-center transition-opacity duration-300 z-10", currentState === 'SCANNING' ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
@@ -204,11 +209,22 @@ const [currentState, setCurrentState] = useState<ScannerState>('SCANNING');
             >
               Попробовать снова
             </button>
-        </div>
+             {/* ✅ НОВОЕ */}
+    <button 
+      onClick={startScanning}
+      className="mt-3 w-full py-3 text-xs font-bold text-slate-500 hover:text-slate-700 uppercase tracking-widest transition-colors flex items-center justify-center gap-1"
+    >
+      Следующий <ArrowRight size={14}/>
+    </button>
+    </div>
 
      {/* 4. STATE: RESULT */}
-        <div className={clsx("absolute inset-0 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950 p-4 md:p-8 transition-opacity duration-300 z-30", currentState === 'RESULT' ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
-           
+       <div className={clsx(
+  "transition-opacity duration-300",
+  currentState === 'RESULT' 
+    ? 'opacity-100 relative p-4 md:p-8 bg-slate-50 dark:bg-slate-950 rounded-3xl' 
+    : 'opacity-0 pointer-events-none absolute inset-0'
+)}>
            {scanResult?.success && scanResult.type === 'booking' && (
               <BookingResultCard 
                  data={scanResult.data as ScannedBookingDTO} 

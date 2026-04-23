@@ -64,11 +64,14 @@ export async function uploadClientReceiptAction(bookingId: string, formData: For
     const receiptUrl = data.publicUrl;
 
     // 3. Обновляем статус брони на "Модерация"
+   // 3. Обновляем статус брони на "Модерация" и поднимаем наверх списка
     await prisma.booking.update({
       where: { id: bookingId },
       data: { 
         status: 'moderation', 
-        paymentProofUrl: receiptUrl 
+        paymentProofUrl: receiptUrl,
+        rejectReason: null, // 🔥 Очищаем старую причину отказа
+        createdAt: new Date() // 🔥 Подбрасываем бронь на самый верх в Админке!
       }
     });
 

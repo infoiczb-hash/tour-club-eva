@@ -1,16 +1,7 @@
 import * as React from 'react';
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-  Tailwind,
-  Button,
+  Body, Container, Head, Heading, Hr, Html,
+  Preview, Section, Text, Tailwind, Button, Link
 } from '@react-email/components';
 
 interface PostTourReviewEmailProps {
@@ -19,6 +10,9 @@ interface PostTourReviewEmailProps {
   points: number;
   level: string;
   bookingLink: string;
+  pointsToEarn?: number;
+  nextLevelPoints?: number;
+  pointsNeeded?: number;
 }
 
 export const PostTourReviewEmail = ({
@@ -27,66 +21,66 @@ export const PostTourReviewEmail = ({
   points,
   level,
   bookingLink,
+  pointsToEarn = 50,
+  nextLevelPoints = 500,
+  pointsNeeded,
 }: PostTourReviewEmailProps) => {
+  const remaining = pointsNeeded ?? (nextLevelPoints - points > 0 ? nextLevelPoints - points : 0);
+  
+  // Умная корректировка ссылки (направляем в историю поездок, а не в активные брони)
+  const historyLink = bookingLink.replace('/bookings', '/history');
+
   return (
     <Html>
       <Head />
-      <Preview>Как прошел тур «{tourTitle}»? Поделитесь впечатлениями и получите бонусы!</Preview>
+    <Preview>
+  {`${name}, как прошёл тур «${tourTitle}»? Напишите отзыв и получите +${pointsToEarn} баллов!`}
+</Preview>
       <Tailwind>
-        <Body className="bg-slate-50 font-sans text-slate-900">
-          <Container className="mx-auto my-10 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-xl">
-            <Section className="text-center mb-6">
-              <Heading className="text-2xl font-black text-slate-900 m-0 uppercase tracking-wider">
-                ТУРКЛУБ EVA
-              </Heading>
-              <Text className="text-[#2AABEE] font-bold m-0 mt-2 text-lg">
-                С возвращением! 🏕️
+        <Body className="bg-white font-sans text-slate-900">
+          <Container className="mx-auto my-10 p-4 max-w-[600px]">
+            <Heading className="text-2xl font-bold tracking-tight text-slate-900 m-0 mb-8">
+              С возвращением! 🏕️
+            </Heading>
+
+            <Section className="mb-8">
+              <Text className="text-base leading-relaxed m-0 mb-4">
+                Привет, {name}! Надеемся, что наше приключение «{tourTitle}» прошло отлично и вы успели перезагрузиться.
               </Text>
+              
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Ваш статус</Text>
+                <Text className="m-0 mb-4 text-lg font-bold text-slate-900">
+                  {level} <span className="text-teal-600 font-black">({points} баллов)</span>
+                </Text>
+                
+                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">До следующего уровня</Text>
+                <Text className="m-0 text-sm font-medium text-slate-700">
+                  Осталось {remaining} баллов. Оставьте отзыв, чтобы получить ещё <span className="text-teal-600 font-bold">+{pointsToEarn}</span>!
+                </Text>
+              </div>
             </Section>
 
-            <Hr className="border-slate-200 my-6" />
-
-            <Section>
-              <Text className="text-base">
-                Привет, <strong>{name}</strong>!
+            <Section className="mb-8">
+              <Text className="text-sm leading-relaxed m-0 mb-6 text-slate-600">
+                Помогите нам стать ещё лучше — поделитесь впечатлениями о работе гида, организации и маршруте. Это займёт буквально пару минут.
               </Text>
-              <Text className="text-base text-slate-600 leading-relaxed">
-                Выходные пролетели незаметно. Надеемся, вы успели отдохнуть и зарядиться энергией в нашем приключении <strong>«{tourTitle}»</strong>.
-              </Text>
-            </Section>
-
-            <Section className="bg-blue-50 rounded-xl p-6 my-6 border border-blue-100 text-center">
-              <Text className="m-0 mb-2 text-sm text-blue-500 font-bold uppercase tracking-widest">
-                Ваш прогресс
-              </Text>
-              <Text className="m-0 mb-1 text-base">
-                🏆 Текущий статус: <strong>{level}</strong>
-              </Text>
-              <Text className="m-0 text-base">
-                ⭐️ Накоплено: <strong>{points} баллов</strong>
-              </Text>
-            </Section>
-
-            <Section>
-              <Text className="text-base text-slate-600 leading-relaxed text-center">
-                Помогите нам стать еще лучше — оцените работу нашего гида и организацию поездки. За каждый опубликованный отзыв мы начисляем дополнительные бонусы, которыми можно оплатить следующие туры!
-              </Text>
-            </Section>
-
-            <Section className="text-center mt-8">
+              
               <Button
-                href={bookingLink}
-                className="bg-teal-500 text-white font-bold px-8 py-4 rounded-xl uppercase tracking-wider block w-full text-center"
+                href={historyLink}
+                className="bg-slate-900 text-white font-bold py-4 px-8 rounded-xl w-full text-center"
               >
-                Оценить тур и получить баллы
+                Написать отзыв (+{pointsToEarn} баллов)
               </Button>
             </Section>
 
-            <Hr className="border-slate-200 my-8" />
+            <Hr className="border-slate-100 my-8" />
 
-            <Section>
-              <Text className="text-xs text-slate-400 text-center leading-relaxed">
-                Спасибо, что путешествуете с нами. До новых встреч на маршрутах!
+            <Section className="text-center">
+              <Link href="https://t.me/romansvtirase" className="text-xs text-slate-400 underline">Связаться с руководством</Link>
+              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+                Турклуб ЭВА. Спасибо, что путешествуете с нами. <br />
+                До новых встреч на маршрутах! 🌲
               </Text>
             </Section>
           </Container>

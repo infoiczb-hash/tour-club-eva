@@ -20,16 +20,8 @@ export default function MemberQrCode({
 
   useEffect(() => {
     if (!canvasRef.current) return;
-
-    const payload = JSON.stringify({
-      id:   String(bookingShortId),
-      tour: tourTitle,
-      date: tourStartDate
-        ? tourStartDate.toLocaleDateString("ru-RU", {
-            day: "numeric", month: "long", year: "numeric",
-          })
-        : "Дата уточняется",
-    });
+    
+const payload = `https://evatur.club/admin/scan?b=${bookingShortId}`;
 
     QRCode.toCanvas(canvasRef.current, payload, {
       width: size,

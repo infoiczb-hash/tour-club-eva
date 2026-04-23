@@ -24,6 +24,7 @@ import { getGroupsManifest, GetGroupsManifestResult } from '@/features/admin/act
 import { GroupManifest } from './views/BookingsTab';
 import ScanTab from './views/ScanTab';
 import SmmTab from './views/SmmTab';
+import KayakingTab from '@/features/admin/components/views/KayakingTab';
 
 // FORMS
 import TourForm from './TourForm'; 
@@ -31,7 +32,6 @@ import GuideForm from './GuideForm';
 import PostForm from './PostForm';
 import ContentForm from './ContentForm';
 import ReviewForm from './ReviewForm'; 
-import AiAssistant from './AiAssistant';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -73,7 +73,7 @@ import {
 type AdminActionResult = { success: boolean; error?: string; data?: any; [key: string]: any };
 
 // TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' ;
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' | 'kayaking';
 interface BookingItem {
   id: string;
   user_name: string;
@@ -786,8 +786,8 @@ const loadGroupsManifest = useCallback(async () => {
         {activeTab === 'smm' && (
             <SmmTab />
         )}
-            
-      <AiAssistant />
-    </div>
+       {activeTab === 'kayaking' && <KayakingTab />}
+          
+       </div>
   );
 }

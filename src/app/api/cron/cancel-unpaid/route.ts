@@ -31,8 +31,18 @@ async function handler(req: Request) {
         status: 'awaiting_payment',
         createdAt: { lt: deadline24h }
       },
-      include: { member: true, tour: true }
-    });
+       include: {
+        member: true,
+        tour: {
+          select: {
+            title: true,
+            currency: true,
+            biletpmrLink: true,   // ← ДОБАВИТЬ
+            apbQrLink: true,      // ← ДОБАВИТЬ
+          },
+        },
+      },
+     });
 
     let cancelledCount = 0;
     let remindedCount = 0;
@@ -98,7 +108,14 @@ async function handler(req: Request) {
                  NotificationHub.dispatch({
                    eventId: 'PAYMENT_REMINDER_24H',
                    memberId: booking.memberId,
-                   data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
+                data: {
+                     bookingId:     booking.id,
+                     shortId:       shortId,
+                     tourTitle:     booking.tour.title,
+                     paymentMethod: booking.paymentMethod,   // ← ДОБАВИТЬ
+                     biletpmrLink:  booking.tour.biletpmrLink, // ← ДОБАВИТЬ
+                     apbQrLink:     booking.tour.apbQrLink,    // ← ДОБАВИТЬ
+                   },
                  })
                );
             } else if (booking.payerTgChatId) {
@@ -116,15 +133,22 @@ async function handler(req: Request) {
         console.error(`Ошибка обработки брони ${booking.id}:`, err);
       }
     }
+if (cancelledCount > 0) {
+  const cancelNames = deadSouls
+    .filter(b => (Date.now() - b.createdAt.getTime()) / (1000 * 60 * 60) >= CANCEL_HOURS)
+    .map(b => `• #${b.shortId} ${b.name} — «${b.tour.title}»`)
+    .join('\n');
 
-    if (notificationPromises.length > 0) {
-      await Promise.allSettled(notificationPromises);
-    }
+  await sendToUserTelegramAdvanced(
+    process.env.TELEGRAM_ADMIN_CHAT_ID!,
+    `🚫 <b>Авто-отмена: ${cancelledCount} брон(и/ей)</b>\n\nМеста возвращены в продажу:\n${cancelNames}`,
+    [],
+    true
+  ).catch(() => {});
 
-    if (cancelledCount > 0) {
-      revalidatePath('/tour');
-      revalidatePath('/admin');
-    }
+  revalidatePath('/tour');
+  revalidatePath('/admin');
+}
 
     await redis.set(RATE_LIMIT_KEY, Date.now(), { ex: 60 * 60 });
 
@@ -140,7 +164,6 @@ async function handler(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-
 // 🔥 Оборачиваем обработчик обратно в Qstash
 export const GET = verifySignatureAppRouter(handler);
 export const POST = verifySignatureAppRouter(handler);

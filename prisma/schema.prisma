@@ -149,6 +149,11 @@ model TourDate {
   bookings  Booking[]
   waitlists Waitlist[]
 
+  boatsK2Count Int @default(4) @map("boats_k2_count")
+  boatsK3Count Int @default(12) @map("boats_k3_count")
+  guidesCount Int?     @map("guides_count")
+  boatAssignments BoatAssignment[]  
+
 @@index([tourId])
   @@index([startDate])
   @@index([endDate, startDate])
@@ -191,12 +196,15 @@ model Booking {
   tourId      String  @map("tour_id") @db.Uuid
   tourDateId  String? @map("tour_date_id") @db.Uuid
   promoCodeId String? @map("promo_code_id") @db.Uuid
+
+  boatAssignments BoatAssignment[]
   
   // ✅ НОВЫЕ ПОЛЯ: Модерация чеков и логи (v2.0)
   paymentProofUrl String?   @map("payment_proof_url") // Скриншот чека из TG бота
   receiptUrl      String?   @map("receipt_url")       // Официальный чек (если есть)
   confirmedBy     String?   @map("confirmed_by")      // Кто из админов проверил
   confirmedAt     DateTime? @map("confirmed_at")      // Когда проверили
+  isAttendanceConfirmed Boolean @default(false)
 
   payerTgChatId   String? @map("payer_tg_chat_id")
   rejectReason    String? @map("reject_reason") 
@@ -604,6 +612,29 @@ model AiPrompt {
   createdAt DateTime @default(now())
 
   @@map("ai_prompts")
+}
+
+model BoatAssignment {
+  id              String   @id @default(cuid())
+  tourDateId      String   @map("tour_date_id") @db.Uuid
+  bookingId       String   @map("booking_id") @db.Uuid
+  
+  // Практичная логика: теперь мы точно знаем, КТО сидит в лодке
+  passengerId     String   // Уникальный ID пассажира (сгенерируем на базе брони)
+  passengerName   String   // Имя конкретного человека (например: "Иванов (Взрослый)")
+  
+  boatType        String   // 'K2' или 'K3'
+  boatIndex       Int      // номер лодки среди однотипных (начиная с 1)
+  assignedAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tourDate        TourDate @relation(fields: [tourDateId], references: [id], onDelete: Cascade)
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // УНИКАЛЬНОСТЬ ИЗМЕНЕНА: Теперь один человек не может сидеть в двух лодках, 
+  // но разные люди из одной брони - могут.
+  @@unique([tourDateId, bookingId, passengerId])
+  @@index([tourDateId])
 }
 
 // ─────────────────────────────────────────────

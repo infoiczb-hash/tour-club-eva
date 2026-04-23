@@ -98,10 +98,21 @@ export default async function BookingDetailsPage({
     ? (booking.tour.checklist as { title: string; items: string }[]) 
     : [];
 
-  // Логика чата: Показываем если Оплачено ИЛИ (Новая + Наличные)
+ // Логика чата: Показываем если Оплачено ИЛИ (Новая + Наличные)
   const showChatButton = (status === 'confirmed' || (status === 'pending' && booking.paymentMethod === 'cash')) && tourDateObj?.groupChatUrl;
 
   const displayId = booking.shortId ? String(booking.shortId) : booking.id.substring(0, 5).toUpperCase();
+
+  // --- ЛОГИКА ПОДТВЕРЖДЕНИЯ УЧАСТИЯ ---
+  const isUnpaid = booking.paymentMethod === 'cash' || booking.paymentMethod === 'foreign';
+  const startDate = tourDateObj?.startDate ? new Date(tourDateObj.startDate) : null;
+  let daysToTour = 999;
+  if (startDate) {
+    daysToTour = Math.ceil((startDate.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+  }
+ const isConfirmed = booking.isAttendanceConfirmed;
+  const showConfirmUI = isUnpaid && daysToTour <= 3 && daysToTour >= 0 && !isConfirmed;
+  // ------------------------------------
 
   // ✅ 4. ИДЕАЛЬНЫЙ UI ИЗ ТВОЕГО ОРИГИНАЛА (Одноколоночный дизайн билета)
   return (
@@ -129,11 +140,15 @@ export default async function BookingDetailsPage({
                   {booking.tour.title}
                 </h1>
               </div>
-              <div className="flex flex-col items-end gap-3">
+            <div className="flex flex-col items-end gap-3">
                 {getStatusBadge(booking.status)}
-                {/* Рабочий QR-код */}
-                <div className="p-2 bg-white rounded-xl shadow-lg">
-                   <QRCode size={80} value={`https://evatur.club/admin/scan?id=${displayId}`} />
+                {/* QR Билета: Крупный и с правильным префиксом */}
+                <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-slate-900">
+                   <QRCode 
+                     size={130} 
+                     value={`BOOKING:${booking.id}`} 
+                     level="H" 
+                   />
                 </div>
               </div>
             </div>
@@ -153,6 +168,44 @@ export default async function BookingDetailsPage({
           </div>
 
           <div className="p-6 sm:p-8 bg-gradient-to-b from-slate-900 to-slate-950 space-y-8">
+
+            {/* БЛОК ПОДТВЕРЖДЕНИЯ (Появляется за 3 дня) */}
+            {showConfirmUI && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/20 blur-3xl rounded-full pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-amber-500 text-slate-950 rounded-full flex items-center justify-center font-black text-xl shadow-lg">⚠️</div>
+                    <h3 className="font-black text-amber-500 uppercase tracking-widest text-sm sm:text-base">
+                      Нужно подтверждение
+                    </h3>
+                  </div>
+                  <p className="text-amber-200/80 text-sm leading-relaxed mb-6 font-medium">
+                    Вы выбрали <b className="text-amber-400">оплату на месте</b>. Пожалуйста, подтвердите своё участие, чтобы мы закрепили за вами место в трансфере и не аннулировали бронь.
+                  </p>
+                  
+                  <form action={async () => {
+                    'use server';
+                    // Динамически импортируем экшен, чтобы не засорять верхний уровень файла
+                    const { confirmBookingAttendance } = await import('@/features/account/actions/confirmBookingAttendance');
+                    await confirmBookingAttendance(booking.id);
+                  }}>
+                    <button className="w-full bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black py-4 px-6 rounded-2xl text-xs sm:text-sm uppercase tracking-widest transition-all shadow-lg shadow-amber-500/20">
+                      ✅ Я точно буду
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {isConfirmed && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-lg">✅</div>
+                <p className="text-emerald-400 text-xs sm:text-sm font-bold uppercase tracking-wider leading-snug">
+                  Участие подтверждено.<br/>До встречи на старте!
+                </p>
+              </div>
+            )}
             
             {/* СЕКРЕТНЫЙ ЧАТ ГРУППЫ */}
             {showChatButton && (

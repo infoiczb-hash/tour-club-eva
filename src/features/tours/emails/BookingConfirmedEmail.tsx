@@ -1,111 +1,153 @@
 import * as React from 'react';
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-  Tailwind,
-  Button,
+  Body, Container, Head, Heading, Hr, Html,
+  Preview, Section, Text, Tailwind, Button, Link,
 } from '@react-email/components';
+
+interface GuestItem {
+  name: string;
+  type?: string;
+}
+
+interface ChecklistItem {
+  title: string;
+  items: string;
+}
 
 interface BookingConfirmedEmailProps {
   name: string;
   tourTitle: string;
+  tourDate: string;
+  totalPrice: number;
+  currency: string;
   meetingPoint: string;
   meetingTime: string;
-  importantInfo?: string | null;
-  groupChatUrl?: string | null;
+  shortId: string | number;
   siteUrl: string;
-  shortId: number | string;
+  ticketsCount: number;
+  guests?: GuestItem[];
+  importantInfo?: string | null;
+  checklist?: ChecklistItem[];
+  groupChatUrl?: string | null;
 }
+
+const ticketTypeLabels: Record<string, string> = {
+  adult:  'Взрослый',
+  child:  'Детский',
+  family: 'Семейный',
+  member: 'Клубный',
+};
 
 export const BookingConfirmedEmail = ({
   name,
   tourTitle,
+  tourDate,
+  totalPrice,
+  currency,
   meetingPoint,
   meetingTime,
-  importantInfo,
-  groupChatUrl,
-  siteUrl,
   shortId,
+  siteUrl,
+  ticketsCount,
+  guests = [],
+  importantInfo,
+  checklist = [],
+  groupChatUrl,
 }: BookingConfirmedEmailProps) => {
+  const accountLink = `${siteUrl}/account/bookings`;
+  const cancellationPolicyLink = `${siteUrl}/faq#cancellation`;
+
   return (
     <Html>
       <Head />
-      <Preview>Ваше место в туре «{tourTitle}» подтверждено!</Preview>
+      <Preview>Вы едете! Участие в туре «{tourTitle}» подтверждено 🎉</Preview>
       <Tailwind>
-        <Body className="bg-slate-50 font-sans text-slate-900">
-          <Container className="mx-auto my-10 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-xl">
-            <Section className="text-center mb-6">
-              <Heading className="text-2xl font-black text-slate-900 m-0 uppercase tracking-wider">
-                ТУРКЛУБ EVA
-              </Heading>
-              <Text className="text-emerald-600 font-bold m-0 mt-2">
-                Бронь #{shortId} подтверждена! 🎉
+        <Body className="bg-white font-sans text-slate-900">
+          <Container className="mx-auto my-10 p-4 max-w-[600px]">
+            <Heading className="text-2xl font-bold tracking-tight text-slate-900 m-0 mb-8">
+              Вы едете! 🎉
+            </Heading>
+
+            <Section className="mb-8">
+              <Text className="text-base leading-relaxed m-0 mb-4">
+                Привет, {name}! Оплата получена, ваше участие в приключении официально подтверждено.
               </Text>
+              
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Тур и дата</Text>
+                <Text className="m-0 mb-4 text-lg font-bold text-slate-900">{tourTitle} — {tourDate}</Text>
+                
+                <div className="flex gap-8">
+                  <div>
+                    <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Билет</Text>
+                    <Text className="m-0 text-sm font-bold text-slate-700">#{shortId}</Text>
+                  </div>
+                  <div>
+                    <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Оплачено</Text>
+                    <Text className="m-0 text-sm font-bold text-teal-600">{totalPrice} {currency}</Text>
+                  </div>
+                </div>
+              </div>
             </Section>
 
-            <Hr className="border-slate-200 my-6" />
-
-            <Section>
-              <Text className="text-base">
-                Привет, <strong>{name}</strong>!
-              </Text>
-              <Text className="text-base text-slate-600 leading-relaxed">
-                Мы успешно проверили вашу оплату. Участие в приключении <strong>«{tourTitle}»</strong> официально подтверждено!
-              </Text>
+            {/* Логистика (Компактно) */}
+            <Section className="mb-8 border-l-4 border-teal-500 pl-6">
+              <Text className="m-0 mb-4 text-sm font-bold uppercase tracking-wider">Детали встречи</Text>
+              <Text className="m-0 mb-2 text-sm">📍 <b>Место:</b> {meetingPoint}</Text>
+              <Text className="m-0 mb-4 text-sm">⏰ <b>Время:</b> {meetingTime}</Text>
+              
+              {groupChatUrl && (
+                <Button href={groupChatUrl} className="bg-[#2AABEE] text-white font-bold py-3 px-6 rounded-xl text-xs uppercase tracking-wider">
+                  Вступить в чат группы
+                </Button>
+              )}
             </Section>
 
-            <Section className="bg-slate-50 rounded-xl p-6 my-6 border border-slate-100">
-              <Text className="m-0 mb-2 text-sm text-slate-400 font-bold uppercase tracking-widest">
-                Информация по сбору
-              </Text>
-              <Text className="m-0 mb-1 text-base"><strong>📍 Место:</strong> {meetingPoint}</Text>
-              <Text className="m-0 text-base"><strong>⏰ Время:</strong> {meetingTime}</Text>
-            </Section>
+            {/* Состав участников */}
+            {guests.length > 0 && (
+              <Section className="mb-8">
+                <Text className="m-0 mb-3 text-xs uppercase tracking-widest text-slate-400 font-bold">Список участников ({ticketsCount})</Text>
+                {guests.map((guest, idx) => (
+                  <div key={idx} className="flex justify-between py-2 border-b border-slate-50 last:border-0 text-sm">
+                    <span className="font-medium">{guest.name}</span>
+                    <span className="text-slate-500">{guest.type ? ticketTypeLabels[guest.type] : 'Билет'}</span>
+                  </div>
+                ))}
+              </Section>
+            )}
+
+            {/* Снаряжение (Если есть) */}
+            {checklist.length > 0 && (
+              <Section className="mb-8 bg-slate-50 rounded-2xl p-6">
+                <Text className="m-0 mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">Что взять с собой</Text>
+                {checklist.map((item, idx) => (
+                  <div key={idx} className="mb-3 last:mb-0">
+                    <Text className="m-0 text-[11px] font-bold text-slate-900 uppercase tracking-tight">{item.title}</Text>
+                    <Text className="m-0 text-xs text-slate-600 leading-relaxed">{item.items}</Text>
+                  </div>
+                ))}
+              </Section>
+            )}
 
             {importantInfo && (
-              <Section className="bg-amber-50 rounded-xl p-6 my-6 border border-amber-100">
-                <Text className="m-0 mb-2 text-sm text-amber-500 font-bold uppercase tracking-widest">
-                  Важно знать
-                </Text>
-                <Text className="m-0 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                  {importantInfo}
+              <Section className="mb-8">
+                <Text className="m-0 text-xs text-slate-500 italic">
+                  ⚠️ <b>Важно:</b> {importantInfo}
                 </Text>
               </Section>
             )}
 
-            {groupChatUrl && (
-              <Section className="text-center my-6">
-                <Button
-                  href={groupChatUrl}
-                  className="bg-[#2AABEE] text-white font-bold px-6 py-3 rounded-xl uppercase tracking-wider block w-full"
-                >
-                  Вступить в чат группы (Telegram)
-                </Button>
-                <Text className="text-xs text-slate-400 mt-2">Там будет вся оперативная инфо от гида</Text>
-              </Section>
-            )}
+            <Button href={accountLink} className="bg-slate-900 text-white font-bold py-4 px-8 rounded-xl w-full text-center">
+              Открыть билет в кабинете
+            </Button>
 
-            <Section className="text-center mt-6">
-              <Button
-                href={`${siteUrl}/account/bookings`}
-                className="bg-teal-500 text-white font-bold px-6 py-3 rounded-xl uppercase tracking-wider block w-full"
-              >
-                Детали и билеты в кабинете
-              </Button>
-            </Section>
+            <Hr className="border-slate-100 my-8" />
 
-            <Hr className="border-slate-200 my-6" />
-
-            <Section>
-              <Text className="text-xs text-slate-400 text-center leading-relaxed">
-                Спасибо, что выбираете нас. До скорой встречи на маршруте! 🏕️
+            <Section className="text-center">
+              <Link href={cancellationPolicyLink} className="text-xs text-slate-400 underline mr-4">Политика отмены</Link>
+              <Link href={`${siteUrl}/faq`} className="text-xs text-slate-400 underline">Помощь</Link>
+              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+                Турклуб ЭВА. До встречи на маршруте! 🏕️
               </Text>
             </Section>
           </Container>

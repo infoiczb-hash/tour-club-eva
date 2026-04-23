@@ -140,21 +140,13 @@ export default function VirtualCard({
             >
               <X size={16} />
             </button>
-
-          <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
-  {bookingShortId ? (
-    <QRCode 
-      size={140} 
-      className="text-slate-950" 
-      value={`https://evatur.club/admin/scan?b=${bookingShortId}`} 
-    />
-  ) : (
-    <QRCode 
-      size={140} 
-      className="text-slate-950" 
-      value={`https://evatur.club/admin/scan?m=${memberId}`} 
-    />
-  )}
+<div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
+  {/* Только QR участника клуба, больше никаких проверок! */}
+  <QRCode 
+    value={`https://evatur.club/admin/scan?m=${memberId}`}
+    size={150} 
+    level="M" 
+  />
 </div>
 
             <p className="text-slate-300 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
