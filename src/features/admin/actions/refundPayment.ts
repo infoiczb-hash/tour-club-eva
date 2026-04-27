@@ -47,10 +47,11 @@ async function refundPaymentHandler(raw: z.infer<typeof RefundSchema>) {
   }
 
   // 2. Вызываем API банка (умный выбор Cancel vs Refund внутри клиента)
-  // Переводим рубли в копейки для банка
+  // amount приходит в рублях (как хранится в БД) → переводим в копейки для АПБ
+  const amountKop = amount * 100;
   const result = await apbClient.processRefund(
     booking.apbInvoiceId,
-    amount * 100,
+    amountKop,
     booking.paidAt
   );
 
@@ -68,14 +69,9 @@ async function refundPaymentHandler(raw: z.infer<typeof RefundSchema>) {
       refundedAmount: updatedRefundedAmount,
       // Если вернули всё — отменяем бронь автоматически
       status: isFullRefund ? 'cancelled' : booking.status,
-      comment: booking.status === 'confirmed' 
-        ? `Частичный возврат: ${amount} руб. Причина: ${reason}` 
-        : undefined,
+      // comment не трогаем совсем, история сохраняется через audit лог
     },
   });
-
-  // Записываем изменение баланса/лог возврата (опционально, если есть BalanceLog)
-  // await prisma.balanceLog.create({ ... })
 
   revalidatePath('/admin');
   return { success: true, isFullRefund };

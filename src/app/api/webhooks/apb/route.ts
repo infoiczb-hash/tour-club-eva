@@ -161,14 +161,12 @@ async function handlePaymentSuccess(
       },
     });
 
-await logSystemAction('APB_PAYMENT_CONFIRMED', {
+await logSystemAction('APB_PAYMENT_FAILED', {
   targetId: booking.id,
   changes:  {
-    invoiceId:  booking.apbInvoiceId,
-    rrn:        state.rrn,
-    authCode:   state.authCode,
-    lastDigits: state.lastDigits,
-    sum:        state.sum,
+    invoiceId:        booking.apbInvoiceId,
+    stateCode:        state.stateCode,
+    stateDescription: state.stateDescription,
   },
 });
 

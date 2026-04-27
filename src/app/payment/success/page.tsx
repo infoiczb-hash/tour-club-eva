@@ -1,22 +1,23 @@
 // src/app/payment/success/page.tsx
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle, Calendar, CreditCard, ArrowRight } from 'lucide-react';
+import { CheckCircle, Calendar, CreditCard, ArrowRight, Clock } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 
 export default async function PaymentSuccessPage({
   searchParams,
 }: {
-  searchParams: { invoiceId?: string };
+  searchParams: Promise<{ invoiceId?: string }>;
 }) {
-  const invoiceId = searchParams.invoiceId;
+  // 1. Распаковываем Promise для Next.js 15
+  const { invoiceId } = await searchParams;
 
   if (!invoiceId) {
     return notFound();
   }
 
-  // Загружаем данные бронирования для отображения контента
+  // Загружаем данные бронирования
   const booking = await prisma.booking.findUnique({
     where: { apbInvoiceId: invoiceId },
     include: {
@@ -29,12 +30,16 @@ export default async function PaymentSuccessPage({
     return notFound();
   }
 
+  // 2. Проверяем "состояние гонки" вебхука
+  const isPending = booking.status === 'awaiting_payment';
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
         <div className="flex justify-center">
-          <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center text-teal-500">
-            <CheckCircle size={48} strokeWidth={2.5} />
+          {/* Динамическая иконка в зависимости от того, успел ли отработать вебхук */}
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isPending ? 'bg-amber-500/20 text-amber-500' : 'bg-teal-500/20 text-teal-500'}`}>
+            {isPending ? <Clock size={48} strokeWidth={2.5} className="animate-pulse" /> : <CheckCircle size={48} strokeWidth={2.5} />}
           </div>
         </div>
 
@@ -42,8 +47,11 @@ export default async function PaymentSuccessPage({
           <h1 className="text-2xl font-black text-white uppercase tracking-tight">
             Оплата получена!
           </h1>
-          <p className="text-slate-400 text-sm">
-            Мы успешно зафиксировали транзакцию на стороне банка.
+          {/* 3. Текст с учетом задержки обновления БД */}
+          <p className="text-slate-400 text-sm min-h-[40px]">
+            {isPending 
+              ? 'Платёж зафиксирован. Ожидаем финального подтверждения от банка (обычно занимает до 1 минуты).'
+              : 'Мы успешно зафиксировали транзакцию на стороне банка.'}
           </p>
         </div>
 
@@ -65,7 +73,8 @@ export default async function PaymentSuccessPage({
                 <Calendar size={10} /> Дата
               </div>
               <p className="text-xs font-bold text-slate-200">
-                {booking.tourDate 
+                {/* Используем опциональную цепочку на всякий случай */}
+                {booking.tourDate?.startDate 
                   ? new Date(booking.tourDate.startDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
                   : 'Открытая дата'}
               </p>

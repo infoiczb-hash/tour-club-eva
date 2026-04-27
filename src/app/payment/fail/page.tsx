@@ -7,9 +7,9 @@ import { prisma } from '@/lib/prisma';
 export default async function PaymentFailPage({
   searchParams,
 }: {
-  searchParams: { invoiceId?: string };
+  searchParams: Promise<{ invoiceId?: string }>;
 }) {
-  const invoiceId = searchParams.invoiceId;
+  const { invoiceId } = await searchParams;
 
   // Пытаемся найти бронь, чтобы дать контекстный ответ
   const booking = invoiceId 

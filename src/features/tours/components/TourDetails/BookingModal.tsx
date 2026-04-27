@@ -57,7 +57,7 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
- const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign' | 'online_card'>('biletpmr');
+const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign' | 'online_card'>('online_card');
 
 
 interface BookingFormData {
@@ -779,63 +779,68 @@ if (result.success) {
                   </label>
                   
                   <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
-                    <button 
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMethod === 'biletpmr'}
-                      onClick={() => setPaymentMethod('biletpmr')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-                    >
-                        <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
-                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} />
-                        </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">BILETPMR/другой сервис</span>
-                    </button>
+                   <div className="flex flex-col gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
+  
+  {/* 1. Крупная кнопка: Онлайн Клевер */}
+  <button 
+    type="button"
+    role="radio"
+    aria-checked={paymentMethod === 'online_card'}
+    onClick={() => setPaymentMethod('online_card')} 
+    className={`relative p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+  >
+      <div className="flex items-center justify-between w-full">
+          <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
+          <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
+      </div>
+      <span className="text-sm text-slate-400 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
+  </button>
 
-                    <button 
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMethod === 'qr'}
-                      onClick={() => setPaymentMethod('qr')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'qr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-                    >
-                        <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'qr' ? 'text-teal-400' : 'text-slate-300'}`}>QR-код</span>
-                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-300'} />
-                        </div>
-                        <span className="text-[12px] text-slate-300 leading-tight"> Система КЛЕВЕР/Наш совет</span>
-                    </button>
+  {/* 2. Крупная кнопка: Из других стран */}
+ <button 
+  type="button"
+  role="radio"
+  aria-checked={paymentMethod === 'foreign'}
+  onClick={() => setPaymentMethod('foreign')} 
+  className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+>
+    <div className="flex items-center justify-between w-full">
+        <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
+        <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
+    </div>
+    <span className="text-[12px] text-slate-400 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
+</button>
 
-                   <button 
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMethod === 'cash'}
-                      onClick={() => setPaymentMethod('cash')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-                    >
-                        <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
-                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
-                        </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">Оплата гиду на месте</span>
-                    </button>
+  {/* 3. Сетка 2x2 внизу: Наличные и BiletPMR */}
+  <div className="grid grid-cols-2 gap-3 mt-1">
+    <button 
+      type="button"
+      role="radio"
+      onClick={() => setPaymentMethod('cash')} 
+      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+    >
+        <div className="flex items-center justify-between w-full">
+            <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
+            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
+        </div>
+        <span className="text-[12px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+    </button>
 
-                    {/* ✅ НОВОЕ: онлайн-оплата через АПБ */}
-                    <button 
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMethod === 'online_card'}
-                      onClick={() => setPaymentMethod('online_card')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-                    >
-                        <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Онлайн</span>
-                            <CreditCard size={16} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
-                        </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">Картой Клевер / АПБ</span>
-                    </button>
-                  </div>
+    <button 
+      type="button"
+      role="radio"
+      onClick={() => setPaymentMethod('biletpmr')} 
+      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+    >
+        <div className="flex items-center justify-between w-full">
+            <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
+            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} />
+        </div>
+        <span className="text-[12px] text-slate-400 leading-tight truncate">BILETPMR / другой сервис</span>
+    </button>
+  </div>
+</div>
+</div>
                 </div>
 
                 {errorMsg && (
