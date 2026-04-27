@@ -182,6 +182,10 @@ model Booking {
   guests        Json?     @default("[]")
   comment       String?
 
+  // НОВЫЕ ПОЛЯ ДЛЯ КАЯКИНГА:
+  hasChildUnder7   Boolean  @default(false) @map("has_child_under_7")
+  hasDog           Boolean  @default(false) @map("has_dog")
+
   totalPrice    Int       @map("total_price")
   amountPaid    Int       @default(0) @map("amount_paid")
   discount      Int       @default(0)
@@ -199,7 +203,7 @@ model Booking {
 
   boatAssignments BoatAssignment[]
   
-  // ✅ НОВЫЕ ПОЛЯ: Модерация чеков и логи (v2.0)
+  // НОВЫЕ ПОЛЯ: Модерация чеков и логи (v2.0)
   paymentProofUrl String?   @map("payment_proof_url") // Скриншот чека из TG бота
   receiptUrl      String?   @map("receipt_url")       // Официальный чек (если есть)
   confirmedBy     String?   @map("confirmed_by")      // Кто из админов проверил
@@ -208,6 +212,18 @@ model Booking {
 
   payerTgChatId   String? @map("payer_tg_chat_id")
   rejectReason    String? @map("reject_reason") 
+
+  // ---------------------------------------------------------
+  //  НОВЫЕ ПОЛЯ: Интеграция Агропромбанк (Клевер)
+  // ---------------------------------------------------------
+  apbInvoiceId   String?   @unique @map("apb_invoice_id") @db.VarChar(25) // Уникальный ID заказа <= 25 символов (например, EVA-1234)
+  apbRrn         String?   @map("apb_rrn")                // RRN транзакции - нужен для RefundOperation
+  apbAuthCode    String?   @map("apb_auth_code")          // Код авторизации - нужен для RefundOperation/CancelOperation
+  apbLastDigits  String?   @map("apb_last_digits") @db.VarChar(4)  // Последние 4 цифры карты из поля lastdgt (ResultURL)
+  
+  refundedAmount Int       @default(0) @map("refunded_amount") // Сумма возврата (в копейках/рублях, как у нас заведено в price)
+  paidAt         DateTime? @map("paid_at") @db.Timestamptz(6)  // Точное время оплаты (критично для логики Cancel vs Refund)
+  // ---------------------------------------------------------
  
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 

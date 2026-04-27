@@ -45,6 +45,13 @@ const serverSchema = z.object({
   TELEGRAM_TOPIC_SUPPORT:        z.string().optional(),
   TELEGRAM_TOPIC_REVIEWS:        z.string().optional(),
   TELEGRAM_TOPIC_HR:             z.string().optional(),
+
+// APB CLEVER ACQUIRING
+   APB_MERCHANT_ID:   z.string().min(1, 'APB_MERCHANT_ID не задан'),
+  APB_MERCHANT_PASS: z.string().min(1, 'APB_MERCHANT_PASS не задан'),
+  APB_IS_TEST:       z.enum(['0', '1']).default('1'),
+  APB_PAYMENT_URL:   z.string().url().default('https://epay.apb.online/PaymentStart'),
+  APB_SOAP_URL:      z.string().url().default('https://ws.agroprombank.com/merchant/APB.SV.WebPayment.AgentService.asmx'),
 });
 
 const isServer = typeof window === 'undefined';
@@ -83,6 +90,12 @@ const parsedServer = isServer
       TELEGRAM_TOPIC_SUPPORT:        process.env.TELEGRAM_TOPIC_SUPPORT,
       TELEGRAM_TOPIC_REVIEWS:        process.env.TELEGRAM_TOPIC_REVIEWS,
       TELEGRAM_TOPIC_HR:             process.env.TELEGRAM_TOPIC_HR,
+
+      APB_MERCHANT_ID:   process.env.APB_MERCHANT_ID,
+      APB_MERCHANT_PASS: process.env.APB_MERCHANT_PASS,
+      APB_IS_TEST:       process.env.APB_IS_TEST,
+      APB_PAYMENT_URL:   process.env.APB_PAYMENT_URL,
+      APB_SOAP_URL:      process.env.APB_SOAP_URL,
     }) 
   : {} as z.infer<typeof serverSchema>;
 

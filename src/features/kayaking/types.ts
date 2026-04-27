@@ -9,6 +9,7 @@ export interface Passenger {
 
 export interface BookingGroup {
   bookingId: string;
+  shortId: number;
   name: string;
   comment: string | null;
   passengers: Passenger[];
@@ -26,8 +27,11 @@ export interface BookingGroup {
 export interface BoatPassenger {
   bookingId: string;
   passengerId: string;
+  shortId: number;
   name: string;
   isChild: boolean;
+  isChildUnder7: boolean; // Добавили
+  hasDog: boolean;        // Добавили
 }
 
 export interface Boat {
