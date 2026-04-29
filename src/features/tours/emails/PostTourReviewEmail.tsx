@@ -1,92 +1,96 @@
 import * as React from 'react';
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-  Tailwind,
-  Button,
+  Body, Container, Head, Heading, Hr, Html,
+  Preview, Section, Text, Tailwind, Button, Link
 } from '@react-email/components';
 
 interface PostTourReviewEmailProps {
   name: string;
   tourTitle: string;
-  points: number;
+  totalTours: number; 
   level: string;
+  nextLevelName?: string | null;
+  toursToNext?: number | null; 
   bookingLink: string;
+  pointsToEarn?: number;
 }
 
 export const PostTourReviewEmail = ({
   name,
   tourTitle,
-  points,
+  totalTours,
   level,
+  nextLevelName,
+  toursToNext,
   bookingLink,
+  pointsToEarn = 50,
 }: PostTourReviewEmailProps) => {
+  
+  // Умная корректировка ссылки
+  const historyLink = bookingLink.replace('/bookings', '/history');
+
+  // Функция для правильного склонения слов (тур, тура, туров)
+  const declension = (n: number, one: string, two: string, five: string) => {
+    n = Math.abs(n) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return five;
+    if (n1 > 1 && n1 < 5) return two;
+    if (n1 === 1) return one;
+    return five;
+  };
+
   return (
     <Html>
       <Head />
-      <Preview>Как прошел тур «{tourTitle}»? Поделитесь впечатлениями и получите бонусы!</Preview>
+      <Preview>Как прошёл тур «{tourTitle}»? Напишите отзыв и получите бонусы!</Preview>
       <Tailwind>
-        <Body className="bg-slate-50 font-sans text-slate-900">
-          <Container className="mx-auto my-10 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-xl">
-            <Section className="text-center mb-6">
-              <Heading className="text-2xl font-black text-slate-900 m-0 uppercase tracking-wider">
-                ТУРКЛУБ EVA
-              </Heading>
-              <Text className="text-[#2AABEE] font-bold m-0 mt-2 text-lg">
-                С возвращением! 🏕️
+        <Body className="bg-white font-sans text-slate-900">
+          <Container className="mx-auto my-10 p-4 max-w-[600px]">
+            <Heading className="text-2xl font-bold tracking-tight text-slate-900 m-0 mb-8">
+              С возвращением! 🏕️
+            </Heading>
+
+            <Section className="mb-8">
+              <Text className="text-base leading-relaxed m-0 mb-4">
+                Привет, {name}! Надеемся, что наше приключение «{tourTitle}» прошло отлично и вы успели перезагрузиться.
               </Text>
+              
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <Text className="text-xs font-bold text-slate-500 uppercase tracking-widest m-0">
+                  Ваш статус в клубе
+                </Text>
+                <Heading className="text-2xl font-black text-slate-900 m-0 mt-1 uppercase italic">
+                  {level}
+                </Heading>
+                <Text className="text-sm text-slate-500 m-0 mt-2">
+                  Вы прошли с нами {totalTours} {declension(totalTours, 'тур', 'тура', 'туров')}. 
+                  {toursToNext 
+                    ? ` Осталось ${toursToNext} ${declension(toursToNext, 'тур', 'тура', 'туров')} до статуса «${nextLevelName}».`
+                    : ' У вас максимальный статус — вы легенда!'}
+                  <br /><br />Поделитесь впечатлениями о поездке и получите бонусы на счет!
+                </Text>
+              </div>
             </Section>
 
-            <Hr className="border-slate-200 my-6" />
-
-            <Section>
-              <Text className="text-base">
-                Привет, <strong>{name}</strong>!
+            <Section className="mb-8">
+              <Text className="text-sm leading-relaxed m-0 mb-6 text-slate-600">
+                Помогите нам стать ещё лучше — поделитесь впечатлениями о работе гида, организации и маршруте. Это займёт буквально пару минут.
               </Text>
-              <Text className="text-base text-slate-600 leading-relaxed">
-                Выходные пролетели незаметно. Надеемся, вы успели отдохнуть и зарядиться энергией в нашем приключении <strong>«{tourTitle}»</strong>.
-              </Text>
-            </Section>
-
-            <Section className="bg-blue-50 rounded-xl p-6 my-6 border border-blue-100 text-center">
-              <Text className="m-0 mb-2 text-sm text-blue-500 font-bold uppercase tracking-widest">
-                Ваш прогресс
-              </Text>
-              <Text className="m-0 mb-1 text-base">
-                🏆 Текущий статус: <strong>{level}</strong>
-              </Text>
-              <Text className="m-0 text-base">
-                ⭐️ Накоплено: <strong>{points} баллов</strong>
-              </Text>
-            </Section>
-
-            <Section>
-              <Text className="text-base text-slate-600 leading-relaxed text-center">
-                Помогите нам стать еще лучше — оцените работу нашего гида и организацию поездки. За каждый опубликованный отзыв мы начисляем дополнительные бонусы, которыми можно оплатить следующие туры!
-              </Text>
-            </Section>
-
-            <Section className="text-center mt-8">
+              
               <Button
-                href={bookingLink}
-                className="bg-teal-500 text-white font-bold px-8 py-4 rounded-xl uppercase tracking-wider block w-full text-center"
+                href={historyLink}
+                className="bg-slate-900 text-white font-bold py-4 px-8 rounded-xl w-full text-center"
               >
-                Оценить тур и получить баллы
+                Написать отзыв (+{pointsToEarn} баллов)
               </Button>
             </Section>
 
-            <Hr className="border-slate-200 my-8" />
+            <Hr className="border-slate-100 my-8" />
 
-            <Section>
-              <Text className="text-xs text-slate-400 text-center leading-relaxed">
-                Спасибо, что путешествуете с нами. До новых встреч на маршрутах!
+            <Section className="text-center">
+              <Link href="https://t.me/romansvtirase" className="text-xs text-slate-400 underline">Связаться с руководством</Link>
+              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+                Турклуб ЭВА. Спасибо, что путешествуете с нами. <br />
               </Text>
             </Section>
           </Container>
@@ -95,5 +99,3 @@ export const PostTourReviewEmail = ({
     </Html>
   );
 };
-
-export default PostTourReviewEmail;

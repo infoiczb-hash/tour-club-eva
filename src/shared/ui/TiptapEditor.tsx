@@ -17,17 +17,19 @@ interface TiptapEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
 }
-
-// 1. Починили тип здесь (убрали any, поставили строгий Editor | null)
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
-  if (!editor) return null;
-
+  // 🟢 ПРАВИЛЬНО: Сначала объявляем useCallback
   const addImage = useCallback(() => {
+    // Внутри функции проверяем наличие editor
+    if (!editor) return;
+    
     const url = window.prompt('URL картинки:');
     if (url) editor.chain().focus().setImage({ src: url }).run();
   }, [editor]);
 
   const setLink = useCallback(() => {
+    if (!editor) return;
+    
     const previousUrl = editor.getAttributes('link').href;
     const url = window.prompt('URL ссылки:', previousUrl);
     if (url === null) return;
@@ -38,7 +40,10 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   }, [editor]);
 
-  return (
+  // 🟢 ПРАВИЛЬНО: Ранний выход ТОЛЬКО после объявления всех хуков
+  if (!editor) return null;
+
+ return (
     <div className="flex flex-wrap gap-1 p-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 rounded-t-xl">
       <button
         type="button"

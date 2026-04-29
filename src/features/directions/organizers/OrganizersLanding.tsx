@@ -1,6 +1,7 @@
 // Первый экран — синхронно (клиентский только из-за useModalStore в кнопке)
 import OrgHero from '@features/directions/organizers/OrgHero';
 import dynamic from 'next/dynamic';
+import SectionErrorBoundary from '@/components/SectionErrorBoundary';
 
 // Всё ниже фолда — lazy
 const OrgFormats = dynamic(() => import('@features/directions/organizers/OrgFormats'), {
@@ -23,22 +24,30 @@ export default function OrganizersLanding() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
       
-      {/* 1. Главный экран */}
+      {/* 1. Главный экран (LCP - без обертки) */}
       <OrgHero />
       
       {/* 3. Форматы (Тимбилдинг, Ретриты, Стратсессии) */}
-      <OrgFormats />
+      <SectionErrorBoundary label="Форматы" minHeight="500px">
+        <OrgFormats />
+      </SectionErrorBoundary>
       
       {/* 2. Боли организатора (Эмпатия) */}
-      <OrgEmpathy />
+      <SectionErrorBoundary label="Для организаторов" minHeight="400px">
+        <OrgEmpathy />
+      </SectionErrorBoundary>
       
       {/* 4. Как мы работаем (Шаги) */}
-      <OrgWorkflow />
+      <SectionErrorBoundary label="Как мы работаем" minHeight="400px">
+        <OrgWorkflow />
+      </SectionErrorBoundary>
 
       {/* 5. Контактный центр B2B */}
-      {/* ✅ Добавили id="contact" для нативного якорного скролла */}
+      {/* ✅ Якорь снаружи для корректного скролла, граница внутри */}
       <div id="contact" className="scroll-mt-10">
-         <OrgContact />
+        <SectionErrorBoundary label="Контакты B2B" minHeight="400px">
+          <OrgContact />
+        </SectionErrorBoundary>
       </div>
 
     </main>

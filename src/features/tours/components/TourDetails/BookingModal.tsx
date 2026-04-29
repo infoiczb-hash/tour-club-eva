@@ -57,7 +57,7 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign'>('biletpmr');
+const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign' | 'online_card'>('online_card');
 
 
 interface BookingFormData {
@@ -78,7 +78,7 @@ const [formData, setFormData] = useState<BookingFormData>({
 
   const [successData, setSuccessData] = useState<{
     bookingId: string;
-    shortId: number;
+    shortId: string;
     totalPrice: number;
     biletpmrLink?: string | null;
     apbQrLink?: string | null;
@@ -104,7 +104,16 @@ const [formData, setFormData] = useState<BookingFormData>({
   const [promoSuccess, setPromoSuccess] = useState<boolean>(false);
   const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false);
 
+  // ✅ НОВЫЕ СТЕЙТЫ ДЛЯ КАЯКИНГА
+  const [hasChildUnder7, setHasChildUnder7] = useState<boolean>(false);
+  const [hasDog, setHasDog] = useState<boolean>(false);
+
   const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
+    tour.category?.slug?.toLowerCase() || ''
+  );
+
+  // ✅ ПРОВЕРКА ИМЕННО НА БАЙДАРКИ
+  const isKayakingTour = ['kayaking', 'kayak'].includes(
     tour.category?.slug?.toLowerCase() || ''
   );
 
@@ -164,6 +173,9 @@ const [formData, setFormData] = useState<BookingFormData>({
         setUseBonuses(false);
         setPromoCode('');
         setIsLoggedIn(false);
+        // ✅ СБРАСЫВАЕМ ГАЛОЧКИ
+        setHasChildUnder7(false);
+        setHasDog(false);
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -304,11 +316,17 @@ try {
         paymentMethod: paymentMethod, 
         useBonuses:    isLoggedIn ? useBonuses : false,
         promoCode:     !isLoggedIn && promoCode.trim() ? promoCode.trim() : undefined,
+        hasChildUnder7, 
+        hasDog,         
     };
 
     const result = await createBookingAction(bookingPayload);
 
-    if (result.success) {
+if (result.success) {
+        if (result.redirectUrl) {
+            window.location.href = result.redirectUrl;
+            return;
+        }
         setSuccessData({
             bookingId: result.bookingId,
             shortId: result.shortId,
@@ -701,7 +719,46 @@ try {
                         );
                     })}
 
-                    <div className="space-y-1.5 pt-2">
+                  {/* ✅ НОВЫЕ ЧЕКБОКСЫ ДЛЯ БАЙДАРОК */}
+                    {isKayakingTour && (
+                      <div className="space-y-3 pt-4 border-t border-white/5">
+                        <label className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-slate-950/50 cursor-pointer hover:bg-white/5 transition-colors">
+                          <div className="relative flex items-center justify-center">
+                            <input 
+                              type="checkbox" 
+                              checked={hasChildUnder7} 
+                              onChange={(e) => setHasChildUnder7(e.target.checked)} 
+                              className="peer sr-only" 
+                            />
+                            <div className="w-5 h-5 border-2 border-slate-600 rounded flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all">
+                              <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                            </div>
+                          </div>
+                          <div className="flex-1 text-sm font-bold text-slate-300">
+                            С нами будет ребенок до 7 лет 👶
+                          </div>
+                        </label>
+
+                        <label className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-slate-950/50 cursor-pointer hover:bg-white/5 transition-colors">
+                          <div className="relative flex items-center justify-center">
+                            <input 
+                              type="checkbox" 
+                              checked={hasDog} 
+                              onChange={(e) => setHasDog(e.target.checked)} 
+                              className="peer sr-only" 
+                            />
+                            <div className="w-5 h-5 border-2 border-slate-600 rounded flex items-center justify-center bg-slate-900 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all">
+                              <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                            </div>
+                          </div>
+                          <div className="flex-1 text-sm font-bold text-slate-300">
+                            Будем с собакой 🐶
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5 pt-4">
                       <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5">
                         <MessageSquare size={12} /> Комментарий / Пожелания
                       </label>
@@ -721,64 +778,75 @@ try {
                     <CreditCard size={14} className="text-teal-500" /> Способ оплаты
                   </label>
                   
-                  <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
+                  <div className="flex flex-col gap-3 w-full" role="radiogroup" aria-label="Выберите способ оплаты">
+                    
+                    {/* 1. Крупная кнопка: Онлайн Клевер */}
                     <button 
                       type="button"
                       role="radio"
-                      aria-checked={paymentMethod === 'biletpmr'}
-                      onClick={() => setPaymentMethod('biletpmr')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                      aria-checked={paymentMethod === 'online_card'}
+                      onClick={() => setPaymentMethod('online_card')} 
+                      // 👇 Добавлен w-full
+                      className={`w-full relative p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                     >
                         <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
-                            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} />
+                            <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
+                            <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">BILETPMR/другой сервис</span>
+                        <span className="text-sm text-slate-400 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
                     </button>
 
-                    <button 
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMethod === 'qr'}
-                      onClick={() => setPaymentMethod('qr')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'qr' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-                    >
-                        <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'qr' ? 'text-teal-400' : 'text-slate-300'}`}>QR-код</span>
-                            <QrCode size={16} className={paymentMethod === 'qr' ? 'text-teal-500' : 'text-slate-300'} />
-                        </div>
-                        <span className="text-[12px] text-slate-300 leading-tight"> Система КЛЕВЕР/Наш совет</span>
-                    </button>
-
-                    <button 
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMethod === 'cash'}
-                      onClick={() => setPaymentMethod('cash')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-                    >
-                        <div className="flex items-center justify-between w-full">
-                            <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
-                            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
-                        </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">Оплата гиду на месте</span>
-                    </button>
-
+                    {/* 2. Крупная кнопка: Из других стран */}
                     <button 
                       type="button"
                       role="radio"
                       aria-checked={paymentMethod === 'foreign'}
                       onClick={() => setPaymentMethod('foreign')} 
-                      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                      // 👇 Добавлен w-full
+                      className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
-                            <Globe size={16} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
+                            <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">MIA / Переводы / Леи</span>
+                        <span className="text-[12px] text-slate-400 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
                     </button>
+
+                    {/* 3. Сетка 2x2 внизу: Наличные и BiletPMR */}
+                    <div className="grid grid-cols-2 gap-3 mt-1 w-full">
+                      <button 
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentMethod === 'cash'}
+                        onClick={() => setPaymentMethod('cash')} 
+                        // 👇 Добавлен w-full
+                        className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                      >
+                          <div className="flex items-center justify-between w-full">
+                              <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
+                              <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
+                          </div>
+                          <span className="text-[12px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+                      </button>
+
+                      <button 
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentMethod === 'biletpmr'}
+                        onClick={() => setPaymentMethod('biletpmr')} 
+                        // 👇 Добавлен w-full
+                        className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                      >
+                          <div className="flex items-center justify-between w-full">
+                              <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
+                              <CreditCard size={16} className={`shrink-0 ml-1 ${paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'}`} />
+                          </div>
+                          <span className="text-[12px] text-slate-400 leading-tight truncate">BILETPMR/сервисы</span>
+                      </button>
+                    </div>
+
                   </div>
-                </div>
+                 </div>
 
                 {errorMsg && (
                   <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-bold leading-snug">
@@ -786,7 +854,6 @@ try {
                     <span>{errorMsg}</span>
                   </div>
                 )}
-
                 <button 
                   type="submit" 
                   disabled={isLoading} 

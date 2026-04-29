@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Camera, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -13,10 +13,21 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (!images || images.length === 0) return null;
+  // 1. Оборачиваем функции в useCallback для линтера
+  const closeLightbox = useCallback(() => {
+    setIsOpen(false);
+    document.body.style.overflow = 'auto';
+  }, []);
 
-  const displayedImages = images.slice(0, 5);
-  const remainingCount = images.length - 5;
+  const nextImage = useCallback((e?: React.MouseEvent | Event) => {
+    e?.stopPropagation();
+    if (images.length) setCurrentIndex((prev) => (prev + 1) % images.length);
+  }, [images.length]);
+
+  const prevImage = useCallback((e?: React.MouseEvent | Event) => {
+    e?.stopPropagation();
+    if (images.length) setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  }, [images.length]);
 
   const openLightbox = (index: number) => {
     setCurrentIndex(index);
@@ -24,21 +35,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
     document.body.style.overflow = 'hidden';
   };
 
-  const closeLightbox = () => {
-    setIsOpen(false);
-    document.body.style.overflow = 'auto';
-  };
-
-  const nextImage = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
+  // 2. useEffect стоит ДО раннего выхода
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -46,9 +43,17 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
       if (e.key === 'ArrowRight') nextImage();
       if (e.key === 'ArrowLeft') prevImage();
     };
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, closeLightbox, nextImage, prevImage]);
+
+  // 3. И вот только ЗДЕСЬ мы делаем ранний выход (после всех хуков)
+  if (!images || images.length === 0) return null;
+
+  // 4. Дальше идут вычисления, которые нужны только если картинки есть
+  const displayedImages = images.slice(0, 5);
+  const remainingCount = images.length - 5;
 
   const mobileRowsClass = 
     displayedImages.length <= 1 ? 'grid-rows-1' :
@@ -88,19 +93,18 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                 isMain ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : "col-span-1 row-span-1"
               )}
             >
-              <Image 
+         <Image 
                 src={img} 
                 alt={`Галерея тура фото ${index + 1}`} 
                 fill 
-                // ✅ ФОКУС: object-[center_20%] держит фокус на лицах (верхняя часть) при любой обрезке
                 className="object-cover object-[center_20%] transition-transform duration-700 group-hover:scale-105"
-               loading={isMain ? "eager" : "lazy"}
-fetchPriority={isMain ? "low" : "auto"}
-                sizes={
-                  isMain 
-                    ? "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 640px" 
-                    : "(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 320px"
+                // Главное фото в сетке занимает 100% на мобилке и 50% на десктопе. 
+                // Остальные — 50% на мобилке и 25% на десктопе.
+                sizes={isMain
+                  ? "(max-width: 768px) 100vw, 50vw"
+                  : "(max-width: 768px) 50vw, 25vw"
                 }
+                loading={index === 0 ? "eager" : "lazy"}
                 quality={isMain ? 65 : 55}
               />
               
@@ -130,13 +134,14 @@ fetchPriority={isMain ? "low" : "auto"}
              className="relative w-full h-[85dvh] md:h-[90dvh] max-w-7xl mx-auto flex items-center justify-center animate-in zoom-in-95 duration-200"
              onClick={(e) => e.stopPropagation()}
           >
-             <Image 
+            <Image 
                src={images[currentIndex]} 
                alt={`Фотография ${currentIndex + 1} из ${images.length}`} 
                fill 
-               className="object-contain" // Картинка впишется без черных полос и обрезки
-               priority
+               className="object-contain"
                sizes="100vw"
+               // Убрали priority, так как лайтбокс открывается по клику
+               loading="eager" 
                quality={75}
              />
           </div>

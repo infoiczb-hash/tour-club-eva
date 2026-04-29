@@ -5,9 +5,11 @@ import { motion } from 'framer-motion';
 import { QrCode as QrCodeIcon, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import LevelsInfoModal from '@/components/modals/LevelsInfoModal';
 import { LEVELS_CONFIG, getLevelConfig } from '@/lib/constants/levels';
-import QRCode from "react-qr-code"; 
+import dynamic from 'next/dynamic';
+
+const LevelsInfoModal = dynamic(() => import('@/components/modals/LevelsInfoModal'), { ssr: false });
+const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -19,7 +21,7 @@ interface VirtualCardProps {
   totalTours: number;
   totalKm: number;
   memberId: string | null;
-  bookingShortId?: number | null; 
+  bookingShortId?: string | null;
   tourTitle?: string | null;       
   tourStartDate?: Date | null;     
 }
@@ -96,10 +98,9 @@ export default function VirtualCard({
           )}>
             <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/20 blur-[50px] rounded-full pointer-events-none" />
-
-            <div className="relative z-10 flex justify-between items-start">
+<div className="relative z-10 flex justify-between items-start">
               <div className="flex flex-col">
-                <span className="text-white/80 text-[12px] font-bold uppercase tracking-[0.3em]">Турклуб</span>
+                <span className="text-white/80 text-xs font-bold uppercase tracking-[0.3em]">Турклуб</span>
                 <span className="text-white text-xl font-black tracking-tighter leading-none">ЭВА</span>
               </div>
 
@@ -113,9 +114,9 @@ export default function VirtualCard({
               </div>
             </div>
 
-            <div className="relative z-10 flex justify-between items-end gap-4">
+           <div className="relative z-10 flex justify-between items-end gap-4">
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-white/50 text-[12px] uppercase font-bold tracking-widest">Участник</span>
+                <span className="text-white/50 text-xs uppercase font-bold tracking-widest">Участник</span>
                 <span className="text-white text-lg md:text-xl font-black uppercase tracking-widest drop-shadow-md line-clamp-2 text-balance break-words leading-tight">
                   {name || 'ТУРИСТ'}
                 </span>
@@ -127,53 +128,45 @@ export default function VirtualCard({
             </div>
           </div>
 
-          {/* ОБОРОТНАЯ СТОРОНА */}
-          <div className={cn(
+        {/* ОБОРОТНАЯ СТОРОНА */}
+        <div className={cn(
             "absolute inset-0 w-full h-full rounded-2xl p-6 flex flex-col items-center justify-center overflow-hidden backface-hidden border rotate-y-180",
-            "bg-slate-900 border-slate-700"
+            "bg-ui-panel border-ui-border"
           )}>
             <div className="absolute inset-x-0 top-6 h-10 bg-black/40" />
 
-            <button
+           <button
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
-              className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-slate-300 hover:text-white z-20"
+              className="absolute top-4 right-4 p-1.5 bg-ui-border/50 hover:bg-ui-border rounded-full transition-colors text-ui-muted hover:text-ui-text z-20"
             >
               <X size={16} />
             </button>
-
-          <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
-  {bookingShortId ? (
-    <QRCode 
-      size={140} 
-      className="text-slate-950" 
-      value={`https://evatur.club/admin/scan?b=${bookingShortId}`} 
-    />
-  ) : (
-    <QRCode 
-      size={140} 
-      className="text-slate-950" 
-      value={`https://evatur.club/admin/scan?m=${memberId}`} 
-    />
-  )}
+<div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
+  {/* Только QR участника клуба, больше никаких проверок! */}
+  <QRCode 
+    value={`https://evatur.club/admin/scan?m=${memberId}`}
+    size={150} 
+    level="M" 
+  />
 </div>
 
-            <p className="text-slate-300 text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
+          <p className="text-ui-muted text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}
             </p>
            </div>
         </motion.div>
       </div>
 
-      <div className="mt-8 px-2 flex flex-col gap-4">
+ <div className="mt-8 px-2 flex flex-col gap-4">
         {nextConfig ? (
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between items-end">
-              <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Прогресс статуса</span>
-              <span className="text-[12px] text-slate-300 font-bold uppercase tracking-widest">
+              <span className="text-xs font-bold text-ui-muted uppercase tracking-widest">Прогресс статуса</span>
+              <span className="text-xs text-ui-muted font-bold uppercase tracking-widest">
                 Еще {toursNeeded} {toursNeeded === 1 ? 'тур' : toursNeeded > 1 && toursNeeded < 5 ? 'тура' : 'туров'} до «{nextConfig.name}»
               </span>
             </div>
-            <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
+            <div className="h-2 w-full bg-ui-panel rounded-full overflow-hidden border border-ui-border">
               <div
                 className={cn("h-full transition-all duration-1000 ease-out bg-gradient-to-r", currentConfig.bg)}
                 style={{ width: `${progressPercent}%` }}

@@ -158,7 +158,7 @@ export default async function TestsPage() {
       {/* Заголовок */}
       <div>
         <h1 className="text-2xl font-black text-white mb-1">ДНК Туриста</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-ui-muted">
           {results.length > 0
             ? `Открыто ${results.length} из ${Object.keys(QUIZ_CONFIG).length} граней вашей личности`
             : 'Пройдите тесты в Fan-секторе, чтобы собрать свой профиль'}
@@ -180,7 +180,7 @@ export default async function TestsPage() {
               return (
                 <div
                   key={result.id}
-                  className="bg-slate-900/60 border border-white/5 rounded-3xl p-5 flex flex-col relative overflow-hidden group hover:border-white/10 transition-colors"
+                  className="bg-ui-panel/60  border border-white/5 rounded-3xl p-5 flex flex-col relative overflow-hidden group hover:border-white/10 transition-colors"
                 >
                   {/* Фоновое свечение */}
                   <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl opacity-20 rounded-full pointer-events-none ${config.bgColor.replace('/10', '')}`} />
@@ -191,8 +191,8 @@ export default async function TestsPage() {
                       <Icon size={20} />
                     </div>
                     <div>
-                      <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">{config.title}</h3>
-                      <p className="text-[12px] text-slate-300">{formatDate(result.createdAt)}</p>
+                  <h3 className="text-xs font-bold text-ui-muted uppercase tracking-wider">{config.title}</h3>
+                   <p className="text-xs text-ui-muted">{formatDate(result.createdAt)} </p>
                     </div>
                   </div>
 
@@ -202,7 +202,7 @@ export default async function TestsPage() {
                       {typeName}
                     </p>
                     {res.badge && (
-                      <p className="text-sm text-slate-300 mt-1 font-medium">
+                      <p className="text-sm text-ui-muted mt-1 font-medium">
                         {res.badge}
                       </p>
                     )}
@@ -216,16 +216,18 @@ export default async function TestsPage() {
                         .slice(0, 6)
                         .map(([key, value]) => (
                           <div key={key} className="space-y-1.5">
-                            <div className="flex items-center justify-between text-[12px] font-bold uppercase tracking-wider">
-                              <span className="text-slate-300 truncate pr-2">{key}</span>
-                              <span className={config.color}>{value}%</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-950 rounded-full overflow-hidden shadow-inner">
-                              <div
-                                className={`h-full rounded-full transition-all duration-1000 ${config.bgColor.replace('/10', '/60')}`}
-                                style={{ width: `${Math.min(value || 0, 100)}%` }}
-                              />
-                            </div>
+                         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+  <span className="text-ui-muted truncate pr-2">{key}</span>
+  <span className={config.color}>{value}%</span>
+</div>
+{/* Подложку бара делаем универсальной: полупрозрачный черный цвет (или ui-border) 
+    идеально ляжет на ЛЮБОЙ фон карточки, создавая эффект "вдавленности" */}
+<div className="h-1.5 bg-black/30 rounded-full overflow-hidden shadow-inner">
+  <div
+    className={`h-full rounded-full transition-all duration-1000 ${config.bgColor.replace('/10', '/60')}`}
+    style={{ width: `${Math.min(value || 0, 100)}%` }}
+  />
+</div>
                           </div>
                         ))}
                     </div>
@@ -235,7 +237,7 @@ export default async function TestsPage() {
                   <div className="mt-auto pt-4 border-t border-white/5 relative z-10">
                     <Link
                       href={config.href}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-colors border border-transparent hover:border-white/5"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-xs font-bold text-ui-muted hover:text-white transition-colors border border-transparent hover:border-white/5"
                     >
                       <RefreshCw size={14} /> Перепройти тест
                     </Link>
@@ -250,7 +252,7 @@ export default async function TestsPage() {
       {/* ── Непройденные квизы ───────────────────────────────────── */}
       {unpassedQuizzes.length > 0 && (
         <section className="space-y-4 pt-4 border-t border-white/5">
-          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-ui-muted uppercase tracking-wider">
             {results.length > 0 ? 'Ещё не пройдены' : 'Доступные тесты'}
           </h2>
 
@@ -267,17 +269,14 @@ export default async function TestsPage() {
                     <Icon size={24} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors truncate">
+                    <p className="text-sm font-bold text-ui-base group-hover:text-teal-400 transition-colors truncate">
                       {config.title}
                     </p>
-                    <p className="text-xs text-slate-300 truncate mt-0.5">
+                    <p className="text-xs text-ui-muted truncate mt-0.5">
                       {config.description}
                     </p>
                   </div>
-                  <ArrowRight
-                    size={16}
-                    className="text-slate-600 group-hover:text-teal-400 transition-colors shrink-0"
-                  />
+                  <ArrowRight size={16} className="text-ui-muted group-hover:text-ui-accent transition-colors shrink-0" />
                 </Link>
               );
             })}
@@ -287,14 +286,14 @@ export default async function TestsPage() {
 
       {/* CTA если вообще нет результатов */}
       {results.length === 0 && (
-        <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center">
+        <div className="bg-ui-panel/60  border border-white/5 rounded-3xl p-8 flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center shrink-0 mb-4 shadow-inner border border-teal-500/20">
             <FlaskConical size={32} className="text-teal-400" />
           </div>
           <p className="text-lg font-black text-white mb-2">
             Узнай свой туристический профиль
           </p>
-          <p className="text-sm text-slate-300 mb-6 max-w-sm">
+          <p className="text-sm text-ui-muted mb-6 max-w-sm">
             Пройди тесты в Fan-секторе — результаты автоматически сохранятся здесь в виде красивой статистики.
           </p>
           <Link

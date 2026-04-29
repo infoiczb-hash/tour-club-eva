@@ -150,39 +150,38 @@ export default async function WishlistPage() {
     <div className="space-y-8 max-w-4xl pb-10">
 
       {/* ── Заголовок ── */}
-      <div>
-        <h1 className="text-2xl font-black text-white mb-1">Мои желания</h1>
-        <p className="text-sm text-slate-300">
+     <div>
+        <h1 className="text-2xl font-black text-ui-text mb-1">Мои желания</h1>
+        <p className="text-sm text-ui-muted">
           Туры и статьи, за которыми вы следите, и ваши листы ожидания.
         </p>
       </div>
 
       {/* ── ТЕКСТОВАЯ ПОДСКАЗКА PRO TELEGRAM ── */}
-      <div className="flex items-start gap-3 bg-slate-800/40 border border-white/5 rounded-2xl p-4">
-        <Bell size={18} className="text-teal-500 shrink-0 mt-0.5" />
-        <p className="text-sm text-slate-300 leading-relaxed">
+      <div className="flex items-start gap-3 bg-ui-panel border border-ui-border rounded-2xl p-4">
+        <Bell size={18} className="text-ui-accent shrink-0 mt-0.5" />
+        <p className="text-sm text-ui-muted leading-relaxed">
           Уведомления об освободившихся местах и новых датах туров приходят в Telegram. 
-          <Link href="/account/settings" className="text-teal-400 hover:text-teal-300 font-bold ml-1.5 transition-colors whitespace-nowrap">
+          <Link href="/account/settings" className="text-ui-accent hover:text-ui-accent/80 font-bold ml-1.5 transition-colors whitespace-nowrap">
             Настроить →
           </Link>
         </p>
       </div>
-
       {/* ── ЛИСТ ОЖИДАНИЯ ── */}
       {waitlists.length > 0 && (
         <section className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+          <div className="flex items-center gap-2 border-b border-ui-border pb-2">
             <Hourglass size={18} className="text-amber-500 animate-pulse" />
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
+          <h2 className="text-sm font-bold text-ui-muted uppercase tracking-widest">
               Лист ожидания ({waitlists.length})
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {waitlists.map((w: any) => (
-              <div key={w.id} className="flex items-center gap-4 bg-slate-900/60 border border-amber-500/20 rounded-xl p-3">
+              <div key={w.id} className="flex items-center gap-4 bg-ui-panel/60 border border-amber-500/20 rounded-xl p-3">
                 <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-slate-800">
                   {w.tour.coverImage && (
-                    <Image src={w.tour.coverImage} alt={w.tour.title} fill className="object-cover opacity-80" sizes="56px" />
+                <Image src={w.tour.coverImage} alt={w.tour.title} fill className="object-cover opacity-80" sizes="56px" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -202,12 +201,12 @@ export default async function WishlistPage() {
 
       {/* ── СОХРАНЁННЫЕ ТУРЫ ── */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between border-b border-white/5 pb-2">
-          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-ui-border pb-2">
+          <h2 className="text-sm font-bold text-ui-muted uppercase tracking-wider flex items-center gap-2">
             <Heart size={14} className="text-rose-400" />
             Туры
             {tourWishlist.length > 0 && (
-              <span className="text-xs font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold bg-ui-surface text-ui-muted px-2 py-0.5 rounded-full">
                 {tourWishlist.length}
               </span>
             )}
@@ -218,9 +217,9 @@ export default async function WishlistPage() {
         </div>
 
         {tourWishlist.length === 0 ? (
-          <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-8 text-center">
+          <div className="bg-ui-panel/60 border border-ui-border rounded-2xl p-8 text-center">
             <Heart size={32} className="text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-300 text-sm mb-2">Нет сохранённых туров</p>
+            <p className="text-ui-muted text-sm mb-2">Нет сохранённых туров</p>
             <p className="text-xs text-slate-600 mb-4">Нажмите ♡ на странице тура чтобы добавить в вишлист</p>
             <Link href="/tour" className="inline-flex items-center gap-2 text-sm font-bold text-teal-400 hover:text-teal-300 transition-colors">
               Смотреть туры <ArrowRight size={14} />
@@ -236,7 +235,7 @@ export default async function WishlistPage() {
               const isLowSpots = nextDate && nextDate.spotsLeft <= 3 && nextDate.spotsLeft > 0;
 
               return (
-                <div key={item.id} className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden flex">
+                <div key={item.id} className="bg-ui-panel/60 border border-ui-border rounded-2xl overflow-hidden flex">
                   {/* Фото */}
                   <div className="relative w-24 sm:w-28 shrink-0">
                     {tour.coverImage ? (
@@ -250,7 +249,7 @@ export default async function WishlistPage() {
                   <div className="flex-1 p-4 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       {tour.category && (
-                        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text}`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.text}`}>
                           {tour.category.title}
                         </span>
                       )}
@@ -266,7 +265,7 @@ export default async function WishlistPage() {
                       {tour.title}
                     </Link>
 
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-300 mb-2">
+                    <div className="flex flex-wrap gap-2 text-xs text-ui-muted mb-2">
                       {tour.location && <span className="flex items-center gap-1"><MapPin size={10} /> {tour.location}</span>}
                       {tour.duration && <span className="flex items-center gap-1"><Clock size={10} /> {tour.duration}</span>}
                       {tour.distance && <span className="flex items-center gap-1"><TrendingUp size={10} /> {tour.distance} км</span>}
@@ -277,7 +276,7 @@ export default async function WishlistPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-teal-400 font-medium">{formatDate(nextDate.startDate)}</span>
                           {isLowSpots && (
-                            <span className="text-[12px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
+                            <span className="text-xs font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
                               Осталось {nextDate.spotsLeft} мест
                             </span>
                           )}
@@ -300,42 +299,46 @@ export default async function WishlistPage() {
       {/* ── ИЗБРАННЫЕ СТАТЬИ БЛОГА ── */}
       {favoritePosts.length > 0 && (
         <section className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+          <div className="flex items-center gap-2 border-b border-ui-border pb-2">
             <BookOpen size={18} className="text-blue-500" />
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
+            <h2 className="text-sm font-bold text-ui-muted uppercase tracking-widest">
               Сохраненные статьи ({favoritePosts.length})
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {favoritePosts.map((sp: any) => (
-              <Link key={sp.id} href={`/blog/${sp.post.slug}`} className="group flex items-start gap-4 bg-slate-900/40 border border-white/5 hover:border-white/10 rounded-xl p-3 transition-colors">
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-slate-800">
-                  {sp.post.image && (
-                    <Image src={sp.post.image} alt={sp.post.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" sizes="64px" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 pt-1">
-                  <p className="text-sm font-bold text-slate-200 group-hover:text-white line-clamp-2 transition-colors leading-snug">{sp.post.title}</p>
-                  <p className="text-[12px] text-slate-300 font-bold uppercase tracking-wider mt-1.5">
-                    {sp.post.read_time ? `${sp.post.read_time} мин чтения` : 'Статья'}
-                  </p>
-                </div>
-              </Link>
+             <Link key={sp.id} href={`/blog/${sp.post.slug}`} className="group flex items-start gap-4 bg-ui-panel/40 border border-ui-border hover:border-ui-muted/30 rounded-xl p-3 transition-colors">
+  {/* Фон-заглушка для картинки тоже становится системным */}
+  <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-ui-surface">
+    {sp.post.image && (
+      <Image src={sp.post.image} alt={sp.post.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" sizes="64px" />
+    )}
+  </div>
+  <div className="flex-1 min-w-0 pt-1">
+    {/* text-slate-200 меняем на text-ui-base/90 (чуть приглушенный белый).
+        А при наведении (group-hover) можно сделать его либо полностью белым (text-ui-base), 
+        либо акцентным (text-teal-400) для лучшего UX */}
+    <p className="text-sm font-bold text-ui-base/90 group-hover:text-teal-400 line-clamp-2 transition-colors leading-snug">{sp.post.title}</p>
+    <p className="text-xs text-ui-muted font-bold uppercase tracking-wider mt-1.5">
+      {sp.post.read_time ? `${sp.post.read_time} мин чтения` : 'Статья'}
+    </p>
+  </div>
+</Link>
             ))}
           </div>
         </section>
       )}
 
     {/* ── ПОДПИСКИ НА КАТЕГОРИИ ── */}
-      <section className="space-y-4 pt-4 border-t border-white/5">
+      <section className="space-y-4 pt-4 border-t border-ui-border">
         <div className="flex items-center gap-2">
           <Bell size={14} className="text-teal-400" />
-          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-ui-muted uppercase tracking-wider">
             Направления (Подписки)
           </h2>
         </div>
 
-        <p className="text-xs text-slate-300 leading-relaxed">
+        <p className="text-xs text-ui-muted leading-relaxed">
           Мы пришлём уведомление, когда появятся новые даты в выбранных категориях.
         </p>
 

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { PostFormat } from '@prisma/client';
 
-import { sendToTelegram, publishToTelegram } from '@/features/admin/actions/telegram';
+import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { withAdminAuth } from '@/lib/auth'; // 👈 Заменили requireAuth на HOC
 import { withAdminAudit } from '@/lib/audit'; // ✅ ДОБАВИЛИ ЯДРО АУДИТА
 import { env } from '@/lib/env';
@@ -71,15 +71,7 @@ export const createBlogPost = withAdminAuth(
       revalidatePath('/blog');
       revalidatePath('/');
       revalidatePath(`/blog/${slug}`);
-      
-      if (image) {
-        publishToTelegram(
-          `📝 <b>${title}</b>\n\n${excerpt}`,
-          image,
-          `${env.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
-          true  // → публичный канал
-        ).catch(console.error); // не блокируем redirect
-      }
+    
     } catch (error) {
       console.error("Ошибка при создании поста:", error);
       return { success: false, error: 'Не удалось создать пост' };

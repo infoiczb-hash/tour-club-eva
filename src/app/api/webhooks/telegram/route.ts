@@ -7,6 +7,7 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { handleTelegramCallback } from '@/features/admin/actions/telegramInteractive';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН АУДИТ
+import { updateBookingStatusAction } from '@/features/admin/actions/bookingStatus';
 
 // Инициализируем Redis (оставляем твой вариант из оригинала)
 const redis = Redis.fromEnv();
@@ -56,32 +57,16 @@ export async function POST(req: Request) {
         return ok(); // Отдаем 200, чтобы Telegram перестал слать этот запрос
       }
     }
-    // ==========================================
-
-    // ==========================================
+      // ==========================================
     // СЦЕНАРИЙ 3: ОБРАБОТКА НАЖАТИЙ КНОПОК В TELEGRAM
     // ==========================================
     if (body.callback_query) {
       const callbackData = body.callback_query.data;
       if (!callbackData) return ok();
 
-      // 🔥 НОВОЕ: СЦЕНАРИЙ КЛИЕНТ ПОДТВЕРЖДАЕТ ИЛИ ОТМЕНЯЕТ УЧАСТИЕ (НАЛИЧНЫЕ/ИНОСТРАНЦЫ)
-      if (callbackData.startsWith('cash_confirm_') || callbackData.startsWith('cash_cancel_')) {
-        const bookingId = callbackData.replace(/cash_confirm_|cash_cancel_/, '');
-        const action = callbackData.startsWith('cash_confirm_') ? 'confirm' : 'cancel';
-        
-        const clientChatId = String(body.callback_query.message.chat.id);
-        const messageId = body.callback_query.message.message_id;
-        const originalText = body.callback_query.message.text || ''; // Забираем старый текст, чтобы он не пропал
-
-        if (action === 'confirm') {
-           // Клиент подтвердил: просто убираем кнопки и пишем "Успех"
-           const newText = originalText + '\n\n✅ <b>Участие подтверждено! Ждем вас!</b>';
-           await editClientMessage(clientChatId, messageId, newText);
-        } else {
-           // 🔥 НЕ отменяем автоматически. Переводим на менеджера.
-          
-          // 🔥 НОВОЕ: СЦЕНАРИЙ КЛИЕНТ НАЖАЛ "НАПИСАТЬ ОТЗЫВ"
+      // ==========================================
+      // 🔥 СЦЕНАРИЙ 1: КЛИЕНТ НАЖАЛ "НАПИСАТЬ ОТЗЫВ"
+      // ==========================================
       if (callbackData.startsWith('write_review_')) {
         const bookingId = callbackData.replace('write_review_', '');
         const clientChatId = String(body.callback_query.message.chat.id);
@@ -97,22 +82,28 @@ export async function POST(req: Request) {
         await answerClientCallbackQuery(body.callback_query.id);
         return ok();
       }
-          const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tour: true }});
+
+      // ==========================================
+      // 🔥 СЦЕНАРИЙ 2: КЛИЕНТ ПОДТВЕРЖДАЕТ ИЛИ ОТМЕНЯЕТ УЧАСТИЕ (НАЛИЧНЫЕ)
+      // ==========================================
+      if (callbackData.startsWith('cash_confirm_') || callbackData.startsWith('cash_cancel_')) {
+        const bookingId = callbackData.replace(/cash_confirm_|cash_cancel_/, '');
+        const action = callbackData.startsWith('cash_confirm_') ? 'confirm' : 'cancel';
+        
+        const clientChatId = String(body.callback_query.message.chat.id);
+        const messageId = body.callback_query.message.message_id;
+        const originalText = body.callback_query.message.text || '';
+
+        if (action === 'confirm') {
+           const newText = originalText + '\n\n✅ <b>Участие подтверждено! Ждем вас!</b>';
+           await editClientMessage(clientChatId, messageId, newText);
+        } else {
+           const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tour: true }});
            
            if (booking && booking.status !== 'cancelled') {
-               // 1. Уведомляем Администратора о запросе на отмену
                const adminMsg = `🚨 <b>ЗАПРОС НА ОТМЕНУ (Менее 24ч / 3 дней)</b>\nБронь #${booking.shortId} на тур «${booking.tour.title}».\n👤 Клиент: ${booking.name} (${booking.phone})\n\n⚠️ <b>Места ПОКА НЕ ОСВОБОЖДЕНЫ.</b>\nКлиент нажал кнопку отмены. Свяжитесь с ним для выяснения причин. Если отмена подтверждается — отмените бронь вручную в CRM (это автоматически вернет места в продажу и запустит Лист Ожидания).`;
-               
-               // Используем publishToTelegram (он уже импортирован в самом верху твоего файла)
-               await publishToTelegram(
-                 adminMsg,
-                 undefined,
-                 undefined,
-                 false,
-                 { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS } // Уйдет в топик с бронями
-               ); 
+               await publishToTelegram(adminMsg, undefined, undefined, false, { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS }); 
 
-               // 2. Меняем сообщение клиенту, направляя к менеджеру
                const newText = originalText + '\n\n⚠️ <b>Мы получили ваш запрос.</b>\nТак как до старта осталось мало времени, пожалуйста, напишите нашему менеджеру для решения этого вопроса: @romansvtirase';
                await editClientMessage(clientChatId, messageId, newText);
            } else {
@@ -129,19 +120,28 @@ export async function POST(req: Request) {
         const messageId = body.callback_query.message.message_id;
         const adminName = body.callback_query.from.username ? `@${body.callback_query.from.username}` : (body.callback_query.from.first_name || 'Admin');
 
-        if (callbackData.startsWith('confirm_')) {
+     if (callbackData.startsWith('confirm_')) {
           const bookingId = callbackData.replace('confirm_', '');
 
-          // 1. Меняем статус в базе
-          const booking = await prisma.booking.update({
+          // ✅ ИСПОЛЬЗУЕМ НАШ НОВЫЙ ЭКШЕН
+        // ✅ Указываем TypeScript, какой ответ мы ждем от экшена
+          const result = (await updateBookingStatusAction({
+            bookingId,
+            newStatus: 'confirmed',
+            adminName
+          })) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('Ошибка подтверждения через бота:', result.error);
+            return ok();
+          }
+
+          // Нам нужна инфа о туре для отправки сообщений, так что запрашиваем:
+          const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
-            data: { 
-              status: 'confirmed',
-              confirmedBy: adminName,
-              confirmedAt: new Date()
-            },
             include: { tour: true, tourDate: true }
           });
+          if (!booking) return ok();
 
           // ✅ СИСТЕМНЫЙ АУДИТ: Логируем подтверждение брони админом через кнопку Telegram
           Promise.resolve().then(() => {
@@ -182,12 +182,26 @@ export async function POST(req: Request) {
 
           await Promise.allSettled(telegramTasks);
           
-        } else if (callbackData.startsWith('reject_')) {
+      } else if (callbackData.startsWith('reject_')) {
           const bookingId = callbackData.replace('reject_', '');
 
+          // ✅ ИСПОЛЬЗУЕМ НАШ НОВЫЙ ЭКШЕН + ДОБАВЛЯЕМ ПРИЧИНУ
+        // ✅ Указываем TypeScript, какой ответ мы ждем от экшена
+          const result = (await updateBookingStatusAction({
+            bookingId,
+            newStatus: 'awaiting_payment',
+            rejectReason: 'Отклонено менеджером через Telegram'
+          })) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('Ошибка отклонения через бота:', result.error);
+            return ok();
+          }
+          
+          // Дополнительно очищаем paymentProofUrl, как это было в старом коде
           const booking = await prisma.booking.update({
             where: { id: bookingId },
-            data: { status: 'awaiting_payment', paymentProofUrl: null },
+            data: { paymentProofUrl: null },
             include: { tour: true }
           });
 
@@ -290,14 +304,15 @@ export async function POST(req: Request) {
         }
         return ok(); // Завершаем запрос
     }
-    // ==========================================
+ // ==========================================
     // СЦЕНАРИЙ 1: КЛИЕНТ ПЕРЕШЕЛ ПО ДИПЛИНКУ (/start {id})
     // ==========================================
     if (text.startsWith('/start ')) {
-      const shortIdStr = text.replace('/start ', '').trim();
-      const shortId = parseInt(shortIdStr, 10);
+      // 1. Просто извлекаем строку и делаем большими буквами (A4F9)
+      const shortId = text.replace('/start ', '').trim().toUpperCase();
       
-      if (!isNaN(shortId)) {
+      // 2. Проверяем, что строка не пустая (вместо isNaN)
+      if (shortId) {
         const booking = await prisma.booking.findUnique({
           where: { shortId }
         });
@@ -330,61 +345,50 @@ export async function POST(req: Request) {
     }
 
     // ==========================================
-    // СЦЕНАРИЙ 2: КЛИЕНТ ПРИСЛАЛ ФОТО ИЛИ ФАЙЛ (ЧЕК)
+    // СЦЕНАРИЙ 2: КЛИЕНТ ПРИСЛАЛ ФОТО ИЛИ ФАЙЛ (ЧЕК) - ОПТИМИЗИРОВАН
     // ==========================================
     if (body.message?.photo || body.message?.document) {
       console.log(`📸 Получен чек от chatId: ${chatId}`);
 
+      // ✅ ИЩЕМ САМУЮ СВЕЖУЮ бронь, добавляем статус 'moderation' в поиск
       const booking = await prisma.booking.findFirst({
         where: { 
-            payerTgChatId: chatId, 
-            status: { in: ['awaiting_payment', 'pending', 'rejected'] } 
+          payerTgChatId: chatId,
+          status: { in: ['awaiting_payment', 'pending', 'rejected', 'moderation'] }
         },
-        include: { tour: { select: { currency: true } } },
+        include: { tour: { select: { currency: true, title: true } } },
         orderBy: { createdAt: 'desc' }
       });
 
       if (!booking) {
-        const checkModeration = await prisma.booking.findFirst({
-          where: { payerTgChatId: chatId, status: 'moderation' }
-        });
-
-        if (checkModeration) {
-          console.log(`📸 Игнорируем дубликат фото из альбома для chatId: ${chatId}`);
-          return ok();
-        }
-
-        await sendMessage(chatId, 'У вас нет заявок, ожидающих скриншота оплаты. Если вы хотите прислать чек для новой заявки, сначала перейдите в бота по кнопке с сайта.');
+        await sendMessage(chatId, 'У вас нет активных заявок, ожидающих оплаты. Если нужно — начните новую бронь на сайте.');
         return ok();
       }
 
-      console.log(`✅ Найдена заявка #${booking.shortId}`);
+      console.log(`✅ Найдена заявка #${booking.shortId} (статус: ${booking.status})`);
 
-      let fileId = '';
-      if (body.message.photo) {
-          fileId = body.message.photo[body.message.photo.length - 1].file_id;
-      } else if (body.message.document) {
-          fileId = body.message.document.file_id;
-      }
+      let fileId = body.message.photo 
+        ? body.message.photo[body.message.photo.length - 1].file_id 
+        : body.message.document?.file_id;
+
+      if (!fileId) return ok();
 
       try {
         const fileUrl = await getTelegramFileUrl(fileId);
-        const receiptUrl = await uploadToCloudinary(fileUrl);
+        const receiptUrl = await uploadToCloudinary(fileUrl); // Сюда вернется либо Cloudinary URL, либо Telegram URL
 
-        const updateResult = await prisma.booking.updateMany({
-          where: { 
-            id: booking.id,
-            status: { in: ['awaiting_payment', 'pending', 'rejected'] }
-          },
-          data: { status: 'moderation', paymentProofUrl: receiptUrl }
+        // 🔥 ИСПРАВЛЕНИЕ: используем update вместо updateMany
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { 
+            status: 'moderation', 
+            paymentProofUrl: receiptUrl,
+            rejectReason: null,
+            createdAt: new Date()
+          }
         });
 
-        if (updateResult.count === 0) {
-          console.log(`📸 Фото дубль. Бронь #${booking.shortId} уже захвачена другим процессом.`);
-          return ok();
-        }
-
-        // ✅ СИСТЕМНЫЙ АУДИТ: Логируем успешное сохранение чека
+        // Аудит
         Promise.resolve().then(() => {
           logSystemAction('PAYMENT_PROOF_RECEIVED', {
             targetId: booking.id,
@@ -392,16 +396,22 @@ export async function POST(req: Request) {
           }).catch(console.error);
         });
 
-        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'MDL'}</b>\n\nПодтверждаете получение средств?`;
-        
+        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 ${booking.name}\n💳 ${booking.paymentMethod || '—'}\n💰 ${booking.totalPrice} ${booking.tour?.currency || 'RUB'}\n\nПодтверждаете получение средств?`;
+
+        // Отправляем админу и клиенту
         await Promise.allSettled([
-          sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id),
+          sendModerationRequest(
+            env.TELEGRAM_ADMIN_CHAT_ID, 
+            receiptUrl, 
+            caption, 
+            booking.id
+          ),
           sendMessage(chatId, `✅ Файл чека получен!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
         ]);
-        
+
       } catch (e: unknown) {
-        console.error('Ошибка обработки фото чека:', e);
-        await sendMessage(chatId, 'Произошла ошибка при сохранении чека. Пожалуйста, попробуйте отправить его еще раз чуть позже.');
+        console.error('Ошибка обработки чека:', e);
+        await sendMessage(chatId, '❌ Не удалось сохранить чек. Попробуйте отправить ещё раз.');
       }
       return ok();
     }

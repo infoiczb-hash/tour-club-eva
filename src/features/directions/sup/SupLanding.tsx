@@ -5,6 +5,7 @@ import SuperHero from './components/SuperHero';
 
 // Второй блок — сразу виден под Hero на большинстве экранов, синхронно
 import SupBenefits from './components/SupBenefits';
+import SectionErrorBoundary from '@/components/SectionErrorBoundary';
 
 // Всё ниже — lazy, грузится после первого рендера
 // min-h вместо h- — скелетон не меньше этого значения,
@@ -48,37 +49,53 @@ export default function SupLanding() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30 selection:text-white">
 
-      {/* 1. Главный экран */}
+      {/* 1. Главный экран (LCP — без обертки) */}
       <SuperHero />
 
-      {/* 2. Выгоды — виден сразу под Hero */}
+      {/* 2. Выгоды — виден сразу под Hero (Синхронный — без обертки) */}
       <SupBenefits />
 
       {/* 3. Форматы */}
-      <SupFormats />
+      <SectionErrorBoundary label="SUP-форматы" minHeight="500px">
+        <SupFormats />
+      </SectionErrorBoundary>
 
       {/* 4. Безопасность */}
-      <SupSafety />
+      <SectionErrorBoundary label="SUP-безопасность" minHeight="500px">
+        <SupSafety />
+      </SectionErrorBoundary>
 
       {/* 5. Каталог — id сохраняется на div, якорь работает */}
       <div id="catalog" className="scroll-mt-10">
-        <SupCatalog />
+        <SectionErrorBoundary label="SUP-каталог" minHeight="600px">
+          <SupCatalog />
+        </SectionErrorBoundary>
       </div>
 
       {/* 6. Арсенал */}
-      <SupEquipment />
+      <SectionErrorBoundary label="SUP-снаряжение" minHeight="500px">
+        <SupEquipment />
+      </SectionErrorBoundary>
 
       {/* 7. Организационные детали */}
-      <ProLogistics />
+      <SectionErrorBoundary label="Логистика" minHeight="400px">
+        <ProLogistics />
+      </SectionErrorBoundary>
 
       {/* 8. Галерея */}
-      <SupGallery />
+      <SectionErrorBoundary label="SUP-галерея" minHeight="500px">
+        <SupGallery />
+      </SectionErrorBoundary>
 
       {/* 9. Видео-гид */}
-      <SupVideo />
+      <SectionErrorBoundary label="SUP-видео" minHeight="400px">
+        <SupVideo />
+      </SectionErrorBoundary>
 
       {/* 10. FAQ */}
-      <SupFAQ />
+      <SectionErrorBoundary label="SUP FAQ" minHeight="400px">
+        <SupFAQ />
+      </SectionErrorBoundary>
 
     </main>
   );

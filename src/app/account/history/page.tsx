@@ -87,9 +87,9 @@ export default async function HistoryPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div>
-        <h1 className="text-2xl font-black text-white mb-1">История путешествий</h1>
-        <p className="text-sm text-slate-300">
+     <div>
+        <h1 className="text-2xl font-black text-ui-text mb-1">История путешествий</h1>
+        <p className="text-sm text-ui-muted">
           Вы прошли с нами {bookings.length} {bookings.length === 1 ? 'тур' : bookings.length > 1 && bookings.length < 5 ? 'тура' : 'туров'}. Спасибо за доверие!
         </p>
       </div>
@@ -101,43 +101,43 @@ export default async function HistoryPage() {
           const review = reviewsMap.get(booking.tourId);
 
           return (
-            <div key={booking.id} className="bg-slate-900 border border-white/5 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-6 hover:border-white/10 transition-colors">
+          <div key={booking.id} className="bg-ui-panel border border-ui-border rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-6 hover:border-ui-accent/50 transition-colors">
               {/* Изображение */}
-              <Link href={`/tour/${booking.tour.slug}`} className="block shrink-0 relative w-full sm:w-48 h-40 sm:h-32 rounded-2xl overflow-hidden group">
+           <Link href={`/tour/${booking.tour.slug}`} className="block shrink-0 relative w-full sm:w-48 h-40 sm:h-32 rounded-2xl overflow-hidden group">
                 <Image
                   src={booking.tour.coverImage || '/og-default.jpg'}
                   alt={booking.tour.title}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent sm:hidden" />
+               <div className="absolute inset-0 bg-gradient-to-t from-ui-bg/80 to-transparent sm:hidden" />
                 {season && (
-                  <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm border border-white/10 px-2 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="absolute top-2 left-2 bg-ui-panel/80 backdrop-blur-sm border border-ui-border px-2 py-1 rounded-lg text-xs font-bold text-ui-text uppercase tracking-wider flex items-center gap-1.5">
                     <span>{season.emoji}</span> {season.label}
                   </div>
                 )}
               </Link>
 
               {/* Инфо */}
-              <div className="flex-1 flex flex-col justify-center min-w-0">
+            <div className="flex-1 flex flex-col justify-center min-w-0">
                 {booking.tour.category && (
-                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 text-${booking.tour.category.color}-400`}>
+                  <p className={`text-xs font-bold uppercase tracking-wider mb-1 text-${booking.tour.category.color}-400`}>
                     {booking.tour.category.title}
                   </p>
                 )}
-                <h3 className="text-base sm:text-lg font-bold text-white leading-tight mb-2 truncate">
-                  <Link href={`/tour/${booking.tour.slug}`} className="hover:text-teal-400 transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-ui-text leading-tight mb-2 truncate">
+                  <Link href={`/tour/${booking.tour.slug}`} className="hover:text-ui-accent transition-colors">
                     {booking.tour.title}
                   </Link>
                 </h3>
                 
                 {d && (
-                  <p className="text-sm font-bold text-slate-300 mb-1">
+                  <p className="text-sm font-bold text-ui-muted mb-1">
                     {formatDate(d)}
                   </p>
                 )}
-                {booking.tour.location && (
-                  <span className="flex items-center gap-1 text-xs text-slate-300">
+               {booking.tour.location && (
+                  <span className="flex items-center gap-1 text-xs text-ui-muted">
                     <MapPin size={12} /> {booking.tour.location}
                   </span>
                 )}
@@ -152,12 +152,12 @@ export default async function HistoryPage() {
                     memberName={profile.name ?? ''}
                   />
                 ) : review.isActive ? (
-                  <div className="flex items-center gap-1.5 text-[12px] sm:text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                 <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-emerald-500/20">
                     <Star size={12} className="fill-emerald-400" />
                     Опубликован
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-[12px] sm:text-xs text-amber-400 font-bold bg-amber-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-amber-500/20" title="Ждет проверки модератором">
+                  <div className="flex items-center gap-1.5 text-xs text-amber-400 font-bold bg-amber-500/10 px-2 sm:px-3 py-1.5 rounded-lg border border-amber-500/20" title="Ждет проверки модератором">
                     <Hourglass size={12} className="animate-pulse" />
                     На модерации
                   </div>

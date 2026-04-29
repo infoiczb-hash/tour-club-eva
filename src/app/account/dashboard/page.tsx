@@ -197,16 +197,16 @@ export default async function DashboardPage() {
 
   const nearestBooking = upcomingBookings.length > 0 ? upcomingBookings[0] : null;
 
-  return (
+ return (
     <div className="w-full max-w-7xl mx-auto space-y-8 pb-10">
       <div className="px-2 md:px-0">
-        <h1 className="text-3xl font-black text-white tracking-tight uppercase">Личный кабинет</h1>
-        <p className="text-slate-300 mt-2">Управляйте своими путешествиями и привилегиями</p>
+        <h1 className="text-3xl font-black text-ui-text tracking-tight uppercase">Личный кабинет</h1>
+        <p className="text-ui-muted mt-2">Управляйте своими путешествиями и привилегиями</p>
       </div>
 
       <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 items-start">
         
-        <div className="w-full xl:w-5/12 order-1 shrink-0 px-2 md:px-0">
+      <div className="w-full xl:w-5/12 order-1 shrink-0 px-2 md:px-0">
           <VirtualCard 
             name={displayName} 
             level={profile.level} 
@@ -222,9 +222,9 @@ export default async function DashboardPage() {
         <div className="w-full xl:w-7/12 flex flex-col gap-6 order-2">
           
           <div className="order-1 xl:order-2 px-2 md:px-0">
-            <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-5 sm:p-6 shadow-lg">
-              <h3 className="text-slate-300 font-bold text-xs sm:text-sm mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
-                <Mountain size={16} className="text-teal-500" /> Вы прошли с нами
+            <div className="bg-ui-panel border border-ui-border rounded-3xl p-5 sm:p-6 shadow-lg">
+              <h3 className="text-ui-muted font-bold text-xs sm:text-sm mb-4 sm:mb-6 uppercase tracking-wider flex items-center gap-2">
+                <Mountain size={16} className="text-ui-accent" /> Вы прошли с нами
               </h3>
               
               <div className="grid grid-cols-3 gap-3 sm:gap-4">
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalTours}</div>
-                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Туров</div>
+                  <div className="text-xs text-ui-muted font-bold uppercase tracking-wider mt-1.5">Туров</div>
                   </div>
                 </div>
 
@@ -244,7 +244,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalKm}</div>
-                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Км</div>
+                    <div className="text-xssm:text-xs text-ui-muted font-bold uppercase tracking-wider mt-1.5">Км</div>
                   </div>
                 </div>
 
@@ -254,7 +254,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black text-white leading-none">{stats.totalNights}</div>
-                    <div className="text-[12px] sm:text-xs text-slate-300 font-bold uppercase tracking-wider mt-1.5">Ночей</div>
+                    <div className="text-xssm:text-xs text-ui-muted font-bold uppercase tracking-wider mt-1.5">Ночей</div>
                   </div>
                 </div>
               </div>
@@ -264,24 +264,22 @@ export default async function DashboardPage() {
           <div className="order-2 xl:order-1 px-2 md:px-0 flex flex-col gap-5">
             
             {/* 🔥 НОВАЯ КАРТОЧКА: УВЕДОМЛЕНИЯ */}
-            <Link 
+           <Link 
               href="/account/notifications" 
-              className="group flex items-center justify-between p-5 bg-slate-900 border border-slate-700/50 rounded-3xl hover:border-teal-500/50 hover:bg-slate-800/50 transition-all shadow-lg"
+              className="group flex items-center justify-between p-5 bg-ui-panel border border-ui-border rounded-3xl hover:border-ui-accent/50 hover:bg-ui-border transition-all shadow-lg"
             >
               <div className="flex items-center gap-4">
-                <div className="relative flex items-center justify-center w-12 h-12 bg-teal-500/10 text-teal-400 rounded-2xl group-hover:bg-teal-500 group-hover:text-slate-900 transition-all duration-300 shadow-inner">
+                <div className="relative flex items-center justify-center w-12 h-12 bg-ui-accent/10 text-ui-accent rounded-2xl group-hover:bg-ui-accent group-hover:text-ui-bg transition-all duration-300 shadow-inner">
                   <Bell size={24} />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[9px] font-black text-white bg-red-500 border-2 border-slate-900 rounded-full">
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs font-black text-white bg-red-500 border-2 border-ui-panel rounded-full">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">
-                    Уведомления
-                  </h3>
-                  <p className="text-xs text-slate-400">
+           <h3 className="font-bold text-ui-base text-base">Уведомления</h3>
+<p className="text-xs text-ui-muted">
                     {unreadCount > 0 ? `У вас ${unreadCount} новых сообщений` : 'История ваших пушей'}
                   </p>
                 </div>
@@ -289,7 +287,7 @@ export default async function DashboardPage() {
               
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
-                  <span className="hidden sm:inline-block px-2.5 py-1 bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-red-500/20">
+                  <span className="hidden sm:inline-block px-2.5 py-1 bg-red-500/10 text-red-400 text-xs font-bold uppercase tracking-widest rounded-lg border border-red-500/20">
                     Новые
                   </span>
                 )}
@@ -298,15 +296,14 @@ export default async function DashboardPage() {
             </Link>
 
             {/* СТАРЫЙ БЛОК БАЛАНСА */}
-            <div className="bg-slate-900 border border-amber-500/20 rounded-3xl overflow-hidden shadow-lg">
-              
+         <div className="bg-ui-panel border border-ui-border rounded-3xl overflow-hidden shadow-lg">
               <div className="p-5 flex items-center justify-between bg-gradient-to-r from-amber-500/10 to-transparent">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 shadow-inner">
                     <Wallet size={24} />
                   </div>
                   <div>
-                    <h3 className="text-amber-500/80 font-bold text-[12px] sm:text-xs uppercase tracking-widest mb-0.5">Ваш баланс</h3>
+                    <h3 className="text-amber-500/80 font-bold text-xs uppercase tracking-widest mb-0.5">Ваш баланс</h3>
                     <div className="text-2xl sm:text-3xl font-black text-white flex items-baseline gap-1.5">
                       {stats.balance} <span className="text-sm sm:text-base font-bold text-amber-500/50">₽</span>
                     </div>
@@ -319,37 +316,37 @@ export default async function DashboardPage() {
                   <span className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
                     <Info size={14} /> Как получать бонусы?
                   </span>
-                  <ChevronDown size={16} className="text-slate-300 group-open:rotate-180 transition-transform duration-300" />
+                  <ChevronDown size={16} className="text-ui-muted group-open:rotate-180 transition-transform duration-300" />
                 </summary>
                 
                 <div className="px-4 pb-5 pt-1 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
                   
-                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5">
+                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-ui-border">
                     <Star size={18} className="text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-white mb-0.5">Отзывы о турах</p>
-                      <p className="text-xs text-slate-300 leading-snug">Получите +10 ₽ за честный отзыв на сайте после прохождения маршрута.</p>
+                      <p className="text-sm font-bold text-ui-base mb-0.5">Отзывы о турах</p>
+                      <p className="text-xs text-ui-muted leading-snug">Получите +10 ₽ за честный отзыв на сайте после прохождения маршрута.</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5">
+                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-ui-border">
                     <FlaskConical size={18} className="text-purple-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-white mb-0.5">Fan-сектор</p>
-                      <p className="text-xs text-slate-300 leading-snug">Проходите веселые тесты в личном кабинете и получайте +1 ₽ за каждый.</p>
+                      <p className="text-xs text-ui-muted leading-snug">Проходите веселые тесты в личном кабинете и получайте +1 ₽ за каждый.</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5">
+                  <div className="flex items-start gap-3 bg-slate-800/40 p-3 rounded-2xl border border-ui-border">
                     <Gift size={18} className="text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-white mb-0.5">Пригласить друга</p>
-                      <p className="text-xs text-slate-300 leading-snug">Дайте другу промокод на 5% скидку. После его первой поездки вы получите бонус!</p>
+                      <p className="text-xs text-ui-muted leading-snug">Дайте другу промокод на 5% скидку. После его первой поездки вы получите бонус!</p>
                     </div>
                   </div>
 
                   <div className="mt-4 text-center">
-                    <span className="inline-block px-3 py-1 bg-amber-500/10 text-amber-500/80 text-[12px] font-bold uppercase tracking-widest rounded-lg border border-amber-500/20">
+                    <span className="inline-block px-3 py-1 bg-amber-500/10 text-amber-500/80 text-xs font-bold uppercase tracking-widest rounded-lg border border-amber-500/20">
                       Оплачивайте до 10% от стоимости тура
                     </span>
                   </div>
@@ -378,13 +375,13 @@ export default async function DashboardPage() {
         <section className="space-y-4 pt-4 border-t border-white/5 px-2 md:px-0">
           <div className="flex items-center gap-2 mb-2">
             <Hourglass size={18} className="text-amber-500 animate-pulse" />
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-ui-muted uppercase tracking-wider">
               Лист ожидания
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {waitlists.map((w: any) => (
-              <div key={w.id} className="flex items-center gap-4 bg-slate-900/60 border border-amber-500/20 rounded-2xl p-4">
+           <div key={w.id} className="flex items-center gap-4 bg-ui-panel/60 border border-amber-500/20 rounded-2xl p-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate">{w.tour.title}</p>
                   <p className="text-xs text-amber-400/80 font-medium mt-1">
@@ -401,13 +398,13 @@ export default async function DashboardPage() {
       )}
 
       <section className="space-y-6 pt-4 border-t border-white/5 px-2 md:px-0">
-        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+        <h2 className="text-sm font-bold text-ui-muted uppercase tracking-wider">
           Предстоящие поездки
         </h2>
 
      {upcomingBookings.length === 0 ? (
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-8 text-center">
-            <p className="text-slate-300 text-sm mb-4">У вас пока нет запланированных туров</p>
+         <div className="bg-ui-panel/60 border border-ui-border rounded-3xl p-8 text-center">
+            <p className="text-ui-muted text-sm mb-4">У вас пока нет запланированных туров</p>
             <Link href="/tour" className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)]">
               Выбрать приключение <ArrowRight size={16} />
             </Link>

@@ -7,29 +7,77 @@ import { withAdminAudit } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { performAiTask } from './ai';
+import { performAiTask, type PerformAiTaskResult } from './ai';
 import { Prisma } from '@prisma/client';
+import crypto from 'crypto';
 
-// --- ТИПЫ ---
+// ============================================================================
+// 0. СТРУКТУРИРОВАННОЕ ЛОГИРОВАНИЕ
+// ============================================================================
+function logSmmError(source: string, error: unknown) {
+  console.error(JSON.stringify({
+    level: 'error',
+    source,
+    error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+    ts: new Date().toISOString(),
+  }));
+}
+
+// ============================================================================
+// 1. ТИПЫ ДАННЫХ
+// ============================================================================
 export type SmmSource = {
   id: string;
   title: string;
-  type: 'tour' | 'blog';
+  type: 'tour' | 'blog' | 'calendar';
   image: string | null;
+  gallery?: string[];
   categoryColor: string;
-  // ✅ П1: Добавляем расширенные поля для TourCard
-  categoryTitle?: string; 
+  categoryTitle?: string;
   price?: number;
-  priceMember?: number; 
-  priceChild?: number;  
-  currency?: string;    
-  location?: string;    
-  duration?: string;    
-  tags?: string[];      
+  currency?: string;
+  location?: string;
+  duration?: string;
+  tags?: string[];
   date?: Date | string | null;
+  program?: any;        // Для мгновенной автосборки слайдов
+  included?: string[];  // Для мгновенной автосборки слайдов
+  author?: string;      // ✅ Добавили для блога
+  read_time?: number;
+  highlights?: any;
+  route?: string | null;
+  meetingPoint?: string | null;
+  priceChild?: number | null;
+  guide?: { name: string; role: string; image?: string | null } | null;
+  spots?: number;
+  spotsLeft?: number;
 };
 
-// --- 1. ПОЛУЧЕНИЕ ИСХОДНИКОВ ДЛЯ SMM-ПУЛЬТА ---
+export type SaveScheduledPostPayload = {
+  id?: string;
+  platform: string;
+  format: string;
+  content: string;
+  imageUrl?: string | null;
+  status: string;
+  scheduledFor?: string | Date | null;
+  sourceType: string;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  templateStyle?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type FreezeAndPublishPayload = {
+  imageUrls: string[];
+  content: string;
+  platform: string;
+  isPublic?: boolean;
+};
+
+// ============================================================================
+// 2. ПОЛУЧЕНИЕ ИСХОДНИКОВ ДЛЯ SMM-ПУЛЬТА (С ПРОГРАММОЙ И INCLUDED)
+// ============================================================================
 export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: boolean; data?: SmmSource[]; error?: string }> => {
   try {
     const [tours, posts] = await Promise.all([
@@ -39,21 +87,24 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
           id: true, 
           title: true, 
           coverImage: true, 
-          // ✅ П1: Вытягиваем всю экономику и метаданные тура
           price: true,
-          priceMember: true,
           priceChild: true,
           currency: true,
           location: true,
           duration: true,
           tags: true,
+          program: true,
+          included: true,
+          highlights: true,      // ✅ Добавили впечатления
+          route: true,           // ✅ Добавили маршрут
+          meetingPoint: true,    // ✅ Добавили место сбора
+          guide: { select: { name: true, role: true, image: true } },
           tourDates: {
             where: { startDate: { gte: new Date() }, isActive: true },
             orderBy: { startDate: 'asc' },
             take: 1,
-            select: { startDate: true }
+            select: { startDate: true, spots: true, spotsLeft: true }
           },
-          // ✅ П1: Берем реальное название категории
           category: { select: { color: true, title: true } }
         },
         orderBy: { createdAt: 'desc' },
@@ -65,17 +116,20 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
           id: true, 
           title: true, 
           image: true,
-          blogCategory: { select: { slug: true } }
+          tags: true,          // ✅ Забираем теги
+          read_time: true,     // ✅ Забираем время чтения
+          author_name: true,   // ✅ Забираем автора
+          blogCategory: { select: { title: true } } // ✅ Берем реальное название рубрики
         },
         orderBy: { date: 'desc' },
         take: 50,
       }),
     ]);
 
-    const tourSources: SmmSource[] = tours.map(t => {
-      const firstDate = t.tourDates?.[0]?.startDate || null;
+ const tourSources: SmmSource[] = tours.map(t => {
+      const firstDateObj = t.tourDates?.[0];
+      const firstDate = firstDateObj?.startDate || null;
       
-      // Безопасный парсинг тегов
       let parsedTags: string[] = [];
       if (Array.isArray(t.tags)) {
         parsedTags = t.tags as string[];
@@ -89,54 +143,111 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
         type: 'tour',
         image: t.coverImage,
         price: t.price ? Number(t.price) : undefined,
-        priceMember: t.priceMember ? Number(t.priceMember) : undefined,
-        priceChild: t.priceChild ? Number(t.priceChild) : undefined,
-        currency: t.currency || 'MDL',
+        priceChild: t.priceChild ? Number(t.priceChild) : undefined, // ✅
+        gallery: t.coverImage ? [t.coverImage] : [],
+        currency: t.currency || 'RUB',
         location: t.location || '',
         duration: t.duration || '',
         tags: parsedTags,
         date: firstDate,
         categoryColor: t.category?.color || 'teal',
-        categoryTitle: t.category?.title || 'Тур',
+        categoryTitle: t.category?.title || 'ТУР',
+        program: t.program,
+        included: t.included,
+        highlights: t.highlights,           // ✅
+        route: t.route,                     // ✅
+        meetingPoint: t.meetingPoint,       // ✅
+        guide: t.guide as any,              // ✅ Приводим к any, чтобы TS не конфликтовал с типом Prisma
+        spots: firstDateObj?.spots,         // ✅
+        spotsLeft: firstDateObj?.spotsLeft, // ✅
       };
     });
-
-    const blogSources: SmmSource[] = posts.map(p => ({
+    
+const blogSources: SmmSource[] = posts.map((p: any) => ({
       id: p.id,
       title: p.title,
       type: 'blog',
       image: p.image,
       categoryColor: 'violet',
-      categoryTitle: 'Блог',
-    }));
+      // ✅ Теперь подставляем реальные данные из БД, а фоллбэки сработают только если поле пустое
+      categoryTitle: p.blogCategory?.title || 'БЛОГ',
+      tags: p.tags || [],
+      author: p.author_name || 'ЭВА',
+      read_time: p.read_time || 5
+     }));
 
-    return { success: true, data: [...tourSources, ...blogSources] };
+    const calendarSource: SmmSource = {
+      id: 'monthly_calendar',
+      title: '📅 АФИША НА МЕСЯЦ',
+      type: 'calendar',
+      image: tours[0]?.coverImage || null,
+      categoryColor: 'amber',
+      categoryTitle: 'АФИША'
+    };
+
+    return { success: true, data: [calendarSource, ...tourSources, ...blogSources] };
   } catch (error) {
-    console.error('getSmmSourcesAction Error:', error);
+    logSmmError('getSmmSourcesAction', error);
     return { success: false, error: 'Ошибка при загрузке источников' };
   }
 });
 
-// --- 2. СОХРАНЕНИЕ / ОБНОВЛЕНИЕ ЧЕРНОВИКА (С АУДИТОМ) ---
-export type SaveScheduledPostPayload = {
-  id?: string;
-  platform: string;
-  format: string;
-  content: string;
-  imageUrl?: string | null;
-  status: string;
-  scheduledFor?: string | Date | null;
-  sourceType: string;
-  sourceId?: string | null;
-  sourceUrl?: string | null;
-  templateStyle?: string | null;
-  metadata?: Record<string, unknown>; 
-};
+// ============================================================================
+// 3. ПОЛУЧЕНИЕ СОБЫТИЙ ДЛЯ ГЕНЕРАТОРА АФИШИ
+// ============================================================================
+export const getSmmCalendarEventsAction = withAdminAuth(async (daysAmount: number = 30) => {
+  try {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const endDate = new Date(now.getTime() + daysAmount * 24 * 60 * 60 * 1000);
 
+    const dates = await prisma.tourDate.findMany({
+      where: {
+        startDate: { gte: now, lte: endDate },
+        isActive: true,
+        tour: { isActive: true, deletedAt: null }
+      },
+      include: {
+        tour: {
+          select: { 
+            title: true, 
+            duration: true, 
+            location: true, 
+            price: true, 
+            currency: true, 
+            category: { select: { color: true, title: true } } 
+          }
+        }
+      },
+      orderBy: { startDate: 'asc' }
+    });
+
+    // Форматируем строго под интерфейс CalendarEvent из route.tsx
+    const events = dates.map(d => ({
+      date: d.startDate.toISOString().split('T')[0],
+      category: d.tour.category?.title || 'ТУР',
+      color: d.tour.category?.color || 'teal',
+      duration: d.tour.duration || undefined,
+      title: d.tour.title,
+      location: d.tour.location || undefined,
+      price: d.basePrice ?? d.tour.price ?? null,
+      currency: d.tour.currency || 'RUB'
+    }));
+
+    return { success: true, data: events };
+  } catch (error) {
+    logSmmError('getSmmCalendarEventsAction', error);
+    return { success: false, error: 'Ошибка загрузки расписания' };
+  }
+});
+
+// ============================================================================
+// 4. СОХРАНЕНИЕ / ОБНОВЛЕНИЕ ЧЕРНОВИКА
+// ============================================================================
 export const saveScheduledPostAction = withAdminAuth(
   withAdminAudit({
     actionName: 'SAVE_SCHEDULED_POST',
-    getTargetId: (payload: SaveScheduledPostPayload) => payload.id,
+    getTargetId: (payload: SaveScheduledPostPayload) => payload.id || 'new_scheduled_post',
   })(async (payload: SaveScheduledPostPayload) => {
     try {
       const supabase = await createServerSupabaseClient();
@@ -171,13 +282,15 @@ export const saveScheduledPostAction = withAdminAuth(
       revalidatePath('/admin');
       return { success: true, data: post };
     } catch (error) {
-      console.error('Save Scheduled Post Error:', error);
+      logSmmError('saveScheduledPostAction', error);
       return { success: false, error: 'Не удалось сохранить пост' };
     }
   })
 );
 
-// --- 3. ПОЛУЧЕНИЕ СПИСКА ЗАПЛАНИРОВАННЫХ ПОСТОВ ---
+// ============================================================================
+// 5. ПОЛУЧЕНИЕ СПИСКА ЗАПЛАНИРОВАННЫХ ПОСТОВ
+// ============================================================================
 export const getScheduledPostsAction = withAdminAuth(async () => {
   try {
     const posts = await prisma.scheduledPost.findMany({
@@ -186,11 +299,28 @@ export const getScheduledPostsAction = withAdminAuth(async () => {
     });
     return { success: true, data: posts };
   } catch (error) {
+    logSmmError('getScheduledPostsAction', error);
     return { success: false, error: 'Ошибка загрузки постов', data: [] };
   }
 });
 
-// --- 4. ГЕНЕРАЦИЯ SMM-КОНТЕНТА (ЧИСТЫЙ КОНТРОЛЛЕР) ---
+// ============================================================================
+// 6. УДАЛЕНИЕ ЗАПЛАНИРОВАННОГО ПОСТА
+// ============================================================================
+export const deleteScheduledPostAction = withAdminAuth(async (id: string) => {
+  try {
+    await prisma.scheduledPost.delete({ where: { id } });
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    logSmmError('deleteScheduledPostAction', error);
+    return { success: false, error: 'Ошибка при удалении поста' };
+  }
+}); 
+
+// ============================================================================
+// 7. ГЕНЕРАЦИЯ SMM-КОНТЕНТА (AI ИЛИ АВТОСБОРКА)
+// ============================================================================
 export const generateSmmContentAction = withAdminAuth(async ({
   sourceType,
   sourceId,
@@ -200,7 +330,7 @@ export const generateSmmContentAction = withAdminAuth(async ({
   audience,
   steps, 
 }: {
-  sourceType: 'tour' | 'blog';
+  sourceType: 'tour' | 'blog' | 'calendar';
   sourceId: string;
   platform: 'instagram' | 'telegram' | 'facebook' | 'threads';
   tone: 'fun' | 'epic' | 'info' | 'sell' | 'strict';
@@ -212,6 +342,7 @@ export const generateSmmContentAction = withAdminAuth(async ({
     let contextData = '';
     const siteUrl = env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
+    // Формируем детальный контекст для ИИ
     if (sourceType === 'tour') {
       const tour = await prisma.tour.findUnique({
         where: { id: sourceId },
@@ -223,6 +354,10 @@ export const generateSmmContentAction = withAdminAuth(async ({
           currency: true, 
           duration: true, 
           location: true,
+          difficulty: true,
+          included: true,
+          additionalExpenses: true,
+          program: true,
           tourDates: {
             where: { startDate: { gte: new Date() }, isActive: true },
             orderBy: { startDate: 'asc' },
@@ -236,7 +371,37 @@ export const generateSmmContentAction = withAdminAuth(async ({
       const firstDate = tour.tourDates?.[0]?.startDate || null;
       const tourDateStr = firstDate ? new Date(firstDate).toLocaleDateString('ru-RU') : 'Открытая дата';
       
-      contextData = `ТИП: Анонс тура\nНАЗВАНИЕ: ${tour.title}\nЛОКАЦИЯ: ${tour.location}\nДЛИТЕЛЬНОСТЬ: ${tour.duration}\nДАТА: ${tourDateStr}\nЦЕНА: ${tour.price} ${tour.currency}\nОПИСАНИЕ: ${tour.subtitle || ''}. ${tour.description?.substring(0, 500) || ''}...\nССЫЛКА: ${siteUrl}/tour/${sourceId}`;
+      contextData = `
+        ТИП КОНТЕНТА: Анонс туристического маршрута
+        НАЗВАНИЕ: ${tour.title}
+        ЛОКАЦИЯ: ${tour.location}
+        ДЛИТЕЛЬНОСТЬ: ${tour.duration}
+        СЛОЖНОСТЬ: ${tour.difficulty || 'Не указана'}
+        ДАТА БЛИЖАЙШЕГО: ${tourDateStr}
+        ЦЕНА: ${tour.price} ${tour.currency}
+        ВКЛЮЧЕНО В СТОИМОСТЬ: ${Array.isArray(tour.included) ? tour.included.join(', ') : 'Не указано'}
+        ДОП. РАСХОДЫ: ${Array.isArray(tour.additionalExpenses) ? tour.additionalExpenses.join(', ') : 'Нет'}
+        ПРОГРАММА ПО ДНЯМ: ${JSON.stringify(tour.program)}
+        МАРКЕТИНГОВОЕ ОПИСАНИЕ: ${tour.subtitle || ''}. ${tour.description?.substring(0, 500) || ''}...
+        ССЫЛКА НА БРОНЬ: ${siteUrl}/tour/${sourceId}
+      `;
+    } else if (sourceType === 'calendar') {
+      const upcomingTours = await prisma.tourDate.findMany({
+        where: { 
+          startDate: { gte: new Date() }, 
+          isActive: true, 
+          tour: { isActive: true } 
+        },
+        orderBy: { startDate: 'asc' },
+        take: 10,
+        include: { tour: { select: { title: true, price: true, currency: true } } }
+      });
+      
+      const scheduleString = upcomingTours.map(t => 
+        `- ${t.startDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}: ${t.tour.title} (${t.tour.price} ${t.tour.currency})`
+      ).join('\n');
+
+      contextData = `ТИП: Афиша туров на ближайший месяц.\nРАСПИСАНИЕ МЕРОПРИЯТИЙ:\n${scheduleString}`;
     } else {
       const post = await prisma.blog.findUnique({
         where: { id: sourceId },
@@ -246,45 +411,48 @@ export const generateSmmContentAction = withAdminAuth(async ({
       
       contextData = `ТИП: Анонс статьи блога\nНАЗВАНИЕ: ${post.title}\nОПИСАНИЕ: ${post.excerpt || post.content.substring(0, 500)}...\nССЫЛКА: ${siteUrl}/blog/${sourceId}`;
     }
-
-   const result = (await performAiTask({
+    
+const result = (await performAiTask({
       mode: 'smm_post',
       context: `ЦЕЛЬ ПОСТА: ${goal === 'sell' ? 'Продать места' : 'Прогреть аудиторию'}\nАУДИТОРИЯ: ${audience === 'warm' ? 'Теплая (знают нас)' : 'Холодная'}\n\n${contextData}`,
       platform,
       tone,
       steps 
-    })) as { 
-      success: boolean; 
-      data?: { 
-        caption: string; 
-        slides: { title: string; text: string }[]; 
-        hashtags: string[] 
-      }; 
-      error?: string 
-    };
+    })) as PerformAiTaskResult;
 
-    if (!result.success) {
-      throw new Error(result.error || 'Неизвестная ошибка ИИ');
+    // Строгая проверка типов через дискриминатор
+    if (!result.success || result.mode !== 'smm_post') {
+      throw new Error(result.success === false ? result.error : 'Неверный режим ответа AI');
     }
 
     return { success: true, data: result.data };
   } catch (error) {
-    console.error('SMM Controller Error:', error);
-    return { success: false, error: 'Ошибка генерации контента' };
+    logSmmError('generateSmmContentAction', error);
+    
+    let friendlyError = 'Не удалось сгенерировать контент. Попробуйте позже.';
+    if (error instanceof Error) {
+      const msg = error.message;
+      if (msg.includes('quota') || msg.includes('429') || msg.includes('exceeded')) {
+        friendlyError = 'Превышен лимит запросов к AI. Пожалуйста, подождите минуту и попробуйте снова.';
+      } else if (msg.includes('fetch') || msg.includes('network')) {
+        friendlyError = 'Проблема с сетью. Проверьте подключение к интернету.';
+      } else if (msg.includes('timeout')) {
+        friendlyError = 'Превышено время ожидания ответа от AI. Попробуйте ещё раз.';
+      }
+    }
+    return { success: false, error: friendlyError };
   }
 });
 
-export type FreezeAndPublishPayload = {
-  imageUrls: string[];
-  content: string;
-  platform: string;
-  isPublic?: boolean;
-};
-
+// ============================================================================
+// 8. ЗАМОРОЗКА И ПУБЛИКАЦИЯ В TELEGRAM
+// ============================================================================
 export const freezeAndPublishSmmAction = withAdminAuth(
   withAdminAudit({
     actionName: 'FREEZE_AND_PUBLISH_SMM',
-    getTargetId: (payload: FreezeAndPublishPayload) => 'telegram_post',
+    // Генерируем уникальный ID для логов на основе контента, так как поста в БД нет
+    getTargetId: (payload: FreezeAndPublishPayload) => 
+      crypto.createHash('md5').update(payload.content).digest('hex'),
   })(async (payload: FreezeAndPublishPayload) => {
     const { imageUrls, content, platform, isPublic = false } = payload;
     
@@ -302,8 +470,9 @@ export const freezeAndPublishSmmAction = withAdminAuth(
 
         const arrayBuffer = await res.arrayBuffer();
         
-        const fileName = `smm-${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
-        const filePath = `smm/${fileName}`; 
+        // Используем криптографически безопасный UUID
+        const fileName = `smm-${crypto.randomUUID()}.png`;
+        const filePath = `smm/${fileName}`;
 
         const { error } = await supabase.storage
           .from('tours-images')
@@ -318,11 +487,8 @@ export const freezeAndPublishSmmAction = withAdminAuth(
         permanentUrls.push(data.publicUrl);
       }
 
-      // 2. ОТПРАВКА В TELEGRAM (ПРОБЛЕМА 7 - ИСПРАВЛЕНА)
-      // 🔥 Теперь мы ВСЕГДА отправляем в Telegram, даже если текст сгенерирован для Инсты. 
-      // isPublic = false означает, что улетит в админский/тестовый канал.
+      // 2. ОТПРАВКА В TELEGRAM (Независимо от платформы)
       const { publishMediaGroupToTelegram } = await import('@/features/admin/actions/telegram');
-      
       const tgRes = await publishMediaGroupToTelegram(content, permanentUrls, isPublic);
 
       if (!tgRes.success) {
@@ -331,8 +497,21 @@ export const freezeAndPublishSmmAction = withAdminAuth(
 
       return { success: true, permanentUrls };
     } catch (error) {
-      console.error('Freeze & Publish Error:', error);
-      return { success: false, error: (error as Error).message };
+      logSmmError('freezeAndPublishSmmAction', error);
+      
+      let friendlyError = 'Не удалось опубликовать пост. Попробуйте позже.';
+      if (error instanceof Error) {
+        const msg = error.message;
+        if (msg.includes('fetch') || msg.includes('network')) {
+          friendlyError = 'Проблема с сетью. Проверьте подключение.';
+        } else if (msg.includes('timeout')) {
+          friendlyError = 'Превышено время ожидания. Попробуйте ещё раз.';
+        } else if (msg.includes('storage') || msg.includes('supabase')) {
+          friendlyError = 'Ошибка сохранения изображений. Попробуйте позже.';
+        }
+      }
+      return { success: false, error: friendlyError };
     }
   })
 );
+

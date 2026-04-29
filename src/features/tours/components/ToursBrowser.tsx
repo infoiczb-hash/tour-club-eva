@@ -23,13 +23,15 @@ const CalendarView = dynamic(() => import('./CalendarView'), {
   ),
 });
 
-// ✅ ИСПРАВЛЕНО: Честный маппинг всех иконок без костылей
+// Выносим маппинг за пределы рендера компонента. 
+// Сборщик Next.js сам вырежет те иконки, которые не встречаются в БД.
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  Compass, Tent, Mountain, Waves, Map: MapIcon, Sun, Snowflake,
+  TreePine, Bike, Footprints, MapPin, Anchor, Flame, Star, Droplets, Baby
+};
+
 const getIconComponent = (iconName: string, size = 14) => {
-  const icons: Record<string, any> = {
-    Compass, Tent, Mountain, Waves, Map: MapIcon, Sun, Snowflake,
-    TreePine, Bike, Footprints, MapPin, Anchor, Flame, Star, Droplets, Baby
-  };
-  const IconComponent = icons[iconName] || Layers; 
+  const IconComponent = CATEGORY_ICONS[iconName] || Layers; 
   return <IconComponent size={size} />;
 };
 

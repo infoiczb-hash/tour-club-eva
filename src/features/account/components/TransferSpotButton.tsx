@@ -71,10 +71,10 @@ export default function TransferSpotButton({
 
   return (
     <>
-      {/* Кнопка передачи */}
+    {/* Кнопка передачи */}
       <button
         onClick={handleOpen}
-        className="px-3 flex items-center justify-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 rounded-xl transition-all"
+        className="px-3 flex items-center justify-center gap-1.5 text-xs font-medium text-ui-muted hover:text-ui-text bg-ui-panel hover:bg-ui-border rounded-xl transition-all"
         title="Передать место"
       >
         <ArrowLeftRight size={13} />
@@ -84,19 +84,20 @@ export default function TransferSpotButton({
       {/* Модалка */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Оверлей */}
+    
+    {/* Оверлей */}
           <div
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-ui-bg/80 backdrop-blur-sm"
             onClick={handleClose}
           />
 
           {/* Карточка */}
-          <div className="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-2xl">
+          <div className="relative w-full max-w-sm bg-ui-panel border border-ui-border rounded-2xl p-6 shadow-2xl">
 
             {/* Закрыть */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-ui-muted hover:text-ui-text transition-colors"
             >
               <X size={16} />
             </button>
@@ -104,27 +105,27 @@ export default function TransferSpotButton({
             {success ? (
               /* Успех */
               <div className="text-center py-4">
-                <CheckCircle size={40} className="text-green-400 mx-auto mb-3" />
-                <p className="text-white font-bold">Место передано!</p>
-                <p className="text-sm text-slate-300 mt-1">
-                  Новый участник получит подтверждение.
-                </p>
-              </div>
+  <CheckCircle size={40} className="text-emerald-400 mx-auto mb-3" />
+  <p className="text-ui-base font-bold">Место передано!</p>
+  <p className="text-sm text-ui-muted mt-1">
+    Новый участник получит подтверждение.
+  </p>
+</div>
             ) : (
               /* Форма */
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <h3 className="text-base font-black text-white mb-1">
+               <h3 className="text-base font-black text-ui-text mb-1">
                     Передать место
                   </h3>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-ui-muted">
                     {tourTitle} · {dateFormatted}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                    <label className="text-xs font-bold text-ui-muted uppercase tracking-wider block mb-1.5">
                       Имя нового участника
                     </label>
                     <input
@@ -132,14 +133,14 @@ export default function TransferSpotButton({
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="Имя Фамилия"
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
+                      className="w-full bg-ui-bg/50 border border-ui-border rounded-xl px-3.5 py-2.5 text-sm text-ui-text placeholder:text-ui-muted/50 focus:outline-none focus:border-ui-accent/50 transition-all"
                       disabled={isPending}
                       autoFocus
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+                    <label className="text-xs font-bold text-ui-muted uppercase tracking-wider block mb-1.5">
                       Телефон нового участника
                     </label>
                     <input
@@ -147,7 +148,7 @@ export default function TransferSpotButton({
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
                       placeholder="+373 777 00 000"
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
+                      className="w-full bg-ui-bg/50 border border-ui-border rounded-xl px-3.5 py-2.5 text-sm text-ui-text placeholder:text-ui-muted/50 focus:outline-none focus:border-ui-accent/50 transition-all"
                       disabled={isPending}
                     />
                   </div>
@@ -164,12 +165,12 @@ export default function TransferSpotButton({
                   </p>
                 </div>
 
-                <button
+              <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl transition-all"
+                  className="w-full flex items-center justify-center gap-2 bg-ui-accent hover:bg-ui-accent/80 disabled:opacity-50 text-ui-bg font-bold py-2.5 rounded-xl transition-all"
                 >
-                  {isPending ? (
+                {isPending ? (
                     <Loader size={15} className="animate-spin" />
                   ) : (
                     <>

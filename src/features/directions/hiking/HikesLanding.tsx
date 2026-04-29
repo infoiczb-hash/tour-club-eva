@@ -1,5 +1,6 @@
 import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
+import SectionErrorBoundary from '@/components/SectionErrorBoundary';
 
 // Первый экран — синхронно, это LCP (серверный, без JS)
 import HikesHero from './HikesHero';
@@ -32,20 +33,38 @@ export default function HikesLanding({ tours = [] }: { tours?: TourPreview[] }) 
     // Обертка страницы теперь темная!
     <main className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-teal-500/30">
       
+      {/* 1. Главный экран (LCP - без обертки) */}
       <HikesHero />
-      <HikesStory />
-      <HikesLogistics />
-      <HikesDestinations />
-      <HikesGallery />
-      <HikesFAQ />
+
+      <SectionErrorBoundary label="История походов" minHeight="500px">
+        <HikesStory />
+      </SectionErrorBoundary>
+
+      <SectionErrorBoundary label="Логистика" minHeight="400px">
+        <HikesLogistics />
+      </SectionErrorBoundary>
+
+      <SectionErrorBoundary label="Направления" minHeight="500px">
+        <HikesDestinations />
+      </SectionErrorBoundary>
+
+      <SectionErrorBoundary label="Галерея походов" minHeight="400px">
+        <HikesGallery />
+      </SectionErrorBoundary>
+
+      <SectionErrorBoundary label="FAQ походы" minHeight="400px">
+        <HikesFAQ />
+      </SectionErrorBoundary>
       
       {/* Афиша реальных туров. Заменили ref на id="catalog" */}
       <section id="catalog" className="py-10 md:py-14 bg-stone-950 relative overflow-hidden scroll-mt-10 border-t border-white/5">
+          {/* Декоративный элемент фона */}
           <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
+          
           <div className="container mx-auto px-4 relative z-10 max-w-6xl">
               <div className="bg-stone-900/40 rounded-[2.5rem] border border-stone-800 p-4 md:p-8 backdrop-blur-sm">
                   
-                  {/* 🔥 Заменили <ToursBrowser> на <ToursBrowserDynamic> */}
+                  {/* 🔥 ToursBrowserDynamic защищен предохранителем изнутри своего файла */}
                   <ToursBrowserDynamic 
                       tours={tours} 
                       limit={6}
@@ -56,7 +75,6 @@ export default function HikesLanding({ tours = [] }: { tours?: TourPreview[] }) 
               </div>
           </div>
       </section>
-
     </main>
   );
 }

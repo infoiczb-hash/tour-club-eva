@@ -24,6 +24,7 @@ import { getGroupsManifest, GetGroupsManifestResult } from '@/features/admin/act
 import { GroupManifest } from './views/BookingsTab';
 import ScanTab from './views/ScanTab';
 import SmmTab from './views/SmmTab';
+import KayakingTab from '@/features/admin/components/views/KayakingTab';
 
 // FORMS
 import TourForm from './TourForm'; 
@@ -31,13 +32,11 @@ import GuideForm from './GuideForm';
 import PostForm from './PostForm';
 import ContentForm from './ContentForm';
 import ReviewForm from './ReviewForm'; 
-import AiAssistant from './AiAssistant';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 // ACTIONS & API
-import { saveTour,getToursAdmin,  updateTourStatus } from '@/features/admin/actions/tour'; 
-import { deleteTour } from '@/features/tours/actions';
+import { saveTour,getToursAdmin,  updateTourStatus, deleteTour } from '@/features/admin/actions/tour'; 
 import { getInquiriesAction } from '@/features/admin/actions/inquiries';
 import { getFunTestsAction } from '@/features/admin/actions/fun';
 import { getReviews, deleteReview, upsertReview } from '@/features/reviews/actions';
@@ -74,7 +73,7 @@ import {
 type AdminActionResult = { success: boolean; error?: string; data?: any; [key: string]: any };
 
 // TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' ;
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' | 'kayaking';
 interface BookingItem {
   id: string;
   user_name: string;
@@ -118,9 +117,8 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [toursPage, setToursPage] = useState(1);
   const [toursTotal, setToursTotal] = useState(0);
   const [toursSearch, setToursSearch] = useState('');
-  const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full'>('all');
+  const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full' | 'drafts'>('upcoming');
   const [toursLoading, setToursLoading] = useState(false);
-
   // --- Стейты для групп (манифест) ---
   const [groupsManifest, setGroupsManifest] = useState<GroupManifest[]>([]);
   const [groupsTotal, setGroupsTotal] = useState(0);
@@ -445,17 +443,20 @@ const loadGroupsManifest = useCallback(async () => {
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
-      // Вызываем новый экшен. Он сам внутри дернет NotificationHub.dispatch()
-      const res = await updateBookingStatusAction(id, status as BookingStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
-      
-      if (res.success) {
-          setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
-          showToast('Статус обновлен', 'success');
-      } else {
-          showToast(res.error || 'Ошибка обновления статуса', 'error');
-      }
-  };
+ const handleStatusChange = async (id: string, status: string) => {
+  // ✅ ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
+  const res = await updateBookingStatusAction({ 
+    bookingId: id, 
+    newStatus: status as BookingStatus 
+  }) as AdminActionResult;
+  
+  if (res.success) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: status as BookingStatus } : b));
+      showToast('Статус обновлен', 'success');
+  } else {
+      showToast(res.error || 'Ошибка обновления статуса', 'error');
+  }
+};
 
   const handleDelete = async (type: 'tour'|'post'|'guide'|'review', id: string) => {
       if(!confirm('Удалить навсегда?')) return;
@@ -785,8 +786,8 @@ const loadGroupsManifest = useCallback(async () => {
         {activeTab === 'smm' && (
             <SmmTab />
         )}
-            
-      <AiAssistant />
-    </div>
+       {activeTab === 'kayaking' && <KayakingTab />}
+          
+       </div>
   );
 }

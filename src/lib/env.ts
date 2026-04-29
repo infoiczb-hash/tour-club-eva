@@ -1,5 +1,6 @@
 // src/lib/env.ts
 import { z } from 'zod';
+import 'server-only'; 
 
 // 1. Схема для ПУБЛИЧНЫХ (клиентских) переменных
 const clientSchema = z.object({
@@ -19,6 +20,8 @@ const serverSchema = z.object({
   TELEGRAM_WEBHOOK_SECRET:       z.string().min(1, 'TELEGRAM_WEBHOOK_SECRET не задан'),
   CRON_SECRET:                   z.string().min(1, 'CRON_SECRET не задан'),
   GOOGLE_GENERATIVE_AI_API_KEY:  z.string().optional(),
+  GROQ_API_KEY:                  z.string().optional(),
+  FAL_KEY:                       z.string().optional(),
   OPENAI_API_KEY:                z.string().optional(),
   
   // Upstash Redis
@@ -43,6 +46,13 @@ const serverSchema = z.object({
   TELEGRAM_TOPIC_SUPPORT:        z.string().optional(),
   TELEGRAM_TOPIC_REVIEWS:        z.string().optional(),
   TELEGRAM_TOPIC_HR:             z.string().optional(),
+
+// APB CLEVER ACQUIRING
+   APB_MERCHANT_ID:   z.string().min(1, 'APB_MERCHANT_ID не задан'),
+  APB_MERCHANT_PASS: z.string().min(1, 'APB_MERCHANT_PASS не задан'),
+  APB_IS_TEST:       z.enum(['0', '1']).default('1'),
+  APB_PAYMENT_URL:   z.string().url().default('https://epay.apb.online/PaymentStart'),
+  APB_SOAP_URL:      z.string().url().default('https://ws.agroprombank.com/merchant/APB.SV.WebPayment.AgentService.asmx'),
 });
 
 const isServer = typeof window === 'undefined';
@@ -64,7 +74,9 @@ const parsedServer = isServer
       TELEGRAM_WEBHOOK_SECRET:       process.env.TELEGRAM_WEBHOOK_SECRET,
       CRON_SECRET:                   process.env.CRON_SECRET,
       GOOGLE_GENERATIVE_AI_API_KEY:  process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      OPENAI_API_KEY:                process.env.OPENAI_API_KEY,
+      GROQ_API_KEY:                  process.env.GROQ_API_KEY,
+      FAL_KEY:                       process.env.FAL_KEY,
+      OPENAI_API_KEY:                  process.env.OPENAI_API_KEY,
       UPSTASH_REDIS_REST_URL:        process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN:      process.env.UPSTASH_REDIS_REST_TOKEN,
       RESEND_API_KEY:                process.env.RESEND_API_KEY,
@@ -79,6 +91,12 @@ const parsedServer = isServer
       TELEGRAM_TOPIC_SUPPORT:        process.env.TELEGRAM_TOPIC_SUPPORT,
       TELEGRAM_TOPIC_REVIEWS:        process.env.TELEGRAM_TOPIC_REVIEWS,
       TELEGRAM_TOPIC_HR:             process.env.TELEGRAM_TOPIC_HR,
+
+      APB_MERCHANT_ID:   process.env.APB_MERCHANT_ID,
+      APB_MERCHANT_PASS: process.env.APB_MERCHANT_PASS,
+      APB_IS_TEST:       process.env.APB_IS_TEST,
+      APB_PAYMENT_URL:   process.env.APB_PAYMENT_URL,
+      APB_SOAP_URL:      process.env.APB_SOAP_URL,
     }) 
   : {} as z.infer<typeof serverSchema>;
 

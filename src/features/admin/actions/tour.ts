@@ -88,7 +88,7 @@ export const saveTour = withAdminAuth(
         distance: data.distance ?? null,
         duration: data.duration ?? null,
         meetingPoint: data.meetingPoint ?? null,
-        dates: data.dates as unknown as Prisma.InputJsonValue,
+        dates: Prisma.JsonNull,
         guideId: mainGuideId,
         currency: data.currency,
         price: data.price,
@@ -124,18 +124,50 @@ export const saveTour = withAdminAuth(
       let slug = data.slug;
       let savedTourId = formData.id as string;
 
-      if (formData.id) {
+    if (formData.id) {
         // === UPDATE ===
+        // 1. Находим ID дат, которые остались в форме (чтобы не удалить лишнее)
+        const incomingIds = data.dates.map(d => d.id).filter(Boolean) as string[];
+        
+        // 2. Обновляем основные данные тура
         await prisma.tour.update({
           where: { id: formData.id as string },
           data: {
               ...prismaPayload,
-              tourDates: {
-                  deleteMany: {}, // Очищаем старые даты
-                  create: tourDatesData // Пишем новые
-              }
           }, 
         });
+
+        // 3. Удаляем только те даты, которые администратор реально удалил в интерфейсе
+        await prisma.tourDate.deleteMany({
+            where: { 
+                tourId: formData.id as string,
+                ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {})
+            }
+        });
+
+        // 4. Точечно обновляем старые и создаем новые (сохраняем tourDateId у существующих броней)
+        for (const d of data.dates) {
+            const datePayload = {
+                startDate: new Date(d.start),
+                endDate: d.end ? new Date(d.end) : null,
+                time: d.time || null,
+                guideId: d.guide_id || null,
+                groupChatUrl: d.groupChatUrl || null, 
+                spots: data.spots,
+                spotsLeft: data.spotsLeft,
+            };
+
+            if (d.id) {
+                await prisma.tourDate.update({
+                    where: { id: d.id },
+                    data: datePayload
+                });
+            } else {
+                await prisma.tourDate.create({
+                    data: { ...datePayload, tourId: formData.id as string }
+                });
+            }
+        }
       } else {
         // === CREATE ===
         const existing = await prisma.tour.findUnique({ where: { slug } });
@@ -180,20 +212,7 @@ export const saveTour = withAdminAuth(
       revalidatePath('/tour');
       revalidatePath(`/tour/${slug}`);
       revalidatePath('/');
-
-      // Отправка в общий паблик
-      if (!formData.id && data.isActive) {
-        publishTourToChannel({
-          title:      data.title,
-          subtitle:   data.subtitle,
-          location:   data.location,
-          duration:   data.duration ?? '',
-          price:      data.price,
-          currency:   data.currency,
-          slug:       slug,
-          coverImage: data.coverImage,
-        }).catch(console.error);
-      }
+      revalidatePath('/account/wishlist'); 
 
       return { success: true };
     } catch (error: unknown) {
@@ -293,17 +312,6 @@ export const updateTourStatus = withAdminAuth(
         } catch (notifyError) {
           console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
         }
-
-        publishTourToChannel({
-          title:      tour.title,
-          subtitle:   tour.subtitle,
-          location:   tour.location,
-          duration:   tour.duration ?? '',
-          price:      tour.price,
-          currency:   tour.currency,
-          slug:       tour.slug,
-          coverImage: tour.coverImage,
-        }).catch(console.error);
       }
 
       revalidatePath('/admin');
@@ -326,24 +334,32 @@ export interface GetToursAdminParams {
   page: number;
   limit?: number;
   search?: string;
-  filter?: 'all' | 'upcoming' | 'past' | 'full';
+  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; // ✅ ДОБАВИЛИ drafts
 }
 
 export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) => {
-  const { page, limit = 20, search, filter = 'all' } = params;
+  const { page, limit = 20, search, filter = 'upcoming' } = params; // ✅ ПО УМОЛЧАНИЮ 'upcoming'
   const skip = (page - 1) * limit;
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
   const where: any = { deletedAt: null };
   if (search) {
     where.title = { contains: search, mode: 'insensitive' };
   }
+  
   if (filter === 'upcoming') {
-    where.date = { gte: now };
+    where.isActive = true;
+    where.tourDates = { some: { startDate: { gte: now } } }; // Есть будущие даты
   } else if (filter === 'past') {
-    where.date = { lt: now };
+    where.isActive = true;
+    where.tourDates = { none: { startDate: { gte: now } } }; // Нет будущих дат (Архив)
+  } else if (filter === 'drafts') {
+    where.isActive = false; // Черновики
+  } else if (filter === 'full') {
+    where.isActive = true;
+    where.tourDates = { some: { startDate: { gte: now }, spotsLeft: { lte: 0 } } }; // Места закончились
   }
-  // filter === 'full' – пока не реализуем (оставляем без фильтра)
 
   const [toursRaw, total] = await Promise.all([
     prisma.tour.findMany({

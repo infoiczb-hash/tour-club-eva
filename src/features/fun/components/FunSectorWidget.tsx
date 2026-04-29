@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Gamepad2, Compass, Flame, Backpack, Shield, Dumbbell, Activity, BookOpen, Brain, Sparkles, Trophy } from 'lucide-react';
+import { ArrowRight, Gamepad2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import { FunTest } from '@prisma/client';
 import { QUIZ_VISUAL_CONFIG } from './constants';
+
+// ─── Удалено: локальный VISUAL_REGISTRY (дублировал constants.tsx)
+// ─── Удалено: FALLBACK_QUIZZES (хардкод данных — лишний fallback, данные всегда приходят с сервера)
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -28,26 +31,8 @@ function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
   return { ref, inView };
 }
 
-const VISUAL_REGISTRY: Record<string, { icon: React.ElementType, iconColor: string, borderColor: string }> = {
-  'fears': { icon: Shield, iconColor: "text-blue-400", borderColor: "group-hover:border-blue-500/50" },
-  'physical': { icon: Dumbbell, iconColor: "text-emerald-400", borderColor: "group-hover:border-emerald-500/50" },
-  'signals': { icon: Activity, iconColor: "text-rose-400", borderColor: "group-hover:border-rose-500/50" },
-  'debrief': { icon: BookOpen, iconColor: "text-purple-400", borderColor: "group-hover:border-purple-500/50" },
-  'psych-profile': { icon: Brain, iconColor: "text-fuchsia-400", borderColor: "group-hover:border-fuchsia-500/50" },
-  'tourist-type': { icon: Compass, iconColor: "text-amber-400", borderColor: "group-hover:border-amber-500/50" },
-  'backpack': { icon: Backpack, iconColor: "text-orange-400", borderColor: "group-hover:border-orange-500/50" },
-  'survival': { icon: Flame, iconColor: "text-red-400", borderColor: "group-hover:border-red-500/50" },
-  'default': { icon: Sparkles, iconColor: "text-teal-400", borderColor: "group-hover:border-teal-500/50" }
-};
-
-const FALLBACK_QUIZZES = [
-  { id: '1', slug: 'tourist-type', title: 'Кто ты в горах?', description: 'Узнай свой идеальный маршрут.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675801/fun1_bo3tsi.webp', category: 'Какой ты турист?' },
-  { id: '2', slug: 'survival', title: 'Выживешь в походе?', description: 'Ситуации: дождь, медведи и гречка.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675803/fun2_c27m1l.webp', category: 'Юмористические' },
-  { id: '3', slug: 'backpack', title: 'Собери рюкзак', description: 'Мини-игра: выбери только нужное.', image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771675806/fun3_quee6m.webp', category: 'Игры' }
-] as FunTest[];
-
 export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest[] }) {
-  const [quizzes, setQuizzes] = useState<FunTest[]>(FALLBACK_QUIZZES);
+  const [quizzes, setQuizzes] = useState<FunTest[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const ctaView = useInView();
 
@@ -56,30 +41,33 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 
     const fetchAndShuffleQuizzes = async () => {
       try {
-        if (!activeTests || activeTests.length === 0) { 
-          setIsLoaded(true); 
-          return; 
+        if (!activeTests || activeTests.length === 0) {
+          setIsLoaded(true);
+          return;
         }
 
         const shuffled = [...activeTests].sort(() => 0.5 - Math.random());
 
-        if (isMounted) { 
-          setQuizzes(shuffled.slice(0, 3)); 
-          setIsLoaded(true); 
+        if (isMounted) {
+          setQuizzes(shuffled.slice(0, 3));
+          setIsLoaded(true);
         }
-      } catch (error) { 
+      } catch (error) {
         console.error(error);
-        setIsLoaded(true); 
+        setIsLoaded(true);
       }
     };
 
     fetchAndShuffleQuizzes();
-    
+
     return () => { isMounted = false; };
   }, [activeTests]);
-  
+
+  // Не рендерим виджет если нет тестов из БД
+  if (isLoaded && quizzes.length === 0) return null;
+
   return (
- <section className="py-12 md:py-24 bg-slate-950 relative overflow-hidden border-t border-white/5">
+    <section className="py-12 md:py-24 bg-slate-950 relative overflow-hidden border-t border-white/5">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-violet-900/10 md:blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
@@ -100,15 +88,15 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 min-h-[100px] lg:min-h-[200px]">
-            {quizzes.map((quiz, idx) => (
-              <div
-                key={`${quiz.id}-${isLoaded ? 'loaded' : 'initial'}`}
-                className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <QuizCard quiz={quiz} />
-              </div>
-            ))}
+          {quizzes.map((quiz, idx) => (
+            <div
+              key={`${quiz.id}-${isLoaded ? 'loaded' : 'initial'}`}
+              className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+              style={{ animationDelay: `${idx * 100}ms` }}
+            >
+              <QuizCard quiz={quiz} />
+            </div>
+          ))}
         </div>
 
         <div
@@ -127,10 +115,9 @@ export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest
 }
 
 function QuizCard({ quiz }: { quiz: FunTest }) {
- const visual = QUIZ_VISUAL_CONFIG[quiz.slug] || QUIZ_VISUAL_CONFIG['default'];
+  // Единственный источник правды — QUIZ_VISUAL_CONFIG из constants.tsx
+  const visual = QUIZ_VISUAL_CONFIG[quiz.slug] || QUIZ_VISUAL_CONFIG['default'];
   const Icon = visual.icon;
-
-  // ❌ МЫ ПОЛНОСТЬЮ УДАЛИЛИ sanitizeHtml ОТСЮДА
 
   return (
     <Link href={`/fun?quiz=${quiz.slug}`} className={cn(
@@ -150,8 +137,6 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
         </div>
         <div className="flex-1 lg:mt-6 w-full">
           <div className="hidden lg:block text-[9px] font-bold uppercase tracking-widest text-slate-300 mb-2">{quiz.category}</div>
-          
-          {/* ✅ БЕЗОПАСНЫЙ НАТИВНЫЙ РЕНДЕР БЕЗ SANITIZE-HTML */}
           <h3 className="font-black text-white uppercase text-sm md:text-lg lg:text-xl leading-tight mb-1 lg:mb-2 drop-shadow-md">
             {quiz.title.split('\n').map((line, idx, array) => (
               <React.Fragment key={idx}>
@@ -160,7 +145,6 @@ function QuizCard({ quiz }: { quiz: FunTest }) {
               </React.Fragment>
             ))}
           </h3>
-          
           <p className="hidden lg:block text-slate-300 font-medium text-xs lg:text-sm line-clamp-2 drop-shadow-md">{quiz.description}</p>
         </div>
         <div className="lg:hidden shrink-0 ml-3 text-white/50 group-hover:text-white transition-colors"><ArrowRight size={18} /></div>

@@ -79,7 +79,7 @@ export default async function AccountLayout({
   const needsOnboarding = !profile.phone;
 
   return (
-    <div className="min-h-screen bg-slate-950 relative flex">
+    <div className="min-h-screen bg-ui-bg relative flex">
 
       <AccountNav
         profile={{

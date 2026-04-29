@@ -196,7 +196,7 @@ const weekDay = dateObj ? weekdayFormatter.format(dateObj) : null;
             <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest mb-0.5">Билет от</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-black text-white leading-none tracking-tight">{Number(displayPrice).toLocaleString()}</span>
-              <span className="text-xs font-bold text-teal-500">{tour.currency || 'MDL'}</span>
+              <span className="text-xs font-bold text-teal-500">{tour.currency || 'RUB'}</span>
             </div>
           </div>
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:border-teal-400 group-hover:text-slate-900 transition-all duration-300 shadow-sm">

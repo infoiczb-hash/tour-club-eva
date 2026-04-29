@@ -25,13 +25,12 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
 const res = await performAiTask({ mode: 'parse_tour_text', text }) as PerformAiTaskResult;
     setLoading(false);
 
-    if (res.success) {
-      // ✅ ИСПРАВЛЕНО: Безопасное приведение данных от AI к ожидаемому типу
+   if (res.success) {
       onImport(res.data as Record<string, unknown>); 
       onClose();
-      setText(''); // Очищаем
+      setText('');
     } else {
-      alert("Ошибка импорта: " + res.error);
+      alert(res.error || 'Не удалось распознать текст. Проверьте формат.');
     }
   };
 

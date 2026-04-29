@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Search, X as XIcon, Phone, Send, Instagram, 
-  Users, ChevronDown, Map, AlertCircle, Globe, LifeBuoy, ChevronUp, Eye, Inbox, Archive
+  Users, ChevronDown, Map, AlertCircle, Globe, LifeBuoy, ChevronUp, Eye, Inbox, Archive, RotateCcw
 } from 'lucide-react';
 import { BookingStatus } from '@prisma/client';
 import { clsx } from 'clsx';
@@ -11,6 +11,7 @@ import { useToast } from '@/shared/context/ToastContext';
 import { sendManifestToTelegramAction } from '@/features/admin/actions/manifest';
 import { broadcastToGroupAction } from '@/features/admin/actions/broadcast';
 import { updateBookingCommentAction } from '@/features/admin/actions';
+import { refundPaymentAction } from '@/features/admin/actions/refundPayment';
 
 // --- ИНТЕРФЕЙСЫ ---
 export interface GuestItem {
@@ -38,10 +39,12 @@ export interface BookingItem {
   amount_paid: number;
   source: string;
   
-  payment_method: string; 
+payment_method: string; 
   discount: number;       
   tourId: string;         
   tourDateId?: string;    
+  apb_invoice_id?: string | null; // ✅ Поле из БД для работы с банком
+  refunded_amount?: number;       // ✅ Поле из БД для учета частичных возвратов   
   
   comment?: string | null;
   social?: string | null;
@@ -203,6 +206,17 @@ export default function BookingsTab({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedRow, setExpandedRow] = useState<string | null>(null); 
   const { showToast } = useToast();
+  // ✅ ДОБАВЛЕНО: Фильтруем старые брони. 
+  // При удалении даты tourDateId становится null. Мы скрываем их из активной вкладки.
+  const displayBookings = useMemo(() => {
+    return bookings.filter(b => {
+      if (filterTab === 'active') {
+        if (!b.tourDateId) return false;
+        if (isPastTour(b.tour?.date)) return false;
+      }
+      return true;
+    });
+  }, [bookings, filterTab]);
 
   // Состояния для модалок
   const [broadcastModal, setBroadcastModal] = useState<{isOpen: boolean, group: any | null}>({isOpen: false, group: null});
@@ -253,6 +267,45 @@ export default function BookingsTab({
   if (loading && activeMode === 'list') {
     return <div className="p-10 text-center text-slate-700">Загрузка бронирований...</div>;
   }
+
+  const handleRefund = async (booking: BookingItem) => {
+    const paid = booking.amount_paid || booking.total_price;
+    const refunded = booking.refunded_amount || 0;
+    const remaining = paid - refunded;
+
+    if (remaining <= 0) {
+      showToast('Нет доступных средств для возврата', 'error');
+      return;
+    }
+
+    const amountStr = window.prompt(
+      `Сделать возврат через Клевер (АПБ)?\nДоступно: ${remaining} MDL\n\nВведите сумму:`, 
+      remaining.toString()
+    );
+    
+    if (!amountStr) return;
+    const amount = parseInt(amountStr);
+    
+    if (isNaN(amount) || amount <= 0 || amount > remaining) {
+      showToast('Некорректная сумма', 'error');
+      return;
+    }
+
+    const reason = window.prompt('Причина возврата:', 'Запрос клиента');
+    if (!reason) return;
+
+    if (!window.confirm(`Вернуть ${amount} MDL на карту клиента?`)) return;
+
+    try {
+      showToast('Выполняем возврат...', 'info');
+      const res = await refundPaymentAction({ bookingId: booking.id, amount, reason });
+      if (res.success) {
+        showToast(res.isFullRefund ? 'Полный возврат выполнен' : 'Частичный возврат выполнен', 'success');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Ошибка возврата', 'error');
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -322,10 +375,10 @@ export default function BookingsTab({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {bookings.length === 0 && (
+                        {displayBookings.length === 0 && (
                             <tr><td colSpan={5} className="p-8 text-center text-slate-800 font-medium">Ничего не найдено</td></tr>
                         )}
-                        {bookings.map(b => {
+                        {displayBookings.map(b => {
                             const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
                             const guests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
                             const hasGuests = guests.length > 0;
@@ -414,11 +467,21 @@ export default function BookingsTab({
                                         </select>
 
                                         {b.payment_proof_url && (
-                                           <button 
+                                       <button 
                                               onClick={() => setReceiptModal({ isOpen: true, booking: b })}
                                               className="w-full flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-colors"
                                            >
                                               <Eye size={14}/> Скриншот
+                                           </button>
+                                        )}
+                                        
+                                        {/* ✅ КНОПКА ВОЗВРАТА */}
+                                        {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
+                                          <button 
+                                              onClick={() => handleRefund(b)}
+                                              className="w-full flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-colors"
+                                           >
+                                              <RotateCcw size={14}/> Возврат
                                            </button>
                                         )}
                                     </td>
@@ -452,9 +515,9 @@ export default function BookingsTab({
                 </table>
             </div>
             
-            {/* Mobile Cards (без изменений) */}
+     {/* Mobile Cards (без изменений) */}
             <div className="md:hidden space-y-4 mt-4">
-                {bookings.map(b => {
+                {displayBookings.map(b => {
                     const rawGuests: GuestItem[] = Array.isArray(b.guests) ? b.guests : [];
                     const guests = rawGuests.filter(g => g.name.trim().toLowerCase() !== b.user_name.trim().toLowerCase());
                     const hasGuests = guests.length > 0;
@@ -534,10 +597,20 @@ export default function BookingsTab({
                                   onClick={() => setReceiptModal({ isOpen: true, booking: b })}
                                   className="w-full mt-2 flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest active:scale-[0.98] transition-all"
                                 >
-                                  <Eye size={16}/> Посмотреть скриншот оплаты
+                                 <Eye size={16}/> Посмотреть скриншот оплаты
                                 </button>
                             )}
 
+                            {/* ✅ КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
+                            {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
+                                <button 
+                                  onClick={() => handleRefund(b)}
+                                  className="w-full mt-2 flex items-center justify-center gap-2 bg-rose-50 text-rose-700 border border-rose-200 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest active:scale-[0.98] transition-all"
+                                >
+                                  <RotateCcw size={16}/> Сделать возврат Клевер
+                                </button>
+                            )}
+                          
                             {hasGuests && (
                                 <div className="pt-3 border-t border-slate-200 flex flex-col gap-2 mt-1">
                                     <span className="text-[12px] uppercase font-black text-slate-700 tracking-wider">Участники ({guests.length + 1}):</span>

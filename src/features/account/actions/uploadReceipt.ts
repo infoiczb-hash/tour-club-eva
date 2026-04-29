@@ -64,16 +64,19 @@ export async function uploadClientReceiptAction(bookingId: string, formData: For
     const receiptUrl = data.publicUrl;
 
     // 3. Обновляем статус брони на "Модерация"
+   // 3. Обновляем статус брони на "Модерация" и поднимаем наверх списка
     await prisma.booking.update({
       where: { id: bookingId },
       data: { 
         status: 'moderation', 
-        paymentProofUrl: receiptUrl 
+        paymentProofUrl: receiptUrl,
+        rejectReason: null, // 🔥 Очищаем старую причину отказа
+        createdAt: new Date() // 🔥 Подбрасываем бронь на самый верх в Админке!
       }
     });
 
     // 4. Отправляем чек Админам в Telegram (Идентично тому, как это делает Webhook бота)
-    const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ (Сайт)</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'MDL'}</b>\n\nПодтверждаете получение средств?`;
+    const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ (Сайт)</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'RUB'}</b>\n\nПодтверждаете получение средств?`;
     
     await publishToTelegram(caption, receiptUrl, undefined, false, {
       messageThreadId: env.TELEGRAM_TOPIC_MONEY || env.TELEGRAM_TOPIC_BOOKINGS,

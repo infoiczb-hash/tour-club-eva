@@ -64,10 +64,10 @@ export const TourSkeleton = () => (
         <Skeleton className="h-10 md:h-16 w-3/4 md:w-1/2 rounded-xl" />
       </div>
 
-      {/* Сетка карточек (точно такие же gap и cols) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-5">
-        {/* Рендерим 6 скелетонов, чтобы заполнить экран на десктопе */}
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+   {/* Сетка карточек (точно такие же gap и cols) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-5">
+        {/* Рендерим 8 скелетонов (2 ряда по 4 колонки) */}
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <TourSkeletonCard key={i} />
         ))}
       </div>

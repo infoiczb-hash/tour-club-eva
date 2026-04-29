@@ -102,45 +102,43 @@ const DIRECTION_META: Record<string, DirectionMetaType> = {
 type Props = {
   params: Promise<{ slug: string }>;
 };
-
 // ==========================================
 // SEO: generateMetadata
 // ==========================================
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const meta = DIRECTION_META[slug];
-  
+  const meta = DIRECTION_META[slug]; // твой существующий объект
   if (!meta) return {};
 
   const url = `${BASE_URL}/directions/${slug}`;
-  const imageUrl = meta.ogImage ? `${BASE_URL}${meta.ogImage}` : `${BASE_URL}/og-default.jpg`;
-  
+
   return {
     title: `${meta.title} | Турклуб «Эва»`,
     description: meta.description,
-    alternates: { canonical: url },
+    keywords: [`${meta.tripName} Приднестровье`, `${meta.tripName} Молдова`, ...meta.touristType],
+    alternates: {
+      canonical: url,
+      languages: {
+        'ru': url,
+        'ro': `${url}?lang=ro`,
+        'en': `${url}?lang=en`,
+      },
+    },
     openGraph: {
       title: `${meta.title} | Турклуб «Эва»`,
       description: meta.description,
-      url: url,
+      url,
       siteName: 'Турклуб «Эва»',
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: meta.title,
-        }
-      ],
-      type: 'website',
+      images: [{ url: `${BASE_URL}${meta.ogImage || '/og-default.jpg'}`, width: 1200, height: 630 }],
       locale: 'ru_RU',
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: meta.twitterTitle || `${meta.title} | Турклуб «Эва»`, // Фолбэк, если twitterTitle нет
+      title: meta.twitterTitle || `${meta.title} | Турклуб «Эва»`,
       description: meta.twitterDesc || meta.description,
-      images: [imageUrl],
+      images: [`${BASE_URL}${meta.ogImage || '/og-default.jpg'}`],
     },
   };
 }
@@ -155,50 +153,50 @@ function DirectionJsonLd({ slug }: { slug: string }) {
 
   const url = `${BASE_URL}/directions/${slug}`;
 
-  const touristTrip = {
+  const schema = {
     "@context": "https://schema.org",
     "@type": "TouristTrip",
-    "name": meta.tripName,
-    "description": meta.description,
-    "touristType": meta.touristType,
-    "url": url,
-    "provider": {
+    name: meta.tripName,
+    description: meta.description,
+    touristType: meta.touristType,
+    url,
+    provider: {
       "@type": "Organization",
-      "name": "Турклуб «Эва»",
-      "url": BASE_URL,
+      name: "Турклуб «Эва»",
+      url: BASE_URL,
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "MD",
+        addressRegion: "Приднестровье",
+      },
     },
-    "itinerary": {
+    itinerary: {
       "@type": "Place",
-      "name": meta.place,
+      name: meta.place,
+      address: { "@type": "PostalAddress", addressCountry: "MD" },
     },
-    "offers": {
+    offers: {
       "@type": "Offer",
-      "priceCurrency": "MDL",
-      "price": meta.price,
-      "availability": "https://schema.org/InStock",
+      priceCurrency: "MDL",
+      price: meta.price,
+      availability: "https://schema.org/InStock",
     },
   };
 
   const breadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Главная", "item": BASE_URL },
-      { "@type": "ListItem", "position": 2, "name": "Направления", "item": `${BASE_URL}/directions` },
-      { "@type": "ListItem", "position": 3, "name": meta.breadcrumbName, "item": url },
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Главная", item: BASE_URL },
+      { "@type": "ListItem", position: 2, name: "Направления", item: `${BASE_URL}/directions` },
+      { "@type": "ListItem", position: 3, name: meta.breadcrumbName, item: url },
     ],
   };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(touristTrip) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
     </>
   );
 }

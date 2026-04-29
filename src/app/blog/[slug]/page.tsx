@@ -43,18 +43,56 @@ const getPost = cache(async (slug: string) => {
   
   if (!post) return null;
 
+  // 1. Пытаемся найти статьи из той же категории
   const relatedPosts = await prisma.blog.findMany({
     where: { 
-        id: { not: post.id },
+      id: { not: post.id },
+      isActive: true, // Только опубликованные статьи
+      // Приоритет — статьи той же категории
+      ...(post.categoryId ? { categoryId: post.categoryId } : {}),
     },
     take: 3,
     orderBy: { date: 'desc' },
-    include: { blogCategory: true } 
+    // select вместо include — не тянем тяжелое поле content
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      image: true,
+      category: true,
+      blogCategory: {
+        select: { title: true }
+      }
+    }
   });
 
-  return { post, relatedPosts };
-});
+  let finalRelated = relatedPosts;
 
+  // 2. Если статей в этой категории меньше 3 — добираем свежие из других рубрик
+  if (relatedPosts.length < 3) {
+    const extra = await prisma.blog.findMany({
+      where: {
+        id: { notIn: [post.id, ...relatedPosts.map(p => p.id)] },
+        isActive: true,
+      },
+      take: 3 - relatedPosts.length,
+      orderBy: { date: 'desc' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        image: true,
+        category: true,
+        blogCategory: {
+          select: { title: true }
+        }
+      }
+    });
+    finalRelated = [...relatedPosts, ...extra];
+  }
+
+  return { post, relatedPosts: finalRelated };
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -220,7 +258,8 @@ export default async function BlogPostPage({ params }: PageProps) {
                 fill 
                 className="object-cover"
                 priority
-                sizes="100vw" 
+              fetchPriority="high"
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/80 to-slate-900/40" />
         </div>
@@ -365,7 +404,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                                 {relatedPosts.map(relPost => (
                                     <Link key={relPost.id} href={`/blog/${relPost.slug}`} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
                                         <div className="relative w-full sm:w-24 lg:w-full xl:w-24 aspect-[4/3] sm:aspect-square lg:aspect-[4/3] xl:aspect-square shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-white/5 shadow-md">
-                                            <Image src={relPost.image || '/placeholder.jpg'} alt={relPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, 100px" />
+                                         <Image
+    src={relPost.image || '/placeholder.jpg'}
+    alt={relPost.title}
+    fill
+    className="object-cover group-hover:scale-105 transition-transform duration-500"
+   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 120px, 96px"
+   loading="lazy"
+  />
                                         </div>
                                         <div className="py-1">
                                             <span className="text-[12px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">

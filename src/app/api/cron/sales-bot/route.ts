@@ -78,7 +78,7 @@ export async function GET(req: Request) {
             }
           });
 
-          notificationPromises.push(
+         notificationPromises.push(
             NotificationHub.dispatch({
               eventId: 'WIN_BACK_OFFER',
               memberId: booking.memberId,
@@ -87,6 +87,14 @@ export async function GET(req: Request) {
                 promoCode: promoCodeString,
                 discount: discountValue
               }
+            }).catch((e) => {
+              // Если Хаб упал, промокод сгорел зря. Логируем это жестко.
+              console.error(`[Sales Bot] Hub упал для memberId ${booking.memberId}, промокод ${promoCodeString} создан но не доставлен`, e);
+              
+              logSystemAction('WIN_BACK_DELIVERY_FAILED', {
+                targetId: booking.memberId ?? undefined, // 🔥 ФИКС: превращаем null в undefined
+                changes: { promoCode: promoCodeString, error: e.message }
+              }).catch(console.error);
             })
           );
           winbackCount++;

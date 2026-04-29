@@ -132,18 +132,18 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
   const unlockedCount = badges.filter(b => b.isUnlocked).length;
   const activeModalData = badges.find(b => b.id === selectedCategory);
 
-  // МОДАЛКА ЭВОЛЮЦИИ (Выкидываем в Portal)
+ // МОДАЛКА ЭВОЛЮЦИИ (Выкидываем в Portal)
   const modalContent = activeModalData && mounted ? (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedCategory(null)}>
-      <div className="relative w-full max-w-sm flex flex-col bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ui-bg/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedCategory(null)}>
+      <div className="relative w-full max-w-sm flex flex-col bg-ui-panel border border-ui-border rounded-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         
         {/* Шапка модалки */}
-        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-slate-900/95">
+        <div className="flex items-center justify-between p-5 border-b border-ui-border bg-ui-panel/95">
           <div>
-            <h2 className="text-lg font-black text-white tracking-tight">{activeModalData.title}</h2>
-            <p className="text-xs text-slate-300 mt-0.5">Ваш прогресс: {Math.floor(activeModalData.currentVal)} {activeModalData.unit}</p>
+            <h2 className="text-lg font-black text-ui-text tracking-tight">{activeModalData.title}</h2>
+            <p className="text-xs text-ui-muted mt-0.5">Ваш прогресс: {Math.floor(activeModalData.currentVal)} {activeModalData.unit}</p>
           </div>
-          <button onClick={() => setSelectedCategory(null)} className="p-2 -mr-2 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
+          <button onClick={() => setSelectedCategory(null)} className="p-2 -mr-2 rounded-full hover:bg-ui-border/50 text-ui-muted hover:text-ui-text transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -157,11 +157,11 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
             return (
               <div key={idx} className={cn(
                 "relative flex items-center gap-4 p-4 rounded-2xl border transition-all",
-                isTierUnlocked ? "bg-slate-800/60 border-white/10" : "bg-slate-900/40 border-white/5 opacity-60 grayscale"
+                isTierUnlocked ? "bg-ui-bg/60 border-ui-border" : "bg-ui-bg/40 border-ui-border/50 opacity-60 grayscale"
               )}>
                 {/* Линия соединения (дерево) */}
                 {idx !== activeModalData.tiers.length - 1 && (
-                  <div className="absolute left-9 top-14 bottom-[-16px] w-px bg-slate-700 z-0" />
+                  <div className="absolute left-9 top-14 bottom-[-16px] w-px bg-ui-border z-0" />
                 )}
 
                 <div className={cn(
@@ -173,14 +173,14 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
 
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
-                    <h4 className={cn("text-sm font-bold", isTierUnlocked ? "text-white" : "text-slate-300")}>{tier.name}</h4>
+                    <h4 className={cn("text-sm font-bold", isTierUnlocked ? "text-ui-text" : "text-ui-muted")}>{tier.name}</h4>
                     {isTierUnlocked ? (
-                      <CheckCircle2 size={14} className="text-teal-500" />
+                      <CheckCircle2 size={14} className="text-ui-accent" />
                     ) : (
-                      <Lock size={12} className="text-slate-600" />
+                      <Lock size={12} className="text-ui-muted/50" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-ui-muted">
                     Цель: {tier.min} {activeModalData.unit}
                   </p>
                 </div>
@@ -194,17 +194,17 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
   ) : null;
 
   return (
-    <div className="bg-transparent md:bg-slate-800/40 md:border md:border-slate-700/50 md:rounded-3xl md:p-6 md:shadow-lg">
+    <div className="bg-transparent md:bg-ui-panel/40 md:border md:border-ui-border md:rounded-3xl md:p-6 md:shadow-lg">
       
       {/* Шапка блока */}
       <div className="flex items-center justify-between mb-4 px-2 md:px-0">
         <div>
-          <h3 className="text-white font-bold tracking-wider flex items-center gap-2">
+          <h3 className="text-ui-text font-bold tracking-wider flex items-center gap-2">
             Достижения
           </h3>
-          <p className="text-sm text-slate-300 mt-0.5">Собрано {unlockedCount} из {CATEGORIES.length}</p>
+          <p className="text-sm text-ui-muted mt-0.5">Собрано {unlockedCount} из {CATEGORIES.length}</p>
         </div>
-        <ChevronRight size={20} className="text-slate-600 md:hidden" />
+        <ChevronRight size={20} className="text-ui-muted/50 md:hidden" />
       </div>
 
       {/* Горизонтальный скролл на мобилке, сетка на десктопе */}
@@ -219,13 +219,13 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
               className={cn(
                 "snap-start shrink-0 w-[120px] md:w-auto relative flex flex-col items-center p-4 rounded-[20px] border transition-all duration-300 group overflow-hidden focus:outline-none",
                 badge.isUnlocked 
-                  ? "bg-slate-900/80 border-white/10 hover:border-white/20 hover:bg-slate-800/80" 
-                  : "bg-slate-900/40 border-white/5 opacity-70 grayscale hover:grayscale-0 hover:opacity-100"
+                  ? "bg-ui-panel/80 border-ui-border hover:border-ui-accent/50 hover:bg-ui-panel" 
+                  : "bg-ui-panel/40 border-ui-border/50 opacity-70 grayscale hover:grayscale-0 hover:opacity-100"
               )}
             >
               {/* Замочек для закрытых */}
               {!badge.isUnlocked && (
-                <div className="absolute top-3 right-3 text-slate-600">
+                <div className="absolute top-3 right-3 text-ui-muted/50">
                   <Lock size={12} />
                 </div>
               )}
@@ -240,14 +240,14 @@ export default function AchievementsBox({ stats }: { stats: UserAchievements }) 
               </div>
               
               {/* Название */}
-              <h4 className={cn("text-xs font-bold text-center mb-1 w-full truncate", badge.isUnlocked ? "text-white" : "text-slate-300")}>
+              <h4 className={cn("text-xs font-bold text-center mb-1 w-full truncate", badge.isUnlocked ? "text-ui-text" : "text-ui-muted")}>
                 {badge.activeTier.name}
               </h4>
               
               {/* Тонкая линия прогресса в самом низу карточки */}
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-950/50">
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-ui-bg/50">
                 <div 
-                  className={cn("h-full transition-all duration-1000", badge.isUnlocked ? "bg-teal-500" : "bg-slate-700")}
+                  className={cn("h-full transition-all duration-1000", badge.isUnlocked ? "bg-ui-accent" : "bg-ui-border")}
                   style={{ width: `${badge.progressPercent}%` }}
                 />
               </div>

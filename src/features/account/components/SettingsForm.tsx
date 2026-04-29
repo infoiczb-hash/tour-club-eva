@@ -24,7 +24,7 @@ const INVENTORY_OPTIONS = [
 ];
 
 const CLOTHES_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL+"];
-const SHOE_SIZES = Array.from({ length: 13 }, (_, i) => String(35 + i)); // от 35 до 47
+const SHOE_SIZES = Array.from({ length: 13 }, (_, i) => String(35 + i));
 
 const formSchema = z.object({
   name: z.string().min(2, "Имя обязательно"),
@@ -40,6 +40,16 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// ── Переиспользуемые классы ──────────────────────────────────────────────────
+const cardCls = "bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl";
+const cardHeaderCls = "flex items-center gap-3 mb-6 border-b border-white/5 pb-4";
+const cardTitleCls = "text-lg font-black text-white uppercase tracking-wide";
+const labelCls = "text-xs font-bold uppercase tracking-wide text-slate-300 ml-1 mb-1.5 block";
+const labelFlexCls = "text-xs font-bold uppercase tracking-wide text-slate-300 ml-1 mb-1.5 flex items-center gap-1.5";
+const inputCls = "w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all";
+const selectCls = "w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none cursor-pointer transition-all";
+// ────────────────────────────────────────────────────────────────────────────
 
 export default function SettingsForm({ profile }: { profile: any }) {
   const { showToast } = useToast();
@@ -57,7 +67,7 @@ export default function SettingsForm({ profile }: { profile: any }) {
       shoeSize: profile.shoeSize || "",
       clothesSize: profile.clothesSize || "",
       lifeJacketSize: profile.lifeJacketSize || "",
-      inventory: Array.isArray(profile.inventory) ? profile.inventory : [], 
+      inventory: Array.isArray(profile.inventory) ? profile.inventory : [],
     }
   });
 
@@ -87,27 +97,33 @@ export default function SettingsForm({ profile }: { profile: any }) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pb-28 md:pb-12">
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        
-        {/* ── СТРОКА 1: TELEGRAM BOT (НА ВСЮ ШИРИНУ) ── */}
+
+        {/* ── TELEGRAM BOT (на всю ширину) ───────────────────────────── */}
         <div className="lg:col-span-2">
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+          <div className={clsx(cardCls, "relative overflow-hidden")}>
             {isTelegramConnected && (
               <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
             )}
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-4">
                 <div className={clsx(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
-                  isTelegramConnected ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-[#2AABEE]/10 border border-[#2AABEE]/20 text-[#2AABEE]"
+                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                  isTelegramConnected
+                    ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                    : "bg-[#2AABEE]/10 border border-[#2AABEE]/20 text-[#2AABEE]"
                 )}>
-                  {isTelegramConnected ? <CheckCircle2 size={24} /> : <Send size={24} className="-ml-1" />}
+                  {isTelegramConnected
+                    ? <CheckCircle2 size={24} />
+                    : <Send size={24} className="-ml-1" />}
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider">Telegram Бот</h2>
-                  <p className="text-sm sm:text-sm text-slate-300 mt-0.5">
-                    {isTelegramConnected 
-                      ? 'Персональный помощник успешно подключен' 
+                  <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wide">
+                    Telegram Бот
+                  </h2>
+                  <p className="text-sm text-slate-300 mt-0.5">
+                    {isTelegramConnected
+                      ? 'Персональный помощник успешно подключен'
                       : 'Мгновенные уведомления о статусе брони и новых турах'}
                   </p>
                 </div>
@@ -115,15 +131,15 @@ export default function SettingsForm({ profile }: { profile: any }) {
 
               <div className="shrink-0">
                 {isTelegramConnected ? (
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-sm">
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-sm">
                     <CheckCircle2 size={18} /> Подключен
                   </div>
                 ) : (
-                  <a 
-                    href={`https://t.me/authevaclub_bot?start=user_${profile.id}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="flex items-center justify-center gap-2 w-full md:w-auto bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(42,171,238,0.2)]"
+                  <a
+                    href={`https://t.me/authevaclub_bot?start=user_${profile.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(42,171,238,0.2)] active:scale-[0.98]"
                   >
                     <Send size={18} className="-ml-1" /> Подключить бота
                   </a>
@@ -133,158 +149,182 @@ export default function SettingsForm({ profile }: { profile: any }) {
           </div>
         </div>
 
-        {/* ── СТРОКА 2: ЛЕВАЯ КОЛОНКА (КОНТАКТЫ) ── */}
+        {/* ── ЛЕВАЯ КОЛОНКА: КОНТАКТЫ ────────────────────────────────── */}
         <div className="space-y-6">
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl h-full">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-              <User className="text-teal-500" size={20} />
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Контакты</h2>
+          <div className={clsx(cardCls, "h-full")}>
+            <div className={cardHeaderCls}>
+              <User className="text-teal-500 shrink-0" size={20} />
+              <h2 className={cardTitleCls}>Контакты</h2>
             </div>
 
             <div className="space-y-4">
+
+              {/* Имя */}
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1 block">Имя и Фамилия *</label>
-                <input 
+                <label className={labelCls}>Имя и Фамилия *</label>
+                <input
                   {...register("name")}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
+                  placeholder="Иван Иванов"
+                  className={inputCls}
                 />
-                {errors.name && <p className="text-sm text-rose-500 mt-1 ml-1">{errors.name?.message}</p>}
+                {errors.name && (
+                  <p className="text-sm text-rose-400 mt-1.5 ml-1">{errors.name.message}</p>
+                )}
               </div>
 
+              {/* Телефон — только для чтения */}
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1 flex items-center gap-1.5">
+                <label className={labelFlexCls}>
                   <Phone size={12} /> Ваш логин (Телефон)
                 </label>
-                <input 
+                <input
                   value={profile.phone || "Не указан"}
                   disabled
-                  className="w-full bg-slate-950/50 border border-transparent rounded-xl px-4 py-3 text-slate-300 text-sm cursor-not-allowed"
-                  title="Телефон нельзя изменить, так как он используется для входа"
+                  title="Телефон нельзя изменить — он используется для входа"
+                  className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-4 py-3 text-slate-400 text-sm cursor-not-allowed select-none"
                 />
               </div>
 
+              {/* Email */}
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1 flex items-center gap-1.5">
+                <label className={labelFlexCls}>
                   <Mail size={12} /> Email
                 </label>
-                <input 
+                <input
                   {...register("email")}
                   placeholder="Для чеков и билетов"
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all"
+                  className={inputCls}
                 />
-                {errors.email && <p className="text-sm text-rose-500 mt-1 ml-1">{errors.email?.message}</p>}
+                {errors.email && (
+                  <p className="text-sm text-rose-400 mt-1.5 ml-1">{errors.email.message}</p>
+                )}
               </div>
 
               {/* Соцсети */}
               <div className="pt-4 mt-2 border-t border-white/5">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-3 block">
-                    Соцсети (Для чатов групп)
-                </label>
+                <label className={labelCls}>Соцсети (для чатов групп)</label>
                 <div className="space-y-3">
-                    <div className="relative group">
-                        <Send size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-sky-400 transition-colors" />
-                        <input 
-                            {...register("telegram")}
-                            placeholder="@username в Telegram"
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all"
-                        />
-                    </div>
-                    <div className="relative group">
-                        <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" />
-                        <input 
-                            {...register("instagram")}
-                            placeholder="@username в Instagram"
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 outline-none transition-all"
-                        />
-                    </div>
-                    <div className="relative group">
-                        <MessageCircle size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-purple-400 transition-colors" />
-                        <input 
-                            {...register("viber")}
-                            placeholder="Номер в Viber (если отличается)"
-                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 outline-none transition-all"
-                        />
-                    </div>
+
+                  {/* Telegram */}
+                  <div className="relative group">
+                    <Send
+                      size={16}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors pointer-events-none"
+                    />
+                    <input
+                      {...register("telegram")}
+                      placeholder="@username в Telegram"
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm placeholder:text-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Instagram */}
+                  <div className="relative group">
+                    <Instagram
+                      size={16}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-pink-400 transition-colors pointer-events-none"
+                    />
+                    <input
+                      {...register("instagram")}
+                      placeholder="@username в Instagram"
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm placeholder:text-slate-500 focus:border-pink-500 focus:ring-1 focus:ring-pink-500/20 outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Viber */}
+                  <div className="relative group">
+                    <MessageCircle
+                      size={16}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors pointer-events-none"
+                    />
+                    <input
+                      {...register("viber")}
+                      placeholder="Номер в Viber (если отличается)"
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm placeholder:text-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 outline-none transition-all"
+                    />
+                  </div>
+
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── СТРОКА 2: ПРАВАЯ КОЛОНКА (ПИТАНИЕ + АНТРОПОМЕТРИЯ) ── */}
+        {/* ── ПРАВАЯ КОЛОНКА: ПИТАНИЕ + АНТРОПОМЕТРИЯ ───────────────── */}
         <div className="space-y-6">
-          
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-              <Apple className="text-emerald-500" size={20} />
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Питание</h2>
-            </div>
 
+          {/* Питание */}
+          <div className={cardCls}>
+            <div className={cardHeaderCls}>
+              <Apple className="text-emerald-500 shrink-0" size={20} />
+              <h2 className={cardTitleCls}>Питание</h2>
+            </div>
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-2 block">
-                Диета и аллергии
-              </label>
-              <textarea 
+              <label className={labelCls}>Диета и аллергии</label>
+              <textarea
                 {...register("foodPref")}
                 placeholder="Например: вегетарианец, не ем лук, аллергия на орехи. Если особенностей нет — оставьте поле пустым."
-                className="w-full min-h-[140px] bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all resize-none"
+                className="w-full min-h-[140px] bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none transition-all resize-none leading-relaxed"
               />
             </div>
           </div>
 
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-              <Shirt className="text-blue-500" size={20} />
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Антропометрия</h2>
+          {/* Антропометрия */}
+          <div className={cardCls}>
+            <div className={cardHeaderCls}>
+              <Shirt className="text-blue-400 shrink-0" size={20} />
+              <h2 className={cardTitleCls}>Антропометрия</h2>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
+
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1 flex items-center gap-1.5"><Shirt size={12}/> Размер одежды</label>
-                  <div className="relative">
-                    <select {...register("clothesSize")} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none appearance-none cursor-pointer">
-                      <option value="">Не указан</option>
-                      {CLOTHES_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
+                  <label className={labelFlexCls}>
+                    <Shirt size={12} /> Размер одежды
+                  </label>
+                  <select {...register("clothesSize")} className={selectCls}>
+                    <option value="">Не указан</option>
+                    {CLOTHES_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1 flex items-center gap-1.5"><LifeBuoy size={12}/> Спасжилет</label>
-                  <div className="relative">
-                    <select {...register("lifeJacketSize")} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none appearance-none cursor-pointer">
-                      <option value="">Не указан</option>
-                      {CLOTHES_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
+                  <label className={labelFlexCls}>
+                    <LifeBuoy size={12} /> Спасжилет
+                  </label>
+                  <select {...register("lifeJacketSize")} className={selectCls}>
+                    <option value="">Не указан</option>
+                    {CLOTHES_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
+
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-300 ml-1 mb-1 flex items-center gap-1.5"><Footprints size={12}/> Размер обуви</label>
-                <div className="relative">
-                  <select {...register("shoeSize")} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none appearance-none cursor-pointer">
-                    <option value="">Не указан</option>
-                    {SHOE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
+                <label className={labelFlexCls}>
+                  <Footprints size={12} /> Размер обуви
+                </label>
+                <select {...register("shoeSize")} className={selectCls}>
+                  <option value="">Не указан</option>
+                  {SHOE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
             </div>
           </div>
 
         </div>
 
-        {/* ── СТРОКА 3: ИНВЕНТАРЬ (НА ВСЮ ШИРИНУ) ── */}
+        {/* ── ИНВЕНТАРЬ (на всю ширину) ──────────────────────────────── */}
         <div className="lg:col-span-2">
-          <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-              <Backpack className="text-amber-500" size={20} />
-              <h2 className="text-lg font-black text-white uppercase tracking-wider">Мой инвентарь</h2>
+          <div className={cardCls}>
+            <div className={cardHeaderCls}>
+              <Backpack className="text-amber-500 shrink-0" size={20} />
+              <h2 className={cardTitleCls}>Мой инвентарь</h2>
             </div>
 
             <p className="text-sm text-slate-300 mb-5 leading-relaxed">
-              Отметьте снаряжение, которое у вас уже есть.
+              Отметьте снаряжение, которое у вас уже есть — гид учтёт это при подготовке тура.
             </p>
 
             <div className="flex flex-wrap gap-2.5">
@@ -296,10 +336,10 @@ export default function SettingsForm({ profile }: { profile: any }) {
                     type="button"
                     onClick={() => toggleInventoryItem(item)}
                     className={clsx(
-                      "px-4 py-2.5 rounded-xl text-sm font-bold transition-all border",
-                      isActive 
-                        ? "bg-amber-500/10 border-amber-500/50 text-amber-400 shadow-inner" 
-                        : "bg-slate-950 border-white/10 text-slate-300 hover:border-white/30 hover:text-white"
+                      "px-4 py-2.5 rounded-xl text-sm font-bold transition-all border active:scale-95",
+                      isActive
+                        ? "bg-amber-500/10 border-amber-500/40 text-amber-400"
+                        : "bg-slate-950 border-white/10 text-slate-300 hover:border-white/25 hover:text-white"
                     )}
                   >
                     {item}
@@ -312,15 +352,17 @@ export default function SettingsForm({ profile }: { profile: any }) {
 
       </div>
 
-      {/* ── КНОПКА СОХРАНЕНИЯ ── */}
-      <div className="pt-6 flex justify-end">
+      {/* ── КНОПКА СОХРАНЕНИЯ ──────────────────────────────────────────── */}
+      <div className="pt-2 flex justify-end">
         <button
           type="submit"
           disabled={isPending}
-          className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-300 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] active:scale-[0.98]"
+          className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-wide rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.25)] hover:shadow-[0_0_28px_rgba(20,184,166,0.45)] active:scale-[0.98]"
         >
           {isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          <span>{isPending ? "Сохранение..." : "Сохранить настройки"}</span>
+          <span className="text-sm sm:text-base">
+            {isPending ? "Сохранение..." : "Сохранить настройки"}
+          </span>
         </button>
       </div>
 

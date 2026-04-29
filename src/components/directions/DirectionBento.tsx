@@ -86,7 +86,7 @@ export default function DirectionBento({ data }: DirectionBentoProps) {
                   gridInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 )}
               >
-                {/* ЕСЛИ ЕСТЬ ФОТО */}
+         {/* ЕСЛИ ЕСТЬ ФОТО */}
                 {hasImage && (
                   <>
                     <Image
@@ -94,7 +94,9 @@ export default function DirectionBento({ data }: DirectionBentoProps) {
                       alt={feat.title}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw"
+                      // ✅ Учитываем реальный размер Bento Grid (calc экономит вес на отступах)
+                      sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1024px) 65vw, 45vw"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent pointer-events-none" />
                     <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end z-10 pointer-events-none">

@@ -23,7 +23,7 @@ interface ToursTabProps {
   limit?: number;
   loading?: boolean;
   searchTerm: string;
-  filter: 'all' | 'upcoming' | 'past' | 'full';
+  filter: 'all' | 'upcoming' | 'past' | 'full' | 'drafts';
   bookings: BookingSimple[];
   categories?: any[];
   
@@ -34,7 +34,7 @@ interface ToursTabProps {
   onToggleStatus: (tour: Tour) => void;
   onSendTg: (id: string, title: string) => void;
   onSearchChange: (val: string) => void;
-  onFilterChange: (filter: 'all' | 'upcoming' | 'past' | 'full') => void;
+ onFilterChange: (filter: 'all' | 'upcoming' | 'past' | 'full' | 'drafts') => void;
   onPageChange: (page: number) => void;
 
   // Хендлеры для категорий
@@ -180,11 +180,17 @@ export default function ToursTab({
         {activeView === 'tours' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-2 shadow-sm">
-                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 shrink-0">
-                    {['all', 'upcoming', 'past', 'full'].map(f => (
+             <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 shrink-0 overflow-x-auto hide-scrollbar">
+                    {['all', 'upcoming', 'drafts', 'past', 'full'].map(f => (
                        <FilterTab 
                          key={f} 
-                         label={f === 'all' ? 'Все' : f === 'upcoming' ? 'Актуальные' : f === 'past' ? 'Архив' : 'Заполненные'} 
+                         label={
+                            f === 'all' ? 'Все' : 
+                            f === 'upcoming' ? 'Актуальные' : 
+                            f === 'drafts' ? 'Черновики' : 
+                            f === 'past' ? 'Архив' : 
+                            'Заполненные'
+                         } 
                          active={filter === f} 
                          onClick={() => onFilterChange(f as any)} 
                        />

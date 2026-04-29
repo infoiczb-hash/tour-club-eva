@@ -75,10 +75,10 @@ export default function ReviewFromCabinetButton({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={handleClose} />
+       <div className="absolute inset-0 bg-ui-bg/80 backdrop-blur-sm" onClick={handleClose} />
 
-          <div className="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <button onClick={handleClose} className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors">
+          <div className="relative w-full max-w-sm bg-ui-panel border border-ui-border rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button onClick={handleClose} className="absolute top-4 right-4 text-ui-muted hover:text-ui-text transition-colors">
               <X size={16} />
             </button>
 
@@ -88,8 +88,8 @@ export default function ReviewFromCabinetButton({
                   <Clock size={32} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">Отзыв на проверке</h3>
-                  <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+                 <h3 className="text-xl font-black text-ui-base">Отзыв на проверке</h3>
+                 <p className="text-sm text-ui-muted mt-2 leading-relaxed">
                     Спасибо за ваше мнение! Мы опубликуем отзыв после быстрой модерации, и бонус <span className="text-amber-400 font-bold">+10 ₽</span> будет зачислен на ваш баланс.
                   </p>
                 </div>
@@ -99,9 +99,9 @@ export default function ReviewFromCabinetButton({
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Star size={16} className="text-amber-400" />
-                    <h3 className="text-base font-black text-white">Оцените тур</h3>
+                    <h3 className="text-base font-black text-ui-text">Оцените тур</h3>
                   </div>
-                  <p className="text-xs text-slate-300 leading-tight truncate">{tourTitle}</p>
+                 <p className="text-xs text-ui-muted leading-tight truncate">{tourTitle}</p>
                 </div>
 
                 <div className="flex justify-center gap-2 py-2">
@@ -116,38 +116,37 @@ export default function ReviewFromCabinetButton({
                     >
                       <Star 
                         size={32} 
-                        className={`transition-colors duration-200 ${
+                       className={`transition-colors duration-200 ${
                           star <= (hoveredRating || rating) 
                             ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' 
-                            : 'fill-slate-800 text-slate-700'
-                        }`} 
+                            : 'fill-ui-border text-ui-border'
+                        }`}
                       />
                     </button>
                   ))}
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">Ваш отзыв</label>
+                  <label className="text-xs font-bold text-ui-muted uppercase tracking-wider block mb-1.5">Ваш отзыв</label>
                   <textarea
                     value={text}
                     onChange={e => setText(e.target.value)}
                     placeholder="Что вам больше всего понравилось?"
                     rows={4}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 transition-all resize-none"
+                 className="w-full bg-ui-bg border border-ui-border rounded-xl px-4 py-3 text-sm text-ui-text placeholder:text-ui-muted/50 focus:outline-none focus:border-amber-500/50 transition-all resize-none"
                     disabled={isPending}
                   />
                   <div className="flex items-center justify-between mt-1">
                     {error && <p className="text-xs text-red-400">{error}</p>}
-                    <span className="text-[12px] text-slate-600 ml-auto">{text.length}/500</span>
+                    <span className="text-xs text-ui-muted/50 ml-auto">{text.length}/500</span>
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isPending || rating === 0 || text.trim().length < 10}
-                  className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:hover:bg-amber-500 text-slate-900 font-bold py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                >
-                  {isPending ? <Loader size={16} className="animate-spin" /> : 'Отправить на модерацию'}
+                className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:hover:bg-amber-500 text-ui-bg font-bold py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                                  {isPending ? <Loader size={16} className="animate-spin" /> : 'Отправить на модерацию'}
                 </button>
               </form>
             )}
