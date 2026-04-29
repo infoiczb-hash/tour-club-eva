@@ -152,7 +152,7 @@ function parseParams(searchParams: URLSearchParams): OgParams {
   const slideType     = resolveSlideType(searchParams.get('slideType'), slideTitle);
 
   const title         = searchParams.get('title')         || 'Секретный тур';
-  const currency      = searchParams.get('currency')      || 'MDL';
+  const currency      = searchParams.get('currency')      || 'RUB';
   const rawDate       = searchParams.get('date')          || '';
   const imageUrl      = searchParams.get('image')         || null;
   const trigger       = searchParams.get('trigger')       || null;

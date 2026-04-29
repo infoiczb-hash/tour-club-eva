@@ -106,7 +106,7 @@ describe('updateBookingStatusAction – интеграционные тесты'
 
     const booking = await prisma.booking.create({
       data: {
-        shortId: 501,
+       shortId: 'A501',
         tourId: tour.id,
         tourDateId: tourDate.id,
         memberId: member.id,
@@ -157,7 +157,7 @@ describe('updateBookingStatusAction – интеграционные тесты'
 
     const booking = await prisma.booking.create({
       data: {
-        shortId: 502,
+        shortId: 'A502',
         tourId: tour.id,
         tourDateId: tourDate.id,
         memberId: member.id,
@@ -205,7 +205,7 @@ const result = (await updateBookingStatusAction({
 
     const booking = await prisma.booking.create({
       data: {
-        shortId: 503,
+         shortId: 'A503',
         tourId: tour.id,
         tourDateId: tourDate.id,
         name: 'Пётр Иванов',
@@ -245,7 +245,7 @@ const result = (await updateBookingStatusAction({
 
     const booking = await prisma.booking.create({
       data: {
-        shortId: 504,
+         shortId: 'A504',
         tourId: tourWithoutDate.id,
         tourDateId: null,
         name: 'Мария Козлова',
@@ -285,7 +285,7 @@ const result = (await updateBookingStatusAction({
 
     const booking = await prisma.booking.create({
       data: {
-        shortId: 505,
+          shortId: 'A505',
         tourId: tour.id,
         tourDateId: tourDate.id,
         name: 'Олег Смирнов',
@@ -323,7 +323,7 @@ const result = (await updateBookingStatusAction({
 
     const booking = await prisma.booking.create({
       data: {
-        shortId: 506,
+         shortId: 'A506',
         tourId: tour.id,
         tourDateId: tourDate.id,
         name: 'Светлана Орлова',

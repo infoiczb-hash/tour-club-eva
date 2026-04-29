@@ -69,7 +69,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                         />
 
                         {/* Сама лодка (Парящая анимация на чистом CSS) */}
-                        <div 
+                   <div 
                             className="relative w-full max-w-[300px] h-[120px] sm:h-[150px] mb-8 drop-shadow-[0_20px_20px_rgba(0,0,0,0.5)] group-hover:drop-shadow-[0_30px_30px_rgba(0,0,0,0.7)] transition-all duration-500 z-10 animate-float"
                             style={{ animationDelay: `${idx * 500}ms` }} // рассинхрон левитации
                         >
@@ -78,7 +78,8 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                                 alt={item.name} 
                                 fill 
                                 className="object-contain"
-                                sizes="(max-width: 768px) 100vw, 300px"
+                                // ✅ Карточка имеет жесткий max-w-[300px], больше скачивать нет смысла
+                                sizes="(max-width: 640px) 90vw, 300px"
                             />
                         </div>
 
@@ -131,12 +132,14 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                             idx % 3 === 0 ? "w-[300px] sm:w-[500px] aspect-[4/3] sm:aspect-[16/9]" : "w-[260px] sm:w-[350px] aspect-[3/4]"
                         )}
                     >
-                        <Image 
+                      <Image 
                             src={url} 
                             alt={`Эмоция ${idx + 1}`} 
                             fill 
                             className="object-cover transition-transform duration-1000 hover:scale-110"
-                            sizes="(max-width: 768px) 80vw, 50vw"
+                            // ✅ У карточек жесткая ширина 260-500px, ограничиваем аппетиты браузера
+                            sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 500px"
+                            loading="lazy"
                         />
                         {/* Легкий градиент для глубины */}
                         <div className="absolute inset-0 bg-slate-950/10 hover:bg-transparent transition-colors duration-500 pointer-events-none" />

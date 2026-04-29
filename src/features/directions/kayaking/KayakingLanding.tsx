@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 import { TourPreview } from '@/features/tours/types';
 import { KayakingTabProvider, KayakingTabContent } from "./KayakingTabProvider";
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
+import SectionErrorBoundary from '@/components/SectionErrorBoundary';
 
 // Первый экран — синхронно, это LCP
 import Hero from "./Hero";
@@ -56,11 +57,23 @@ export default function KayakingLanding({ tours }: { tours: TourPreview[] }) {
           {/* Benefits и Fleet — серверные, грузятся без JS */}
           <Benefits />
           <Fleet />
-          <PopularRoutes />
+          
+          <SectionErrorBoundary label="Популярные маршруты" minHeight="500px">
+            <PopularRoutes />
+          </SectionErrorBoundary>
+          
           <Timeline />
-          <Gallery />
-          <FAQ />
+          
+          <SectionErrorBoundary label="Галерея" minHeight="500px">
+            <Gallery />
+          </SectionErrorBoundary>
+          
+          <SectionErrorBoundary label="FAQ" minHeight="400px">
+            <FAQ />
+          </SectionErrorBoundary>
+          
           <div id="tours" className="bg-[#0B1120] border-y border-white/5 relative z-20">
+            {/* Обертка SectionErrorBoundary здесь не нужна, так как мы добавили её внутрь самого ToursBrowserDynamic */}
             <ToursBrowserDynamic
               tours={tours}
               title="Ближайшие сплавы"
@@ -72,11 +85,23 @@ export default function KayakingLanding({ tours }: { tours: TourPreview[] }) {
 
         {/* ПОТОК 2: "Я УЧАСТНИК" — скрыт при загрузке, всё lazy */}
         <KayakingTabContent value="participant">
-          <PackingList />
+          <SectionErrorBoundary label="Список снаряжения" minHeight="400px">
+            <PackingList />
+          </SectionErrorBoundary>
+          
           <KayakRules />
-          <VideoGuide />
-          <SafetyRegulations />
-          <PreparationCTA />
+          
+          <SectionErrorBoundary label="Видеогид" minHeight="400px">
+            <VideoGuide />
+          </SectionErrorBoundary>
+          
+          <SectionErrorBoundary label="Правила безопасности" minHeight="500px">
+            <SafetyRegulations />
+          </SectionErrorBoundary>
+          
+          <SectionErrorBoundary label="Подготовка CTA" minHeight="160px">
+            <PreparationCTA />
+          </SectionErrorBoundary>
         </KayakingTabContent>
 
       </KayakingTabProvider>

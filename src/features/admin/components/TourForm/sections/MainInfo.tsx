@@ -1,5 +1,5 @@
 // src/features/admin/components/TourForm/sections/MainInfo.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormInput, FormSelect, FormSwitch, FormTextarea } from '../ui/FormUI';
 import { ImageUploader } from '../ui/ImageUploader';
@@ -7,9 +7,10 @@ import { AlignLeft, Plus, X, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import { uploadFile } from '@/features/admin/upload'; 
 import { slugify } from '@/lib/utils';
-import { TourCategory } from '@prisma/client'; // ✅ ДОБАВЛЕН ИМПОРТ УТИЛИТЫ
+import { TourCategory } from '@prisma/client';
 
 type CategoryOption = Pick<TourCategory, 'id' | 'title'>;
+
 export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] }) => {
   const { control, watch, setValue, getValues } = useFormContext();
   
@@ -20,24 +21,30 @@ export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] })
 
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
 
-  // ✅ ЛОГИКА АВТОГЕНЕРАЦИИ SLUG ДЛЯ НОВОГО ТУРА
+  // Следим за значениями для логики слага
   const title = watch('title');
   const slug = watch('slug');
 
-  useEffect(() => {
-    // Если создается новый тур (slug изначально пустой) - генерируем на лету
-    if (title && !getValues('id') && (!slug || slug === slugify(title.slice(0, -1)))) {
-      setValue('slug', slugify(title), { shouldValidate: true, shouldDirty: true });
-    }
-  }, [title]);
-
-  const handleRegenerateSlug = () => {
+  // 1. Функция регенерации слага (стабильная ссылка)
+  const handleRegenerateSlug = useCallback(() => {
     if (title) {
       setValue('slug', slugify(title), { shouldValidate: true, shouldDirty: true });
     }
-  };
+  }, [title, setValue]);
 
- const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 2. Автогенерация слага при вводе названия
+  useEffect(() => {
+    const isNewTour = !getValues('id');
+    // Логика: обновляем слаг только если он пустой или совпадает с тем, что мы генерировали шагом ранее
+    const isAutoSlug = !slug || slug === slugify(title?.slice(0, -1) || '');
+
+    if (title && isNewTour && isAutoSlug) {
+      setValue('slug', slugify(title), { shouldValidate: true, shouldDirty: true });
+    }
+  }, [title, slug, getValues, setValue]);
+
+  // 3. Обработчик загрузки галереи (стабильная ссылка)
+  const handleGalleryUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploadingGallery(true);
       try {
@@ -49,12 +56,10 @@ export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] })
           
           const response = await uploadFile(formData); 
           
-          // ✅ ИСПРАВЛЕНО: Сначала проверяем, есть ли ключ 'url' в ответе
           if (response && 'url' in response && response.url) {
-              append(response.url); 
+            append(response.url); 
           } else if (response && 'error' in response) {
-              // Опционально: можно вывести конкретную ошибку, если загрузка не удалась
-              console.error('Ошибка сервера при загрузке:', response.error);
+            console.error('Ошибка сервера при загрузке:', response.error);
           }
         }
       } catch (err) {
@@ -64,7 +69,7 @@ export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] })
         e.target.value = '';
       }
     }
-  };
+  }, [append]);
 
   const categoryOptions = [
     { value: '', label: '— Выберите категорию —' },

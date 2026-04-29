@@ -10,7 +10,7 @@ import { BookingStatus } from '@prisma/client';
 // --- ТИПЫ ДЛЯ ВОЗВРАЩАЕМЫХ ДАННЫХ (DTO) ---
 export type ScannedBookingDTO = {
   id: string;
-  shortId: number | null;
+  shortId:  string;
   status: BookingStatus;
   userName: string;
   userPhone: string;
@@ -84,65 +84,51 @@ export const processScanAction = withAdminAuth(async (qrText: string): Promise<S
     }
 
     // --- СЦЕНАРИЙ А: БИЛЕТ (БРОНЬ) ---
-    if (type === 'booking') {
-      let booking = null;
-      const shortIdNum = parseInt(value, 10);
+      if (type === 'booking') {
+        // value — это либо строка shortId (например "A4F9"), либо UUID (id)
+        const isUUID = isValidUUID(value);
 
-      // 1. Поиск по shortId (число)
-      if (!isNaN(shortIdNum)) {
-        booking = await prisma.booking.findFirst({
-          where: { shortId: shortIdNum },
+        // Делаем ОДИН запрос. TypeScript идеально запомнит тип благодаря const
+        const booking = await prisma.booking.findFirst({
+          where: isUUID ? { id: value } : { shortId: value.toUpperCase() },
           include: {
             tour: { select: { title: true, currency: true } },
             tourDate: { select: { startDate: true, time: true } }
           }
         });
+
+        if (booking) {
+          const totalTickets = 
+            (booking.ticketsAdult || 0) + 
+            (booking.ticketsChild || 0) + 
+            (booking.ticketsMember || 0) + 
+            ((booking.ticketsFamily || 0) * 3);
+
+          return { 
+            success: true, 
+            type: 'booking', 
+            data: {
+              id: booking.id,
+              shortId: booking.shortId,
+              status: booking.status,
+              userName: booking.name,
+              userPhone: booking.phone,
+              totalTickets,
+              totalPrice: booking.totalPrice,
+              amountPaid: booking.amountPaid,
+              discount: booking.discount,
+              currency: booking.tour.currency || 'RUB',
+              paymentMethod: booking.paymentMethod,
+              checkedIn: (booking as any).checkedIn || false, 
+              checkedInAt: (booking as any).checkedInAt || null,
+              tour: { title: booking.tour.title },
+              tourDate: booking.tourDate
+                ? { startDate: booking.tourDate.startDate, time: booking.tourDate.time }
+                : null
+            } 
+          };
+        }
       }
-
-      // 2. Если не нашли и value похож на UUID — поиск по id
-      if (!booking && isValidUUID(value)) {
-        booking = await prisma.booking.findFirst({
-          where: { id: value },
-          include: {
-            tour: { select: { title: true, currency: true } },
-            tourDate: { select: { startDate: true, time: true } }
-          }
-        });
-      }
-
-      if (booking) {
-        const totalTickets = 
-          (booking.ticketsAdult || 0) + 
-          (booking.ticketsChild || 0) + 
-          (booking.ticketsMember || 0) + 
-          ((booking.ticketsFamily || 0) * 3);
-
-        return { 
-          success: true, 
-          type: 'booking', 
-          data: {
-            id: booking.id,
-            shortId: booking.shortId,
-            status: booking.status,
-            userName: booking.name,
-            userPhone: booking.phone,
-            totalTickets,
-            totalPrice: booking.totalPrice,
-            amountPaid: booking.amountPaid,
-            discount: booking.discount,
-            currency: booking.tour.currency || 'MDL',
-            paymentMethod: booking.paymentMethod,
-            checkedIn: (booking).checkedIn || false, 
-            checkedInAt: (booking).checkedInAt || null,
-            tour: { title: booking.tour.title },
-            tourDate: booking.tourDate
-              ? { startDate: booking.tourDate.startDate, time: booking.tourDate.time }
-              : null
-          } 
-        };
-      }
-    }
-
     // --- СЦЕНАРИЙ Б: УЧАСТНИК КЛУБА (MEMBER) ---
     if (type === 'member') {
       // memberId всегда UUID

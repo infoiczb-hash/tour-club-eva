@@ -70,10 +70,12 @@ export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
 
-  const tour = await getTourBySlug(decodedSlug);
+ const tour = await getTourBySlug(decodedSlug);
   if (!tour) notFound();
-  
-  if (tour.image) ReactDOM.preload(tour.image, { as: 'image', fetchPriority: 'high' });
+
+  // Мы полностью удалили ReactDOM.preload.
+  // За предзагрузку hero-изображения отвечает атрибут priority в TourHero.tsx, 
+  // Next.js сам вставит идеальный <link rel="preload"> в <head>.
 
   // ✅ ИЗМЕНЕНО: Убрали чтение кук. Запрашиваем только похожие туры (теперь это TourPreview)
   const similarTours = await getSimilarTours(tour.categoryId ?? null, tour.id, 3);
@@ -104,7 +106,7 @@ export default async function TourPage({ params }: Props) {
       '@type': 'Offer',
       url: `${BASE_URL}/tour/${tour.slug}`,
       price: tour.price, 
-      priceCurrency: tour.currency || 'MDL',
+      priceCurrency: tour.currency || 'RUB',
       availability: (tour.spotsLeft || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
     },
     organizer: {

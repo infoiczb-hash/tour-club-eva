@@ -54,7 +54,7 @@ export default function ReferralCard({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-white/10 p-6 md:p-8 shadow-2xl">
+    <div className="relative overflow-hidden rounded-3xl bg-ui-panel/80 backdrop-blur-xl border border-ui-border p-6 md:p-8 shadow-2xl">
       {/* Декоративный фоновый градиент */}
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
       
@@ -64,24 +64,24 @@ export default function ReferralCard({
             <Gift size={14} />
             Реферальная программа
           </div>
-          <h3 className="text-xl md:text-2xl font-bold text-white">
+         <h3 className="text-xl md:text-2xl font-bold text-ui-text">
             Приглашайте друзей в первый тур с нами
           </h3>
-          <p className="text-slate-300 text-sm leading-relaxed max-w-md">
-            Поделитесь промокодом. Друг получит скидку <span className="text-white font-medium">{friendReward} ₽</span> на первый тур, а мы начислим <span className="text-teal-400 font-medium">{rewardAmount} ₽</span> на ваш баланс после его поездки.
+          <p className="text-ui-muted text-sm leading-relaxed max-w-md">
+            Поделитесь промокодом. Друг получит скидку <span className="text-ui-text font-medium">{friendReward} ₽</span> на первый тур, а мы начислим <span className="text-ui-accent font-medium">{rewardAmount} ₽</span> на ваш баланс после его поездки.
           </p>
         </div>
 
-        <div className="w-full md:w-auto bg-black/40 rounded-2xl p-4 border border-white/5 flex flex-col gap-3">
+        <div className="w-full md:w-auto bg-ui-bg/60 rounded-2xl p-4 border border-ui-border/50 flex flex-col gap-3">
           <div className="text-center">
-            <p className="text-xs text-slate-300 uppercase tracking-widest mb-1">Ваш промокод</p>
-            <p className="text-2xl font-mono font-bold text-white tracking-widest">{promoCode}</p>
+            <p className="text-xs text-ui-muted uppercase tracking-widest mb-1">Ваш промокод</p>
+            <p className="text-2xl font-mono font-bold text-ui-text tracking-widest">{promoCode}</p>
           </div>
           
           <div className="flex gap-2">
             <button
               onClick={handleCopy}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-2.5 px-4 rounded-xl text-sm font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 bg-ui-border/50 hover:bg-ui-border text-ui-text py-2.5 px-4 rounded-xl text-sm font-medium transition-colors"
             >
               {copied ? <Check size={16} className="text-teal-400" /> : <Copy size={16} />}
               {copied ? "Скопирован" : "Копировать"}

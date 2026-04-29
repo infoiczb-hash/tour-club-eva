@@ -127,7 +127,7 @@ const generateGetOgUrl = (source: SmmSource, format: string, index: number, slid
     params.append('price', source.price?.toString() || '');
     params.append('priceMember', (source as any).priceMember?.toString() || '');
     params.append('priceChild', source.priceChild?.toString() || '');
-    params.append('currency', source.currency || 'MDL');
+    params.append('currency', source.currency || 'RUB');
     
     // ✅ Новые поля для журнальной карусели
     if (source.route) params.append('route', source.route);
@@ -440,7 +440,7 @@ useEffect(() => {
     }
   };
 
-  const handlePublishNow = async () => {
+const handlePublishNow = async (isPublic: boolean = false) => {
     setIsPublishing(true);
     try {
       const allImages = entityType === 'calendar' 
@@ -448,15 +448,15 @@ useEffect(() => {
         : [generateGetOgUrl(selectedSource!, format, 0, undefined, undefined, triggerText, 'cover'), 
            ...generatedSlides.map((s, i) => generateGetOgUrl(selectedSource!, format, i + 1, s.title, s.text, triggerText, s.type))];
 
-    const res = (await freezeAndPublishSmmAction({
+      const res = (await freezeAndPublishSmmAction({
         imageUrls: allImages,
         content: fullContent,
         platform,
-        isPublic: false
+        isPublic: isPublic // 👈 Передаем флаг из кнопки
       })) as { success: boolean; error?: string };
 
       if (res.success) {
-        showToast('Отправлено в Telegram! 🚀', 'success');
+        showToast(isPublic ? 'Опубликовано в публичный канал! 📢' : 'Сохранено в админский ТГ! 🚀', 'success');
       } else {
         showToast(res.error || 'Ошибка публикации', 'error');
       }
@@ -935,22 +935,30 @@ return (
                      />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                      <button
                        onClick={handleSave}
                        disabled={isSaving}
                        className="py-5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all"
                      >
                        {isSaving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
-                       {scheduledAt ? 'Запланировать' : 'В черновики'}
+                       {scheduledAt ? 'Запланировать' : 'В БД'}
                      </button>
                      <button
-                       onClick={handlePublishNow}
+                       onClick={() => handlePublishNow(false)}
                        disabled={isPublishing}
                        className="py-5 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all shadow-xl shadow-teal-500/30"
                      >
+                       {isPublishing ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                       В админский ТГ
+                     </button>
+                     <button
+                       onClick={() => handlePublishNow(true)}
+                       disabled={isPublishing}
+                       className="py-5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 transition-all shadow-xl shadow-indigo-500/30"
+                     >
                        {isPublishing ? <RefreshCw className="animate-spin" size={16} /> : <Send size={16} />}
-                       Заморозить и в Telegram
+                       В публичный канал
                      </button>
                   </div>
                </div>

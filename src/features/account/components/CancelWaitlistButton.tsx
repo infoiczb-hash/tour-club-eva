@@ -24,12 +24,12 @@ export default function CancelWaitlistButton({ id }: { id: string }) {
   };
 
   return (
-    <button
-      onClick={handleCancel}
-      disabled={isPending}
-      className="flex items-center gap-1.5 px-3 py-2 bg-slate-800/60 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
-      title="Отменить заявку"
-    >
+   <button
+  onClick={handleCancel}
+  disabled={isPending}
+  className="flex items-center gap-1.5 px-3 py-2 bg-ui-surface hover:bg-rose-500/10 text-ui-muted hover:text-rose-400 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+  title="Отменить заявку"
+>
       {isPending ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
       <span className="hidden sm:inline">Отменить</span>
     </button>

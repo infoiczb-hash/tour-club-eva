@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       message += `📞 <code>${b.phone}</code>\n`; 
       message += `🗺 Тур: ${b.tour.title}\n`;
       message += `📅 Дата: ${tourDate}\n`;
-      message += `💰 К оплате: <b>${b.totalPrice} ${b.tour.currency || 'MDL'}</b> (Статус: ${b.status})\n`;
+      message += `💰 К оплате: <b>${b.totalPrice} ${b.tour.currency || 'RUB'}</b> (Статус: ${b.status})\n`;
       message += `──────────────────\n`;
     });
 

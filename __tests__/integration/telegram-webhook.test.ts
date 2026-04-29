@@ -126,7 +126,7 @@ beforeEach(async () => {
     });
     const booking = await prisma.booking.create({
       data: {
-        shortId: Math.floor(Math.random() * 100000),
+        shortId: Math.random().toString(36).substring(2, 6).toUpperCase(),
         tourId: tour.id,
         tourDateId: tourDate.id,
         memberId: member.id,
@@ -188,7 +188,7 @@ beforeEach(async () => {
   it('отклоняет бронь (reject_)', async () => {
     const newBooking = await prisma.booking.create({
       data: {
-        shortId: Math.floor(Math.random() * 100000),
+        shortId: Math.random().toString(36).substring(2, 6).toUpperCase(),
         tourId: testData.tourId,
         tourDateId: testData.tourDateId,
         memberId: testData.memberId,

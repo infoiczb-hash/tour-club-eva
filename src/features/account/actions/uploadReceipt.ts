@@ -76,7 +76,7 @@ export async function uploadClientReceiptAction(bookingId: string, formData: For
     });
 
     // 4. Отправляем чек Админам в Telegram (Идентично тому, как это делает Webhook бота)
-    const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ (Сайт)</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'MDL'}</b>\n\nПодтверждаете получение средств?`;
+    const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ (Сайт)</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 Клиент: <b>${booking.name}</b>\n💳 Способ: <b>${booking.paymentMethod || 'Не указан'}</b>\n💰 К оплате: <b>${booking.totalPrice} ${booking.tour?.currency || 'RUB'}</b>\n\nПодтверждаете получение средств?`;
     
     await publishToTelegram(caption, receiptUrl, undefined, false, {
       messageThreadId: env.TELEGRAM_TOPIC_MONEY || env.TELEGRAM_TOPIC_BOOKINGS,

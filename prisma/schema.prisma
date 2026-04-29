@@ -164,7 +164,7 @@ model TourDate {
 model Booking {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   
-  shortId     Int? @unique @map("short_id")
+  shortId   String   @unique @map("short_id")
 
   memberId String?        @map("member_id") @db.Uuid
   member   MemberProfile? @relation(fields: [memberId], references: [id], onDelete: SetNull)

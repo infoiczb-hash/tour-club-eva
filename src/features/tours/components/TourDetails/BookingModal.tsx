@@ -78,7 +78,7 @@ const [formData, setFormData] = useState<BookingFormData>({
 
   const [successData, setSuccessData] = useState<{
     bookingId: string;
-    shortId: number;
+    shortId: string;
     totalPrice: number;
     biletpmrLink?: string | null;
     apbQrLink?: string | null;
@@ -778,70 +778,75 @@ if (result.success) {
                     <CreditCard size={14} className="text-teal-500" /> Способ оплаты
                   </label>
                   
-                  <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
-                   <div className="flex flex-col gap-3" role="radiogroup" aria-label="Выберите способ оплаты">
-  
-  {/* 1. Крупная кнопка: Онлайн Клевер */}
-  <button 
-    type="button"
-    role="radio"
-    aria-checked={paymentMethod === 'online_card'}
-    onClick={() => setPaymentMethod('online_card')} 
-    className={`relative p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-  >
-      <div className="flex items-center justify-between w-full">
-          <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
-          <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
-      </div>
-      <span className="text-sm text-slate-400 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
-  </button>
+                  <div className="flex flex-col gap-3 w-full" role="radiogroup" aria-label="Выберите способ оплаты">
+                    
+                    {/* 1. Крупная кнопка: Онлайн Клевер */}
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'online_card'}
+                      onClick={() => setPaymentMethod('online_card')} 
+                      // 👇 Добавлен w-full
+                      className={`w-full relative p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
+                            <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
+                        </div>
+                        <span className="text-sm text-slate-400 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
+                    </button>
 
-  {/* 2. Крупная кнопка: Из других стран */}
- <button 
-  type="button"
-  role="radio"
-  aria-checked={paymentMethod === 'foreign'}
-  onClick={() => setPaymentMethod('foreign')} 
-  className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
->
-    <div className="flex items-center justify-between w-full">
-        <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
-        <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
-    </div>
-    <span className="text-[12px] text-slate-400 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
-</button>
+                    {/* 2. Крупная кнопка: Из других стран */}
+                    <button 
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'foreign'}
+                      onClick={() => setPaymentMethod('foreign')} 
+                      // 👇 Добавлен w-full
+                      className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
+                            <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
+                        </div>
+                        <span className="text-[12px] text-slate-400 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
+                    </button>
 
-  {/* 3. Сетка 2x2 внизу: Наличные и BiletPMR */}
-  <div className="grid grid-cols-2 gap-3 mt-1">
-    <button 
-      type="button"
-      role="radio"
-      onClick={() => setPaymentMethod('cash')} 
-      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-    >
-        <div className="flex items-center justify-between w-full">
-            <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
-            <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
-        </div>
-        <span className="text-[12px] text-slate-400 leading-tight">Оплата гиду на месте</span>
-    </button>
+                    {/* 3. Сетка 2x2 внизу: Наличные и BiletPMR */}
+                    <div className="grid grid-cols-2 gap-3 mt-1 w-full">
+                      <button 
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentMethod === 'cash'}
+                        onClick={() => setPaymentMethod('cash')} 
+                        // 👇 Добавлен w-full
+                        className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                      >
+                          <div className="flex items-center justify-between w-full">
+                              <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
+                              <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
+                          </div>
+                          <span className="text-[12px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+                      </button>
 
-    <button 
-      type="button"
-      role="radio"
-      onClick={() => setPaymentMethod('biletpmr')} 
-      className={`relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
-    >
-        <div className="flex items-center justify-between w-full">
-            <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
-            <CreditCard size={16} className={paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} />
-        </div>
-        <span className="text-[12px] text-slate-400 leading-tight truncate">BILETPMR / другой сервис</span>
-    </button>
-  </div>
-</div>
-</div>
-                </div>
+                      <button 
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentMethod === 'biletpmr'}
+                        onClick={() => setPaymentMethod('biletpmr')} 
+                        // 👇 Добавлен w-full
+                        className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
+                      >
+                          <div className="flex items-center justify-between w-full">
+                              <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
+                              <CreditCard size={16} className={`shrink-0 ml-1 ${paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'}`} />
+                          </div>
+                          <span className="text-[12px] text-slate-400 leading-tight truncate">BILETPMR/сервисы</span>
+                      </button>
+                    </div>
+
+                  </div>
+                 </div>
 
                 {errorMsg && (
                   <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-bold leading-snug">

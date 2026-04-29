@@ -1,5 +1,6 @@
 // src/lib/env.ts
 import { z } from 'zod';
+import 'server-only'; 
 
 // 1. Схема для ПУБЛИЧНЫХ (клиентских) переменных
 const clientSchema = z.object({

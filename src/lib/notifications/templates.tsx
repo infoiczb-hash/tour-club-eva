@@ -75,7 +75,7 @@ export const NotificationTemplates = {
     const shortId = data.shortId || data.bookingId?.substring(0, 4) || '---';
     const firstName = profile.name ? profile.name.split(' ')[0] : 'Путешественник';
     const tourTitle = data.tourTitle || 'выбранный тур';
-    const currency = data.currency || 'MDL';
+    const currency = data.currency || 'RUB';
     const price = data.totalPrice || 0;
 
     // ЕДИНЫЙ СТИЛЬ ЗАГОЛОВКОВ (Бренд)
@@ -511,24 +511,33 @@ case 'BOOKING_CANCELLED': {
       }
 
       case 'POST_TOUR_REVIEW': {
-        const points = data.points || 0;
-        const level = data.level || 'Новичок';
-        const nextLevelPoints = data.nextLevelPoints || 500;
-        const pointsNeeded = nextLevelPoints - points > 0 ? nextLevelPoints - points : 0;
+        // Достаем новые переменные геймификации, переданные из крона
+        const totalTours = data.totalTours || 0;
+        const level = data.level || 'Первопроходец';
+        const nextLevelName = data.nextLevelName;
+        const toursToNext = data.toursToNext;
 
         let buttons = [
           [{ text: '✍️ Написать отзыв', callback_data: `write_review_${data.bookingId}` }]
         ];
 
+        // Рендерим письмо с новыми пропсами
         const emailHtml = await safeRenderEmail(
           <PostTourReviewEmail
             name={firstName}
             tourTitle={tourTitle}
-            points={points}
+            totalTours={totalTours}
             level={level}
+            nextLevelName={nextLevelName}
+            toursToNext={toursToNext}
             bookingLink={accountLink}
           />
         );
+
+        // Динамический текст прогресса для Telegram
+        const progressText = nextLevelName && toursToNext 
+          ? `🚀 До статуса <b>«${nextLevelName}»</b> осталось туров: <b>${toursToNext}</b>`
+          : `🏆 Вы достигли максимального статуса в клубе!`;
 
         return {
           inApp: {
@@ -538,7 +547,7 @@ case 'BOOKING_CANCELLED': {
             link: `/account/history`
           },
           telegram: {
-            text: `🏕 <b>${firstName}, с возвращением!</b>\n\nНадеемся, наше приключение «<b>${tourTitle}</b>» прошло отлично.\n\n🏆 Ваш статус: <b>${level}</b>\n⭐️ Накоплено: <b>${points} баллов</b>\n${pointsNeeded > 0 ? `🚀 До следующего уровня осталось: ${pointsNeeded} баллов\n\n` : '\n'}Помогите нам стать еще лучше — поделитесь впечатлениями о работе гида и организации. За каждый опубликованный отзыв мы начисляем бонусы! 👇`,
+            text: `🏕 <b>${firstName}, с возвращением!</b>\n\nНадеемся, наше приключение «<b>${tourTitle}</b>» прошло отлично.\n\n🏆 Ваш статус: <b>${level}</b>\n👣 Пройдено приключений: <b>${totalTours}</b>\n${progressText}\n\nПомогите нам стать еще лучше — поделитесь впечатлениями о работе гида и организации. За каждый опубликованный отзыв мы начисляем бонусы на баланс для новых поездок! 👇`,
             buttons: buttons
           },
           push: { title: 'Поделитесь впечатлениями! 🏕', body: `Оцените тур ${tourTitle} и получите бонусы` },
@@ -549,7 +558,6 @@ case 'BOOKING_CANCELLED': {
           } : null
         };
       }
-
       case 'REVIEW_PUBLISHED': {
         const added = data.pointsAdded || 50;
         const balance = data.newBalance || 0;

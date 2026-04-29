@@ -25,7 +25,7 @@ export const Finance = () => {
                   { value: 'RUB', label: 'RUB (₽)' },
                   { value: 'EUR', label: 'EUR (€)' },
                   { value: 'USD', label: 'USD ($)' },
-                  { value: 'MDL', label: 'MDL (L)' },
+                  { value: 'RUB', label: 'MDL (L)' },
                 ]} 
              />
           </div>

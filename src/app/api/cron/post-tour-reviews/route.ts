@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { getLevelName } from '@/lib/constants/levels'; // ✅ Импорт для пересчёта уровня
+import { getLevelName, getLevelConfig, LEVELS_CONFIG   } from '@/lib/constants/levels'; // ✅ Импорт для пересчёта уровня
+
 
 // ==========================================
 // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ГОСТЕЙ (БЕЗ ЛК)
@@ -47,10 +48,10 @@ async function updateMemberStats(memberId: string) {
   });
 
   // 2. Получаем текущее значение totalTours из профиля
-  const member = await prisma.memberProfile.findUnique({
-    where: { id: memberId },
-    select: { totalTours: true, level: true }
-  });
+ const member = await prisma.memberProfile.findUnique({
+  where: { id: memberId },
+  select: { totalTours: true, level: true }
+});
 
   if (!member) return;
 
@@ -125,12 +126,16 @@ export async function GET(req: Request) {
       }
 
       if (!existingReview) {
-        try {
+      try {
           if (booking.memberId) {
             // 🌟 СЦЕНАРИЙ А: ЗАГРУЖАЕМ ГЕЙМИФИКАЦИЮ (С ЛИЧНЫМ КАБИНЕТОМ)
-            const points = booking.member?.balance || 0;
-            const level = booking.member?.level || 'Первопроходец';
-            const nextLevelPoints = points < 500 ? 500 : (points < 1500 ? 1500 : points + 1000);
+            const totalTours = booking.member?.totalTours || 0;
+            const currentLevelName = booking.member?.level || 'Первопроходец';
+            
+            // Находим следующий уровень в конфиге
+            const currentLevelIdx = LEVELS_CONFIG.findIndex(l => l.name === currentLevelName);
+            const nextLevel = LEVELS_CONFIG[currentLevelIdx + 1];
+            const toursToNext = nextLevel ? nextLevel.min - totalTours : null;
 
             await NotificationHub.dispatch({
               eventId: 'POST_TOUR_REVIEW', 
@@ -138,9 +143,10 @@ export async function GET(req: Request) {
               data: {
                 bookingId: booking.id,
                 tourTitle: booking.tour.title,
-                points: points,
-                level: level,
-                nextLevelPoints: nextLevelPoints
+                totalTours: totalTours,
+                level: currentLevelName,
+                nextLevelName: nextLevel?.name || null,
+                toursToNext: toursToNext && toursToNext > 0 ? toursToNext : null
               }
             });
           } else if (booking.payerTgChatId) {
@@ -157,12 +163,14 @@ export async function GET(req: Request) {
         } catch (e) {
           console.error(`[Cron Review] Ошибка для брони ${booking.id}:`, e);
         }
-      }
-    }
-
-    return NextResponse.json({ success: true, sent: sentCount, processed: bookings.length });
-
+}
+  return NextResponse.json({ 
+        success: true, 
+        message: `Уведомления успешно отправлены: ${sentCount} шт.` 
+      });
+}
   } catch (error) {
+    // Глобальная ошибка (например, упала БД)
     console.error('Cron review error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

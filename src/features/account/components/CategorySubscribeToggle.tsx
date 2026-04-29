@@ -48,12 +48,12 @@ export default function CategorySubscribeToggle({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className={clsx(
-        'flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left',
-        subscribed
-          ? `${colorBg} ${colorText} ${colorBorder}`
-          : 'bg-slate-900/60 border-white/5 text-slate-300 hover:border-white/10 hover:text-slate-300'
-      )}
+     className={clsx(
+  'flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left',
+  subscribed
+    ? `${colorBg} ${colorText} ${colorBorder}`
+    : 'bg-ui-surface border-ui-border text-ui-muted hover:border-ui-accent/50 hover:text-ui-base'
+)}
     >
       <span className="text-base leading-none">{icon}</span>
       <span className="flex-1 text-xs font-bold truncate">{title}</span>

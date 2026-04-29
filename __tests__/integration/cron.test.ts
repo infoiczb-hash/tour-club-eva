@@ -104,7 +104,7 @@ async function createTourWithDate(overrides: { startDate?: Date; endDate?: Date 
       title: 'Cron Test Tour',
       location: 'Test',
       price: 500,
-      currency: 'MDL',
+      currency: 'RUB',
       spots: 10,
       spotsLeft: 10,
       categoryId: category.id,
@@ -145,7 +145,7 @@ async function createBooking(
 ) {
   return prisma.booking.create({
     data: {
-      shortId: Math.floor(Math.random() * 999999),
+     shortId: Math.random().toString(36).substring(2, 6).toUpperCase(),
       tourId,
       tourDateId,
       memberId,
@@ -237,7 +237,8 @@ describe('Cron: payment-report', () => {
 // 2. POST-TOUR-REVIEWS
 // ─────────────────────────────────────────────
 describe('Cron: post-tour-reviews', () => {
-  let GET: (req: Request) => Promise<Response>;
+  // Меняем тип на any, чтобы избежать конфликтов Request/NextRequest в среде Jest
+  let GET: any;
   let tourId: string;
   let tourDateId: string;
   let memberId: string;
@@ -278,8 +279,8 @@ describe('Cron: post-tour-reviews', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.processed).toBeGreaterThanOrEqual(1);
-    expect(data.sent).toBeGreaterThanOrEqual(1);
+    // Проверяем по новому формату ответа
+    expect(data.success).toBe(true);
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ eventId: 'POST_TOUR_REVIEW', memberId })
     );
@@ -303,8 +304,8 @@ describe('Cron: post-tour-reviews', () => {
     const res = await GET(makeRequest('http://localhost/api/cron/post-tour-reviews'));
     const data = await res.json();
 
-    expect(data.processed).toBeGreaterThanOrEqual(1);
-    expect(data.sent).toBeGreaterThanOrEqual(1);
+    expect(res.status).toBe(200);
+    expect(data.success).toBe(true);
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ eventId: 'POST_TOUR_REVIEW', memberId })
     );
@@ -350,7 +351,9 @@ describe('Cron: post-tour-reviews', () => {
     const res = await GET(makeRequest('http://localhost/api/cron/post-tour-reviews'));
     const data = await res.json();
 
-    expect(data.sent).toBe(0);
+    expect(res.status).toBe(200);
+    expect(data.success).toBe(true);
+    // Самая главная проверка — что пуш не отправлялся
     expect(mockDispatch).not.toHaveBeenCalled();
 
     await prisma.review.deleteMany({ where: { tourId, memberId } });

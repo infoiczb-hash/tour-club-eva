@@ -175,7 +175,7 @@ function EventCard({ ev, brandColor, s }: { ev: CalendarEvent; brandColor: strin
   const evColorHex  = COLOR_MAP[ev.color] ?? brandColor;
   const evBadgeBg   = hexToRgba(evColorHex, 0.15);
   const priceFormatted = ev.price != null ? formatPrice(ev.price) : null;
-  const currency = ev.currency ?? 'MDL';
+  const currency = ev.currency ?? 'RUB';
 
   return (
     <div style={{

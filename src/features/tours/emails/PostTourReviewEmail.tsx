@@ -7,35 +7,42 @@ import {
 interface PostTourReviewEmailProps {
   name: string;
   tourTitle: string;
-  points: number;
+  totalTours: number; 
   level: string;
+  nextLevelName?: string | null;
+  toursToNext?: number | null; 
   bookingLink: string;
   pointsToEarn?: number;
-  nextLevelPoints?: number;
-  pointsNeeded?: number;
 }
 
 export const PostTourReviewEmail = ({
   name,
   tourTitle,
-  points,
+  totalTours,
   level,
+  nextLevelName,
+  toursToNext,
   bookingLink,
   pointsToEarn = 50,
-  nextLevelPoints = 500,
-  pointsNeeded,
 }: PostTourReviewEmailProps) => {
-  const remaining = pointsNeeded ?? (nextLevelPoints - points > 0 ? nextLevelPoints - points : 0);
   
-  // Умная корректировка ссылки (направляем в историю поездок, а не в активные брони)
+  // Умная корректировка ссылки
   const historyLink = bookingLink.replace('/bookings', '/history');
+
+  // Функция для правильного склонения слов (тур, тура, туров)
+  const declension = (n: number, one: string, two: string, five: string) => {
+    n = Math.abs(n) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return five;
+    if (n1 > 1 && n1 < 5) return two;
+    if (n1 === 1) return one;
+    return five;
+  };
 
   return (
     <Html>
       <Head />
-    <Preview>
-  {`${name}, как прошёл тур «${tourTitle}»? Напишите отзыв и получите +${pointsToEarn} баллов!`}
-</Preview>
+      <Preview>Как прошёл тур «{tourTitle}»? Напишите отзыв и получите бонусы!</Preview>
       <Tailwind>
         <Body className="bg-white font-sans text-slate-900">
           <Container className="mx-auto my-10 p-4 max-w-[600px]">
@@ -49,14 +56,18 @@ export const PostTourReviewEmail = ({
               </Text>
               
               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Ваш статус</Text>
-                <Text className="m-0 mb-4 text-lg font-bold text-slate-900">
-                  {level} <span className="text-teal-600 font-black">({points} баллов)</span>
+                <Text className="text-xs font-bold text-slate-500 uppercase tracking-widest m-0">
+                  Ваш статус в клубе
                 </Text>
-                
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">До следующего уровня</Text>
-                <Text className="m-0 text-sm font-medium text-slate-700">
-                  Осталось {remaining} баллов. Оставьте отзыв, чтобы получить ещё <span className="text-teal-600 font-bold">+{pointsToEarn}</span>!
+                <Heading className="text-2xl font-black text-slate-900 m-0 mt-1 uppercase italic">
+                  {level}
+                </Heading>
+                <Text className="text-sm text-slate-500 m-0 mt-2">
+                  Вы прошли с нами {totalTours} {declension(totalTours, 'тур', 'тура', 'туров')}. 
+                  {toursToNext 
+                    ? ` Осталось ${toursToNext} ${declension(toursToNext, 'тур', 'тура', 'туров')} до статуса «${nextLevelName}».`
+                    : ' У вас максимальный статус — вы легенда!'}
+                  <br /><br />Поделитесь впечатлениями о поездке и получите бонусы на счет!
                 </Text>
               </div>
             </Section>
@@ -80,7 +91,6 @@ export const PostTourReviewEmail = ({
               <Link href="https://t.me/romansvtirase" className="text-xs text-slate-400 underline">Связаться с руководством</Link>
               <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. Спасибо, что путешествуете с нами. <br />
-                До новых встреч на маршрутах! 🌲
               </Text>
             </Section>
           </Container>
@@ -89,5 +99,3 @@ export const PostTourReviewEmail = ({
     </Html>
   );
 };
-
-export default PostTourReviewEmail;

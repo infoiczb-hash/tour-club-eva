@@ -214,20 +214,6 @@ export const saveTour = withAdminAuth(
       revalidatePath('/');
       revalidatePath('/account/wishlist'); 
 
-      // Отправка в общий паблик
-      if (!formData.id && data.isActive) {
-        publishTourToChannel({
-          title:      data.title,
-          subtitle:   data.subtitle,
-          location:   data.location,
-          duration:   data.duration ?? '',
-          price:      data.price,
-          currency:   data.currency,
-          slug:       slug,
-          coverImage: data.coverImage,
-        }).catch(console.error);
-      }
-
       return { success: true };
     } catch (error: unknown) {
       const err = error as Error;
@@ -326,17 +312,6 @@ export const updateTourStatus = withAdminAuth(
         } catch (notifyError) {
           console.error("Ошибка при рассылке уведомлений Telegram (updateTourStatus):", notifyError);
         }
-
-        publishTourToChannel({
-          title:      tour.title,
-          subtitle:   tour.subtitle,
-          location:   tour.location,
-          duration:   tour.duration ?? '',
-          price:      tour.price,
-          currency:   tour.currency,
-          slug:       tour.slug,
-          coverImage: tour.coverImage,
-        }).catch(console.error);
       }
 
       revalidatePath('/admin');

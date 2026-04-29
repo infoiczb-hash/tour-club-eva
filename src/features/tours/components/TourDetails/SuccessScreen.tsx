@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 interface SuccessScreenProps {
   bookingId: string; // ✅ Добавлено для формирования ссылки в кабинет
-  shortId: number;
+ shortId: string;
   totalPrice: number;
   currency: string;
   paymentMethod: string;

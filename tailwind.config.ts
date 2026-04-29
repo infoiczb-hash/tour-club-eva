@@ -8,11 +8,21 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: {
+ theme: {
     extend: {
       colors: {
         background: 'var(--background)',
-        foreground: 'var(--foreground)'
+        foreground: 'var(--foreground)',
+        // 🚀 СЕМАНТИЧЕСКИЕ ЦВЕТА ИНТЕРФЕЙСА
+        ui: {
+          bg: 'var(--ui-bg)',         // -> bg-ui-bg
+          panel: 'var(--ui-panel)',   // -> bg-ui-panel
+          border: 'var(--ui-border)', // -> border-ui-border
+          text: 'var(--ui-text)',     // -> text-ui-text
+          muted: 'var(--ui-muted)',   // -> text-ui-muted
+          accent: 'var(--ui-accent)', // -> text-ui-accent / bg-ui-accent
+          danger: 'var(--ui-danger)', // -> text-ui-danger
+        }
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -244,10 +244,19 @@ export const getTours = cache(async (cursor?: string): Promise<TourPreview[]> =>
       take: 50,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: { createdAt: 'desc' },
-      include: { 
+     include: { 
         guide: true, 
         category: true,
-        tourDates: { orderBy: { startDate: 'asc' }, take: 3 }
+        tourDates: { 
+          where: {
+            OR: [
+              { startDate: { gte: now } },
+              { endDate: { gte: now } }
+            ]
+          },
+          orderBy: { startDate: 'asc' }, 
+          take: 3 
+        }
       },
     });
     return tours.map(mapPrismaTourToPreview).filter(t => isTourRelevant(t as unknown as Tour));
@@ -363,38 +372,6 @@ export async function getAllTours(skip: number = 0, take: number = 50): Promise<
   } catch (error) {
     console.error('Ошибка получения всех туров для админки:', error);
     return [];
-  }
-}
-
-// Старый экшен для бронирования (Остается без изменений)
-export async function createBookingAction(params: {
-  eventId: string;
-  name: string;
-  phone: string;
-  tickets: { adult: number; child: number; family?: number };
-  totalPrice: number;
-  bookedDate?: Date | null;
-}) {
-  try {
-    const booking = await prisma.booking.create({
-      data: {
-        tourId: params.eventId,
-        name: params.name,
-        phone: params.phone,
-        ticketsAdult: params.tickets.adult,
-        ticketsChild: params.tickets.child,
-        ticketsFamily: params.tickets.family || 0,
-        totalPrice: params.totalPrice,
-        status: 'pending',
-        bookedDate: params.bookedDate,
-      },
-    });
-    return { success: true, data: booking };
-  } catch (error: unknown) {
-    // Безопасно получаем текст ошибки, даже если выброшен не стандартный объект Error
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('❌ Ошибка бронирования:', message);
-    return { success: false, error: 'Не удалось создать бронь' };
   }
 }
 

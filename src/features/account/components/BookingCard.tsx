@@ -12,13 +12,16 @@ import {
 } from 'lucide-react'; 
 import { clsx } from 'clsx';
 import cloudinaryLoader from '@/lib/cloudinary-loader';
-import QRCode from "react-qr-code"; 
+import dynamic from 'next/dynamic';
+
+// Ленивая загрузка QR-кода, чтобы не раздувать LCP/JS-бандл списка туров
+const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
 
 interface BookingCardProps {
   bookingId: string;
   booking: {
     id: string;
-    shortId: number | null;
+    shortId: string | null;
     status: string;
     totalPrice: number;
     finalPrice?: number | null;
@@ -46,7 +49,7 @@ const STATUS_MAP = {
   moderation: { label: 'Проверка чека', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: Hourglass },
   confirmed: { label: 'Оплачено', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', icon: CheckCircle2 },
   rejected: { label: 'Отклонено', color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/30', icon: AlertCircle },
-  cancelled: { label: 'Отменено', color: 'text-slate-300', bg: 'bg-slate-400/10', border: 'border-slate-400/30', icon: X },
+cancelled: { label: 'Отменено', color: 'text-ui-muted', bg: 'bg-ui-surface', border: 'border-ui-border', icon: X },
 };
 
 const PAYMENT_METHOD_MAP: Record<string, string> = {
@@ -82,9 +85,8 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
   const imageUrl = tour?.coverImage;
   const displayId = shortId ? String(shortId) : bookingId.substring(0, 5).toUpperCase();
 
-  return (
-    <div className="relative flex flex-col md:flex-row bg-slate-900 rounded-3xl overflow-hidden border border-white/10 shadow-xl group transition-all hover:border-white/20 hover:shadow-2xl">
-      
+ return (
+    <div className="relative flex flex-col md:flex-row bg-ui-panel rounded-3xl overflow-hidden border border-ui-border shadow-xl group transition-all hover:border-ui-accent/50 hover:shadow-2xl">
       {/* ✅ ГЛАВНАЯ ССЫЛКА НА БИЛЕТ (Растянута на всю карточку) */}
       <Link href={`/account/bookings/${bookingId}`} className="absolute inset-0 z-0 focus:outline-none" aria-hidden="true" />
 
@@ -92,7 +94,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
       <div className="flex-1 flex flex-col sm:flex-row p-4 sm:p-6 gap-6 relative z-10 pointer-events-none">
         
         {/* Изображение */}
-        <div className="w-full sm:w-48 h-48 sm:h-auto rounded-2xl overflow-hidden relative shrink-0 bg-slate-800 flex items-center justify-center pointer-events-auto">
+       <div className="w-full sm:w-48 h-48 sm:h-auto rounded-2xl overflow-hidden relative shrink-0 bg-ui-bg flex items-center justify-center pointer-events-auto">
           {imageUrl ? (
             <Image
               loader={cloudinaryLoader}
@@ -103,10 +105,10 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
               sizes="(max-width: 640px) 100vw, 200px"
             />
           ) : (
-            <MapPin className="text-slate-600" size={32} />
+            <MapPin className="text-ui-muted/50" size={32} />
           )}
           
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent sm:hidden" />
+<div className="absolute inset-0 bg-gradient-to-t from-ui-panel/80 via-transparent to-transparent sm:hidden" />
           
           <div className="absolute top-3 left-3 sm:hidden">
             <div className={clsx("flex items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur-md border shadow-lg", statusInfo.bg, statusInfo.border)}>
@@ -121,60 +123,59 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
         {/* Детали */}
         <div className="flex flex-col justify-center flex-1">
           <div className="flex items-center justify-between mb-2 pointer-events-auto">
-            <div className="flex items-center gap-2 text-teal-400">
+            <div className="flex items-center gap-2 text-ui-accent">
               <MapPin size={16} />
               <span className="text-xs font-bold uppercase tracking-widest">{tour?.meetingPoint || tour?.location || 'Место старта'}</span>
             </div>
             
-            {appliedBonuses > 0 && (
-              <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-[12px] font-bold uppercase tracking-wider">
+           {appliedBonuses > 0 && (
+              <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
                 <Gift size={12} /> Скидка {appliedBonuses} ₽
               </div>
             )}
           </div>
           
           {/* ✅ ССЫЛКА НА ТУР (Локальная, работает только при точном клике на текст) */}
-          <h3 className="text-xl sm:text-2xl font-black text-white leading-tight mb-4 pointer-events-auto w-fit">
-            <Link href={`/tour/${tour?.slug}`} className="hover:text-teal-400 transition-colors relative z-20">
-               {tour?.title || 'Название тура'}
+         <h3 className="text-xl sm:text-2xl font-black text-ui-text leading-tight mb-4 pointer-events-auto w-fit">
+            <Link href={`/tour/${tour?.slug}`} className="hover:text-ui-accent transition-colors relative z-20">
             </Link>
           </h3>
 
           <div className="grid grid-cols-2 gap-y-3 gap-x-4">
             <div>
-              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Дата и Время</p>
-              <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <Calendar size={16} className="text-slate-300 shrink-0" />
+            <p className="text-xs text-ui-muted font-bold uppercase tracking-widest mb-1">Дата и Время </p>
+              <div className="flex items-center gap-2 text-ui-muted font-medium">
+                <Calendar size={16} className="text-ui-muted shrink-0" />
                 <span className="truncate">{formattedDate}, {time}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Места</p>
-              <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <Users size={16} className="text-slate-300 shrink-0" />
+              <p className="text-xs text-ui-muted font-bold uppercase tracking-widest mb-1">Места</p>
+              <div className="flex items-center gap-2 text-ui-muted font-medium">
+                <Users size={16} className="text-ui-muted shrink-0" />
                 <span>{guestsCount} чел.</span>
               </div>
             </div>
             
             <div>
-              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Сумма</p>
-              <div className="flex items-center gap-2 text-slate-300 font-medium">
-                <CreditCard size={16} className="text-slate-300 shrink-0" />
+           <p className="text-xs text-ui-muted font-bold uppercase tracking-widest mb-1">Сумма</p>
+              <div className="flex items-center gap-2 text-ui-muted font-medium">
+                <CreditCard size={16} className="text-ui-muted shrink-0" />
                 {appliedBonuses > 0 ? (
                   <span>
-                    <span className="line-through text-slate-300 text-xs mr-2">{totalPrice}</span>
-                    <span className="text-emerald-400 font-bold">{finalPrice || totalPrice - appliedBonuses} {tour?.currency || 'MDL'}</span>
+                    <span className="line-through text-ui-muted text-xs mr-2">{totalPrice}</span>
+                    <span className="text-emerald-400 font-bold">{finalPrice || totalPrice - appliedBonuses} {tour?.currency || 'RUB'}</span>
                   </span>
                 ) : (
-                  <span>{totalPrice} {tour?.currency || 'MDL'}</span>
+                  <span>{totalPrice} {tour?.currency || 'RUB'}</span>
                 )}
               </div>
             </div>
 
             <div>
-              <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Оплата</p>
-              <div className="flex items-center gap-2 text-slate-300 font-medium">
+              <p className="text-xs text-ui-muted font-bold uppercase tracking-widest mb-1">Оплата</p>
+              <div className="flex items-center gap-2 text-ui-muted font-medium">
                 <span className="text-xs">{paymentLabel}</span>
               </div>
             </div>
@@ -183,19 +184,18 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
       </div>
 
       {/* ─── ЛИНИЯ ОТРЫВА (ПЕРФОРАЦИЯ) ─────────────────────────────────── */}
-      <div className="hidden md:flex flex-col items-center justify-between relative w-6 border-l-2 border-dashed border-white/10 my-4 z-10">
-        <div className="absolute -top-7 -left-[13px] w-6 h-6 bg-slate-950 rounded-full border border-white/10" />
-        <div className="absolute -bottom-7 -left-[13px] w-6 h-6 bg-slate-950 rounded-full border border-white/10" />
+    <div className="hidden md:flex flex-col items-center justify-between relative w-6 border-l-2 border-dashed border-ui-border my-4 z-10">
+        <div className="absolute -top-7 -left-[13px] w-6 h-6 bg-ui-bg rounded-full border border-ui-border" />
+        <div className="absolute -bottom-7 -left-[13px] w-6 h-6 bg-ui-bg rounded-full border border-ui-border" />
       </div>
 
-      <div className="md:hidden w-full h-0 border-t-2 border-dashed border-white/10 relative my-2 z-10">
-         <div className="absolute -left-3 -top-[13px] w-6 h-6 bg-slate-950 rounded-full border border-white/10" />
-         <div className="absolute -right-3 -top-[13px] w-6 h-6 bg-slate-950 rounded-full border border-white/10" />
+      <div className="md:hidden w-full h-0 border-t-2 border-dashed border-ui-border relative my-2 z-10">
+         <div className="absolute -left-3 -top-[13px] w-6 h-6 bg-ui-bg rounded-full border border-ui-border" />
+         <div className="absolute -right-3 -top-[13px] w-6 h-6 bg-ui-bg rounded-full border border-ui-border" />
       </div>
 
       {/* ─── ПРАВАЯ ЧАСТЬ (Контрольный талон) ──────────── */}
-      <div className="w-full md:w-64 bg-slate-800/20 p-6 flex flex-col justify-between items-center text-center relative z-10 pointer-events-none">
-        
+     <div className="w-full md:w-64 bg-ui-bg/50 p-6 flex flex-col justify-between items-center text-center relative z-10 pointer-events-none">
         <div className="hidden md:flex flex-col items-center mb-6 w-full">
           <div className={clsx("flex justify-center items-center gap-2 px-4 py-2 w-full rounded-xl border", statusInfo.bg, statusInfo.border)}>
             <StatusIcon size={16} className={statusInfo.color} />
@@ -216,12 +216,12 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
 
         <div className="w-full flex md:flex-col justify-between items-center">
           <div className="text-left md:text-center mb-0 md:mb-4">
-            <p className="text-[12px] text-slate-300 font-bold uppercase tracking-widest mb-1">Booking Ref</p>
-            <p className="text-sm font-mono text-slate-300 font-bold tracking-wider">#{displayId}</p>
+            <p className="text-xs text-ui-muted font-bold uppercase tracking-widest mb-1">Booking Ref</p>
+            <p className="text-sm font-mono text-ui-text font-bold tracking-wider">#{displayId}</p>
           </div>
 
           {/* Визуальная кнопка "Подробнее" */}
-          <div className="flex items-center gap-2 text-teal-400 text-xs font-bold uppercase tracking-widest group-hover:text-teal-300 transition-colors pointer-events-auto">
+         <div className="flex items-center gap-2 text-ui-accent text-xs font-bold uppercase tracking-widest group-hover:text-ui-accent/80 transition-colors pointer-events-auto">
             Подробнее 
             <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </div>

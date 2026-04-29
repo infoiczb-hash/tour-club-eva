@@ -48,20 +48,20 @@ export default function AccountNav({ profile }: AccountNavProps) {
   return (
     <>
       {/* ─── ДЕСКТОПНАЯ ВЕРСИЯ (Левый сайдбар) ─────────────────────────── */}
-      <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 z-50 bg-slate-950/80 backdrop-blur-xl border-r border-white/5">
+      <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 z-50 bg-ui-bg/90 backdrop-blur-xl border-r border-ui-border">
         
         {/* Логотип и мини-профиль */}
-        <div className="p-6 border-b border-white/5">
-          <Link href="/" className="flex items-center gap-2 text-white hover:text-teal-400 transition-colors mb-6">
-            <Compass size={28} className="text-teal-500" />
+        <div className="p-6 border-b border-ui-border">
+          <Link href="/" className="flex items-center gap-2 text-ui-text hover:text-ui-accent transition-colors mb-6">
+            <Compass size={28} className="text-ui-accent" />
             <span className="font-black tracking-widest uppercase text-lg">EVA</span>
           </Link>
           
           <div>
-            <p className="text-sm font-bold text-white leading-tight">
+            <p className="text-sm font-bold text-ui-text leading-tight">
               {profile.name || 'Турист'}
             </p>
-            <p className="text-xs text-teal-400 font-medium">
+            <p className="text-xs text-ui-accent font-medium">
               {profile.level} · {profile.totalTours} туров
             </p>
           </div>
@@ -78,8 +78,8 @@ export default function AccountNav({ profile }: AccountNavProps) {
                 href={link.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                   isActive 
-                    ? 'bg-teal-500/10 text-teal-400' 
-                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    ? 'bg-ui-accent/10 text-ui-accent' 
+                    : 'text-ui-muted hover:text-ui-text hover:bg-ui-border/50'
                 }`}
               >
                 <Icon size={18} />
@@ -89,11 +89,11 @@ export default function AccountNav({ profile }: AccountNavProps) {
           })}
         </nav>
         
-        {/* Кнопка выхода */}
-        <div className="p-4 border-t border-white/5">
+       {/* Кнопка выхода */}
+        <div className="p-4 border-t border-ui-border">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-slate-300 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-ui-muted hover:text-ui-danger hover:bg-ui-danger/10 transition-all"
           >
             <LogOut size={18} />
             Выйти
@@ -102,7 +102,7 @@ export default function AccountNav({ profile }: AccountNavProps) {
       </aside>
 
       {/* ─── МОБИЛЬНАЯ ВЕРСИЯ (Нижний свайп-бар) ────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-ui-bg/95 backdrop-blur-xl border-t border-ui-border pb-safe">
         <div className="flex items-center overflow-x-auto snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-2 py-2 gap-1">
           
           {NAV_LINKS.map((link) => {
@@ -114,31 +114,31 @@ export default function AccountNav({ profile }: AccountNavProps) {
                 href={link.href}
                 className={`snap-start shrink-0 flex flex-col items-center justify-center w-[100px] h-14 rounded-2xl transition-all relative ${
                   isActive 
-                    ? 'text-teal-400' 
-                    : 'text-slate-300 hover:text-slate-300'
+                    ? 'text-ui-accent' 
+                    : 'text-ui-muted hover:text-ui-text'
                 }`}
               >
                 {isActive && (
-                  <div className="absolute inset-0 bg-teal-500/10 rounded-2xl -z-10 animate-in fade-in zoom-in duration-300" />
+                  <div className="absolute inset-0 bg-ui-accent/10 rounded-2xl -z-10 animate-in fade-in zoom-in duration-300" />
                 )}
                 <Icon size={20} className={isActive ? 'mb-1' : 'mb-1 opacity-80'} />
-                <span className="text-[12px] font-bold tracking-wide truncate w-full text-center px-1">
-                  {link.name}
-                </span>
+                <span className="text-xs font-bold tracking-wide truncate w-full text-center px-1">
+  {link.name}
+</span>
               </Link>
             );
           })}
 
-          <div className="shrink-0 w-px h-8 bg-white/10 mx-1" />
+          <div className="shrink-0 w-px h-8 bg-ui-border mx-1" />
 
           <button
             onClick={handleLogout}
-            className="snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl text-slate-600 hover:text-red-400 transition-colors"
+            className="snap-start shrink-0 flex flex-col items-center justify-center w-[72px] h-14 rounded-2xl text-ui-muted hover:text-ui-danger transition-colors"
           >
             <LogOut size={20} className="mb-1" />
-            <span className="text-[12px] font-bold tracking-wide">
-              Выход
-            </span>
+            <span className="text-xs font-bold tracking-wide">
+  Выход
+</span>
           </button>
           
           <div className="shrink-0 w-2" />

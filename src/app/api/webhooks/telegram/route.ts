@@ -304,14 +304,15 @@ export async function POST(req: Request) {
         }
         return ok(); // Завершаем запрос
     }
-    // ==========================================
+ // ==========================================
     // СЦЕНАРИЙ 1: КЛИЕНТ ПЕРЕШЕЛ ПО ДИПЛИНКУ (/start {id})
     // ==========================================
     if (text.startsWith('/start ')) {
-      const shortIdStr = text.replace('/start ', '').trim();
-      const shortId = parseInt(shortIdStr, 10);
+      // 1. Просто извлекаем строку и делаем большими буквами (A4F9)
+      const shortId = text.replace('/start ', '').trim().toUpperCase();
       
-      if (!isNaN(shortId)) {
+      // 2. Проверяем, что строка не пустая (вместо isNaN)
+      if (shortId) {
         const booking = await prisma.booking.findUnique({
           where: { shortId }
         });
@@ -395,7 +396,7 @@ export async function POST(req: Request) {
           }).catch(console.error);
         });
 
-        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 ${booking.name}\n💳 ${booking.paymentMethod || '—'}\n💰 ${booking.totalPrice} ${booking.tour?.currency || 'MDL'}\n\nПодтверждаете получение средств?`;
+        const caption = `🔎 <b>МОДЕРАЦИЯ ОПЛАТЫ</b>\n\n🆔 Бронь: <b>#${booking.shortId}</b>\n👤 ${booking.name}\n💳 ${booking.paymentMethod || '—'}\n💰 ${booking.totalPrice} ${booking.tour?.currency || 'RUB'}\n\nПодтверждаете получение средств?`;
 
         // Отправляем админу и клиенту
         await Promise.allSettled([

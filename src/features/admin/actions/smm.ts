@@ -145,7 +145,7 @@ export const getSmmSourcesAction = withAdminAuth(async (): Promise<{ success: bo
         price: t.price ? Number(t.price) : undefined,
         priceChild: t.priceChild ? Number(t.priceChild) : undefined, // ✅
         gallery: t.coverImage ? [t.coverImage] : [],
-        currency: t.currency || 'MDL',
+        currency: t.currency || 'RUB',
         location: t.location || '',
         duration: t.duration || '',
         tags: parsedTags,
@@ -231,7 +231,7 @@ export const getSmmCalendarEventsAction = withAdminAuth(async (daysAmount: numbe
       title: d.tour.title,
       location: d.tour.location || undefined,
       price: d.basePrice ?? d.tour.price ?? null,
-      currency: d.tour.currency || 'MDL'
+      currency: d.tour.currency || 'RUB'
     }));
 
     return { success: true, data: events };
@@ -514,3 +514,4 @@ export const freezeAndPublishSmmAction = withAdminAuth(
     }
   })
 );
+

@@ -21,21 +21,20 @@ export const ImageUploader = ({
 }: ImageUploaderProps) => {
   const { setValue, watch, formState: { errors } } = useFormContext();
   
-  // Следим за значением поля (там лежит URL строки)
+  // Следим за значением поля
   const value = watch(name);
   const error = errors[name]?.message as string;
   
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
-// === ЛОГИКА ЗАГРУЗКИ ===
-  const handleUpload = async (file: File) => {
-    // Проверка типа
+  // === ЛОГИКА ЗАГРУЗКИ ===
+  const handleUpload = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert("Можно загружать только изображения");
       return;
     }
-    // Проверка размера (например 5Мб)
+    
     if (file.size > 5 * 1024 * 1024) {
       alert("Файл слишком большой (макс 5Мб)");
       return;
@@ -43,18 +42,13 @@ export const ImageUploader = ({
 
     try {
       setIsUploading(true);
-      
-      // ✅ ИСПРАВЛЕНИЕ: Формируем FormData для отправки в Server Action
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', folder);
 
-      // Загружаем в Supabase через сервер
       const response = await uploadFile(formData); 
       
-      // Достаем url из объекта response
-   if (response && 'url' in response && response.url) {
-        // Записываем полученную СТРОКУ в форму
+      if (response && 'url' in response && response.url) {
         setValue(name, response.url, { shouldDirty: true, shouldValidate: true });
       } else if (response.error) {
         alert("Ошибка сервера: " + response.error);
@@ -65,7 +59,7 @@ export const ImageUploader = ({
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [folder, name, setValue]);
 
   // === DRAG & DROP ===
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -85,7 +79,7 @@ export const ImageUploader = ({
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleUpload(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [handleUpload]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -101,17 +95,16 @@ export const ImageUploader = ({
 
       {/* 1. Если картинка уже есть -> Показываем PREVIEW */}
       {value && value.length > 0 ? (
-  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-100">
-   <Image
-  src={value}
-  alt="Preview"
-  fill
-  sizes="(max-width: 768px) 100vw, 50vw"
-  quality={75}
-  className="object-cover ..."
-/>
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-100">
+          <Image
+            src={value}
+            alt="Preview"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            quality={75}
+            className="object-cover"
+          />
           
-          {/* Кнопка удаления */}
           <button
             type="button"
             onClick={(e) => {

@@ -59,10 +59,21 @@ export async function transferBookingSpot(input: TransferInput): Promise<Transfe
         where: { id: bookingId },
         data: { status: 'cancelled' },
       });
+  // Генерируем уникальный ID для новой брони
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let newShortId = '';
+      let isUniqueId = false;
+      while (!isUniqueId) {
+        let tempId = '';
+        for (let i = 0; i < 4; i++) tempId += chars.charAt(Math.floor(Math.random() * chars.length));
+        const existing = await tx.booking.findUnique({ where: { shortId: tempId }, select: { id: true } });
+        if (!existing) { newShortId = tempId; isUniqueId = true; }
+      }
 
       // 2. Создаём новую бронь для нового участника
       const newBooking = await tx.booking.create({
         data: {
+          shortId: newShortId,
           name: newName,
           phone: newPhone,
           tourId: booking.tourId,

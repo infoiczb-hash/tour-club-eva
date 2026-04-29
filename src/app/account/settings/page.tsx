@@ -20,7 +20,7 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black text-white mb-1">Настройки профиля</h1>
-        <p className="text-sm text-slate-300">Ваша походная карточка. Заполните её один раз, чтобы мы учитывали это во всех турах.</p>
+        <p className="text-sm text-ui-muted">Ваша походная карточка. Заполните её один раз, чтобы мы учитывали это во всех турах.</p>
       </div>
 
       <SettingsForm profile={profile} />

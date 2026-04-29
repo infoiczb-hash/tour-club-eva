@@ -80,7 +80,7 @@ const TourAiSchema = z.object({
   duration: z.string(),
   distance: z.string().optional().describe('Дистанция — только если известна из запроса'),
   price_adult: z.number().describe('Цена в MDL — только если указана в запросе, иначе 0'),
-  currency: z.enum(['RUB', 'MDL', 'EUR']).default('MDL'),
+  currency: z.enum(['RUB', 'RUB', 'EUR']).default('RUB'),
   dates: z.array(z.string()).optional().describe('Даты — только из запроса, не придумывать'),
   program: z.array(z.object({
     day: z.number(),

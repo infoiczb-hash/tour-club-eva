@@ -87,7 +87,7 @@ export type BookingResult =
   | {
       success: true;
       bookingId: string;
-      shortId: number;
+      shortId: string;
       totalPrice: number;
       biletpmrLink?: string | null;
       apbQrLink?: string | null;
@@ -115,12 +115,12 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
   const data = parsed.data;
 
   // Honeypot против ботов
-  if (data.website && data.website.length > 0) {
+if (data.website && data.website.length > 0) {
     console.warn('Bot detected via honeypot field');
     return {
       success: true,
       bookingId: 'sp-checked',
-      shortId: 0,
+      shortId: '0000', // 👈 Теперь строка
       totalPrice: 0
     };
   }
@@ -178,7 +178,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     booking: any;
     tourSlug: string | null;
     tourCoverImage: string | null;
-    shortId: number;
+    shortId: string;
     apbInvoiceId: string | null; // ← новое поле
     paymentLinks: {
       biletpmrLink: string | null;
@@ -257,13 +257,19 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           data.ticketsFamily * priceFamily +
           data.ticketsMember * priceMember;
 
-        // ---------- 3. Применение скидок ----------
+      // ---------- 3. Применение скидок ----------
         let appliedDiscount = 0;
         let usedPromoCodeId: string | null = null;
         let promoOwnerIdToReward: string | null = null;
         let promoRewardAmount = 0;
 
-        if (!currentMemberId && data.promoCode) {
+        // ⛔️ БЛОКИРОВКА: Запрещаем одновременное использование промокода и бонусов
+        if (data.promoCode && data.useBonuses && currentMemberId) {
+          throw new Error('PROMO_AND_BONUS_CONFLICT');
+        }
+
+        // Если пользователь ввел промокод
+        if (data.promoCode) { 
           const promoCodeRaw = data.promoCode.trim().toUpperCase();
           const promo = await tx.promoCode.findUnique({
             where: { code: promoCodeRaw }
@@ -271,6 +277,12 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
 
           if (!promo || !promo.isActive) throw new Error('PROMO_INVALID');
           if (promo.validUntil && promo.validUntil < new Date()) throw new Error('PROMO_EXPIRED');
+
+          // ⛔️ БЛОКИРОВКА: Авторизованный юзер НЕ может использовать реферальные коды из ЛК (ни свои, ни чужие).
+          // Он может использовать только системные промокоды от администратора (где memberId === null)
+          if (currentMemberId && promo.memberId !== null) {
+            throw new Error('PROMO_CABINET_FORBIDDEN');
+          }
 
           if (promo.type === 'percent') {
             appliedDiscount = Math.floor(baseTotalPrice * (promo.discount / 100));
@@ -285,21 +297,25 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
             data: { usageCount: { increment: 1 } }
           });
 
+          // Начисляем вознаграждение владельцу промокода (только если это гость использовал рефералку)
           if (promo.memberId) {
             await tx.memberProfile.update({
               where: { id: promo.memberId },
-              data: { balance: { increment: 10 } }
+              data: { balance: { increment: 10 } } // Или promo.reward
             });
             promoOwnerIdToReward = promo.memberId;
             promoRewardAmount = 10;
           }
+          
+        // Если промокода НЕТ, но юзер авторизован и поставил галочку "Использовать бонусы"
         } else if (currentMemberId && data.useBonuses) {
           const profile = await tx.memberProfile.findUnique({
             where: { id: currentMemberId },
             select: { balance: true }
           });
+          
           if (profile && profile.balance > 0) {
-            const maxDiscount = Math.floor(baseTotalPrice * 0.1);
+            const maxDiscount = Math.floor(baseTotalPrice * 0.1); // Списываем до 10%
             appliedDiscount = Math.min(profile.balance, maxDiscount, baseTotalPrice);
             if (appliedDiscount > 0) {
               await tx.memberProfile.update({
@@ -312,12 +328,28 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
 
         const finalPrice = baseTotalPrice - appliedDiscount;
 
-        // ---------- 4. Генерация shortId ----------
-        const lastBooking = await tx.booking.findFirst({
-          orderBy: { shortId: 'desc' },
-          select: { shortId: true }
-        });
-        const newShortId = (lastBooking?.shortId ?? 999) + 1;
+      // ---------- 4. Генерация уникального 4-значного shortId ----------
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Без 0, O, 1, I
+        let newShortId = '';
+        let isUniqueId = false;
+
+        while (!isUniqueId) {
+          let tempId = '';
+          for (let i = 0; i < 4; i++) {
+            tempId += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          
+          // Используем findUnique, так как поле теперь @unique — это работает быстрее
+          const existing = await tx.booking.findUnique({
+            where: { shortId: tempId },
+            select: { id: true }
+          });
+          
+          if (!existing) {
+            newShortId = tempId;
+            isUniqueId = true;
+          }
+        }
 
         // ---------- 5. Определяем начальный статус ----------
         // online_card → awaiting_payment (деньги ещё не получены, клиент уйдёт на АПБ)
@@ -392,13 +424,19 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       }
 
       if (error instanceof Error) {
+        if (error.message === 'PROMO_AND_BONUS_CONFLICT') {
+          return { success: false, error: 'Промокод и бонусы не могут быть использованы одновременно. Пожалуйста, выберите что-то одно.' };
+        }
+        if (error.message === 'PROMO_CABINET_FORBIDDEN') {
+          return { success: false, error: 'Реферальные промокоды друзей доступны только для новых пользователей. Вы можете использовать свои бонусы или системные промокоды клуба.' };
+        }
         if (error.message === 'PROMO_INVALID') {
           return { success: false, error: 'Промокод недействителен.' };
         }
-        if (error.message === 'PROMO_EXPIRED') {
+      if (error.message === 'PROMO_EXPIRED') {
           return { success: false, error: 'Срок действия промокода истёк.' };
         }
-        if (error.message === 'SPOTS_GONE') {
+       if (error.message === 'SPOTS_GONE') {
           return { success: false, error: 'Последние места на эту дату были выкуплены прямо сейчас.' };
         }
       }
@@ -530,7 +568,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
 async function notifyTelegram(
   data: BookingInput,
   bookingId: string,
-  shortId: number,
+  shortId: string,
   appliedBonuses: number = 0,
   finalPrice: number,
   apbInvoiceId: string | null = null, // ✅ НОВОЕ

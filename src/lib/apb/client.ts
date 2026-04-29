@@ -2,6 +2,7 @@
 // Выполняется ТОЛЬКО на сервере (Server Actions, API Routes)
 import crypto from 'crypto';
 import { env } from '@/lib/env';
+import 'server-only';
 
 // ─────────────────────────────────────────────
 // ТИПЫ
