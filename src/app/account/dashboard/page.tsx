@@ -269,7 +269,7 @@ export default async function DashboardPage() {
               className="group flex items-center justify-between p-5 bg-ui-panel border border-ui-border rounded-3xl hover:border-ui-accent/50 hover:bg-ui-border transition-all shadow-lg"
             >
               <div className="flex items-center gap-4">
-                <div className="relative flex items-center justify-center w-12 h-12 bg-ui-accent/10 text-ui-accent rounded-2xl group-hover:bg-ui-accent group-hover:text-ui-bg transition-all duration-300 shadow-inner">
+               <div className="relative flex items-center justify-center w-12 h-12 bg-teal-500/15 text-teal-400 border border-teal-500/20 rounded-2xl group-hover:bg-teal-500 group-hover:text-slate-900 group-hover:border-transparent transition-all duration-300">
                   <Bell size={24} />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs font-black text-white bg-red-500 border-2 border-ui-panel rounded-full">
@@ -277,12 +277,12 @@ export default async function DashboardPage() {
                     </span>
                   )}
                 </div>
-                <div>
-           <h3 className="font-bold text-ui-base text-base">Уведомления</h3>
-<p className="text-xs text-ui-muted">
-                    {unreadCount > 0 ? `У вас ${unreadCount} новых сообщений` : 'История ваших пушей'}
-                  </p>
-                </div>
+             <div>
+  <h3 className="font-black text-white text-base tracking-tight">Уведомления</h3>
+  <p className="text-xs text-slate-400 font-medium mt-0.5">
+    {unreadCount > 0 ? `У вас ${unreadCount} новых сообщений` : 'История уведомлений'}
+  </p>
+</div>
               </div>
               
               <div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ export default async function DashboardPage() {
                     <Star size={18} className="text-amber-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-ui-base mb-0.5">Отзывы о турах</p>
-                      <p className="text-xs text-ui-muted leading-snug">Получите +10 ₽ за честный отзыв на сайте после прохождения маршрута.</p>
+                      <p className="text-xs text-ui-muted leading-snug">Получите +10 ₽ за отзыв на сайте после прохождения маршрута.</p>
                     </div>
                   </div>
 

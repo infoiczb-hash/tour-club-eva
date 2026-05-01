@@ -95,6 +95,8 @@ export default function HikesGallery() {
                 </div>
 
                 <div className="relative" ref={galleryView.ref}>
+                    <div className="mb-3">
+                          <SwipeHint /> </div>
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-4 md:auto-rows-[250px] md:gap-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {GALLERY_ITEMS.map((item, i) => (
                             <div
@@ -126,8 +128,7 @@ export default function HikesGallery() {
                             </div>
                         ))}
                     </div>
-                      <SwipeHint />
-                </div>
+                  </div>
 
             </div>
         </section>

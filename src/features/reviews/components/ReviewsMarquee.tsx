@@ -1,3 +1,4 @@
+// src/features/reviews/components/ReviewsMarquee.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -5,6 +6,7 @@ import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, A
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
+import SwipeHint from '@/shared/ui/SwipeHint';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -161,6 +163,29 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
     scrollContainerRef.current.style.scrollBehavior = 'smooth';
   };
 
+  // ✅ ДОБАВЛЕНО: Функции для управления каруселью с клавиатуры
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      // Ширина карточки (380px) + gap (24px)
+      const scrollAmount = window.innerWidth > 768 ? 404 : 320; 
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'right' ? scrollAmount : -scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      scroll('left');
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      scroll('right');
+    }
+  };
+
   return (
    <section className="py-12 md:py-24 bg-slate-950 text-white relative overflow-hidden border-t border-white/5">
       
@@ -238,6 +263,8 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
          <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
          <div className="relative">
+            <div className="mb-3">
+                  <SwipeHint /> </div>
              <div 
                 ref={scrollContainerRef}
                 key={activeCategory}
@@ -248,6 +275,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                 onMouseLeave={handleMouseLeave}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
+                onKeyDown={handleKeyDown} // ✅ ДОБАВЛЕН ОБРАБОТЧИК КЛАВИАТУРЫ
                 style={{ WebkitOverflowScrolling: 'touch' }}
                 className={cn(
                     "flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500",
@@ -258,13 +286,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                   <ReviewCard key={`${review.id}-${i}`} review={review} />
                 ))}
               </div>
-
-           {/* ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
-          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                        <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                    </div>
-         </div>
+          </div>
       </div>
 
     </section>

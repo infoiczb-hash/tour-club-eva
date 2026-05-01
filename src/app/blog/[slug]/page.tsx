@@ -242,9 +242,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     
     <article className="min-h-screen bg-[#0B1120] pb-10 md:pb-24">
       
-      <script
+    <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // ✅ ИСПРАВЛЕНО: Экранирование для безопасности
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
       {/* --- 1. HERO HEADER --- */}

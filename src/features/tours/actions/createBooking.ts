@@ -12,8 +12,11 @@ import { BookingTicketEmail } from '@/features/tours/emails/BookingTicketEmail';
 import { withRateLimit } from '@/lib/rate-limit-server';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
-// ✅ НОВЫЙ ИМПОРТ: клиент АПБ для генерации URL оплаты
+// клиент АПБ для генерации URL оплаты
 import { apbClient } from '@/lib/apb/client';
+
+// ✅ НОВЫЙ ИМПОРТ: берем протестированную финансовую логику
+import { calculateTotalSpots, calculateBasePrice } from '../lib/pricing';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = env.NEXT_PUBLIC_SITE_URL;
@@ -60,12 +63,10 @@ const BookingSchema = z.object({
 
   currency: z.string().default('RUB'),
 
-  // ✅ ИЗМЕНЕНО: добавлен 'online_card' — динамический эквайринг АПБ
   paymentMethod: z.enum(['biletpmr', 'qr', 'cash', 'foreign', 'online_card']).default('biletpmr'),
   useBonuses: z.boolean().default(false),
   promoCode: z.string().optional(),
 
-  // ✅ ПОЛЯ ДЛЯ КАЯКИНГА
   hasChildUnder7: z.boolean().optional(),
   hasDog: z.boolean().optional(),
 })
@@ -82,7 +83,6 @@ const BookingSchema = z.object({
 
 export type BookingInput = z.infer<typeof BookingSchema>;
 
-// ✅ ИЗМЕНЕНО: добавлен redirectUrl для online_card
 export type BookingResult =
   | {
       success: true;
@@ -115,7 +115,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
   const data = parsed.data;
 
   // Honeypot против ботов
-if (data.website && data.website.length > 0) {
+  if (data.website && data.website.length > 0) {
     console.warn('Bot detected via honeypot field');
     return {
       success: true,
@@ -125,12 +125,13 @@ if (data.website && data.website.length > 0) {
     };
   }
 
-  const SPOTS_PER_FAMILY = 3;
-  const totalSpots =
-    data.ticketsAdult +
-    data.ticketsChild +
-    data.ticketsMember +
-    (data.ticketsFamily * SPOTS_PER_FAMILY);
+  // ✅ ИЗМЕНЕНО: Вычисляем места через нашу чистую утилиту
+  const totalSpots = calculateTotalSpots({
+    ticketsAdult: data.ticketsAdult,
+    ticketsChild: data.ticketsChild,
+    ticketsMember: data.ticketsMember,
+    ticketsFamily: data.ticketsFamily,
+  });
 
   if (totalSpots <= 0) {
     return { success: false, error: 'Выберите хотя бы один билет.' };
@@ -173,13 +174,12 @@ if (data.website && data.website.length > 0) {
     };
   }
 
-  // ✅ ИЗМЕНЕНО: добавлен apbInvoiceId в тип transactionResult
   let transactionResult: {
     booking: any;
     tourSlug: string | null;
     tourCoverImage: string | null;
     shortId: string;
-    apbInvoiceId: string | null; // ← новое поле
+    apbInvoiceId: string | null; 
     paymentLinks: {
       biletpmrLink: string | null;
       apbQrLink: string | null;
@@ -251,38 +251,49 @@ if (data.website && data.website.length > 0) {
         }
 
         // ---------- 2. Расчёт базовой цены ----------
-        const baseTotalPrice =
-          data.ticketsAdult * priceAdult +
-          data.ticketsChild * priceChild +
-          data.ticketsFamily * priceFamily +
-          data.ticketsMember * priceMember;
+        // ✅ ИЗМЕНЕНО: Вычисляем базовую сумму через чистую утилиту
+        const baseTotalPrice = calculateBasePrice(
+          {
+            ticketsAdult: data.ticketsAdult,
+            ticketsChild: data.ticketsChild,
+            ticketsMember: data.ticketsMember,
+            ticketsFamily: data.ticketsFamily,
+          },
+          {
+            priceAdult,
+            priceChild,
+            priceFamily,
+            priceMember,
+          }
+        );
 
-      // ---------- 3. Применение скидок ----------
+        // ---------- 3. Применение скидок ----------
         let appliedDiscount = 0;
         let usedPromoCodeId: string | null = null;
         let promoOwnerIdToReward: string | null = null;
         let promoRewardAmount = 0;
 
-        // ⛔️ БЛОКИРОВКА: Запрещаем одновременное использование промокода и бонусов
-        if (data.promoCode && data.useBonuses && currentMemberId) {
+        // ⛔️ Авторизованный + промокод другого юзера — запрещено
+        if (currentMemberId && data.promoCode) {
+          const promoCodeRaw = data.promoCode.trim().toUpperCase();
+          const promo = await tx.promoCode.findUnique({ where: { code: promoCodeRaw } });
+          if (promo && promo.memberId !== null) {
+            throw new Error('PROMO_CABINET_FORBIDDEN');
+          }
+        }
+
+        // ⛔️ Одновременно промокод и бонусы — запрещено
+        if (data.promoCode && data.useBonuses) {
           throw new Error('PROMO_AND_BONUS_CONFLICT');
         }
 
-        // Если пользователь ввел промокод
-        if (data.promoCode) { 
+        // Если пользователь ввел промокод (гость или авторизованный с системным)
+        if (data.promoCode) {
           const promoCodeRaw = data.promoCode.trim().toUpperCase();
-          const promo = await tx.promoCode.findUnique({
-            where: { code: promoCodeRaw }
-          });
+          const promo = await tx.promoCode.findUnique({ where: { code: promoCodeRaw } });
 
           if (!promo || !promo.isActive) throw new Error('PROMO_INVALID');
           if (promo.validUntil && promo.validUntil < new Date()) throw new Error('PROMO_EXPIRED');
-
-          // ⛔️ БЛОКИРОВКА: Авторизованный юзер НЕ может использовать реферальные коды из ЛК (ни свои, ни чужие).
-          // Он может использовать только системные промокоды от администратора (где memberId === null)
-          if (currentMemberId && promo.memberId !== null) {
-            throw new Error('PROMO_CABINET_FORBIDDEN');
-          }
 
           if (promo.type === 'percent') {
             appliedDiscount = Math.floor(baseTotalPrice * (promo.discount / 100));
@@ -297,25 +308,23 @@ if (data.website && data.website.length > 0) {
             data: { usageCount: { increment: 1 } }
           });
 
-          // Начисляем вознаграждение владельцу промокода (только если это гость использовал рефералку)
           if (promo.memberId) {
             await tx.memberProfile.update({
               where: { id: promo.memberId },
-              data: { balance: { increment: 10 } } // Или promo.reward
+              data: { balance: { increment: 10 } }
             });
             promoOwnerIdToReward = promo.memberId;
             promoRewardAmount = 10;
           }
-          
-        // Если промокода НЕТ, но юзер авторизован и поставил галочку "Использовать бонусы"
+
+        // Если промокода нет, но авторизованный хочет бонусы
         } else if (currentMemberId && data.useBonuses) {
           const profile = await tx.memberProfile.findUnique({
             where: { id: currentMemberId },
             select: { balance: true }
           });
-          
           if (profile && profile.balance > 0) {
-            const maxDiscount = Math.floor(baseTotalPrice * 0.1); // Списываем до 10%
+            const maxDiscount = Math.floor(baseTotalPrice * 0.1);
             appliedDiscount = Math.min(profile.balance, maxDiscount, baseTotalPrice);
             if (appliedDiscount > 0) {
               await tx.memberProfile.update({
@@ -328,7 +337,7 @@ if (data.website && data.website.length > 0) {
 
         const finalPrice = baseTotalPrice - appliedDiscount;
 
-      // ---------- 4. Генерация уникального 4-значного shortId ----------
+        // ---------- 4. Генерация уникального 4-значного shortId ----------
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Без 0, O, 1, I
         let newShortId = '';
         let isUniqueId = false;
@@ -339,7 +348,6 @@ if (data.website && data.website.length > 0) {
             tempId += chars.charAt(Math.floor(Math.random() * chars.length));
           }
           
-          // Используем findUnique, так как поле теперь @unique — это работает быстрее
           const existing = await tx.booking.findUnique({
             where: { shortId: tempId },
             select: { id: true }
@@ -352,16 +360,12 @@ if (data.website && data.website.length > 0) {
         }
 
         // ---------- 5. Определяем начальный статус ----------
-        // online_card → awaiting_payment (деньги ещё не получены, клиент уйдёт на АПБ)
-        // biletpmr / qr / foreign → awaiting_payment (ждём чек/подтверждение)
-        // cash → pending (администратор подтверждает вручную)
         let initialStatus: 'pending' | 'awaiting_payment' = 'pending';
         if (['biletpmr', 'qr', 'foreign', 'online_card'].includes(data.paymentMethod)) {
           initialStatus = 'awaiting_payment';
         }
 
         // ---------- 6. Генерация apbInvoiceId для online_card ----------
-        // Формат EVA-{shortId}: уникален, ≤25 символов, читаем в интерфейсе банка
         const apbInvoiceId = data.paymentMethod === 'online_card'
           ? `EVA-${newShortId}`
           : null;
@@ -395,7 +399,6 @@ if (data.website && data.website.length > 0) {
             status: initialStatus,
             bookedDate: new Date(),
             paymentMethod: data.paymentMethod,
-            // ✅ НОВОЕ: сохраняем apbInvoiceId (null для всех методов кроме online_card)
             apbInvoiceId,
           },
         });
@@ -405,7 +408,7 @@ if (data.website && data.website.length > 0) {
           tourSlug,
           tourCoverImage,
           shortId: newShortId,
-          apbInvoiceId,   // ✅ НОВОЕ: передаём наружу для генерации redirectUrl
+          apbInvoiceId,   
           paymentLinks: { biletpmrLink, apbQrLink, apbQrImage },
           finalPrice,
           appliedDiscount,
@@ -457,7 +460,6 @@ if (data.website && data.website.length > 0) {
   }
 
   // ---------- 8. Генерация redirectUrl для online_card (вне транзакции) ----------
-  // Выполняется после успешного сохранения брони, чтобы не блокировать транзакцию
   let redirectUrl: string | null = null;
   if (data.paymentMethod === 'online_card' && transactionResult.apbInvoiceId) {
     try {
@@ -465,11 +467,9 @@ if (data.website && data.website.length > 0) {
         transactionResult.apbInvoiceId,
         transactionResult.finalPrice,
         `Тур: ${data.tourTitle}`.slice(0, 255),
-        30, // время жизни счёта в минутах
+        30, 
       );
     } catch (apbError) {
-      // Если URL не построился — бронь уже создана, не роллбэкаем
-      // Клиент увидит страницу с контактами для ручной оплаты
       console.error('[APB] buildPaymentUrl failed:', apbError);
     }
   }
@@ -482,7 +482,6 @@ if (data.website && data.website.length > 0) {
       transactionResult.shortId,
       transactionResult.appliedDiscount,
       transactionResult.finalPrice,
-      // ✅ НОВОЕ: передаём apbInvoiceId для отображения в Telegram-уведомлении
       transactionResult.apbInvoiceId,
     );
 
@@ -559,7 +558,7 @@ if (data.website && data.website.length > 0) {
     apbQrLink: transactionResult.paymentLinks.apbQrLink,
     apbQrImage: transactionResult.paymentLinks.apbQrImage,
     paymentMethod: data.paymentMethod,
-    redirectUrl,  // ✅ НОВОЕ: null для всех методов кроме online_card
+    redirectUrl,  
   };
 });
 
@@ -571,9 +570,12 @@ async function notifyTelegram(
   shortId: string,
   appliedBonuses: number = 0,
   finalPrice: number,
-  apbInvoiceId: string | null = null, // ✅ НОВОЕ
+  apbInvoiceId: string | null = null, 
 ): Promise<void> {
-  const familySpots = data.ticketsFamily * 3;
+  // Вычисляем места для Телеграм-отчета с помощью константы напрямую из модуля
+  // (чтобы не дублировать SPOTS_PER_FAMILY)
+  const { SPOTS_PER_FAMILY } = await import('../lib/pricing');
+  const familySpots = data.ticketsFamily * SPOTS_PER_FAMILY;
   const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
 
   const guestsList = (data.guests || []).map((g: GuestInput, i: number) => {
@@ -586,7 +588,6 @@ async function notifyTelegram(
     return `${i + 1}. 👤 ${escapeHtml(g.name || 'Без имени')} (${g.type})${ageInfo}${phoneInfo}${jacketInfo}`;
   }).join('\n');
 
-  // ✅ ИЗМЕНЕНО: добавлен online_card в метки оплаты
   const paymentLabels: Record<string, string> = {
     biletpmr:    '💳 BiletPMR',
     qr:          '📱 Клевер (QR)',
@@ -600,7 +601,6 @@ async function notifyTelegram(
     `🎯 <b>НОВАЯ БРОНЬ (Сайт)</b>`,
     ``,
     `🆔 #<b>${shortId}</b>`,
-    // ✅ НОВОЕ: показываем apbInvoiceId в уведомлении если есть
     apbInvoiceId ? `🏦 APB Invoice: <code>${apbInvoiceId}</code>` : null,
     ``,
     `🏕 <b>${escapeHtml(data.tourTitle)}</b>`,

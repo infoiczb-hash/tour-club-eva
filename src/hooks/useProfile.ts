@@ -11,6 +11,7 @@ export interface TouristProfile {
   bodySymptoms?: string[];    // Симптомы (из BodySignals)
   touristType?: string;       // Психотип (из старого квиза)
   updatedAt?: number;         // Время последнего обновления
+  bodySignals?: string[];
 }
 
 // Безопасное чтение (защита от падения на сервере в Next.js)

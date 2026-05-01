@@ -14,39 +14,13 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { getGuides } from '@/features/tours/api';
 import dynamic from 'next/dynamic'; // 👈 ДОБАВИЛИ
+import { cn, slugify } from '@/lib/utils';
 
 // 👈 ДОБАВИЛИ: Ленивая загрузка тяжелого редактора
 const TiptapEditor = dynamic(() => import('@/shared/ui/TiptapEditor'), { 
   ssr: false,
   loading: () => <div className="h-[300px] w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
 });
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// Утилита для транслитерации (Русский -> Eng Slug)
-const slugify = (text: string) => {
-  const ru: Record<string, string> = {
-    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 
-    'е': 'e', 'ё': 'yo', 'ж': 'zh', 'з': 'z', 'и': 'i', 
-    'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 
-    'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 
-    'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 
-    'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 
-    'э': 'e', 'ю': 'yu', 'я': 'ya'
-  };
-
-  return text
-    .toLowerCase()
-    .split('')
-    .map(char => ru[char] || char)
-    .join('')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
-};
 
 // Расчет времени чтения (HTML -> Text -> Words -> Minutes)
 const calculateReadTime = (html: string): number => {

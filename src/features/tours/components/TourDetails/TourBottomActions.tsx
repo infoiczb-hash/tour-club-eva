@@ -92,8 +92,8 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
         {/* Основной контент бара */}
         <div className="flex items-center gap-4">
           
-          <div className="flex-grow">
-            <p className="text-[12px] text-slate-300 uppercase font-bold tracking-wider mb-0.5">Стоимость участия</p>
+        <div className="flex-grow min-w-0">
+  <p className="text-[12px] text-slate-300 uppercase font-bold tracking-wider mb-0.5 truncate">Стоимость участия</p>
             <div className="flex items-center gap-2">
               <div className="flex items-baseline gap-1">
                 {hasMultiplePrices && <span className="text-sm text-slate-300 font-medium">от</span>}
@@ -127,8 +127,8 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
             aria-label={isSoldOut ? 'Мест нет' : `Записаться в тур ${tour.title}`}
             className={clsx(
               // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
-              "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg active:scale-95 transition whitespace-nowrap",
-              isSoldOut
+              "shrink-0 px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg active:scale-95 transition whitespace-nowrap",
+             isSoldOut
                 ? "bg-slate-800 text-slate-300 cursor-not-allowed"
                 : "bg-teal-500 text-slate-900 shadow-teal-500/20"
             )}

@@ -309,6 +309,8 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
 
                         {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
                         <div className="relative">
+                              <div className="mb-3">
+                                    <SwipeHint /> </div>
                             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 {displayScheduled.map((tour, index) => (
                                     <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full">
@@ -316,10 +318,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                                     </div>
                                 ))}
                             </div>
-                            
-                            {/* Подсказка для свайпа на мобилках */}
-                           <SwipeHint />
-                        </div>
+                            </div>
 
                         {/* Кнопка "Показать еще" */}
                         {hasMoreScheduled && (
@@ -348,6 +347,8 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
 
                         {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
                         <div className="relative">
+                              <div className="mb-3">
+                                    <SwipeHint /> </div>
                             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 {tbaTours.map((tour) => (
                                     <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full opacity-90 hover:opacity-100 transition-opacity">
@@ -355,9 +356,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                                     </div>
                                 ))}
                             </div>
-                            
-                           <SwipeHint />
-                        </div>
+                            </div>
                     </section>
                 )}
 

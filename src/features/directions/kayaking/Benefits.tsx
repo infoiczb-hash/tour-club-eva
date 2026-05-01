@@ -60,6 +60,8 @@ export default function Benefits() {
 
         {/* Mobile */}
         <div className="flex flex-col md:hidden gap-4 mb-16 relative">
+  <div className="mb-3">
+        <SwipeHint /> </div>
           <BenefitCard item={mainBenefits[0]} idx={0} />
           <BenefitCard item={mainBenefits[1]} idx={1} />
           <div className="relative mt-2">
@@ -68,7 +70,6 @@ export default function Benefits() {
                 <BenefitCard key={item.id} item={item} idx={idx + 2} isSwipeable />
               ))}
             </div>
-          <SwipeHint />
           </div>
         </div>
 
@@ -84,6 +85,8 @@ export default function Benefits() {
           </div>
 
           <div className="relative">
+             <div className="mb-3">
+                   <SwipeHint /> </div>
             <div className="flex flex-row md:grid md:grid-cols-3 overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-6 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {instructorRoles.map((role, idx) => {
                 const Icon = role.icon;
@@ -108,8 +111,7 @@ export default function Benefits() {
                 );
               })}
             </div>
-            <SwipeHint />
-          </div>
+           </div>
         </div>
       </div>
     </section>

@@ -86,7 +86,7 @@ export async function submitReviewFromCabinet(
         },
       });
 
-      // 🔥 Начисляем 5 бонусов за честный отзыв
+      // 🔥 Начисляем 5 бонусов за отзыв
       await tx.memberProfile.update({
         where: { id: profile.id },
         data: { balance: { increment: 5 } }

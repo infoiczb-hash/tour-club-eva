@@ -51,6 +51,8 @@ export default function PackingList() {
         <div key={activeDuration} className="animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Обертка для скролла с подсказкой */}
             <div className="relative">
+                  <div className="mb-3">
+                        <SwipeHint /> </div>
                 <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {/* Одежда */}
                     <CategoryCard 
@@ -75,8 +77,7 @@ export default function PackingList() {
                             : ["Вода (от 2л на человека)", "Солнцезащитный крем (SPF) и очки", "Купальник и пакет для мокрых вещей", "Средства гигиены", "Многоразовая посуда (миска, ложка, чашка)", "Фонарик (желательно налобный)"]}
                     />
                 </div>
-                   <SwipeHint />
-            </div>
+                </div>
 
             {/* Подсказки и Лайфхаки */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mt-4 md:mt-8">

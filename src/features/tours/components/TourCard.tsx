@@ -1,3 +1,4 @@
+// src/features/tours/components/TourCard.tsx
 "use client";
 
 import React, { memo } from 'react';
@@ -89,41 +90,41 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           "hover:-translate-y-2"
         )}
       >
-        {/* ✅ ИСПРАВЛЕНО: Кинематографичные пропорции фото 3:2 (мобильные) и 16:10 (десктоп) */}
         <div className="relative w-full aspect-[3/2] sm:aspect-[16/10] overflow-hidden bg-slate-800 shrink-0">
           <Image
             src={image || '/placeholder-tour.jpg'}
             alt={title}
             fill
             priority={priority}
-            // ✅ ИСПРАВЛЕНО: Более точные sizes для Supabase Image Transformation
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-            // ✅ ИСПРАВЛЕНО: Снижено quality (под градиентом разницы нет, а вес меньше)
             quality={55}
             className="object-cover transition-transform duration-1000 group-hover:scale-105"
           />
           {/* Легкий градиент снизу для плавного перехода в темный блок */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d131a] via-transparent to-slate-950/40" />
-
+  
+          {/* ✅ ИСПРАВЛЕНО: Эти элементы теперь находятся ВНУТРИ контейнера картинки */}
           {/* Бейдж категории */}
-          <div className={cn(
-            "absolute top-4 left-4 flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm",
-            typeStyle.bg, typeStyle.border
-          )}>
-            <span className={cn("text-[12px] sm:text-xs font-black uppercase tracking-wider", typeStyle.text)}>
-              {displayLabel}
-            </span>
-          </div> 
-
-          {/* Плашка "Хит/Новинка" */}
-          {label && (
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-lg bg-rose-500 text-white animate-pulse">
-              {!label.includes('🔥') && !label.includes('✨') && (
-                <Flame size={14} strokeWidth={2.5} />
-              )}
-              <span className="text-[12px] sm:text-xs font-black uppercase tracking-wider">{label}</span>
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
+            <div className={cn(
+              "flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm min-w-0",
+              typeStyle.bg, typeStyle.border
+            )}>
+              <span className={cn("text-[12px] sm:text-xs font-black uppercase tracking-wider truncate", typeStyle.text)}>
+                {displayLabel}
+              </span>
             </div>
-          )}
+
+            {/* Плашка "Хит/Новинка" */}
+            {label && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl shadow-lg bg-rose-500 text-white animate-pulse shrink-0">
+                {!label.includes('🔥') && !label.includes('✨') && (
+                  <Flame size={14} strokeWidth={2.5} />
+                )}
+                <span className="text-[12px] sm:text-xs font-black uppercase tracking-wider">{label}</span>
+              </div>
+            )}
+          </div>
 
           {/* Дата поверх фото снизу */}
           <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">

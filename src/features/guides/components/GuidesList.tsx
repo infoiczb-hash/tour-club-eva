@@ -11,26 +11,13 @@ import {
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useModalStore } from '@/shared/store/useModalStore';	
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 // ХУК ДЛЯ НАБЛЮДЕНИЯ ЗА СКРОЛЛОМ (замена whileInView)
-function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
 
 // --- СЛОВАРЬ ИКОНОК ДЛЯ RPG-СТАТОВ ---
 const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
@@ -96,8 +83,8 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => {
 export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null); 
   const openContactModal = useModalStore((state) => state.openContactModal);
-  const headerView = useInView();
-  const ctaView = useInView();
+  const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
+  const ctaView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
   // Сортируем гидов по полю order (чтобы основатели были первыми)
   const displayGuides = Array.isArray(guides) 
@@ -206,7 +193,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 // --- GUIDE CARD ---
 function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onClick: () => void }) {
     const rhythmClass = index % 2 !== 0 ? 'lg:mt-12' : '';
-    const { ref, inView } = useInView();
+    const { ref, inView } = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
     return (
         <div

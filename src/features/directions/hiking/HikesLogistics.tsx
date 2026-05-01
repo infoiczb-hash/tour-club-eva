@@ -64,7 +64,8 @@ export default function HikesLogistics() {
 
                 {/* --- 2. КАРТОЧКИ ЛОГИСТИКИ --- */}
                 <div ref={cardsView.ref}>
-                 <SwipeHint />
+                 <div className="mb-3">
+                       <SwipeHint /> </div>
 
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         

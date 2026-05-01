@@ -1,22 +1,83 @@
 "use client";
 
-import React from 'react';
-import { Calendar, User, ChevronRight } from 'lucide-react';
+import React, { useState, useTransition } from 'react';
+import { Calendar, User, ChevronRight, Bell, BellOff, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Tour } from '@/features/tours/types';
 import { useModalStore } from '@/shared/store/useModalStore';
+import { toggleTourWishlistAction } from '@/features/account/actions/tourWishlist';
 
 interface TourDatesProps {
   tour: Tour;
+  isWished?: boolean;
 }
 
-export default function TourDates({ tour }: TourDatesProps) {
+export default function TourDates({ tour, isWished = false }: TourDatesProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
-  
-  // ✅ ИСПРАВЛЕНО: Теперь берем унифицированный массив dates
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [wished, setWished] = useState(isWished);
+
   const datesToRender = tour.dates || [];
 
-  if (datesToRender.length === 0) return null;
+  if (datesToRender.length === 0) {
+    function handleWishlistToggle() {
+      startTransition(async () => {
+        const res = await toggleTourWishlistAction(tour.id);
+        if (res.needsAuth) {
+          router.push(`/login?next=/tour/${tour.slug}`);
+          return;
+        }
+        if (res.success) {
+          setWished(res.isWished ?? !wished);
+        }
+      });
+    }
+
+    return (
+      <section className="scroll-mt-24 mb-12 md:mb-16" id="dates">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 min-w-[40px] min-h-[40px] bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500 border border-teal-500/20 shrink-0">
+            <Calendar size={20} strokeWidth={2} />
+          </div>
+          <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+            Расписание
+          </h2>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5 p-6 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
+          <div className="flex-1">
+            <p className="text-white font-black text-lg uppercase tracking-tight mb-1">
+              Даты пока не объявлены
+            </p>
+            <p className="text-slate-400 text-sm font-medium leading-relaxed">
+              Сохраните тур — мы уведомим вас, как только появятся новые даты.
+            </p>
+          </div>
+
+          <button
+            onClick={handleWishlistToggle}
+            disabled={isPending}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-300 shrink-0 disabled:opacity-60 ${
+              wished
+                ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
+                : 'bg-teal-500 text-slate-900 hover:bg-teal-400 shadow-lg hover:shadow-teal-500/25'
+            }`}
+          >
+            {isPending ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : wished ? (
+              <BellOff size={16} />
+            ) : (
+              <Bell size={16} />
+            )}
+            {wished ? 'Слежу за туром' : 'Уведомить меня'}
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="scroll-mt-24 mb-12 md:mb-16" id="dates">
@@ -33,7 +94,6 @@ export default function TourDates({ tour }: TourDatesProps) {
       {/* СПИСОК ДАТ */}
       <div className="flex flex-col gap-3">
         {datesToRender.map((item, idx) => {
-           // ✅ ИСПРАВЛЕНО: Заменили item.date на item.start
            if (!item.start) return null;
 
            const startDateObj = new Date(item.start); 
@@ -92,12 +152,12 @@ export default function TourDates({ tour }: TourDatesProps) {
                         }`}>
                            {guideImage ? (
                            <Image 
-  src={guideImage} 
-  alt={guideName} 
-  fill 
-  className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
-  sizes="40px" 
-/>
+                             src={guideImage} 
+                             alt={guideName} 
+                             fill 
+                             className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
+                             sizes="40px" 
+                           />
                            ) : (
                              <User size={20} />
                            )}

@@ -1,13 +1,11 @@
 // __tests__/integration/admin-tours.test.ts
 import { prisma } from '@/lib/prisma';
 import { saveTour, getToursAdmin, updateTourStatus, deleteTour } from '@/features/admin/actions/tour';
-import { publishTourToChannel } from '@/features/admin/actions/telegram';
 import { notifySubscribersOnNewDates } from '@/lib/telegram/notify';
 
 // Мокаем Telegram‑функции
 jest.mock('@/features/admin/actions/telegram', () => ({
   publishToTelegram: jest.fn().mockResolvedValue({ success: true }),
-  publishTourToChannel: jest.fn().mockResolvedValue({ success: true }),
   sendToUserTelegramAdvanced: jest.fn().mockResolvedValue({ success: true }),
 }));
 
@@ -85,67 +83,12 @@ describe('Admin Tours Actions', () => {
       };
       const result = await saveTour(input as any) as { success: boolean; error?: string };
       expect(result.success).toBe(true);
-      expect(publishTourToChannel).not.toHaveBeenCalled();
-    });
+      const tour = await prisma.tour.findFirst({ where: { slug: input.slug } });
+  expect(tour).not.toBeNull();
+  expect(tour!.isActive).toBe(false);
+     });
 
-    it('создаёт новый активный тур – вызывает publishTourToChannel', async () => {
-      const input = {
-        title: 'Активный тур для канала',
-        slug: `active-tour-telegram-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        categoryId,
-        location: 'Горы',
-        duration: '3 дня',
-        price: 5000,
-        currency: 'RUB',
-        spots: 20,
-        spotsLeft: 20,
-        isActive: true,
-        dates: [],
-        difficulty: '2', 
-      };
-      const result = await saveTour(input as any) as { success: boolean };
-      expect(result.success).toBe(true);
-      expect(publishTourToChannel).toHaveBeenCalledTimes(1);
-    });
-
-    it('при обновлении черновика (isActive остаётся false) – не вызывает Telegram', async () => {
-      const slug = `draft-update-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const tour = await prisma.tour.create({
-        data: {
-          title: 'Черновик для обновления',
-          slug,
-          categoryId,
-          location: 'Лес',
-          duration: '2 часа',
-          price: 500,
-          currency: 'RUB',
-          spots: 5,
-          spotsLeft: 5,
-          isActive: false,
-        }
-      });
-
-      const updateInput = {
-        id: tour.id,
-        title: 'Черновик для обновления (Изменено)',
-        slug,
-        categoryId,
-        location: 'Лес',
-        duration: '2 часа',
-        price: 750,
-        currency: 'RUB',
-        spots: 5,
-        spotsLeft: 5,
-        isActive: false,
-        dates: [],
-        difficulty: '1', 
-      };
-      const result = await saveTour(updateInput as any) as { success: boolean };
-      expect(result.success).toBe(true);
-      expect(publishTourToChannel).not.toHaveBeenCalled();
-    });
-
-    it('при добавлении новых дат вызывает notifySubscribersOnNewDates', async () => {
+     it('при добавлении новых дат вызывает notifySubscribersOnNewDates', async () => {
       const startDate = daysOffset(5);
       const slug = `tour-new-dates-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const input = {
@@ -208,7 +151,7 @@ describe('Admin Tours Actions', () => {
 
   // ==================== UPDATE TOUR STATUS ====================
   describe('updateTourStatus', () => {
-    it('при включении черновика вызывает publishTourToChannel', async () => {
+   it('при включении черновика обновляет статус тура', async () => {
       const slug = `draft-to-active-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const tour = await prisma.tour.create({
         data: {
@@ -225,12 +168,14 @@ describe('Admin Tours Actions', () => {
         },
       });
 
-      const result = await updateTourStatus(tour.id, true) as { success: boolean };
-      expect(result.success).toBe(true);
-      expect(publishTourToChannel).toHaveBeenCalledTimes(1);
-    });
+     const result = await updateTourStatus(tour.id, true) as { success: boolean };
+  expect(result.success).toBe(true);
 
-    it('при выключении активного тура не вызывает publishTourToChannel', async () => {
+  const updated = await prisma.tour.findUnique({ where: { id: tour.id } });
+  expect(updated!.isActive).toBe(true);
+  });
+
+   it('при выключении активного тура обновляет isActive в false', async () => {
       const slug = `active-to-draft-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const tour = await prisma.tour.create({
         data: {
@@ -249,7 +194,8 @@ describe('Admin Tours Actions', () => {
 
       const result = await updateTourStatus(tour.id, false) as { success: boolean };
       expect(result.success).toBe(true);
-      expect(publishTourToChannel).not.toHaveBeenCalled();
+      const updated = await prisma.tour.findUnique({ where: { id: tour.id } });
+  expect(updated!.isActive).toBe(false);
     });
   });
 

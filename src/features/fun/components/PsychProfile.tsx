@@ -1,8 +1,6 @@
-// src/features/fun/components/PsychProfile.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   ChevronLeft, RotateCcw, Mountain, Users, Search, 
@@ -14,6 +12,7 @@ import { twMerge } from "tailwind-merge";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 import { useSaveTest } from "@/hooks/useSaveTest";
+import { useModalTransition } from "@/hooks/useModalTransition";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -98,7 +97,10 @@ const ScoreBar = ({ typeKey, score, max = 20 }: { typeKey: TypeKey; score: numbe
     <div className="flex items-center gap-4">
       <div className={cn("w-24 text-right font-bold text-xs uppercase tracking-wider shrink-0", t.color)}>{t.name}</div>
       <div className="flex-1 h-[4px] rounded-full bg-slate-800 relative overflow-hidden">
-        <motion.div className="absolute left-0 top-0 h-full rounded-full" style={{ background: t.accent }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }} />
+        <div 
+          className="absolute left-0 top-0 h-full rounded-full transition-all duration-[800ms] ease-out" 
+          style={{ background: t.accent, width: `${pct}%` }} 
+        />
       </div>
       <div className="text-slate-300 font-bold text-xs w-8 shrink-0">{score}</div>
     </div>
@@ -114,6 +116,8 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
+
+  const { shouldRender, closing } = useModalTransition(isOpen, 200);
 
   const answered = Object.keys(answers).length;
   const progressPct = (answered / TOTAL) * 100;
@@ -169,306 +173,284 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
     return () => clearTimeout(timer);
   }, [selectedValue, current, answers]);
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div 
-        className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <div 
+      className={cn(
+        "fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4 transition-opacity duration-200 ease-out",
+        closing ? "opacity-0" : "opacity-100"
+      )}
+      onClick={onClose}
+    >
+      <div 
+        className={cn(
+          "relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl transition-all duration-200 ease-out",
+          closing ? "scale-95 opacity-0 translate-y-4" : "scale-100 opacity-100 translate-y-0"
+        )}
+        onClick={(e) => e.stopPropagation()}
       >
-        <motion.div 
-          initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-          animate={{ scale: 1, opacity: 1, y: 0 }} 
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
+        {/* Progress Bar Header */}
+        {step === "test" && (
+          <div 
+            className="absolute top-0 left-0 h-1.5 z-50 bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300 ease-out" 
+            style={{ width: `${progressPct}%` }} 
+          />
+        )}
+
+        <button 
+          onClick={onClose} 
+          className="absolute top-5 right-5 z-50 p-3 text-slate-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full"
         >
-          {/* Progress Bar Header */}
-          {step === "test" && (
-            <motion.div className="absolute top-0 left-0 h-1.5 z-50 bg-gradient-to-r from-purple-500 to-indigo-500" animate={{ width: `${progressPct}%` }} transition={{ duration: 0.4, ease: "easeOut" }} />
-          )}
+          <X size={20} />
+        </button>
 
-          <button 
-            onClick={onClose} 
-            className="absolute top-5 right-5 z-50 p-3 text-slate-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full"
-          >
-            <X size={20} />
-          </button>
+        {/* ══════════════════════════════ INTRO ══════════════════════════════ */}
+        {step === "intro" && (
+          <div key="intro" className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex-1 flex flex-col justify-center items-center text-center pb-8">
+              <div className="w-16 h-16 bg-purple-500/10 text-purple-400 rounded-full flex items-center justify-center mb-6 border border-purple-500/20">
+                <Brain size={32} />
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black text-white mb-4 uppercase tracking-tight leading-tight">
+                Кто ты<br /><span className="text-purple-400">в горах?</span>
+              </h1>
 
-          <AnimatePresence mode="wait">
-            
-            {/* ══════════════════════════════ INTRO ══════════════════════════════ */}
-            {step === "intro" && (
-              <motion.div
-                key="intro"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10"
-              >
-                <div className="flex-1 flex flex-col justify-center items-center text-center pb-8">
-                  <div className="w-16 h-16 bg-purple-500/10 text-purple-400 rounded-full flex items-center justify-center mb-6 border border-purple-500/20">
-                    <Brain size={32} />
-                  </div>
-                  <h1 className="text-3xl md:text-5xl font-black text-white mb-4 uppercase tracking-tight leading-tight">
-                    Кто ты<br /><span className="text-purple-400">в горах?</span>
-                  </h1>
+              <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed mb-10 max-w-md">
+                Тест основан на психологии групповой динамики. Нет правильных и неправильных ответов — только честные.
+              </p>
 
-                  <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed mb-10 max-w-md">
-                    Тест основан на психологии групповой динамики. Нет правильных и неправильных ответов — только честные.
-                  </p>
-
-                  <div className="w-full max-w-md mb-10 rounded-2xl border border-white/5 bg-slate-800/50 overflow-hidden text-left">
-                    {[
-                      { icon: <BarChart2 size={16} />, label: "24 утверждения", sub: "Оцени каждое по шкале от 1 до 5" },
-                      { icon: <Clock size={16} />, label: "5–7 минут", sub: "Отвечай первым ощущением" },
-                      { icon: <Sparkles size={16} />, label: "6 психотипов", sub: "Ведущий, Хранитель, Аналитик и другие" },
-                      { icon: <CheckCircle2 size={16} />, label: "Без правильных ответов", sub: "Результат сохранится в профиле" },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-start gap-4 px-5 py-4 border-b border-white/5 last:border-0">
-                        <div className="mt-0.5 text-slate-300 shrink-0">{item.icon}</div>
-                        <div>
-                          <p className="text-slate-200 text-sm font-bold leading-tight mb-1">{item.label}</p>
-                          <p className="text-slate-300 text-xs leading-snug font-medium">{item.sub}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="shrink-0">
-                  <button
-                    onClick={() => setStep("instruction")}
-                    className="w-full inline-flex justify-center items-center gap-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-sm px-8 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-purple-600/20 active:scale-[0.98]"
-                  >
-                    <BookOpen size={18} /> Начать тест <ArrowRight size={18} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ══════════════════════════════ INSTRUCTION ══════════════════════════════ */}
-            {step === "instruction" && (
-              <motion.div
-                key="instruction"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10"
-              >
-                <div className="flex-1 flex flex-col justify-center pb-8">
-                  <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-800 text-teal-400 mb-4">
-                      <BookOpen size={24} />
+              <div className="w-full max-w-md mb-10 rounded-2xl border border-white/5 bg-slate-800/50 overflow-hidden text-left">
+                {[
+                  { icon: <BarChart2 size={16} />, label: "24 утверждения", sub: "Оцени каждое по шкале от 1 до 5" },
+                  { icon: <Clock size={16} />, label: "5–7 минут", sub: "Отвечай первым ощущением" },
+                  { icon: <Sparkles size={16} />, label: "6 психотипов", sub: "Ведущий, Хранитель, Аналитик и другие" },
+                  { icon: <CheckCircle2 size={16} />, label: "Без правильных ответов", sub: "Результат сохранится в профиле" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-4 px-5 py-4 border-b border-white/5 last:border-0">
+                    <div className="mt-0.5 text-slate-300 shrink-0">{item.icon}</div>
+                    <div>
+                      <p className="text-slate-200 text-sm font-bold leading-tight mb-1">{item.label}</p>
+                      <p className="text-slate-300 text-xs leading-snug font-medium">{item.sub}</p>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">Как отвечать?</h2>
-                    <p className="text-slate-300 text-sm font-medium">Оценивай утверждения по своим первым ощущениям, используя эту шкалу:</p>
                   </div>
+                ))}
+              </div>
+            </div>
 
-                  <div className="space-y-3 mb-8">
-                    {[
-                      { val: 1, title: "Совсем не про меня", desc: "Вообще не моя история, я так никогда не делаю" },
-                      { val: 2, title: "Скорее нет", desc: "Редко, но иногда бывает" },
-                      { val: 3, title: "Нейтрально", desc: "50/50, всё зависит от конкретной ситуации" },
-                      { val: 4, title: "Скорее да", desc: "Часто так делаю, это похоже на меня" },
-                      { val: 5, title: "Полностью про меня", desc: "Абсолютно в точку, это мой стиль!" },
-                    ].map((item) => (
-                      <div key={item.val} className="flex items-center gap-4 bg-slate-800/50 border border-white/5 rounded-2xl p-4">
-                        <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-900 text-white text-lg flex items-center justify-center font-black shadow-inner">
-                          {item.val}
-                        </div>
-                        <div>
-                          <p className="text-white text-sm font-bold uppercase tracking-wider mb-1 leading-tight">{item.title}</p>
-                          <p className="text-slate-300 text-xs font-medium leading-snug">{item.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="shrink-0">
-                  <button
-                    onClick={() => setStep("test")}
-                    className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)] active:scale-[0.98]"
-                  >
-                    Всё понятно, погнали!
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ══════════════════════════════ TEST ═══════════════════════════════ */}
-            {step === "test" && currentStatement && (
-              <motion.div
-                key={`s-${current}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1 flex flex-col h-full overflow-hidden p-6 md:p-10"
+            <div className="shrink-0">
+              <button
+                onClick={() => setStep("instruction")}
+                className="w-full inline-flex justify-center items-center gap-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-sm px-8 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-purple-600/20 active:scale-[0.98]"
               >
-                <div className="shrink-0 flex items-center justify-between mb-8 pr-12">
-                  <span className="font-bold text-xs text-slate-300 uppercase tracking-widest">
-                    Вопрос {current + 1} / {TOTAL}
+                <BookOpen size={18} /> Начать тест <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════ INSTRUCTION ══════════════════════════════ */}
+        {step === "instruction" && (
+          <div key="instruction" className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar p-6 md:p-10 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="flex-1 flex flex-col justify-center pb-8">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-800 text-teal-400 mb-4">
+                  <BookOpen size={24} />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">Как отвечать?</h2>
+                <p className="text-slate-300 text-sm font-medium">Оценивай утверждения по своим первым ощущениям, используя эту шкалу:</p>
+              </div>
+
+              <div className="space-y-3 mb-8">
+                {[
+                  { val: 1, title: "Совсем не про меня", desc: "Вообще не моя история, я так никогда не делаю" },
+                  { val: 2, title: "Скорее нет", desc: "Редко, но иногда бывает" },
+                  { val: 3, title: "Нейтрально", desc: "50/50, всё зависит от конкретной ситуации" },
+                  { val: 4, title: "Скорее да", desc: "Часто так делаю, это похоже на меня" },
+                  { val: 5, title: "Полностью про меня", desc: "Абсолютно в точку, это мой стиль!" },
+                ].map((item) => (
+                  <div key={item.val} className="flex items-center gap-4 bg-slate-800/50 border border-white/5 rounded-2xl p-4">
+                    <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-900 text-white text-lg flex items-center justify-center font-black shadow-inner">
+                      {item.val}
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-bold uppercase tracking-wider mb-1 leading-tight">{item.title}</p>
+                      <p className="text-slate-300 text-xs font-medium leading-snug">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              <button
+                onClick={() => setStep("test")}
+                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)] active:scale-[0.98]"
+              >
+                Всё понятно, погнали!
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════ TEST ═══════════════════════════════ */}
+        {step === "test" && currentStatement && (
+          <div key={`s-${current}`} className="flex-1 flex flex-col h-full overflow-hidden p-6 md:p-10 animate-in fade-in duration-200">
+            <div className="shrink-0 flex items-center justify-between mb-8 pr-12">
+              <span className="font-bold text-xs text-slate-300 uppercase tracking-widest">
+                Вопрос {current + 1} / {TOTAL}
+              </span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center overflow-y-auto custom-scrollbar pb-4">
+              <p className="text-white text-2xl md:text-3xl font-black leading-tight mb-10 text-center tracking-tight">
+                {currentStatement.text}
+              </p>
+
+              <div className="max-w-md mx-auto w-full">
+                <div className="flex gap-2 sm:gap-3 justify-between mb-4">
+                  {[1, 2, 3, 4, 5].map((val) => {
+                    const isSelected = (selectedValue ?? currentAnswer) === val;
+                    return (
+                      <button
+                        key={val}
+                        onClick={() => !selectedValue && setSelectedValue(val)}
+                        disabled={selectedValue !== null}
+                        className={clsx(
+                          "flex-1 h-14 sm:h-16 flex flex-col items-center justify-center rounded-2xl border transition-all duration-200",
+                          isSelected
+                            ? "border-teal-500 bg-teal-500 text-slate-900 scale-105 shadow-[0_0_15px_rgba(20,184,166,0.4)]"
+                            : "border-white/10 bg-slate-800/50 hover:bg-slate-800 hover:border-white/20 text-slate-300"
+                        )}
+                      >
+                        <span className="text-lg font-black">{val}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex justify-between px-1">
+                  <span className="text-slate-300 text-[12px] font-bold uppercase tracking-widest leading-tight max-w-[90px]">
+                    {SCALE_LABELS[0]}
+                  </span>
+                  <span className="text-slate-300 text-[12px] font-bold uppercase tracking-widest leading-tight max-w-[90px] text-right">
+                    {SCALE_LABELS[4]}
                   </span>
                 </div>
+              </div>
+            </div>
 
-                <div className="flex-1 flex flex-col justify-center overflow-y-auto custom-scrollbar pb-4">
-                  <p className="text-white text-2xl md:text-3xl font-black leading-tight mb-10 text-center tracking-tight">
-                    {currentStatement.text}
-                  </p>
-
-                  <div className="max-w-md mx-auto w-full">
-                    <div className="flex gap-2 sm:gap-3 justify-between mb-4">
-                      {[1, 2, 3, 4, 5].map((val) => {
-                        const isSelected = (selectedValue ?? currentAnswer) === val;
-                        return (
-                          <button
-                            key={val}
-                            onClick={() => !selectedValue && setSelectedValue(val)}
-                            disabled={selectedValue !== null}
-                            className={clsx(
-                              "flex-1 h-14 sm:h-16 flex flex-col items-center justify-center rounded-2xl border transition-all duration-200",
-                              isSelected
-                                ? "border-teal-500 bg-teal-500 text-slate-900 scale-105 shadow-[0_0_15px_rgba(20,184,166,0.4)]"
-                                : "border-white/10 bg-slate-800/50 hover:bg-slate-800 hover:border-white/20 text-slate-300"
-                            )}
-                          >
-                            <span className="text-lg font-black">{val}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex justify-between px-1">
-                      <span className="text-slate-300 text-[12px] font-bold uppercase tracking-widest leading-tight max-w-[90px]">
-                        {SCALE_LABELS[0]}
-                      </span>
-                      <span className="text-slate-300 text-[12px] font-bold uppercase tracking-widest leading-tight max-w-[90px] text-right">
-                        {SCALE_LABELS[4]}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="shrink-0 pt-4 border-t border-transparent h-12">
-                  <button
-                    onClick={() => current > 0 && setCurrent(c => c - 1)}
-                    disabled={current === 0 || selectedValue !== null}
-                    className="flex items-center gap-2 text-slate-300 hover:text-white disabled:opacity-0 transition-colors text-xs font-bold uppercase tracking-widest"
-                  >
-                    <ChevronLeft size={16} /> Назад
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ══════════════════════════════ RESULT ═════════════════════════════ */}
-            {step === "result" && (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col h-full overflow-hidden"
+            <div className="shrink-0 pt-4 border-t border-transparent h-12">
+              <button
+                onClick={() => current > 0 && setCurrent(c => c - 1)}
+                disabled={current === 0 || selectedValue !== null}
+                className="flex items-center gap-2 text-slate-300 hover:text-white disabled:opacity-0 transition-colors text-xs font-bold uppercase tracking-widest"
               >
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 pb-4">
-                  <div className="text-center mb-10 relative">
-                    <div className={clsx("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 blur-[60px] rounded-full pointer-events-none opacity-30", primaryType.color.replace('text-', 'bg-'))} />
-                    
-                    <div className={clsx("inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 shadow-2xl relative z-10 border border-white/10", primaryType.colorDim.replace('text-', 'bg-'))}>
-                      <div className={primaryType.color}>
-                        {primaryType.icon}
-                      </div>
-                    </div>
-                    
-                    <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-2 relative z-10">
-                      {primaryType.name}
-                    </h2>
-                    <p className={clsx("text-sm font-bold uppercase tracking-widest relative z-10", primaryType.color)}>
-                      «{primaryType.tagline}»
-                    </p>
-                  </div>
-                  
-                  <div className="mb-8 bg-slate-800/30 p-6 rounded-2xl border border-white/5">
-                    <p className="text-slate-300 text-sm leading-relaxed font-medium whitespace-pre-line">
-                      {primaryType.desc}
-                    </p>
-                  </div>
-                  
-                  {/* Слепое пятно */}
-                  <div className="border-l-2 pl-5 mb-6" style={{ borderColor: primaryType.accent }}>
-                    <p className={clsx("font-bold text-xs uppercase tracking-widest mb-2", primaryType.color)}>Точка роста</p>
-                    <p className="text-slate-300 text-sm leading-relaxed font-medium">{primaryType.blind}</p>
-                  </div>
+                <ChevronLeft size={16} /> Назад
+              </button>
+            </div>
+          </div>
+        )}
 
-                  {/* Идеальный напарник */}
-                  <div className="border-l-2 pl-5 mb-8" style={{ borderColor: primaryType.accent }}>
-                    <p className={clsx("font-bold text-xs uppercase tracking-widest mb-2", primaryType.color)}>В связке</p>
-                    <p className="text-slate-300 text-sm leading-relaxed font-medium">{primaryType.pair}</p>
-                  </div>
-
-                  {/* Вторичный тип */}
-                  {secondaryType && (
-                     <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-5 mb-8 flex items-center gap-4 shadow-inner">
-                        <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-white/10", secondaryType.colorDim.replace('text-', 'bg-'), secondaryType.color)}>
-                           {secondaryType.icon}
-                        </div>
-                        <div>
-                           <p className="text-[12px] font-bold uppercase tracking-widest text-slate-300 mb-1">Скрытый резерв</p>
-                           <p className="text-sm text-slate-300 font-medium leading-snug">В критических ситуациях в тебе просыпается <strong className={secondaryType.color}>{secondaryType.name}</strong>.</p>
-                        </div>
-                     </div>
-                  )}
-
-                  <div className="mb-6 mt-6">
-                    <p className="font-bold text-[12px] text-slate-300 uppercase tracking-widest mb-5 border-b border-white/5 pb-2">Все архетипы</p>
-                    <div className="space-y-3">
-                      {(Object.entries(scores) as [TypeKey, number][]).sort((a, b) => b[1] - a[1]).map(([key, score]) => (
-                        <ScoreBar key={key} typeKey={key} score={score} />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* SMART CTA */}
-                  <div className="pt-8 mt-6 border-t border-white/10 text-center">
-                    <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", primaryType.color)}>
-                      Мы рекомендуем Вам
-                    </p>
-                    <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", primaryType.color)}>
-                      {primaryType.directionName}
-                    </h3>
-                    <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                      <Link
-                        href={`/directions/${primaryType.directionSlug}`}
-                        onClick={onClose}
-                        className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
-                      >
-                        <Compass size={16} /> О направлении
-                      </Link>
-                      <Link
-                        href={`/tour?category=${primaryType.directionSlug}`}
-                        onClick={onClose}
-                        className="flex-1 py-4 rounded-xl text-slate-900 font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:brightness-110"
-                        style={{ backgroundColor: primaryType.accent }}
-                      >
-                        Выбрать маршрут <ArrowRight size={16} />
-                      </Link>
-                    </div>
-
-                    <button
-                      onClick={() => { setStep("intro"); setCurrent(0); setAnswers({}); setSelectedValue(null); }}
-                      className="inline-flex items-center gap-2 text-slate-300 hover:text-slate-300 text-xs font-bold uppercase tracking-widest transition-colors"
-                    >
-                      <RotateCcw size={14} /> Пройти заново
-                    </button>
+        {/* ══════════════════════════════ RESULT ═════════════════════════════ */}
+        {step === "result" && (
+          <div key="result" className="flex flex-col h-full overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 pb-4">
+              <div className="text-center mb-10 relative">
+                <div className={clsx("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 blur-[60px] rounded-full pointer-events-none opacity-30", primaryType.color.replace('text-', 'bg-'))} />
+                
+                <div className={clsx("inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 shadow-2xl relative z-10 border border-white/10", primaryType.colorDim.replace('text-', 'bg-'))}>
+                  <div className={primaryType.color}>
+                    {primaryType.icon}
                   </div>
                 </div>
-              </motion.div>
-            )}
+                
+                <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-2 relative z-10">
+                  {primaryType.name}
+                </h2>
+                <p className={clsx("text-sm font-bold uppercase tracking-widest relative z-10", primaryType.color)}>
+                  «{primaryType.tagline}»
+                </p>
+              </div>
+              
+              <div className="mb-8 bg-slate-800/30 p-6 rounded-2xl border border-white/5">
+                <p className="text-slate-300 text-sm leading-relaxed font-medium whitespace-pre-line">
+                  {primaryType.desc}
+                </p>
+              </div>
+              
+              {/* Слепое пятно */}
+              <div className="border-l-2 pl-5 mb-6" style={{ borderColor: primaryType.accent }}>
+                <p className={clsx("font-bold text-xs uppercase tracking-widest mb-2", primaryType.color)}>Точка роста</p>
+                <p className="text-slate-300 text-sm leading-relaxed font-medium">{primaryType.blind}</p>
+              </div>
 
-          </AnimatePresence>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+              {/* Идеальный напарник */}
+              <div className="border-l-2 pl-5 mb-8" style={{ borderColor: primaryType.accent }}>
+                <p className={clsx("font-bold text-xs uppercase tracking-widest mb-2", primaryType.color)}>В связке</p>
+                <p className="text-slate-300 text-sm leading-relaxed font-medium">{primaryType.pair}</p>
+              </div>
+
+              {/* Вторичный тип */}
+              {secondaryType && (
+                 <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-5 mb-8 flex items-center gap-4 shadow-inner">
+                    <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-white/10", secondaryType.colorDim.replace('text-', 'bg-'), secondaryType.color)}>
+                       {secondaryType.icon}
+                    </div>
+                    <div>
+                       <p className="text-[12px] font-bold uppercase tracking-widest text-slate-300 mb-1">Скрытый резерв</p>
+                       <p className="text-sm text-slate-300 font-medium leading-snug">В критических ситуациях в тебе просыпается <strong className={secondaryType.color}>{secondaryType.name}</strong>.</p>
+                    </div>
+                 </div>
+              )}
+
+              <div className="mb-6 mt-6">
+                <p className="font-bold text-[12px] text-slate-300 uppercase tracking-widest mb-5 border-b border-white/5 pb-2">Все архетипы</p>
+                <div className="space-y-3">
+                  {(Object.entries(scores) as [TypeKey, number][]).sort((a, b) => b[1] - a[1]).map(([key, score]) => (
+                    <ScoreBar key={key} typeKey={key} score={score} />
+                  ))}
+                </div>
+              </div>
+
+              {/* SMART CTA */}
+              <div className="pt-8 mt-6 border-t border-white/10 text-center">
+                <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", primaryType.color)}>
+                  Мы рекомендуем Вам
+                </p>
+                <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", primaryType.color)}>
+                  {primaryType.directionName}
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <Link
+                    href={`/directions/${primaryType.directionSlug}`}
+                    onClick={onClose}
+                    className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Compass size={16} /> О направлении
+                  </Link>
+                  <Link
+                    href={`/tour?category=${primaryType.directionSlug}`}
+                    onClick={onClose}
+                    className="flex-1 py-4 rounded-xl text-slate-900 font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-95"
+                    style={{ backgroundColor: primaryType.accent }}
+                  >
+                    Выбрать маршрут <ArrowRight size={16} />
+                  </Link>
+                </div>
+
+                <button
+                  onClick={() => { setStep("intro"); setCurrent(0); setAnswers({}); setSelectedValue(null); }}
+                  className="inline-flex items-center gap-2 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                >
+                  <RotateCcw size={14} /> Пройти заново
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }

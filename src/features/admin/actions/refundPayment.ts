@@ -13,10 +13,13 @@ const RefundSchema = z.object({
   reason: z.string().min(3, 'Укажите причину возврата'),
 });
 
+type RefundInput = z.infer<typeof RefundSchema>;
+type RefundOutput = { success: boolean; isFullRefund: boolean };
+
 /**
  * Основная логика возврата через АПБ
  */
-async function refundPaymentHandler(raw: z.infer<typeof RefundSchema>) {
+async function refundPaymentHandler(raw: RefundInput): Promise<RefundOutput> {
   const { bookingId, amount, reason } = RefundSchema.parse(raw);
 
   // 1. Ищем бронь и проверяем возможность возврата
@@ -36,18 +39,17 @@ async function refundPaymentHandler(raw: z.infer<typeof RefundSchema>) {
     throw new Error('Данная бронь не была оплачена через эквайринг АПБ');
   }
 
-  if (booking.status !== 'confirmed' && booking.status !== 'cancelled') {
-    throw new Error('Возврат возможен только для подтвержденных броней');
+  // ✅ Вернули оригинальную проверку (без выдуманного 'paid')
+  if (booking.status === 'cancelled' && booking.refundedAmount >= booking.totalPrice) {
+    throw new Error('Бронь уже полностью отменена и средства возвращены');
   }
 
-  // Проверка: нельзя вернуть больше, чем было оплачено
   const remainingAmount = booking.totalPrice - booking.refundedAmount;
   if (amount > remainingAmount) {
     throw new Error(`Максимально возможная сумма возврата: ${remainingAmount} руб.`);
   }
 
-  // 2. Вызываем API банка (умный выбор Cancel vs Refund внутри клиента)
-  // amount приходит в рублях (как хранится в БД) → переводим в копейки для АПБ
+  // 2. Вызываем API банка 
   const amountKop = amount * 100;
   const result = await apbClient.processRefund(
     booking.apbInvoiceId,
@@ -59,30 +61,34 @@ async function refundPaymentHandler(raw: z.infer<typeof RefundSchema>) {
     throw new Error(result.error || 'Банк отклонил операцию возврата');
   }
 
-  // 3. Обновляем данные в нашей БД
+  // 3. Обновляем данные в нашей БД с защитой от Race Condition (Optimistic Locking)
   const updatedRefundedAmount = booking.refundedAmount + amount;
   const isFullRefund = updatedRefundedAmount >= booking.totalPrice;
 
-  await prisma.booking.update({
-    where: { id: bookingId },
+  const updateResult = await prisma.booking.updateMany({
+    where: { 
+      id: bookingId,
+      // КРИТИЧНО: проверяем, что сумма возвратов не изменилась другими запросами
+      refundedAmount: booking.refundedAmount 
+    },
     data: {
       refundedAmount: updatedRefundedAmount,
       // Если вернули всё — отменяем бронь автоматически
       status: isFullRefund ? 'cancelled' : booking.status,
-      // comment не трогаем совсем, история сохраняется через audit лог
     },
   });
+
+  if (updateResult.count === 0) {
+    console.error(`[CRITICAL RACE CONDITION] Бронь ${bookingId}. Деньги возвращены через АПБ, но БД не обновилась из-за конфликта транзакций!`);
+    throw new Error('Сбой синхронизации с базой данных при возврате. Обратитесь к разработчику.');
+  }
 
   revalidatePath('/admin');
   return { success: true, isFullRefund };
 }
 
-type RefundInput = z.infer<typeof RefundSchema>;
-// ✅ Создаем тип для результата
-type RefundOutput = { success: boolean; isFullRefund: boolean };
-
-export const refundPaymentAction = withAdminAudit({
+export const refundPaymentAction = withAdminAudit<[RefundInput], RefundOutput>({
   actionName: 'APB_REFUND_OPERATION',
-  getTargetId: (data: RefundInput) => data.bookingId,
-  sanitizeChanges: (data: RefundInput) => ({ amount: data.amount, reason: data.reason }),
-})(refundPaymentHandler) as (data: RefundInput) => Promise<RefundOutput>;
+  getTargetId: (data) => data.bookingId,
+  sanitizeChanges: (data) => ({ amount: data.amount, reason: data.reason }),
+})(refundPaymentHandler);

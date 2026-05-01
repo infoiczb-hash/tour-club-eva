@@ -58,7 +58,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   };
 
   return (
-    <aside className="hidden lg:block relative z-30">
+ <aside className="sticky top-24 z-30 self-start">
       <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/50 overflow-hidden relative">
         
         {/* БЛОК 1: Цена и Места */}

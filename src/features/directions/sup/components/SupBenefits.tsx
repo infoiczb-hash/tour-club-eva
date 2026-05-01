@@ -64,6 +64,8 @@ export default function SupBenefits() {
 
         {/* CARDS SCROLL */}
         <div className="relative" ref={cardsView.ref}>
+            <div className="mb-3">
+                  <SwipeHint /> </div>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {BENEFITS.map((b, i) => (
                 <div 
@@ -89,9 +91,6 @@ export default function SupBenefits() {
                 </div>
               ))}
             </div>
-
-            {/* Подсказка "Мотай" */}
-              <SwipeHint />
         </div>
 
       </div>

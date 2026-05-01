@@ -60,6 +60,8 @@ export default function HikesDestinations() {
 
         {/* Обертка для мобильного свайпа */}
         <div className="relative" ref={cardsView.ref}>
+            <div className="mb-3">
+                  <SwipeHint /> </div>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 lg:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {DESTINATIONS.map((dest, i) => {
               const Icon = dest.icon;
@@ -110,8 +112,7 @@ export default function HikesDestinations() {
               )
             })}
           </div>
-          <SwipeHint />
-        </div>
+          </div>
 
       </div>
     </section>

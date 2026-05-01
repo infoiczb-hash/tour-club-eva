@@ -25,6 +25,7 @@ export interface GuideInfo {
   bio?: string | null;
   instagram?: string | null;
   telegram?: string | null;
+  slug?: string | null;
 }
 
 // ==========================================

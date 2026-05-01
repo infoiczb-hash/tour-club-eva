@@ -1,14 +1,14 @@
-import React from 'react';
+// src/features/tours/components/TourDetails/TourDetailsWrapper.tsx
+import React, { Suspense } from 'react'; 
 import dynamic from 'next/dynamic';
 import { Tour, TourPreview } from '@/features/tours/types';
 
-// ✅ Above-fold (Первый экран) — статические импорты (попадают в initial bundle)
 import TourStickyNav from './TourStickyNav';
 import TourHero from './TourHero';
 import TourDirectionBanner from './TourDirectionBanner';
 import TourLegalLinks from './TourLegalLinks';
+import SimilarTours, { SimilarToursSkeleton } from './SimilarTours';
 
-// ✅ Below-fold (Ниже первого экрана) — ленивые импорты (разгружают Main Thread)
 const TourStats         = dynamic(() => import('./TourStats'));
 const TourLogistics     = dynamic(() => import('./TourLogistics'));
 const TourSidebar       = dynamic(() => import('./TourSidebar'));
@@ -20,29 +20,26 @@ const TourEssentials    = dynamic(() => import('./TourEssentials'));
 const TourDates         = dynamic(() => import('./TourDates'));
 const TourFAQ           = dynamic(() => import('./TourFAQ'));
 const TourActionButtons = dynamic(() => import('./TourActionButtons'));
-const SimilarTours      = dynamic(() => import('./SimilarTours'));
 
 interface TourDetailsWrapperProps {
-  tour: Tour; // Основной тур остается полным (он нужен для страницы)
-  similarTours: TourPreview[]; // ✅ ИЗМЕНЕНО: Похожие туры теперь легкие
+  tour: Tour;
+  similarToursPromise: Promise<TourPreview[]>; 
   isWished: boolean;
 }
 
-// ✅ ДОБАВИЛИ: достаем isWished (по умолчанию false)
-export default function TourDetailsWrapper({ tour, similarTours, isWished = false }: TourDetailsWrapperProps) {
-  
+export default function TourDetailsWrapper({ tour, similarToursPromise, isWished }: TourDetailsWrapperProps) {
   return (
-    // overflow-x-hidden убран с корня — sticky сайдбар его не переживает
-    <div className="bg-slate-950 min-h-screen pb-0 selection:bg-teal-500/30 selection:text-teal-200">
-
+    <>
+      <TourHero tour={tour} isWished={isWished} />
       <TourStickyNav />
-      {/* ✅ ДОБАВИЛИ: Передаем пропс isWished дальше в TourHero */}
-      <TourHero tour={tour} isWished={isWished} /> 
 
-      <main className="container mx-auto px-4 relative z-10 mt-6 md:mt-10 pb-24">
-        <div className="grid lg:grid-cols-12 gap-8 items-start">
-
-          {/* Левая колонка: overflow-x-hidden только здесь, не на родителе */}
+      {/* Основной контент */}
+      <div className="container mx-auto px-4 relative z-10 mt-6 md:mt-10 pb-24">
+        
+        {/* ✅ ИСПРАВЛЕНО: Убрали items-start. Теперь колонки тянутся на всю высоту друг друга! */}
+        <div className="grid lg:grid-cols-12 gap-8">
+          
+          {/* ЛЕВАЯ КОЛОНКА (Длинный контент) */}
           <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-hidden">
             <TourStats tour={tour} />
             <TourLogistics tour={tour} />
@@ -57,26 +54,26 @@ export default function TourDetailsWrapper({ tour, similarTours, isWished = fals
               includedDetailed={tour.includedDetailed}
               excludedDetailed={tour.excludedDetailed}
             />
-            <TourDates tour={tour} />
-                <TourFAQ tour={tour} />
+            <TourDates tour={tour} isWished={isWished} />
+            <TourFAQ tour={tour} />
             <TourDirectionBanner categorySlug={tour.category?.slug ?? null} />
             <TourLegalLinks />
             <TourActionButtons tour={tour} />
           </div>
 
-          {/* Правая колонка: self-start и relative убраны — они мешали sticky */}
-          <div className="hidden lg:block lg:col-span-4">
-            <div className="sticky top-24">
-              <TourSidebar tour={tour} />
-            </div>
+          {/* ПРАВАЯ КОЛОНКА (Сайдбар) */}
+          <div className="hidden lg:block lg:col-span-4 relative">
+            <TourSidebar tour={tour} />
           </div>
-
         </div>
-        <SimilarTours tours={similarTours || []} />
-      </main>
+
+        {/* Suspense-обертка для SimilarTours */}
+        <Suspense fallback={<SimilarToursSkeleton />}>
+          <SimilarTours toursPromise={similarToursPromise} />
+        </Suspense>
+      </div>
 
       <TourBottomActions tour={tour} />
-
-    </div>
+    </>
   );
 }

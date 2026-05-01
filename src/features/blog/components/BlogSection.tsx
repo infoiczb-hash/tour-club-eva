@@ -119,10 +119,17 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
           </div>
 
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+            {/* ✅ ВНЕДРЕНО: role="tablist" и aria-label */}
+            <div 
+              role="tablist" 
+              aria-label="Категории блога"
+              className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0"
+            >
               {displayCategories.map(cat => (
                 <button
                   key={cat.id}
+                  role="tab" // ✅ ДОБАВЛЕНО
+                  aria-selected={activeCategory === cat.slug} // ✅ ДОБАВЛЕНО
                   onClick={() => setActiveCategory(cat.slug)}
                   className={`px-4 py-2 rounded-xl text-[14px] md:text-xs font-bold uppercase whitespace-nowrap transition-all border ${
                     activeCategory === cat.slug
@@ -134,9 +141,10 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                 </button>
               ))}
             </div>
+            
             <div className="relative group shrink-0 hidden md:block">
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-300 hover:border-teal-500/30 transition-colors">
-                <Filter size={12} />
+                <Filter size={12} aria-hidden="true" />
                 <select
                   aria-label="Выберите автора"
                   className="bg-transparent outline-none appearance-none w-full cursor-pointer font-bold pr-4 text-slate-300"
@@ -163,7 +171,6 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
         {/* Hero Post */}
           {featuredPost && (
             <div className="lg:col-span-3">
-              {/* ЗАМЕНИЛИ h-[400px] md:h-[520px] на aspect-[4/3] lg:aspect-[16/9] */}
               <Link href={`/blog/${featuredPost.slug}`} className="group relative block aspect-[4/3] lg:aspect-[16/9] w-full rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900 shadow-2xl hover:border-teal-500/30 transition-all duration-500">
                 <Image
                   src={featuredPost.image || '/placeholder.jpg'}
@@ -171,7 +178,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   quality={75}
-                  loading="lazy" /* no priority */
+                  loading="lazy" 
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
@@ -179,22 +186,23 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   <span className="px-3 py-1.5 bg-teal-400 text-slate-900 text-[14px] font-black uppercase tracking-widest rounded-lg mb-4 shadow-lg shadow-teal-500/20">
                     {getLabel(featuredPost)}
                   </span>
-<h3 className="text-2xl md:text-5xl font-black text-white leading-[1.1] mb-6 group-hover:text-teal-400 transition-colors drop-shadow-lg">
-  {featuredPost.title}
-</h3>
+                  <h3 className="text-2xl md:text-5xl font-black text-white leading-[1.1] mb-6 group-hover:text-teal-400 transition-colors drop-shadow-lg">
+                    {featuredPost.title}
+                  </h3>
                   <div className="flex items-center gap-4 pt-6 border-t border-white/10 w-full">
-                    {/* ДОБАВИЛИ shrink-0 к обертке аватарки */}
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 bg-slate-800 shrink-0">
                       {featuredPost.author_image ? (
                       <Image 
-  src={featuredPost.author_image} 
-  alt={featuredPost.author_name || 'Автор'} 
-  fill 
-  className="object-cover object-top" 
-  sizes="40px" 
-/>
+                        src={featuredPost.author_image} 
+                        alt={featuredPost.author_name || 'Автор'} 
+                        fill 
+                        className="object-cover object-top" 
+                        sizes="40px" 
+                      />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300"><User size={16} /></div>
+                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                          <User size={16} aria-hidden="true" />
+                        </div>
                       )}
                     </div>
                     <div className="flex flex-col">
@@ -238,8 +246,8 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                       <span className="text-[12px] text-slate-300 font-mono">{formatDate(post.date || post.createdAt)}</span>
                     </div>
                    <h4 className="font-bold text-slate-200 text-sm md:text-base leading-snug group-hover:text-teal-400 transition-colors">
-  {post.title}
-</h4>
+                      {post.title}
+                    </h4>
                   </div>
                 </Link>
               ))}
@@ -251,13 +259,13 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-teal-400 text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-teal-300 hover:scale-[1.01] transition-all shadow-[0_0_20px_-5px_rgba(45,212,191,0.3)]"
               >
                 <span>Читать все статьи</span>
-                <ArrowRight size={16} strokeWidth={3} />
+                <ArrowRight size={16} strokeWidth={3} aria-hidden="true" />
               </Link>
               <button
                 onClick={() => openContactModal('Хочу стать автором блога', 'BLOG')}
                 className="group flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed border-slate-700 text-slate-300 hover:text-teal-400 hover:border-teal-500/50 hover:bg-teal-500/5 transition-all text-xs font-bold uppercase tracking-wider"
               >
-                <PenLine size={14} className="group-hover:-rotate-12 transition-transform" />
+                <PenLine size={14} className="group-hover:-rotate-12 transition-transform" aria-hidden="true" />
                 <span>Стать автором</span>
               </button>
             </div>

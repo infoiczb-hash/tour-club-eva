@@ -1,3 +1,5 @@
+// src/utils/date.test.ts
+import { describe, it, expect } from '@jest/globals'
 import { formatTourDate, getTourDuration } from './date'
 
 describe('formatTourDate', () => {
@@ -24,6 +26,13 @@ describe('formatTourDate', () => {
     expect(result).toContain('марта')
   })
 
+  // ✅ ДОБАВЛЕНО: Обработка перехода года
+  it('корректно обрабатывает даты в разных годах (Новогодние туры)', () => {
+    const result = formatTourDate('2024-12-31', '2025-01-02')
+    expect(result).toContain('декабря')
+    expect(result).toContain('января')
+  })
+
   it('возвращает "Дата уточняется" при невалидной дате', () => {
     expect(formatTourDate('invalid-date', 'invalid-date')).toBe('Дата уточняется')
   })
@@ -42,7 +51,14 @@ describe('getTourDuration', () => {
     expect(result).toBe('6 дн.')
   })
 
-  it('возвращает 1 день если даты совпадают', () => {
+  // ✅ ДОБАВЛЕНО: Точная проверка разницы ровно в 1 день (с ночевкой)
+  it('считает дни правильно при startDate и endDate в разнице 1 день (с ночевкой)', () => {
+    const tour = { date: '2024-02-20', endDate: '2024-02-21' }
+    // 20 число (1 день) + 21 число (2 день) = 2 дня
+    expect(getTourDuration(tour)).toBe('2 дн.')
+  })
+
+  it('возвращает 1 день если даты совпадают (без ночевки)', () => {
     const result = getTourDuration({
       date: '2024-02-20',
       endDate: '2024-02-20',

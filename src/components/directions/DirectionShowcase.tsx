@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { DirectionData, THEMES } from '@/data/directionsData';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -111,12 +112,8 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                         Живые <span style={{ color: theme.hex }}>Эмоции</span>
                     </h2>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-300 animate-in fade-in duration-700 fill-mode-both">
-                    <span className="w-8 h-px bg-slate-700" />
-                    Листайте
-                    <span className="w-8 h-px bg-slate-700" />
-                </div>
-            </div>
+                  <SwipeHint />
+              </div>
 
             {/* Горизонтальная лента фотографий */}
             <div 

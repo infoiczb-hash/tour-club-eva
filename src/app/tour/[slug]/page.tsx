@@ -1,11 +1,11 @@
+// src/app/tour/[slug]/page.tsx
 import React from 'react';
-import ReactDOM from 'react-dom';
+// import ReactDOM from 'react-dom'; // Удален, так как не используется
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getTourBySlug, getTours, getSimilarTours } from '@/features/tours/api'; 
 import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper';
 
-// Базовый URL сайта (из env или фолбек на прод)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
 export async function generateStaticParams() {
@@ -15,14 +15,12 @@ export async function generateStaticParams() {
   }));
 }
 
-// ✅ ТЕПЕРЬ ЭТО РАБОТАЕТ НА 100%. Страница кэшируется на час.
 export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// --- 1. SEO МЕТАДАННЫЕ ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
@@ -38,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const url = `${BASE_URL}/tour/${tour.slug}`; 
   
- let imageUrl = `${BASE_URL}/api/og?title=${encodeURIComponent(tour.title)}&subtitle=${encodeURIComponent(tour.subtitle || 'Турклуб Эва')}`;
+  let imageUrl = `${BASE_URL}/api/og?title=${encodeURIComponent(tour.title)}&subtitle=${encodeURIComponent(tour.subtitle || 'Турклуб Эва')}`;
   if (imageUrl.startsWith('/')) imageUrl = `${BASE_URL}${imageUrl}`;
 
   const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
@@ -46,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${tour.title} | Турклуб «Эва»`,
     description: cleanDescription,
-     alternates: { canonical: url },
+    alternates: { canonical: url },
     openGraph: {
       title: `${tour.title} | Турклуб «Эва»`,
       description: cleanDescription,
@@ -65,23 +63,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// --- 2. СТРАНИЦА ТУРА ---
 export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
 
- const tour = await getTourBySlug(decodedSlug);
+  const tour = await getTourBySlug(decodedSlug);
   if (!tour) notFound();
 
-  // Мы полностью удалили ReactDOM.preload.
-  // За предзагрузку hero-изображения отвечает атрибут priority в TourHero.tsx, 
-  // Next.js сам вставит идеальный <link rel="preload"> в <head>.
-
-  // ✅ ИЗМЕНЕНО: Убрали чтение кук. Запрашиваем только похожие туры (теперь это TourPreview)
-  const similarTours = await getSimilarTours(tour.categoryId ?? null, tour.id, 3);
+  // ✅ ИЗМЕНЕНО: Убрали await. Передаем Promise для Suspense.
+  const similarToursPromise = getSimilarTours(tour.categoryId ?? null, tour.id, 3);
 
   const schemaImages = [tour.image, ...(tour.gallery || [])].filter(Boolean) as string[];
-  // ✅ ИЗМЕНЕНО: Не ставим сегодняшнюю дату для туров-анонсов (без дат)
   const startDate = tour.date ? new Date(tour.date).toISOString() : undefined;
 
   const jsonLd: any = {
@@ -126,14 +118,16 @@ export default async function TourPage({ params }: Props) {
     jsonLd.performer = { '@type': 'Person', name: tour.guide.name };
   }
 
-  return (
-    <main className="print:bg-white print:text-slate-900">
+  <main className="print:bg-white print:text-slate-900">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // ✅ ИСПРАВЛЕНО
+        dangerouslySetInnerHTML={{ 
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
+        }}
       />
-      {/* ✅ isWished теперь всегда false при рендере на сервере. Кнопка вишлиста должна сама проверять статус на клиенте */}
-      <TourDetailsWrapper tour={tour} similarTours={similarTours} isWished={false} />
+      {/* ✅ ИЗМЕНЕНО: Передаем similarToursPromise */}
+      <TourDetailsWrapper tour={tour} similarToursPromise={similarToursPromise} isWished={false} />
     </main>
-  );
+
 }

@@ -6,7 +6,6 @@ import { X, Send, User, Phone, AtSign, MessageSquare, Briefcase, Heart, Star, Te
 import { clsx } from 'clsx';
 import { submitInquiry } from '@/features/inquiries/actions';
 import { InquiryInput } from '@/features/inquiries/schema';
-// ✅ Подключено серверное действие для получения данных из БД
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 type TabType = 'TOUR' | 'HR' | 'BLOG' | 'B2B' | 'REVIEW' | 'HELP';
@@ -32,6 +31,64 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
   const [formData, setFormData] = useState<any>({});
   const honeypotRef = useRef<HTMLInputElement>(null);
+  
+  // ✅ РЕФ ДЛЯ МОДАЛКИ (Focus Trap)
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // ✅ ЭФФЕКТ ДЛЯ КЛАВИАТУРЫ (Escape + Focus Trap)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Закрытие по Escape
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      // Ловушка фокуса по Tab
+      if (e.key === 'Tab') {
+        if (!modalRef.current) return;
+        
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) { // Shift + Tab
+          if (document.activeElement === firstElement || document.activeElement === document.body) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else { // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    // Фокусируем первый элемент (кнопку закрытия) при открытии
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]):not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) focusable[0].focus();
+      }
+    }, 100);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,13 +96,11 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
         setStatus('idle');
         document.body.style.overflow = 'hidden';
 
-        // ✅ Исправлено: Предзаполнение из MemberProfile (БД)
         getMyProfileAction().then(profile => {
           if (profile) {
             setFormData({
               name: profile.name || '',
               phone: profile.phone || '',
-              // Приоритет соцсетей для связи
               social: profile.telegram || profile.instagram || profile.email || ''
             });
           } else {
@@ -90,11 +145,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
       setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
-  // ✅ Функция для авто-растягивания текстовых полей
-const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
+  const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.currentTarget;
-    target.style.height = 'auto'; // Сбрасываем высоту, чтобы узнать реальный размер
-    target.style.height = `${target.scrollHeight}px`; // Ставим высоту по контенту
+    target.style.height = 'auto'; 
+    target.style.height = `${target.scrollHeight}px`; 
   };
 
   if (!isOpen) return null;
@@ -103,43 +157,42 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       
       <div
+        ref={modalRef} // ✅ ДОБАВЛЕН REF ДЛЯ ФОКУСА
         role="dialog" aria-modal="true" aria-labelledby="modal-contact-title" 
         className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-t-[2rem] md:rounded-3xl shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-300"
       >
-        {/* Язычок для мобилки (декор) */}
         <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-1 md:hidden" />
 
-        {/* ✅ HEADER: Теперь тут только заголовок и крестик */}
         <div className="p-5 md:p-6 border-b border-white/5 bg-slate-900 z-10 shrink-0">
            <div className="flex justify-between items-center">
               <h3 id="modal-contact-title" className="text-white font-black text-2xl md:text-3xl tracking-tight">Центр связи</h3>
-              <button onClick={onClose} aria-label="Закрыть" className="p-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={onClose} aria-label="Закрыть модальное окно" className="p-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
                   <X size={20}/>
               </button>
            </div>
         </div>
 
-        {/* BODY */}
         <div className="p-5 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-slate-900 flex flex-col">
            {status === 'success' ? (
                <div className="h-full flex flex-col items-center justify-center text-center py-10 md:py-20 my-auto">
                    <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center text-teal-500 mb-6 border border-teal-500/30 animate-in zoom-in duration-500">
                        <CheckCircle2 size={40}/>
                    </div>
-                   <h3 className="text-2xl md:text-3xl font-black text-white mb-3">Успешно!</h3>
+                   <h3 className="text-2xl md:text-3xl font-black text-white mb-3" aria-live="polite">Успешно!</h3>
                    <p className="text-slate-300 text-base md:text-lg">Сообщение отправлено, мы скоро с вами свяжемся.</p>
                </div>
            ) : (
                <form onSubmit={handleSubmit} className="flex flex-col h-full">
                    
-                   {/* ✅ TABS: Перенесены в скроллируемую зону формы */}
-                   <div className="flex flex-wrap gap-2.5 mb-6 md:mb-8">
+                   <div className="flex flex-wrap gap-2.5 mb-6 md:mb-8" role="tablist" aria-label="Тип обращения">
                       {TABS.map(tab => {
                           const isActive = activeTab === tab.id;
                           return (
                               <button
                                 key={tab.id}
                                 type="button"
+                                role="tab"
+                                aria-selected={isActive}
                                 onClick={() => { setActiveTab(tab.id); setFormData((prev: any) => ({ name: prev.name, phone: prev.phone, social: prev.social })); }}
                                 className={clsx(
                                     "flex items-center gap-2 px-4 py-2.5 md:py-2 rounded-xl text-xs md:text-sm font-bold uppercase tracking-wide transition-all border",
@@ -148,26 +201,24 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                                         : "bg-slate-800/50 border-white/5 text-slate-300 hover:border-white/20 hover:text-white"
                                 )}
                               >
-                                  <tab.icon size={16} strokeWidth={isActive ? 2.5 : 2}/> {tab.label}
+                                  <tab.icon size={16} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" /> {tab.label}
                               </button>
                           );
                       })}
                    </div>
                    
-                   <div className="space-y-6 md:space-y-8 flex-1">
-                       {/* Context Banner */}
+                   <div className="space-y-6 md:space-y-8 flex-1" role="tabpanel">
                        {activeTab === 'TOUR' && tourContext && (
                            <div className="bg-teal-900/20 border border-teal-500/30 p-4 rounded-2xl flex items-center gap-3">
-                               <Tent size={20} className="text-teal-400 shrink-0"/>
+                               <Tent size={20} className="text-teal-400 shrink-0" aria-hidden="true" />
                                <span className="text-sm text-teal-100">Контекст заявки: <strong className="text-white font-bold">{tourContext}</strong></span>
                            </div>
                        )}
 
-                       {/* --- COMMON FIELDS --- */}
                        <div className="space-y-4">
                            <div className="relative group">
-                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
-                               <input required placeholder="Ваше имя" 
+                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors" aria-hidden="true" />
+                               <input required aria-label="Ваше имя" placeholder="Ваше имя" 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                    value={formData.name || ''} onChange={e => updateField('name', e.target.value)}
                                />
@@ -175,15 +226,15 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                            
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="relative group">
-                                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
-                                   <input placeholder="+373..." 
+                                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors" aria-hidden="true" />
+                                   <input aria-label="Номер телефона" placeholder="+373..." 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.phone || ''} onChange={e => updateField('phone', e.target.value)}
                                    />
                                </div>
                                <div className="relative group">
-                                   <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
-                                   <input placeholder="Telegram / Insta" 
+                                   <AtSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors" aria-hidden="true" />
+                                   <input aria-label="Telegram или Instagram" placeholder="Telegram / Insta" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all" 
                                        value={formData.social || ''} onChange={e => updateField('social', e.target.value)}
                                    />
@@ -191,13 +242,11 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                            </div>
                            <p className="text-[12px] text-slate-300 ml-2">* Укажите хотя бы один контакт для связи</p>
                        </div>
-
-                       {/* --- DYNAMIC FIELDS --- */}
                        
                        {/* HR */}
                        {activeTab === 'HR' && (
                            <div className="space-y-4 animate-in fade-in">
-                               <select required 
+                               <select required aria-label="Выберите желаемую должность"
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none appearance-none cursor-pointer transition-all"
                                    value={formData.role || ''} onChange={e => updateField('role', e.target.value)}
                                >
@@ -209,15 +258,13 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                                    <option value="photo">Фотограф / Контент</option>
                                    <option value="other">Другое</option>
                                </select>
-                               {/* ✅ Добавлен onInput и удален resize-none */}
-                               <textarea required placeholder="Ваш опыт (где работали, навыки, хобби)" 
+                               <textarea required aria-label="Ваш опыт работы" placeholder="Ваш опыт (где работали, навыки, хобби)" 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[80px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.experience || ''} 
                                    onInput={handleInputResize}
                                    onChange={e => updateField('experience', e.target.value)}
                                />
-                               {/* ✅ Добавлен onInput и удален resize-none */}
-                               <textarea required placeholder="Почему хотите именно к нам?" 
+                               <textarea required aria-label="Мотивация работать у нас" placeholder="Почему хотите именно к нам?" 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[80px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.motivation || ''} 
                                    onInput={handleInputResize}
@@ -238,7 +285,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                                        </button>
                                    ))}
                                </div>
-                               <textarea required placeholder="Опишите тему или дайте ссылку на Google Docs..." 
+                               <textarea required aria-label="Описание темы статьи" placeholder="Опишите тему или дайте ссылку на Google Docs..." 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.message || ''} 
                                    onInput={handleInputResize}
@@ -251,13 +298,13 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {activeTab === 'B2B' && (
                            <div className="space-y-4 animate-in fade-in">
                                <div className="relative group">
-                                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors"/>
-                                   <input placeholder="Название компании (необязательно)" 
+                                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors" aria-hidden="true" />
+                                   <input aria-label="Название компании" placeholder="Название компании (необязательно)" 
                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white text-base focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                        value={formData.company || ''} onChange={e => updateField('company', e.target.value)}
                                    />
                                </div>
-                               <textarea required placeholder="Опишите масштаб выезда: количество человек, пожелания, примерные даты..." 
+                               <textarea required aria-label="Описание корпоративного заказа" placeholder="Опишите масштаб выезда: количество человек, пожелания, примерные даты..." 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.message || ''} 
                                    onInput={handleInputResize}
@@ -269,14 +316,22 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {/* REVIEW */}
                        {activeTab === 'REVIEW' && (
                            <div className="space-y-4 animate-in fade-in">
-                               <div className="flex justify-center gap-3 bg-slate-950 py-4 rounded-2xl border border-slate-800">
+                               <div className="flex justify-center gap-3 bg-slate-950 py-4 rounded-2xl border border-slate-800" role="radiogroup" aria-label="Оценка">
                                    {[1, 2, 3, 4, 5].map(star => (
-                                       <button key={star} type="button" onClick={() => updateField('rating', star)} className="transition-transform hover:scale-110 p-1">
+                                       <button 
+                                            key={star} 
+                                            type="button" 
+                                            role="radio"
+                                            aria-checked={formData.rating === star}
+                                            aria-label={`Оценить на ${star} из 5`}
+                                            onClick={() => updateField('rating', star)} 
+                                            className="transition-transform hover:scale-110 p-1"
+                                        >
                                            <Star size={36} strokeWidth={1.5} className={formData.rating >= star ? "text-amber-400 fill-amber-400" : "text-slate-700"} />
                                        </button>
                                    ))}
                                </div>
-                               <textarea required placeholder="Ваши честные впечатления о туре..." 
+                               <textarea required aria-label="Текст отзыва" placeholder="Ваши честные впечатления о туре..." 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.message || ''} 
                                    onInput={handleInputResize}
@@ -288,7 +343,7 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        {/* TOUR / HELP */}
                        {(activeTab === 'TOUR' || activeTab === 'HELP') && (
                            <div className="animate-in fade-in">
-                               <textarea required 
+                               <textarea required aria-label={activeTab === 'TOUR' ? "Ваш вопрос" : "Описание проблемы"} 
                                    placeholder={activeTab === 'TOUR' ? "Напишите ваш вопрос который Вас интересует" : "Опишите ситуацию, с которой нужна помощь..."} 
                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white text-base min-h-[100px] overflow-hidden focus:bg-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all"
                                    value={formData.message || ''} 
@@ -299,7 +354,6 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                        )}
                    </div>
 
-                   {/* Honeypot (Hidden) */}
                    <input 
                      ref={honeypotRef} 
                      type="text" 
@@ -310,13 +364,12 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                      autoComplete="off" 
                    />
 
-                   {/* 🔥 КНОПКА ОТПРАВКИ И ТЕЛЕГРАМ */}
                    <div className="mt-8 pt-6 border-t border-white/5 shrink-0 flex flex-col gap-4">
                        <button 
                            disabled={status === 'loading'}
                            className="w-full py-4 md:py-5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black text-base md:text-lg uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] flex items-center justify-center gap-3 active:scale-[0.98]"
                        >
-                           {status === 'loading' ? <Loader2 className="animate-spin" size={24} /> : <><Send size={20}/> Отправить</>}
+                           {status === 'loading' ? <Loader2 className="animate-spin" size={24} aria-hidden="true" /> : <><Send size={20} aria-hidden="true" /> Отправить</>}
                        </button>
                        
                        <a 
@@ -324,9 +377,9 @@ const handleInputResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
                          target="_blank" 
                          rel="noopener noreferrer" 
                          className="text-xs md:text-sm font-bold text-slate-300 hover:text-teal-400 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mb-2" 
-                         aria-label="Наш Telegram"
+                         aria-label="Срочно? Написать в Telegram"
                        >
-                          <MessageSquare size={16}/> Срочно? Написать в Telegram
+                          <MessageSquare size={16} aria-hidden="true" /> Срочно? Написать в Telegram
                        </a>
                    </div>
                </form>

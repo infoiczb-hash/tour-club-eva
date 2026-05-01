@@ -1,10 +1,10 @@
+// src/features/tours/components/TourStats.tsx
 "use client";
 
 import React, { useState } from 'react';
 import { Ruler, Signal, Users, Backpack, Info, X } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { DIFFICULTY_DETAILS } from '../../constants/difficultyMapping';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface TourStatsProps {
   tour: Tour;
@@ -34,70 +34,57 @@ export default function TourStats({ tour }: TourStatsProps) {
     hard: 'Сложный',
     expert: 'Экстрим',
   };
-  
-  const difficultyLabel = difficultyMap[difficultyLevel] || tour.difficulty || '—';
-  const formatLabel = tour.tourFormat || tour.category?.title || 'Активный';
+
+  const difficultyLabel = difficultyMap[difficultyLevel] || 'Средний';
+  const formatLabel = tour.tourFormat || 'Поход';
 
   return (
-    <div className="flex flex-col gap-3 w-full relative z-20">
-      
-      {/* ВЕРХНИЙ РЯД: 3 короткие метрики в линию */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        
-        {/* 1. ДИСТАНЦИЯ */}
-        <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors flex-1 min-w-0">
+    <div className="flex flex-col gap-3 w-full">
+      {/* ВЕРХНИЙ РЯД: 3 колонки (Сложность, Дистанция, Формат) */}
+     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {/* Сложность с Tooltip */}
+        <div 
+          className="relative flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors cursor-help group z-50"
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          onClick={() => setShowTooltip(!showTooltip)}
+        >
+          <div className="text-teal-500 shrink-0"><Signal size={18} strokeWidth={2.5} /></div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1 flex items-center gap-1">
+              Сложность
+              <Info size={10} className="text-slate-500 group-hover:text-teal-400 transition-colors" />
+            </span>
+            <span className="text-white font-black text-sm leading-none truncate capitalize" title={difficultyLabel}>
+              {difficultyLabel}
+            </span>
+          </div>
+
+          {/* CSS Tooltip */}
+          {showTooltip && (
+            <div
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-3 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-200"
+            >
+              <p className="text-xs text-slate-300 font-medium leading-relaxed">
+                {tooltipText}
+              </p>
+              {/* Треугольник-указатель */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Дистанция */}
+        <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors">
           <div className="text-teal-500 shrink-0"><Ruler size={18} strokeWidth={2.5} /></div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1 truncate" title="Дистанция">Дистанция</span>
+            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1 truncate" title="Дистанция">Длина</span>
             <span className="text-white font-black text-sm leading-none truncate" title={tour.distance || '—'}>{tour.distance || '—'}</span>
           </div>
         </div>
 
-        {/* 2. СЛОЖНОСТЬ (с интерактивной подсказкой) */}
-        <div 
-          className="relative flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors flex-1 min-w-0 group cursor-pointer select-none"
-          onClick={() => setShowTooltip(!showTooltip)}
-        >
-          <div className="text-teal-500 shrink-0"><Signal size={18} strokeWidth={2.5} /></div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none truncate">Сложность</span>
-              <Info size={10} className={showTooltip ? "text-teal-400" : "text-slate-300 group-hover:text-teal-400 transition-colors"} />
-            </div>
-            <span className="text-white font-black text-sm leading-none capitalize truncate">{difficultyLabel}</span>
-          </div>
-
-          {/* ИНТЕРАКТИВНЫЙ TOOLTIP */}
-          <AnimatePresence>
-            {showTooltip && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute bottom-full left-0 md:left-1/2 md:-translate-x-1/2 mb-3 w-[260px] md:w-72 z-50 p-4 md:p-5 bg-slate-800 border border-teal-500/30 rounded-2xl shadow-2xl shadow-black/50 backdrop-blur-xl"
-                onClick={(e) => e.stopPropagation()} // Клик внутри тултипа его не закрывает
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[12px] font-black uppercase text-teal-400 tracking-wider">О сложности</span>
-                  <X 
-                    size={16} 
-                    className="text-slate-300 cursor-pointer hover:text-white transition-colors" 
-                    onClick={() => setShowTooltip(false)} 
-                  />
-                </div>
-                <p className="text-xs md:text-sm text-slate-200 leading-relaxed font-medium">
-                  {tooltipText}
-                </p>
-                {/* Декоративный хвостик тултипа */}
-                <div className="absolute -bottom-1.5 left-8 md:left-1/2 md:-translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45 border-r border-b border-teal-500/30" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* 3. ФОРМАТ ТУРА */}
-        <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors col-span-2 md:col-span-1 min-w-0">
+        {/* Формат */}
+        <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/80 transition-colors">
           <div className="text-teal-500 shrink-0"><Backpack size={18} strokeWidth={2.5} /></div>
           <div className="flex flex-col min-w-0">
             <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none mb-1 truncate" title="Формат">Формат</span>
@@ -115,7 +102,7 @@ export default function TourStats({ tour }: TourStatsProps) {
             Информация о группе
           </span>
           <span className="text-white font-bold text-sm leading-snug break-words">
-            {tour.groupInfo || `Размер группы: до ${tour.spots || 15} человек.`}
+            {tour.groupInfo || `Размер группы: до ${tour.spots || 8-20} человек`}
           </span>
         </div>
       </div>

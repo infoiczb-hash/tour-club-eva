@@ -4,6 +4,7 @@ import React from "react";
 import { Shield, LifeBuoy, Navigation, ArrowRight  } from 'lucide-react'; 
 // ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 const SAFETY_GUARANTEES = [
     {
@@ -63,6 +64,8 @@ export default function SupSafety() {
 
                  {/* ОБЕРТКА ДЛЯ ГОРИЗОНТАЛЬНОГО СКРОЛЛА */}
                  <div className="relative" ref={cardsView.ref}>
+                    <div className="mb-3">
+                                      <SwipeHint /> </div>
                      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                          {SAFETY_GUARANTEES.map((item, idx) => {
                              const Icon = item.icon;
@@ -98,11 +101,6 @@ export default function SupSafety() {
                              );
                          })}
                      </div>
-
-                     <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                              </div>
                  </div>
 
             </div>

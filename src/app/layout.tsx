@@ -143,6 +143,20 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
      <head>
+      {/* ✅ PRELOAD: Hero-изображение главной страницы */}
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_auto:good,w_828/v1771673823/hero-bg_cz1j25.webp"
+    // @ts-ignore — imagesrcset не в стандартных типах React, но браузер поддерживает
+    imagesrcset="
+      https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_auto:good,w_640/v1771673823/hero-bg_cz1j25.webp 640w,
+      https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_auto:good,w_1080/v1771673823/hero-bg_cz1j25.webp 1080w,
+      https://res.cloudinary.com/dwrei7k2z/image/upload/f_auto,q_auto:good,w_1200/v1771673823/hero-bg_cz1j25.webp 1920w
+    "
+    imagesizes="100vw"
+    fetchPriority="high"
+  />
   {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
       Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
   <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />

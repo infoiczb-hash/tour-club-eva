@@ -35,6 +35,8 @@ export default function KayakRules() {
         </div>
 
         <div className="relative">
+             <div className="mb-3">
+                   <SwipeHint /> </div>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {rules.map((rule, idx) => (
               <div
@@ -67,8 +69,7 @@ export default function KayakRules() {
               </div>
             ))}
           </div>
-         <SwipeHint />
-        </div>
+         </div>
 
         <div className="mt-6 md:mt-8 p-6 md:p-8 rounded-[2.5rem] bg-gradient-to-r from-teal-900/40 to-slate-900 border border-teal-500/20 flex flex-col md:flex-row items-center gap-6 md:gap-8 animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
           <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center text-slate-950 shrink-0 shadow-[0_0_20px_rgba(20,184,166,0.4)]">
