@@ -1,49 +1,12 @@
-"use client";
-
+// src/features/guides/components/GuidesEditorialList.tsx
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Instagram, Send, ArrowRight, Zap, Flame, 
-  Sparkles, Utensils, Activity, Heart, Compass, User 
-} from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { useModalStore } from '@/shared/store/useModalStore';	
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
-  Zap: { icon: Zap, color: "text-amber-400" },
-  Utensils: { icon: Utensils, color: "text-rose-400" },
-  Sparkles: { icon: Sparkles, color: "text-purple-400" },
-  Flame: { icon: Flame, color: "text-teal-400" },
-  Activity: { icon: Activity, color: "text-sky-400" },
-  Heart: { icon: Heart, color: "text-red-500" },
-  Compass: { icon: Compass, color: "text-emerald-400" },
-};
-
-interface Guide {
-  id: string;
-  slug: string;
-  name: string;
-  role: string;
-  image: string | null;       
-  actionImage: string | null; 
-  bio: string | null;
-  fullBio: string | null;
-  superpower: string | null;
-  experience: string | null;
-  tags: string[];
-  achievements: string[];
-  quotes: string[];
-  stats: any; 
-  instagram: string | null;
-  telegram: string | null;
-  order: number;
-}
+import { Instagram, Send, ArrowRight, Zap, Sparkles, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Guide } from "../types";
+import { ICON_MAP } from "../constants";
+import GuidesEditorialCTA from "./GuidesEditorialCTA";
 
 const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
     <div className="mb-2">
@@ -55,17 +18,16 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => (
           <span className="text-xs font-mono font-bold text-white">{value}%</span>
        </div>
        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          {/* Анимация ширины работает на сервере как 100% закрашенный бар */}
           <div 
              style={{ width: `${value}%` }} 
-             className={cn("h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out", colorClass.replace('text-', 'bg-'))}
+             className={cn("h-full rounded-full shadow-[0_0_10px_currentColor]", colorClass.replace('text-', 'bg-'))}
           />
        </div>
     </div>
 );
 
 export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }) {
-    const openContactModal = useModalStore((state) => state.openContactModal);
-    
     const displayGuides = Array.isArray(guides) 
         ? [...guides].sort((a, b) => (a.order || 0) - (b.order || 0)) 
         : [];
@@ -79,12 +41,11 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                         key={guide.id} 
                         guide={guide} 
                         index={index} 
-                        // FIX: priority только для первых 2, остальные lazy
                         priority={index < 2} 
                     />
                 ))}
 
-                <div className="relative mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+                <div className="relative mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both will-change-transform">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[300px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col items-center">
@@ -97,13 +58,8 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                         <p className="text-slate-300 font-medium text-base md:text-lg max-w-2xl leading-relaxed mb-10">
                             Мы всегда в поиске людей, влюбленных в природу: гидов, водителей, фотографов, поваров и технических помощников. 
                         </p>
-                        <button
-                            onClick={() => openContactModal(undefined, 'HR')}
-                            className="w-full sm:w-auto px-10 py-5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_30px_rgba(20,184,166,0.3)] hover:shadow-[0_0_40px_rgba(20,184,166,0.5)] active:scale-95 flex items-center justify-center gap-3"
-                        >
-                            <span>Подать заявку</span>
-                            <ArrowRight size={20} />
-                        </button>
+                        {/* Изолированный клиентский компонент */}
+                        <GuidesEditorialCTA />
                     </div>
                 </div>
 
@@ -123,10 +79,9 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
 
     return (
         <div
-            className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center relative animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center relative animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both will-change-transform"
             style={{ animationDelay: `${Math.min(index * 150, 600)}ms` }}
         >
-            {/* КОЛОНКА 1: ФОТО */}
             <div className={cn(
                 "lg:col-span-5 relative w-full aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5 bg-slate-900 group",
                 isReverse ? "lg:order-2" : "lg:order-1"
@@ -137,11 +92,9 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                         alt={guide.name}
                         fill
                         priority={priority}
-                        // FIX: явный lazy для гидов 3+ чтобы не грузить всю страницу сразу
                         loading={priority ? undefined : "lazy"}
                         className="object-cover transition-transform duration-1000 group-hover:scale-105"
                         sizes="(max-width: 1024px) 100vw, 50vw"
-                        // FIX: quality 65 — большие портреты, нужна детализация, но не максимум
                         quality={65}
                     />
                 ) : (
@@ -152,7 +105,6 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-60" />
             </div>
 
-            {/* КОЛОНКА 2: ИНФОРМАЦИЯ */}
             <div className={cn(
                 "lg:col-span-7 flex flex-col",
                 isReverse ? "lg:order-1" : "lg:order-2"
@@ -189,13 +141,7 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                         {parsedStats.map((stat, i) => {
                             const mapping = ICON_MAP[stat.icon] || ICON_MAP['Zap'];
                             return (
-                                <SkillBar
-                                    key={i}
-                                    label={stat.label}
-                                    value={stat.value}
-                                    icon={mapping.icon}
-                                    colorClass={mapping.color}
-                                />
+                                <SkillBar key={i} label={stat.label} value={stat.value} icon={mapping.icon} colorClass={mapping.color} />
                             );
                         })}
                     </div>
@@ -213,14 +159,10 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
                     {(guide.instagram || guide.telegram) && (
                         <div className="flex gap-3 justify-center w-full sm:w-auto">
                             {guide.instagram && (
-                                <a href={guide.instagram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 transition-all shadow-sm">
-                                    <Instagram size={20} />
-                                </a>
+                                <a href={guide.instagram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 transition-all shadow-sm"><Instagram size={20} /></a>
                             )}
                             {guide.telegram && (
-                                <a href={guide.telegram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 transition-all shadow-sm">
-                                    <Send size={20} className="ml-[-2px]" />
-                                </a>
+                                <a href={guide.telegram} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-900 border border-white/10 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 transition-all shadow-sm"><Send size={20} className="ml-[-2px]" /></a>
                             )}
                         </div>
                     )}
