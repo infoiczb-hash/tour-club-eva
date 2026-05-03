@@ -29,6 +29,52 @@ export type AppEvent =
   | 'WIN_BACK_OFFER'
   | 'CROSS_SELL_OFFER';
 
+export interface AppEventPayloadMap {
+  BOOKING_CREATED: { 
+    bookingId: string; shortId: string; tourTitle: string; tourDate: string; 
+    totalPrice: number; currency: string; paymentMethod: string; 
+   biletpmrLink?: string | null; apbQrLink?: string | null; guests?: any[];
+  tourSlug?: string | null;
+  };
+ PAYMENT_MODERATION_RECEIVED: { bookingId: string; shortId: string; tourTitle: string; tourSlug?: string | null; };
+  BOOKING_CONFIRMED: { 
+    bookingId: string; shortId: string; tourTitle: string; tourDate?: string; 
+    totalPrice: number; currency: string; meetingPoint?: string | null; 
+    meetingTime?: string | null; importantInfo?: string | null; 
+    checklist?: any[]; groupChatUrl?: string | null; guests?: any[] 
+  };
+PAYMENT_REJECTED: { bookingId: string; shortId: string; tourTitle: string; tourSlug?: string | null; };
+  BOOKING_CANCELLED: { bookingId: string; shortId: string; tourTitle: string };
+  PAYMENT_REMINDER_24H: { 
+    bookingId: string; shortId: string; tourTitle: string; totalPrice: number; 
+    currency: string; paymentMethod: string; biletpmrLink?: string | null; apbQrLink?: string | null 
+  };
+  BOOKING_AUTO_CANCELLED: { bookingId: string; shortId: string; tourTitle: string };
+  TOUR_TOMORROW_REMINDER: { 
+    bookingId: string; tourTitle: string; meetingPoint?: string | null; 
+    meetingTime?: string | null; paymentMethod: string; price: number; 
+    currency: string; groupChatUrl?: string | null 
+  };
+  NEW_DATES_PUBLISHED: { tourTitle: string; tourSlug: string };
+  WAITLIST_ALERT: { tourTitle: string; tourSlug: string };
+  C2C_TICKET_TRANSFER: { bookingId: string; tourTitle: string };
+  REVIEW_REQUEST: { bookingId: string; tourTitle: string };
+  CASHBACK_RECEIVED: { amount: number };
+  BROADCAST_MESSAGE: { message: string };
+  TOUR_3DAY_REMINDER: { 
+    bookingId: string; tourTitle: string; meetingPoint?: string | null; 
+    meetingTime?: string | null; paymentMethod: string; price: number; 
+    currency: string; groupChatUrl?: string | null 
+  };
+POST_TOUR_REVIEW: { 
+    bookingId: string; tourTitle: string; totalTours: number; level: string; 
+    nextLevelName?: string | null; toursToNext?: number | null;
+  };
+  REVIEW_PUBLISHED: { tourTitle: string; pointsAdded: number; newBalance: number };
+  WIN_BACK_OFFER: { lastTourTitle: string; promoCode: string; discount: number };
+  CROSS_SELL_OFFER: { lastTourTitle: string; categoryTransitionText: string };
+}
+
 export interface NotificationContent {
   inApp: {
     type: 'info' | 'success' | 'error' | 'warning' | 'bonus' | 'system';

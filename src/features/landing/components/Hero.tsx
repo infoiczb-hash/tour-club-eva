@@ -37,9 +37,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
             className="object-cover object-center"
             priority
             fetchPriority="high"
-            // ✅ ИСПРАВЛЕНИЕ: quality 85 сообщает нашему cloudinary-loader, 
-            // что это LCP-картинка. Он отключит q_auto:eco и даст ширину до 2560px.
-            quality={85}
+            quality={75}
             sizes="100vw"
           />
           {/* СЛОИ ЗАТЕМНЕНИЯ — сохранены полностью */}

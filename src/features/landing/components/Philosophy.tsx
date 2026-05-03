@@ -108,7 +108,7 @@ export default function Philosophy() {
        <div className="hidden md:block absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full" />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-20">
+     <div className="container relative z-20">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             
           {/* LEFT: STICKY CONTENT */}

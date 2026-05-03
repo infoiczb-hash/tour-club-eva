@@ -10,6 +10,9 @@ import { AppEvent } from '@/lib/notifications/templates';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify';
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
+// ✅ ИМПОРТ: Используем единый источник правды для расчета мест
+import { calculateTotalSpots } from '@/features/tours/lib/pricing';
+
 export type UpdateBookingStatusInput = {
   bookingId: string;
   newStatus: BookingStatus;
@@ -31,10 +34,13 @@ export const updateBookingStatusAction = withAdminAuth(
 
         if (!current) throw new Error('Бронирование не найдено');
 
-        const totalTickets = (current.ticketsAdult || 0) + 
-                             (current.ticketsChild || 0) + 
-                             (current.ticketsMember || 0) + 
-                             ((current.ticketsFamily || 0) * 3);
+        // ✅ ИСПРАВЛЕНО: Вместо хардкода (* 3) используем централизованную функцию
+        const totalTickets = calculateTotalSpots({
+          ticketsAdult: current.ticketsAdult ?? 0,
+          ticketsChild: current.ticketsChild ?? 0,
+          ticketsMember: current.ticketsMember ?? 0,
+          ticketsFamily: current.ticketsFamily ?? 0,
+        });
 
         // -------------------------------------------------------------
         // Логика пересчета мест (Возврат и Повторное списание)
@@ -95,7 +101,7 @@ export const updateBookingStatusAction = withAdminAuth(
         }
 
         if (eventId) {
-          await NotificationHub.dispatch({
+         await NotificationHub.dispatch({
             eventId,
             memberId: booking.memberId,
             data: {
@@ -105,7 +111,10 @@ export const updateBookingStatusAction = withAdminAuth(
               tourSlug: booking.tour.slug,
               totalPrice: booking.totalPrice,
               currency: booking.tour.currency,
-              paymentMethod: booking.paymentMethod,
+              
+              // ✅ ДОБАВИЛИ ФОЛБЭК: Если null, передаем строку 'unknown'
+              paymentMethod: booking.paymentMethod ?? 'unknown', 
+              
               meetingPoint: booking.tourDate?.meetingPoint || booking.tour.meetingPoint,
               meetingTime: booking.tourDate?.time,
               importantInfo: booking.tour.importantInfo,

@@ -157,7 +157,7 @@ export default function SupCatalog() {
                         : data.routes?.map(route => (
                             <div key={route.name} className="shrink-0 snap-center w-[75vw] md:w-auto flex flex-col p-4 bg-slate-900 rounded-xl border border-white/5 hover:border-teal-500/30 transition-colors md:min-w-[180px] shadow-sm">
                                 <span className="text-[14px] md:text-sm font-black text-white mb-1.5">{route.name}</span>
-                                <span className="text-[11px] md:text-xs text-slate-300 uppercase tracking-widest font-bold">
+                                <span className="text-xs md:text-xs text-slate-300 uppercase tracking-widest font-bold">
                                     {route.dist} <span className="text-teal-500 mx-1.5">•</span> {route.time}
                                 </span>
                             </div>
@@ -168,7 +168,7 @@ export default function SupCatalog() {
                 {activeTab === 'tours' && (
                       <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
                                   <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листай вбок</span>
+                                  <span className="text-xs font-bold uppercase tracking-widest">Листай вбок</span>
                               </div>
                 )}
             </div>

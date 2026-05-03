@@ -51,7 +51,7 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
             <p className="text-white font-black text-lg uppercase tracking-tight mb-1">
               Даты пока не объявлены
             </p>
-            <p className="text-slate-400 text-sm font-medium leading-relaxed">
+            <p className="text-slate-300 text-sm font-medium leading-relaxed">
               Сохраните тур — мы уведомим вас, как только появятся новые даты.
             </p>
           </div>
@@ -174,11 +174,11 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
 
                     <div className="flex items-center gap-4">
                         {isSoldOut ? (
-                            <div className="flex items-center gap-1.5 text-rose-500/80 font-bold text-[11px] uppercase tracking-widest bg-rose-500/10 px-2.5 py-1.5 rounded-md">
+                            <div className="flex items-center gap-1.5 text-rose-500/80 font-bold text-xs uppercase tracking-widest bg-rose-500/10 px-2.5 py-1.5 rounded-md">
                                 Мест нет
                             </div>
                         ) : (
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest bg-slate-950/50 border border-white/5 px-2.5 py-1.5 rounded-md">
+                            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest bg-slate-950/50 border border-white/5 px-2.5 py-1.5 rounded-md">
                                 <span className="relative flex h-1.5 w-1.5">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>

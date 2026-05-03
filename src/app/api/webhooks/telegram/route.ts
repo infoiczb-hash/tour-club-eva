@@ -157,20 +157,27 @@ export async function POST(req: Request) {
           ];
 
           // 3. 🔥 Уведомляем клиента через Единую Шину (Хаб)
-          if (booking.memberId) {
+       if (booking.memberId) {
             telegramTasks.push(NotificationHub.dispatch({
               eventId: 'BOOKING_CONFIRMED',
               memberId: booking.memberId,
               data: {
                 bookingId: booking.id,
                 shortId: booking.shortId,
-                tourTitle: booking.tour?.title,
-                tourSlug: booking.tour?.slug,
+                tourTitle: booking.tour?.title || 'Тур', 
+                
+                // ❌ tourSlug: booking.tour?.slug, — УДАЛИЛИ МУСОР
+                
+                // ✅ ПРОВЕРЬ, ЧТОБЫ БЫЛИ ЭТИ ДВА ПОЛЯ (Они нужны для чека в письме):
+                totalPrice: Number(booking.totalPrice),
+                currency: booking.tour?.currency ?? 'RUB',
+                
                 meetingPoint: booking.tourDate?.meetingPoint || booking.tour?.meetingPoint,
                 meetingTime: booking.tourDate?.time,
                 importantInfo: booking.tour?.importantInfo
               }
             }));
+          
           } else if (booking.payerTgChatId) {
             // 🔥 РЕШЕНИЕ 3: Красивое сообщение для "Гостей" (без аккаунта)
             const meetingInfo = booking.tourDate?.meetingPoint || booking.tour?.meetingPoint || 'Будет уточнено гидом';

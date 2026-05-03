@@ -34,7 +34,7 @@ export default function TourDetailsWrapper({ tour, similarToursPromise, isWished
       <TourStickyNav />
 
       {/* Основной контент */}
-      <div className="container mx-auto px-4 relative z-10 mt-6 md:mt-10 pb-24">
+      <div className="container relative z-10 mt-6 md:mt-10 pb-24">
         
         {/* ✅ ИСПРАВЛЕНО: Убрали items-start. Теперь колонки тянутся на всю высоту друг друга! */}
         <div className="grid lg:grid-cols-12 gap-8">

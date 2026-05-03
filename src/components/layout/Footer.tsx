@@ -1,8 +1,11 @@
 import Link from 'next/link';
-import { Instagram, Send, Mail, Phone, MessageCircle } from "lucide-react";
+import { Instagram, Send, Mail, Phone } from "lucide-react";
 import ClientButtons from '@/features/footer/ClientButtons';
 import SocialLink from '@/features/footer/SocialLink';
 import AnimatedHeart from '@/features/footer/AnimatedHeart';
+
+// ✅ ИСПРАВЛЕНИЕ 1: Константа вычисляется один раз при инициализации модуля
+const CURRENT_YEAR = new Date().getFullYear();
 
 export const Footer = () => {
   // 1. Единый стиль для ссылок с плавной анимацией подчеркивания слева направо
@@ -19,7 +22,7 @@ export const Footer = () => {
       {/* КОНТЕНТ */}
       <div className="container relative z-10 mx-auto px-5 pt-12 pb-[calc(20px+env(safe-area-inset-bottom))]">
         
-        {/* Основная сетка: разделили на 3 равные колонки для баланса (4+4+4 = 12) */}
+        {/* Основная сетка */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-12">
           
           {/* БЛОК 1: БРЕНД И КОНТАКТЫ */}
@@ -51,45 +54,29 @@ export const Footer = () => {
             <div className="flex gap-3 mt-1">
               <SocialLink href="https://instagram.com/evaturclub" icon={<Instagram size={18} />} label="Instagram" aria-label="Наш Instagram" />
               <SocialLink href="https://t.me/evaturclub" icon={<Send size={18} />} label="Telegram" aria-label="Наш Telegram"/>
-                          </div>
+            </div>
           </div>
 
-          {/* БЛОК 2: НАВИГАЦИЯ (2 четкие колонки по 3 ссылки) */}
+          {/* БЛОК 2: НАВИГАЦИЯ */}
           <div className="md:col-span-4 flex justify-start md:justify-center">
              <nav className="flex gap-x-12 gap-y-5">
-                
                 {/* Левая колонка */}
                 <div className="flex flex-col gap-5">
-                    <Link href="/offer" className={linkStyles}>
-                        Оферта
-                    </Link> 
-                    <Link href="/faq" className={linkStyles}>
-                        FAQ    
-                    </Link>
-                    <Link href="/privacy" className={linkStyles}>
-                        Политика конфиденциальности 
-                    </Link>
+                    <Link href="/offer" className={linkStyles}>Оферта</Link> 
+                    <Link href="/faq" className={linkStyles}>FAQ</Link>
+                    <Link href="/privacy" className={linkStyles}>Политика конфиденциальности</Link>
                 </div>
-
                 {/* Правая колонка */}
                 <div className="flex flex-col gap-5">
-                    <Link href="/directions" className={linkStyles}>
-                        Направления Клуба
-                    </Link>
-                    <Link href="/fun" className={linkStyles}>
-                        Тесты и квизы
-                    </Link>
-                    <Link href="/blog" className={linkStyles}>
-                        Блог клуба
-                    </Link>
+                    <Link href="/directions" className={linkStyles}>Направления Клуба</Link>
+                    <Link href="/fun" className={linkStyles}>Тесты и квизы</Link>
+                    <Link href="/blog" className={linkStyles}>Блог клуба</Link>
                 </div>
-
              </nav>
           </div>
 
-          {/* БЛОК 3: CTA (Кнопки) */}
+          {/* БЛОК 3: CTA */}
           <div className="md:col-span-4 flex flex-col items-start md:items-end justify-start">
-             {/* 3. Жестко выстраиваем кнопки по горизонтали */}
              <div className="flex flex-row flex-wrap items-center gap-3 w-full md:w-auto">
                 <ClientButtons />
              </div>
@@ -100,7 +87,8 @@ export const Footer = () => {
         {/* НИЖНИЙ КОЛОНТИТУЛ */}
         <div className="border-t border-white/10 pt-5 flex flex-col md:flex-row justify-between items-center gap-3 text-center md:text-left">
            <p className="text-[12px] text-white/80 font-bold uppercase tracking-wider">
-             © {new Date().getFullYear()} Турклуб «Эва» • ИП САНДУ Р.С.
+             {/* ✅ ИСПОЛЬЗУЕМ КОНСТАНТУ */}
+             © {CURRENT_YEAR} Турклуб «Эва» • ИП САНДУ Р.С.
            </p>
            
            <p className="text-[14px] text-white/80 font-normal flex items-center justify-center gap-1.5">

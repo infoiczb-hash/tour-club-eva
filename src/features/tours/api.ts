@@ -151,6 +151,7 @@ export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
       ? {
           id: item.guide.id,
           name: item.guide.name,
+          slug: item.guide.slug, 
           image: item.guide.image,
           role: item.guide.role,
           instagram: item.guide.instagram,

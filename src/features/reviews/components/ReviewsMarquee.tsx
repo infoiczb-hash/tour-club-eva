@@ -1,12 +1,10 @@
-// src/features/reviews/components/ReviewsMarquee.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ArrowRight } from 'lucide-react';
+import { CheckCheck, MessageCircle, Send, Instagram, Phone, ShieldCheck, Tags, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
-import SwipeHint from '@/shared/ui/SwipeHint';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,11 +38,11 @@ const CATEGORY_MAP: Record<string, { label: string, colorClass: string }> = {
 };
 
 const FALLBACK_REVIEWS: Review[] = [
-  { id: '1', name: "Ольга М.", text: "Это был лучший сплав в моей жизни! Организация на высоте 🔥", source: 'viber', category: 'kayak', createdAt: new Date().toISOString() },
-  { id: '2', name: "Дмитрий К.", text: "Маршруты, которых нет на картах — это правда. Безопасность на 100% 🛶", source: 'tg', category: 'sup', createdAt: new Date().toISOString() },
-  { id: '3', name: "Анна С.", text: "Дети в восторге от лагеря, спасибо ЭВА! ❤️", source: 'instagram', category: 'kids', createdAt: new Date().toISOString() },
-  { id: '4', name: "Максим", text: "Гиды — просто космос. Знают каждую тропинку и историю.", source: 'tg', category: 'mountains', createdAt: new Date().toISOString() },
-  { id: '5', name: "Елена В.", text: "Вкусная еда на костре, гитара и полная перезагрузка. Вернусь!", source: 'instagram', category: 'general', createdAt: new Date().toISOString() },
+  { id: '1', name: "Ольга М.", text: "Это был лучший сплав в моей жизни! Организация на высоте 🔥", source: 'viber', category: 'kayak', createdAt: '2024-05-01T10:00:00.000Z' },
+  { id: '2', name: "Дмитрий К.", text: "Маршруты, которых нет на картах — это правда. Безопасность на 100% 🛶", source: 'tg', category: 'sup', createdAt: '2024-05-02T11:30:00.000Z' },
+  { id: '3', name: "Анна С.", text: "Дети в восторге от лагеря, спасибо ЭВА! ❤️", source: 'instagram', category: 'kids', createdAt: '2024-05-03T14:15:00.000Z' },
+  { id: '4', name: "Максим", text: "Гиды — просто космос. Знают каждую тропинку и историю.", source: 'tg', category: 'mountains', createdAt: '2024-05-04T09:45:00.000Z' },
+  { id: '5', name: "Елена В.", text: "Вкусная еда на костре, гитара и полная перезагрузка. Вернусь!", source: 'instagram', category: 'general', createdAt: '2024-05-05T18:20:00.000Z' },
 ];
 
 // --- CARD COMPONENT ---
@@ -87,26 +85,27 @@ const ReviewCard = ({ review }: { review: Review }) => {
             <span className="text-sm font-bold text-white leading-none">{review.name}</span>
             <div className={cn("flex items-center gap-1.5 mt-1.5 transition-colors duration-300", config.iconColor)}>
                {config.icon}
-               <span className="text-[12px] font-bold uppercase tracking-wider">{config.label}</span>
+               <span className="text-xs font-bold uppercase tracking-wider">{config.label}</span>
             </div>
           </div>
         </div>
 
-        {/* CATEGORY BADGE */}
-        <div className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-widest", catConfig.colorClass)}>
-            <Tags size={10} strokeWidth={2.5} />
+        {/* CATEGORY BADGE - ✅ ИСПРАВЛЕНИЕ: text-[9px] заменен на text-[10px] md:text-xs */}
+        <div className={cn("inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] md:text-xs font-bold uppercase tracking-widest", catConfig.colorClass)}>
+            <Tags size={12} strokeWidth={2.5} />
             {catConfig.label}
         </div>
       </div>
 
       {/* BODY */}
-      <p className="text-[14px] text-slate-300 leading-relaxed font-medium mb-5 group-hover:text-white transition-colors duration-300 flex-1">
+      <p className="text-sm text-slate-300 leading-relaxed font-medium mb-5 group-hover:text-white transition-colors duration-300 flex-1">
         {review.text}
       </p>
 
       {/* FOOTER */}
       <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-        <span className="text-[11px] font-mono text-slate-300 transition-colors">
+        {/* ✅ ИСПРАВЛЕНИЕ: text-[11px] заменен на text-xs */}
+        <span className="text-xs font-mono text-slate-400 transition-colors">
             {time}
         </span>
         
@@ -137,6 +136,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
 
   // --- DRAG TO SCROLL LOGIC ---
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const containerOffsetRef = useRef<number>(0); // ✅ Кэш для offsetLeft (предотвращает Forced Reflow)
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeftPos, setScrollLeftPos] = useState(0);
@@ -144,7 +144,9 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
     setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    // Кэшируем позицию контейнера один раз при нажатии
+    containerOffsetRef.current = scrollContainerRef.current.offsetLeft;
+    setStartX(e.pageX - containerOffsetRef.current);
     setScrollLeftPos(scrollContainerRef.current.scrollLeft);
   };
 
@@ -154,35 +156,19 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // Скорость прокрутки
+    // ✅ Используем закэшированное значение вместо чтения DOM (0 Layout Thrashing)
+    const x = e.pageX - containerOffsetRef.current;
+    const walk = (x - startX) * 1.5; 
     
-    // Временно отключаем smooth скролл во время перетаскивания для мгновенного отклика
     scrollContainerRef.current.style.scrollBehavior = 'auto';
     scrollContainerRef.current.scrollLeft = scrollLeftPos - walk;
     scrollContainerRef.current.style.scrollBehavior = 'smooth';
   };
 
-  // ✅ ДОБАВЛЕНО: Функции для управления каруселью с клавиатуры
-  const scroll = (direction: 'left' | 'right') => {
+  // ✅ ИСПРАВЛЕНИЕ: Кнопки навигации для десктопа
+  const scrollByAmount = (amount: number) => {
     if (scrollContainerRef.current) {
-      // Ширина карточки (380px) + gap (24px)
-      const scrollAmount = window.innerWidth > 768 ? 404 : 320; 
-      scrollContainerRef.current.scrollBy({
-        left: direction === 'right' ? scrollAmount : -scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      scroll('left');
-    }
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      scroll('right');
+      scrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
     }
   };
 
@@ -213,10 +199,9 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
             </div>
         </div>
 
-        {/* ФИЛЬТРЫ КАТЕГОРИЙ В ДВА ЭТАЖА */}
+        {/* ФИЛЬТРЫ КАТЕГОРИЙ */}
         {availableCategories.length > 1 && (
             <div className="flex flex-col gap-4 md:gap-5">
-                {/* 1 ЭТАЖ: Сброс (Все отзывы) */}
                 <div className="flex items-center">
                     <button
                         onClick={() => setActiveCategory('all')}
@@ -231,7 +216,6 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                     </button>
                 </div>
 
-                {/* 2 ЭТАЖ: Конкретные направления */}
                 <div className="flex gap-2 md:gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {availableCategories.map(catId => {
                         const catInfo = CATEGORY_MAP[catId] || CATEGORY_MAP.general;
@@ -256,15 +240,31 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
 
       </div>
 
-      {/* --- CARDS CONTAINER С DRAG TO SCROLL --- */}
-      <div className="relative flex flex-col gap-8">
+      {/* --- CARDS CONTAINER С DRAG TO SCROLL И КНОПКАМИ --- */}
+      <div className="relative flex flex-col gap-8 group/slider">
+         
          {/* Fade Edges (Desktop only) */}
          <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
          <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
+         {/* ✅ ИСПРАВЛЕНИЕ: Кнопки-стрелки для десктопа */}
+         <button 
+            onClick={() => scrollByAmount(-400)} 
+            aria-label="Прокрутить влево"
+            className="hidden md:flex opacity-0 group-hover/slider:opacity-100 absolute left-8 top-1/2 -translate-y-1/2 z-30 w-14 h-14 items-center justify-center rounded-full bg-slate-800/80 backdrop-blur-md border border-white/10 text-white hover:bg-teal-600 hover:border-teal-500 transition-all shadow-xl hover:scale-110"
+         >
+            <ChevronLeft size={28} />
+         </button>
+         
+         <button 
+            onClick={() => scrollByAmount(400)} 
+            aria-label="Прокрутить вправо"
+            className="hidden md:flex opacity-0 group-hover/slider:opacity-100 absolute right-8 top-1/2 -translate-y-1/2 z-30 w-14 h-14 items-center justify-center rounded-full bg-slate-800/80 backdrop-blur-md border border-white/10 text-white hover:bg-teal-600 hover:border-teal-500 transition-all shadow-xl hover:scale-110"
+         >
+            <ChevronRight size={28} />
+         </button>
+
          <div className="relative">
-            <div className="mb-3">
-                  <SwipeHint /> </div>
              <div 
                 ref={scrollContainerRef}
                 key={activeCategory}
@@ -275,10 +275,9 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                 onMouseLeave={handleMouseLeave}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
-                onKeyDown={handleKeyDown} // ✅ ДОБАВЛЕН ОБРАБОТЧИК КЛАВИАТУРЫ
                 style={{ WebkitOverflowScrolling: 'touch' }}
                 className={cn(
-                    "flex gap-4 md:gap-6 px-4 md:px-0 overflow-x-auto hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500",
+                    "flex gap-4 md:gap-6 px-4 md:px-32 overflow-x-auto hide-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl w-full pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500",
                     isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab snap-x snap-mandatory"
                 )}
               >
@@ -286,7 +285,13 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
                   <ReviewCard key={`${review.id}-${i}`} review={review} />
                 ))}
               </div>
-          </div>
+
+           {/* ПОДСКАЗКА ДЛЯ СКРОЛЛА */}
+           <div className="flex md:hidden items-center gap-2 mb-4 text-slate-400 pl-4">
+              <ArrowRight size={16} className="text-teal-500 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest">Листайте вбок</span>
+           </div>
+         </div>
       </div>
 
     </section>

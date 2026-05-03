@@ -147,7 +147,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
 
       <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 md:blur-[120px] rounded-full pointer-events-none opacity-60" />
 
-      <div className="container mx-auto px-4 max-w-7xl relative z-10">
+      <div className="container relative z-10">
         
         {/* --- HEADER --- */}
         <div className="mb-8 md:mb-14">

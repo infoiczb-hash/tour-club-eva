@@ -64,18 +64,20 @@ export async function GET(req: Request) {
       if (!isSent) continue;
 
       notificationPromises.push(
-        NotificationHub.dispatch({
+    NotificationHub.dispatch({
           eventId,
           memberId: booking.memberId,
           data: {
             bookingId: booking.id,
             tourTitle: booking.tour.title,
-            meetingPoint: booking.tourDate.meetingPoint || booking.tour.meetingPoint,
+            meetingPoint: (booking.tourDate.meetingPoint || booking.tour.meetingPoint) ?? 'Уточняется гидом',
             meetingTime: booking.tourDate.time,
-            paymentMethod: booking.paymentMethod,
-            totalPrice: booking.totalPrice,
-            currency: booking.tour.currency,
-            checklist: booking.tour.checklist,
+            paymentMethod: booking.paymentMethod ?? 'unknown',
+            price: Number(booking.totalPrice),
+            currency: booking.tour.currency ?? 'RUB',
+            
+            // ❌ checklist: booking.tour.checklist, — УДАЛИЛИ МУСОР
+            
             groupChatUrl: booking.tourDate.groupChatUrl
           }
         })

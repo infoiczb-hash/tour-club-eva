@@ -83,10 +83,10 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
       <article
         className={cn(
           "relative flex flex-col h-full rounded-[2rem] overflow-hidden transition-all duration-500",
-          "bg-[#0d131a] border border-white/5",
+          "bg-[#0d131a] border-2 border-white/10", // ✅ ИСПРАВЛЕНО: border-2 для четкого контура
           isHighlighted
-            ? "shadow-[0_0_30px_rgba(245,158,11,0.08)] hover:border-amber-500/50"
-            : "hover:border-teal-500/40 hover:shadow-2xl hover:shadow-teal-900/20",
+            ? "shadow-[0_0_30px_rgba(245,158,11,0.1)] hover:border-amber-500/60"
+            : "hover:border-teal-500/60 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4),0_0_20px_rgba(20,184,166,0.2)]", // ✅ ИСПРАВЛЕНО: усиленная тень и рамка при наведении
           "hover:-translate-y-2"
         )}
       >
@@ -103,14 +103,14 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {/* Легкий градиент снизу для плавного перехода в темный блок */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d131a] via-transparent to-slate-950/40" />
   
-          {/* ✅ ИСПРАВЛЕНО: Эти элементы теперь находятся ВНУТРИ контейнера картинки */}
           {/* Бейдж категории */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
             <div className={cn(
               "flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm min-w-0",
               typeStyle.bg, typeStyle.border
             )}>
-              <span className={cn("text-[12px] sm:text-xs font-black uppercase tracking-wider truncate", typeStyle.text)}>
+              {/* ✅ ИСПРАВЛЕНО: text-xs (не менее 12px) */}
+              <span className={cn("text-xs font-black uppercase tracking-wider truncate", typeStyle.text)}>
                 {displayLabel}
               </span>
             </div>
@@ -121,7 +121,8 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
                 {!label.includes('🔥') && !label.includes('✨') && (
                   <Flame size={14} strokeWidth={2.5} />
                 )}
-                <span className="text-[12px] sm:text-xs font-black uppercase tracking-wider">{label}</span>
+                {/* ✅ ИСПРАВЛЕНО: text-xs */}
+                <span className="text-xs font-black uppercase tracking-wider">{label}</span>
               </div>
             )}
           </div>
@@ -131,18 +132,18 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             <div className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-md shadow-lg",
               isHighlighted
-                ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
-                : "bg-slate-900/60 border-white/10 text-teal-400"
+                ? "bg-amber-500/20 border-amber-500/40 text-amber-400"
+                : "bg-slate-900/80 border-white/20 text-teal-400" // ✅ ИСПРАВЛЕНО: больше контраста для бордера
             )}>
               <Calendar size={14} strokeWidth={2.5} />
               <span suppressHydrationWarning className={cn(
-                  "text-[12px] sm:text-sm font-black uppercase tracking-wider",
-                  isPast && "text-slate-300"
+                  "text-xs sm:text-sm font-black uppercase tracking-wider", // ✅ ИСПРАВЛЕНО: text-xs минимум
+                  isPast && "text-slate-400"
               )}>
                  {isPast ? "Завершен" : dateStr}
               </span>
               {hasMoreDates && !isPast && (
-                <span className="text-[12px] sm:text-xs font-bold text-white/70 ml-1 border-b border-dashed border-white/30">+ другие даты</span>
+                <span className="text-xs font-bold text-white/90 ml-1 border-b border-dashed border-white/40">+ другие даты</span>
               )}
             </div>
           </div>
@@ -152,15 +153,16 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
         <div className="p-5 sm:p-6 flex flex-col flex-grow bg-[#0d131a]">
           
           {/* Локация и длительность */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">
+          {/* ✅ ИСПРАВЛЕНО: text-xs (вместо 11px) и text-slate-200 (вместо тусклого slate-300/400) */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">
             <div className="flex items-center gap-1.5">
-              <MapPin size={12} className="text-teal-600" strokeWidth={2.5} />
-              <span className="truncate max-w-[140px] sm:max-w-full text-slate-300">{location}</span>
+              <MapPin size={12} className="text-teal-500" strokeWidth={3} />
+              <span className="truncate max-w-[140px] sm:max-w-full text-slate-200">{location}</span>
             </div>
-            <div className="w-1 h-1 rounded-full bg-slate-700 shrink-0" />
+            <div className="w-1 h-1 rounded-full bg-slate-600 shrink-0" />
             <div className="flex items-center gap-1.5">
-              <Clock size={12} className="text-teal-600" strokeWidth={2.5} />
-              <span className="text-slate-300">{duration || '1 день'}</span>
+              <Clock size={12} className="text-teal-500" strokeWidth={3} />
+              <span className="text-slate-200">{duration || '1 день'}</span>
             </div>
           </div>
 
@@ -171,8 +173,9 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-5">
               {tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="flex items-center gap-1 text-[12px] sm:text-[11px] font-black uppercase tracking-widest text-slate-300 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                  <Hash size={10} strokeWidth={4} /> {tag}
+                // ✅ ИСПРАВЛЕНО: text-xs, контрастные рамки bg-white/10
+                <span key={i} className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-slate-200 bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                  <Hash size={12} strokeWidth={3} /> {tag}
                 </span>
               ))}
             </div>
@@ -180,16 +183,17 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
 
           {/* Тарифы */}
           <div className={cn("flex flex-wrap gap-2 mb-6 mt-auto", (!tags || tags.length === 0) && "mt-auto")}>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/5 text-[12px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+            {/* ✅ ИСПРАВЛЕНО: text-xs вместо 11px во всех тарифах */}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/20 text-xs font-bold text-slate-200 uppercase tracking-wider">
               Стандарт
             </span>
             {(priceMember ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-400 uppercase tracking-wider">
                 <Crown size={12} strokeWidth={2.5} /> Клубная
               </span>
             )}
             {(priceChild ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20 text-[12px] sm:text-[11px] font-bold text-pink-400 uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/30 text-xs font-bold text-pink-400 uppercase tracking-wider">
                 <Baby size={12} strokeWidth={2.5} /> Детский
               </span>
             )}
@@ -200,7 +204,8 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {/* Подвал с ценой и кнопкой */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Стоимость</span>
+              {/* ✅ ИСПРАВЛЕНО: text-slate-300 для контраста подписи */}
+              <span className="text-xs font-black text-slate-300 uppercase tracking-widest mb-1">Стоимость</span>
               <div className="flex items-baseline gap-1.5">
                 {(priceOld ?? 0) > Number(price) && (
                   <span className="text-xs font-bold text-rose-400/80 line-through decoration-rose-400/50 mr-1">{priceOld}</span>
@@ -208,17 +213,18 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
                 <span className="text-2xl sm:text-3xl font-black text-white leading-none tracking-tighter drop-shadow-md">
                   {Number(price).toLocaleString()}
                 </span>
-                <span className="text-[12px] sm:text-xs font-bold text-teal-400 uppercase tracking-wider">{currency || 'RUB'}</span>
+                <span className="text-xs font-black text-teal-400 uppercase tracking-wider ml-1">{currency || 'RUB'}</span>
               </div>
             </div>
             
+            {/* ✅ ИСПРАВЛЕНО: Увеличена кнопка и иконка для удобства нажатия на мобилках */}
             <div className={cn(
-              "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg group-hover:scale-110",
+              "w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl group-hover:scale-110",
               isHighlighted
-                ? "bg-amber-500 text-slate-900 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-                : "bg-teal-500 text-slate-900 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.4)]"
+                ? "bg-amber-500 text-slate-900 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.5)]"
+                : "bg-teal-500 text-slate-900 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.5)]"
             )}>
-              <ArrowRight size={20} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={24} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>

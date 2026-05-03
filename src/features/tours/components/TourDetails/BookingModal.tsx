@@ -6,7 +6,7 @@ import {
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
   AlertCircle, Users, LifeBuoy, CalendarDays,
-  CreditCard, Banknote, Globe, QrCode, Tag, Mail, Link
+  CreditCard, Banknote, Globe, QrCode, Tag, Mail,
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction, type BookingInput, type GuestInput } from '@/features/tours/actions/createBooking';
@@ -618,7 +618,7 @@ export default function BookingModal({
                                 setPromoError(null);
                               }} 
                               disabled={promoSuccess || isCheckingPromo}
-                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-400 disabled:opacity-50" 
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-300 disabled:opacity-50" 
                             />
                           </div>
                           {!promoSuccess ? (
@@ -879,7 +879,7 @@ export default function BookingModal({
                             <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
                             <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-sm text-slate-400 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
+                        <span className="text-sm text-slate-300 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
                     </button>
 
                     <button 
@@ -893,7 +893,7 @@ export default function BookingModal({
                             <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
                             <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[12px] text-slate-400 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
+                        <span className="text-[12px] text-slate-300 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
                     </button>
 
                     <div className="grid grid-cols-2 gap-3 mt-1 w-full">
@@ -908,7 +908,7 @@ export default function BookingModal({
                               <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
                               <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
                           </div>
-                          <span className="text-[12px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+                          <span className="text-[12px] text-slate-300 leading-tight">Оплата гиду на месте</span>
                       </button>
 
                       <button 
@@ -922,7 +922,7 @@ export default function BookingModal({
                               <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
                               <CreditCard size={16} className={`shrink-0 ml-1 ${paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} `} />
                           </div>
-                          <span className="text-[12px] text-slate-400 leading-tight truncate">BILETPMR/сервисы</span>
+                          <span className="text-[12px] text-slate-300 leading-tight truncate">BILETPMR/сервисы</span>
                       </button>
                     </div>
 
@@ -941,13 +941,21 @@ export default function BookingModal({
                   </div>
                 )}
 
-                {/* ✅ БЛОК СОГЛАСИЙ С ЖИВЫМИ ССЫЛКАМИ */}
-                <div className="space-y-3 pt-2 bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Юридическая информация:
-                  </p>
+              {/* ✅ БЛОК СОГЛАСИЙ (ЯРКИЙ ТЕКСТ И ПРАВИЛЬНЫЕ ССЫЛКИ) */}
+                            <div className="mt-2 bg-white/5 p-5 rounded-2xl border border-white/10">
                   
-                  <div className="space-y-3">
+                  {/* Заголовок и подсказка */}
+                  <div className="mb-4">
+                    <p className="text-xs font-black text-white uppercase tracking-widest">
+                      При бронировании вы соглашаетесь с:
+                    </p>
+                    <p className="text-[12px] text-amber-400/90 mt-1.5 flex items-center gap-1.5 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+                      Пожалуйста, поставьте отметку для согласия
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
                     {/* 1. Публичная оферта */}
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <div className="relative flex items-center justify-center mt-0.5 shrink-0">
@@ -957,12 +965,12 @@ export default function BookingModal({
                           onChange={(e) => setAgreedOffer(e.target.checked)} 
                           className="peer sr-only" 
                         />
-                        <div className="w-5 h-5 border-2 border-slate-600 rounded-lg flex items-center justify-center bg-slate-950 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all">
-                          <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                        <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+                          <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
                         </div>
                       </div>
-                      <span className="text-xs text-slate-300 leading-tight">
-                        Я ознакомлен и согласен с <Link href="/docs/offer" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Публичной офертой</Link> оказания услуг
+                      <span className="text-sm text-white leading-snug">
+                      <a href="/offer" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Публичной офертой оказания услуг</a>
                       </span>
                     </label>
 
@@ -975,16 +983,16 @@ export default function BookingModal({
                           onChange={(e) => setAgreedPrivacy(e.target.checked)} 
                           className="peer sr-only" 
                         />
-                        <div className="w-5 h-5 border-2 border-slate-600 rounded-lg flex items-center justify-center bg-slate-950 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all">
+                        <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
                           <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
                         </div>
                       </div>
-                      <span className="text-xs text-slate-300 leading-tight">
-                        Согласен с <Link href="/docs/privacy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Политикой обработки</Link> персональных данных
+                      <span className="text-sm text-white leading-snug">
+                      <a href="/docs/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Политикой обработки персональных данных</a>
                       </span>
                     </label>
 
-                    {/* 3. Правила сплава (Только для воды) */}
+             {/* 3. Правила сплава (Только для воды) */}
                     {showSpecificRules && (
                       <label className="flex items-start gap-3 cursor-pointer group animate-in fade-in slide-in-from-left-2">
                         <div className="relative flex items-center justify-center mt-0.5 shrink-0">
@@ -994,23 +1002,23 @@ export default function BookingModal({
                             onChange={(e) => setAgreedRules(e.target.checked)} 
                             className="peer sr-only" 
                           />
-                          <div className="w-5 h-5 border-2 border-slate-600 rounded-lg flex items-center justify-center bg-slate-950 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all">
+                          <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
                             <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
                           </div>
                         </div>
-                        <span className="text-xs text-slate-300 leading-tight">
-                          Я подтверждаю ознакомление с <Link href={specificRulesLink} target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">{specificRulesText}</Link>
+                        <span className="text-sm text-white leading-snug">
+                         <a href="/rules-kayaking" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">{specificRulesText}</a>
                         </span>
                       </label>
                     )}
                   </div>
                 </div>
 
+                {/* КНОПКА ОФОРМИТЬ */}
                 <button 
                   type="submit" 
-                  // ✅ ТЕПЕРЬ КНОПКА ВКЛЮЧАЕТСЯ ТОЛЬКО КОГДА ВСЕ ГАЛОЧКИ СТОЯТ
                   disabled={isLoading || !agreedOffer || !agreedPrivacy || (showSpecificRules && !agreedRules)} 
-                  className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:opacity-20 disabled:grayscale disabled:cursor-not-allowed text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(20,184,166,0.2)]"
+                  className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:grayscale-0 disabled:bg-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(20,184,166,0.2)]"
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin" size={20} />

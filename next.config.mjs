@@ -9,26 +9,22 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   reactStrictMode: true,
 
+  // ✅ ВНЕДРЕНО: Умный Tree-shaking для тяжелых библиотек
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'react-markdown', 'date-fns'],
+  },
+
   images: {
-    // ── СТРАТЕГИЯ FREE TIER: Кастомный лоадер берет всё на себя ──
     loader: 'custom',
     loaderFile: './src/lib/cloudinary-loader.ts',
-    
-    // Поддерживаемые форматы (используются браузером через Accept)
     formats: ['image/avif', 'image/webp'],
-    
-    // ЭКОНОМИЯ КРЕДИТОВ: Строго ограничиваем количество генерируемых ширин в srcset.
-    // Чем меньше цифр в этих массивах, тем меньше уникальных трансформаций создает Cloudinary.
-    deviceSizes: [640, 1080, 1920], // Оставили только 3 главных брейкпоинта (мобилка, планшет, десктоп)
-    imageSizes: [64, 128, 256, 384], // Убрали микро-размеры (16, 32), браузер отлично ужмет 64px
-    
-
-    // РАЗРЕШЕННЫЕ ДОМЕНЫ (Обязательно, чтобы Next.js не блокировал рендер <Image>)
+    deviceSizes: [640, 1080, 1920],
+    imageSizes: [64, 128, 256, 384],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'img.youtube.com' },
-      { protocol: 'https', hostname: 'images.unsplash.com' }, // ⚠️ Оставляем, пока в БД есть их ссылки!
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
 
@@ -52,13 +48,12 @@ const nextConfig = {
   },
 };
 
-// Экспортируем конфигурацию: сначала применяем bundleAnalyzer, затем Sentry
 export default withSentryConfig(
   withBundleAnalyzer(nextConfig),
   {
     silent: true,
-    org: "tc-eva",                 // ✅ ЖЕСТКО ЗАДАЛИ ОРГАНИЗАЦИЮ
-    project: "javascript-nextjs",  // ✅ ЖЕСТКО ЗАДАЛИ ПРОЕКТ
+    org: "tc-eva",
+    project: "javascript-nextjs",
   },
   {
     widenClientFileUpload: true,

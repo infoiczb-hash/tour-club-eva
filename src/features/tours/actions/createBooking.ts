@@ -509,9 +509,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           biletpmrLink: transactionResult.paymentLinks.biletpmrLink,
           apbQrLink: transactionResult.paymentLinks.apbQrLink,
           guests: data.guests,
-          name: data.name,
-          appliedDiscount: transactionResult.appliedDiscount,
-        }
+          }
       });
     }
 

@@ -197,7 +197,6 @@ async function handlePaymentSuccess(
           bookingId:    booking.id,
           shortId:      booking.shortId,
           tourTitle:    booking.tour.title,
-          tourSlug:     booking.tour.slug,
           totalPrice:   booking.totalPrice,
           currency:     booking.tour.currency,
           meetingPoint: booking.tourDate?.meetingPoint ?? booking.tour.meetingPoint,
@@ -256,9 +255,7 @@ async function handlePaymentFail(
         shortId:    booking.shortId,
         tourTitle:  booking.tour.title,
         tourSlug:   booking.tour.slug,
-        totalPrice: booking.totalPrice,
-        currency:   booking.tour.currency,
-      },
+        },
     });
   }
 }

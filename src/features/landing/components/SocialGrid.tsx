@@ -217,7 +217,7 @@ export default function SocialGrid() {
          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-teal-900/10 md:md:blur-[150px] pacity-50" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+    <div className="container relative z-10">
         
        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-6">

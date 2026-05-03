@@ -41,7 +41,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
       {/* 2. ГИД */}
       <div className="flex gap-4 items-center">
          {/* ✅ ИСПРАВЛЕНО: Добавлен класс relative для корректной работы fill */}
-         <div className="w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden bg-indigo-500/10 border border-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400 relative">
+         <div className="relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden bg-indigo-500/10 border border-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400">
             {guideSlug ? (
                <Link href={`/guides/${guideSlug}`} className="block w-full h-full relative">
                   {guideImage ? (
@@ -96,7 +96,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
                Маршрут
             </h3>
             <p className="text-white font-bold text-sm leading-snug break-words">
-               {tour.route|| 'По основным достопримечательностям'}
+               {tour.route|| 'не установлен'}
             </p>
          </div>
       </div>

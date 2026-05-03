@@ -19,7 +19,6 @@ interface BlogCategory {
   sortOrder: number;
 }
 
-// ✅ НОВЫЙ ИНТЕРФЕЙС: Легкий DTO-тип без поля content
 export interface BlogPreview extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
   tags?: string[];
   categoryId?: string | null;
@@ -41,11 +40,10 @@ export interface BlogPreview extends Omit<Blog, 'categoryId' | 'tags' | 'content
 }
 
 interface BlogFeedProps {
-  initialPosts: BlogPreview[]; // ✅ ИЗМЕНЕНО: Ожидаем легкие карточки
+  initialPosts: BlogPreview[]; 
   categories?: BlogCategory[];
 }
 
-// ✅ ДОБАВЛЕНО: Слушатель параметров для обхода деоптимизации SSR
 function ParamsListener({ onChange }: { onChange: (val: string) => void }) {
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -61,14 +59,12 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   const pathname = usePathname();
   const openContactModal = useModalStore((state) => state.openContactModal);
 
-  // ✅ ИСПРАВЛЕНО: Заменили прямое чтение searchParams на локальный стейт
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedAuthor, setSelectedAuthor] = useState("all");
 
   const formatDate = (date: Date | string) =>
     new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
-  // Кнопки фильтра — только активные категории из БД
   const displayCategories = useMemo(() => {
     const allBtn = { id: 'all', slug: 'all', label: 'Все' };
     const dbCats = categories
@@ -78,16 +74,14 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   }, [categories]);
 
   const handleCategoryClick = (slug: string) => {
-    setActiveCategory(slug); // Мгновенный отклик UI
+    setActiveCategory(slug); 
     
-    // Читаем параметры из window, чтобы не привязывать компонент к хуку Next.js
     const params = new URLSearchParams(window.location.search);
     if (slug === 'all') params.delete('category');
     else params.set('category', slug);
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Лейбл категории берётся только из БД.
   const getLabel = (post: BlogPreview): string => {
     if (post.categoryId) {
       const cat = categories.find(c => c.id === post.categoryId);
@@ -120,7 +114,6 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
 
   const isDefaultView = activeCategory === 'all';
 
-  // Логика "Выбор редакции" (топ-3 trending)
   const trendingPosts = sortedPosts.filter(post => post.is_trending);
   const regularPosts = sortedPosts.filter(post => !post.is_trending);
 
@@ -148,12 +141,15 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
       className="group flex flex-col bg-slate-900/40 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-500"
     >
       <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden bg-slate-800">
+        {/* ✅ ИСПРАВЛЕНО ДЛЯ LCP: Точные размеры и форсированный приоритет */}
         <Image
           src={post.image || '/placeholder.jpg'}
           alt={post.title}
           fill
           priority={priority}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          loading={priority ? undefined : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 48vw, 400px"
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
         <div className="absolute top-4 left-4 px-2.5 py-1 bg-slate-900/80 backdrop-blur-md rounded-lg text-[12px] font-black text-white uppercase tracking-widest border border-white/10">
@@ -213,51 +209,33 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   return (
     <div className="min-h-screen bg-[#0B1120] text-white pb-24">
       
-      {/* ✅ ДОБАВЛЕНО: Инъекция параметров URL без деоптимизации SSR */}
       <Suspense fallback={null}>
         <ParamsListener onChange={setActiveCategory} />
       </Suspense>
 
-      {/* HEADER */}
-      <div className="relative pt-24 pb-8 md:pt-32 md:pb-12 border-b border-white/5 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
-
-        <div className="container mx-auto max-w-5xl relative z-10 text-center px-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
-            <BookOpen size={12} className="text-teal-400" />
-            <span className="text-[14px] font-bold uppercase tracking-widest text-teal-400">База знаний</span>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl leading-[0.9] text-center mb-10 md:mb-14">
-            <span className="block font-light text-white tracking-tight">Полевой</span>
-            <span className="block font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-500">Журнал</span>
-          </h1>
-        </div>
-
-        {/* Динамические категории из БД */}
-        <div className="w-full overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="flex justify-start md:justify-center gap-2.5 px-4 min-w-max pb-2 md:pb-0 mx-auto max-w-5xl">
-            {displayCategories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => handleCategoryClick(cat.slug)}
-                aria-pressed={activeCategory === cat.slug}
-                aria-label={`Фильтр: ${cat.label}`}
-                className={cn(
-                  'px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border shrink-0',
-                  activeCategory === cat.slug
-                    ? 'bg-teal-400 text-slate-900 border-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.3)]'
-                    : 'bg-slate-800/50 border-white/5 text-slate-300 hover:text-white hover:bg-slate-800'
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+      {/* ✅ ОСТАВЛЕНО: Только вкладки категорий. Hero-блок вырезан и перенесен в page.tsx */}
+      <div className="w-full overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] border-b border-white/5 pb-4 pt-4 md:pt-8 md:pb-6">
+        <div className="flex justify-start md:justify-center gap-2.5 px-4 min-w-max pb-2 md:pb-0 mx-auto max-w-5xl">
+          {displayCategories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => handleCategoryClick(cat.slug)}
+              aria-pressed={activeCategory === cat.slug}
+              aria-label={`Фильтр: ${cat.label}`}
+              className={cn(
+                'px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border shrink-0',
+                activeCategory === cat.slug
+                  ? 'bg-teal-400 text-slate-900 border-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.3)]'
+                  : 'bg-slate-800/50 border-white/5 text-slate-300 hover:text-white hover:bg-slate-800'
+              )}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="container mx-auto max-w-6xl px-4 md:px-8 mt-8 md:mt-16">
+      <div className="container mx-auto max-w-6xl px-4 md:px-8 mt-8 md:mt-12">
 
         {/* ТОП-3: Выбор редакции */}
         {isDefaultView && top3Posts.length > 0 && (
@@ -268,7 +246,6 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {top3Posts.map((post, index) => (
-                // ✅ LCP-FIX: первая карточка грузится с priority
                 <PostCard key={post.id} post={post} priority={index === 0} />
               ))}
             </div>
@@ -333,36 +310,36 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           )}
         </div>
 
-   {/* CTA: Стать автором */}
-<button
-  type="button"
-  onClick={() => openContactModal('Стать автором блога', 'BLOG')}
-  aria-label="Стать автором блога — написать нам"
-  className="group relative w-full rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-teal-500/20 cursor-pointer hover:border-teal-500/50 transition-all duration-500 shadow-xl text-left"
->
-  <div className="absolute inset-0 bg-gradient-to-r from-teal-900/20 via-transparent to-slate-900/50" />
-  <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-    <div className="flex items-start md:items-center gap-5 md:gap-8">
-      <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500 group-hover:text-slate-900 text-teal-400 transition-all duration-500 group-hover:rotate-12">
-        <PenLine size={28} strokeWidth={1.5} />
-      </div>
-      <div>
-        <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
-          У вас есть тематическая статья?
-        </h3>
-        <p className="text-sm md:text-base text-slate-300 font-medium">
-          Станьте автором полевого журнала и поделитесь опытом с нашим клубом.
-        </p>
-      </div>
-    </div>
-    <div className="flex items-center gap-3 shrink-0 text-sm font-bold text-teal-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
-      <span>Написать нам</span>
-      <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center group-hover:translate-x-2 transition-transform duration-300">
-        <ArrowRight size={18} />
-      </div>
-    </div>
-  </div>
-</button>
+        {/* CTA: Стать автором */}
+        <button
+          type="button"
+          onClick={() => openContactModal('Стать автором блога', 'BLOG')}
+          aria-label="Стать автором блога — написать нам"
+          className="group relative w-full rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-teal-500/20 cursor-pointer hover:border-teal-500/50 transition-all duration-500 shadow-xl text-left"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-teal-900/20 via-transparent to-slate-900/50" />
+          <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-start md:items-center gap-5 md:gap-8">
+              <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500 group-hover:text-slate-900 text-teal-400 transition-all duration-500 group-hover:rotate-12">
+                <PenLine size={28} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-2">
+                  У вас есть тематическая статья?
+                </h3>
+                <p className="text-sm md:text-base text-slate-300 font-medium">
+                  Станьте автором полевого журнала и поделитесь опытом с нашим клубом.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 text-sm font-bold text-teal-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
+              <span>Написать нам</span>
+              <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center group-hover:translate-x-2 transition-transform duration-300">
+                <ArrowRight size={18} />
+              </div>
+            </div>
+          </div>
+        </button>
 
       </div>
     </div>

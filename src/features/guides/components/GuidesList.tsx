@@ -99,7 +99,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-teal-900/5 md:blur-[150px] rounded-full" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container relative z-10">
         
         {/* --- HEADER --- */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-8">

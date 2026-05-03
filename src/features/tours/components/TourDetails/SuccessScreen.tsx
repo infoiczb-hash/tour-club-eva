@@ -200,7 +200,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
 
         <button 
           onClick={onClose}
-          className="w-full py-3 text-slate-400 hover:text-slate-300 font-bold transition-colors text-[12px] uppercase tracking-[0.2em]"
+          className="w-full py-3 text-slate-300 hover:text-slate-300 font-bold transition-colors text-[12px] uppercase tracking-[0.2em]"
         >
           Закрыть окно
         </button>

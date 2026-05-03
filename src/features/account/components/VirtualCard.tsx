@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, MouseEvent } from 'react';
-import { motion } from 'framer-motion';
 import { QrCode as QrCodeIcon, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -38,7 +37,9 @@ export default function VirtualCard({
 }: VirtualCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [transformStyle, setTransformStyle] = useState('');
+  
   const cardRef = useRef<HTMLDivElement>(null);
+  const rectRef = useRef<DOMRect | null>(null); // ✅ Кэш для размеров карточки, чтобы избежать Forced Reflow
 
   const safeTours = totalTours || 0;
   const safeKm = totalKm || 0;
@@ -55,9 +56,17 @@ export default function VirtualCard({
     ? ((safeTours - currentConfig.min) / (nextConfig.min - currentConfig.min)) * 100
     : 100;
 
+  const handleMouseEnter = () => {
+    // ✅ Читаем геометрию ОДИН раз при наведении, избавляемся от синхронного перерасчета макета
+    if (cardRef.current) {
+      rectRef.current = cardRef.current.getBoundingClientRect();
+    }
+  };
+
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || isFlipped) return; 
-    const rect = cardRef.current.getBoundingClientRect();
+    if (!rectRef.current || isFlipped) return; 
+    
+    const rect = rectRef.current; // Берем размеры из кэша
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
@@ -71,6 +80,7 @@ export default function VirtualCard({
   };
 
   const handleMouseLeave = () => {
+    rectRef.current = null; // Очищаем кэш
     setTransformStyle(`perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`);
   };
 
@@ -82,13 +92,14 @@ export default function VirtualCard({
         style={{
           transform: isFlipped ? 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)' : transformStyle
         }}
+        onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <motion.div
-          animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="w-full h-full relative preserve-3d cursor-pointer shadow-2xl rounded-2xl"
+        {/* ✅ Использован чистый CSS + cubic-bezier для эффекта пружинки вместо framer-motion */}
+        <div
+          className="w-full h-full relative preserve-3d cursor-pointer shadow-2xl rounded-2xl transition-transform duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
+          style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
           {/* ЛИЦЕВАЯ СТОРОНА */}
@@ -98,7 +109,7 @@ export default function VirtualCard({
           )}>
             <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/20 blur-[50px] rounded-full pointer-events-none" />
-<div className="relative z-10 flex justify-between items-start">
+            <div className="relative z-10 flex justify-between items-start">
               <div className="flex flex-col">
                 <span className="text-white/80 text-xs font-bold uppercase tracking-[0.3em]">Турклуб</span>
                 <span className="text-white text-xl font-black tracking-tighter leading-none">ЭВА</span>
@@ -114,7 +125,7 @@ export default function VirtualCard({
               </div>
             </div>
 
-           <div className="relative z-10 flex justify-between items-end gap-4">
+            <div className="relative z-10 flex justify-between items-end gap-4">
               <div className="flex flex-col gap-1 min-w-0">
                 <span className="text-white/50 text-xs uppercase font-bold tracking-widest">Участник</span>
                 <span className="text-white text-lg md:text-xl font-black uppercase tracking-widest drop-shadow-md line-clamp-2 text-balance break-words leading-tight">
@@ -128,36 +139,36 @@ export default function VirtualCard({
             </div>
           </div>
 
-        {/* ОБОРОТНАЯ СТОРОНА */}
-        <div className={cn(
+          {/* ОБОРОТНАЯ СТОРОНА */}
+          <div className={cn(
             "absolute inset-0 w-full h-full rounded-2xl p-6 flex flex-col items-center justify-center overflow-hidden backface-hidden border rotate-y-180",
             "bg-ui-panel border-ui-border"
           )}>
             <div className="absolute inset-x-0 top-6 h-10 bg-black/40" />
 
-           <button
+            <button
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
               className="absolute top-4 right-4 p-1.5 bg-ui-border/50 hover:bg-ui-border rounded-full transition-colors text-ui-muted hover:text-ui-text z-20"
             >
               <X size={16} />
             </button>
-<div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
-  {/* Только QR участника клуба, больше никаких проверок! */}
-  <QRCode 
-    value={`https://evatur.club/admin/scan?m=${memberId}`}
-    size={150} 
-    level="M" 
-  />
-</div>
+            <div className="relative z-10 bg-white p-2.5 rounded-xl mt-8 mb-4 shadow-lg">
+              {/* Только QR участника клуба, больше никаких проверок! */}
+              <QRCode 
+                value={`https://evatur.club/admin/scan?m=${memberId}`}
+                size={150} 
+                level="M" 
+              />
+            </div>
 
-          <p className="text-ui-muted text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
+            <p className="text-ui-muted text-xs uppercase tracking-[0.2em] font-mono text-center font-bold">
               ID: {displayId}
             </p>
-           </div>
-        </motion.div>
+          </div>
+        </div>
       </div>
 
- <div className="mt-8 px-2 flex flex-col gap-4">
+      <div className="mt-8 px-2 flex flex-col gap-4">
         {nextConfig ? (
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between items-end">

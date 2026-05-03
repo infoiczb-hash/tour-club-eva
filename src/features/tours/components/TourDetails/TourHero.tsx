@@ -98,7 +98,7 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
    <div className="absolute top-24 left-4 md:left-8 z-20">
         <Link
           href="/tour"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all text-[11px] md:text-xs font-bold uppercase tracking-widest shadow-lg group"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all text-xs md:text-xs font-bold uppercase tracking-widest shadow-lg group"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           В каталог
@@ -110,7 +110,7 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
         <TourWishlistButton tourId={tour.id} initialIsWished={isWished} />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">
+      <div className="container relative z-10 pb-4 md:pb-8 pt-32 flex flex-col justify-end h-full">
         
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 md:space-y-6 max-w-5xl mt-10">
             <div className="flex flex-wrap gap-2 md:gap-3">

@@ -1,6 +1,5 @@
 // src/app/tour/[slug]/page.tsx
 import React from 'react';
-// import ReactDOM from 'react-dom'; // Удален, так как не используется
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getTourBySlug, getTours, getSimilarTours } from '@/features/tours/api'; 
@@ -70,7 +69,7 @@ export default async function TourPage({ params }: Props) {
   const tour = await getTourBySlug(decodedSlug);
   if (!tour) notFound();
 
-  // ✅ ИЗМЕНЕНО: Убрали await. Передаем Promise для Suspense.
+  // Promise передаём в Suspense через TourDetailsWrapper
   const similarToursPromise = getSimilarTours(tour.categoryId ?? null, tour.id, 3);
 
   const schemaImages = [tour.image, ...(tour.gallery || [])].filter(Boolean) as string[];
@@ -118,16 +117,16 @@ export default async function TourPage({ params }: Props) {
     jsonLd.performer = { '@type': 'Person', name: tour.guide.name };
   }
 
-  <main className="print:bg-white print:text-slate-900">
+  return (
+    // ✅ Жёстко задаём тёмный фон и белый текст — страница тура всегда тёмная
+    <main className="bg-slate-950 text-white min-h-screen print:bg-white print:text-slate-900">
       <script
         type="application/ld+json"
-        // ✅ ИСПРАВЛЕНО
         dangerouslySetInnerHTML={{ 
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
         }}
       />
-      {/* ✅ ИЗМЕНЕНО: Передаем similarToursPromise */}
       <TourDetailsWrapper tour={tour} similarToursPromise={similarToursPromise} isWished={false} />
     </main>
-
+  );
 }

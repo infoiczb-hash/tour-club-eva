@@ -8,7 +8,23 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
   ],
- theme: {
+  theme: {
+    // ✅ container — на уровне theme (не extend!), чтобы полностью переопределить дефолт
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1rem',    // px-4 на мобиле
+        sm: '1.5rem',       // px-6 на планшете
+        lg: '2rem',         // px-8 на десктопе
+      },
+      screens: {
+        sm:  '640px',
+        md:  '768px',
+        lg:  '1024px',
+        xl:  '1280px',
+        '2xl': '1280px',    // max-width фиксирован на 1280px — единый для всего сайта
+      },
+    },
     extend: {
       colors: {
         background: 'var(--background)',

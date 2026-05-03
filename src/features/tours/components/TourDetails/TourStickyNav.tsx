@@ -45,7 +45,7 @@ export default function TourStickyNav() {
         isVisible ? "translate-y-0" : "-translate-y-full"
       )}
     >
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+     <div className="container h-16 flex items-center justify-between">
 
         <button
           onClick={scrollToTop}
