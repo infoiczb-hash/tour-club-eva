@@ -28,7 +28,7 @@ export async function publishToTelegram(
   isPublic: boolean = false,
   options?: TelegramTopicOptions
 ) {
-  // ✅ СОХРАНЕНО ИЗ ОРИГИНАЛА: публичный канал использует отдельный бот
+  //   СОХРАНЕНО ИЗ ОРИГИНАЛА: публичный канал использует отдельный бот
   const token  = isPublic
     ? env.TELEGRAM_PUBLIC_BOT_TOKEN
     : env.TELEGRAM_BOT_TOKEN;
@@ -336,7 +336,7 @@ export async function sendToUserTelegram(chatId: string, text: string, linkUrl?:
   }
 }
 
-// ✅ СОХРАНЕНО ИЗ ОРИГИНАЛА: Advanced-функция для рассылок юзерам
+//   СОХРАНЕНО ИЗ ОРИГИНАЛА: Advanced-функция для рассылок юзерам
 export async function sendToUserTelegramAdvanced(
   chatId: string,
   text: string,

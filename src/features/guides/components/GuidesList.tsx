@@ -314,7 +314,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                          <h2 className="text-5xl lg:text-6xl font-black text-white leading-[0.85] tracking-tight">{guide.name}</h2>
                     </div>
 
-                    {/* ✅ ИСПРАВЛЕНИЕ: Убрали pb-24/32, так как футер теперь не sticky */}
+                    {/*   ИСПРАВЛЕНИЕ: Убрали pb-24/32, так как футер теперь не sticky */}
                     <div className="flex-1 overflow-y-auto pr-4 -mr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-4">
                         
                         {/* Суперсила и Теги */}
@@ -374,7 +374,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                             {guide.telegram && <SocialBtn href={guide.telegram} icon={Send} />}
                         </div>
 
-                        {/* ✅ ИСПРАВЛЕНИЕ: Кнопка перенесена внутрь скроллируемого блока */}
+                        {/*   ИСПРАВЛЕНИЕ: Кнопка перенесена внутрь скроллируемого блока */}
                         <div className="pt-6 border-t border-white/10">
                             <Link 
                                 href={`/tour`} // В будущем можно сделать: href={`/tour?guide=${guide.slug}`}

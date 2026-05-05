@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { 
   mockNotificationHubDispatch, 
   mockSendToTelegram,
-  mockResendEmailsSend // ✅ Добавили импорт мока Resend
+  mockResendEmailsSend //   Добавили импорт мока Resend
 } from '../../__mocks__/external-services';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 

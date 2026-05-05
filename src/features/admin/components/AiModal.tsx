@@ -35,7 +35,7 @@ export default function AiModal({ isOpen, onClose, onApply }: Props) {
   if (!isOpen) return null;
 
   return (
-    // ✅ ИСПРАВЛЕНИЕ: z-[100] гарантирует, что это окно будет ВЫШЕ формы создания тура (у которой z-50)
+    //   ИСПРАВЛЕНИЕ: z-[100] гарантирует, что это окно будет ВЫШЕ формы создания тура (у которой z-50)
     <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
       
       {/* Кликабельный оверлей для закрытия (по желанию) */}

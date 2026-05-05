@@ -114,7 +114,7 @@ export default function DirectionsClient() {
         {/* --- BENTO GRID --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 auto-rows-[300px] md:auto-rows-[340px]">
             
-            {/* ✅ ИСПРАВЛЕНО: Добавлен index для вычисления приоритета */}
+            {/*   ИСПРАВЛЕНО: Добавлен index для вычисления приоритета */}
             {DIRECTIONS.map((dir, index) => {
                 const Icon = dir.icon;
                 
@@ -133,7 +133,7 @@ export default function DirectionsClient() {
                             fill
                             className="object-cover opacity-60 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                             sizes={dir.isLarge ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 100vw, 33vw"}
-                            // ✅ ИСПРАВЛЕНО: priority получают и большие карточки (для десктопа) и первые 2 карточки (для мобилок)
+                            //   ИСПРАВЛЕНО: priority получают и большие карточки (для десктопа) и первые 2 карточки (для мобилок)
                             priority={dir.isLarge || index < 2} 
                         />
                         {/* ГРАДИЕНТ */}

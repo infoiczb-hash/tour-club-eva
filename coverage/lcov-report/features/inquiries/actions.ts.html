@@ -393,7 +393,7 @@ import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 &nbsp;
-// ✅ ДОБАВЛЕНА: Функция экранирования опасных символов
+//   ДОБАВЛЕНА: Функция экранирования опасных символов
 function escapeHtml(str: string | null | undefined): string {
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!str) <span class="cstat-no" title="statement not covered" >return "";</span>
   return str
@@ -404,7 +404,7 @@ function escapeHtml(str: string | null | undefined): string {
 }
 &nbsp;
 export async function submitInquiry(data: InquiryInput) {
-  // ✅ ДОБАВЛЕНО: Rate Limiting (защита от спама)
+  //   ДОБАВЛЕНО: Rate Limiting (защита от спама)
   try {
     const ip = await getClientIp();
     const { success: rateLimitSuccess } = await basicRateLimit.limit(ip);
@@ -496,7 +496,7 @@ export async function submitInquiry(data: InquiryInput) {
       validData.social ? `✈️ ${escapeHtml(validData.social)}` : null
     ].filter(Boolean).join('\n');
 &nbsp;
-    // ✅ ИСПРАВЛЕНИЕ: Экранируем весь пользовательский ввод
+    //   ИСПРАВЛЕНИЕ: Экранируем весь пользовательский ввод
     let tgMessage = `&lt;b&gt;${hashtags[validData.type]} от ${escapeHtml(validData.name)}&lt;/b&gt;\n\n${contactStr}\n\n`;
 &nbsp;
     if (validData.type === 'HR') {

@@ -6,7 +6,7 @@ import {
   LayoutGrid, Calendar as CalendarIcon, 
   Flame, Sparkles, Layers, Filter, X, Bell, ArrowRight,
   Compass, Map as MapIcon, Sun, Snowflake, TreePine, Bike, Footprints, MapPin, Anchor, Star, Waves,
-  TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby // ✅ ВСЕ ИКОНКИ НА МЕСТЕ
+  TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby //   ВСЕ ИКОНКИ НА МЕСТЕ
 } from 'lucide-react';
 import Link from 'next/link';
 import { TourPreview, TourDateItem } from '@/features/tours/types';
@@ -67,7 +67,7 @@ export default function ToursBrowser({
   
   const openContactModal = useModalStore((state) => state.openContactModal);
   
-  // ✅ ИСПРАВЛЕНО: Мгновенный стейт вместо зависимости от роутера Next.js
+  //   ИСПРАВЛЕНО: Мгновенный стейт вместо зависимости от роутера Next.js
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -307,7 +307,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                             </h3>
                         </div>
 
-                        {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
+                        {/*   УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
                         <div className="relative">
                               <div className="mb-3">
                                     <SwipeHint /> </div>
@@ -345,7 +345,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                             </h3>
                         </div>
 
-                        {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
+                        {/*   УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
                         <div className="relative">
                               <div className="mb-3">
                                     <SwipeHint /> </div>

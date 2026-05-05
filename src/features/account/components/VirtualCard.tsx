@@ -39,13 +39,13 @@ export default function VirtualCard({
   const [transformStyle, setTransformStyle] = useState('');
   
   const cardRef = useRef<HTMLDivElement>(null);
-  const rectRef = useRef<DOMRect | null>(null); // ✅ Кэш для размеров карточки, чтобы избежать Forced Reflow
+  const rectRef = useRef<DOMRect | null>(null); //   Кэш для размеров карточки, чтобы избежать Forced Reflow
 
   const safeTours = totalTours || 0;
   const safeKm = totalKm || 0;
   const displayId = memberId ? memberId.split('-')[0].toUpperCase() : 'ID_PENDING';
 
-  // ✅ БЕРЕМ УРОВНИ ИЗ ЕДИНОГО ИСТОЧНИКА ПРАВДЫ
+  //   БЕРЕМ УРОВНИ ИЗ ЕДИНОГО ИСТОЧНИКА ПРАВДЫ
   const currentConfig = getLevelConfig(safeTours);
   const currentLevelIndex = LEVELS_CONFIG.indexOf(currentConfig);
   const nextConfig = LEVELS_CONFIG[currentLevelIndex + 1];
@@ -57,7 +57,7 @@ export default function VirtualCard({
     : 100;
 
   const handleMouseEnter = () => {
-    // ✅ Читаем геометрию ОДИН раз при наведении, избавляемся от синхронного перерасчета макета
+    //   Читаем геометрию ОДИН раз при наведении, избавляемся от синхронного перерасчета макета
     if (cardRef.current) {
       rectRef.current = cardRef.current.getBoundingClientRect();
     }
@@ -96,7 +96,7 @@ export default function VirtualCard({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* ✅ Использован чистый CSS + cubic-bezier для эффекта пружинки вместо framer-motion */}
+        {/*   Использован чистый CSS + cubic-bezier для эффекта пружинки вместо framer-motion */}
         <div
           className="w-full h-full relative preserve-3d cursor-pointer shadow-2xl rounded-2xl transition-transform duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
           style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}

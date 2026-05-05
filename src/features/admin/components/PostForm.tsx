@@ -481,7 +481,7 @@ const handleAiText = async () => {
                          const data = res.data as unknown as { caption: string; slides: { title: string; text: string }[]; hashtags: string[] };
                          // Заменили data.text на data.caption
                          const finalPost = `${data.caption}\n\n${data.hashtags.map(h => `#${h}`).join(' ')}`;
-                         navigator.clipboard.writeText(finalPost).then(() => alert('✅ Copied!'));
+                         navigator.clipboard.writeText(finalPost).then(() => alert('  Copied!'));
                      } else {
                          alert('Error: ' + res.error);
                      }
@@ -495,7 +495,7 @@ const handleAiText = async () => {
                          const data = res.data as unknown as { caption: string; slides: { title: string; text: string }[]; hashtags: string[] };
                          // Заменили data.text на data.caption
                          const finalPost = `${data.caption}\n\n${data.hashtags.map(h => `#${h}`).join(' ')}`;
-                         navigator.clipboard.writeText(finalPost).then(() => alert('✅ Copied!'));
+                         navigator.clipboard.writeText(finalPost).then(() => alert('  Copied!'));
                      } else {
                          alert('Error: ' + res.error);
                      }

@@ -129,10 +129,10 @@ export default function BookingModal({
     
   const specificRulesLink = isKayakingTour ? "/docs/rules-kayaking" : "/docs/rules-sup";
 
-  // ✅ РЕФ ДЛЯ МОДАЛКИ (Фокус Трап)
+  //   РЕФ ДЛЯ МОДАЛКИ (Фокус Трап)
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // ✅ ЭФФЕКТ ДЛЯ КЛАВИАТУРЫ (Escape + Focus Trap)
+  //   ЭФФЕКТ ДЛЯ КЛАВИАТУРЫ (Escape + Focus Trap)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -469,7 +469,7 @@ export default function BookingModal({
 
       <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2 sm:p-4 pointer-events-none">
         <div 
-          ref={modalRef} // ✅ ПРИВЯЗАЛИ REF
+          ref={modalRef} //   ПРИВЯЗАЛИ REF
           role="dialog" 
           aria-modal="true" 
           aria-labelledby="modal-title"
@@ -479,7 +479,7 @@ export default function BookingModal({
           <div className="flex items-center justify-between p-5 border-b border-white/5 bg-white/5 shrink-0">
             <div>
               <h3 id="modal-title" className="text-lg font-bold text-white uppercase tracking-wide leading-none mb-1">
-                {step === 'form' ? 'Оформление билета' : 'Успешно!'}
+                {step === 'form' ? 'Оформление билета' : 'ЗАЯВКА ПОЛУЧЕНА!'}
               </h3>
               <p className="text-xs text-teal-400 font-bold truncate max-w-[250px]">
                 {tour.title}
@@ -651,7 +651,7 @@ export default function BookingModal({
                         )}
                         {promoSuccess && (
                           <p className="text-[12px] text-teal-400 mt-1.5 ml-1 font-bold" role="status">
-                            ✅ Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
+                              Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
                           </p>
                         )}
                       </div>
@@ -879,7 +879,7 @@ export default function BookingModal({
                             <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
                             <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-sm text-slate-300 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
+                        <span className="text-sm text-slate-300 leading-tight">Напрямую через банк</span>
                     </button>
 
                     <button 
@@ -893,7 +893,7 @@ export default function BookingModal({
                             <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
                             <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[12px] text-slate-300 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
+                        <span className="text-[12px] text-slate-300 leading-tight">(Инструкция после оформления)</span>
                     </button>
 
                     <div className="grid grid-cols-2 gap-3 mt-1 w-full">
@@ -922,14 +922,14 @@ export default function BookingModal({
                               <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
                               <CreditCard size={16} className={`shrink-0 ml-1 ${paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} `} />
                           </div>
-                          <span className="text-[12px] text-slate-300 leading-tight truncate">BILETPMR/сервисы</span>
+                          <span className="text-[12px] text-slate-300 leading-tight truncate">BILETPMR</span>
                       </button>
                     </div>
 
                   </div>
                  </div>
 
-                {/* ✅ ARIA ALERT ДЛЯ ОШИБОК */}
+                {/*   ARIA ALERT ДЛЯ ОШИБОК */}
                 {errorMsg && (
                   <div 
                     id="booking-error" 
@@ -941,7 +941,7 @@ export default function BookingModal({
                   </div>
                 )}
 
-              {/* ✅ БЛОК СОГЛАСИЙ (ЯРКИЙ ТЕКСТ И ПРАВИЛЬНЫЕ ССЫЛКИ) */}
+              {/*   БЛОК СОГЛАСИЙ (ЯРКИЙ ТЕКСТ И ПРАВИЛЬНЫЕ ССЫЛКИ) */}
                             <div className="mt-2 bg-white/5 p-5 rounded-2xl border border-white/10">
                   
                   {/* Заголовок и подсказка */}
@@ -988,7 +988,7 @@ export default function BookingModal({
                         </div>
                       </div>
                       <span className="text-sm text-white leading-snug">
-                      <a href="/docs/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Политикой обработки персональных данных</a>
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Политикой обработки персональных данных</a>
                       </span>
                     </label>
 

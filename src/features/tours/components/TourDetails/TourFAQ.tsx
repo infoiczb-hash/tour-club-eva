@@ -67,7 +67,7 @@ export default function TourFAQ({ tour }: TourFAQProps) {
             <div 
               key={index}
               className={clsx(
-                // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
+                //   ИСПРАВЛЕНИЕ: transition вместо transition-all
                 "rounded-2xl border transition duration-300 overflow-hidden print:border-slate-300 print:bg-transparent print:shadow-none print:break-inside-avoid print:mb-4",
                 isOpen && !isPrinting
                   ? "bg-slate-900 border-teal-500/30 shadow-lg" 
@@ -87,7 +87,7 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                 </span>
                 
                 <div className={clsx(
-                  // ✅ ИСПРАВЛЕНИЕ: transition вместо transition-all
+                  //   ИСПРАВЛЕНИЕ: transition вместо transition-all
                   "w-8 h-8 rounded-full flex items-center justify-center transition duration-300 shrink-0 print:hidden",
                   isOpen && !isPrinting ? "bg-teal-500 text-slate-900 rotate-180" : "bg-white/5 text-slate-300 group-hover:bg-white/10 group-hover:text-white"
                 )}>
@@ -95,7 +95,7 @@ export default function TourFAQ({ tour }: TourFAQProps) {
                 </div>
               </button>
 
-              {/* ✅ ИСПРАВЛЕНИЕ: transition-[grid-template-rows,opacity] для честного GPU-аккордеона */}
+              {/*   ИСПРАВЛЕНИЕ: transition-[grid-template-rows,opacity] для честного GPU-аккордеона */}
               <div className={clsx(
                   "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out print:block",
                   isOpen ? "grid-rows-[1fr] opacity-100 print:h-auto print:opacity-100" : "grid-rows-[0fr] opacity-0"

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 interface SuccessScreenProps {
-  bookingId: string; // ✅ Добавлено для формирования ссылки в кабинет
+  bookingId: string; //   Добавлено для формирования ссылки в кабинет
  shortId: string;
   totalPrice: number;
   currency: string;
@@ -18,7 +18,7 @@ interface SuccessScreenProps {
 }
 
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({
-  bookingId, // ✅ Добавлено
+  bookingId, //   Добавлено
   shortId,
   totalPrice,
   currency,
@@ -55,7 +55,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
             <h3 className="text-lg font-semibold text-white">Оплата онлайн (BiletPMR)</h3>
           </div>
           <p className="text-sm text-slate-300 leading-relaxed mb-6">
-            Если Вам удобно оплатить на biletpmr, можно перейти по ссылке. Цена может отличаться (не применяются бонусные оплаты и промокод), так как это сторонний сервис оплаты. После оплаты вы можете отправить нам билет сюда, или ожидайте, пока мы проверим вручную.
+            Если Вам удобно оплатить на biletpmr, можно перейти по ссылке. Цена может отличаться (не применяются бонусные оплаты и промокод), так как это сторонний сервис оплаты. После оплаты на сервисе, Вам надо отправить билет через личный кабинет или через нашего Телеграм-bot координатора. После проверки администратором бронь будет подтверждена. Вы получите уведомление.
           </p>
           
           <div className="flex flex-col gap-3">
@@ -69,7 +69,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
               </p>
             )}
             <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
-              <Send size={18} /> Отправить билет в Telegram
+              <Send size={18} /> Отправить билет/скан в Telegram
             </Link>
           </div>
         </div>
@@ -117,7 +117,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
           </div>
           <p className="text-sm text-slate-300 leading-relaxed mb-6">
             Договорились! Подготовьте <strong className="text-white">{totalPrice} {currency}</strong> без сдачи к дню тура (оплата гиду на месте).<br/><br/>
-            За 3 дня и за сутки до выезда бот пришлет вам запрос на подтверждение участия — не пропустите! Рекомендуем выбрать другой способ оплаты или оплатить через платежные терминалы АПБ. Выберите там ТурКлуб &quot;Эва&quot;. Квитанцию отправьте нам в бот.
+            За 3 дня и за сутки до выезда бот в телеграм или через e-mail пришлет вам запрос на подтверждение участия — не пропустите! Мы рекомендуем выбрать другой способ оплаты или оплатить наличкой через платежные терминалы АПБ выберите там ТурКлуб &quot;Эва&quot;. Квитанцию отправьте нам в бот-координатору или прикрепите его в личном кабинете.
           </p>
           
           <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
@@ -134,7 +134,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
             <h3 className="text-lg font-black text-white uppercase tracking-wider">Перевод из-за рубежа</h3>
           </div>
           <p className="text-[13px] text-slate-300 leading-relaxed mb-4">
-            Видим, что вам нужен перевод из другой страны. Свяжитесь с нашим менеджером, и мы подберем удобный способ оплаты (Crypto, SWIFT, P2P).
+            Видим, что вам нужен перевод из другой страны. Свяжитесь с нашим менеджером, и мы подберем удобный способ оплаты.
           </p>
           <Link 
             href={managerLink} 

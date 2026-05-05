@@ -15,7 +15,7 @@ import { publishToTelegram } from '@/features/admin/actions/telegram';
 // клиент АПБ для генерации URL оплаты
 import { apbClient } from '@/lib/apb/client';
 
-// ✅ НОВЫЙ ИМПОРТ: берем протестированную финансовую логику
+//   НОВЫЙ ИМПОРТ: берем протестированную финансовую логику
 import { calculateTotalSpots, calculateBasePrice } from '../lib/pricing';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -125,7 +125,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     };
   }
 
-  // ✅ ИЗМЕНЕНО: Вычисляем места через нашу чистую утилиту
+  //   ИЗМЕНЕНО: Вычисляем места через нашу чистую утилиту
   const totalSpots = calculateTotalSpots({
     ticketsAdult: data.ticketsAdult,
     ticketsChild: data.ticketsChild,
@@ -251,7 +251,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         }
 
         // ---------- 2. Расчёт базовой цены ----------
-        // ✅ ИЗМЕНЕНО: Вычисляем базовую сумму через чистую утилиту
+        //   ИЗМЕНЕНО: Вычисляем базовую сумму через чистую утилиту
         const baseTotalPrice = calculateBasePrice(
           {
             ticketsAdult: data.ticketsAdult,

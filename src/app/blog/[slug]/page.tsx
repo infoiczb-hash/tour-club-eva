@@ -9,13 +9,18 @@ import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import sanitizeHtml from 'sanitize-html';
-import { SafeHTML } from '@/shared/ui/SafeHTML'; // ✅ ИМПОРТ НАШЕГО КОМПОНЕНТА
-import PostWishlistButton from '@/features/blog/components/PostWishlistButton';
+import { SafeHTML } from '@/shared/ui/SafeHTML'; 
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import dynamic from 'next/dynamic';
+
+const PostWishlistButton = dynamic(
+  () => import('@/features/blog/components/PostWishlistButton')
+);
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-export const revalidate = 300;
+//   ОПТИМИЗАЦИЯ: Увеличиваем интервал ревалидации до 1 часа
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const posts = await prisma.blog.findMany({
@@ -32,50 +37,25 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+//   ОПТИМИЗАЦИЯ: Параллельный запуск запросов внутри getPost (добор related-статей за 1 запрос)
 const getPost = cache(async (slug: string) => {
   if (!slug) return null;
   const decodedSlug = decodeURIComponent(slug);
 
-  const post = await prisma.blog.findUnique({
-    where: { slug: decodedSlug },
-    include: { blogCategory: true } 
-  });
-  
-  if (!post) return null;
-
-  // 1. Пытаемся найти статьи из той же категории
-  const relatedPosts = await prisma.blog.findMany({
-    where: { 
-      id: { not: post.id },
-      isActive: true, // Только опубликованные статьи
-      // Приоритет — статьи той же категории
-      ...(post.categoryId ? { categoryId: post.categoryId } : {}),
-    },
-    take: 3,
-    orderBy: { date: 'desc' },
-    // select вместо include — не тянем тяжелое поле content
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      image: true,
-      category: true,
-      blogCategory: {
-        select: { title: true }
-      }
-    }
-  });
-
-  let finalRelated = relatedPosts;
-
-  // 2. Если статей в этой категории меньше 3 — добираем свежие из других рубрик
-  if (relatedPosts.length < 3) {
-    const extra = await prisma.blog.findMany({
-      where: {
-        id: { notIn: [post.id, ...relatedPosts.map(p => p.id)] },
+  const [post, relatedCandidates] = await Promise.all([
+    prisma.blog.findUnique({
+      where: { slug: decodedSlug },
+      include: { 
+  blogCategory: true,
+  guide: { select: { slug: true } } // Добавляем эту строку
+} 
+    }),
+    prisma.blog.findMany({
+      where: { 
         isActive: true,
+        slug: { not: decodedSlug }
       },
-      take: 3 - relatedPosts.length,
+      take: 6,
       orderBy: { date: 'desc' },
       select: {
         id: true,
@@ -83,13 +63,19 @@ const getPost = cache(async (slug: string) => {
         title: true,
         image: true,
         category: true,
+        categoryId: true,
         blogCategory: {
           select: { title: true }
         }
       }
-    });
-    finalRelated = [...relatedPosts, ...extra];
-  }
+    })
+  ]);
+  
+  if (!post) return null;
+
+  const finalRelated = [...relatedCandidates]
+    .sort((a, b) => (a.categoryId === post.categoryId ? -1 : 1))
+    .slice(0, 3);
 
   return { post, relatedPosts: finalRelated };
 });
@@ -141,18 +127,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
-  const data = await getPost(slug);
+
+  //   ОПТИМИЗАЦИЯ: Параллельный запуск получения данных поста и сессии Supabase
+  const [data, { data: { user } }] = await Promise.all([
+    getPost(slug),
+    createServerSupabaseClient().then(sb => sb.auth.getUser())
+  ]);
 
   if (!data) notFound();
 
   const { post, relatedPosts } = data;
   const postUrl = `${BASE_URL}/blog/${post.slug}`;
 
-  // Проверка сессии и статуса "в избранном" для статьи
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
   let isWished = false;
-
   if (user) {
     const profile = await prisma.memberProfile.findUnique({
       where: { userId: user.id },
@@ -180,6 +167,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     absoluteImageUrl = `${BASE_URL}${absoluteImageUrl}`;
   }
 
+  //   ВОССТАНОВЛЕНО: Полный объект jsonLd с BreadcrumbList
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -242,9 +230,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     
     <article className="min-h-screen bg-[#0B1120] pb-10 md:pb-24">
       
-    <script
+      <script
         type="application/ld+json"
-        // ✅ ИСПРАВЛЕНО: Экранирование для безопасности
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
@@ -259,8 +246,10 @@ export default async function BlogPostPage({ params }: PageProps) {
                 fill 
                 className="object-cover"
                 priority
-              fetchPriority="high"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
+                fetchPriority="high"
+                //   ОПТИМИЗАЦИЯ: Уменьшено качество картинки для LCP
+                quality={60}
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/80 to-slate-900/40" />
         </div>
@@ -291,29 +280,59 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
-                <div className="flex items-center gap-3">
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
-                        {post.author_image ? (
-                         <Image 
-                            src={post.author_image} 
-                            alt={post.author_name || "Автор статьи"} 
-                            fill 
-                            className="object-cover object-top" 
-                            sizes="48px" 
-                         />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                <User size={20}/>
-                            </div>
-                        )}
+         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
+    
+    {/* --- НОВЫЙ ИНТЕРАКТИВНЫЙ БЛОК АВТОРА --- */}
+    {post.guide?.slug ? (
+        <Link href={`/guides/${post.guide.slug}`} className="group flex items-center gap-3 cursor-pointer">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0 transition-all group-hover:border-teal-500/50 group-hover:scale-105">
+                {post.author_image ? (
+                    <Image 
+                        src={post.author_image} 
+                        alt={post.author_name || "Автор статьи"} 
+                        fill 
+                        className="object-cover object-top" 
+                        sizes="48px" 
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                        <User size={20}/>
                     </div>
-                    <div>
-                        <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">{post.author_name}</div>
-                        <div className="text-slate-300 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
-                    </div>
+                )}
+            </div>
+            <div>
+                <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px] transition-colors group-hover:text-teal-400">
+                    {post.author_name}
                 </div>
-
+                <div className="text-slate-300 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
+            </div>
+        </Link>
+    ) : (
+        /* Обычный блок, если статья не привязана к гиду (старые посты) */
+        <div className="flex items-center gap-3">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
+                {post.author_image ? (
+                    <Image 
+                        src={post.author_image} 
+                        alt={post.author_name || "Автор статьи"} 
+                        fill 
+                        className="object-cover object-top" 
+                        sizes="48px" 
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                        <User size={20}/>
+                    </div>
+                )}
+            </div>
+            <div>
+                <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">
+                    {post.author_name}
+                </div>
+                <div className="text-slate-300 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
+            </div>
+        </div>
+    )}
                 <div className="h-8 w-px bg-white/20 hidden md:block" />
 
                 <div className="flex items-center gap-4 text-slate-300 text-[12px] md:text-[13px] font-medium bg-slate-900/50 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/5 w-fit">
@@ -358,7 +377,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
-                {/* ✅ ВНЕДРЕНИЕ НАШЕГО SafeHTML с кастомными настройками */}
+                {/*   ВОССТАНОВЛЕНО: Настройки безопасности SafeHTML для iframe и XSS */}
                 <SafeHTML 
                     html={post.content}
                     className="prose prose-base prose-invert max-w-none 
@@ -380,7 +399,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                             'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
                         },
                         allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
-                        // ✅ ИСПРАВЛЕНИЕ УЯЗВИМОСТИ №9 ИЗ АУДИТА (XSS):
                         allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
                     }}
                 />
@@ -406,13 +424,13 @@ export default async function BlogPostPage({ params }: PageProps) {
                                     <Link key={relPost.id} href={`/blog/${relPost.slug}`} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
                                         <div className="relative w-full sm:w-24 lg:w-full xl:w-24 aspect-[4/3] sm:aspect-square lg:aspect-[4/3] xl:aspect-square shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-white/5 shadow-md">
                                          <Image
-    src={relPost.image || '/placeholder.jpg'}
-    alt={relPost.title}
-    fill
-    className="object-cover group-hover:scale-105 transition-transform duration-500"
-   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 120px, 96px"
-   loading="lazy"
-  />
+                                            src={relPost.image || '/placeholder.jpg'}
+                                            alt={relPost.title}
+                                            fill
+                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 120px, 96px"
+                                            loading="lazy"
+                                          />
                                         </div>
                                         <div className="py-1">
                                             <span className="text-[12px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">

@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getDashboardData } from '@/features/account/api';
 import DashboardClient from './DashboardClient';
 
-// ✅ Оставляем настройки динамического рендеринга из оригинала
+//   Оставляем настройки динамического рендеринга из оригинала
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

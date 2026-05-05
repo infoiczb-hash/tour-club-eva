@@ -122,7 +122,7 @@ async function handleWebhook(req: NextRequest): Promise<NextResponse> {
       return ok(); // Глушим вебхук, чтобы не выдавать билет
     }
 
-    // ✅ ОПЛАТА ПОДТВЕРЖДЕНА И СУММА СОВПАДАЕТ
+    //   ОПЛАТА ПОДТВЕРЖДЕНА И СУММА СОВПАДАЕТ
     await handlePaymentSuccess(booking, paymentState);
   } else {
     // ❌ ОПЛАТА НЕ ПРОШЛА (fail, ошибка, просрочен)
@@ -168,7 +168,7 @@ async function handlePaymentSuccess(
 
     // Уведомление в Telegram-топик броней
     const msg = [
-      `✅ <b>Онлайн-оплата подтверждена (АПБ)</b>`,
+      `  <b>Онлайн-оплата подтверждена (АПБ)</b>`,
       ``,
       `🆔 Бронь #<b>${booking.shortId}</b>`,
       `🏦 Invoice: <code>${booking.apbInvoiceId}</code>`,

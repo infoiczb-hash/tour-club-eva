@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Heart, Camera, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
-// ✅ ДОБАВЛЕНО: Глобальный хук
+//   ДОБАВЛЕНО: Глобальный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
 
@@ -42,7 +42,7 @@ const PHOTOS = [
 ];
 
 export default function SupGallery() {
-    // ✅ ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
+    //   ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
     const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
     const galleryView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 

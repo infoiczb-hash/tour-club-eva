@@ -6,7 +6,7 @@ import Button from '@/shared/ui/Button';
 import { performAiTask, type PerformAiTaskResult } from '@/features/admin/actions/ai';
 
 
-// ✅ ИСПРАВЛЕНО: Строгая типизация вместо any
+//   ИСПРАВЛЕНО: Строгая типизация вместо any
 interface Props {
   isOpen: boolean;
   onClose: () => void;

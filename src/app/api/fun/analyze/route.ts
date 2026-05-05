@@ -3,7 +3,7 @@ import { streamObject } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 import { getTours } from '@/features/tours/api';
-import { basicRateLimit, getClientIp } from '@/lib/rate-limit'; // ✅ ИМПОРТ НАДЕЖНОГО REDIS ЛИМИТЕРА
+import { basicRateLimit, getClientIp } from '@/lib/rate-limit'; //   ИМПОРТ НАДЕЖНОГО REDIS ЛИМИТЕРА
 
 // ==========================================
 // СВЕРХЛЕГКИЙ КОНТЕКСТ ДЛЯ ИИ

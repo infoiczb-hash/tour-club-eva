@@ -39,7 +39,7 @@ describe('Admin Tours Actions', () => {
   let categoryId: string;
   let guideId: string;
 
-  // ✅ ФИКС: Используем beforeEach вместо beforeAll, 
+  //   ФИКС: Используем beforeEach вместо beforeAll, 
   // чтобы глобальная очистка БД не удаляла наши данные до запуска теста
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -201,7 +201,7 @@ describe('Admin Tours Actions', () => {
 
   // ==================== GET TOURS ADMIN ====================
   describe('getToursAdmin', () => {
-    // ✅ ФИКС: Тоже меняем на beforeEach для гарантии изоляции
+    //   ФИКС: Тоже меняем на beforeEach для гарантии изоляции
     beforeEach(async () => {
       const futureDate = daysOffset(10);
       const pastDate = daysOffset(-10);

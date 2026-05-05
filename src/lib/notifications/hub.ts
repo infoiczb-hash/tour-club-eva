@@ -4,7 +4,7 @@ import { AppEvent, AppEventPayloadMap, NotificationTemplates } from './templates
 import { sendFallbackEmail } from './adapters/email'; 
 
 /**
- * ✅ ТИПИЗИРОВАННЫЙ PAYLOAD: 
+ *   ТИПИЗИРОВАННЫЙ PAYLOAD: 
  * Теперь 'data' будет иметь разный тип в зависимости от 'eventId'.
  */
 export interface DispatchPayload<E extends AppEvent = AppEvent> {

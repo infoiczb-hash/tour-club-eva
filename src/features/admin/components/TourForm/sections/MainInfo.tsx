@@ -97,7 +97,7 @@ export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] })
             placeholder="Придумай красивое название тура" 
           />
           
-          {/* ✅ БЛОК SLUG С КНОПКОЙ */}
+          {/*   БЛОК SLUG С КНОПКОЙ */}
           <div className="flex items-end gap-2">
              <div className="flex-1">
                  <FormInput 

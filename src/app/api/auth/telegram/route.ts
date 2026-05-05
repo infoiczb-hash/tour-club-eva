@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     }
 
     // 2. Проверяем подлинность данных (магия криптографии Telegram)
-    // ✅ ИСПРАВЛЕНИЕ: Используем токен от бота авторизации, а не от бота уведомлений
+    //   ИСПРАВЛЕНИЕ: Используем токен от бота авторизации, а не от бота уведомлений
     const authBotToken = env.TELEGRAM_AUTH_BOT;
     if (!authBotToken) {
       throw new Error('TELEGRAM_AUTH_BOT is not defined in .env');
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
 
     // 3. Авторизуем в Supabase
     const email = `tg_${userData.id}@evaclub.tour`;
-    // ✅ ИСПРАВЛЕНИЕ: Пароль тоже генерируем на основе правильного токена
+    //   ИСПРАВЛЕНИЕ: Пароль тоже генерируем на основе правильного токена
     const password = crypto.createHmac('sha256', authBotToken).update(userData.id).digest('hex');
 
     // Клиент для установки сессии (cookies) в браузере
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
           tgChatId: userData.id, 
         },
         create: {
-          // ✅ А ЗДЕСЬ ОСТАВИЛИ
+          //   А ЗДЕСЬ ОСТАВИЛИ
           // При самом первом входе (регистрации) имя всё равно подтянется из ТГ
           userId: userId,
           name: fullName || null,
@@ -156,7 +156,7 @@ export async function GET(request: Request) {
     // 5. Успех! Перенаправляем в личный кабинет
     return NextResponse.redirect(`${origin}/account/dashboard`);
 
-  } catch (error: unknown) { // ✅ Заменили any на unknown (OPT-09)
+  } catch (error: unknown) { //   Заменили any на unknown (OPT-09)
     console.error('Telegram Auth 500 Error:', error);
     const { origin } = new URL(request.url);
     return NextResponse.redirect(`${origin}/login?error=server_error`);

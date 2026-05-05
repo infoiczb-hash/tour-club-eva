@@ -1,7 +1,7 @@
 // src/features/admin/components/TourForm/sections/Logistics.tsx
 import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { FormInput, FormSelect } from '../ui/FormUI'; // ✅ ИМПОРТ FORMSELECT
+import { FormInput, FormSelect } from '../ui/FormUI'; //   ИМПОРТ FORMSELECT
 import { MapPin, Calendar, Plus, Trash2, User, Zap, DollarSign } from 'lucide-react';
 
 interface LogisticsProps {
@@ -9,7 +9,7 @@ interface LogisticsProps {
 }
 
 export const Logistics = ({ guides }: LogisticsProps) => {
-  const { control, register } = useFormContext();
+ const { control, register, getValues } = useFormContext();
   
   const { fields, append, remove } = useFieldArray({
     control,
@@ -33,7 +33,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           <FormInput name="route" label="Нитка маршрута" placeholder="Город А - Город Б - Город В" />
         </div>
         
-        {/* ✅ ИСПРАВЛЕНО: Удалили дубль TourFormat, Сложность стала Select */}
+        {/*   ИСПРАВЛЕНО: Удалили дубль TourFormat, Сложность стала Select */}
         <div className="grid grid-cols-2 gap-4 mt-4">
            <FormInput name="distance" label="Дистанция (км)" placeholder="не определено" />
            <FormSelect 
@@ -58,7 +58,24 @@ export const Logistics = ({ guides }: LogisticsProps) => {
           </div>
           <button 
             type="button" 
-           onClick={() => append({ start: '', end: '', guide_id: '', groupChatUrl: '', spots: undefined, spotsLeft: undefined, basePrice: undefined, discountEarlyBird: undefined, earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined })}
+           onClick={() => {
+  // Читаем глобальное количество мест из формы (если пусто — ставим дефолт, например 15)
+  const globalSpots = Number(getValues('spots')) || 15;
+  
+  append({ 
+    start: '', 
+    end: '', 
+    guide_id: '', 
+    groupChatUrl: '', 
+    spots: globalSpots, 
+    spotsLeft: globalSpots, 
+    basePrice: undefined, 
+    discountEarlyBird: undefined, 
+    earlyBirdDeadline: undefined, 
+    surchargeLastMinute: undefined, 
+    lastMinuteTrigger: undefined 
+  });
+}}
             className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-500 bg-teal-50 px-3 py-1.5 rounded-lg transition-colors"
           >
             <Plus size={14} /> Добавить дату
@@ -107,7 +124,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
                 </div>
               </div>
 
-          {/* ✅ ИСПРАВЛЕНИЕ: Сделали 4 колонки и добавили поле для чата */}
+          {/*   ИСПРАВЛЕНИЕ: Сделали 4 колонки и добавили поле для чата */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pb-4 border-b border-slate-200/60">
                  <FormInput name={`dates.${index}.spots`} label="Всего мест" type="number" placeholder="По умолчанию" />
                  <FormInput name={`dates.${index}.spotsLeft`} label="Осталось мест" type="number" placeholder="По умолчанию" />

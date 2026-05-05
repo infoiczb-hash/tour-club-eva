@@ -50,7 +50,7 @@ describe('Server Action: refundPaymentAction', () => {
       totalPrice: 1000,
       refundedAmount: 800,
       paidAt: mockPaidAt,
-      status: 'confirmed', // ✅ Исправлено на confirmed
+      status: 'confirmed', //   Исправлено на confirmed
     });
 
     await expect(refundPaymentAction({
@@ -73,7 +73,7 @@ describe('Server Action: refundPaymentAction', () => {
       totalPrice: 1000,
       refundedAmount: 0,
       paidAt: mockPaidAt,
-      status: 'confirmed', // ✅ Исправлено на confirmed
+      status: 'confirmed', //   Исправлено на confirmed
     });
 
     await expect(refundPaymentAction({
@@ -94,7 +94,7 @@ describe('Server Action: refundPaymentAction', () => {
       totalPrice: 1000,
       refundedAmount: currentRefundedAmount,
       paidAt: mockPaidAt,
-      status: 'confirmed', // ✅ Исправлено на confirmed
+      status: 'confirmed', //   Исправлено на confirmed
     });
 
     const result = await refundPaymentAction({
@@ -131,7 +131,7 @@ describe('Server Action: refundPaymentAction', () => {
       totalPrice: 1000,
       refundedAmount: currentRefundedAmount,
       paidAt: mockPaidAt,
-      status: 'confirmed', // ✅ Исправлено на confirmed
+      status: 'confirmed', //   Исправлено на confirmed
     });
 
     const result = await refundPaymentAction({
@@ -147,7 +147,7 @@ describe('Server Action: refundPaymentAction', () => {
       },
       data: {
         refundedAmount: 400,
-        status: 'confirmed', // ✅ Ожидаем сохранения статуса confirmed
+        status: 'confirmed', //   Ожидаем сохранения статуса confirmed
       },
     });
 
@@ -164,7 +164,7 @@ describe('Server Action: refundPaymentAction', () => {
       totalPrice: 1000,
       refundedAmount: 0,
       paidAt: mockPaidAt,
-      status: 'confirmed', // ✅ Исправлено на confirmed
+      status: 'confirmed', //   Исправлено на confirmed
     });
 
     (apbClient.processRefund as jest.Mock).mockResolvedValue({ 
@@ -191,7 +191,7 @@ describe('Server Action: refundPaymentAction', () => {
       totalPrice: 1000,
       refundedAmount: 0,
       paidAt: mockPaidAt,
-      status: 'confirmed', // ✅ Исправлено на confirmed
+      status: 'confirmed', //   Исправлено на confirmed
     });
 
     (prisma.booking.updateMany as jest.Mock).mockResolvedValue({ count: 0 });

@@ -297,12 +297,12 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
       case 'pub_rev':
 <span class="cstat-no" title="statement not covered" >        await prisma.review.update({</span>
           where: { id },
-          data: { isActive: true }, // ✅ ИСПРАВЛЕНО: используем поле isActive из твоей схемы
+          data: { isActive: true }, //   ИСПРАВЛЕНО: используем поле isActive из твоей схемы
         });
-<span class="cstat-no" title="statement not covered" >        await answerCallbackQuery(callbackQuery.id, '✅ Отзыв успешно опубликован!');</span>
+<span class="cstat-no" title="statement not covered" >        await answerCallbackQuery(callbackQuery.id, '  Отзыв успешно опубликован!');</span>
 <span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (chatId &amp;&amp; messageId) {</span>
 <span class="cstat-no" title="statement not covered" >          await editMessageReplyMarkup(chatId, messageId, {</span>
-            inline_keyboard: [[{ text: `✅ Опубликовал @${username}`, callback_data: 'noop' }]]
+            inline_keyboard: [[{ text: `  Опубликовал @${username}`, callback_data: 'noop' }]]
           });
         }
 <span class="cstat-no" title="statement not covered" >        break;</span>
@@ -311,7 +311,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
       case 'tk_lead':
 <span class="cstat-no" title="statement not covered" >        await prisma.inquiry.update({</span>
           where: { id },
-          data: { status: 'WORK' }, // ✅ ИСПРАВЛЕНО: используем статус WORK из твоего Enum
+          data: { status: 'WORK' }, //   ИСПРАВЛЕНО: используем статус WORK из твоего Enum
         });
 <span class="cstat-no" title="statement not covered" >        await answerCallbackQuery(callbackQuery.id, '🤝 Заявка взята в работу!');</span>
 <span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (chatId &amp;&amp; messageId) {</span>

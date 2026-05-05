@@ -1,7 +1,7 @@
 // src/features/landing/components/Hero.tsx
 import React from 'react';
 import Image from 'next/image';
-import { preload } from 'react-dom'; // ✅ ДОБАВЛЕНО: Нативный preload
+import { preload } from 'react-dom'; //   ДОБАВЛЕНО: Нативный preload
 import { ArrowDown } from 'lucide-react';
 
 export interface HeroContent {
@@ -15,12 +15,12 @@ const DEFAULT_HERO: HeroContent = {
   title: 'ЭВА',
   subtitle: 'Приключения каждые выходные',
   tagline: 'ОПЫТ — КОТОРЫЙ ВДОХНОВЛЯЕТ',
-  // ✅ ИСПРАВЛЕНИЕ: Убрали /f_auto,q_auto/ чтобы не конфликтовать с cloudinary-loader
+  //   ИСПРАВЛЕНИЕ: Убрали /f_auto,q_auto/ чтобы не конфликтовать с cloudinary-loader
   bg_image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771673823/hero-bg_cz1j25.webp'
 };
 
 export default function HeroSection({ content = DEFAULT_HERO }: { content?: HeroContent }) {
-  // ✅ ИСПРАВЛЕНИЕ (Fix 2): Принудительный preload изображения прямо в потоке рендеринга.
+  //   ИСПРАВЛЕНИЕ (Fix 2): Принудительный preload изображения прямо в потоке рендеринга.
   // Это заставляет браузер начать загрузку сразу, не дожидаясь обработки всего CSS/JS.
   preload(content.bg_image, { as: 'image', fetchPriority: 'high' });
 

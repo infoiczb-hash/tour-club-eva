@@ -90,7 +90,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
           </div>
         </div>
 
-        {/* CATEGORY BADGE - ✅ ИСПРАВЛЕНИЕ: text-[9px] заменен на text-[10px] md:text-xs */}
+        {/* CATEGORY BADGE -   ИСПРАВЛЕНИЕ: text-[9px] заменен на text-[10px] md:text-xs */}
         <div className={cn("inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] md:text-xs font-bold uppercase tracking-widest", catConfig.colorClass)}>
             <Tags size={12} strokeWidth={2.5} />
             {catConfig.label}
@@ -104,7 +104,7 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
       {/* FOOTER */}
       <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-        {/* ✅ ИСПРАВЛЕНИЕ: text-[11px] заменен на text-xs */}
+        {/*   ИСПРАВЛЕНИЕ: text-[11px] заменен на text-xs */}
         <span className="text-xs font-mono text-slate-400 transition-colors">
             {time}
         </span>
@@ -136,7 +136,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
 
   // --- DRAG TO SCROLL LOGIC ---
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const containerOffsetRef = useRef<number>(0); // ✅ Кэш для offsetLeft (предотвращает Forced Reflow)
+  const containerOffsetRef = useRef<number>(0); //   Кэш для offsetLeft (предотвращает Forced Reflow)
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeftPos, setScrollLeftPos] = useState(0);
@@ -156,7 +156,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
-    // ✅ Используем закэшированное значение вместо чтения DOM (0 Layout Thrashing)
+    //   Используем закэшированное значение вместо чтения DOM (0 Layout Thrashing)
     const x = e.pageX - containerOffsetRef.current;
     const walk = (x - startX) * 1.5; 
     
@@ -165,7 +165,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
     scrollContainerRef.current.style.scrollBehavior = 'smooth';
   };
 
-  // ✅ ИСПРАВЛЕНИЕ: Кнопки навигации для десктопа
+  //   ИСПРАВЛЕНИЕ: Кнопки навигации для десктопа
   const scrollByAmount = (amount: number) => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
@@ -247,7 +247,7 @@ export default function ReviewsMarquee({ reviews = [] }: { reviews?: Review[] })
          <div className="hidden md:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
          <div className="hidden md:block absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
-         {/* ✅ ИСПРАВЛЕНИЕ: Кнопки-стрелки для десктопа */}
+         {/*   ИСПРАВЛЕНИЕ: Кнопки-стрелки для десктопа */}
          <button 
             onClick={() => scrollByAmount(-400)} 
             aria-label="Прокрутить влево"

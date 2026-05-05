@@ -32,10 +32,10 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
   const [formData, setFormData] = useState<any>({});
   const honeypotRef = useRef<HTMLInputElement>(null);
   
-  // ✅ РЕФ ДЛЯ МОДАЛКИ (Focus Trap)
+  //   РЕФ ДЛЯ МОДАЛКИ (Focus Trap)
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // ✅ ЭФФЕКТ ДЛЯ КЛАВИАТУРЫ (Escape + Focus Trap)
+  //   ЭФФЕКТ ДЛЯ КЛАВИАТУРЫ (Escape + Focus Trap)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -157,7 +157,7 @@ export default function ContactHubModal({ isOpen, onClose, initialTab = 'TOUR', 
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       
       <div
-        ref={modalRef} // ✅ ДОБАВЛЕН REF ДЛЯ ФОКУСА
+        ref={modalRef} //   ДОБАВЛЕН REF ДЛЯ ФОКУСА
         role="dialog" aria-modal="true" aria-labelledby="modal-contact-title" 
         className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-t-[2rem] md:rounded-3xl shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-300"
       >

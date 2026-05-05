@@ -2,15 +2,15 @@ import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.1, // ✅ Снижено до 10% для снижения нагрузки на сеть клиента
+  tracesSampleRate: 0.1, //   Снижено до 10% для снижения нагрузки на сеть клиента
   debug: false,
   replaysOnErrorSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,
-  // ✅ Убрали синхронную инициализацию Replay
+  //   Убрали синхронную инициализацию Replay
   integrations: [], 
 });
 
-// ✅ Ленивая загрузка Replay с динамическим импортом (отрезает ~50Kb от бандла)
+//   Ленивая загрузка Replay с динамическим импортом (отрезает ~50Kb от бандла)
 if (typeof window !== 'undefined') {
   const loadReplay = async () => {
     try {

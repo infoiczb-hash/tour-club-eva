@@ -38,7 +38,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
   }
 
   return (
-    // ✅ ИСПРАВЛЕНИЕ: Убрали mb-12 и сделали секцию flex-контейнером с идеальным gap.
+    //   ИСПРАВЛЕНИЕ: Убрали mb-12 и сделали секцию flex-контейнером с идеальным gap.
     // Теперь блоки никогда не слипнутся, а снизу не будет лишней дыры.
 <section className="scroll-mt-24 flex flex-col gap-10 md:gap-12" id="about">
       
@@ -96,7 +96,7 @@ export default function TourDescription({ tour }: TourDescriptionProps) {
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-6">
             О туре
           </h2>
-          {/* ✅ ЗАМЕНЯЕМ DANGEROUSLY SET INNER HTML НА SAFEHTML */}
+          {/*   ЗАМЕНЯЕМ DANGEROUSLY SET INNER HTML НА SAFEHTML */}
           <SafeHTML 
             html={tour.description}
             className="text-slate-300 leading-relaxed text-base md:text-lg space-y-4"

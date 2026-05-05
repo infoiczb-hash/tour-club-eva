@@ -4,7 +4,7 @@ import { ShieldCheck, Users, HeartHandshake, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
-// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
 

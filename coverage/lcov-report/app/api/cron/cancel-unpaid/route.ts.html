@@ -408,7 +408,7 @@ import { revalidatePath } from 'next/cache';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 QStash вернулся на место
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
-import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН ИМПОРТ АУДИТА
+import { logSystemAction } from '@/lib/audit'; //   ДОБАВЛЕН ИМПОРТ АУДИТА
 &nbsp;
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
@@ -472,7 +472,7 @@ async function handler(req: Request) {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >          cancelledCount++;</span>
 &nbsp;
-          // ✅ ИСПРАВЛЕНИЕ 2: АУДИТ ОТМЕНЫ
+          //   ИСПРАВЛЕНИЕ 2: АУДИТ ОТМЕНЫ
           // Добавили асинхронное логирование, чтобы оно не тормозило основной цикл
 <span class="cstat-no" title="statement not covered" >          Promise.resolve().then(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >            logSystemAction('BOOKING_AUTO_CANCELLED_BY_CRON', {</span>

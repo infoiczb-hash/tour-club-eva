@@ -141,7 +141,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
       className="group flex flex-col bg-slate-900/40 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-500"
     >
       <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden bg-slate-800">
-        {/* ✅ ИСПРАВЛЕНО ДЛЯ LCP: Точные размеры и форсированный приоритет */}
+        {/*   ИСПРАВЛЕНО ДЛЯ LCP: Точные размеры и форсированный приоритет */}
         <Image
           src={post.image || '/placeholder.jpg'}
           alt={post.title}
@@ -213,7 +213,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         <ParamsListener onChange={setActiveCategory} />
       </Suspense>
 
-      {/* ✅ ОСТАВЛЕНО: Только вкладки категорий. Hero-блок вырезан и перенесен в page.tsx */}
+      {/*   ОСТАВЛЕНО: Только вкладки категорий. Hero-блок вырезан и перенесен в page.tsx */}
       <div className="w-full overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] border-b border-white/5 pb-4 pt-4 md:pt-8 md:pb-6">
         <div className="flex justify-start md:justify-center gap-2.5 px-4 min-w-max pb-2 md:pb-0 mx-auto max-w-5xl">
           {displayCategories.map(cat => (

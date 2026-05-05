@@ -78,16 +78,30 @@ export default async function AccountLayout({
   // но теперь сама регистрация и вход будут работать на 100% стабильно.
   const needsOnboarding = !profile.phone;
 
+  const pastBookings = await prisma.booking.findMany({
+    where: {
+      memberId: profile.id,
+      status: 'confirmed',
+      tourDate: { 
+        startDate: { lt: new Date() } 
+      },
+    },
+    select: { tourDateId: true },
+    distinct: ['tourDateId'] // Схлопываем дубли билетов
+  });
+
+  const liveTourCount = pastBookings.length;
+
   return (
     <div className="min-h-screen bg-ui-bg relative flex">
 
-      <AccountNav
-        profile={{
-          name: profile.name,
-          level: profile.level,
-          totalTours: profile.totalTours,
-        }}
-      />
+     <AccountNav 
+  profile={{ 
+    name: profile.name, 
+    level: profile.level, 
+    totalTours: liveTourCount //   Теперь число всегда точное
+  }} 
+/>
 
       {/* Главный контент */}
       <main 

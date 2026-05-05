@@ -39,7 +39,7 @@ async function refundPaymentHandler(raw: RefundInput): Promise<RefundOutput> {
     throw new Error('Данная бронь не была оплачена через эквайринг АПБ');
   }
 
-  // ✅ Вернули оригинальную проверку (без выдуманного 'paid')
+  //   Вернули оригинальную проверку (без выдуманного 'paid')
   if (booking.status === 'cancelled' && booking.refundedAmount >= booking.totalPrice) {
     throw new Error('Бронь уже полностью отменена и средства возвращены');
   }

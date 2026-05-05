@@ -32,7 +32,7 @@ export function formatTourDate(date: string | Date, endDate?: string | Date | nu
   return `${ruDateFull.format(start)} — ${ruDateFull.format(end)}`;
 }
 
-// ✅ ДОБАВЛЕНО: Строгий интерфейс вместо any
+//   ДОБАВЛЕНО: Строгий интерфейс вместо any
 export interface TourDurationInput {
   duration?: string | null;
   date?: string | Date | null;

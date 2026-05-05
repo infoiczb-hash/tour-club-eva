@@ -13,10 +13,10 @@ export async function confirmBookingAttendance(bookingId: string) {
 await prisma.booking.update({
     where: { id: bookingId },
     data: {
-      isAttendanceConfirmed: true // Просто ставим галочку в базе ✅
+      isAttendanceConfirmed: true // Просто ставим галочку в базе  
     }
   });
 
-  // Мгновенно обновляем страницу билета, чтобы желтый блок сменился на зеленый ✅
+  // Мгновенно обновляем страницу билета, чтобы желтый блок сменился на зеленый  
   revalidatePath(`/account/bookings/${bookingId}`);
 }

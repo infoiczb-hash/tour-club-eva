@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AllGuidesPage() {
-  // ✅ ИСПОЛЬЗУЕМ КЭШИРОВАННУЮ API-ФУНКЦИЮ
+  //   ИСПОЛЬЗУЕМ КЭШИРОВАННУЮ API-ФУНКЦИЮ
   const guides = await getGuidesForLanding();
 
   return (

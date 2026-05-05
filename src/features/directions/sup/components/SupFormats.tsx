@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Coffee, Heart, Users, Briefcase, Dog, Baby, ArrowRight } from 'lucide-react';
-// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
 
@@ -16,7 +16,7 @@ const FORMATS = [
 ];
 
 export default function SupFormats() {
-  // ✅ ИСПРАВЛЕНО: Используем внешний хук
+  //   ИСПРАВЛЕНО: Используем внешний хук
   const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
   const listView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 

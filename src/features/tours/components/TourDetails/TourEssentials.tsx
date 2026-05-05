@@ -61,7 +61,7 @@ interface TourEssentialsProps {
   additionalExpenses: any[];
   documents?: any[];
   checklist?: any;
-  // ✅ ИНЖЕКЦИЯ: Новые типы для детальных списков
+  //   ИНЖЕКЦИЯ: Новые типы для детальных списков
   includedDetailed?: any[];
   excludedDetailed?: any[];
 }
@@ -71,7 +71,7 @@ export default function TourEssentials({
   additionalExpenses, 
   documents = [], 
   checklist,
-  includedDetailed, // ✅ Получаем новые поля
+  includedDetailed, //   Получаем новые поля
   excludedDetailed
 }: TourEssentialsProps) {
   

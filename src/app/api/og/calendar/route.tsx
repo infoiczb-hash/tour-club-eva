@@ -357,7 +357,7 @@ function renderCalendar(
           display: 'flex', 
           flexDirection: 'column', 
           flex: 1, 
-          justifyContent: 'center', // ✅ Жесткая центровка (отступы раздвинут элементы равномерно)
+          justifyContent: 'center', //   Жесткая центровка (отступы раздвинут элементы равномерно)
           gap: `${parentGap}px`, 
           overflow: 'hidden' 
         }}>

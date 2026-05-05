@@ -76,7 +76,7 @@ export default function FAQLayout({
       {/* Скрытый скрипт, который Гугл превратит в красивые ответы в поиске */}
      <script
         type="application/ld+json"
-        // ✅ ИСПРАВЛЕНО
+        //   ИСПРАВЛЕНО
         dangerouslySetInnerHTML={{ 
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
         }}

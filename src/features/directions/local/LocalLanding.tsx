@@ -40,7 +40,7 @@ export default function LocalLanding({ tours }: { tours: TourPreview[] }) {
       </SectionErrorBoundary>
 
       {/* 5. Каталог / Расписание */}
-      {/* ✅ Добавили id="schedule" для нативного якорного скролла */}
+      {/*   Добавили id="schedule" для нативного якорного скролла */}
       <section id="schedule" className="py-10 md:py-18 bg-slate-950 relative border-t border-white/5 scroll-mt-10">
           {/* Декоративный изумрудный градиент */}
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-900/10 md:blur-[150px] rounded-full pointer-events-none" />

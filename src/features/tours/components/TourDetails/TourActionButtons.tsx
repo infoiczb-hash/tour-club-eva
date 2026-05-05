@@ -54,10 +54,10 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
         <button
           onClick={handleShare}
           aria-label={isCopied ? 'Ссылка скопирована' : 'Поделиться туром'}
-          // ✅ transition-[border-color,background-color] вместо transition-all
+          //   transition-[border-color,background-color] вместо transition-all
           className="group relative flex items-center gap-4 p-5 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-[border-color,background-color] hover:bg-slate-800 text-left"
         >
-          {/* ✅ transition-transform на иконке — composited */}
+          {/*   transition-transform на иконке — composited */}
           <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform shrink-0">
             {isCopied ? <Check size={20} aria-hidden="true" /> : <Share2 size={20} aria-hidden="true" />}
           </div>
@@ -75,7 +75,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
         <button
           onClick={handlePrint}
           aria-label="Распечатать или сохранить тур как PDF"
-          // ✅ transition-[border-color,background-color]
+          //   transition-[border-color,background-color]
           className="group flex items-center gap-4 p-5 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-[border-color,background-color] hover:bg-slate-800 text-left"
         >
           <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-500 group-hover:scale-110 transition-transform shrink-0">
@@ -95,7 +95,7 @@ export default function TourActionButtons({ tour }: TourActionButtonsProps) {
         <button
           onClick={() => openContactModal(tour.title, 'TOUR')}
           aria-label="Написать нам вопрос по туру"
-          // ✅ transition-[border-color,background-color]
+          //   transition-[border-color,background-color]
           className="group flex items-center gap-4 p-5 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-[border-color,background-color] hover:bg-slate-800 text-left"
         >
           <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform shrink-0">

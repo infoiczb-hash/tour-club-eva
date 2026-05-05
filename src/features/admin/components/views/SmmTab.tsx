@@ -129,7 +129,7 @@ const generateGetOgUrl = (source: SmmSource, format: string, index: number, slid
     params.append('priceChild', source.priceChild?.toString() || '');
     params.append('currency', source.currency || 'RUB');
     
-    // ✅ Новые поля для журнальной карусели
+    //   Новые поля для журнальной карусели
     if (source.route) params.append('route', source.route);
     if (source.meetingPoint) params.append('meetingPoint', source.meetingPoint);
     if (source.spots) params.append('spots', source.spots.toString());
@@ -156,7 +156,7 @@ const generateGetOgUrl = (source: SmmSource, format: string, index: number, slid
   if (trigger) params.append('trigger', trigger);
   if (slideTitle) params.append('slideTitle', slideTitle);
   if (slideText) params.append('slideText', slideText);
-  if (slideType) params.append('slideType', slideType); // ✅ Прокидываем тип слайда!
+  if (slideType) params.append('slideType', slideType); //   Прокидываем тип слайда!
 
   return `/api/og?${params.toString()}`;
 };
@@ -191,7 +191,7 @@ export default function SmmTab() {
 
   // --- РЕЗУЛЬТАТЫ И ИНЛАЙН-ФОРМЫ ---
  const [generatedCaption, setGeneratedCaption] = useState('');
-  const [generatedSlides, setGeneratedSlides] = useState<{ title: string; text: string; type?: string }[]>([]); // ✅ Добавили type
+  const [generatedSlides, setGeneratedSlides] = useState<{ title: string; text: string; type?: string }[]>([]); //   Добавили type
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [calendarBlobUrls, setCalendarBlobUrls] = useState<string[]>([]);
 
@@ -213,7 +213,7 @@ export default function SmmTab() {
   // --- ОЧИСТКА ПАМЯТИ ОТ BLOB ---
 useEffect(() => {
     return () => {
-      calendarBlobUrls.forEach(url => URL.revokeObjectURL(url)); // ✅ Очищаем весь массив
+      calendarBlobUrls.forEach(url => URL.revokeObjectURL(url)); //   Очищаем весь массив
     };
   }, [calendarBlobUrls]);
 
@@ -270,7 +270,7 @@ useEffect(() => {
         const eventsRes = await getSmmCalendarEventsAction(days) as { success: boolean; data?: any[] };
         
         if (eventsRes.success && eventsRes.data && eventsRes.data.length > 0) {
-          // ✅ Нарезаем события на чанки: 6 для Сториз, 4 для Ленты/Квадрата
+          //   Нарезаем события на чанки: 6 для Сториз, 4 для Ленты/Квадрата
           const chunkSize = format === 'story' ? 6 : 4;
           const chunks = [];
           for (let i = 0; i < eventsRes.data.length; i += chunkSize) {
@@ -280,7 +280,7 @@ useEffect(() => {
           // Очищаем старые ссылки из памяти
           calendarBlobUrls.forEach(url => URL.revokeObjectURL(url));
           
-          // ✅ Делаем параллельные запросы для каждого куска афиши
+          //   Делаем параллельные запросы для каждого куска афиши
           const fetchPromises = chunks.map(chunk => 
             fetch('/api/og/calendar', {
               method: 'POST',
@@ -300,7 +300,7 @@ useEffect(() => {
           const blobs = await Promise.all(fetchPromises);
           const newUrls = blobs.map(blob => URL.createObjectURL(blob));
           
-          setCalendarBlobUrls(newUrls); // ✅ Сохраняем массив слайдов
+          setCalendarBlobUrls(newUrls); //   Сохраняем массив слайдов
           
           setGeneratedCaption(`Свежая афиша туров ЭВА на ${calendarPeriod === 'week' ? 'неделю' : 'ближайшее время'}! 🏔️\n\nВыбирайте свой маршрут и бронируйте места заранее.`);
           setHashtags(['эватур', 'афишатирасполь', 'отдыхпмр']);
@@ -318,12 +318,12 @@ useEffect(() => {
     if (!selectedSource) return showToast('Сначала выбери источник', 'error');
     
    setIsAssembling(true);
-    // ✅ Добавили type?: string, чтобы TypeScript разрешил класть туда типы слайдов
+    //   Добавили type?: string, чтобы TypeScript разрешил класть туда типы слайдов
     const slides: { title: string; text: string; type?: string }[] = [];
 
   if (isCarousel) {
      if (selectedSource.type === 'tour') {
-        // ✅ Формируем строгую маркетинговую воронку (Журнальная верстка)
+        //   Формируем строгую маркетинговую воронку (Журнальная верстка)
         
         // 1. Слайд "Логистика" (Рисует генератор сам из данных URL)
         slides.push({ title: 'ЛОГИСТИКА', text: '', type: 'logistics' });
@@ -775,7 +775,7 @@ return (
             <div className="flex overflow-x-auto gap-8 pb-8 custom-scrollbar snap-x snap-mandatory">
                    {entityType === 'calendar' ? (
                      calendarBlobUrls.length > 0 ? (
-                       // ✅ Если афиша собрана, рендерим карусель из кусков
+                       //   Если афиша собрана, рендерим карусель из кусков
                        calendarBlobUrls.map((url, idx) => (
                          <div key={idx} className="shrink-0 w-80 snap-start flex flex-col gap-6">
                             <div className={clsx(
@@ -827,7 +827,7 @@ return (
                                "relative w-full rounded-[2rem] overflow-hidden bg-slate-900 border-4 border-slate-50 dark:border-slate-800 shadow-2xl",
                                getAspectClass(format)
                              )}>
-                                {/* ✅ Добавлен slide.type в конец вызова функции */}
+                                {/*   Добавлен slide.type в конец вызова функции */}
                                 <img src={generateGetOgUrl(selectedSource!, format, idx+1, slide.title, slide.text, triggerText, slide.type)} className="w-full h-full object-cover" />
                              </div>
                              {/* Отступы увеличены через space-y-4 для предотвращения наслоения */}

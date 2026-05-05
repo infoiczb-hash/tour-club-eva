@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'; // ✅ SSR-клиент с cookies (сессия работает)
+import { createClient } from '@/lib/supabase/client'; //   SSR-клиент с cookies (сессия работает)
 
 // ==========================================
 // 1. ПОЛУЧЕНИЕ КОНТЕНТА
@@ -21,7 +21,7 @@ export async function getContentBlock(slug: string): Promise<Record<string, unkn
 // ==========================================
 export async function uploadImage(file: File, folder: string = ''): Promise<string | null> {
     try {
-        // ✅ ФАЗА 1: Жёсткий лимит размера файла (5 MB)
+        //   ФАЗА 1: Жёсткий лимит размера файла (5 MB)
         const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
         if (file.size > MAX_FILE_SIZE) {
             alert(`Файл слишком большой! Максимальный размер 5 МБ. Размер вашего файла: ${(file.size / 1024 / 1024).toFixed(2)} МБ.`);
@@ -30,7 +30,7 @@ export async function uploadImage(file: File, folder: string = ''): Promise<stri
 
         const supabase = createClient();
 
-        // ✅ ФАЗА 2: Базовая проверка авторизации (чтобы не делать лишний запрос в хранилище)
+        //   ФАЗА 2: Базовая проверка авторизации (чтобы не делать лишний запрос в хранилище)
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
             alert('Ошибка: Вы не авторизованы. Только администраторы могут загружать файлы.');
@@ -45,7 +45,7 @@ export async function uploadImage(file: File, folder: string = ''): Promise<stri
         // Склеиваем путь
         const filePath = folder ? `${folder}/${fileName}` : fileName; 
         
-        // ✅ ФАЗА 3: Загрузка в Supabase (Здесь отработает наша RLS политика)
+        //   ФАЗА 3: Загрузка в Supabase (Здесь отработает наша RLS политика)
         const { error } = await supabase.storage.from(bucket).upload(filePath, file);
         
         if (error) {

@@ -25,9 +25,15 @@ interface TourDetailsWrapperProps {
   tour: Tour;
   similarToursPromise: Promise<TourPreview[]>; 
   isWished: boolean;
+  profile?: { name?: string | null; phone?: string | null; id?: string } | null;
 }
 
-export default function TourDetailsWrapper({ tour, similarToursPromise, isWished }: TourDetailsWrapperProps) {
+export default function TourDetailsWrapper({ 
+  tour, 
+  similarToursPromise, 
+  isWished, 
+  profile 
+}: TourDetailsWrapperProps) {
   return (
     <>
       <TourHero tour={tour} isWished={isWished} />
@@ -36,7 +42,7 @@ export default function TourDetailsWrapper({ tour, similarToursPromise, isWished
       {/* Основной контент */}
       <div className="container relative z-10 mt-6 md:mt-10 pb-24">
         
-        {/* ✅ ИСПРАВЛЕНО: Убрали items-start. Теперь колонки тянутся на всю высоту друг друга! */}
+        {/*   ИСПРАВЛЕНО: Убрали items-start. Теперь колонки тянутся на всю высоту друг друга! */}
         <div className="grid lg:grid-cols-12 gap-8">
           
           {/* ЛЕВАЯ КОЛОНКА (Длинный контент) */}
@@ -61,9 +67,10 @@ export default function TourDetailsWrapper({ tour, similarToursPromise, isWished
             <TourActionButtons tour={tour} />
           </div>
 
-          {/* ПРАВАЯ КОЛОНКА (Сайдбар) */}
+        {/* ПРАВАЯ КОЛОНКА (Сайдбар) */}
           <div className="hidden lg:block lg:col-span-4 relative">
-            <TourSidebar tour={tour} />
+            {/* ✅ ДОБАВЛЕНО: Передаем профиль в сайдбар */}
+            <TourSidebar tour={tour} profile={profile} />
           </div>
         </div>
 
@@ -73,7 +80,7 @@ export default function TourDetailsWrapper({ tour, similarToursPromise, isWished
         </Suspense>
       </div>
 
-      <TourBottomActions tour={tour} />
+     <TourBottomActions tour={tour} profile={profile} />
     </>
   );
 }

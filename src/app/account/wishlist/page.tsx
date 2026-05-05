@@ -318,7 +318,9 @@ export default async function WishlistPage() {
     {/* text-slate-200 меняем на text-ui-base/90 (чуть приглушенный белый).
         А при наведении (group-hover) можно сделать его либо полностью белым (text-ui-base), 
         либо акцентным (text-teal-400) для лучшего UX */}
-    <p className="text-sm font-bold text-ui-base/90 group-hover:text-teal-400 line-clamp-2 transition-colors leading-snug">{sp.post.title}</p>
+   <p className="text-sm font-bold text-white group-hover:text-teal-300 line-clamp-2 transition-colors leading-snug">
+  {sp.post.title}
+</p>
     <p className="text-xs text-ui-muted font-bold uppercase tracking-wider mt-1.5">
       {sp.post.read_time ? `${sp.post.read_time} мин чтения` : 'Статья'}
     </p>
@@ -348,8 +350,8 @@ export default async function WishlistPage() {
           memberId={profile.id}
         />
 
-        {/* ✅ ВЕРНУЛИ ТВОЮ ФРАЗУ ПРО КАНАЛ */}
-        <p className="text-xs text-slate-400 mt-5">
+        {/*   ВЕРНУЛИ ТВОЮ ФРАЗУ ПРО КАНАЛ */}
+        <p className="text-sm text-slate-300 mt-5">
           Уведомления о новых турах и постах приходят в наш Telegram канал. Убедитесь что вы подписаны на{' '}
           <a
             href="https://t.me/evaturclub"

@@ -6,7 +6,7 @@ import { PostFormat } from '@prisma/client';
 
 import { sendToTelegram } from '@/features/admin/actions/telegram';
 import { withAdminAuth } from '@/lib/auth'; // 👈 Заменили requireAuth на HOC
-import { withAdminAudit } from '@/lib/audit'; // ✅ ДОБАВИЛИ ЯДРО АУДИТА
+import { withAdminAudit } from '@/lib/audit'; //   ДОБАВИЛИ ЯДРО АУДИТА
 import { env } from '@/lib/env';
 
 // === 1. СОЗДАНИЕ ПОСТА (ЗАЩИЩЕНО + АУДИТ) ===

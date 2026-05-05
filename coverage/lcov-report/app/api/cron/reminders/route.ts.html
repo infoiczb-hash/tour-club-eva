@@ -280,9 +280,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { Redis } from '@upstash/redis'; // ✅ ДОБАВИЛИ ИМПОРТ REDIS
+import { Redis } from '@upstash/redis'; //   ДОБАВИЛИ ИМПОРТ REDIS
 &nbsp;
-const redis = Redis.fromEnv(); // ✅ ИНИЦИАЛИЗАЦИЯ REDIS
+const redis = Redis.fromEnv(); //   ИНИЦИАЛИЗАЦИЯ REDIS
 &nbsp;
 export async function <span class="fstat-no" title="function not covered" >GET(r</span>eq: Request) {
 <span class="cstat-no" title="statement not covered" >  try {</span>
@@ -332,7 +332,7 @@ export async function <span class="fstat-no" title="function not covered" >GET(r
       const isTomorrow = <span class="cstat-no" title="statement not covered" >booking.tourDate.startDate &lt; tomorrowRange.lt;</span>
       const eventId = <span class="cstat-no" title="statement not covered" >isTomorrow ? 'TOUR_TOMORROW_REMINDER' : 'TOUR_3DAY_REMINDER';</span>
 &nbsp;
-      // ✅ ИСПРАВЛЕНИЕ 6: Защита от дублей при случайном двойном вызове крона (TTL 20 часов)
+      //   ИСПРАВЛЕНИЕ 6: Защита от дублей при случайном двойном вызове крона (TTL 20 часов)
       const redisKey = <span class="cstat-no" title="statement not covered" >`reminder_sent:${eventId}:${booking.id}`;</span>
       // Пытаемся записать ключ. nx: true гарантирует, что запись произойдет ТОЛЬКО если ключа еще нет
       const isSent = <span class="cstat-no" title="statement not covered" >await redis.set(redisKey, '1', { ex: 20 * 60 * 60, nx: true });</span>
@@ -359,7 +359,7 @@ export async function <span class="fstat-no" title="function not covered" >GET(r
         .then(<span class="fstat-no" title="function not covered" >() =&gt; { <span class="cstat-no" title="statement not covered" >s</span>entCount++; }</span>)
         .catch(<span class="fstat-no" title="function not covered" >async (e</span>) =&gt; { 
 <span class="cstat-no" title="statement not covered" >          console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e);</span>
-          // ✅ ОТКАТ REDIS: Если Хаб упал и сообщение не ушло, удаляем ключ в Redis, 
+          //   ОТКАТ REDIS: Если Хаб упал и сообщение не ушло, удаляем ключ в Redis, 
           // чтобы попытаться снова при следующем запуске (или ручном ретрае Vercel)
 <span class="cstat-no" title="statement not covered" >          await redis.del(redisKey);</span>
         })

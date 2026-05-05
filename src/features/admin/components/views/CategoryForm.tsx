@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { X, Save, Tent, Mountain, Waves, Compass, Map, Sun, Snowflake, TreePine, Bike, Footprints, Loader2, MapPin, Anchor, Flame, Star } from 'lucide-react';
 
-// ✅ ИСПРАВЛЕНО: Объявляем цвета прямо здесь, чтобы не зависеть от schemas.ts и не ронять билд Vercel
+//   ИСПРАВЛЕНО: Объявляем цвета прямо здесь, чтобы не зависеть от schemas.ts и не ронять билд Vercel
 const CATEGORY_COLORS = [
   'slate', 'teal', 'emerald', 'sky', 'blue',
   'violet', 'pink', 'rose', 'orange', 'amber',

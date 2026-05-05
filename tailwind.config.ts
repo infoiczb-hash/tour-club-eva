@@ -9,7 +9,7 @@ const config: Config = {
     "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    // ✅ container — на уровне theme (не extend!), чтобы полностью переопределить дефолт
+    //   container — на уровне theme (не extend!), чтобы полностью переопределить дефолт
     container: {
       center: true,
       padding: {

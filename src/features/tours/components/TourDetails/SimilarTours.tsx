@@ -6,11 +6,11 @@ import TourCard from '@/features/tours/components/TourCard';
 import { TourPreview } from '@/features/tours/types';
 
 interface SimilarToursProps {
-  toursPromise: Promise<TourPreview[]>; // ✅ Меняем тип на Promise
+  toursPromise: Promise<TourPreview[]>; //   Меняем тип на Promise
 }
 
 export default async function SimilarTours({ toursPromise }: SimilarToursProps) {
-  // ✅ Ждем загрузки туров
+  //   Ждем загрузки туров
   const tours = await toursPromise;
 
   if (!tours || tours.length === 0) return null;
@@ -52,7 +52,7 @@ export default async function SimilarTours({ toursPromise }: SimilarToursProps) 
   );
 }
 
-// ✅ ДОБАВЛЕНО: Скелетон
+//   ДОБАВЛЕНО: Скелетон
 export function SimilarToursSkeleton() {
   return (
     <section className="mt-24 mb-12 relative animate-pulse">

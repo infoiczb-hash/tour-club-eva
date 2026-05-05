@@ -9,7 +9,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   reactStrictMode: true,
 
-  // ✅ ВНЕДРЕНО: Умный Tree-shaking для тяжелых библиотек
+  //   ВНЕДРЕНО: Умный Tree-shaking для тяжелых библиотек
   experimental: {
     optimizePackageImports: ['lucide-react', 'react-markdown', 'date-fns'],
   },

@@ -17,7 +17,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
   const guideImage = typeof guide === 'object' ? guide?.image : null;
   const guideRole = typeof guide === 'object' ? guide?.role : 'Гид группы';
   
-  // ✅ ИЗВЛЕКАЕМ SLUG ГИДА
+  //   ИЗВЛЕКАЕМ SLUG ГИДА
   const guideSlug = typeof guide === 'object' ? guide?.slug : null;
 
   return (
@@ -40,7 +40,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
 
       {/* 2. ГИД */}
       <div className="flex gap-4 items-center">
-         {/* ✅ ИСПРАВЛЕНО: Добавлен класс relative для корректной работы fill */}
+         {/*   ИСПРАВЛЕНО: Добавлен класс relative для корректной работы fill */}
          <div className="relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden bg-indigo-500/10 border border-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400">
             {guideSlug ? (
                <Link href={`/guides/${guideSlug}`} className="block w-full h-full relative">
@@ -70,7 +70,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             <h3 className="text-[14px] font-bold text-slate-300 uppercase tracking-widest mb-1 break-words">
                {guideRole}
             </h3>
-            {/* ✅ ИСПРАВЛЕНО: Имя теперь ссылка на /guides/[slug] */}
+            {/*   ИСПРАВЛЕНО: Имя теперь ссылка на /guides/[slug] */}
             {guideSlug ? (
               <Link 
                 href={`/guides/${guideSlug}`} 

@@ -61,7 +61,7 @@ type ViewMode = 'studio' | 'library';
 type StylePreset = (typeof STYLE_PRESETS)[number]['id'];
 type AspectRatio = (typeof ASPECT_RATIOS)[number]['id'];
 
-// ✅ ОБНОВЛЕНО: Добавлены новые поля для форматов и Image-to-Image
+//   ОБНОВЛЕНО: Добавлены новые поля для форматов и Image-to-Image
 interface GenerateImagePayload {
   mode: 'generate_image';
   prompt: string;
@@ -95,7 +95,7 @@ const STYLE_PRESETS = [
   { id: 'minimal', label: '⬜ Минимал', hint: 'minimalist composition, clean, flat lay, white background' },
 ] as const;
 
-// ✅ ДОБАВЛЕНО: Пресеты форматов
+//   ДОБАВЛЕНО: Пресеты форматов
 const ASPECT_RATIOS = [
   { id: '1:1', label: '1:1', sub: 'Квадрат' },
   { id: '16:9', label: '16:9', sub: 'Обложка' },
@@ -366,7 +366,7 @@ export default function NeuroStudioTab() {
   const [style, setStyle] = useState<StylePreset>('photo');
   const [groqEnhance, setGroqEnhance] = useState(true);
   
-  // ✅ НОВЫЕ СТЕЙТЫ
+  //   НОВЫЕ СТЕЙТЫ
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -440,7 +440,7 @@ export default function NeuroStudioTab() {
     [sourceMode, slugId, sources]
   );
 
-  // ✅ ДОБАВЛЕНО: Обработчик загрузки фото (Image-to-Image)
+  //   ДОБАВЛЕНО: Обработчик загрузки фото (Image-to-Image)
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -491,7 +491,7 @@ export default function NeuroStudioTab() {
       const hint = STYLE_PRESETS.find((s) => s.id === style)?.hint ?? '';
       const finalPrompt = hint ? `${trimmed}. ${hint}` : trimmed;
 
-      // ✅ ДОБАВЛЕНО: В Payload передаем новые поля
+      //   ДОБАВЛЕНО: В Payload передаем новые поля
       const payload: GenerateImagePayload = {
         mode: 'generate_image',
         prompt: finalPrompt,
@@ -752,7 +752,7 @@ export default function NeuroStudioTab() {
                 )}
               </section>
 
-              {/* ✅ 3. ФОРМАТ (Aspect Ratio) */}
+              {/*   3. ФОРМАТ (Aspect Ratio) */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
@@ -779,7 +779,7 @@ export default function NeuroStudioTab() {
                 </div>
               </section>
 
-              {/* ✅ 4. ЗАГРУЗКА ФОТО (Image-to-Image) */}
+              {/*   4. ЗАГРУЗКА ФОТО (Image-to-Image) */}
               <section>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">

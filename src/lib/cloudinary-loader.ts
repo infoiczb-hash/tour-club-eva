@@ -30,7 +30,7 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
   if (src.includes('res.cloudinary.com') && src.includes('/upload/')) {
     // Хард-лимит ширины. Даже если Next.js запросит 3840w, мы отдадим максимум 1200w.
     // Это спасет твой лимит Bandwidth в Cloudinary.
-    // ✅ ИСПРАВЛЕНИЕ: Если запрошено высокое качество (>= 85) для LCP-изображений (Hero),
+    //   ИСПРАВЛЕНИЕ: Если запрошено высокое качество (>= 85) для LCP-изображений (Hero),
     // отключаем режим eco и расширяем лимит до 2560px для кристальной четкости.
     const isHighQuality = q >= 85;
     const safeWidth = isHighQuality ? Math.min(width, 2560) : Math.min(width, 1200);

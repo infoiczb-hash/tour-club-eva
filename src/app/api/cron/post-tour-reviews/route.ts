@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { getLevelName, getLevelConfig, LEVELS_CONFIG   } from '@/lib/constants/levels'; // ✅ Импорт для пересчёта уровня
+import { getLevelName, getLevelConfig, LEVELS_CONFIG   } from '@/lib/constants/levels'; //   Импорт для пересчёта уровня
 
 
 // ==========================================
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    // ✅ ИСПРАВЛЕНИЕ 5: Документируем edge-case для однодневных туров
+    //   ИСПРАВЛЕНИЕ 5: Документируем edge-case для однодневных туров
     // ВНИМАНИЕ: Если однодневный тур закончился сегодня глубокой ночью (напр. в 02:00), 
     // но администратор не указал endDate в БД, крон запросит отзыв по startDate (вчерашнему дню).
     // Правило для контент-менеджеров: Для туров с ночными возвратами ВСЕГДА указывать endDate!
@@ -108,7 +108,7 @@ export async function GET(req: Request) {
       // Игнорируем заявки, где нет ни аккаунта, ни Telegram-чата
       if (!booking.memberId && !booking.payerTgChatId) continue;
 
-      // ✅ НОВОЕ: обновляем статистику участника (только если есть memberId)
+      //   НОВОЕ: обновляем статистику участника (только если есть memberId)
       if (booking.memberId) {
         await updateMemberStats(booking.memberId);
       }

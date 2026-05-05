@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma'; // Сохранил, хотя он не используется в компоненте
 import { Metadata } from 'next';
 
-// ✅ ИЗМЕНЕНО: Импортируем только нужные функции
+//   ИЗМЕНЕНО: Импортируем только нужные функции
 import { getBlogPreviews } from '@/features/blog/api'; // Облегченная версия
 import { getReviews } from '@/features/reviews/actions';
 import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * ✅ ВЫНЕСЕНО В ОТДЕЛЬНЫЙ КОМПОНЕНТ ДЛЯ STREAMING
+ *   ВЫНЕСЕНО В ОТДЕЛЬНЫЙ КОМПОНЕНТ ДЛЯ STREAMING
  * Это позволяет Hero отрисоваться мгновенно, не дожидаясь этих тяжелых запросов.
  */
 async function DeferredLandingContent() {
@@ -73,7 +73,7 @@ async function DeferredLandingContent() {
   const blogCategories = bCatRes.success ? bCatRes.data : [];
   const activeTests = funRes?.success && funRes.data ? funRes.data.filter(t => t.isActive) : [];
 
-  // ✅ ИСПРАВЛЕНО: Обработка отзывов (ISO строки для дат обязательны для клиентских компонентов)
+  //   ИСПРАВЛЕНО: Обработка отзывов (ISO строки для дат обязательны для клиентских компонентов)
   const limitedReviews = fetchedReviews
     .slice(0, 12) // Ограничение для производительности DOM
     .map(r => ({
@@ -114,13 +114,13 @@ export default function Home() {
     <>
       <script
         type="application/ld+json"
-        // ✅ ИСПРАВЛЕНО
+        //   ИСПРАВЛЕНО
         dangerouslySetInnerHTML={{ 
           __html: JSON.stringify(websiteSchema).replace(/</g, '\\u003c') 
         }}
       />
 
-      {/* ✅ LCP ЭЛЕМЕНТ: Рендерится сразу! */}
+      {/*   LCP ЭЛЕМЕНТ: Рендерится сразу! */}
       <Hero />
       
       <Suspense fallback={<TourSkeleton />}>
@@ -129,7 +129,7 @@ export default function Home() {
       
       <Philosophy />
 
-      {/* ✅ ВСЁ ОСТАЛЬНОЕ: Подгружается стримингом (Suspense) */}
+      {/*   ВСЁ ОСТАЛЬНОЕ: Подгружается стримингом (Suspense) */}
       <Suspense fallback={<div className="h-64 flex items-center justify-center text-teal-500 animate-pulse font-bold uppercase tracking-widest">Собираем рюкзак...</div>}>
         <DeferredLandingContent />
       </Suspense>

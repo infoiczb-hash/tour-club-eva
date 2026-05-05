@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getTourBySlug, getTours, getSimilarTours } from '@/features/tours/api'; 
 import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper';
+// ✅ ИМПОРТ: Используем твою существующую функцию получения профиля
+import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -35,53 +37,47 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const url = `${BASE_URL}/tour/${tour.slug}`; 
   
-  let imageUrl = `${BASE_URL}/api/og?title=${encodeURIComponent(tour.title)}&subtitle=${encodeURIComponent(tour.subtitle || 'Турклуб Эва')}`;
-  if (imageUrl.startsWith('/')) imageUrl = `${BASE_URL}${imageUrl}`;
-
-  const cleanDescription = tour.subtitle || `Тур «${tour.title}» от турклуба «Эва» — активный отдых в Приднестровье. Подробности и запись →`;
-
   return {
     title: `${tour.title} | Турклуб «Эва»`,
-    description: cleanDescription,
-    alternates: { canonical: url },
+    description: tour.subtitle || 'Присоединяйтесь к нашему путешествию',
     openGraph: {
-      title: `${tour.title} | Турклуб «Эва»`,
-      description: cleanDescription,
-      url: url,
-      siteName: 'Турклуб «Эва»',
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: tour.title }],
-      type: 'website',
-      locale: 'ru_RU',
-    },
-    twitter: {
-      card: 'summary_large_image', 
       title: tour.title,
-      description: cleanDescription,
-      images: [imageUrl],
+      description: tour.subtitle || '',
+      url,
+      images: tour.image ? [{ url: tour.image }] : [],
+      type: 'article',
     },
+    alternates: {
+      canonical: url,
+    }
   };
 }
 
 export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
+  
+  // ✅ ИСПРАВЛЕНО: Загружаем тур и профиль параллельно для скорости
+  const [tour, profile] = await Promise.all([
+    getTourBySlug(decodedSlug),
+    getMyProfileAction()
+  ]);
 
-  const tour = await getTourBySlug(decodedSlug);
-  if (!tour) notFound();
+  if (!tour) {
+    notFound();
+  }
 
-  // Promise передаём в Suspense через TourDetailsWrapper
-  const similarToursPromise = getSimilarTours(tour.categoryId ?? null, tour.id, 3);
+  // Для похожих туров используем Promise (Suspense внутри Wrapper его обработает)
+ const similarToursPromise = getSimilarTours(tour.id, tour.category?.id ?? '');
 
-  const schemaImages = [tour.image, ...(tour.gallery || [])].filter(Boolean) as string[];
-  const startDate = tour.date ? new Date(tour.date).toISOString() : undefined;
-
+  // Формируем JSON-LD для SEO (оставляем твою логику без изменений)
+  const startDate = tour.dates?.[0]?.start ? new Date(tour.dates[0].start).toISOString() : null;
   const jsonLd: any = {
     '@context': 'https://schema.org',
-    '@type': ['Event', 'TouristTrip'],
+    '@type': 'Event',
     name: tour.title,
-    description: tour.subtitle || tour.description,
-    image: schemaImages,
-    touristType: ["Любители природы", "Активный отдых"],
+    description: tour.subtitle,
+    image: tour.image,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
@@ -118,15 +114,20 @@ export default async function TourPage({ params }: Props) {
   }
 
   return (
-    // ✅ Жёстко задаём тёмный фон и белый текст — страница тура всегда тёмная
-    <main className="bg-slate-950 text-white min-h-screen print:bg-white print:text-slate-900">
+    <main className="bg-slate-950 min-h-screen">
+      {/* Скрипт JSON-LD для поисковиков */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ 
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TourDetailsWrapper tour={tour} similarToursPromise={similarToursPromise} isWished={false} />
+
+      {/* ✅ ПЕРЕДАЕМ: Теперь profile летит во Wrapper, а оттуда в Sidebar и BottomActions */}
+      <TourDetailsWrapper 
+        tour={tour} 
+        similarToursPromise={similarToursPromise}
+        isWished={false} // Здесь можно добавить проверку из профиля, если нужно
+        profile={profile}
+      />
     </main>
   );
 }

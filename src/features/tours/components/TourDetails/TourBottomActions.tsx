@@ -3,18 +3,31 @@
 import React, { useEffect, useState } from 'react';
 import { Tour } from '@/features/tours/types';
 import { clsx } from 'clsx';
-import { X, Crown, Baby, Users, Ticket, ChevronUp } from 'lucide-react';
+// ✅ НОВОЕ: Добавили Loader2
+import { X, Crown, Baby, Users, Ticket, ChevronUp, Loader2 } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
+// ✅ НОВОЕ: Импортируем экшен для списка ожидания
+import { joinWaitlistAction } from '@/features/account/actions/waitlist';
 
 interface TourBottomActionsProps {
   tour: Tour;
+  // ✅ НОВОЕ: Принимаем профиль для предзаполнения
+  profile?: { name?: string | null; phone?: string | null } | null;
 }
 
-export default function TourBottomActions({ tour }: TourBottomActionsProps) {
+export default function TourBottomActions({ tour, profile }: TourBottomActionsProps) {
   const [isVisible, setIsVisible]   = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const openBookingModal = useModalStore((state) => state.openBookingModal);
+
+  // ✅ НОВОЕ: Стейты для Листа Ожидания
+  const [showWaitlistForm, setShowWaitlistForm] = useState(false);
+  const [waitlistName,     setWaitlistName]     = useState(profile?.name || '');
+  const [waitlistPhone,    setWaitlistPhone]    = useState(profile?.phone || '+373 ');
+  const [waitlistLoading,  setWaitlistLoading]  = useState(false);
+  const [waitlistDone,     setWaitlistDone]     = useState(false);
+  const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,7 +39,10 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
   // Закрываем при скролле вверх (пользователь ушёл от тура)
   useEffect(() => {
-    if (!isVisible) setIsExpanded(false);
+    if (!isVisible) {
+      setIsExpanded(false);
+      setShowWaitlistForm(false); // Сбрасываем состояние формы
+    }
   }, [isVisible]);
 
   if (!tour) return null;
@@ -48,13 +64,34 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
     ? Math.round(((Number(tour.priceOld) - Number(tour.price)) / Number(tour.priceOld)) * 100)
     : 0;
 
+  // ✅ НОВОЕ: Обработчик сабмита листа ожидания
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistName.trim()) return;
+    setWaitlistLoading(true);
+    setWaitlistError(null);
+
+    const result = await joinWaitlistAction({
+      tourId:  String(tour.id),
+      name:    waitlistName.trim(),
+      phone:   waitlistPhone.trim() || undefined,
+    });
+
+    if (result.success) {
+      setWaitlistDone(true);
+    } else {
+      setWaitlistError(result.error || 'Ошибка. Попробуйте ещё раз.');
+    }
+    setWaitlistLoading(false);
+  };
+
   return (
     <>
       {/* Затемнение фона при расширении */}
       {isExpanded && (
         <div
           className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm lg:hidden"
-          onClick={() => setIsExpanded(false)}
+          onClick={() => { setIsExpanded(false); setShowWaitlistForm(false); }}
           aria-hidden="true"
         />
       )}
@@ -75,18 +112,21 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
           {/* ── ХЭНДЛ + КНОПКА ЗАКРЫТИЯ ── */}
           <div
             className="flex items-center justify-center pt-3 pb-1 cursor-pointer relative"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+              if (isExpanded) setShowWaitlistForm(false); // Закрываем форму если сворачиваем
+              setIsExpanded(!isExpanded);
+            }}
             role="button"
             aria-label={isExpanded ? 'Свернуть панель' : 'Развернуть детали тура'}
             aria-expanded={isExpanded}
           >
-            {/* Полоска-хэндл — универсальный bottom sheet паттерн */}
+            {/* Полоска-хэндл */}
             <div className="w-10 h-1 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors" />
 
-            {/* Крестик закрытия — только в расширенном состоянии */}
+            {/* Крестик закрытия */}
             {isExpanded && (
               <button
-                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); setShowWaitlistForm(false); }}
                 aria-label="Закрыть панель"
                 className="absolute right-4 top-2 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
               >
@@ -98,62 +138,114 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
           {/* ── РАСШИРЕННЫЙ КОНТЕНТ ── */}
           <div className={clsx(
             "overflow-hidden transition-all duration-400 ease-in-out",
-            isExpanded ? "max-h-[60vh] opacity-100" : "max-h-0 opacity-0"
+            isExpanded ? "max-h-[70vh] opacity-100" : "max-h-0 opacity-0"
           )}>
-            <div className="px-5 pt-2 pb-4 space-y-4 overflow-y-auto max-h-[55vh]">
-
-              {/* Цена с скидкой */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Стоимость участия</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-3xl font-black text-white">{Number(tour.price).toLocaleString('ru-RU')}</span>
-                    <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
+            <div className="px-5 pt-2 pb-4 space-y-4 overflow-y-auto max-h-[65vh]">
+              
+              {/* ✅ НОВОЕ: Развилка контента. Если нажали "В очередь" — показываем форму */}
+              {showWaitlistForm ? (
+                <div className="space-y-4 pt-2">
+                  <div>
+                    <h3 className="text-lg font-black text-white">Список ожидания</h3>
+                    <p className="text-xs text-slate-400 mt-1">Оставьте контакты, и мы сообщим, если кто-то откажется от поездки или мы добавим новые места.</p>
                   </div>
-                  {hasDiscount && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-slate-300 line-through text-xs">{Number(tour.priceOld).toLocaleString()}</span>
-                      <span className="bg-rose-500/10 text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
-                        −{discountPercent}%
-                      </span>
+
+                  {!profile && (
+                    <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-xs text-slate-300">
+                      💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a> для авто-уведомлений о датах!
                     </div>
                   )}
-                </div>
 
-                {/* Свободных мест */}
-                <div className="text-right">
-                  <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Мест</p>
-                  <span className={clsx(
-                    "text-2xl font-black",
-                    isSoldOut ? "text-rose-500" : isLowSpots ? "text-amber-400" : "text-teal-400"
-                  )}>
-                    {isSoldOut ? "0" : left}
-                  </span>
-                  {isLowSpots && !isSoldOut && (
-                    <p className="text-xs font-bold text-amber-400 uppercase">Мало!</p>
+                  {waitlistDone ? (
+                    <div className="w-full py-4 rounded-xl text-sm font-black uppercase tracking-wider text-center bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                      Вы добавлены в список!
+                    </div>
+                  ) : (
+                    <form onSubmit={handleWaitlistSubmit} className="space-y-3 pb-4">
+                      <input
+                        required
+                        type="text"
+                        placeholder="Ваше имя"
+                        value={waitlistName}
+                        onChange={(e) => setWaitlistName(e.target.value)}
+                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none transition-all"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Телефон"
+                        value={waitlistPhone}
+                        onChange={(e) => setWaitlistPhone(e.target.value)}
+                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 outline-none transition-all"
+                      />
+                      {waitlistError && (
+                        <p className="text-xs text-rose-400 font-bold">{waitlistError}</p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={waitlistLoading}
+                        className="w-full py-3.5 rounded-xl text-sm font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-400 text-slate-900 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {waitlistLoading ? <Loader2 size={16} className="animate-spin" /> : 'Встать в очередь'}
+                      </button>
+                    </form>
                   )}
                 </div>
-              </div>
-
-              {/* Разделитель */}
-              <div className="border-t border-white/5" />
-
-              {/* Все тарифы */}
-              {prices.length > 1 && (
-                <div className="space-y-2.5">
-                  <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Тарифы</p>
-                  {prices.map((p, idx) => (
-                    <div key={idx} className="flex justify-between items-center">
-                      <div className="flex items-center gap-2 text-sm text-slate-300">
-                        {p.icon}
-                        <span>{p.label}</span>
+              ) : (
+                <>
+                  {/* Старый контент: Цена со скидкой и места */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Стоимость участия</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-black text-white">{Number(tour.price).toLocaleString('ru-RU')}</span>
+                        <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
                       </div>
-                      <span className="font-bold text-white text-sm">
-                        {(p.value as number).toLocaleString()} {tour.currency}
-                      </span>
+                      {hasDiscount && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-slate-300 line-through text-xs">{Number(tour.priceOld).toLocaleString()}</span>
+                          <span className="bg-rose-500/10 text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
+                            −{discountPercent}%
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+
+                    {/* Свободных мест */}
+                    <div className="text-right">
+                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Мест</p>
+                      <span className={clsx(
+                        "text-2xl font-black",
+                        isSoldOut ? "text-rose-500" : isLowSpots ? "text-amber-400" : "text-teal-400"
+                      )}>
+                        {isSoldOut ? "0" : left}
+                      </span>
+                      {isLowSpots && !isSoldOut && (
+                        <p className="text-xs font-bold text-amber-400 uppercase">Мало!</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Разделитель */}
+                  <div className="border-t border-white/5" />
+
+                  {/* Все тарифы */}
+                  {prices.length > 1 && (
+                    <div className="space-y-2.5">
+                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Тарифы</p>
+                      {prices.map((p, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <div className="flex items-center gap-2 text-sm text-slate-300">
+                            {p.icon}
+                            <span>{p.label}</span>
+                          </div>
+                          <span className="font-bold text-white text-sm">
+                            {(p.value as number).toLocaleString()} {tour.currency}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -163,11 +255,14 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
             {/* Цена + стрелка-триггер */}
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => {
+                if (isExpanded) setShowWaitlistForm(false);
+                setIsExpanded(!isExpanded);
+              }}
               className="flex-1 flex items-center gap-2 min-w-0 group"
               aria-label={isExpanded ? 'Свернуть детали' : 'Показать детали'}
             >
-              <div className="min-w-0">
+              <div className="min-w-0 text-left">
                 <p className="text-xs text-slate-300 uppercase font-bold tracking-wider mb-0.5">Стоимость</p>
                 <div className="flex items-baseline gap-1">
                   {prices.length > 1 && <span className="text-xs text-slate-300 font-medium">от</span>}
@@ -176,7 +271,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                 </div>
               </div>
 
-              {/* Стрелка — визуальный индикатор расширения */}
+              {/* Стрелка */}
               <div className={clsx(
                 "w-7 h-7 rounded-full border border-white/15 flex items-center justify-center shrink-0 transition-all duration-300",
                 isExpanded
@@ -187,19 +282,26 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
               </div>
             </button>
 
-            {/* Кнопка записи */}
+            {/* ✅ НОВОЕ: Умная кнопка. Меняет цвет и действие при Sold Out */}
             <button
-              onClick={() => { setIsExpanded(false); openBookingModal(tour); }}
-              disabled={isSoldOut}
-              aria-label={isSoldOut ? 'Мест нет' : `Записаться в тур ${tour.title}`}
+              onClick={() => {
+                if (isSoldOut) {
+                  setShowWaitlistForm(true);
+                  setIsExpanded(true);
+                } else {
+                  setIsExpanded(false);
+                  openBookingModal(tour);
+                }
+              }}
+              aria-label={isSoldOut ? 'Встать в очередь' : `Записаться в тур ${tour.title}`}
               className={clsx(
                 "shrink-0 px-6 py-3.5 rounded-xl font-black uppercase tracking-wider text-sm transition-all active:scale-95 whitespace-nowrap",
                 isSoldOut
-                  ? "bg-slate-800 text-slate-300 cursor-not-allowed"
+                  ? "bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-lg shadow-amber-500/25"
                   : "bg-teal-500 hover:bg-teal-400 text-slate-900 shadow-lg shadow-teal-500/25"
               )}
             >
-              {isSoldOut ? 'Мест нет' : 'Записаться'}
+              {isSoldOut ? 'В очередь' : 'Записаться'}
             </button>
 
           </div>

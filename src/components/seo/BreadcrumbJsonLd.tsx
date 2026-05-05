@@ -18,7 +18,7 @@ export function BreadcrumbJsonLd({
 return (
     <script
       type="application/ld+json"
-      // ✅ ИСПРАВЛЕНО: Добавлен .replace для безопасности
+      //   ИСПРАВЛЕНО: Добавлен .replace для безопасности
       dangerouslySetInnerHTML={{ 
         __html: JSON.stringify(schema).replace(/</g, '\\u003c') 
       }}

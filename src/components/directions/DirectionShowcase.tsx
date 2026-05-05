@@ -79,7 +79,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                                 alt={item.name} 
                                 fill 
                                 className="object-contain"
-                                // ✅ Карточка имеет жесткий max-w-[300px], больше скачивать нет смысла
+                                //   Карточка имеет жесткий max-w-[300px], больше скачивать нет смысла
                                 sizes="(max-width: 640px) 90vw, 300px"
                             />
                         </div>
@@ -134,7 +134,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                             alt={`Эмоция ${idx + 1}`} 
                             fill 
                             className="object-cover transition-transform duration-1000 hover:scale-110"
-                            // ✅ У карточек жесткая ширина 260-500px, ограничиваем аппетиты браузера
+                            //   У карточек жесткая ширина 260-500px, ограничиваем аппетиты браузера
                             sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 500px"
                             loading="lazy"
                         />

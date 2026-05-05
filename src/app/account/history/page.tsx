@@ -34,12 +34,13 @@ async function getHistory(userId: string) {
     }),
 
     // 2. Брони пользователя (сразу по userId)
-    prisma.booking.findMany({
+  prisma.booking.findMany({
       where: {
         member: { userId },
-        status: { not: 'cancelled' },
-        tourDate: { startDate: { lt: now } },
+        status: 'confirmed', //   Только подтвержденные (оплаченные) туры
+        tourDate: { startDate: { lt: now } }, //   Только в прошлом
       },
+      distinct: ['tourDateId'],
       orderBy: { tourDate: { startDate: 'desc' } },
       include: {
         tour: {
@@ -90,7 +91,7 @@ export default async function HistoryPage() {
      <div>
         <h1 className="text-2xl font-black text-ui-text mb-1">История путешествий</h1>
         <p className="text-sm text-ui-muted">
-          Вы прошли с нами {bookings.length} {bookings.length === 1 ? 'тур' : bookings.length > 1 && bookings.length < 5 ? 'тура' : 'туров'}. Спасибо за доверие!
+          Вы прошли с нами {bookings.length} {bookings.length === 1 ? 'тур' : bookings.length > 1 && bookings.length < 5 ? 'тура' : 'туров'}.
         </p>
       </div>
 

@@ -84,7 +84,7 @@ model Tour {
   priceFamily  Int?    @map("price_family")
   priceMember  Int?    @map("price_member")
 
-  // ✅ ПРОВЕРЕНО И ОСТАВЛЕНО: ССЫЛКИ НА ОПЛАТУ
+  //   ПРОВЕРЕНО И ОСТАВЛЕНО: ССЫЛКИ НА ОПЛАТУ
   biletpmrLink  String? @map("biletpmr_link") 
   apbQrLink     String? @map("apb_qr_link")   
   apbQrImage    String? @map("apb_qr_image")
@@ -126,7 +126,7 @@ model TourDate {
   meetingTime  String? @map("meeting_time")
   meetingPoint String? @map("meeting_point_override")
   
-  // ✅ НОВОЕ ПОЛЕ: Секретный чат (v2.0)
+  //   НОВОЕ ПОЛЕ: Секретный чат (v2.0)
   groupChatUrl String? @map("group_chat_url")
   
   spots     Int       @default(15)
@@ -473,7 +473,7 @@ model MemberProfile {
   @@index([totalTours])
   @@map("member_profiles")
 }
-// ✅ НОВАЯ ТАБЛИЦА: Центр Уведомлений / Логи (v2.0)
+//   НОВАЯ ТАБЛИЦА: Центр Уведомлений / Логи (v2.0)
 model Notification {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   memberId  String   @map("member_id") @db.Uuid

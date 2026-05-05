@@ -190,7 +190,7 @@ export default function QuizTotem({ open, onClose }: Props) {
     }
   };
 
-  // ✅ ИСПОЛЬЗУЕТСЯ СТРОГО ОРИГИНАЛЬНАЯ ЛОГИКА И ТИПИЗАЦИЯ
+  //   ИСПОЛЬЗУЕТСЯ СТРОГО ОРИГИНАЛЬНАЯ ЛОГИКА И ТИПИЗАЦИЯ
   const calculateTotem = (finalScores: typeof scores) => {
     setView('summoning');
     setTimeout(() => {
@@ -199,7 +199,7 @@ export default function QuizTotem({ open, onClose }: Props) {
       const res = results[winnerKey] || results["wolf"];
       setFinalResult(res);
       
-      // ✅ Исправлено на 100% соответствие оригиналу: touristType
+      //   Исправлено на 100% соответствие оригиналу: touristType
       updateProfile({ touristType: `Тотем: ${res.animal}` });
       incrementFunTestPassAction('totem').catch(console.error);
       

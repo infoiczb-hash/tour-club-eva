@@ -96,7 +96,12 @@ export async function notifySubscribersOnNewDates(
 // 2. СНАЙПИНГ: Уведомление об освобождении мест (Отмена брони)
 export async function notifyWaitlistOnSpotFreed(tourId: string, tourDateId: string | null = null) {
   const waitlist = await prisma.waitlist.findMany({
-    where: { tourId, tourDateId },
+    where: {
+      tourId,
+      OR: [
+        { tourDateId: tourDateId }, 
+        { tourDateId: null } 
+    },
     include: { tour: true }
   });
 

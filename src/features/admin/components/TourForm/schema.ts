@@ -30,7 +30,7 @@ export const tourFormSchema = z.object({
   label: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
 
-  // ✅ НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК (ФАЗА 1)
+  //   НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК (ФАЗА 1)
   tourFormat: z.string().optional().nullable(),
   accommodation: z.string().optional().nullable(),
   groupInfo: z.string().optional().nullable(),
@@ -52,11 +52,11 @@ export const tourFormSchema = z.object({
     guide_id: z.string().uuid().optional().nullable(),
     groupChatUrl: z.string().optional().nullable(), 
     
-    // ✅ Лимиты для конкретной даты
+    //   Лимиты для конкретной даты
     spots: z.coerce.number().optional(),
     spotsLeft: z.coerce.number().optional(),
 
-    // ✅ Динамические цены для даты (Early Bird / Last Minute)
+    //   Динамические цены для даты (Early Bird / Last Minute)
     basePrice: z.coerce.number().optional().nullable(),
     discountEarlyBird: z.coerce.number().optional().nullable(),
     earlyBirdDeadline: z.coerce.number().optional().nullable(),
@@ -114,7 +114,7 @@ export const tourFormSchema = z.object({
   included: z.array(z.string()).default([]),
   additionalExpenses: z.array(z.string()).default([]),
 
-  // ✅ НОВЫЕ: Детализированные списки (Аккордеоны)
+  //   НОВЫЕ: Детализированные списки (Аккордеоны)
   includedDetailed: z.array(DetailedCategorySchema).optional().nullable(),
   excludedDetailed: z.array(DetailedCategorySchema).optional().nullable(),
 

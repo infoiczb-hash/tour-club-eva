@@ -4,7 +4,7 @@ import ClientButtons from '@/features/footer/ClientButtons';
 import SocialLink from '@/features/footer/SocialLink';
 import AnimatedHeart from '@/features/footer/AnimatedHeart';
 
-// ✅ ИСПРАВЛЕНИЕ 1: Константа вычисляется один раз при инициализации модуля
+//   ИСПРАВЛЕНИЕ 1: Константа вычисляется один раз при инициализации модуля
 const CURRENT_YEAR = new Date().getFullYear();
 
 export const Footer = () => {
@@ -87,7 +87,7 @@ export const Footer = () => {
         {/* НИЖНИЙ КОЛОНТИТУЛ */}
         <div className="border-t border-white/10 pt-5 flex flex-col md:flex-row justify-between items-center gap-3 text-center md:text-left">
            <p className="text-[12px] text-white/80 font-bold uppercase tracking-wider">
-             {/* ✅ ИСПОЛЬЗУЕМ КОНСТАНТУ */}
+             {/*   ИСПОЛЬЗУЕМ КОНСТАНТУ */}
              © {CURRENT_YEAR} Турклуб «Эва» • ИП САНДУ Р.С.
            </p>
            

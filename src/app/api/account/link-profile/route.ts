@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
-import { getLevelName } from '@/lib/constants/levels'; // ✅ ПОДКЛЮЧИЛИ ИСТОЧНИК ПРАВДЫ
+import { getLevelName } from '@/lib/constants/levels'; //   ПОДКЛЮЧИЛИ ИСТОЧНИК ПРАВДЫ
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
       const tourCount = stats._count.id;
       
-      // ✅ ИСПОЛЬЗУЕМ ФУНКЦИЮ ИЗ КОНФИГА ВМЕСТО ЛОКАЛЬНОГО ХАРДКОДА
+      //   ИСПОЛЬЗУЕМ ФУНКЦИЮ ИЗ КОНФИГА ВМЕСТО ЛОКАЛЬНОГО ХАРДКОДА
       const level = getLevelName(tourCount);
 
       await prisma.memberProfile.update({

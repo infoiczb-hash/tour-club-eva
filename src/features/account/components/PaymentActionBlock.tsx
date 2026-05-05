@@ -6,7 +6,7 @@ import { Send, Link as LinkIcon, AlertCircle, RefreshCw, CheckCircle, CreditCard
 import Image from 'next/image';
 import Link from 'next/link';
 import { updatePaymentMethodAction } from '../actions/updatePaymentMethod';
-import { uploadClientReceiptAction } from '../actions/uploadReceipt'; // ✅ Подключаем наш экшен
+import { uploadClientReceiptAction } from '../actions/uploadReceipt'; //   Подключаем наш экшен
 
 interface PaymentActionBlockProps {
   bookingId: string;

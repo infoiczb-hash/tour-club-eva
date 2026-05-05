@@ -10,7 +10,7 @@ import { AppEvent } from '@/lib/notifications/templates';
 import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify';
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 
-// ✅ ИМПОРТ: Используем единый источник правды для расчета мест
+//   ИМПОРТ: Используем единый источник правды для расчета мест
 import { calculateTotalSpots } from '@/features/tours/lib/pricing';
 
 export type UpdateBookingStatusInput = {
@@ -34,7 +34,7 @@ export const updateBookingStatusAction = withAdminAuth(
 
         if (!current) throw new Error('Бронирование не найдено');
 
-        // ✅ ИСПРАВЛЕНО: Вместо хардкода (* 3) используем централизованную функцию
+        //   ИСПРАВЛЕНО: Вместо хардкода (* 3) используем централизованную функцию
         const totalTickets = calculateTotalSpots({
           ticketsAdult: current.ticketsAdult ?? 0,
           ticketsChild: current.ticketsChild ?? 0,
@@ -101,27 +101,33 @@ export const updateBookingStatusAction = withAdminAuth(
         }
 
         if (eventId) {
-         await NotificationHub.dispatch({
-            eventId,
-            memberId: booking.memberId,
-            data: {
-              bookingId: booking.id,
-              shortId: booking.shortId,
-              tourTitle: booking.tour.title,
-              tourSlug: booking.tour.slug,
-              totalPrice: booking.totalPrice,
-              currency: booking.tour.currency,
-              
-              // ✅ ДОБАВИЛИ ФОЛБЭК: Если null, передаем строку 'unknown'
-              paymentMethod: booking.paymentMethod ?? 'unknown', 
-              
-              meetingPoint: booking.tourDate?.meetingPoint || booking.tour.meetingPoint,
-              meetingTime: booking.tourDate?.time,
-              importantInfo: booking.tour.importantInfo,
-              biletpmrLink: booking.tour.biletpmrLink,
-              apbQrLink: booking.tour.apbQrLink,
-            }
-          });
+ await NotificationHub.dispatch({
+  eventId,
+  memberId: booking.memberId,
+  data: {
+    bookingId: booking.id,
+    shortId: booking.shortId,
+    tourTitle: booking.tour.title,
+    tourSlug: booking.tour.slug,
+    totalPrice: Number(booking.totalPrice),
+    currency: booking.tour.currency,
+    paymentMethod: booking.paymentMethod ?? 'unknown',
+    meetingPoint: booking.tourDate?.meetingPoint || booking.tour.meetingPoint,
+    meetingTime: booking.tourDate?.time,
+    importantInfo: booking.tour.importantInfo,
+    biletpmrLink: booking.tour.biletpmrLink,
+    apbQrLink: booking.tour.apbQrLink,
+
+    //   Добавить:
+    tourDate: booking.tourDate?.startDate
+      ? new Date(booking.tourDate.startDate).toLocaleDateString('ru-RU', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        })
+      : undefined,
+    checklist: Array.isArray(booking.tour.checklist) ? booking.tour.checklist : [],
+    groupChatUrl: booking.tourDate?.groupChatUrl ?? null,
+  }
+});
         }
       } else if (booking.payerTgChatId) {
         // -------------------------------------------------------------

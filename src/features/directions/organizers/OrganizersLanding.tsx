@@ -43,7 +43,7 @@ export default function OrganizersLanding() {
       </SectionErrorBoundary>
 
       {/* 5. Контактный центр B2B */}
-      {/* ✅ Якорь снаружи для корректного скролла, граница внутри */}
+      {/*   Якорь снаружи для корректного скролла, граница внутри */}
       <div id="contact" className="scroll-mt-10">
         <SectionErrorBoundary label="Контакты B2B" minHeight="400px">
           <OrgContact />

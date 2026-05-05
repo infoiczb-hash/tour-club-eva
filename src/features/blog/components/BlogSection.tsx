@@ -9,7 +9,7 @@ import { Blog } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { cn } from '@/lib/utils';
 
-// ✅ ДОБАВИЛИ ТИПЫ ДЛЯ НОВОЙ СТРУКТУРЫ
+//   ДОБАВИЛИ ТИПЫ ДЛЯ НОВОЙ СТРУКТУРЫ
 interface BlogCategory {
   id: string;
   slug: string;
@@ -18,7 +18,7 @@ interface BlogCategory {
   sortOrder: number;
 }
 
-// ✅ НОВЫЙ ИНТЕРФЕЙС: Легкий DTO-тип. Жестко убираем 'content' через Omit
+//   НОВЫЙ ИНТЕРФЕЙС: Легкий DTO-тип. Жестко убираем 'content' через Omit
 export interface BlogPreview extends Omit<Blog, 'categoryId' | 'tags' | 'content'> {
   tags?: string[];
   categoryId?: string | null;
@@ -40,7 +40,7 @@ export interface BlogPreview extends Omit<Blog, 'categoryId' | 'tags' | 'content
 }
 
 interface BlogSectionProps {
-  posts: BlogPreview[]; // ✅ ИЗМЕНЕНО: Ожидаем легкие карточки
+  posts: BlogPreview[]; //   ИЗМЕНЕНО: Ожидаем легкие карточки
   categories?: BlogCategory[];
 }
 
@@ -119,7 +119,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
           </div>
 
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-            {/* ✅ ВНЕДРЕНО: role="tablist" и aria-label */}
+            {/*   ВНЕДРЕНО: role="tablist" и aria-label */}
             <div 
               role="tablist" 
               aria-label="Категории блога"
@@ -128,8 +128,8 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
               {displayCategories.map(cat => (
                 <button
                   key={cat.id}
-                  role="tab" // ✅ ДОБАВЛЕНО
-                  aria-selected={activeCategory === cat.slug} // ✅ ДОБАВЛЕНО
+                  role="tab" //   ДОБАВЛЕНО
+                  aria-selected={activeCategory === cat.slug} //   ДОБАВЛЕНО
                   onClick={() => setActiveCategory(cat.slug)}
                   className={`px-4 py-2 rounded-xl text-[14px] md:text-xs font-bold uppercase whitespace-nowrap transition-all border ${
                     activeCategory === cat.slug

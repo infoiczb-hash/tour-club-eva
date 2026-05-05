@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ChevronDown, Flag, Navigation, CircleDot, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 
-// ✅ ДОБАВЛЕНО: Утилита для правильного склонения числительных в русском языке
+//   ДОБАВЛЕНО: Утилита для правильного склонения числительных в русском языке
 function plural(n: number, one: string, few: string, many: string): string {
   const abs = Math.abs(n) % 100;
   const mod = abs % 10;
@@ -52,7 +52,7 @@ export default function TourProgram({ program }: TourProgramProps) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase break-words">Программа тура</h2>
-          {/* ✅ ИСПРАВЛЕНИЕ: Умный рендер подзаголовка с учетом количества дней */}
+          {/*   ИСПРАВЛЕНИЕ: Умный рендер подзаголовка с учетом количества дней */}
           <p className="text-slate-300 text-sm md:text-lg font-medium truncate">
             {days.length === 1 
               ? 'Однодневная программа' 

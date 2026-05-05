@@ -98,7 +98,7 @@ const DIRECTION_META: Record<string, DirectionMetaType> = {
   },
 };
 
-// ✅ ИСПРАВЛЕНО: Типизация params как Promise
+//   ИСПРАВЛЕНО: Типизация params как Promise
 type Props = {
   params: Promise<{ slug: string }>;
 };
@@ -256,7 +256,7 @@ export default async function DirectionPage({ params }: Props) {
     return (
         <main className="min-h-screen bg-slate-950">
           <DirectionJsonLd slug={slug} />
-          <KidsLanding tours={tours} /> {/* ✅ Теперь туры пошли на клиент! */}
+          <KidsLanding tours={tours} /> {/*   Теперь туры пошли на клиент! */}
         </main>
       );
 

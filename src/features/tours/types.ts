@@ -124,7 +124,7 @@ export interface Tour {
   tags?: string[];         
   highlights?: TourHighlight[];      
 
-  // ✅ НОВЫЕ ХАРАКТЕРИСТИКИ (Фаза 1)
+  //   НОВЫЕ ХАРАКТЕРИСТИКИ (Фаза 1)
   tourFormat?: string | null;
   accommodation?: string | null;
   groupInfo?: string | null;
@@ -156,7 +156,7 @@ export interface Tour {
   included: string[];           
   additionalExpenses: string[];  
 
-  // ✅ НОВЫЕ ДЕТАЛИЗИРОВАННЫЕ СПИСКИ (Аккордеоны)
+  //   НОВЫЕ ДЕТАЛИЗИРОВАННЫЕ СПИСКИ (Аккордеоны)
   includedDetailed?: any | null;
   excludedDetailed?: any | null;
 
@@ -188,7 +188,7 @@ export interface TourGuide {
 // ==========================================
 export type TourPreview = Pick<Tour,
   | 'id' | 'slug' | 'title' | 'subtitle' | 'price' | 'currency' | 'priceOld'
-  | 'priceMember' | 'priceChild' | 'tags' // ✅ ДОБАВИЛИ ЭТИ ПОЛЯ
+  | 'priceMember' | 'priceChild' | 'tags' //   ДОБАВИЛИ ЭТИ ПОЛЯ
   | 'date' | 'endDate' | 'dates' | 'image' | 'label' | 'categoryId' | 'category'
   | 'difficulty' | 'location' | 'duration' | 'spots' | 'spotsLeft' | 'isActive'
   | 'guide'

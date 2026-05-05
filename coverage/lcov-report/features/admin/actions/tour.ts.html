@@ -835,8 +835,8 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { withAdminAuth } from '@/lib/auth'; // ✅ ИМПОРТИРУЕМ НАШУ БРОНЮ
-import { withAdminAudit } from '@/lib/audit'; // ✅ ИМПОРТИРУЕМ ЯДРО АУДИТА
+import { withAdminAuth } from '@/lib/auth'; //   ИМПОРТИРУЕМ НАШУ БРОНЮ
+import { withAdminAudit } from '@/lib/audit'; //   ИМПОРТИРУЕМ ЯДРО АУДИТА
 import { publishToTelegram, publishTourToChannel, sendToUserTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 &nbsp;
@@ -1165,11 +1165,11 @@ export interface GetToursAdminParams {
   page: number;
   limit?: number;
   search?: string;
-  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; // ✅ ДОБАВИЛИ drafts
+  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; //   ДОБАВИЛИ drafts
 }
 &nbsp;
 export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) =&gt; {
-  const { page, limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> search, filter = 'upcoming' } = params; // ✅ ПО УМОЛЧАНИЮ 'upcoming'
+  const { page, limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> search, filter = 'upcoming' } = params; //   ПО УМОЛЧАНИЮ 'upcoming'
   const skip = (page - 1) * limit;
   const now = new Date();
   now.setHours(0, 0, 0, 0);

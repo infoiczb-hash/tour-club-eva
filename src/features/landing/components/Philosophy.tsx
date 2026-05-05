@@ -89,7 +89,7 @@ export default function Philosophy() {
     }
   };
 
-  // ✅ ДОБАВЛЕНО: Обработчик для управления с клавиатуры
+  //   ДОБАВЛЕНО: Обработчик для управления с клавиатуры
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'ArrowLeft') {
       e.preventDefault(); // Предотвращаем скролл всей страницы
@@ -190,7 +190,7 @@ export default function Philosophy() {
               onMouseLeave={handleMouseLeave}
               onMouseUp={handleMouseUp}
               onMouseMove={handleMouseMove}
-              onKeyDown={handleKeyDown} // ✅ ДОБАВЛЕН ОБРАБОТЧИК КЛАВИАТУРЫ
+              onKeyDown={handleKeyDown} //   ДОБАВЛЕН ОБРАБОТЧИК КЛАВИАТУРЫ
               style={{ WebkitOverflowScrolling: 'touch' }}
               // a11y атрибуты
               tabIndex={0} 

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Heart, Instagram, Send, Play, X, Volume2, VolumeX, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from '@/lib/utils';
 
-// ✅ РЕШЕНИЕ 1: Импортируем статический JSON напрямую. 
+//   РЕШЕНИЕ 1: Импортируем статический JSON напрямую. 
 // Никаких fetch, useEffect и водопадов загрузки!
 import postsData from '../../../../public/social/posts.json';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
@@ -50,7 +50,7 @@ const SOCIAL_LINKS = [
 ];
 
 // ==========================================
-// ✅ РЕШЕНИЕ 2: DRY Хук для IntersectionObserver (Автоплей видео)
+//   РЕШЕНИЕ 2: DRY Хук для IntersectionObserver (Автоплей видео)
 // ==========================================
 function useVideoAutoPlayback(options = { threshold: 0.6 }) {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -132,7 +132,7 @@ const VerticalPlayer = ({
 
 // Отдельный слайд 
 const SingleSlide = ({ post }: { post: SocialPost }) => {
-    // ✅ ИСПОЛЬЗУЕМ ЧИСТЫЙ ХУК ВМЕСТО ПРОСТЫНИ КОДА
+    //   ИСПОЛЬЗУЕМ ЧИСТЫЙ ХУК ВМЕСТО ПРОСТЫНИ КОДА
     const { videoRef, isPlaying } = useVideoAutoPlayback({ threshold: 0.6 });
     const [isMuted, setIsMuted] = useState(true);
 
@@ -204,7 +204,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
 export default function SocialGrid() {
   const [activePostIndex, setActivePostIndex] = useState<number | null>(null);
 
-  // ✅ ДАННЫЕ УЖЕ ЗДЕСЬ (Загружаются мгновенно без стейтов и загрузок)
+  //   ДАННЫЕ УЖЕ ЗДЕСЬ (Загружаются мгновенно без стейтов и загрузок)
   const posts = postsData.posts.slice(0, 6) as SocialPost[];
 
   if (posts.length === 0) return null; 

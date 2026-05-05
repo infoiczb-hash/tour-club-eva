@@ -4,7 +4,7 @@ import React from "react";
 import { 
   Leaf, Briefcase, ShieldCheck, Camera, ArrowRight
 } from 'lucide-react';
-// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
 
@@ -32,7 +32,7 @@ const BENEFITS = [
 ];
 
 export default function SupBenefits() {
-  // ✅ ИСПРАВЛЕНО: Используем внешний хук
+  //   ИСПРАВЛЕНО: Используем внешний хук
   const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
   const cardsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 

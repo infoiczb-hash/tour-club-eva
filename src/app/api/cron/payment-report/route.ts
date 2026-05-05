@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    // ✅ ИСПРАВЛЕНИЕ 1: Ищем и pending, и awaiting_payment
+    //   ИСПРАВЛЕНИЕ 1: Ищем и pending, и awaiting_payment
     const pendingBookings = await prisma.booking.findMany({
       where: { 
         status: { in: ['pending', 'awaiting_payment'] },

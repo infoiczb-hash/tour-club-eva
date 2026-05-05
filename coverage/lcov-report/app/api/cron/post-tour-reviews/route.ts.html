@@ -419,7 +419,7 @@
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { getLevelName, getLevelConfig, LEVELS_CONFIG   } from '@/lib/constants/levels'; // ✅ Импорт для пересчёта уровня
+import { getLevelName, getLevelConfig, LEVELS_CONFIG   } from '@/lib/constants/levels'; //   Импорт для пересчёта уровня
 &nbsp;
 &nbsp;
 // ==========================================
@@ -502,7 +502,7 @@ export async function GET(req: Request) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 &nbsp;
-    // ✅ ИСПРАВЛЕНИЕ 5: Документируем edge-case для однодневных туров
+    //   ИСПРАВЛЕНИЕ 5: Документируем edge-case для однодневных туров
     // ВНИМАНИЕ: Если однодневный тур закончился сегодня глубокой ночью (напр. в 02:00), 
     // но администратор не указал endDate в БД, крон запросит отзыв по startDate (вчерашнему дню).
     // Правило для контент-менеджеров: Для туров с ночными возвратами ВСЕГДА указывать endDate!
@@ -525,7 +525,7 @@ export async function GET(req: Request) {
       // Игнорируем заявки, где нет ни аккаунта, ни Telegram-чата
 <span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (!booking.memberId &amp;&amp; !booking.payerTgChatId) <span class="cstat-no" title="statement not covered" >continue;</span></span>
 &nbsp;
-      // ✅ НОВОЕ: обновляем статистику участника (только если есть memberId)
+      //   НОВОЕ: обновляем статистику участника (только если есть memberId)
 <span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (booking.memberId) {</span>
 <span class="cstat-no" title="statement not covered" >        await updateMemberStats(booking.memberId);</span>
       }

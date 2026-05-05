@@ -81,7 +81,7 @@ export async function uploadClientReceiptAction(bookingId: string, formData: For
     await publishToTelegram(caption, receiptUrl, undefined, false, {
       messageThreadId: env.TELEGRAM_TOPIC_MONEY || env.TELEGRAM_TOPIC_BOOKINGS,
       inlineKeyboard: [
-        [{ text: '✅ Подтвердить', callback_data: `confirm_${booking.id}` }],
+        [{ text: '  Подтвердить', callback_data: `confirm_${booking.id}` }],
         [{ text: '❌ Отклонить', callback_data: `reject_${booking.id}` }]
       ]
     });

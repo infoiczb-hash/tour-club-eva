@@ -62,7 +62,7 @@ export default async function BlogPage() {
 
       <main className="min-h-screen bg-[#0B1120]">
         
-        {/* ✅ LCP-ОПТИМИЗАЦИЯ: Серверный рендер Hero-блока */}
+        {/*   LCP-ОПТИМИЗАЦИЯ: Серверный рендер Hero-блока */}
         <div className="relative pt-24 pb-6 md:pt-32 md:pb-8 border-b border-white/5 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
           <div className="container mx-auto max-w-5xl relative z-10 text-center px-4">
