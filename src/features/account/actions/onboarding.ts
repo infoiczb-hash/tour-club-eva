@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { getLevelName } from '@/lib/constants/levels'; // ✅ ПОДКЛЮЧИЛИ ИСТОЧНИК ПРАВДЫ
+import { getLevelName } from '@/lib/constants/levels'; //   ПОДКЛЮЧИЛИ ИСТОЧНИК ПРАВДЫ
 
 export async function saveOnboardingDataAction(phoneRaw: string, name: string) {
   const supabase = await createServerSupabaseClient();
@@ -72,7 +72,7 @@ export async function saveOnboardingDataAction(phoneRaw: string, name: string) {
         data: { 
           totalTours: tourCount, 
           totalKm, 
-          level: getLevelName(tourCount) // ✅ ИСПОЛЬЗУЕМ ФУНКЦИЮ ИЗ КОНФИГА
+          level: getLevelName(tourCount) //   ИСПОЛЬЗУЕМ ФУНКЦИЮ ИЗ КОНФИГА
         },
       });
     }

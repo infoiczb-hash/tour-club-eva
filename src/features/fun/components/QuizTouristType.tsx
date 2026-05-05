@@ -2,19 +2,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
 import { 
   X, ArrowLeft, Check, Compass, Users, Mountain, 
   TreePine, Dices, Scale, ListTodo, Music, Flame, 
   Sparkles, Smile, Activity, Headphones, Utensils, 
   Camera, CloudFog, PartyPopper, Shield, Eye, 
-  Handshake, ArrowRight, MapPin, LucideIcon
+  Handshake, ArrowRight, MapPin, LucideIcon, Umbrella,  Dumbbell, Coffee, Trophy
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 import { useSaveTest } from "@/hooks/useSaveTest";
+import { useModalTransition } from "@/hooks/useModalTransition";
 
 /* =======================
    ТИПЫ
@@ -39,117 +39,108 @@ type Result = {
 };
 
 /* =======================
-   ВОПРОСЫ
-======================= */
-const questions: Array<{ id: number; question: string; options: Option[] }> = [
-  {
-    id: 1,
-    question: "Ты идёшь в поход ради:",
-    options: [
-      { value: "A", text: "Людей и общения", icon: Users },
-      { value: "B", text: "Видов и вершин", icon: Mountain },
-      { value: "C", text: "Тишины и себя", icon: TreePine },
-    ],
-  },
-  {
-    id: 2,
-    question: "План или спонтанность?",
-    options: [
-      { value: "A", text: "Полная импровизация", icon: Dices },
-      { value: "B", text: "Есть план, но гибкий", icon: Scale },
-      { value: "C", text: "Чёткий тайминг", icon: ListTodo },
-    ],
-  },
-  {
-    id: 3,
-    question: "Костёр вечером — это:",
-    options: [
-      { value: "A", text: "Центр веселья и песен", icon: Music },
-      { value: "B", text: "Источник тепла", icon: Flame },
-      { value: "C", text: "Магия и созерцание", icon: Sparkles },
-    ],
-  },
-  {
-    id: 4,
-    question: "Если ты устал на маршруте:",
-    options: [
-      { value: "A", text: "Шучу, чтобы подбодрить всех", icon: Smile },
-      { value: "B", text: "Сцепил зубы и иду", icon: Activity },
-      { value: "C", text: "Ухожу в свои мысли", icon: Headphones },
-    ],
-  },
-  {
-    id: 5,
-    question: "Лучший момент похода:",
-    options: [
-      { value: "A", text: "Ужин всей бандой", icon: Utensils },
-      { value: "B", text: "Фото на вершине", icon: Camera },
-      { value: "C", text: "Утро в тумане", icon: CloudFog },
-    ],
-  },
-  {
-    id: 6,
-    question: "Твоя роль в группе:",
-    options: [
-      { value: "A", text: "Душа компании", icon: PartyPopper },
-      { value: "B", text: "Надёжное плечо", icon: Shield },
-      { value: "C", text: "Наблюдатель", icon: Eye },
-    ],
-  },
-];
-
-/* =======================
-   РЕЗУЛЬТАТЫ (МАТРИЦА)
+   РЕЗУЛЬТАТЫ
 ======================= */
 const results: Result[] = [
   {
     id: "team",
-    icon: Handshake,
-    themeColor: "amber",
-    title: "ЧЕЛОВЕК КОМАНДЫ",
-    description: "Тебя вдохновляют люди. Поход для тебя — это социальная сеть в офлайне. Ты создаёшь атмосферу и превращаешь любой дождь в вечеринку.",
-    values: ["Командный дух", "Новые знакомства", "Эмоции"],
+    icon: Users,
+    themeColor: "blue",
+    title: "Душа компании",
+    description: "Для тебя поход — это прежде всего люди. Вечерние посиделки у костра, песни, шутки и взаимовыручка важнее покоренных километров.",
+    values: ["Общение", "Командный дух", "Эмоции"],
     directionSlug: "kayaking",
     directionName: "Сплавы на байдарках",
   },
   {
-    id: "seeker",
+    id: "sport",
     icon: Mountain,
-    themeColor: "blue",
-    title: "ИСКАТЕЛЬ ВЫСОТЫ",
-    description: "Тебя вдохновляют достижения. Ты ценишь момент преодоления и вид с вершины. Физический вызов для тебя — часть смысла жизни.",
-    values: ["Панорамы", "Преодоление", "Результат"],
+    themeColor: "amber",
+    title: "Покоритель вершин",
+    description: "Больше, выше, сильнее! Тебе нужен вызов. Боль в мышцах после похода для тебя — лучшая награда и показатель того, что выходные прошли не зря.",
+    values: ["Достижения", "Выносливость", "Преодоление"],
     directionSlug: "hiking",
-    directionName: "Горы и Походы",
+    directionName: "Горные походы",
   },
   {
-    id: "contemplator",
-    icon: TreePine,
+    id: "chill",
+    icon: Smile,
     themeColor: "purple",
-    title: "СОЗЕРЦАТЕЛЬ",
-    description: "Тебе нужна тишина. Поход для тебя — это детокс от города, возможность замедлиться, услышать птиц и свой внутренний голос.",
-    values: ["Уединение", "Гармония", "Природа"],
+    title: "Гедонист на природе",
+    description: "Природа создана для того, чтобы ей наслаждаться. Вкусный кофе с видом на реку, отсутствие тяжелого рюкзака и красивая эстетика — твой выбор.",
+    values: ["Комфорт", "Эстетика", "Расслабление"],
     directionSlug: "sup",
     directionName: "SUP-прогулки",
   },
   {
-    id: "balanced",
-    icon: Scale,
+    id: "explorer",
+    icon: Compass,
     themeColor: "emerald",
-    title: "ГАРМОНИЧНЫЙ ТУРИСТ",
-    description: "Дзен-мастер. Ты умеешь и повеселиться у костра, и помолчать на рассвете. Тебе комфортно везде, и с тобой комфортно всем.",
-    values: ["Баланс", "Гибкость", "Открытость"],
+    title: "Искатель впечатлений",
+    description: "Ты любишь разнообразие. Тебе интересно попробовать всё понемногу, увидеть новые места, но без фанатизма и жесткого экстрима.",
+    values: ["Любопытство", "Баланс", "Новый опыт"],
     directionSlug: "local",
     directionName: "Локальные туры",
-  },
+  }
 ];
 
-const colorMaps = {
-  emerald: { border: "border-emerald-500/20", text: "text-emerald-400", button: "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/20", blur: "bg-emerald-500/20" },
-  blue:    { border: "border-blue-500/20",    text: "text-blue-400",    button: "bg-blue-600 hover:bg-blue-500 shadow-blue-900/20",       blur: "bg-blue-500/20" },
-  purple:  { border: "border-purple-500/20",  text: "text-purple-400",  button: "bg-purple-600 hover:bg-purple-500 shadow-purple-900/20", blur: "bg-purple-500/20" },
-  amber:   { border: "border-amber-500/20",   text: "text-amber-400",   button: "bg-amber-600 hover:bg-amber-500 shadow-amber-900/20",    blur: "bg-amber-500/20" }
+const THEME_MAP = {
+  emerald: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-400", button: "bg-emerald-600 hover:bg-emerald-500", glow: "bg-emerald-500" },
+  blue: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-400", button: "bg-blue-600 hover:bg-blue-500", glow: "bg-blue-500" },
+  purple: { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-400", button: "bg-purple-600 hover:bg-purple-500", glow: "bg-purple-500" },
+  amber: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-400", button: "bg-amber-600 hover:bg-amber-500", glow: "bg-amber-500" },
 };
+
+/* =======================
+   ВОПРОСЫ
+======================= */
+const questions: { id: number; text: string; options: Option[] }[] = [
+  {
+    id: 1,
+    text: "Какая фраза описывает твой идеальный выходной?",
+    options: [
+      { value: "A", text: "Собраться большой шумной компанией и рвануть за город.", icon: PartyPopper },
+      { value: "B", text: "Ранний подъем, рюкзак на плечи и 20 км по пересеченной местности.", icon: Activity },
+      { value: "C", text: "Проснуться без будильника, выпить кофе с красивым видом.", icon: Coffee }
+    ]
+  },
+  {
+    id: 2,
+    text: "Что самое крутое в походе?",
+    options: [
+      { value: "A", text: "Истории у костра до глубокой ночи.", icon: Flame },
+      { value: "B", text: "Чувство гордости, когда дошел до финиша.", icon: Trophy },
+      { value: "C", text: "Сделать потрясающие фотографии природы.", icon: Camera }
+    ]
+  },
+  {
+    id: 3,
+    text: "Какую еду ты предпочтешь на природе?",
+    options: [
+      { value: "A", text: "Общий котелок с кашей, главное — чтобы на всех хватило.", icon: Users },
+      { value: "B", text: "Протеиновые батончики и сублиматы — легко нести.", icon: Scale },
+      { value: "C", text: "Сыр, вино, фрукты и эстетичная нарезка.", icon: Utensils }
+    ]
+  },
+  {
+    id: 4,
+    text: "Как ты относишься к тяжелому рюкзаку (15+ кг)?",
+    options: [
+      { value: "A", text: "Если друзья помогут закинуть на спину — донесу.", icon: Handshake },
+      { value: "B", text: "Это часть испытания, я готов к нагрузкам.", icon: Dumbbell },
+      { value: "C", text: "Нет, спасибо. Я предпочитаю гулять налегке.", icon: CloudFog }
+    ]
+  },
+  {
+    id: 5,
+    text: "Во время маршрута начался мелкий дождь. Твои мысли:",
+    options: [
+      { value: "A", text: "Запоем песню, чтобы было веселее идти!", icon: Music },
+      { value: "B", text: "Отлично, это добавит эпичности нашему переходу.", icon: Shield },
+      { value: "C", text: "Где ближайшее укрытие, чтобы не промочить ноги?", icon: Umbrella }
+    ]
+  }
+];
 
 /* =======================
    КОМПОНЕНТ
@@ -160,185 +151,207 @@ interface Props {
 }
 
 export default function QuizTouristType({ open, onClose }: Props) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState<"intro" | "quiz" | "result">("intro");
+  const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
-  const [showResult, setShowResult] = useState(false);
   
   const { updateProfile } = useProfile();
   const { saveResult } = useSaveTest();
+  const { shouldRender, closing } = useModalTransition(open, 200);
 
   useEffect(() => {
     if (open) {
-        document.body.style.overflow = "hidden";
-        setStep(0);
-        setAnswers([]);
-        setShowResult(false);
+      document.body.style.overflow = "hidden";
+      setStep("intro");
+      setCurrentQ(0);
+      setAnswers([]);
     } else {
-        document.body.style.overflow = "";
+      document.body.style.overflow = "";
     }
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const currentQuestion = questions[step];
-  const progress = ((step + 1) / questions.length) * 100;
+  const handleAnswer = (val: Answer) => {
+    const nextAnswers = [...answers, val];
+    setAnswers(nextAnswers);
 
-  const handleAnswer = (value: Answer) => {
-    const newAnswers = [...answers, value];
-    setAnswers(newAnswers);
-
-    if (step < questions.length - 1) {
-      setTimeout(() => setStep(step + 1), 250);
+    if (currentQ < questions.length - 1) {
+      setTimeout(() => setCurrentQ((c) => c + 1), 200);
     } else {
-      const res = calculateResult(newAnswers);
-      
-      // Сохраняем в локальный профиль
-      updateProfile({ touristType: res.title });
-      incrementFunTestPassAction('tourist-type').catch(console.error);
-      
-      // Сохраняем в базу данных
-      saveResult('tourist-type', {
-        type: res.title,
-        badge: "🧭",
-        description: res.description,
-      });
-
-      setTimeout(() => setShowResult(true), 250);
+      finishQuiz(nextAnswers);
     }
   };
 
-  const handleBack = () => {
-    if (step > 0) {
-      setStep(step - 1);
-      setAnswers(answers.slice(0, -1));
-    }
+  const finishQuiz = (finalAnswers: Answer[]) => {
+    const res = calculateResult(finalAnswers);
+    
+    updateProfile({ touristType: res.title });
+    incrementFunTestPassAction('tourist-type').catch(console.error);
+
+    saveResult('tourist-type', {
+      type: "Тип туриста",
+      badge: "🏕️",
+      description: `Твой типаж: ${res.title}`,
+      fullAnalysis: res.description,
+    });
+
+    setStep("result");
   };
 
-  const result = calculateResult(answers);
+  if (!shouldRender) return null;
 
-  const listVariants: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants: Variants = { hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } };
-
-  if (!open) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-10 overflow-hidden max-h-[90dvh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full">
-            <X size={20} />
-          </button>
-
-          {!showResult ? (
-            <AnimatePresence mode="wait">
-              <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="flex flex-col h-full overflow-hidden">
-                <div className="shrink-0 mb-8 pr-12">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-4">
-                     <Compass size={14} className="text-emerald-400"/>
-                     <span className="text-[12px] font-black uppercase text-emerald-400 tracking-widest">Психотип туриста</span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight min-h-[72px]">
-                    {currentQuestion.question}
-                  </h3>
-                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400" initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.4, ease: "easeOut" }} />
-                  </div>
-                </div>
-
-                <motion.div variants={listVariants} initial="hidden" animate="show" className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
-                  {currentQuestion.options.map((option) => {
-                    const OptionIcon = option.icon;
-                    return (
-                      <motion.button key={option.value} variants={itemVariants} whileHover={{ scale: 1.02, x: 4 }} whileTap={{ scale: 0.98 }} onClick={() => handleAnswer(option.value)} className="w-full p-4 rounded-2xl text-left bg-slate-800/50 border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all flex items-center gap-4 group">
-                        <div className="w-12 h-12 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/30 transition-colors shadow-sm shrink-0">
-                            <OptionIcon size={24} className="text-slate-300 group-hover:text-emerald-400 transition-colors" strokeWidth={1.5} />
-                        </div>
-                        <span className="flex-1 font-medium text-slate-300 group-hover:text-white transition-colors">
-                          {option.text}
-                        </span>
-                      </motion.button>
-                    )
-                  })}
-                </motion.div>
-
-                <div className="shrink-0 mt-4 pt-2 border-t border-transparent h-12">
-                  {step > 0 && (
-                      <button onClick={handleBack} className="text-sm font-bold text-slate-300 hover:text-slate-300 flex items-center gap-2 transition-colors w-fit">
-                        <ArrowLeft size={16} /> Назад
-                      </button>
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          ) : (
-            <ResultScreen result={result} onClose={onClose} theme={colorMaps[result.themeColor]} />
-          )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-/* =======================
-   ЭКРАН РЕЗУЛЬТАТА
-======================= */
-function ResultScreen({ result, onClose, theme }: { result: Result; onClose: () => void; theme: any }) {
-  const ResultIcon = result.icon;
+  const currentQuestion = questions[currentQ];
+  const progress = ((currentQ + 1) / questions.length) * 100;
+  const result = step === "result" ? calculateResult(answers) : null;
+  const theme = result ? THEME_MAP[result.themeColor] : THEME_MAP.emerald;
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
-        <div className="text-center mb-8 pt-4">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-slate-800/50 border border-white/10 mb-6 shadow-xl relative">
-              <div className={clsx("absolute inset-0 blur-xl opacity-20 rounded-full", theme.blur)} />
-              <ResultIcon className={clsx("w-12 h-12", theme.text)} strokeWidth={1.5} />
+    <div
+      className={clsx(
+        "fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4 transition-opacity duration-200 ease-out",
+        closing ? "opacity-0" : "opacity-100"
+      )}
+      onClick={onClose}
+    >
+      <div
+        className={clsx(
+          "relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] transition-all duration-200 ease-out",
+          closing ? "scale-95 opacity-0 translate-y-4" : "scale-100 opacity-100 translate-y-0"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          onClick={onClose} 
+          className="absolute top-5 right-5 z-20 text-slate-300 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full"
+        >
+          <X size={20} />
+        </button>
+
+        {step === "intro" && (
+          <div key="intro" className="flex flex-col h-full overflow-hidden p-6 md:p-10 text-center justify-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 mx-auto bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+              <MapPin size={40} />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-4 tracking-tight uppercase">
+              Какой ты <br /><span className="text-indigo-400">Турист?</span>
+            </h2>
+            <p className="text-slate-300 text-sm leading-relaxed font-medium mb-10 max-w-md mx-auto">
+              Походы бывают разными: от сурового выживания до расслабленного чилла с бокалом на закате. Пройди короткий тест и узнай свой стиль.
+            </p>
+            <button 
+              onClick={() => setStep("quiz")} 
+              className="w-full sm:w-auto px-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-4 text-sm font-bold uppercase tracking-wider mx-auto transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)] active:scale-95"
+            >
+              Начать тест
+            </button>
           </div>
-          <h3 className="text-2xl md:text-3xl font-black text-white mb-3 uppercase tracking-tight">{result.title}</h3>
-          <p className="text-sm text-slate-300 leading-relaxed font-medium max-w-[90%] mx-auto">
-            {result.description}
-          </p>
-        </div>
+        )}
 
-        <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-6 mb-6">
-          <h4 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-4">Твои ценности:</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {result.values.map((val, i) => (
-              <div key={i} className={clsx("flex items-center gap-2 text-slate-200 text-sm font-bold bg-white/5 border p-3 rounded-xl justify-center transition-colors", theme.border)}>
-                <Check size={16} className={theme.text} strokeWidth={3} />
-                <span>{val}</span>
+        {step === "quiz" && (
+          <div key={`q-${currentQ}`} className="flex flex-col h-full overflow-hidden p-6 md:p-8 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="shrink-0 mb-6 pr-8">
+              <div className="flex items-center gap-3 mb-6">
+                <Compass className="w-5 h-5 text-indigo-400" />
+                <span className="text-indigo-400 text-xs font-bold tracking-widest uppercase">Вопрос {currentQ + 1} из {questions.length}</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <h2 className="text-xl md:text-2xl font-black text-white leading-tight mb-6">{currentQuestion.text}</h2>
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
 
-        {/* SMART CTA */}
-        <div className="pt-6 mt-4 border-t border-white/10 text-center">
-          <p className={clsx("text-[12px] font-bold uppercase tracking-widest mb-1", theme.text)}>
-            Мы рекомендуем Вам
-          </p>
-          <h3 className={clsx("text-2xl md:text-3xl font-black uppercase tracking-tight mb-6", theme.text)}>
-            {result.directionName}
-          </h3>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link
-              href={`/directions/${result.directionSlug}`}
-              onClick={onClose}
-              className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
-            >
-              <Compass size={16} /> О направлении
-            </Link>
-            <Link
-              href={`/tour?category=${result.directionSlug}`}
-              onClick={onClose}
-              className={clsx(
-                "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:brightness-110",
-                theme.button
-              )}
-            >
-              Выбрать маршрут <ArrowRight size={16} />
-            </Link>
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 space-y-3">
+              {currentQuestion.options.map((opt, i) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button 
+                      key={i} 
+                      onClick={() => handleAnswer(opt.value)} 
+                      className="w-full text-left px-5 py-4 rounded-2xl border border-white/5 bg-slate-800/50 hover:bg-slate-800 hover:border-indigo-500/50 transition-all duration-300 flex items-center gap-4 group hover:scale-[1.02] hover:translate-x-1 active:scale-[0.98]"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center shrink-0 group-hover:border-indigo-500/30 transition-colors">
+                            <Icon className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                        </div>
+                        <div className="text-[14px] md:text-[15px] font-bold text-slate-300 group-hover:text-white transition-colors">
+                            {opt.text}
+                        </div>
+                    </button>
+                  )
+              })}
+            </div>
+
+            {currentQ > 0 && (
+              <div className="shrink-0 pt-4 border-t border-white/5 mt-2">
+                  <button 
+                    onClick={() => setCurrentQ(q => q - 1)} 
+                    className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                  >
+                    <ArrowLeft size={16} /> Назад
+                  </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {step === "result" && result && (
+          <div key="result" className="flex flex-col h-full overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 pb-6 text-center">
+              
+              <div className="mb-8 relative inline-block">
+                <div className={clsx("absolute inset-0 blur-3xl opacity-30 rounded-full", theme.glow)} />
+                <div className={clsx("w-24 h-24 mx-auto rounded-3xl flex items-center justify-center border relative z-10 shadow-2xl", theme.bg)}>
+                  <result.icon className={clsx("w-12 h-12", theme.text)} strokeWidth={1.5}/>
+                </div>
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-4 uppercase tracking-tight">
+                {result.title}
+              </h2>
+              
+              <div className="flex flex-wrap justify-center gap-2 mb-6">
+                {result.values.map((v, i) => (
+                   <span key={i} className={clsx("px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border", theme.bg, theme.text)}>
+                      {v}
+                   </span>
+                ))}
+              </div>
+
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium mb-10 max-w-lg mx-auto">
+                {result.description}
+              </p>
+
+              <div className="border-t border-white/10 pt-8 mt-4">
+                <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                  Твой идеальный формат:
+                </p>
+                <h3 className={clsx("text-2xl font-black mb-6 uppercase tracking-wide", theme.text)}>
+                  {result.directionName}
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href={`/directions/${result.directionSlug}`}
+                    onClick={onClose}
+                    className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Compass size={16} /> О направлении
+                  </Link>
+                  <Link
+                    href={`/tour?category=${result.directionSlug}`}
+                    onClick={onClose}
+                    className={clsx(
+                      "flex-1 py-4 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-95",
+                      theme.button
+                    )}
+                  >
+                    Выбрать маршрут <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -350,8 +363,8 @@ function calculateResult(answers: Answer[]): Result {
   answers.forEach((a) => counts[a]++);
 
   if (counts.A >= 3 && counts.A > counts.B && counts.A > counts.C) return results[0]; // Team -> Байдарки
-  if (counts.B >= 3 && counts.B > counts.A && counts.B > counts.C) return results[1]; // Seeker -> Горы
-  if (counts.C >= 3 && counts.C > counts.A && counts.C > counts.B) return results[2]; // Contemplator -> SUP
+  if (counts.B >= 3 && counts.B > counts.A && counts.B > counts.C) return results[1]; // Sport -> Горы
+  if (counts.C >= 3 && counts.C > counts.A && counts.C > counts.B) return results[2]; // Chill -> Сапы
   
-  return results[3]; // Balanced -> Локальные
+  return results[3]; // Explorer -> Локальные (Смешанный тип)
 }

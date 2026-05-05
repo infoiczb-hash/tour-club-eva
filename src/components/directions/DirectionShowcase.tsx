@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { DirectionData, THEMES } from '@/data/directionsData';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -78,7 +79,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                                 alt={item.name} 
                                 fill 
                                 className="object-contain"
-                                // ✅ Карточка имеет жесткий max-w-[300px], больше скачивать нет смысла
+                                //   Карточка имеет жесткий max-w-[300px], больше скачивать нет смысла
                                 sizes="(max-width: 640px) 90vw, 300px"
                             />
                         </div>
@@ -111,12 +112,8 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                         Живые <span style={{ color: theme.hex }}>Эмоции</span>
                     </h2>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-300 animate-in fade-in duration-700 fill-mode-both">
-                    <span className="w-8 h-px bg-slate-700" />
-                    Листайте
-                    <span className="w-8 h-px bg-slate-700" />
-                </div>
-            </div>
+                  <SwipeHint />
+              </div>
 
             {/* Горизонтальная лента фотографий */}
             <div 
@@ -137,7 +134,7 @@ export default function DirectionShowcase({ data }: DirectionShowcaseProps) {
                             alt={`Эмоция ${idx + 1}`} 
                             fill 
                             className="object-cover transition-transform duration-1000 hover:scale-110"
-                            // ✅ У карточек жесткая ширина 260-500px, ограничиваем аппетиты браузера
+                            //   У карточек жесткая ширина 260-500px, ограничиваем аппетиты браузера
                             sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 500px"
                             loading="lazy"
                         />

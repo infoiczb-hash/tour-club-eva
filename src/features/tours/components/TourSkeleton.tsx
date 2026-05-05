@@ -56,7 +56,7 @@ export const TourSkeletonCard = () => (
 export const TourSkeleton = () => (
   // Секция в точности повторяет обертку ToursBrowser
   <section className="py-8 md:py-24 bg-slate-950 min-h-screen relative overflow-hidden w-full">
-    <div className="container mx-auto px-4 max-w-7xl relative z-10">
+    <div className="container relative z-10">
       
       {/* Заголовок секции */}
       <div className="mb-8 md:mb-14">

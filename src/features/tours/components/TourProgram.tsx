@@ -11,7 +11,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// ✅ Выносим карточку дня в отдельный компонент, чтобы у каждой был свой независимый хук useInView
+//   Выносим карточку дня в отдельный компонент, чтобы у каждой был свой независимый хук useInView
 function ProgramDayCard({ item, idx }: { item: TourProgramDay; idx: number }) {
   const { ref, inView } = useInView({ threshold: 0.1, rootMargin: '-50px' });
 

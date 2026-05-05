@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Redis } from '@upstash/redis';
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 ОФИЦИАЛЬНЫЙ ВАЛИДАТОР ПОДПИСИ
-import { sendTelegramMessage } from '@/lib/telegram/notify'; // ✅ ДОБАВЛЕН ИМПОРТ
+import { sendTelegramMessage } from '@/lib/telegram/notify'; //   ДОБАВЛЕН ИМПОРТ
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:rollover:last_run';
@@ -56,7 +56,7 @@ async function handler(req: Request) {
         revalidatePath(`/tour/${tour.slug}`);
       }
 
-      // ✅ ИСПРАВЛЕНИЕ: Уведомляем администратора о скрытии туров
+      //   ИСПРАВЛЕНИЕ: Уведомляем администратора о скрытии туров
       const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
       if (adminChatId) {
         const tourNames = toursWithAllDatesPast.map(t => t.slug).join(', ');

@@ -40,7 +40,9 @@ export default function Timeline() {
         </div>
 
         {/* CARDS */}
-        <div className="relative">
+        <div className="relative">\
+            <div className="mb-3">
+                  <SwipeHint /> </div>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-12 pt-2 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {timeline.map((item, idx) => {
               const Icon = item.icon;
@@ -79,9 +81,7 @@ export default function Timeline() {
               );
             })}
           </div>
-
-          <SwipeHint />
-        </div>
+          </div>
       </div>
     </section>
   );

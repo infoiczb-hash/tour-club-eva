@@ -15,10 +15,13 @@ export function BreadcrumbJsonLd({
       item: item.url,
     })),
   };
-  return (
+return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      //   ИСПРАВЛЕНО: Добавлен .replace для безопасности
+      dangerouslySetInnerHTML={{ 
+        __html: JSON.stringify(schema).replace(/</g, '\\u003c') 
+      }}
     />
   );
 }

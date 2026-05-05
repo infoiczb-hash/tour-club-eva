@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { InquiryStatus } from '@prisma/client';
 import { withAdminAuth } from '@/lib/auth';
-import { withAdminAudit } from '@/lib/audit'; // ✅ Добавлено ядро аудита
+import { withAdminAudit } from '@/lib/audit'; //   Добавлено ядро аудита
 
 // ЧТЕНИЕ: Аудит не нужен
 export const getInquiriesAction = withAdminAuth(async () => {

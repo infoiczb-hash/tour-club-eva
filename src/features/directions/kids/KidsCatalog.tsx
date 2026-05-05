@@ -41,7 +41,7 @@ export default function KidsCatalog({ tours = [] }: KidsCatalogProps) {
     const twoWeeksLater = new Date();
     twoWeeksLater.setDate(now.getDate() + 14);
 
-    // ✅ ИСПРАВЛЕНО: Теперь используем правильный легкий тип TourPreview
+    //   ИСПРАВЛЕНО: Теперь используем правильный легкий тип TourPreview
     const hot: TourPreview[] = [];
     const soon: TourPreview[] = [];
 

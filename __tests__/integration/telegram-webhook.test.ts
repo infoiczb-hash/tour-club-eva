@@ -4,14 +4,14 @@ import { POST } from '@/app/api/webhooks/telegram/route';
 import { NextRequest } from 'next/server';
 import { mockNotificationHubDispatch } from '../../__mocks__/external-services';
 
-// ✅ МОК АВТОРИЗАЦИИ: Чтобы updateBookingStatusAction не падал при вызове из вебхука
+//   МОК АВТОРИЗАЦИИ: Чтобы updateBookingStatusAction не падал при вызове из вебхука
 jest.mock('@/lib/auth', () => ({
   requireAuth: jest.fn().mockResolvedValue({ id: 'webhook-admin', role: 'admin' }),
   getSession: jest.fn().mockResolvedValue({ id: 'webhook-admin', role: 'admin' }),
-  withAdminAuth: (fn: any) => fn, // ✅ Добавили пропуск обертки экшена
+  withAdminAuth: (fn: any) => fn, //   Добавили пропуск обертки экшена
 }));
 
-// ✅ УМНЫЙ МОК REDIS: Создаем реальную in-memory базу данных для тестов
+//   УМНЫЙ МОК REDIS: Создаем реальную in-memory базу данных для тестов
 const mockRedisStore = new Map<string, string>();
 
 jest.mock('@upstash/redis', () => ({
@@ -81,7 +81,7 @@ beforeEach(async () => {
     mockRedisStore.clear(); 
     jest.clearAllMocks();
 
-    // ✅ ДОБАВЛЯЕМ СБРОС СЧЕТЧИКОВ СЮДА
+    //   ДОБАВЛЯЕМ СБРОС СЧЕТЧИКОВ СЮДА
     mockNotificationHubDispatch.mockClear();
     
     const { publishToTelegram } = require('@/features/admin/actions/telegram');
@@ -254,7 +254,7 @@ beforeEach(async () => {
     });
     await POST(req1);
 
-    // ✅ Очищаем счетчик вызовов после первого успешного запроса!
+    //   Очищаем счетчик вызовов после первого успешного запроса!
     mockNotificationHubDispatch.mockClear();
 
     // Запрос 2: Должен быть заблокирован дедупликацией
@@ -268,7 +268,7 @@ beforeEach(async () => {
     });
     await POST(req2);
 
-    // ✅ Раз второй запрос был заблокирован, уведомлений быть не должно вообще (0)
+    //   Раз второй запрос был заблокирован, уведомлений быть не должно вообще (0)
     expect(mockNotificationHubDispatch).toHaveBeenCalledTimes(0);
   });
   
@@ -357,7 +357,7 @@ beforeEach(async () => {
         undefined,
         undefined,
         false,
-        // ✅ Разрешаем быть undefined, если в тестовом .env нет TELEGRAM_TOPIC_BOOKINGS
+        //   Разрешаем быть undefined, если в тестовом .env нет TELEGRAM_TOPIC_BOOKINGS
         expect.objectContaining({ messageThreadId: process.env.TELEGRAM_TOPIC_BOOKINGS || undefined })
       );
 

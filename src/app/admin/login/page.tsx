@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // ✅ Ждём пока cookies сессии точно установятся, потом делаем hard redirect
+    //   Ждём пока cookies сессии точно установятся, потом делаем hard redirect
     // (router.push не гарантирует что middleware увидит свежую сессию)
     window.location.href = '/admin';
   }

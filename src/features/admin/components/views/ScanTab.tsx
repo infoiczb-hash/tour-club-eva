@@ -209,7 +209,7 @@ const [currentState, setCurrentState] = useState<ScannerState>('SCANNING');
             >
               Попробовать снова
             </button>
-             {/* ✅ НОВОЕ */}
+             {/*   НОВОЕ */}
     <button 
       onClick={startScanning}
       className="mt-3 w-full py-3 text-xs font-bold text-slate-500 hover:text-slate-700 uppercase tracking-widest transition-colors flex items-center justify-center gap-1"

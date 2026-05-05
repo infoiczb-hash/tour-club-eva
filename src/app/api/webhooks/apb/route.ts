@@ -1,10 +1,4 @@
 // src/app/api/webhooks/apb/route.ts
-// Вебхук ResultURL для приёма уведомлений от Агропромбанка (Клевер).
-// Документация АПБ, раздел "4. Оповещение об оплате (ResultURL)".
-//
-// ВАЖНО: банк вызывает этот URL после каждой попытки оплаты (успешной и нет).
-// Мы НИКОГДА не доверяем телу запроса — всегда делаем повторный GetState.
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
@@ -128,7 +122,7 @@ async function handleWebhook(req: NextRequest): Promise<NextResponse> {
       return ok(); // Глушим вебхук, чтобы не выдавать билет
     }
 
-    // ✅ ОПЛАТА ПОДТВЕРЖДЕНА И СУММА СОВПАДАЕТ
+    //   ОПЛАТА ПОДТВЕРЖДЕНА И СУММА СОВПАДАЕТ
     await handlePaymentSuccess(booking, paymentState);
   } else {
     // ❌ ОПЛАТА НЕ ПРОШЛА (fail, ошибка, просрочен)
@@ -161,22 +155,24 @@ async function handlePaymentSuccess(
       },
     });
 
-await logSystemAction('APB_PAYMENT_FAILED', {
-  targetId: booking.id,
-  changes:  {
-    invoiceId:        booking.apbInvoiceId,
-    stateCode:        state.stateCode,
-    stateDescription: state.stateDescription,
-  },
-});
+    await logSystemAction('APB_PAYMENT_CONFIRMED', {
+      targetId: booking.id,
+      changes:  {
+        invoiceId:  booking.apbInvoiceId,
+        rrn:        state.rrn,
+        authCode:   state.authCode,
+        lastDigits: state.lastDigits,
+        sum:        state.sum,
+      },
+    });
 
     // Уведомление в Telegram-топик броней
     const msg = [
-      `✅ <b>Онлайн-оплата подтверждена (АПБ)</b>`,
+      `  <b>Онлайн-оплата подтверждена (АПБ)</b>`,
       ``,
       `🆔 Бронь #<b>${booking.shortId}</b>`,
       `🏦 Invoice: <code>${booking.apbInvoiceId}</code>`,
-      `👤 ${booking.name} | 📞 ${booking.phone}`,
+      `👤 ${booking.name ?? 'Клиент'} | 📞 ${booking.phone}`,
       `🏕 ${booking.tour.title}`,
       `💰 ${booking.totalPrice} ${booking.tour.currency}`,
       state.rrn        ? `🔑 RRN: <code>${state.rrn}</code>`              : null,
@@ -189,7 +185,7 @@ await logSystemAction('APB_PAYMENT_FAILED', {
       undefined,
       undefined,
       false,
-      { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS }, // ✅ Исправлен топик
+      { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS },
     );
 
     // Уведомление клиенту через Хаб (если авторизован)
@@ -201,7 +197,6 @@ await logSystemAction('APB_PAYMENT_FAILED', {
           bookingId:    booking.id,
           shortId:      booking.shortId,
           tourTitle:    booking.tour.title,
-          tourSlug:     booking.tour.slug,
           totalPrice:   booking.totalPrice,
           currency:     booking.tour.currency,
           meetingPoint: booking.tourDate?.meetingPoint ?? booking.tour.meetingPoint,
@@ -236,17 +231,14 @@ async function handlePaymentFail(
   // клиент может попробовать ещё раз или выбрать другой метод оплаты
   // Статус менять на cancelled не нужно — это делает крон cancel-unpaid
 
-// СТАЛО:
-await logSystemAction('APB_PAYMENT_CONFIRMED', {
-  targetId: booking.id,
-  changes:  {
-    invoiceId:  booking.apbInvoiceId,
-    rrn:        state.rrn,
-    authCode:   state.authCode,
-    lastDigits: state.lastDigits,
-    sum:        state.sum,
-  },
-});
+  await logSystemAction('APB_PAYMENT_FAILED', {
+    targetId: booking.id,
+    changes:  {
+      invoiceId:  booking.apbInvoiceId,
+      stateCode:  state.stateCode,
+      stateDescription: state.stateDescription,
+    },
+  });
 
   console.log(
     `[APB Webhook] Оплата не прошла для брони ${booking.id}: ${state.stateDescription}`,
@@ -263,9 +255,7 @@ await logSystemAction('APB_PAYMENT_CONFIRMED', {
         shortId:    booking.shortId,
         tourTitle:  booking.tour.title,
         tourSlug:   booking.tour.slug,
-        totalPrice: booking.totalPrice,
-        currency:   booking.tour.currency,
-      },
+        },
     });
   }
 }

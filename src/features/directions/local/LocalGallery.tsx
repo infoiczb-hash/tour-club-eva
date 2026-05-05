@@ -37,6 +37,8 @@ export default function LocalGallery() {
                 </div>
 
                 <div className="relative">
+                     <div className="mb-3">
+        <SwipeHint /> </div>
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-4 md:mx-0 md:px-0 md:auto-rows-[300px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {GALLERY_IMAGES.map((src, i) => {
                             const isWide = i === 0 || i === 3 || i === 5;
@@ -67,8 +69,7 @@ export default function LocalGallery() {
                             );
                         })}
                     </div>
-                       <SwipeHint />
-                </div>
+                    </div>
 
             </div>
         </section>

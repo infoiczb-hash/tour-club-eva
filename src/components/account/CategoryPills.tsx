@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition, useOptimistic } from "react";
-// ✅ Используем единственную надёжную версию из wishlistActions.ts
+//   Используем единственную надёжную версию из wishlistActions.ts
 // (там есть проверка memberId → гарантия что чужой профиль не тронуть)
 // Старый импорт из @/app/account/wishlist/actions — УДАЛЁН
 import { toggleCategorySubscription } from "@/features/account/actions/wishlistActions";
@@ -14,7 +14,7 @@ interface Category {
 interface CategoryPillsProps {
   categories: Category[];
   subscribedIds: string[];
-  memberId: string; // ✅ Добавили: нужен для безопасного action
+  memberId: string; //   Добавили: нужен для безопасного action
 }
 
 export default function CategoryPills({

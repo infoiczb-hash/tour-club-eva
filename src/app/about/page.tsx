@@ -72,7 +72,7 @@ export default function AboutPage() {
              </p>
           </div>
           
-          <div className="opacity-0 animate-fade-in-up [animation-delay:450ms]">
+         <div className="animate-fade-in-up">
               <div className="w-16 h-px bg-white/10 mx-auto my-8" />
               <p className="text-slate-300">
                 Если вы уже с нами — <span className="text-teal-400">спасибо, что идёте рядом</span>.<br />

@@ -16,7 +16,7 @@ const Button: React.FC<ButtonProps> = ({
     ...props 
 }) => {
     
-    // ✅ Базовые стили: 
+    //   Базовые стили: 
     // - active:scale-95 (эффект нажатия "пружинка")
     // - disabled:active:scale-100 (отключенная кнопка не пружинит)
     const baseStyles = "relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100";

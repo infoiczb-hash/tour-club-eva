@@ -337,7 +337,7 @@ const result = (await updateBookingStatusAction({
 
 const result = (await updateBookingStatusAction({
       bookingId: booking.id,
-      newStatus: 'confirmed' // ✅ ИСПРАВЛЕНО НА CONFIRMED
+      newStatus: 'confirmed' //   ИСПРАВЛЕНО НА CONFIRMED
     })) as ActionResult;
 
     expect(result.success).toBe(true);

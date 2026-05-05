@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Save, AlertCircle, Loader2, Tags, Key } from "lucide-react";
 import { upsertFunTestAction } from "@/features/admin/actions/fun";
-import type { FunTest } from "@prisma/client"; // ✅ ДОБАВЛЕНО: Строгий тип из базы данных
+import type { FunTest } from "@prisma/client"; //   ДОБАВЛЕНО: Строгий тип из базы данных
 
 // --- КОНСТАНТЫ ДЛЯ УДОБСТВА ---
 const CATEGORIES = [
@@ -33,11 +33,11 @@ const SYSTEM_SLUGS = [
 
 // --- Схема валидации Zod ---
 const formSchema = z.object({
-  id: z.string().optional(), // ✅ ДОБАВЛЕНО: Для корректного сохранения при редактировании
+  id: z.string().optional(), //   ДОБАВЛЕНО: Для корректного сохранения при редактировании
   slug: z.string().min(2, "Выберите системный ключ"),
   title: z.string().min(2, "Введите название теста"),
   description: z.string().min(5, "Добавьте краткое описание"),
-  image: z.string().url("Введите корректный URL картинки").or(z.literal("")).optional().nullable(), // ✅ ИСПРАВЛЕНО: Разрешаем null
+  image: z.string().url("Введите корректный URL картинки").or(z.literal("")).optional().nullable(), //   ИСПРАВЛЕНО: Разрешаем null
   category: z.string().min(2, "Укажите категорию"),
   isActive: z.boolean(), 
   passCount: z.number().min(0), 
@@ -45,7 +45,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// ✅ ИСПРАВЛЕНО: Строгая типизация вместо any
+//   ИСПРАВЛЕНО: Строгая типизация вместо any
 interface Props {
   initialData?: Partial<FunTest> | null; 
   onSuccess?: () => void; 
@@ -55,7 +55,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ ИСПРАВЛЕНО: Безопасный маппинг данных из БД в форму
+  //   ИСПРАВЛЕНО: Безопасный маппинг данных из БД в форму
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {

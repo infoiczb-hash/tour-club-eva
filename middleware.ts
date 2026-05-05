@@ -4,14 +4,15 @@ import { env } from '@/lib/env';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  
-  // ✅ ПРОВЕРКА ОКРУЖЕНИЯ: Включаем HTTPS-апгрейд только в продакшене
   const isProd = process.env.NODE_ENV === 'production';
 
-// CSP — строится один раз для всех маршрутов
+  // --- Генерация nonce для script-src ---
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+
+  // --- CSP с nonce (без unsafe-inline и unsafe-eval) ---
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' https://res.cloudinary.com https://*.supabase.co https://api.telegram.org https://t.me blob: data:;
     media-src 'self' https://res.cloudinary.com blob: data:;
@@ -25,8 +26,7 @@ export async function middleware(request: NextRequest) {
     ${isProd ? 'upgrade-insecure-requests;' : ''}
   `.replace(/\s{2,}/g, ' ').trim();
 
-  // ── ПУБЛИЧНЫЕ МАРШРУТЫ ────────────────────────────────────────────
-  // Supabase не инициализируется — нет сетевых запросов, нет задержки
+  // --- Публичные маршруты (без авторизации) ---
   const isAuthRoute =
     pathname.startsWith('/admin') ||
     pathname.startsWith('/account') ||
@@ -35,15 +35,16 @@ export async function middleware(request: NextRequest) {
   if (!isAuthRoute) {
     const response = NextResponse.next();
     response.headers.set('Content-Security-Policy', cspHeader);
-    // ПАТЧ: Preconnect к Cloudinary для ускорения загрузки изображений (экономия 150-300мс)
+    // Пробрасываем nonce для использования в layout.tsx или других компонентах
+    response.headers.set('x-nonce', nonce);
     response.headers.append('Link', '<https://res.cloudinary.com>; rel=preconnect');
     return response;
   }
 
-  // ── ЗАЩИЩЁННЫЕ МАРШРУТЫ (/admin, /account, /login) ───────────────
-  // Supabase инициализируется только здесь
+  // --- Защищённые маршруты ---
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('Content-Security-Policy', cspHeader);
+  // Передаём nonce дальше (например, для <Script nonce={...}>)
+  requestHeaders.set('x-nonce', nonce);
 
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
@@ -54,16 +55,10 @@ export async function middleware(request: NextRequest) {
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
+        getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request: { headers: requestHeaders },
-          });
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -72,30 +67,21 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // ── /admin ───────────────────────────────────────────────────────
+  // ── /admin проверки ──
   if (pathname.startsWith('/admin')) {
     if (!user && pathname !== '/admin/login') {
-      // Неавторизованных гостей отправляем на логин админки
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/admin/login';
       supabaseResponse = NextResponse.redirect(loginUrl);
     } else if (user) {
-      // ✅ ПРОВЕРКА РОЛИ АДМИНА
-      // Проверяем наличие роли 'admin' в метадате пользователя
       const isAdmin = user.user_metadata?.role === 'admin';
-
       if (!isAdmin) {
-        // Залогинен, но не админ? Выкидываем в обычный кабинет пользователя
         const accountUrl = request.nextUrl.clone();
         accountUrl.pathname = '/account/dashboard';
         return NextResponse.redirect(accountUrl);
       }
-
-      // Если админ пытается зайти на страницу логина — пускаем его сразу внутрь
       if (pathname === '/admin/login') {
         const adminUrl = request.nextUrl.clone();
         adminUrl.pathname = '/admin';
@@ -104,7 +90,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── /account ─────────────────────────────────────────────────────
+  // ── /account ──
   if (pathname.startsWith('/account')) {
     if (!user) {
       const loginUrl = request.nextUrl.clone();
@@ -114,11 +100,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── /login ───────────────────────────────────────────────────────
+  // ── /login ──
   if (pathname === '/login') {
     if (user) {
-      const next =
-        request.nextUrl.searchParams.get('next') ?? '/account';
+      const next = request.nextUrl.searchParams.get('next') ?? '/account';
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = next;
       redirectUrl.search = '';
@@ -127,14 +112,12 @@ export async function middleware(request: NextRequest) {
   }
 
   supabaseResponse.headers.set('Content-Security-Policy', cspHeader);
-  // ПАТЧ: Preconnect к Cloudinary для авторизованных страниц
+  supabaseResponse.headers.set('x-nonce', nonce);
   supabaseResponse.headers.append('Link', '<https://res.cloudinary.com>; rel=preconnect');
   
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

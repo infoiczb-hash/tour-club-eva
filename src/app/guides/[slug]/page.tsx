@@ -115,7 +115,13 @@ export default async function GuidePage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white selection:bg-teal-500/30">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+   <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ 
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
+        }}
+      />
+      
 
       {/* ─── HERO ─── */}
       <section className="relative w-full min-h-[100svh] md:min-h-[90vh] flex flex-col">

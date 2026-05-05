@@ -37,6 +37,8 @@ export default function Fleet() {
         </div>
 
         <div className="relative mt-6 md:mt-8">
+           <div className="mb-3">
+                 <SwipeHint /> </div>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-6 pt-4 md:pt-0 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {fleet.map((boat, i) => (
               <div
@@ -74,8 +76,6 @@ export default function Fleet() {
               </div>
             ))}
           </div>
-          
-       <SwipeHint />
         </div>
       </div>
     </section>

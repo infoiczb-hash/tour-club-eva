@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-// ✅ ДОБАВЛЕНО: Импорт глобального хука
+//   ДОБАВЛЕНО: Импорт глобального хука
 import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -28,7 +28,7 @@ const regulations = [
 export default function SafetyRegulations() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   
-  // ✅ ИСПРАВЛЕНО: Явно передаем параметры, чтобы сохранить оригинальное поведение
+  //   ИСПРАВЛЕНО: Явно передаем параметры, чтобы сохранить оригинальное поведение
   const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
   const listView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 

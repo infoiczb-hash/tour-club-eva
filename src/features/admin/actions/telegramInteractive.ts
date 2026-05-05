@@ -52,12 +52,12 @@ export async function handleTelegramCallback(callbackQuery: TelegramCallbackQuer
       case 'pub_rev':
         await prisma.review.update({
           where: { id },
-          data: { isActive: true }, // ✅ ИСПРАВЛЕНО: используем поле isActive из твоей схемы
+          data: { isActive: true }, //   ИСПРАВЛЕНО: используем поле isActive из твоей схемы
         });
-        await answerCallbackQuery(callbackQuery.id, '✅ Отзыв успешно опубликован!');
+        await answerCallbackQuery(callbackQuery.id, '  Отзыв успешно опубликован!');
         if (chatId && messageId) {
           await editMessageReplyMarkup(chatId, messageId, {
-            inline_keyboard: [[{ text: `✅ Опубликовал @${username}`, callback_data: 'noop' }]]
+            inline_keyboard: [[{ text: `  Опубликовал @${username}`, callback_data: 'noop' }]]
           });
         }
         break;
@@ -66,7 +66,7 @@ export async function handleTelegramCallback(callbackQuery: TelegramCallbackQuer
       case 'tk_lead':
         await prisma.inquiry.update({
           where: { id },
-          data: { status: 'WORK' }, // ✅ ИСПРАВЛЕНО: используем статус WORK из твоего Enum
+          data: { status: 'WORK' }, //   ИСПРАВЛЕНО: используем статус WORK из твоего Enum
         });
         await answerCallbackQuery(callbackQuery.id, '🤝 Заявка взята в работу!');
         if (chatId && messageId) {

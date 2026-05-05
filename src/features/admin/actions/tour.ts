@@ -4,8 +4,8 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { withAdminAuth } from '@/lib/auth'; // ✅ ИМПОРТИРУЕМ НАШУ БРОНЮ
-import { withAdminAudit } from '@/lib/audit'; // ✅ ИМПОРТИРУЕМ ЯДРО АУДИТА
+import { withAdminAuth } from '@/lib/auth'; //   ИМПОРТИРУЕМ НАШУ БРОНЮ
+import { withAdminAudit } from '@/lib/audit'; //   ИМПОРТИРУЕМ ЯДРО АУДИТА
 import { publishToTelegram, publishTourToChannel, sendToUserTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
@@ -63,14 +63,14 @@ export const saveTour = withAdminAuth(
       const mainGuideId = data.dates?.[0]?.guide_id || null;
 
       // Подготовка дат
-      const tourDatesData = data.dates.map((d) => ({
+     const tourDatesData = data.dates.map((d) => ({
         startDate: new Date(d.start),
         endDate: d.end ? new Date(d.end) : null,
         time: d.time || null,
         guideId: d.guide_id || null,
         groupChatUrl: d.groupChatUrl || null, 
-        spots: data.spots,
-        spotsLeft: data.spotsLeft,
+        spots: d.spots ?? data.spots,                    // ✅ Приоритет у вместимости конкретной даты
+        spotsLeft: d.spotsLeft ?? d.spots ?? data.spots, // ✅ Безопасно для нового тура: ставим полное число мест
       }));
 
       // 3. Формируем Payload
@@ -145,26 +145,44 @@ export const saveTour = withAdminAuth(
             }
         });
 
-        // 4. Точечно обновляем старые и создаем новые (сохраняем tourDateId у существующих броней)
+       // 4. Точечно обновляем старые и создаем новые (сохраняем tourDateId у существующих броней)
         for (const d of data.dates) {
-            const datePayload = {
+            // ✅ Берем вместимость конкретной даты, если нет — берем общую
+            const currentSpots = d.spots ?? data.spots;
+
+            const basePayload = {
                 startDate: new Date(d.start),
                 endDate: d.end ? new Date(d.end) : null,
                 time: d.time || null,
                 guideId: d.guide_id || null,
-                groupChatUrl: d.groupChatUrl || null, 
-                spots: data.spots,
-                spotsLeft: data.spotsLeft,
+                groupChatUrl: d.groupChatUrl || null,
+                spots: currentSpots,
             };
 
             if (d.id) {
+                // ⚠️ ОБНОВЛЕНИЕ СУЩЕСТВУЮЩЕЙ ДАТЫ
+                const updateData: Record<string, any> = { ...basePayload };
+                
+                // ✅ Защита от овербукинга: обновляем spotsLeft ТОЛЬКО если админ явно передал число
+                if (d.spotsLeft !== undefined && d.spotsLeft !== null) {
+                    updateData.spotsLeft = Number(d.spotsLeft);
+                }
+
                 await prisma.tourDate.update({
                     where: { id: d.id },
-                    data: datePayload
+                    data: updateData
                 });
             } else {
+                // ❇️ СОЗДАНИЕ НОВОЙ ДАТЫ В СТАРОМ ТУРЕ
                 await prisma.tourDate.create({
-                    data: { ...datePayload, tourId: formData.id as string }
+                    data: { 
+                        ...basePayload, 
+                        tourId: formData.id as string,
+                        // ✅ Новая дата: если остаток не задан, ставим его равным полной вместимости
+                        spotsLeft: (d.spotsLeft !== undefined && d.spotsLeft !== null) 
+                            ? Number(d.spotsLeft) 
+                            : currentSpots
+                    }
                 });
             }
         }
@@ -190,7 +208,6 @@ export const saveTour = withAdminAuth(
         });
         savedTourId = newTour.id; 
       }
-
       // 👇 НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine) 👇
       const hasNewDates = data.dates.some(d => !d.id);
       
@@ -334,11 +351,11 @@ export interface GetToursAdminParams {
   page: number;
   limit?: number;
   search?: string;
-  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; // ✅ ДОБАВИЛИ drafts
+  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; //   ДОБАВИЛИ drafts
 }
 
 export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) => {
-  const { page, limit = 20, search, filter = 'upcoming' } = params; // ✅ ПО УМОЛЧАНИЮ 'upcoming'
+  const { page, limit = 20, search, filter = 'upcoming' } = params; //   ПО УМОЛЧАНИЮ 'upcoming'
   const skip = (page - 1) * limit;
   const now = new Date();
   now.setHours(0, 0, 0, 0);

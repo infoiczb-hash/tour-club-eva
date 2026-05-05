@@ -96,16 +96,6 @@ export default function ReferralCard({
           </div>
         </div>
       </div>
-
-      {/* Кастомный Toast (появляется снизу) */}
-      <div 
-        className={`absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg transition-all duration-300 ${
-          toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
-        }`}
-      >
-        <Check size={16} />
-        Ссылка скопирована! Другу +{friendReward} ₽
       </div>
-    </div>
   );
 }

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { Redis } from '@upstash/redis';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВИЛИ ИМПОРТ АУДИТА
+import { logSystemAction } from '@/lib/audit'; //   ДОБАВИЛИ ИМПОРТ АУДИТА
 
 const redis = Redis.fromEnv();
 
@@ -159,7 +159,7 @@ export async function GET(req: Request) {
       await Promise.allSettled(notificationPromises);
     }
 
-    // ✅ СИСТЕМНЫЙ АУДИТ: Успешное выполнение
+    //   СИСТЕМНЫЙ АУДИТ: Успешное выполнение
     Promise.resolve().then(() => {
       logSystemAction('CRON_SALES_BOT_EXECUTED', {
         changes: { winbackSent: winbackCount, crosssellSent: crosssellCount }
@@ -172,12 +172,12 @@ export async function GET(req: Request) {
       crosssellSent: crosssellCount 
     });
 
-  // ✅ ИСПРАВЛЕНИЕ ТИПОВ: Заменили error на error: unknown
+  //   ИСПРАВЛЕНИЕ ТИПОВ: Заменили error на error: unknown
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[Sales Bot Error]:', err);
     
-    // ✅ СИСТЕМНЫЙ АУДИТ: Логируем ошибку CRON-задачи
+    //   СИСТЕМНЫЙ АУДИТ: Логируем ошибку CRON-задачи
     Promise.resolve().then(() => {
       logSystemAction('CRON_SALES_BOT_ERROR', {
         changes: { error: err.message, stack: err.stack }

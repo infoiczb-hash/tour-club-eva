@@ -12,7 +12,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// ✅ СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
+//   СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
 const COLOR_THEMES: Record<string, string> = {
   slate:   "bg-slate-500/10 border-slate-500/20 text-slate-300",
   teal:    "bg-teal-500/10 border-teal-500/20 text-teal-400",
@@ -26,8 +26,8 @@ const COLOR_THEMES: Record<string, string> = {
   amber:   "bg-amber-500/10 border-amber-500/20 text-amber-400",
 };
 
-// ✅ ИСПРАВЛЕНО: Добавлен currentPrice для динамического ценообразования дат
-type CalendarTour = Omit<TourPreview, 'date'> & { // ✅ ИЗМЕНЕНО: Omit из TourPreview
+//   ИСПРАВЛЕНО: Добавлен currentPrice для динамического ценообразования дат
+type CalendarTour = Omit<TourPreview, 'date'> & { //   ИЗМЕНЕНО: Omit из TourPreview
   uniqueId: string; 
   originalId: string;
   date: string | null; 

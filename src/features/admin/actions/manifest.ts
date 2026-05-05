@@ -43,7 +43,7 @@ export const sendManifestToTelegramAction = withAdminAuth(async (payload: {
       }
 
       let statusStr = '⏳ Не оплачено';
-      if (p.status === 'confirmed') statusStr = '✅ Оплачено';
+      if (p.status === 'confirmed') statusStr = '  Оплачено';
       if (p.status === 'pending') statusStr = '💵 Наличные';
 
       message += `<b>${num}. ${p.name}</b> (${ticketLabel}) / ${phone}${equipStr} | <i>#${p.shortId} (${statusStr})</i>\n`;

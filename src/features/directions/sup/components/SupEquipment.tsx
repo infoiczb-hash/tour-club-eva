@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
-// ✅ ДОБАВЛЕНО: Глобальный хук
+//   ДОБАВЛЕНО: Глобальный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
 
@@ -54,7 +54,7 @@ const GEAR = [
 ];
 
 export default function SupEquipment() {
-    // ✅ ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
+    //   ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
     const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
     const boardView = useInView({ threshold: 0.1, rootMargin: '-30px' });
     const statsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
@@ -150,6 +150,8 @@ export default function SupEquipment() {
                 </div>
 {/* СКРОЛЛ ЭКИПИРОВКИ */}
 <div className="relative" ref={gearListView.ref}>
+      <div className="mb-3">
+            <SwipeHint /> </div>
     <div className="grid grid-rows-2 md:grid-rows-none grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-3 gap-3 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {GEAR.map((item, idx) => {
             const Icon = item.icon;
@@ -175,8 +177,7 @@ export default function SupEquipment() {
             );
         })}
     </div>
-                       <SwipeHint />
-                </div>
+                 </div>
 
             </div>
         </section>

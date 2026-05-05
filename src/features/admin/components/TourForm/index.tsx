@@ -29,7 +29,7 @@ interface TourFormProps {
 export default function TourForm({ initialData, onClose, guides, categories = [], onSuccess }: TourFormProps) {
   const { showToast } = useToast();
   
-  // ✅ ДОБАВЛЕНО: Умный выбор дефолтной категории
+  //   ДОБАВЛЕНО: Умный выбор дефолтной категории
   const defaultCategoryId = categories.length > 0 ? categories[0].id : '';
 
   // =========================================================
@@ -41,7 +41,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       return {
          currency: 'RUB',
          type: 'hiking',
-         categoryId: defaultCategoryId, // ✅ ДОБАВЛЕНО: Дефолтная категория
+         categoryId: defaultCategoryId, //   ДОБАВЛЕНО: Дефолтная категория
          isActive: false,
          price: 0, // Важно: для нового тура цена 0
          dates: [],
@@ -70,9 +70,9 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       // Приводим поля к формату схемы
       isActive: initialData.isActive ?? initialData.is_active ?? false,
       
-      categoryId: initialData.categoryId ?? initialData.categoryId ?? defaultCategoryId, // ✅ ДОБАВЛЕНО: Маппинг категории
+      categoryId: initialData.categoryId ?? initialData.categoryId ?? defaultCategoryId, //   ДОБАВЛЕНО: Маппинг категории
       
-      // ✅ ИСПРАВЛЕНО: Принудительная конвертация в число (Number)
+      //   ИСПРАВЛЕНО: Принудительная конвертация в число (Number)
       // Это решает проблему "expected number, received NaN"
       price: initialData.price ? Number(initialData.price) : 0,
       
@@ -117,14 +117,14 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       gallery: initialData.gallery || [],
       
       // Даты
-      // ✅ ИСПРАВЛЕНИЕ ДАТ: Отсекаем временную зону для <input type="date">
+      //   ИСПРАВЛЕНИЕ ДАТ: Отсекаем временную зону для <input type="date">
       dates: Array.isArray(initialData.dates) ? initialData.dates.map((d: any) => ({
         ...d,
         start: d.start ? d.start.split('T')[0] : '', 
         end: d.end ? d.end.split('T')[0] : '',
       })) : [],
     };
-  }, [initialData, defaultCategoryId]); // ✅ ДОБАВЛЕНО: defaultCategoryId в зависимости
+  }, [initialData, defaultCategoryId]); //   ДОБАВЛЕНО: defaultCategoryId в зависимости
 
   // =========================================================
   // 2. ИНИЦИАЛИЗАЦИЯ ФОРМЫ
@@ -152,7 +152,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
     try {
       const payload = { ...data };
       
-      // ✅ ДОБАВЛЕНО: Защита от пустой строки в UUID
+      //   ДОБАВЛЕНО: Защита от пустой строки в UUID
       if (payload.categoryId === '') {
           delete payload.categoryId;
       }
@@ -207,7 +207,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
             >
                {/* 1. Главная инфо */}
                <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-                  <MainInfo categories={categories} /> {/* ✅ ДОБАВЛЕНО: Прокидываем категории */}
+                  <MainInfo categories={categories} /> {/*   ДОБАВЛЕНО: Прокидываем категории */}
                </section>
 
                {/* 2. Логистика */}

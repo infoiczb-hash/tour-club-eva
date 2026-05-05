@@ -24,7 +24,7 @@ export default function OrganizersHero() {
           </p>
 
           <div className="animate-hero-subtitle flex flex-col sm:flex-row justify-center gap-4">
-            {/* ✅ Кнопка вынесена в изолированный клиентский компонент */}
+            {/*   Кнопка вынесена в изолированный клиентский компонент */}
             <OrgHeroButton />
           </div>
         </div>

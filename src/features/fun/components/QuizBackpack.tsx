@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
 import { 
   X, Check, Luggage, AlertTriangle, ArrowRight, 
@@ -15,6 +14,7 @@ import { clsx } from "clsx";
 import { useProfile } from "@/hooks/useProfile";
 import { incrementFunTestPassAction } from "@/features/admin/actions/fun";
 import { useSaveTest } from "@/hooks/useSaveTest";
+import { useModalTransition } from "@/hooks/useModalTransition";
 
 /* =======================
    ТИПЫ
@@ -120,6 +120,9 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
   const { updateProfile } = useProfile();
   const { saveResult } = useSaveTest();
 
+  // Наш новый хук для управления переходом закрытия
+  const { shouldRender, closing } = useModalTransition(open, 200);
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -161,127 +164,112 @@ export default function QuizBackpack({ open, onClose, onComplete }: Props) {
     setShowResult(true);
   };
 
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
-
-  if (!open) return null;
+  if (!shouldRender) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <div
+      className={clsx(
+        "fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4 transition-opacity duration-200 ease-out",
+        closing ? "opacity-0" : "opacity-100"
+      )}
+      onClick={onClose}
+    >
+      <div
+        className={clsx(
+          "relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] transition-all duration-200 ease-out",
+          closing ? "scale-95 opacity-0 translate-y-4" : "scale-100 opacity-100 translate-y-0"
+        )}
+        onClick={(e) => e.stopPropagation()}
       >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]"
-          onClick={(e) => e.stopPropagation()}
+        <button 
+          onClick={handleReset} 
+          className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full"
         >
-          <button 
-            onClick={handleReset} 
-            className="absolute top-4 right-4 text-slate-300 hover:text-white transition-colors z-20 p-2 bg-white/5 hover:bg-white/10 rounded-full"
-          >
-            <X size={20} />
-          </button>
+          <X size={20} />
+        </button>
 
-          {!showResult ? (
-            <div className="flex flex-col h-full overflow-hidden">
-              <div className="shrink-0 mb-6 text-center pr-8">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full mb-3">
-                   <Luggage size={14} className="text-blue-400"/>
-                   <span className="text-[12px] font-black uppercase text-blue-400 tracking-widest">Инвентарь</span>
-                </div>
-                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Собери рюкзак</h3>
-                <p className="text-slate-300 text-sm">В рюкзак влезает ровно 7 предметов. Выбирай с умом!</p>
+        {!showResult ? (
+          <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-300">
+            <div className="shrink-0 mb-6 text-center pr-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full mb-3">
+                 <Luggage size={14} className="text-blue-400"/>
+                 <span className="text-[12px] font-black uppercase text-blue-400 tracking-widest">Инвентарь</span>
               </div>
-
-              {/* Progress Bar */}
-              <div className="shrink-0 flex justify-between items-center bg-slate-950/50 p-3 rounded-2xl border border-white/5 mb-6">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider pl-2">Места занято:</span>
-                  <div className="flex gap-1.5 pr-1">
-                    {[...Array(7)].map((_, i) => (
-                      <motion.div 
-                        key={i} 
-                        initial={false}
-                        animate={{ 
-                          backgroundColor: i < selected.length ? "#3b82f6" : "#1e293b",
-                          scale: i < selected.length ? 1.1 : 1 
-                        }}
-                        className="w-3 h-3 rounded-full" 
-                      />
-                    ))}
-                  </div>
-              </div>
-
-              <motion.div 
-                variants={containerVariants} 
-                initial="hidden" 
-                animate="show"
-                className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-2"
-              >
-                {items.map((item) => {
-                  const isSelected = selected.includes(item.id);
-                  const Icon = item.icon;
-                  return (
-                    <motion.button
-                      key={item.id}
-                      variants={itemVariants}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleToggle(item.id)}
-                      disabled={!isSelected && selected.length >= 7}
-                      className={clsx(
-                        "aspect-square p-3 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all relative group",
-                        isSelected 
-                          ? "bg-blue-500/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)] text-blue-400" 
-                          : "bg-slate-800/50 border-white/5 text-slate-300 hover:border-white/20 hover:text-white hover:bg-slate-800",
-                        !isSelected && selected.length >= 7 && "opacity-30 cursor-not-allowed grayscale hover:scale-100"
-                      )}
-                    >
-                      <Icon className={clsx("w-8 h-8 transition-transform", isSelected ? "scale-110" : "group-hover:scale-110")} strokeWidth={1.5} />
-                      <span className={clsx("text-[12px] font-bold uppercase text-center", isSelected ? "text-blue-200" : "text-slate-300")}>
-                        {item.name}
-                      </span>
-                      <AnimatePresence>
-                        {isSelected && (
-                          <motion.div 
-                            initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900"
-                          >
-                            <Check size={12} className="text-white" strokeWidth={3} />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.button>
-                  );
-                })}
-              </motion.div>
-
-              <div className="shrink-0">
-                <button
-                  onClick={handleCheck}
-                  disabled={selected.length !== 7}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-blue-900/20"
-                >
-                  {selected.length === 7 ? "Проверить рюкзак" : `Выбери ещё ${7 - selected.length}`}
-                </button>
-              </div>
+              <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Собери рюкзак</h3>
+              <p className="text-slate-300 text-sm">В рюкзак влезает ровно 7 предметов. Выбирай с умом!</p>
             </div>
-          ) : (
-            <ResultScreen result={result} selected={selected} onClose={onClose} />
-          )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+
+            {/* Progress Bar */}
+            <div className="shrink-0 flex justify-between items-center bg-slate-950/50 p-3 rounded-2xl border border-white/5 mb-6">
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider pl-2">Места занято:</span>
+                <div className="flex gap-1.5 pr-1">
+                  {[...Array(7)].map((_, i) => {
+                    const isActive = i < selected.length;
+                    return (
+                      <div 
+                        key={i} 
+                        className="w-3 h-3 rounded-full transition-all duration-300 ease-out"
+                        style={{ 
+                          backgroundColor: isActive ? "#3b82f6" : "#1e293b",
+                          transform: isActive ? "scale(1.1)" : "scale(1)" 
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+            </div>
+
+            <div 
+              className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-2"
+            >
+              {items.map((item) => {
+                const isSelected = selected.includes(item.id);
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleToggle(item.id)}
+                    disabled={!isSelected && selected.length >= 7}
+                    className={clsx(
+                      "aspect-square p-3 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all duration-200 relative group",
+                      "hover:scale-105 active:scale-95",
+                      isSelected 
+                        ? "bg-blue-500/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)] text-blue-400" 
+                        : "bg-slate-800/50 border-white/5 text-slate-300 hover:border-white/20 hover:text-white hover:bg-slate-800",
+                      !isSelected && selected.length >= 7 && "opacity-30 cursor-not-allowed grayscale hover:scale-100"
+                    )}
+                  >
+                    <Icon className={clsx("w-8 h-8 transition-transform", isSelected ? "scale-110" : "group-hover:scale-110")} strokeWidth={1.5} />
+                    <span className={clsx("text-[12px] font-bold uppercase text-center", isSelected ? "text-blue-200" : "text-slate-300")}>
+                      {item.name}
+                    </span>
+                    {isSelected && (
+                      <div 
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 animate-in fade-in zoom-in-50 duration-200"
+                      >
+                        <Check size={12} className="text-white" strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="shrink-0">
+              <button
+                onClick={handleCheck}
+                disabled={selected.length !== 7}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
+              >
+                {selected.length === 7 ? "Проверить рюкзак" : `Выбери ещё ${7 - selected.length}`}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <ResultScreen result={result} selected={selected} onClose={onClose} />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -294,9 +282,8 @@ function ResultScreen({ result, selected, onClose }: { result: Result; selected:
   const ResultIcon = result.icon;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} 
-      className="flex flex-col h-full overflow-hidden"
+    <div 
+      className="flex flex-col h-full overflow-hidden animate-in fade-in zoom-in-95 duration-300"
     >
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
         <div className="text-center mb-6 pt-4">
@@ -349,21 +336,21 @@ function ResultScreen({ result, selected, onClose }: { result: Result; selected:
             <Link
               href={`/directions/${result.directionSlug}`}
               onClick={onClose}
-              className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2"
+              className="flex-1 py-4 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-white/5 hover:border-white/20 transition-all text-center flex items-center justify-center gap-2 active:scale-95"
             >
               <Compass size={16} /> О направлении
             </Link>
             <Link
               href={`/tour?category=${result.directionSlug}`}
               onClick={onClose}
-              className="flex-1 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+              className="flex-1 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95"
             >
               Выбрать маршрут <ArrowRight size={16} />
             </Link>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

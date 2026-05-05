@@ -26,7 +26,7 @@ const KidsCatalog = dynamic(() => import('./KidsCatalog'), {
   loading: () => <div className="min-h-[400px] bg-slate-950" />,
 });
 
-// ✅ Ожидаем массив туров из page.tsx
+//   Ожидаем массив туров из page.tsx
 export default function KidsLanding({ tours }: { tours: TourPreview[] }) {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-amber-500/30 selection:text-white">
@@ -57,7 +57,7 @@ export default function KidsLanding({ tours }: { tours: TourPreview[] }) {
       </SectionErrorBoundary>
       
       {/* 6. Каталог */}
-      {/* ✅ Прокидываем туры в каталог, чтобы они отрендерились! */}
+      {/*   Прокидываем туры в каталог, чтобы они отрендерились! */}
       <SectionErrorBoundary label="Каталог детских туров" minHeight="400px">
         <KidsCatalog tours={tours} />
       </SectionErrorBoundary>

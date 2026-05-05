@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Waves, Users, TreePine, Backpack, ArrowRight} from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
-// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint';  
 
@@ -91,6 +91,8 @@ export default function KidsFormats() {
                 </FadeBlock>
 
                 <div className="relative mb-12 md:mb-20">
+                   <div className="mb-3">
+                         <SwipeHint /> </div>
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                        {FORMATS.map((format, idx) => (
                           <FadeBlock 
@@ -134,7 +136,6 @@ export default function KidsFormats() {
                           </FadeBlock>
                       ))}
                     </div>
-<SwipeHint />                  
                 </div>
 
                 <FadeBlock startY={30} className="pt-8 border-t border-white/5">
@@ -148,6 +149,8 @@ export default function KidsFormats() {
                     </div>
 
                     <div className="relative">
+                         <div className="mb-3">
+                               <SwipeHint /> </div>
                         <div className="grid grid-rows-2 md:grid-rows-none grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-2 gap-3 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {OTHER_FORMATS.map((item, idx) => {
                                 const Icon = item.icon;
@@ -171,7 +174,6 @@ export default function KidsFormats() {
                                 )
                             })}
                         </div>
-<SwipeHint />
                     </div>
                 </FadeBlock>
                 

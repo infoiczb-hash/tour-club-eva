@@ -1,7 +1,7 @@
 // src/features/tours/api.ts
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { Tour, TourPreview } from './types'; // ✅ ДОБАВЛЕНО: TourPreview
+import { Tour, TourPreview } from './types'; //   ДОБАВЛЕНО: TourPreview
 import { cache } from 'react';
 
 // ─────────────────────────────────────────────
@@ -151,6 +151,7 @@ export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
       ? {
           id: item.guide.id,
           name: item.guide.name,
+          slug: item.guide.slug, 
           image: item.guide.image,
           role: item.guide.role,
           instagram: item.guide.instagram,
@@ -166,7 +167,7 @@ export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
 }
 
 // ─────────────────────────────────────────────
-// ✅ ДОБАВЛЕНО: Маппер Prisma → TourPreview (DTO для карточек)
+//   ДОБАВЛЕНО: Маппер Prisma → TourPreview (DTO для карточек)
 // ─────────────────────────────────────────────
 function mapPrismaTourToPreview(item: PrismaTourWithRelations): TourPreview {
   const full = mapPrismaTourToFrontend(item);
@@ -227,7 +228,7 @@ function isTourRelevant(tour: Tour): boolean {
 // Публичные функции
 // ─────────────────────────────────────────────
 
-// ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
+//   ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
 export const getTours = cache(async (cursor?: string): Promise<TourPreview[]> => {
   try {
     const now = today();
@@ -266,7 +267,7 @@ export const getTours = cache(async (cursor?: string): Promise<TourPreview[]> =>
   }
 });
 
-// ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
+//   ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация в БД
 export const getToursByCategory = cache(async (
   categorySlug: string,
   take: number = 6
@@ -318,7 +319,7 @@ export const getTourBySlug = cache(async (slug: string): Promise<Tour | null> =>
   }
 });
 
-// ✅ ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация актуальных дат в БД
+//   ИЗМЕНЕНО: Возвращает TourPreview[], фильтрация актуальных дат в БД
 export const getSimilarTours = cache(async (
   categoryId: string | null,
   excludeId: string,

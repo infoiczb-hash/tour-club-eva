@@ -85,7 +85,7 @@ export const TourReminderEmail = ({
                   У вас выбрана <b>оплата на месте ({price} {currency})</b>. Пожалуйста, подтвердите своё участие по ссылке ниже, чтобы мы сохранили за вами место в трансфере.
                 </Text>
                 <Button href={bookingLink} className="bg-amber-500 text-slate-900 font-bold py-3 px-6 rounded-xl text-xs uppercase tracking-wider">
-                  ✅ Я точно буду
+                    Я точно буду
                 </Button>
               </Section>
             )}

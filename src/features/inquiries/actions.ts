@@ -8,7 +8,7 @@ import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
 
-// ✅ ДОБАВЛЕНА: Функция экранирования опасных символов
+//   ДОБАВЛЕНА: Функция экранирования опасных символов
 function escapeHtml(str: string | null | undefined): string {
   if (!str) return "";
   return str
@@ -19,7 +19,7 @@ function escapeHtml(str: string | null | undefined): string {
 }
 
 export async function submitInquiry(data: InquiryInput) {
-  // ✅ ДОБАВЛЕНО: Rate Limiting (защита от спама)
+  //   ДОБАВЛЕНО: Rate Limiting (защита от спама)
   try {
     const ip = await getClientIp();
     const { success: rateLimitSuccess } = await basicRateLimit.limit(ip);
@@ -111,7 +111,7 @@ export async function submitInquiry(data: InquiryInput) {
       validData.social ? `✈️ ${escapeHtml(validData.social)}` : null
     ].filter(Boolean).join('\n');
 
-    // ✅ ИСПРАВЛЕНИЕ: Экранируем весь пользовательский ввод
+    //   ИСПРАВЛЕНИЕ: Экранируем весь пользовательский ввод
     let tgMessage = `<b>${hashtags[validData.type]} от ${escapeHtml(validData.name)}</b>\n\n${contactStr}\n\n`;
 
     if (validData.type === 'HR') {

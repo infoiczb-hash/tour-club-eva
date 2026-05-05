@@ -6,7 +6,7 @@ import {
   LayoutGrid, Calendar as CalendarIcon, 
   Flame, Sparkles, Layers, Filter, X, Bell, ArrowRight,
   Compass, Map as MapIcon, Sun, Snowflake, TreePine, Bike, Footprints, MapPin, Anchor, Star, Waves,
-  TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby // ✅ ВСЕ ИКОНКИ НА МЕСТЕ
+  TrendingUp, ArrowDownCircle, Mountain, Tent, Droplets, Baby //   ВСЕ ИКОНКИ НА МЕСТЕ
 } from 'lucide-react';
 import Link from 'next/link';
 import { TourPreview, TourDateItem } from '@/features/tours/types';
@@ -67,7 +67,7 @@ export default function ToursBrowser({
   
   const openContactModal = useModalStore((state) => state.openContactModal);
   
-  // ✅ ИСПРАВЛЕНО: Мгновенный стейт вместо зависимости от роутера Next.js
+  //   ИСПРАВЛЕНО: Мгновенный стейт вместо зависимости от роутера Next.js
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -147,7 +147,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
 
       <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-teal-900/5 md:blur-[120px] rounded-full pointer-events-none opacity-60" />
 
-      <div className="container mx-auto px-4 max-w-7xl relative z-10">
+      <div className="container relative z-10">
         
         {/* --- HEADER --- */}
         <div className="mb-8 md:mb-14">
@@ -307,8 +307,10 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                             </h3>
                         </div>
 
-                        {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
+                        {/*   УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
                         <div className="relative">
+                              <div className="mb-3">
+                                    <SwipeHint /> </div>
                             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 {displayScheduled.map((tour, index) => (
                                     <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full">
@@ -316,10 +318,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                                     </div>
                                 ))}
                             </div>
-                            
-                            {/* Подсказка для свайпа на мобилках */}
-                           <SwipeHint />
-                        </div>
+                            </div>
 
                         {/* Кнопка "Показать еще" */}
                         {hasMoreScheduled && (
@@ -346,8 +345,10 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                             </h3>
                         </div>
 
-                        {/* ✅ УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
+                        {/*   УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
                         <div className="relative">
+                              <div className="mb-3">
+                                    <SwipeHint /> </div>
                             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 {tbaTours.map((tour) => (
                                     <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full opacity-90 hover:opacity-100 transition-opacity">
@@ -355,9 +356,7 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                                     </div>
                                 ))}
                             </div>
-                            
-                           <SwipeHint />
-                        </div>
+                            </div>
                     </section>
                 )}
 

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Coffee, Heart, Users, Briefcase, Dog, Baby, ArrowRight } from 'lucide-react';
-// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 import SwipeHint from '@/shared/ui/SwipeHint'; 
 
@@ -16,7 +16,7 @@ const FORMATS = [
 ];
 
 export default function SupFormats() {
-  // ✅ ИСПРАВЛЕНО: Используем внешний хук
+  //   ИСПРАВЛЕНО: Используем внешний хук
   const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
   const listView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
@@ -42,6 +42,8 @@ export default function SupFormats() {
 
         {/* ИНТЕРАКТИВНАЯ ЛЕНТА */}
         <div ref={listView.ref} className="relative">
+            <div className="mb-3">
+                  <SwipeHint /> </div>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-5 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {FORMATS.map((format, i) => {
               const Icon = format.icon;
@@ -69,8 +71,7 @@ export default function SupFormats() {
               );
             })}
           </div>
-          <SwipeHint />
-        </div>
+          </div>
       </div>
     </section>
   );

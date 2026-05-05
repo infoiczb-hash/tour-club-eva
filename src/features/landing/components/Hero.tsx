@@ -1,5 +1,7 @@
+// src/features/landing/components/Hero.tsx
 import React from 'react';
 import Image from 'next/image';
+import { preload } from 'react-dom'; //   ДОБАВЛЕНО: Нативный preload
 import { ArrowDown } from 'lucide-react';
 
 export interface HeroContent {
@@ -13,11 +15,15 @@ const DEFAULT_HERO: HeroContent = {
   title: 'ЭВА',
   subtitle: 'Приключения каждые выходные',
   tagline: 'ОПЫТ — КОТОРЫЙ ВДОХНОВЛЯЕТ',
-  // ✅ ИСПРАВЛЕНИЕ: Убрали /f_auto,q_auto/ чтобы не конфликтовать с cloudinary-loader
+  //   ИСПРАВЛЕНИЕ: Убрали /f_auto,q_auto/ чтобы не конфликтовать с cloudinary-loader
   bg_image: 'https://res.cloudinary.com/dwrei7k2z/image/upload/v1771673823/hero-bg_cz1j25.webp'
 };
 
 export default function HeroSection({ content = DEFAULT_HERO }: { content?: HeroContent }) {
+  //   ИСПРАВЛЕНИЕ (Fix 2): Принудительный preload изображения прямо в потоке рендеринга.
+  // Это заставляет браузер начать загрузку сразу, не дожидаясь обработки всего CSS/JS.
+  preload(content.bg_image, { as: 'image', fetchPriority: 'high' });
+
   return (
     <section className="relative w-full h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950">
 
@@ -31,21 +37,20 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
             className="object-cover object-center"
             priority
             fetchPriority="high"
-            // ✅ ИСПРАВЛЕНИЕ: quality 85 → 65 — фоновое изображение покрыто градиентами,
-            // артефакты сжатия не видны. Экономия ~66 KiB (по данным Lighthouse).
-            quality={45}
+            quality={75}
             sizes="100vw"
           />
+          {/* СЛОИ ЗАТЕМНЕНИЯ — сохранены полностью */}
           <div className="absolute inset-0 bg-slate-950/30" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.5)_100%)]" />
           <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
         </div>
       </div>
-
-      {/* ТЕКСТ */}
+      
+      {/* ТЕКСТОВЫЙ КОНТЕНТ — сохранен полностью */}
       <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center mt-[-10vh]">
-
-        {/* Тэглайн — не LCP, анимация допустима */}
+        
+        {/* Надзаголовок */}
         <div className="flex items-center gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
           <span className="text-base md:text-lg font-bold tracking-[0.2em] text-teal-300 uppercase drop-shadow-md">
@@ -54,15 +59,11 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
           <div className="h-[1px] w-8 md:w-16 bg-teal-400/50" />
         </div>
 
-        {/*
-          ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: убраны animate-in / fade-in / zoom-in-95 с LCP-элементов.
-
-        */}
+        {/* Главный заголовок (LCP элемент) */}
         <h1 className="relative flex flex-col items-center leading-none text-center">
           <span className="text-6xl sm:text-7xl md:text-8xl font-black text-white uppercase tracking-tight mb-2 drop-shadow-xl block animate-hero-subtitle">
             Турклуб
           </span>
-          {/* LCP-элемент: без opacity-анимации, только transform */}
           <span className="text-[35vw] sm:text-[12rem] md:text-[16rem] font-black text-white uppercase tracking-tighter select-none drop-shadow-2xl leading-[0.85] block animate-hero-title">
             {content.title}
           </span>
@@ -74,7 +75,7 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
         </p>
       </div>
 
-      {/* КНОПКА — задержка допустима, не влияет на LCP */}
+      {/* КНОПКА СКРОЛЛА — сохранена полностью */}
       <div className="absolute bottom-8 sm:bottom-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
         <a
           href="#tours"

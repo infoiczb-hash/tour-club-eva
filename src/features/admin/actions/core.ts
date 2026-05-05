@@ -102,7 +102,7 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
     }
 
     if (filterTab === 'active') {
-      // ✅ ФИКС: Оффлайн-брони (tourDateId: null) теперь видны в активных
+      //   ФИКС: Оффлайн-брони (tourDateId: null) теперь видны в активных
       andConditions.push({
         status: { notIn: ['cancelled', 'rejected'] },
         OR: [
@@ -311,7 +311,7 @@ export const savePostAction = withAdminAuth(
 export const togglePostStatusAction = withAdminAuth(
   withAdminAudit({
     actionName: 'TOGGLE_POST_STATUS',
-    getTargetId: (id: string, _field: 'isActive' | 'is_trending', _value: boolean) => id, // ✅ Добавили недостающие аргументы
+    getTargetId: (id: string, _field: 'isActive' | 'is_trending', _value: boolean) => id, //   Добавили недостающие аргументы
   })(async (id: string, field: 'isActive' | 'is_trending', value: boolean) => {
     try {
       const existing = field === 'isActive' 
@@ -371,7 +371,7 @@ export const deletePostAction = withAdminAuth(
 export const saveContentBlockAction = withAdminAuth(
   withAdminAudit({
     actionName: 'SAVE_CONTENT_BLOCK',
-    getTargetId: (slug: string, _content: Prisma.InputJsonValue) => slug, // ✅ Добавили второй аргумент
+    getTargetId: (slug: string, _content: Prisma.InputJsonValue) => slug, //   Добавили второй аргумент
   })(async (slug: string, content: Prisma.InputJsonValue) => {
     try {
       await prisma.contentBlock.upsert({
@@ -390,7 +390,7 @@ export const saveContentBlockAction = withAdminAuth(
 export const updateBookingCommentAction = withAdminAuth(
   withAdminAudit({
     actionName: 'UPDATE_BOOKING_COMMENT',
-    getTargetId: (id: string, _comment: string) => id, // ✅ Добавили _comment
+    getTargetId: (id: string, _comment: string) => id, //   Добавили _comment
   })(async (id: string, comment: string) => {
     try {
       await prisma.booking.update({ where: { id }, data: { comment } });
@@ -446,7 +446,7 @@ export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestP
 
     if (tourDates.length === 0) return { success: true, groups: [], total: 0 };
 
-    // ✅ РЕШЕНИЕ N+1: Выгружаем все брони для выбранных дат одним запросом
+    //   РЕШЕНИЕ N+1: Выгружаем все брони для выбранных дат одним запросом
     const tourDateIds = tourDates.map(td => td.id);
     const allBookings = await prisma.booking.findMany({
       where: {

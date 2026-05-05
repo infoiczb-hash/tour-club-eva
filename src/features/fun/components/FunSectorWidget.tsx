@@ -8,6 +8,7 @@ import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import { FunTest } from '@prisma/client';
 import { QUIZ_VISUAL_CONFIG } from './constants';
+import { useInView } from '@/hooks/useInView';
 
 // ─── Удалено: локальный VISUAL_REGISTRY (дублировал constants.tsx)
 // ─── Удалено: FALLBACK_QUIZZES (хардкод данных — лишний fallback, данные всегда приходят с сервера)
@@ -16,25 +17,10 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
-
 export default function FunSectorWidget({ activeTests }: { activeTests?: FunTest[] }) {
   const [quizzes, setQuizzes] = useState<FunTest[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const ctaView = useInView();
+  const ctaView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
   useEffect(() => {
     let isMounted = true;

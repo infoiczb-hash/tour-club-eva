@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { 
   mockNotificationHubDispatch, 
   mockSendToTelegram,
-  mockResendEmailsSend // ✅ Добавили импорт мока Resend
+  mockResendEmailsSend //   Добавили импорт мока Resend
 } from '../../__mocks__/external-services';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -76,13 +76,23 @@ describe('createBookingAction – интеграционные тесты', () =
       currency: 'RUB', paymentMethod: 'cash' as const, useBonuses: false, website: '',
     };
 
-   const result = await createBookingAction(input);
-   expect(result.success).toBe(false);
-  if (!result.success) {
-      expect(result.error).toMatch(/доступны только для новых пользователей|не могут быть использованы одновременно/);
-    }
+ const result = await createBookingAction(input);
+  expect(result.success).toBe(true);
+  if (!result.success) throw new Error('Expected success');
 
-   });
+  expect(result.totalPrice).toBe(2000); // 2 билета × 1000
+  expect(result.bookingId).toBeDefined();
+
+  // Места списались
+  const updatedDate = await prisma.tourDate.findUnique({ where: { id: tourDateId } });
+  expect(updatedDate!.spotsLeft).toBe(18); // 20 - 2
+
+  // TG-уведомление отправлено
+  expect(mockSendToTelegram).toHaveBeenCalled();
+
+  // Email отправлен (social — валидный email)
+  expect(mockResendEmailsSend).toHaveBeenCalled();
+});
 
   // 2. БЛОКИРОВКА ПРИ НЕХВАТКЕ МЕСТ
   it('возвращает ошибку при недостатке мест', async () => {
@@ -421,7 +431,7 @@ describe('createBookingAction – интеграционные тесты', () =
   });
 
   // 17. ИГНОРИРОВАНИЕ ПРОМОКОДА ПРИ АВТОРИЗАЦИИ
-  it('игнорирует переданный промокод, если юзер авторизован (списываются только бонусы)', async () => {
+  it('авторизованный с useBonuses списывает бонусы без промокода', async () => {
     const member = await prisma.memberProfile.findFirst({ where: { id: memberId! } });
     mockGetUser.mockResolvedValue({ data: { user: { id: member!.userId } }, error: null });
 
@@ -431,14 +441,14 @@ describe('createBookingAction – интеграционные тесты', () =
     });
 
     const input = {
-      tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
-      name: 'Участник', phone: '+37377755544', social: '',
-      ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
-      currency: 'RUB', paymentMethod: 'cash' as const, 
-      useBonuses: true, // И бонусы
-      promoCode: 'SUPER90', // И дикий промокод
-      website: '',
-    };
+  tourId, tourDateId, tourTitle: 'Тур', tourDate: 'завтра',
+  name: 'Участник', phone: '+37377755544', social: '',
+  ticketsAdult: 1, ticketsChild: 0, ticketsMember: 0, ticketsFamily: 0,
+  currency: 'RUB', paymentMethod: 'cash' as const,
+  useBonuses: true, // только бонусы
+  // promoCode убран — нельзя оба одновременно
+  website: '',
+};
 
     const result = await createBookingAction(input);
     expect(result.success).toBe(true);

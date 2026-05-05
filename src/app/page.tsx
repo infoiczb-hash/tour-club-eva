@@ -1,9 +1,9 @@
 // src/app/page.tsx
 import { Suspense } from 'react';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma'; // Сохранил, хотя он не используется в компоненте
 import { Metadata } from 'next';
 
-// ✅ ИЗМЕНЕНО: Импортируем только нужные функции
+//   ИЗМЕНЕНО: Импортируем только нужные функции
 import { getBlogPreviews } from '@/features/blog/api'; // Облегченная версия
 import { getReviews } from '@/features/reviews/actions';
 import { getBlogCategoriesAction } from '@/features/admin/actions/categories';
@@ -36,7 +36,6 @@ const LazyReviewsMarquee = dynamic(() => import('@/features/reviews/components/R
 
 export const revalidate = 3600; 
 
-// (Metadata остается без изменений)
 export const metadata: Metadata = {
   title: "Турклуб «Эва» — Активный отдых в Приднестровье",
   description: "Сплавы по Днестру, туры в горы, SUP. Приключения в Приднестровье и Молдове.",
@@ -58,12 +57,15 @@ export const metadata: Metadata = {
   }
 };
 
-export default async function Home() {
-  // ✅ ИСПРАВЛЕНО: Правильные вызовы функций и именование переменных
+/**
+ *   ВЫНЕСЕНО В ОТДЕЛЬНЫЙ КОМПОНЕНТ ДЛЯ STREAMING
+ * Это позволяет Hero отрисоваться мгновенно, не дожидаясь этих тяжелых запросов.
+ */
+async function DeferredLandingContent() {
   const [guides, posts, fetchedReviews, bCatRes, funRes] = await Promise.all([
-    getGuidesForLanding(), // Полные данные гидов для лендинга
-    getBlogPreviews(),     // Облегченные посты без content
-    getReviews(true),      // Только активные отзывы
+    getGuidesForLanding(),
+    getBlogPreviews(),
+    getReviews(true),
     getBlogCategoriesAction(),
     getFunTestsAction(),
   ]);
@@ -71,7 +73,7 @@ export default async function Home() {
   const blogCategories = bCatRes.success ? bCatRes.data : [];
   const activeTests = funRes?.success && funRes.data ? funRes.data.filter(t => t.isActive) : [];
 
-  // ✅ ИСПРАВЛЕНО: Обработка отзывов (ISO строки для дат обязательны для клиентских компонентов)
+  //   ИСПРАВЛЕНО: Обработка отзывов (ISO строки для дат обязательны для клиентских компонентов)
   const limitedReviews = fetchedReviews
     .slice(0, 12) // Ограничение для производительности DOM
     .map(r => ({
@@ -83,7 +85,19 @@ export default async function Home() {
       createdAt: r.createdAt.toISOString(), 
       avatar: r.avatar
   }));
-  
+
+  return (
+    <>
+      <LazyGuidesList guides={guides} /> 
+      <LazySocialGrid />
+      <LazyReviewsMarquee reviews={limitedReviews} />
+      <BlogList posts={posts} categories={blogCategories} />
+      <LazyFunSector activeTests={activeTests} />
+    </>
+  );
+}
+
+export default function Home() {
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -100,24 +114,25 @@ export default async function Home() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        //   ИСПРАВЛЕНО
+        dangerouslySetInnerHTML={{ 
+          __html: JSON.stringify(websiteSchema).replace(/</g, '\\u003c') 
+        }}
       />
 
+      {/*   LCP ЭЛЕМЕНТ: Рендерится сразу! */}
       <Hero />
-       <Suspense fallback={<TourSkeleton />}>
+      
+      <Suspense fallback={<TourSkeleton />}>
         <ToursBrowserWrapper limit={8} title="Афиша Приключений" />
       </Suspense>
       
       <Philosophy />
-      <LazyGuidesList guides={guides} /> 
-      
-      <LazySocialGrid />
 
-      <LazyReviewsMarquee reviews={limitedReviews} />
-      
-      <BlogList posts={posts} categories={blogCategories} />
-      
-      <LazyFunSector activeTests={activeTests} />
+      {/*   ВСЁ ОСТАЛЬНОЕ: Подгружается стримингом (Suspense) */}
+      <Suspense fallback={<div className="h-64 flex items-center justify-center text-teal-500 animate-pulse font-bold uppercase tracking-widest">Собираем рюкзак...</div>}>
+        <DeferredLandingContent />
+      </Suspense>
     </>
   );
 }

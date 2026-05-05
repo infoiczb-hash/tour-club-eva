@@ -6,7 +6,7 @@ import { useModalStore } from '@/shared/store/useModalStore';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
-// ✅ ДОБАВЛЕНО: Глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {

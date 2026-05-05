@@ -11,26 +11,13 @@ import {
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useModalStore } from '@/shared/store/useModalStore';	
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 // ХУК ДЛЯ НАБЛЮДЕНИЯ ЗА СКРОЛЛОМ (замена whileInView)
-function useInView(options = { threshold: 0.1, rootMargin: '-50px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
-}
 
 // --- СЛОВАРЬ ИКОНОК ДЛЯ RPG-СТАТОВ ---
 const ICON_MAP: Record<string, { icon: React.ElementType, color: string }> = {
@@ -96,8 +83,8 @@ const SkillBar = ({ label, value, icon: Icon, colorClass }: any) => {
 export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null); 
   const openContactModal = useModalStore((state) => state.openContactModal);
-  const headerView = useInView();
-  const ctaView = useInView();
+  const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
+  const ctaView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
   // Сортируем гидов по полю order (чтобы основатели были первыми)
   const displayGuides = Array.isArray(guides) 
@@ -112,7 +99,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-teal-900/5 md:blur-[150px] rounded-full" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container relative z-10">
         
         {/* --- HEADER --- */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-8">
@@ -206,7 +193,7 @@ export default function GuidesList({ guides = [] }: { guides: Guide[] }) {
 // --- GUIDE CARD ---
 function GuideCard({ guide, index, onClick }: { guide: Guide, index: number, onClick: () => void }) {
     const rhythmClass = index % 2 !== 0 ? 'lg:mt-12' : '';
-    const { ref, inView } = useInView();
+    const { ref, inView } = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
     return (
         <div
@@ -327,7 +314,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                          <h2 className="text-5xl lg:text-6xl font-black text-white leading-[0.85] tracking-tight">{guide.name}</h2>
                     </div>
 
-                    {/* ✅ ИСПРАВЛЕНИЕ: Убрали pb-24/32, так как футер теперь не sticky */}
+                    {/*   ИСПРАВЛЕНИЕ: Убрали pb-24/32, так как футер теперь не sticky */}
                     <div className="flex-1 overflow-y-auto pr-4 -mr-2 scrollbar-thin scrollbar-thumb-slate-800 pb-4">
                         
                         {/* Суперсила и Теги */}
@@ -387,7 +374,7 @@ function GuideHeroModal({ guide, onClose }: { guide: Guide, onClose: () => void 
                             {guide.telegram && <SocialBtn href={guide.telegram} icon={Send} />}
                         </div>
 
-                        {/* ✅ ИСПРАВЛЕНИЕ: Кнопка перенесена внутрь скроллируемого блока */}
+                        {/*   ИСПРАВЛЕНИЕ: Кнопка перенесена внутрь скроллируемого блока */}
                         <div className="pt-6 border-t border-white/10">
                             <Link 
                                 href={`/tour`} // В будущем можно сделать: href={`/tour?guide=${guide.slug}`}

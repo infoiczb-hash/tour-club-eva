@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { Redis } from '@upstash/redis'; // ✅ ДОБАВИЛИ ИМПОРТ REDIS
+import { Redis } from '@upstash/redis'; //   ДОБАВИЛИ ИМПОРТ REDIS
 
-const redis = Redis.fromEnv(); // ✅ ИНИЦИАЛИЗАЦИЯ REDIS
+const redis = Redis.fromEnv(); //   ИНИЦИАЛИЗАЦИЯ REDIS
 
 export async function GET(req: Request) {
   try {
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
       const isTomorrow = booking.tourDate.startDate < tomorrowRange.lt;
       const eventId = isTomorrow ? 'TOUR_TOMORROW_REMINDER' : 'TOUR_3DAY_REMINDER';
 
-      // ✅ ИСПРАВЛЕНИЕ 6: Защита от дублей при случайном двойном вызове крона (TTL 20 часов)
+      //   ИСПРАВЛЕНИЕ 6: Защита от дублей при случайном двойном вызове крона (TTL 20 часов)
       const redisKey = `reminder_sent:${eventId}:${booking.id}`;
       // Пытаемся записать ключ. nx: true гарантирует, что запись произойдет ТОЛЬКО если ключа еще нет
       const isSent = await redis.set(redisKey, '1', { ex: 20 * 60 * 60, nx: true });
@@ -64,25 +64,27 @@ export async function GET(req: Request) {
       if (!isSent) continue;
 
       notificationPromises.push(
-        NotificationHub.dispatch({
+    NotificationHub.dispatch({
           eventId,
           memberId: booking.memberId,
           data: {
             bookingId: booking.id,
             tourTitle: booking.tour.title,
-            meetingPoint: booking.tourDate.meetingPoint || booking.tour.meetingPoint,
+            meetingPoint: (booking.tourDate.meetingPoint || booking.tour.meetingPoint) ?? 'Уточняется гидом',
             meetingTime: booking.tourDate.time,
-            paymentMethod: booking.paymentMethod,
-            totalPrice: booking.totalPrice,
-            currency: booking.tour.currency,
-            checklist: booking.tour.checklist,
+            paymentMethod: booking.paymentMethod ?? 'unknown',
+            price: Number(booking.totalPrice),
+            currency: booking.tour.currency ?? 'RUB',
+            
+            // ❌ checklist: booking.tour.checklist, — УДАЛИЛИ МУСОР
+            
             groupChatUrl: booking.tourDate.groupChatUrl
           }
         })
         .then(() => { sentCount++; })
         .catch(async (e) => { 
           console.error(`[Cron Reminder] Ошибка для брони ${booking.id}:`, e);
-          // ✅ ОТКАТ REDIS: Если Хаб упал и сообщение не ушло, удаляем ключ в Redis, 
+          //   ОТКАТ REDIS: Если Хаб упал и сообщение не ушло, удаляем ключ в Redis, 
           // чтобы попытаться снова при следующем запуске (или ручном ретрае Vercel)
           await redis.del(redisKey);
         })

@@ -94,7 +94,7 @@ export default function DirectionBento({ data }: DirectionBentoProps) {
                       alt={feat.title}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      // ✅ Учитываем реальный размер Bento Grid (calc экономит вес на отступах)
+                      //   Учитываем реальный размер Bento Grid (calc экономит вес на отступах)
                       sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1024px) 65vw, 45vw"
                       loading="lazy"
                     />

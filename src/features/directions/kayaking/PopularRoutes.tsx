@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { 
   Navigation, Clock, X, Users, Wind, MapPin, Map, 
@@ -12,24 +12,10 @@ import { routesData, RouteData } from "@/data/routes";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import SwipeHint from '@/shared/ui/SwipeHint'; 
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-function useInView(options = { threshold: 0.1, rootMargin: '-30px' }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
-      options
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
 }
 
 const otherFormats = [
@@ -43,7 +29,7 @@ const otherFormats = [
 export default function PopularRoutes() {
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
-  const formatsView = useInView();
+  const formatsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 
   useEffect(() => {
     if (selectedRoute) {
@@ -82,6 +68,8 @@ export default function PopularRoutes() {
         </div>
 
         <div className="relative">
+              <div className="mb-3">
+                    <SwipeHint /> </div>
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-10 md:pb-0 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {routesData.map((route) => (
               <div
@@ -122,8 +110,7 @@ export default function PopularRoutes() {
               </div>
             ))}
           </div>
-       <SwipeHint />
-        </div>
+         </div>
 
         {/* OTHER FORMATS */}
         <div
@@ -139,6 +126,8 @@ export default function PopularRoutes() {
           </div>
           
           <div className="relative">
+          <div className="mb-3">
+                <SwipeHint /> </div>
             <div className="grid grid-rows-2 grid-flow-col auto-cols-[80vw] md:grid-flow-row md:grid-rows-none md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-10 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {otherFormats.map((format, idx) => {
                 const Icon = format.icon;
@@ -155,9 +144,7 @@ export default function PopularRoutes() {
                 );
               })}
             </div>
-            
-            <SwipeHint />
-          </div>
+            </div>
         </div>
 
       </div>

@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { Play, Video } from 'lucide-react';
 import Image from 'next/image';
-// ✅ ДОБАВЛЕНО: Глобальный хук
+//   ДОБАВЛЕНО: Глобальный хук
 import { useInView } from '@/hooks/useInView';
 
 export default function SupVideo() {
     // Состояние, которое переключает обложку на реальный плеер
     const [isPlaying, setIsPlaying] = useState(false);
     
-    // ✅ ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
+    //   ИСПРАВЛЕНО: Глобальный хук с оригинальными параметрами
     const headerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
     const playerView = useInView({ threshold: 0.1, rootMargin: '-50px' });
 

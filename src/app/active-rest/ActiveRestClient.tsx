@@ -17,7 +17,7 @@ function cn(...cls: (string | undefined | false | null)[]) {
   return cls.filter(Boolean).join(' ');
 }
 
-// ✅ НАТИВНЫЕ АНИМАЦИИ ВМЕСТО FRAMER MOTION
+//   НАТИВНЫЕ АНИМАЦИИ ВМЕСТО FRAMER MOTION
 function FadeIn({ children, delay = 0, x = 0, y = 20, className = '' }: any) {
   const { ref, inView } = useInView({ threshold: 0.1, rootMargin: '-30px' });
   return (
@@ -224,7 +224,7 @@ export default function ActiveRestClient() {
               ))}
             </div>
 
-            {/* ✅ LCP Fix */}
+            {/*   LCP Fix */}
             <h1 className="animate-hero-title text-5xl md:text-7xl lg:text-[5.5rem] font-black text-white uppercase tracking-tighter leading-[0.88] mb-6">
               Приднестровье —<br />
               <span className="text-teal-400">место вне времени</span>

@@ -5,9 +5,10 @@ import Image from "next/image";
 import { Heart, Instagram, Send, Play, X, Volume2, VolumeX, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from '@/lib/utils';
 
-// ✅ РЕШЕНИЕ 1: Импортируем статический JSON напрямую. 
+//   РЕШЕНИЕ 1: Импортируем статический JSON напрямую. 
 // Никаких fetch, useEffect и водопадов загрузки!
 import postsData from '../../../../public/social/posts.json';
+import SwipeHint from '@/shared/ui/SwipeHint'; 
 
 
 // --- ТИПЫ ---
@@ -49,7 +50,7 @@ const SOCIAL_LINKS = [
 ];
 
 // ==========================================
-// ✅ РЕШЕНИЕ 2: DRY Хук для IntersectionObserver (Автоплей видео)
+//   РЕШЕНИЕ 2: DRY Хук для IntersectionObserver (Автоплей видео)
 // ==========================================
 function useVideoAutoPlayback(options = { threshold: 0.6 }) {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -131,7 +132,7 @@ const VerticalPlayer = ({
 
 // Отдельный слайд 
 const SingleSlide = ({ post }: { post: SocialPost }) => {
-    // ✅ ИСПОЛЬЗУЕМ ЧИСТЫЙ ХУК ВМЕСТО ПРОСТЫНИ КОДА
+    //   ИСПОЛЬЗУЕМ ЧИСТЫЙ ХУК ВМЕСТО ПРОСТЫНИ КОДА
     const { videoRef, isPlaying } = useVideoAutoPlayback({ threshold: 0.6 });
     const [isMuted, setIsMuted] = useState(true);
 
@@ -203,7 +204,7 @@ const SingleSlide = ({ post }: { post: SocialPost }) => {
 export default function SocialGrid() {
   const [activePostIndex, setActivePostIndex] = useState<number | null>(null);
 
-  // ✅ ДАННЫЕ УЖЕ ЗДЕСЬ (Загружаются мгновенно без стейтов и загрузок)
+  //   ДАННЫЕ УЖЕ ЗДЕСЬ (Загружаются мгновенно без стейтов и загрузок)
   const posts = postsData.posts.slice(0, 6) as SocialPost[];
 
   if (posts.length === 0) return null; 
@@ -216,7 +217,7 @@ export default function SocialGrid() {
          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-teal-900/10 md:md:blur-[150px] pacity-50" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+    <div className="container relative z-10">
         
        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-6">
@@ -258,6 +259,8 @@ export default function SocialGrid() {
         
         {/* --- GRID / CAROUSEL --- */}
         <div className="relative group/carousel">
+        <div className="mb-3">
+                          <SwipeHint /> </div>
             <div 
               tabIndex={0}
               role="region"
@@ -275,13 +278,7 @@ export default function SocialGrid() {
                 />
             ))}
             </div>
-            
-            {/* SWIPE HINT (Mobile only, bottom right) */}
-          <div className="flex md:hidden items-center gap-2 mb-4 text-slate-300 pl-1">
-                                  <ArrowRight size={16} className="text-teal-500 animate-pulse" />
-                                  <span className="text-[11px] font-bold uppercase tracking-widest">Листайте вбок</span>
-                              </div>
-        </div>
+            </div>
 
       </div>
 

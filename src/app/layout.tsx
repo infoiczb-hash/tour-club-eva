@@ -143,7 +143,7 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
      <head>
-  {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
+     {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
       Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
   <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
   <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />

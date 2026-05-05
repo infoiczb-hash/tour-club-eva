@@ -1,11 +1,12 @@
+// src/features/tours/components/TourDetails/BookingModal.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   X, CheckCircle, Loader2, Phone, User, 
   MessageSquare, Calendar, Minus, Plus, 
   AlertCircle, Users, LifeBuoy, CalendarDays,
-  CreditCard, Banknote, Globe, QrCode, Tag, Mail
+  CreditCard, Banknote, Globe, QrCode, Tag, Mail,
 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { createBookingAction, type BookingInput, type GuestInput } from '@/features/tours/actions/createBooking';
@@ -57,24 +58,23 @@ export default function BookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign' | 'online_card'>('online_card');
+  const [paymentMethod, setPaymentMethod] = useState<'biletpmr' | 'qr' | 'cash' | 'foreign' | 'online_card'>('online_card');
 
+  interface BookingFormData {
+    name: string;
+    phone: string;
+    social: string;
+    comment: string;
+    website: string;
+  }
 
-interface BookingFormData {
-  name: string;
-  phone: string;
-  social: string;
-  comment: string;
-  website: string;
-}
-
-const [formData, setFormData] = useState<BookingFormData>({
-  name: '',
-  phone: '+373 ',
-  social: '',
-  comment: '',
-  website: ''
-});
+  const [formData, setFormData] = useState<BookingFormData>({
+    name: '',
+    phone: '+373 ',
+    social: '',
+    comment: '',
+    website: ''
+  });
 
   const [successData, setSuccessData] = useState<{
     bookingId: string;
@@ -92,7 +92,6 @@ const [formData, setFormData] = useState<BookingFormData>({
   const [tickets, setTickets] = useState({ adult: 1, child: 0, member: 0, family: 0 });
   const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
 
-  // ✅ НОВОЕ: Стейт авторизации
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [balance, setBalance] = useState<number>(0);
   const [useBonuses, setUseBonuses] = useState<boolean>(false);
@@ -104,18 +103,90 @@ const [formData, setFormData] = useState<BookingFormData>({
   const [promoSuccess, setPromoSuccess] = useState<boolean>(false);
   const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false);
 
-  // ✅ НОВЫЕ СТЕЙТЫ ДЛЯ КАЯКИНГА
   const [hasChildUnder7, setHasChildUnder7] = useState<boolean>(false);
   const [hasDog, setHasDog] = useState<boolean>(false);
 
-  const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(
-    tour.category?.slug?.toLowerCase() || ''
-  );
+// 1. Согласия с документами (стейты)
+  const [agreedOffer, setAgreedOffer] = useState(false);
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false);
+  const [agreedRules, setAgreedRules] = useState(false);
 
-  // ✅ ПРОВЕРКА ИМЕННО НА БАЙДАРКИ
-  const isKayakingTour = ['kayaking', 'kayak'].includes(
-    tour.category?.slug?.toLowerCase() || ''
-  );
+  // 2. Единая логика определения категорий
+  const categorySlug = tour.category?.slug?.toLowerCase() || '';
+
+  const isSupTour = categorySlug === 'sup';
+  const isKayakingTour = ['kayaking', 'kayak'].includes(categorySlug);
+  
+  // Этот флаг используется для отображения выбора размера жилета и чекбоксов (дети/собаки)
+  const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(categorySlug);
+
+  // 3. Логика специфических юридических правил
+  const showSpecificRules = isKayakingTour || isSupTour;
+  
+  const specificRulesText = isKayakingTour 
+    ? "Правилами поведения на сплаве на байдарках" 
+    : "Правилами поведения для SUP туров";
+    
+  const specificRulesLink = isKayakingTour ? "/docs/rules-kayaking" : "/docs/rules-sup";
+
+  //   РЕФ ДЛЯ МОДАЛКИ (Фокус Трап)
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  //   ЭФФЕКТ ДЛЯ КЛАВИАТУРЫ (Escape + Focus Trap)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Закрытие по Escape
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      // Ловушка фокуса по Tab
+      if (e.key === 'Tab') {
+        if (!modalRef.current) return;
+        
+        // Находим все интерактивные элементы (исключая скрытые и задизейбленные)
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) { // Shift + Tab
+          if (document.activeElement === firstElement || document.activeElement === document.body) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else { // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    // Фокусируем первый элемент (кнопку закрытия) при открытии
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]):not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) focusable[0].focus();
+      }
+    }, 100);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -169,11 +240,10 @@ const [formData, setFormData] = useState<BookingFormData>({
         setFormData({ name: '', phone: '+373 ', social: '', comment: '', website: '' });
         setTickets({ adult: 1, child: 0, member: 0, family: 0 });
         setGuestData({});
-        setPaymentMethod('biletpmr'); 
+        setPaymentMethod('online_card'); 
         setUseBonuses(false);
         setPromoCode('');
         setIsLoggedIn(false);
-        // ✅ СБРАСЫВАЕМ ГАЛОЧКИ
         setHasChildUnder7(false);
         setHasDog(false);
       }, 300);
@@ -226,7 +296,6 @@ const [formData, setFormData] = useState<BookingFormData>({
     }
   };
 
-  // Визуальный пересчет (для отображения клиенту)
   const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
   const availableBonusesToUse = Math.min(balance, maxBonusDiscount);
   
@@ -276,81 +345,81 @@ const [formData, setFormData] = useState<BookingFormData>({
     setErrorMsg(null);
 
     const payloadGuests: GuestInput[] = expectedGuests.map((g, index) => {
-    if (index === 0) {
-        return {
-            isMain: true,
-            type: g.type,
-            name: formData.name.trim(), 
-            phone: formData.phone.trim(),
-            jacket: guestData[g.id]?.jacket || ''
-        };
+      if (index === 0) {
+          return {
+              isMain: true,
+              type: g.type,
+              name: formData.name.trim(), 
+              phone: formData.phone.trim(),
+              jacket: guestData[g.id]?.jacket || ''
+          };
+      }
+      return {
+          isMain: false,
+          type: g.type,
+          name: guestData[g.id]?.name?.trim() || '',
+          phone: guestData[g.id]?.phone?.trim() || undefined,
+          age: guestData[g.id]?.age?.trim() || undefined,
+          jacket: guestData[g.id]?.jacket || ''
+      };
+    });
+
+    try {
+      const bookingPayload: BookingInput = {
+          tourId:        String(tour.id),
+          tourDateId:    selectedDateId || undefined, 
+          tourTitle:     tour.title,
+          tourDate:      selectedDateStr,
+          name:          formData.name.trim(),
+          phone:         formData.phone.trim(),
+          social:        formData.social.trim() || undefined,
+          comment:       formData.comment.trim() || undefined,
+          website:       formData.website, 
+          ticketsAdult:  tickets.adult,
+          ticketsChild:  tickets.child,
+          ticketsMember: tickets.member,
+          ticketsFamily: tickets.family, 
+          guests:        payloadGuests, 
+          currency:      tour.currency ?? 'RUB',
+          paymentMethod: paymentMethod, 
+          useBonuses:    isLoggedIn ? useBonuses : false,
+          promoCode:     !isLoggedIn && promoCode.trim() ? promoCode.trim() : undefined,
+          hasChildUnder7, 
+          hasDog,         
+      };
+
+      const result = await createBookingAction(bookingPayload);
+
+      if (result.success) {
+          if (result.redirectUrl) {
+              window.location.href = result.redirectUrl;
+              return;
+          }
+          setSuccessData({
+              bookingId: result.bookingId,
+              shortId: result.shortId,
+              totalPrice: result.totalPrice,
+              biletpmrLink: result.biletpmrLink,
+              apbQrLink: result.apbQrLink,
+              apbQrImage: result.apbQrImage,
+              paymentMethod: paymentMethod
+          });
+          setStep('success');
+      } else {
+          if ('fields' in result && result.fields && Object.keys(result.fields).length > 0) {
+              const issues = Object.values(result.fields).join(' | ');
+              setErrorMsg(`Ошибка в полях: ${issues}`);
+          } else {
+              setErrorMsg(result.error || 'Произошла ошибка при бронировании. Попробуйте позже.');
+          }
+      }
+    } catch {
+        setErrorMsg('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+    } finally {
+        setIsLoading(false);
     }
-    return {
-        isMain: false,
-        type: g.type,
-        name: guestData[g.id]?.name?.trim() || '',
-        phone: guestData[g.id]?.phone?.trim() || undefined,
-        age: guestData[g.id]?.age?.trim() || undefined,
-        jacket: guestData[g.id]?.jacket || ''
-    };
-});
+  }
 
-try {
-    // Явно указываем тип аргумента для дополнительной проверки (опционально)
-    const bookingPayload: BookingInput = {
-        tourId:        String(tour.id),
-        tourDateId:    selectedDateId || undefined, 
-        tourTitle:     tour.title,
-        tourDate:      selectedDateStr,
-        name:          formData.name.trim(),
-        phone:         formData.phone.trim(),
-        social:        formData.social.trim() || undefined,
-        comment:       formData.comment.trim() || undefined,
-        website:       formData.website, 
-        ticketsAdult:  tickets.adult,
-        ticketsChild:  tickets.child,
-        ticketsMember: tickets.member,
-        ticketsFamily: tickets.family, 
-        guests:        payloadGuests, 
-        currency:      tour.currency ?? 'RUB',
-        paymentMethod: paymentMethod, 
-        useBonuses:    isLoggedIn ? useBonuses : false,
-        promoCode:     !isLoggedIn && promoCode.trim() ? promoCode.trim() : undefined,
-        hasChildUnder7, 
-        hasDog,         
-    };
-
-    const result = await createBookingAction(bookingPayload);
-
-if (result.success) {
-        if (result.redirectUrl) {
-            window.location.href = result.redirectUrl;
-            return;
-        }
-        setSuccessData({
-            bookingId: result.bookingId,
-            shortId: result.shortId,
-            totalPrice: result.totalPrice,
-            biletpmrLink: result.biletpmrLink,
-            apbQrLink: result.apbQrLink,
-            apbQrImage: result.apbQrImage,
-            paymentMethod: paymentMethod
-        });
-        setStep('success');
-    } else {
-        if ('fields' in result && result.fields && Object.keys(result.fields).length > 0) {
-            const issues = Object.values(result.fields).join(' | ');
-            setErrorMsg(`Ошибка в полях: ${issues}`);
-        } else {
-            setErrorMsg(result.error || 'Произошла ошибка при бронировании. Попробуйте позже.');
-        }
-    }
-} catch {
-    setErrorMsg('Ошибка соединения. Проверьте интернет и попробуйте снова.');
-} finally {
-    setIsLoading(false);
-}
-}
   const Counter = ({ 
     label, 
     price, 
@@ -370,14 +439,16 @@ if (result.success) {
       <div className="flex items-center gap-3 bg-slate-950 rounded-lg p-1 border border-white/10">
         <button 
           type="button" 
+          aria-label={`Уменьшить количество ${label}`}
           onClick={() => setTickets(prev => ({ ...prev, [type]: Math.max(type === 'adult' ? 1 : 0, prev[type] - 1) }))} 
           className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors"
         >
           <Minus size={16} />
         </button>
-        <span className="text-sm font-bold text-white w-4 text-center">{value}</span>
+        <span className="text-sm font-bold text-white w-4 text-center" aria-live="polite">{value}</span>
         <button 
           type="button" 
+          aria-label={`Увеличить количество ${label}`}
           onClick={() => setTickets(prev => ({ ...prev, [type]: prev[type] + 1 }))} 
           className="w-8 h-8 flex items-center justify-center text-teal-500 hover:bg-teal-500/20 rounded-md transition-colors"
         >
@@ -398,15 +469,17 @@ if (result.success) {
 
       <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2 sm:p-4 pointer-events-none">
         <div 
+          ref={modalRef} //   ПРИВЯЗАЛИ REF
           role="dialog" 
           aria-modal="true" 
+          aria-labelledby="modal-title"
           className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-2xl pointer-events-auto overflow-hidden flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300"
         >
           
           <div className="flex items-center justify-between p-5 border-b border-white/5 bg-white/5 shrink-0">
             <div>
-              <h3 className="text-lg font-bold text-white uppercase tracking-wide leading-none mb-1">
-                {step === 'form' ? 'Оформление билета' : 'Успешно!'}
+              <h3 id="modal-title" className="text-lg font-bold text-white uppercase tracking-wide leading-none mb-1">
+                {step === 'form' ? 'Оформление билета' : 'ЗАЯВКА ПОЛУЧЕНА!'}
               </h3>
               <p className="text-xs text-teal-400 font-bold truncate max-w-[250px]">
                 {tour.title}
@@ -414,6 +487,7 @@ if (result.success) {
             </div>
             <button 
               onClick={onClose} 
+              aria-label="Закрыть окно"
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
             >
               <X size={18} />
@@ -424,6 +498,7 @@ if (result.success) {
             {step === 'form' ? (
               <form onSubmit={handleSubmit} className="space-y-6">
                 
+                {/* Honeypot */}
                 <input 
                   type="text" 
                   name="website" 
@@ -431,6 +506,7 @@ if (result.success) {
                   tabIndex={-1} 
                   value={formData.website} 
                   onChange={(e) => setFormData({...formData, website: e.target.value})} 
+                  aria-hidden="true"
                 />
 
                 <div className="space-y-2">
@@ -447,6 +523,7 @@ if (result.success) {
                         <div className="relative">
                           <select 
                             value={selectedDateId || ''} 
+                            aria-label="Выберите дату тура"
                             onChange={(e) => {
                                const id = e.target.value; 
                                setSelectedDateId(id);
@@ -485,7 +562,6 @@ if (result.success) {
                       <Counter label="По клубной карте" price={tour.priceMember} value={tickets.member} type="member" />
                     ) : null}
                     
-                    {/* ✅ НОВАЯ ЛОГИКА: Разделение по авторизации */}
                     {isLoggedIn ? (
                       <div className="pt-3 mt-1 border-t border-white/10">
                         {balance > 0 ? (
@@ -542,7 +618,7 @@ if (result.success) {
                                 setPromoError(null);
                               }} 
                               disabled={promoSuccess || isCheckingPromo}
-                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-400 disabled:opacity-50" 
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors uppercase placeholder:normal-case placeholder:text-slate-300 disabled:opacity-50" 
                             />
                           </div>
                           {!promoSuccess ? (
@@ -569,19 +645,19 @@ if (result.success) {
                           )}
                         </div>
                         {promoError && (
-                          <p className="text-[12px] text-rose-400 mt-1.5 ml-1 font-bold">
+                          <p className="text-[12px] text-rose-400 mt-1.5 ml-1 font-bold" role="alert">
                             {promoError}
                           </p>
                         )}
                         {promoSuccess && (
-                          <p className="text-[12px] text-teal-400 mt-1.5 ml-1 font-bold">
-                            ✅ Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
+                          <p className="text-[12px] text-teal-400 mt-1.5 ml-1 font-bold" role="status">
+                              Код применен! Скидка: {promoType === 'percent' ? `${promoDiscount}%` : `${promoDiscount} ${tour.currency}`}
                           </p>
                         )}
                       </div>
                     )}
 
-                   <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
+                   <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10" aria-live="polite">
                        <span className="text-xs font-bold text-slate-300 uppercase">Итого к оплате:</span>
                        <div className="text-right flex items-center gap-2 justify-end">
                          {((isLoggedIn && useBonuses) || (!isLoggedIn && promoSuccess)) && (
@@ -623,9 +699,12 @@ if (result.success) {
                                            <input 
                                              required 
                                              type="text" 
+                                             aria-label="Имя Фамилия"
                                              placeholder="Имя Фамилия" 
                                              value={formData.name} 
                                              onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                                             aria-invalid={!!errorMsg}
+                                             aria-describedby={errorMsg ? "booking-error" : undefined}
                                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
                                            />
                                         </div>
@@ -634,21 +713,26 @@ if (result.success) {
                                            <input 
                                              required 
                                              type="tel" 
+                                             aria-label="Телефон"
                                              value={formData.phone} 
                                              onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                                             aria-invalid={!!errorMsg}
+                                             aria-describedby={errorMsg ? "booking-error" : undefined}
                                              className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
                                            />
                                         </div>
                                     </div>
-                                    {/* ✅ НОВОЕ ПОЛЕ: Email/Telegram для получения билета */}
                                     <div className="relative mt-3">
                                        <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                        <input 
                                          required
                                          type="text" 
+                                         aria-label="Email или Telegram (Сюда придет билет)"
                                          placeholder="Email или Telegram (Сюда придет билет)" 
                                          value={formData.social} 
                                          onChange={(e) => setFormData({...formData, social: e.target.value})} 
+                                         aria-invalid={!!errorMsg}
+                                         aria-describedby={errorMsg ? "booking-error" : undefined}
                                          className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors" 
                                        />
                                     </div>
@@ -660,6 +744,7 @@ if (result.success) {
                                          <input 
                                            required 
                                            type="text" 
+                                           aria-label={`Имя участника ${index + 1}`}
                                            placeholder="Имя Фамилия" 
                                            value={guestData[guest.id]?.name || ''} 
                                            onChange={(e) => handleGuestChange(guest.id, 'name', e.target.value)} 
@@ -675,6 +760,7 @@ if (result.success) {
                                               type="number" 
                                               min="1"
                                               max="17"
+                                              aria-label={`Возраст ребенка ${index + 1}`}
                                               placeholder="Возраст" 
                                               value={guestData[guest.id]?.age || ''} 
                                               onChange={(e) => handleGuestChange(guest.id, 'age', e.target.value)} 
@@ -686,6 +772,7 @@ if (result.success) {
                                             <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                             <input 
                                               type="tel" 
+                                              aria-label={`Телефон участника ${index + 1}`}
                                               placeholder="Телефон" 
                                               value={guestData[guest.id]?.phone || ''} 
                                               onChange={(e) => handleGuestChange(guest.id, 'phone', e.target.value)} 
@@ -701,6 +788,7 @@ if (result.success) {
                                       <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"/>
                                       <select 
                                         required 
+                                        aria-label={`Размер спасжилета участника ${index + 1}`}
                                         value={guestData[guest.id]?.jacket || ''} 
                                         onChange={(e) => handleGuestChange(guest.id, 'jacket', e.target.value)} 
                                         className="w-full bg-slate-900 border border-white/5 rounded-lg py-2.5 pl-9 pr-3 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none cursor-pointer"
@@ -719,7 +807,6 @@ if (result.success) {
                         );
                     })}
 
-                  {/* ✅ НОВЫЕ ЧЕКБОКСЫ ДЛЯ БАЙДАРОК */}
                     {isKayakingTour && (
                       <div className="space-y-3 pt-4 border-t border-white/5">
                         <label className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-slate-950/50 cursor-pointer hover:bg-white/5 transition-colors">
@@ -759,10 +846,11 @@ if (result.success) {
                     )}
 
                     <div className="space-y-1.5 pt-4">
-                      <label className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5">
+                      <label htmlFor="booking-comment" className="text-xs font-bold text-slate-300 uppercase ml-1 flex items-center gap-1.5">
                         <MessageSquare size={12} /> Комментарий / Пожелания
                       </label>
                       <textarea 
+                        id="booking-comment"
                         rows={1} 
                         placeholder={getSmartPlaceholder()} 
                         value={formData.comment}
@@ -780,53 +868,47 @@ if (result.success) {
                   
                   <div className="flex flex-col gap-3 w-full" role="radiogroup" aria-label="Выберите способ оплаты">
                     
-                    {/* 1. Крупная кнопка: Онлайн Клевер */}
                     <button 
                       type="button"
                       role="radio"
                       aria-checked={paymentMethod === 'online_card'}
                       onClick={() => setPaymentMethod('online_card')} 
-                      // 👇 Добавлен w-full
                       className={`w-full relative p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
                             <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-sm text-slate-400 leading-tight">Картой Клевер / АПБ (Без комиссии)</span>
+                        <span className="text-sm text-slate-300 leading-tight">Напрямую через банк</span>
                     </button>
 
-                    {/* 2. Крупная кнопка: Из других стран */}
                     <button 
                       type="button"
                       role="radio"
                       aria-checked={paymentMethod === 'foreign'}
                       onClick={() => setPaymentMethod('foreign')} 
-                      // 👇 Добавлен w-full
                       className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'foreign' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                     >
                         <div className="flex items-center justify-between w-full">
                             <span className={`text-sm font-bold ${paymentMethod === 'foreign' ? 'text-teal-400' : 'text-slate-300'}`}>Из других стран</span>
                             <Globe size={18} className={paymentMethod === 'foreign' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-[12px] text-slate-400 leading-tight">MIA / Переводы / Леи (Инструкция после оформления)</span>
+                        <span className="text-[12px] text-slate-300 leading-tight">(Инструкция после оформления)</span>
                     </button>
 
-                    {/* 3. Сетка 2x2 внизу: Наличные и BiletPMR */}
                     <div className="grid grid-cols-2 gap-3 mt-1 w-full">
                       <button 
                         type="button"
                         role="radio"
                         aria-checked={paymentMethod === 'cash'}
                         onClick={() => setPaymentMethod('cash')} 
-                        // 👇 Добавлен w-full
                         className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'cash' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                       >
                           <div className="flex items-center justify-between w-full">
                               <span className={`text-sm font-bold ${paymentMethod === 'cash' ? 'text-teal-400' : 'text-slate-300'}`}>Наличными</span>
                               <Banknote size={16} className={paymentMethod === 'cash' ? 'text-teal-500' : 'text-slate-300'} />
                           </div>
-                          <span className="text-[12px] text-slate-400 leading-tight">Оплата гиду на месте</span>
+                          <span className="text-[12px] text-slate-300 leading-tight">Оплата гиду на месте</span>
                       </button>
 
                       <button 
@@ -834,30 +916,109 @@ if (result.success) {
                         role="radio"
                         aria-checked={paymentMethod === 'biletpmr'}
                         onClick={() => setPaymentMethod('biletpmr')} 
-                        // 👇 Добавлен w-full
                         className={`w-full relative p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 text-left ${paymentMethod === 'biletpmr' ? 'bg-teal-500/10 border-teal-500' : 'bg-slate-900 border-white/5 hover:border-white/20'}`}
                       >
                           <div className="flex items-center justify-between w-full">
                               <span className={`text-sm font-bold truncate ${paymentMethod === 'biletpmr' ? 'text-teal-400' : 'text-slate-300'}`}>BILETPMR</span>
-                              <CreditCard size={16} className={`shrink-0 ml-1 ${paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'}`} />
+                              <CreditCard size={16} className={`shrink-0 ml-1 ${paymentMethod === 'biletpmr' ? 'text-teal-500' : 'text-slate-300'} `} />
                           </div>
-                          <span className="text-[12px] text-slate-400 leading-tight truncate">BILETPMR/сервисы</span>
+                          <span className="text-[12px] text-slate-300 leading-tight truncate">BILETPMR</span>
                       </button>
                     </div>
 
                   </div>
                  </div>
 
+                {/*   ARIA ALERT ДЛЯ ОШИБОК */}
                 {errorMsg && (
-                  <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-bold leading-snug">
+                  <div 
+                    id="booking-error" 
+                    role="alert" 
+                    className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-bold leading-snug"
+                  >
                     <AlertCircle size={16} className="shrink-0 mt-0.5" />
                     <span>{errorMsg}</span>
                   </div>
                 )}
+
+              {/*   БЛОК СОГЛАСИЙ (ЯРКИЙ ТЕКСТ И ПРАВИЛЬНЫЕ ССЫЛКИ) */}
+                            <div className="mt-2 bg-white/5 p-5 rounded-2xl border border-white/10">
+                  
+                  {/* Заголовок и подсказка */}
+                  <div className="mb-4">
+                    <p className="text-xs font-black text-white uppercase tracking-widest">
+                      При бронировании вы соглашаетесь с:
+                    </p>
+                    <p className="text-[12px] text-amber-400/90 mt-1.5 flex items-center gap-1.5 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+                      Пожалуйста, поставьте отметку для согласия
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* 1. Публичная оферта */}
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+                        <input 
+                          type="checkbox" 
+                          checked={agreedOffer} 
+                          onChange={(e) => setAgreedOffer(e.target.checked)} 
+                          className="peer sr-only" 
+                        />
+                        <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+                          <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                        </div>
+                      </div>
+                      <span className="text-sm text-white leading-snug">
+                      <a href="/offer" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Публичной офертой оказания услуг</a>
+                      </span>
+                    </label>
+
+                    {/* 2. Персональные данные */}
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+                        <input 
+                          type="checkbox" 
+                          checked={agreedPrivacy} 
+                          onChange={(e) => setAgreedPrivacy(e.target.checked)} 
+                          className="peer sr-only" 
+                        />
+                        <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+                          <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                        </div>
+                      </div>
+                      <span className="text-sm text-white leading-snug">
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Политикой обработки персональных данных</a>
+                      </span>
+                    </label>
+
+             {/* 3. Правила сплава (Только для воды) */}
+                    {showSpecificRules && (
+                      <label className="flex items-start gap-3 cursor-pointer group animate-in fade-in slide-in-from-left-2">
+                        <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+                          <input 
+                            type="checkbox" 
+                            checked={agreedRules} 
+                            onChange={(e) => setAgreedRules(e.target.checked)} 
+                            className="peer sr-only" 
+                          />
+                          <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+                            <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                          </div>
+                        </div>
+                        <span className="text-sm text-white leading-snug">
+                         <a href="/rules-kayaking" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">{specificRulesText}</a>
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* КНОПКА ОФОРМИТЬ */}
                 <button 
                   type="submit" 
-                  disabled={isLoading} 
-                  className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_30px_rgba(20,184,166,0.4)]"
+                  disabled={isLoading || !agreedOffer || !agreedPrivacy || (showSpecificRules && !agreedRules)} 
+                  className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:grayscale-0 disabled:bg-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(20,184,166,0.2)]"
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin" size={20} />
@@ -865,11 +1026,6 @@ if (result.success) {
                     `Оформить за ${displayFinalPrice.toLocaleString()} ${tour.currency}`
                   )}
                 </button>
-                
-                <p className="text-sm text-slate-300 text-center leading-tight">
-                  Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
-                </p>
-
               </form>
          ) : successData ? (
                <SuccessScreen

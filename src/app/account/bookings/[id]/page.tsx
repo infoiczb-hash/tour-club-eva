@@ -36,21 +36,36 @@ function getStatusBadge(status: string) {
   return <span className={`${baseClasses} bg-slate-800 text-slate-300`}>{status}</span>;
 }
 
-// ✅ 1. ЛОГИКА 2026: params как Promise
+//   1. ЛОГИКА 2026: params как Promise
 export default async function BookingDetailsPage({ 
   params 
 }: { 
   params: Promise<{ id: string }> 
 }) {
-  // ✅ 2. ЛОГИКА 2026: Извлекаем ID через await
+  //   2. ЛОГИКА 2026: Извлекаем ID через await
   const { id } = await params;
+
+  // 🛡️ БЕЗОПАСНОСТЬ: Проверяем, является ли id валидным UUID
+  // Если пришла строка "undefined" или мусор, мы не пускаем запрос в Prisma
+  const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  if (!id || !isValidUUID) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <Lock className="w-16 h-16 text-slate-300 mb-6" />
+        <h1 className="text-2xl font-black text-ui-text mb-2 uppercase tracking-tight">Билет не найден</h1>
+        <p className="text-slate-300 mb-8 max-w-xs">Ссылка повреждена или такого билета не существует.</p>
+        <Link href="/account" className="px-6 py-3 bg-ui-accent hover:bg-ui-accent/80 transition-colors text-ui-bg font-bold uppercase tracking-widest text-xs rounded-xl">Вернуться в кабинет</Link>
+      </div>
+    );
+  }
 
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
 
-  // ✅ 3. БЕЗОПАСНАЯ ЛОГИКА И СТРОГАЯ ДИЕТА: 1 запрос вместо 2
+  //   3. БЕЗОПАСНАЯ ЛОГИКА: Сюда дойдет только 100% правильный UUID
   const booking = await prisma.booking.findFirst({
     where: { 
       id: id, 
@@ -76,7 +91,7 @@ export default async function BookingDetailsPage({
   if (!booking) {
     return (
    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <Lock className="w-16 h-16 text-slate-400 mb-6" />
+        <Lock className="w-16 h-16 text-slate-300 mb-6" />
         <h1 className="text-2xl font-black text-ui-text mb-2 uppercase tracking-tight">Доступ закрыт</h1>
         <p className="text-slate-300 mb-8 max-w-xs">Этот билет либо не существует, либо не принадлежит вам.</p>
         <Link href="/account" className="px-6 py-3 bg-ui-accent hover:bg-ui-accent/80 transition-colors text-ui-bg font-bold uppercase tracking-widest text-xs rounded-xl">Вернуться в кабинет</Link>
@@ -114,11 +129,11 @@ export default async function BookingDetailsPage({
   const showConfirmUI = isUnpaid && daysToTour <= 3 && daysToTour >= 0 && !isConfirmed;
   // ------------------------------------
 
-  // ✅ 4. ИДЕАЛЬНЫЙ UI ИЗ ТВОЕГО ОРИГИНАЛА (Одноколоночный дизайн билета)
+  //   4. ИДЕАЛЬНЫЙ UI ИЗ ТВОЕГО ОРИГИНАЛА (Одноколоночный дизайн билета)
   return (
     <div className="max-w-2xl mx-auto pb-12 animate-in fade-in duration-500 px-4">
       
-   <Link href="/account" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-100 mb-6 text-sm font-bold uppercase tracking-widest transition-colors">
+   <Link href="/account" className="inline-flex items-center gap-2 text-slate-300 hover:text-slate-100 mb-6 text-sm font-bold uppercase tracking-widest transition-colors">
         <ChevronLeft size={16} /> Назад к билетам
       </Link>
 
@@ -193,7 +208,7 @@ export default async function BookingDetailsPage({
                     await confirmBookingAttendance(booking.id);
                   }}>
                     <button className="w-full bg-amber-500 hover:bg-amber-400 active:scale-95 text-ui-bg font-black py-4 px-6 rounded-2xl text-sm uppercase tracking-wide transition-all shadow-lg shadow-amber-500/20">
-                      ✅ Я точно буду
+                        Я точно буду
                     </button>
                   </form>
                 </div>
@@ -202,7 +217,7 @@ export default async function BookingDetailsPage({
 
             {isConfirmed && (
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 flex items-center gap-4">
-                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-lg">✅</div>
+                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-lg"> </div>
                 <p className="text-emerald-400 text-sm font-bold uppercase tracking-wide leading-snug">
                   Участие подтверждено.<br/>До встречи на старте!
                 </p>
@@ -236,7 +251,7 @@ export default async function BookingDetailsPage({
                   <div key={idx} className="flex items-center justify-between gap-2 p-4 rounded-2xl bg-white/5 border border-white/5">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8 h-8 flex-shrink-0 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-black text-xs">{idx + 1}</div>
-                    <p className="text-sm font-bold text-slate-100 truncate">{guest.name} <span className="text-sm text-slate-400 uppercase ml-2">{guest.ticketType}</span></p>
+                    <p className="text-sm font-bold text-slate-100 truncate">{guest.name} <span className="text-sm text-slate-300 uppercase ml-2">{guest.ticketType}</span></p>
                     </div>
                     {guest.equipment && (
                       <span className="flex-shrink-0 px-2 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded text-xs font-bold uppercase tracking-tighter">

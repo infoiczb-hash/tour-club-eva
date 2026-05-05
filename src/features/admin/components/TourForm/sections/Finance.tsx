@@ -69,7 +69,7 @@ export const Finance = () => {
 
       </div>
 
-      {/* ✅ НОВЫЙ БЛОК: Реквизиты для оплаты */}
+      {/*   НОВЫЙ БЛОК: Реквизиты для оплаты */}
       <div className="mt-8 pt-6 border-t border-slate-100">
         <div className="flex items-center gap-2 mb-4">
           <QrCode className="text-indigo-500" size={20} />

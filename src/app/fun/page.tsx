@@ -1,7 +1,9 @@
+// src/app/fun/page.tsx
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import FunClient from './FunClient';
+import { Sparkles } from "lucide-react";
 
 export const revalidate = 3600;
 
@@ -31,7 +33,6 @@ export const metadata: Metadata = {
 };
 
 export default async function FunSectorPage() {
-  // 1. Детерминированная сортировка для стабильного LCP
   const tests = await prisma.funTest.findMany({
     where: { isActive: true },
     orderBy: { order: 'asc' }
@@ -39,8 +40,7 @@ export default async function FunSectorPage() {
 
   const firstImage = tests[0]?.image;
   
-  // Генерация srcSet, идентичного Next.js <Image> (качество 65 для priority)
-  // Это гарантирует 100% Cache-Hit в Cloudinary CDN
+  // Оптимизация Cloudinary для LCP
   const imageSrcSet = firstImage 
     ? `/_next/image?url=${encodeURIComponent(firstImage)}&w=640&q=65 640w, ` +
       `/_next/image?url=${encodeURIComponent(firstImage)}&w=750&q=65 750w, ` +
@@ -52,22 +52,33 @@ export default async function FunSectorPage() {
   const serializedTests = JSON.parse(JSON.stringify(tests));
 
   return (
-    <main>
-      {/* 2. Нативный Preload с fetchpriority="high". React 18 поднимет его в <head> */}
-      {firstImage && (
-        <link
-          rel="preload"
-          as="image"
-          href={`/_next/image?url=${encodeURIComponent(firstImage)}&w=1200&q=65`}
-          imageSrcSet={imageSrcSet}
-          imageSizes="(max-width: 768px) 92vw, (max-width: 1024px) 48vw, 400px"
-          fetchPriority="high"
-        />
-      )}
-      
-      <Suspense fallback={null}>
-        <FunClient activeTests={serializedTests} />
-      </Suspense>
+    <main className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
+      {/* 1. СТАТИЧНЫЙ ФОН: Теперь рендерится на сервере */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
+        <div className="hidden md:block absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 md:blur-[150px] rounded-full opacity-30" />
+      </div>
+
+      {/* 2. HERO HEADER: Перенесен из клиентского компонента для мгновенной отрисовки H1 */}
+      <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
+          <Sparkles size={16} className="text-teal-400" />
+          <span className="text-xs font-black uppercase tracking-widest text-teal-300">Психология & Игры</span>
+        </div>
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter mb-6 leading-[0.9]">
+          Твои <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-purple-400">Тесты и квизы</span>
+        </h1>
+        <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto font-medium">
+          Узнай какой ты турист, проработай страхи, кто ты в туристической группе и подбери идеальное приключение. Осторожно: вызывает желание уйти в поход!
+        </p>
+      </section>
+
+      {/* 3. ДИНАМИЧЕСКАЯ ЧАСТЬ: Загружаем только сетку тестов и модалки */}
+      <div className="container mx-auto px-4 pb-24 relative z-10">
+        <Suspense fallback={<div className="min-h-[400px] animate-pulse bg-white/5 rounded-3xl" />}>
+          <FunClient activeTests={serializedTests} />
+        </Suspense>
+      </div>
     </main>
   );
 }

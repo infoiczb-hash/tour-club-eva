@@ -70,7 +70,7 @@ export async function submitReviewFromCabinet(
   const reviewCategory = tour?.category?.slug ?? 'general';
 
   try {
-    // ✅ Выполняем в транзакции: сохраняем отзыв + пополняем баланс на 5 MDL
+    //   Выполняем в транзакции: сохраняем отзыв + пополняем баланс на 5 MDL
     // И возвращаем созданный отзыв, чтобы получить его ID для Telegram
     const newReview = await prisma.$transaction(async (tx) => {
       const createdReview = await tx.review.create({
@@ -86,7 +86,7 @@ export async function submitReviewFromCabinet(
         },
       });
 
-      // 🔥 Начисляем 5 бонусов за честный отзыв
+      // 🔥 Начисляем 5 бонусов за отзыв
       await tx.memberProfile.update({
         where: { id: profile.id },
         data: { balance: { increment: 5 } }
@@ -116,7 +116,7 @@ export async function submitReviewFromCabinet(
         {
           messageThreadId: env.TELEGRAM_TOPIC_REVIEWS,
           inlineKeyboard: [
-            [{ text: '✅ Опубликовать на сайте', callback_data: `pub_rev:${newReview.id}` }]
+            [{ text: '  Опубликовать на сайте', callback_data: `pub_rev:${newReview.id}` }]
           ]
         }
       );

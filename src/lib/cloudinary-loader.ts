@@ -30,19 +30,21 @@ export default function cloudinaryLoader({ src, width, quality }: LoaderParams):
   if (src.includes('res.cloudinary.com') && src.includes('/upload/')) {
     // Хард-лимит ширины. Даже если Next.js запросит 3840w, мы отдадим максимум 1200w.
     // Это спасет твой лимит Bandwidth в Cloudinary.
-    const safeWidth = Math.min(width, 1200);
-    const transformation = `f_auto,q_auto:eco,w_${safeWidth}`;
+    //   ИСПРАВЛЕНИЕ: Если запрошено высокое качество (>= 85) для LCP-изображений (Hero),
+    // отключаем режим eco и расширяем лимит до 2560px для кристальной четкости.
+    const isHighQuality = q >= 85;
+    const safeWidth = isHighQuality ? Math.min(width, 2560) : Math.min(width, 1200);
+    const qualityParam = isHighQuality ? 'q_auto:good' : 'q_auto:eco';
+    
+    const transformation = `f_auto,${qualityParam},w_${safeWidth}`;
     
     return src.replace('/upload/', `/upload/${transformation}/`);
   }
 
   // ── 3. Внешние URL (Unsplash, Google и т.д.) ───────────────────────────
   if (src.startsWith('https://') && !src.includes('cloudinary.com') && !src.includes('supabase.co')) {
-    // СЕНЬОРСКОЕ ПРАВИЛО: На Free-тиере НИКОГДА не проксируй чужой трафик через свой Cloudinary.
-    // Пусть отдаются оригиналы, трафик оплачивает их CDN.
     return src;
   }
 
-  // ── 4. Фоллбек (локальные файлы, blob и т.д.) ──────────────────────────
   return src;
 }

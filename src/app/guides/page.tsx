@@ -1,10 +1,15 @@
 // src/app/guides/page.tsx
 import React from 'react';
 import { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
 import { Users } from 'lucide-react';
-// ✅ ИМПОРТИРУЕМ НАШ НОВЫЙ КОМПОНЕНТ
-import GuidesEditorialList from '@/features/guides/components/GuidesEditorialList';
+import dynamic from 'next/dynamic';
+import { getGuidesForLanding } from '@/features/guides/api';
+
+// ЛЕНИВАЯ ЗАГРУЗКА БЛОКА С ГИДАМИ (HTML рендерится на сервере, JS загрузится позже)
+const GuidesEditorialList = dynamic(
+  () => import('@/features/guides/components/GuidesEditorialList'),
+  { ssr: true }
+);
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -12,9 +17,7 @@ export const metadata: Metadata = {
   title: 'Команда гидов и инструкторов | Турклуб Эва',
   description: 'Познакомьтесь с профессиональными гидами и инструкторами турклуба «Эва». Опытные лидеры, которые делают каждое ваше приключение безопасным и незабываемым.',
   keywords: ['гиды', 'инструкторы', 'команда турклуб эва', 'походы', 'сопровождение в горах'],
-  alternates: {
-    canonical: `${BASE_URL}/guides`,
-  },
+  alternates: { canonical: `${BASE_URL}/guides` },
   openGraph: {
     title: 'Наша команда — Турклуб «Эва»',
     description: 'Надежные лидеры ваших приключений.',
@@ -26,32 +29,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AllGuidesPage() {
-  const rawGuides = await prisma.guide.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' }
-  });
-
-  const guides = rawGuides.map((guide) => ({
-    id: String(guide.id),
-    slug: guide.slug || "",
-    name: guide.name,
-    role: guide.role,
-    image: guide.image,           
-    actionImage: guide.actionImage, 
-    bio: guide.bio, 
-    fullBio: guide.fullBio,
-    superpower: guide.superpower, 
-    experience: guide.experience,
-    achievements: guide.achievements || [],
-    tags: guide.tags || [],
-    quotes: guide.quotes || [],
-    stats: guide.stats ? (typeof guide.stats === 'string' ? JSON.parse(guide.stats) : guide.stats) : [], 
-    instagram: guide.instagram,
-    telegram: guide.telegram,
-    contact: guide.contact,       
-    order: guide.order,
-    isActive: guide.isActive
-  }));
+  //   ИСПОЛЬЗУЕМ КЭШИРОВАННУЮ API-ФУНКЦИЮ
+  const guides = await getGuidesForLanding();
 
   return (
     <main className="min-h-screen bg-slate-950 text-white selection:bg-teal-500/30 overflow-hidden">
@@ -61,7 +40,7 @@ export default async function AllGuidesPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none" />
         
         <div className="container mx-auto max-w-5xl relative z-10 text-center flex flex-col items-center">
-        <div className="animate-hero-subtitle inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
+          <div className="animate-hero-subtitle inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
              <Users size={14} className="text-teal-400" />
              <span className="text-[12px] font-bold uppercase tracking-widest text-teal-400">
                Лица клуба
@@ -69,9 +48,9 @@ export default async function AllGuidesPage() {
           </div>
           
           <h1 className="animate-hero-title text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-                <span className="font-light text-slate-300 block md:inline">Команда </span>
-                <span className="font-black text-white">Клуба</span>
-                <span className="text-teal-500">.</span>
+            <span className="font-light text-slate-300 block md:inline">Команда </span>
+            <span className="font-black text-white">Клуба</span>
+            <span className="text-teal-500">.</span>
           </h1>
           
           <p className="animate-hero-subtitle text-base md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed">
@@ -83,7 +62,6 @@ export default async function AllGuidesPage() {
       {/* --- СПИСОК ГИДОВ --- */}
       <section className="relative z-10 pb-24">
         {guides.length > 0 ? (
-          // ✅ ИСПОЛЬЗУЕМ НОВЫЙ КОМПОНЕНТ
           <GuidesEditorialList guides={guides} />
         ) : (
           <div className="text-center text-slate-300 py-20">
@@ -91,7 +69,6 @@ export default async function AllGuidesPage() {
           </div>
         )}
       </section>
-      
     </main>
   );
 }

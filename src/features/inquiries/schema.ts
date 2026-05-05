@@ -29,7 +29,7 @@ const TourInquirySchema = BaseFields.extend({
 
 const HrInquirySchema = BaseFields.extend({
   type: z.literal('HR'),
-  // ✅ ИСПРАВЛЕНО: Передаем только массив. 
+  //   ИСПРАВЛЕНО: Передаем только массив. 
   // Если нужно кастомное сообщение об ошибке, Zod сам скажет "Invalid enum value",
   // либо это обрабатывается на уровне формы (React Hook Form).
   role: z.enum(HR_ROLES), 
@@ -39,7 +39,7 @@ const HrInquirySchema = BaseFields.extend({
 
 const BlogInquirySchema = BaseFields.extend({
   type: z.literal('BLOG'),
-  // ✅ ИСПРАВЛЕНО: Передаем только массив
+  //   ИСПРАВЛЕНО: Передаем только массив
   format: z.enum(BLOG_FORMATS),
   message: z.string().min(5, "Опишите тему или идею"),
 });

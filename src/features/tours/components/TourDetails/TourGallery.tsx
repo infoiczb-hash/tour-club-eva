@@ -72,7 +72,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         </h2>
       </div>
 
-      {/* ✅ УМНАЯ СЕТКА: Используем aspect-ratio вместо жестких пикселей */}
+      {/*   УМНАЯ СЕТКА: Используем aspect-ratio вместо жестких пикселей */}
       <div className={clsx(
         "grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 rounded-[2rem] md:rounded-3xl overflow-hidden bg-slate-900 border border-white/5 shadow-xl",
         "md:grid-rows-2",
@@ -122,7 +122,7 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         })}
       </div>
 
-      {/* ✅ ЛАЙТБОКС: Полностью переработан UX для мобильных и десктопов */}
+      {/*   ЛАЙТБОКС: Полностью переработан UX для мобильных и десктопов */}
       {isOpen && (
         <div 
           className="fixed inset-0 z-[9999] bg-black/98 isolate backdrop-blur-xl flex flex-col items-center justify-center touch-none animate-in fade-in duration-200"

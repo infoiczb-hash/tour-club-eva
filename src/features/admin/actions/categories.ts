@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { withAdminAuth } from '@/lib/auth';
-import { withAdminAudit } from '@/lib/audit'; // ✅ Импортируем нашу броню аудита
+import { withAdminAudit } from '@/lib/audit'; //   Импортируем нашу броню аудита
 
 // 🔥 Заменяем any на строгие интерфейсы
 export interface UpsertTourCategoryInput {

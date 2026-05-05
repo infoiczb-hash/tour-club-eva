@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { withAdminAuth } from '@/lib/auth';
-import { withAdminAudit } from '@/lib/audit'; // ✅ Добавлено ядро аудита
+import { withAdminAudit } from '@/lib/audit'; //   Добавлено ядро аудита
 import { Guide } from '@prisma/client';
 
 type UpsertGuideInput = Partial<Omit<Guide, 'id' | 'createdAt' | 'updatedAt'>> & { id?: string };

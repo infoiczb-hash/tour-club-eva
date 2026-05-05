@@ -6,7 +6,7 @@ import { useModalStore } from '@/shared/store/useModalStore';
 import { useKayakTab } from "./KayakingTabProvider";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-// ✅ ДОБАВЛЕНО: Импортируем глобальный оптимизированный хук
+//   ДОБАВЛЕНО: Импортируем глобальный оптимизированный хук
 import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -25,7 +25,7 @@ export default function FAQ() {
   const openContactModal = useModalStore((state) => state.openContactModal);
   const { setActiveTab } = useKayakTab();
 
-  // ✅ ИСПРАВЛЕНО: Используем глобальный хук с сохранением оригинальных параметров
+  //   ИСПРАВЛЕНО: Используем глобальный хук с сохранением оригинальных параметров
   const headerView = useInView({ threshold: 0.1, rootMargin: '-30px' });
   const faqsView = useInView({ threshold: 0.1, rootMargin: '-30px' });
 

@@ -15,7 +15,7 @@ const fontPromise: Promise<ArrayBuffer | null> = fetch(
 
 type SmmFormat = 'story' | 'feed' | 'post' | 'event';
 
-// ✅ Расширили типы слайдов под нашу воронку
+//   Расширили типы слайдов под нашу воронку
 type SlideType = 'logistics' | 'highlights' | 'included' | 'checklist' | 'price' | 'program' | 'default';
 
 interface FontConfig {
@@ -52,7 +52,7 @@ interface OgParams {
   rubric:         string;
   width:          number;
   height:         number;
-  // ✅ НОВЫЕ ПОЛЯ ИЗ ПУЛЬТА
+  //   НОВЫЕ ПОЛЯ ИЗ ПУЛЬТА
   route:          string | null;
   meetingPoint:   string | null;
   guideName:      string | null;
@@ -122,12 +122,12 @@ export function formatFullDate(raw: string): string {
 
 /** Определяет SlideType из явного параметра или по slideTitle */
 function resolveSlideType(explicit: string | null, title: string): SlideType {
-  // ✅ Обновили массив валидных типов до наших новых
+  //   Обновили массив валидных типов до наших новых
   const VALID: SlideType[] = ['logistics', 'highlights', 'included', 'checklist', 'price', 'program', 'default'];
   if (explicit && VALID.includes(explicit as SlideType)) return explicit as SlideType;
   
   const t = title.toUpperCase();
-  // ✅ Обновили fallback-логику, чтобы она узнавала новые заголовки
+  //   Обновили fallback-логику, чтобы она узнавала новые заголовки
   if (t.includes('ЛОГИСТИКА') || t.includes('ДЕТАЛИ')) return 'logistics';
   if (t.includes('ПРОГРАММА'))                         return 'program';
   if (t.includes('ВПЕЧАТЛЕНИЯ'))                       return 'highlights';
@@ -183,7 +183,7 @@ function parseParams(searchParams: URLSearchParams): OgParams {
 
 const [width, height] = format ? (SIZES[format] ?? [1080, 1350]) : [1080, 1350];
 
-  // ✅ Достаем новые поля для карусели
+  //   Достаем новые поля для карусели
   const route = searchParams.get('route');
   const meetingPoint = searchParams.get('meetingPoint');
   const guideName = searchParams.get('guideName');
@@ -197,7 +197,7 @@ const [width, height] = format ? (SIZES[format] ?? [1080, 1350]) : [1080, 1350];
     priceStr, priceChildStr, priceMemberStr, priceFamilyStr,
     author, readTime, rubric,
     width, height,
-    route, meetingPoint, guideName, spotsLeft, highlightsRaw // ✅ Отдаем их в рендерер
+    route, meetingPoint, guideName, spotsLeft, highlightsRaw //   Отдаем их в рендерер
   };
 }
 
@@ -396,7 +396,7 @@ function renderLogisticsSlide(p: OgParams) {
     { icon: <MapPinIcon color={p.brandColor} size={scale.iconSize} />, label: 'МЕСТО ВСТРЕЧИ', value: p.meetingPoint || p.location },
     { icon: <ClockIcon color={p.brandColor} size={scale.iconSize} />, label: 'ВРЕМЯ', value: p.duration },
     { icon: <CompassIcon color={p.brandColor} size={scale.iconSize} />, label: 'МАРШРУТ', value: p.route },
-    // ✅ ДОБАВЛЕНО: Вывод гида
+    //   ДОБАВЛЕНО: Вывод гида
     { icon: <UserIcon color={p.brandColor} size={scale.iconSize} />, label: 'ГИД', value: p.guideName },
   ].filter(i => i.value);
 
@@ -405,11 +405,11 @@ function renderLogisticsSlide(p: OgParams) {
       <span style={{ fontSize: scale.subTextSize, color: p.brandColor, fontWeight: 900, marginBottom: '24px', letterSpacing: '4px' }}>ЛОГИСТИКА</span>
       <div style={{ display: 'flex', flexDirection: 'column', gap: scale.gap }}>
         {items.map((item, i) => (
-          // ✅ ДОБАВЛЕНО: Полупрозрачный фон карточки (glassmorphism) и отступы
+          //   ДОБАВЛЕНО: Полупрозрачный фон карточки (glassmorphism) и отступы
           <div key={i} style={{ display: 'flex', alignItems: 'center', width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '24px 32px' }}>
             <div style={{ display: 'flex', marginRight: '30px' }}>{item.icon}</div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              // ✅ ДОБАВЛЕНО: Вывод label
+              //   ДОБАВЛЕНО: Вывод label
               <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '28px', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '2px' }}>{item.label}</span>
               <span style={{ color: 'white', fontSize: scale.textSize, fontWeight: 900, textTransform: 'uppercase' }}>{item.value}</span>
             </div>
@@ -436,7 +436,7 @@ function renderHighlightsSlide(p: OgParams) {
       
      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
         {items.slice(0, 3).map((item, i) => (
-          // ✅ ИЗМЕНЕНО: Заменили нижнее подчеркивание на полноценную карточку
+          //   ИЗМЕНЕНО: Заменили нижнее подчеркивание на полноценную карточку
           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', width: '100%', padding: '32px', backgroundColor: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '30px', flexShrink: 0, marginTop: '4px' }}>
               <CheckIcon color={p.brandColor} size={Math.round(scale.iconSize * 0.9)} />
@@ -471,7 +471,7 @@ function renderListSlide(p: OgParams) {
       </div>
      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
         {lines.slice(0, 6).map((line, i) => (
-          // ✅ ИЗМЕНЕНО: Обернули в карточку, добавили контрастности тексту
+          //   ИЗМЕНЕНО: Обернули в карточку, добавили контрастности тексту
           <div key={i} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '24px 32px', backgroundColor: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <CheckIcon color={p.brandColor} size={Math.round(scale.iconSize * 0.8)} />
@@ -504,7 +504,7 @@ function renderPriceSlide(p: OgParams) {
            <span style={{ fontSize: '50px', color: p.brandColor, fontWeight: 900 }}>{p.currency}</span>
          </div>
          
-         {/* ✅ ДОБАВЛЕНО: Вывод дополнительных категорий билетов */}
+         {/*   ДОБАВЛЕНО: Вывод дополнительных категорий билетов */}
          {(p.priceChildStr || p.priceMemberStr || p.priceFamilyStr) && (
           <div style={{ display: 'flex', gap: '16px', marginTop: '24px', flexWrap: 'wrap' }}>
             {p.priceChildStr && (
@@ -537,7 +537,7 @@ function renderPriceSlide(p: OgParams) {
          <span style={{ fontSize: isStory ? '48px' : '40px', color: '#020617', fontWeight: 900, textTransform: 'uppercase' }}>ЗАПИСАТЬСЯ В ГРУППУ</span>
       </div>
 
-      {/* ✅ ДОБАВЛЕНО: Хардкод-футер, прибитый к низу */}
+      {/*   ДОБАВЛЕНО: Хардкод-футер, прибитый к низу */}
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '40px', padding: '24px', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px' }}>
         <span style={{ fontSize: isStory ? '32px' : '26px', color: '#94a3b8', fontWeight: 600, textAlign: 'center', lineHeight: 1.4 }}>
           Билеты на мероприятия по ссылке в шапке профиля<br />или на сайте <span style={{ color: 'white', fontWeight: 800 }}>evatur.club</span>
@@ -894,7 +894,7 @@ export async function GET(request: Request) {
           let slideText = '';
           let mappedSlideType: SlideType = 'default';
 
-          // ✅ Маппинг типов данных на наши НОВЫЕ журнальные дизайны
+          //   Маппинг типов данных на наши НОВЫЕ журнальные дизайны
           switch (explicitSlideType) {
             case 'program':
               slideTitle = 'ПРОГРАММА ТУРА';
@@ -909,19 +909,19 @@ export async function GET(request: Request) {
             case 'included':
               slideTitle = 'В СТОИМОСТЬ ВХОДИТ';
               slideText = formatIncludedForSlide(tour.includedDetailed, tour.included);
-              mappedSlideType = 'included'; // ✅ Теперь направляем прямо в наш новый обработчик
+              mappedSlideType = 'included'; //   Теперь направляем прямо в наш новый обработчик
               break;
             case 'logistics':
               slideTitle = 'ЛОГИСТИКА';
-              mappedSlideType = 'logistics'; // ✅ Теперь у нас есть отдельный красивый дизайн с иконками!
+              mappedSlideType = 'logistics'; //   Теперь у нас есть отдельный красивый дизайн с иконками!
               break;
             case 'highlights':
               slideTitle = 'ГЛАВНЫЕ ВПЕЧАТЛЕНИЯ';
-              mappedSlideType = 'highlights'; // ✅ Добавили впечатления
+              mappedSlideType = 'highlights'; //   Добавили впечатления
               break;
             case 'price':
               slideTitle = 'СТОИМОСТЬ УЧАСТИЯ';
-              mappedSlideType = 'price'; // ✅ Добавили слайд с тарифами
+              mappedSlideType = 'price'; //   Добавили слайд с тарифами
               break;
           }
 

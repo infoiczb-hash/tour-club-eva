@@ -1,6 +1,7 @@
+// src/features/landing/components/Philosophy.tsx
 "use client";
 
-import React, { useRef, useState, useEffect, MouseEvent as ReactMouseEvent } from 'react';
+import React, { useRef, useState, useEffect, MouseEvent as ReactMouseEvent, KeyboardEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -11,6 +12,7 @@ import {
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import SwipeHint from '@/shared/ui/SwipeHint';
+import { useInView } from '@/hooks/useInView';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -25,27 +27,10 @@ const directions = [
   { id: 6, title: "Организаторам", image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674641/organ_zrvvfc.webp", icon: Briefcase, href: "/directions/organizers" },
 ];
 
-// ─── CSS анимация через IntersectionObserver ────────────────
-// Заменяет motion.div whileInView — не требует Framer Motion
-function useInView(ref: React.RefObject<Element>) {
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true); },
-      { threshold: 0.1, rootMargin: '-50px' }
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [ref]);
-  return inView;
-}
-
 export default function Philosophy() {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const headerInView = useInView(headerRef as React.RefObject<Element>)
+  const { ref: headerRef, inView: headerInView } = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -104,6 +89,18 @@ export default function Philosophy() {
     }
   };
 
+  //   ДОБАВЛЕНО: Обработчик для управления с клавиатуры
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault(); // Предотвращаем скролл всей страницы
+      scroll('left');
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      scroll('right');
+    }
+  };
+
   return (
    <section className="relative bg-slate-950 py-12 md:py-24 overflow-hidden border-t border-white/5">
       
@@ -111,7 +108,7 @@ export default function Philosophy() {
        <div className="hidden md:block absolute top-0 right-0 w-[600px] h-[600px] bg-teal-900/10 blur-[150px] rounded-full" />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-20">
+     <div className="container relative z-20">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             
           {/* LEFT: STICKY CONTENT */}
@@ -182,37 +179,37 @@ export default function Philosophy() {
           {/* RIGHT: SCROLLABLE CARDS */}
           <div className="lg:w-2/3 min-w-0 flex flex-col">
            <div className="lg:hidden mb-6 flex items-center justify-between pl-2">
-  <span className="text-s font-black uppercase tracking-widest text-slate-300">Направления</span>
-  <SwipeHint />
+              <span className="text-sm font-black uppercase tracking-widest text-slate-300">Направления</span>
+              <SwipeHint />
             </div>
 
            <div
-  ref={scrollContainerRef}
-  onScroll={checkScroll}
-  onMouseDown={handleMouseDown}
-  onMouseLeave={handleMouseLeave}
-  onMouseUp={handleMouseUp}
-  onMouseMove={handleMouseMove}
-  style={{ WebkitOverflowScrolling: 'touch' }}
-  // ✅ ДОБАВЛЕНО ДЛЯ ДОСТУПНОСТИ (a11y)
-  tabIndex={0} 
-  role="region" 
-  aria-label="Карусель туристических направлений" 
-  className={cn(
-    // ✅ ДОБАВЛЕНЫ СТИЛИ ФОКУСА (ring) И СКРУГЛЕНИЕ ДЛЯ РАМКИ
-    "flex gap-4 sm:gap-6 overflow-x-auto pb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:pb-12 hide-scrollbar scroll-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl",
-    isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab lg:snap-x lg:snap-mandatory"
-  )}
->
-  {directions.map((dir, idx) => (
-    <DirectionCard
-      key={dir.id}
-      direction={dir}
-      index={idx}
-      onPreventClick={() => dragDistance > 10}
-    />
-  ))}
-</div>
+              ref={scrollContainerRef}
+              onScroll={checkScroll}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onKeyDown={handleKeyDown} //   ДОБАВЛЕН ОБРАБОТЧИК КЛАВИАТУРЫ
+              style={{ WebkitOverflowScrolling: 'touch' }}
+              // a11y атрибуты
+              tabIndex={0} 
+              role="region" 
+              aria-label="Карусель туристических направлений" 
+              className={cn(
+                "flex gap-4 sm:gap-6 overflow-x-auto pb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:pb-12 hide-scrollbar scroll-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl",
+                isDragging ? "cursor-grabbing select-none snap-none" : "cursor-grab lg:snap-x lg:snap-mandatory"
+              )}
+            >
+              {directions.map((dir, idx) => (
+                <DirectionCard
+                  key={dir.id}
+                  direction={dir}
+                  index={idx}
+                  onPreventClick={() => dragDistance > 10}
+                />
+              ))}
+            </div>
 
             <div className="hidden lg:block w-full h-1 bg-slate-900 mt-[-20px] relative overflow-hidden rounded-full">
               <div
@@ -243,8 +240,7 @@ function DirectionCard({ direction, index, onPreventClick }: {
   index: number;
   onPreventClick: () => boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref as React.RefObject<Element>);
+  const { ref, inView } = useInView({ threshold: 0.1, rootMargin: '-50px' });
 
   return (
     <div

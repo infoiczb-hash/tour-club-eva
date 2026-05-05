@@ -74,9 +74,12 @@ export default function FAQLayout({
   return (
     <>
       {/* Скрытый скрипт, который Гугл превратит в красивые ответы в поиске */}
-      <script
+     <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        //   ИСПРАВЛЕНО
+        dangerouslySetInnerHTML={{ 
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
+        }}
       />
       {/* Твой красивый клиентский компонент с аккордеоном */}
       {children}

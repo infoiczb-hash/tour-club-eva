@@ -15,6 +15,14 @@
     "test:coverage": "jest --coverage",
     "test:ci": "NODE_ENV=test jest --runInBand --coverage"
   },
+  "browserslist": {
+    "production": [
+      "chrome >= 100",
+      "firefox >= 100",
+      "safari >= 15.4",
+      "edge >= 100"
+    ]
+  },
   "dependencies": {
     "@ai-sdk/google": "^3.0.43",
     "@ai-sdk/groq": "^3.0.35",
@@ -44,9 +52,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "focus-trap-react": "^12.0.0",
-    "framer-motion": "^12.34.3",
     "lucide-react": "^0.474.0",
-    "motion-dom": "^12.34.3",
     "next": "16.1.6",
     "openai": "^6.18.0",
     "qrcode": "^1.5.4",
@@ -54,7 +60,7 @@
     "react-dom": "^19.0.0",
     "react-error-boundary": "^6.1.0",
     "react-hook-form": "^7.71.2",
-    "react-input-mask": "^2.0.4",
+    "react-hot-toast": "^2.6.0",
     "react-markdown": "^10.1.0",
     "react-qr-code": "^2.0.18",
     "remark-gfm": "^4.0.1",
@@ -86,7 +92,6 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/react-input-mask": "^3.0.6",
     "@types/sanitize-html": "^2.16.1",
     "@typescript-eslint/parser": "^8.59.1",
     "autoprefixer": "^10.4.24",

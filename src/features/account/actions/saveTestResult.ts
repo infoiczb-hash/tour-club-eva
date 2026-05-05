@@ -42,7 +42,7 @@ export async function saveTestResult(
     return { success: false, error: 'Профиль не найден', needsAuth: true };
   }
 
-  // ✅ Проверяем, сдавал ли пользователь этот тест ранее
+  //   Проверяем, сдавал ли пользователь этот тест ранее
   const existingTest = await prisma.testResult.findUnique({
     where: {
       memberId_testSlug: {
@@ -84,7 +84,7 @@ export async function saveTestResult(
     });
 
     revalidatePath('/account/tests');
-    // ✅ Обновляем дашборд, чтобы свежий баланс сразу подтянулся в интерфейсе
+    //   Обновляем дашборд, чтобы свежий баланс сразу подтянулся в интерфейсе
     revalidatePath('/account/dashboard');
     
     return { success: true };

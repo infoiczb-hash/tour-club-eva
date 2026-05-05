@@ -5,17 +5,16 @@ import { Loader2 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
 import { clsx } from 'clsx';
-// ✅ ИСПРАВЛЕНО: Подключили Zustand для вызова модалки бронирования
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
 
 interface TourSidebarProps {
   tour: Tour;
-  // Удалили onBook, так как теперь компонент сам открывает модалку
+  // ✅ НОВОЕ: Принимаем профиль для предзаполнения
+  profile?: { name?: string | null; phone?: string | null; id?: string } | null;
 }
 
-export default function TourSidebar({ tour }: TourSidebarProps) {
-  // ✅ ИСПРАВЛЕНО: Достаем функцию открытия модалки из глобального стора
+export default function TourSidebar({ tour, profile }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
   const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily, spotsLeft } = tour;
@@ -31,8 +30,9 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   const isLowSpots = left > 0 && left <= 5;
 
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
-  const [waitlistName,     setWaitlistName]     = useState('');
-  const [waitlistPhone,    setWaitlistPhone]     = useState('+373 ');
+  // ✅ НОВОЕ: Предзаполняем стейты из профиля, если он передан
+  const [waitlistName,     setWaitlistName]     = useState(profile?.name || '');
+  const [waitlistPhone,    setWaitlistPhone]    = useState(profile?.phone || '+373 ');
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
@@ -58,7 +58,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   };
 
   return (
-    <aside className="hidden lg:block relative z-30">
+    <aside className="sticky top-24 z-30 self-start">
       <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/50 overflow-hidden relative">
         
         {/* БЛОК 1: Цена и Места */}
@@ -139,7 +139,8 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
             )}
           </div>
         )}
- {/* БЛОК 3: Кнопка Бронирования / Вайтлист */}
+
+        {/* БЛОК 3: Кнопка Бронирования / Вайтлист */}
         {!isSoldOut ? (
           <button
             onClick={() => openBookingModal(tour)}
@@ -149,10 +150,16 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
           </button>
         ) : waitlistDone ? (
           <div className="w-full py-4 rounded-xl text-sm font-black uppercase tracking-wider text-center bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            ✅ Вы в списке ожидания!
+              Вы в списке ожидания!
           </div>
         ) : showWaitlistForm ? (
           <form onSubmit={handleWaitlistSubmit} className="space-y-3">
+            {/* ✅ НОВОЕ: Подсказка для гостей */}
+            {!profile && (
+              <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 mb-2 text-xs text-slate-300">
+                💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a>, чтобы мы автоматически уведомляли вас о новых местах и других датах тура!
+              </div>
+            )}
             <input
               required
               type="text"

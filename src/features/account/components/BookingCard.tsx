@@ -25,7 +25,7 @@ interface BookingCardProps {
     status: string;
     totalPrice: number;
     finalPrice?: number | null;
-    discount?: number; // ✅ Исправили на discount (как в БД) и сделали необязательным
+    discount?: number; //   Исправили на discount (как в БД) и сделали необязательным
     paymentMethod?: string | null;
     guestsCount: number;
     tourDate?: {
@@ -66,7 +66,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
     discount, finalPrice, paymentMethod  
   } = booking;
   
-  // ✅ Переводим discount из БД в переменную для верстки
+  //   Переводим discount из БД в переменную для верстки
   const appliedBonuses = discount || 0;
   
   const statusInfo = STATUS_MAP[status as keyof typeof STATUS_MAP] || STATUS_MAP.pending;
@@ -87,7 +87,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
 
  return (
     <div className="relative flex flex-col md:flex-row bg-ui-panel rounded-3xl overflow-hidden border border-ui-border shadow-xl group transition-all hover:border-ui-accent/50 hover:shadow-2xl">
-      {/* ✅ ГЛАВНАЯ ССЫЛКА НА БИЛЕТ (Растянута на всю карточку) */}
+      {/*   ГЛАВНАЯ ССЫЛКА НА БИЛЕТ (Растянута на всю карточку) */}
       <Link href={`/account/bookings/${bookingId}`} className="absolute inset-0 z-0 focus:outline-none" aria-hidden="true" />
 
       {/* ─── ЛЕВАЯ ЧАСТЬ (Инфо о туре) ─────────────────────────────────── */}
@@ -135,7 +135,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
             )}
           </div>
           
-          {/* ✅ ССЫЛКА НА ТУР (Локальная, работает только при точном клике на текст) */}
+          {/*   ССЫЛКА НА ТУР (Локальная, работает только при точном клике на текст) */}
          <h3 className="text-xl sm:text-2xl font-black text-ui-text leading-tight mb-4 pointer-events-auto w-fit">
             <Link href={`/tour/${tour?.slug}`} className="hover:text-ui-accent transition-colors relative z-20">
             </Link>
@@ -204,7 +204,7 @@ export default function BookingCard({ bookingId, booking }: BookingCardProps) {
             </span>
           </div>
         </div>
-{/* ✅ НАСТОЯЩИЙ QR Code */}
+{/*   НАСТОЯЩИЙ QR Code */}
         <div className="p-2 bg-white rounded-xl mb-6 shadow-inner hidden md:block opacity-90 transition-all duration-300">
            <QRCode 
              size={90} 

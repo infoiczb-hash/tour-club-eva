@@ -27,7 +27,7 @@ export default function AiAssistant() {
     }
   }, [messages, isOpen]);
 
-  // ✅ ПАТТЕРН: Задержка размонтирования для CSS-анимации исчезновения
+  //   ПАТТЕРН: Задержка размонтирования для CSS-анимации исчезновения
   useEffect(() => {
     if (isOpen) {
       setIsMounted(true);

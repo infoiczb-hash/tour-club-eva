@@ -4,17 +4,17 @@ import { prisma } from '@/lib/prisma';
 import { Redis } from '@upstash/redis';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { revalidatePath } from 'next/cache';
-import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify'; 
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'; // 🔥 QStash вернулся на место
+import { notifyWaitlistOnSpotFreed } from '@/lib/telegram/notify';
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
-import { logSystemAction } from '@/lib/audit'; // ✅ ДОБАВЛЕН ИМПОРТ АУДИТА
+import { logSystemAction } from '@/lib/audit';
 
 const redis = Redis.fromEnv();
 const RATE_LIMIT_KEY = 'cron:cancel_unpaid:last_run';
 const MIN_INTERVAL_MS = 55 * 60 * 1000; // 55 минут защита от двойного запуска
 
-const REMINDER_HOURS = 24; 
-const CANCEL_HOURS = 48;   
+const REMINDER_HOURS = 24;
+const CANCEL_HOURS = 48;
 
 // Внутренняя функция-обработчик
 async function handler(req: Request) {
@@ -25,106 +25,129 @@ async function handler(req: Request) {
     }
 
     const deadline24h = new Date(Date.now() - REMINDER_HOURS * 60 * 60 * 1000);
-    
+
     const deadSouls = await prisma.booking.findMany({
       where: {
         status: 'awaiting_payment',
-        createdAt: { lt: deadline24h }
+        createdAt: { lt: deadline24h },
       },
-       include: {
+      include: {
         member: true,
-        tour: {
-          select: {
-            title: true,
-            currency: true,
-            biletpmrLink: true,   // ← ДОБАВИТЬ
-            apbQrLink: true,      // ← ДОБАВИТЬ
-          },
-        },
+        tour: true, // Полностью подтягиваем тур, чтобы TS видел все поля и не ломался
       },
-     });
+    });
 
     let cancelledCount = 0;
     let remindedCount = 0;
 
-    // 🔥 ОПТИМИЗАЦИЯ: Массив для параллельной отправки (чтобы уложиться в 10 сек лимита Vercel)
+    // Массив для параллельной отправки уведомлений
     const notificationPromises: Promise<any>[] = [];
 
     for (const booking of deadSouls) {
       try {
         const ageInHours = (Date.now() - booking.createdAt.getTime()) / (1000 * 60 * 60);
-        const shortId = booking.shortId || parseInt(booking.id.substring(0, 4), 16); 
+        const shortId = booking.shortId || parseInt(booking.id.substring(0, 4), 16);
+
+        // Используем правильное поле `price` из схемы
+        const totalPrice = 
+          (booking.ticketsAdult || 0) * (booking.tour.price || 0) +
+          (booking.ticketsChild || 0) * (booking.tour.priceChild || 0) +
+          (booking.ticketsMember || 0) * (booking.tour.priceMember || 0) +
+          (booking.ticketsFamily || 0) * (booking.tour.priceFamily || 0);
 
         // --- ЛОГИКА 1: ПРОШЛО 48 ЧАСОВ (ОТМЕНА) ---
         if (ageInHours >= CANCEL_HOURS) {
           await prisma.$transaction(async (tx) => {
-            const totalTickets = (booking.ticketsAdult || 0) + (booking.ticketsChild || 0) + (booking.ticketsMember || 0) + ((booking.ticketsFamily || 0) * 3);
+            const totalTickets =
+              (booking.ticketsAdult || 0) +
+              (booking.ticketsChild || 0) +
+              (booking.ticketsMember || 0) +
+              ((booking.ticketsFamily || 0) * 3);
 
             if (booking.tourDateId) {
-              await tx.tourDate.update({ where: { id: booking.tourDateId }, data: { spotsLeft: { increment: totalTickets } } });
+              await tx.tourDate.update({
+                where: { id: booking.tourDateId },
+                data: { spotsLeft: { increment: totalTickets } },
+              });
             } else {
-              await tx.tour.update({ where: { id: booking.tourId }, data: { spotsLeft: { increment: totalTickets } } });
+              await tx.tour.update({
+                where: { id: booking.tourId },
+                data: { spotsLeft: { increment: totalTickets } },
+              });
             }
 
-            await tx.booking.update({ where: { id: booking.id }, data: { status: 'cancelled' } });
+            await tx.booking.update({
+              where: { id: booking.id },
+              data: { status: 'cancelled' },
+            });
           });
 
           cancelledCount++;
 
-          // ✅ ИСПРАВЛЕНИЕ 2: АУДИТ ОТМЕНЫ
-          // Добавили асинхронное логирование, чтобы оно не тормозило основной цикл
+          // Аудит отмены (асинхронно)
           Promise.resolve().then(() => {
             logSystemAction('BOOKING_AUTO_CANCELLED_BY_CRON', {
               targetId: booking.id,
-              changes: { shortId, ageInHours: Math.round(ageInHours), tourTitle: booking.tour.title }
+              changes: {
+                shortId,
+                ageInHours: Math.round(ageInHours),
+                tourTitle: booking.tour.title,
+              },
             }).catch(console.error);
           });
 
-         if (booking.memberId) {
+          if (booking.memberId) {
             notificationPromises.push(
               NotificationHub.dispatch({
                 eventId: 'BOOKING_AUTO_CANCELLED',
                 memberId: booking.memberId,
-                data: { bookingId: booking.id, shortId: shortId, tourTitle: booking.tour.title }
+                data: {
+                  bookingId: booking.id,
+                  shortId: String(shortId), // ← ИСПРАВЛЕНО: привели число к строке
+                  tourTitle: booking.tour.title,
+                },
               })
-            );
-          } else if (booking.payerTgChatId) {
+            )
+           } else if (booking.payerTgChatId) {
             const msg = `🚫 <b>Бронь аннулирована</b>\n\nВаша заявка <b>#${shortId}</b> на тур «${booking.tour.title}» была отменена из-за отсутствия оплаты в течение 48 часов.\n\nЕсли вы хотите поехать, пожалуйста, оформите новую заявку на сайте.`;
             notificationPromises.push(
               sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
             );
           }
 
-          notificationPromises.push(notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId));
+          notificationPromises.push(
+            notifyWaitlistOnSpotFreed(booking.tourId, booking.tourDateId)
+          );
         }
-
-        // --- ЛОГИКА 2: ПРОШЛО ОТ 24 ДО 48 ЧАСОВ (НАПОМИНАНИЕ) ---
+       // --- ЛОГИКА 2: ПРОШЛО ОТ 24 ДО 48 ЧАСОВ (НАПОМИНАНИЕ) ---
         else if (ageInHours >= REMINDER_HOURS) {
           const redisKey = `reminder_sent:${booking.id}`;
           const isReminded = await redis.get(redisKey);
           if (!isReminded) {
             if (booking.memberId) {
-               notificationPromises.push(
-                 NotificationHub.dispatch({
-                   eventId: 'PAYMENT_REMINDER_24H',
-                   memberId: booking.memberId,
-                data: {
-                     bookingId:     booking.id,
-                     shortId:       shortId,
-                     tourTitle:     booking.tour.title,
-                     paymentMethod: booking.paymentMethod,   // ← ДОБАВИТЬ
-                     biletpmrLink:  booking.tour.biletpmrLink, // ← ДОБАВИТЬ
-                     apbQrLink:     booking.tour.apbQrLink,    // ← ДОБАВИТЬ
-                   },
-                 })
-               );
+              notificationPromises.push(
+                NotificationHub.dispatch({
+                  eventId: 'PAYMENT_REMINDER_24H',
+                  memberId: booking.memberId,
+                  data: {
+                    bookingId: booking.id,
+                    shortId: String(shortId), // ← ИСПРАВЛЕНО: обернули в String()
+                    tourTitle: booking.tour.title,
+                    paymentMethod: booking.paymentMethod ?? 'unknown',
+                    biletpmrLink: booking.tour.biletpmrLink,
+                    apbQrLink: booking.tour.apbQrLink,
+                    totalPrice: totalPrice,
+                    currency: booking.tour.currency,
+                  }
+                })
+              );
             } else if (booking.payerTgChatId) {
-               const msg = `⚠️ <b>Ожидается оплата</b>\n\nНапоминаем, что у вас осталось 24 часа на оплату заявки <b>#${shortId}</b> на тур «${booking.tour.title}».\n\nПожалуйста, отправьте скриншот перевода или файл билета BiletPMR в этот чат, иначе бронь будет автоматически отменена.`;
-               notificationPromises.push(
-                 sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
-               );
+              const msg = `⚠️ <b>Ожидается оплата</b>\n\nНапоминаем, что у вас осталось 24 часа на оплату заявки <b>#${shortId}</b> на тур «${booking.tour.title}».\n\nПожалуйста, отправьте скриншот перевода или файл билета BiletPMR в этот чат, иначе бронь будет автоматически отменена.`;
+              notificationPromises.push(
+                sendToUserTelegramAdvanced(booking.payerTgChatId, msg, [], true)
+              );
             }
-            
+
             await redis.set(redisKey, '1', { ex: 48 * 60 * 60 });
             remindedCount++;
           }
@@ -133,37 +156,41 @@ async function handler(req: Request) {
         console.error(`Ошибка обработки брони ${booking.id}:`, err);
       }
     }
-if (cancelledCount > 0) {
-  const cancelNames = deadSouls
-    .filter(b => (Date.now() - b.createdAt.getTime()) / (1000 * 60 * 60) >= CANCEL_HOURS)
-    .map(b => `• #${b.shortId} ${b.name} — «${b.tour.title}»`)
-    .join('\n');
 
-  await sendToUserTelegramAdvanced(
-    process.env.TELEGRAM_ADMIN_CHAT_ID!,
-    `🚫 <b>Авто-отмена: ${cancelledCount} брон(и/ей)</b>\n\nМеста возвращены в продажу:\n${cancelNames}`,
-    [],
-    true
-  ).catch(() => {});
+    if (cancelledCount > 0) {
+      const cancelNames = deadSouls
+        .filter(
+          (b) =>
+            (Date.now() - b.createdAt.getTime()) / (1000 * 60 * 60) >= CANCEL_HOURS
+        )
+        .map((b) => `• #${b.shortId} ${b.name} — «${b.tour.title}»`)
+        .join('\n');
 
-  revalidatePath('/tour');
-  revalidatePath('/admin');
-}
+      await sendToUserTelegramAdvanced(
+        process.env.TELEGRAM_ADMIN_CHAT_ID!,
+        `🚫 <b>Авто-отмена: ${cancelledCount} брон(и/ей)</b>\n\nМеста возвращены в продажу:\n${cancelNames}`,
+        [],
+        true
+      ).catch(() => {});
+
+      revalidatePath('/tour');
+      revalidatePath('/admin');
+    }
 
     await redis.set(RATE_LIMIT_KEY, Date.now(), { ex: 60 * 60 });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       processed: deadSouls.length,
       reminded: remindedCount,
-      cancelled: cancelledCount 
+      cancelled: cancelledCount,
     });
-
   } catch (error) {
     console.error('Cron error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-// 🔥 Оборачиваем обработчик обратно в Qstash
+
+// Оборачиваем обработчик в QStash
 export const GET = verifySignatureAppRouter(handler);
 export const POST = verifySignatureAppRouter(handler);
