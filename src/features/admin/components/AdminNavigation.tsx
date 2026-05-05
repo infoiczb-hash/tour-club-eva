@@ -1,17 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-  LayoutTemplate, Compass, Users, 
-  MessageCircle, FileText, Layout, 
-  LogOut, Plus, Activity, MessageSquare, Sparkles, Waves, ScanLine, Megaphone, Menu, X
-} from 'lucide-react';
-
+import { LayoutTemplate, Compass, Users, MessageCircle, FileText, Layout, LogOut, Plus, Activity, MessageSquare, Sparkles, Waves, ScanLine, Megaphone, Menu, X, ShoppingBag } from 'lucide-react';
 import { SidebarNavItem } from './ui/SidebarNavItem';
 
 // Типы табов (совпадают с AdminDashboard)
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'members' | 'smm' | 'scan' | 'logs' | 'kayaking';
-
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'members' | 'smm' | 'scan' | 'logs' | 'kayaking' | 'shop';
+ 
 interface AdminNavigationProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
@@ -49,6 +44,7 @@ const navItems: Array<{ id: Tab; icon: any; label: string; badge?: number }> = [
     { id: 'scan', icon: ScanLine, label: 'Сканер QR' },
     { id: 'logs', icon: Activity, label: 'Журнал' },
     { id: 'kayaking', icon: Waves, label: 'Байдарки' },
+    { id: 'shop', icon: ShoppingBag, label: 'Магазин' },
   ];
 
   // Обработчик клика для мобилки (переключает таб и закрывает меню)

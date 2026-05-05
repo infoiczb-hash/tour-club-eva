@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { DashboardCard } from '../ui/DashboardCard';
 import { Tour } from '@/features/tours/types';
-import { DashboardDeparture, BookingItem } from '../AdminDashboard';
+import { DashboardDeparture, BookingItem } from '../AdminDashboard'; 
 
 interface DashboardStats {
   newBookings: number;
@@ -15,8 +15,8 @@ interface DashboardStats {
   finishedTours: number;
   totalPosts: number;
   totalGuides: number;
-  toursThisMonth: DashboardDeparture[];
-  allBookings: BookingItem[];
+  toursThisMonth: DashboardDeparture[]; // ✅ Используем новый тип
+  allBookings: BookingItem[]; // ✅ Строгий тип для броней
 }
 
 interface DashboardTabProps {
@@ -45,9 +45,8 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
   }, [stats.allBookings]);
 
   // 🧠 ВЫЧИСЛЕНИЯ ДЛЯ СВЕТОФОРА (Заполняемость)
-  const getTourOccupancy = (tourDateId: string, totalSpots: number) => {
-    // ✅ Фильтрация строго по конкретной дате выезда
-    const tourBookings = stats.allBookings.filter(b => b.tourDateId === tourDateId);
+ const getTourOccupancy = (tourDateId: string, totalSpots: number) => {
+ const tourBookings = stats.allBookings.filter(b => b.tourDateId === tourDateId);
     let green = 0; // Едут (confirmed + pending)
     let yellow = 0; // Думают (awaiting_payment + moderation)
     
@@ -107,9 +106,10 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
         Общая сводка
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Новая карточка Финансов */}
         <DashboardCard 
           label="Выручка (Оплачено)" 
-          value={`${analytics.totalRevenue.toLocaleString('ru-RU')} MDL`} 
+          value={`${analytics.totalRevenue.toLocaleString('ru-RU')} RUB`} 
           icon={<Wallet size={18}/>} 
           color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
         />
@@ -134,7 +134,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
         />
       </div>
 
-      {/* 3. БЛИЖАЙШИЕ СТАРТЫ (На 30 дней) */}
+     {/* 3. БЛИЖАЙШИЕ СТАРТЫ (На 30 дней) */}
       <div className="pt-4">
         <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4 flex items-center gap-2">
           <Calendar className="text-teal-500"/> Старты на ближайший месяц
@@ -143,14 +143,14 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
         {stats.toursThisMonth.length > 0 ? (
           <div className="space-y-4">
             {stats.toursThisMonth.map(departure => {
-              // ✅ Передаем ID даты и ее места
+              // ✅ Передаем ID даты и ее места в светофор
               const { green, yellow, free } = getTourOccupancy(String(departure.id), departure.spots);
-              const isBurning = new Date(departure.date).getTime() - new Date().getTime() < 48 * 60 * 60 * 1000;
+              const isBurning = new Date(departure.date).getTime() - new Date().getTime() < 48 * 60 * 60 * 1000; // Менее 48 часов
 
               return (
                 <div 
                   key={departure.id} // ✅ Ключ теперь уникален (ID даты)
-                  onClick={() => onEditTour(departure.originalTour)}
+                  onClick={() => onEditTour(departure.originalTour)} // ✅ При клике отдаем оригинальный тур
                   className={`bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors ${isBurning ? 'border-rose-300 dark:border-rose-900/50' : 'border-slate-200 dark:border-slate-800'}`}
                 >
                   <div className="flex items-center gap-4">
@@ -169,7 +169,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
                       </h4>
                       <p className="text-xs text-slate-800 flex items-center gap-1 mt-1">
                         <Users size={12}/> 
-                        {(typeof departure.guide === 'object' && departure.guide?.name) ? departure.guide.name : "Без гида"}
+                        {departure.guide?.name || "Без гида"}
                       </p>
                     </div>
                   </div>
@@ -191,7 +191,7 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
                     </div>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         ) : (

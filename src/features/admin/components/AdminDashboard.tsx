@@ -50,6 +50,7 @@ import { LogsTab } from './views/LogsTab';
 import MembersTab from './views/MembersTab';
 import MemberDrawer from './views/MemberDrawer';
 import { getMembersAction } from '@/features/admin/actions/members';
+import ShopTab from '@/features/admin/components/views/ShopTab';
 
 import { 
   deleteGuideAction, 
@@ -73,10 +74,9 @@ import {
 type AdminActionResult = { success: boolean; error?: string; data?: any; [key: string]: any };
 
 // TYPES
-export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' | 'kayaking';
+export type Tab = 'dashboard' | 'tours' | 'bookings' | 'reviews' | 'guides' | 'blog' | 'content' | 'inquiries' | 'fun' | 'logs' | 'smm'| 'members' | 'scan' | 'kayaking' | 'shop';
 export interface BookingItem {
   id: string;
-  short_id?: number; 
   user_name: string;
   user_phone: string;
   status: BookingStatus;
@@ -92,39 +92,29 @@ export interface BookingItem {
   source: string;    
   payment_method: string; 
   discount: number;       
-  tourId: string;         
+  tourId: string;
+  tourDateId?: string | null;        
    
   comment?: string | null;
   social?: string | null;
-  
-  tourDateId?: string | null; 
+  event_id: string;
   tour?: { title: string; date: Date | string };
-
-  // БЛОК НЕДОСТАЮЩИХ ПОЛЕЙ (чтобы BookingsTab работал без ошибок):
-  apb_invoice_id?: string | null; 
-  refunded_amount?: number;       
-  guests?: any[] | null; 
-  payment_proof_url?: string | null;
-  receipt_url?: string | null;
-  confirmed_by?: string | null;
-  confirmed_at?: Date | string | null;
 }
-// Добавляем новый интерфейс для конкретного выезда
+
 export interface DashboardDeparture {
   id: string;        // ID самой даты (tourDateId)
   tourId: string;    // ID родительского тура
   title: string;     // Название тура
-  date: Date | string; // Дата выезда
+  date: Date | string; // Дата конкретного выезда
   spots: number;     // Места на эту дату
   guide: any;        // Гид на эту дату
-  originalTour: Tour; // Объект тура для открытия редактора
-  isActive: boolean; // ✅ ДОБАВЛЕНО: поле активности для фильтров
+  originalTour: Tour; // Оригинальный объект для модалки редактирования
+  isActive: boolean; // Статус активности
 }
 
 interface GuideItem extends Omit<Guide, 'id'> {
   id: string;
 }
-
 // --- MAIN COMPONENT ---
 export default function AdminDashboard({ initialTours }: { initialTours: Tour[] }) {
   const [isAuth, setIsAuth] = useState(false);
@@ -406,30 +396,50 @@ const loadGroupsManifest = useCallback(async () => {
     const activeTours = tours.filter(t => t.isActive).length;
     const finishedTours = tours.filter(t => new Date(t.date) < new Date()).length;
     
-  const now = new Date();
+const now = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(now.getDate() + 7);
     const nextMonth = new Date();
     nextMonth.setMonth(now.getMonth() + 1);
     
-    // ✅ Приводим массив от бэкенда к нашему типу выездов
-    const departures = tours as unknown as DashboardDeparture[];
+    // ✅ 1. РАЗВОРАЧИВАЕМ ТУРЫ В ВЫЕЗДЫ (FLAT MAP)
+    const departures: DashboardDeparture[] = tours.flatMap(t => {
+      if (!t.isActive) return [];
+      
+      // Достаем даты (маппер может отдать их как dates или tourDates)
+      const dates = (t as any).dates || (t as any).tourDates || [];
+      
+      return dates.map((td: any) => {
+        const dateVal = td.startDate || td.start || td.date;
+        return {
+          id: String(td.id), // ID конкретной даты (tourDateId)
+          tourId: String(t.id),
+          title: t.title,
+          date: dateVal,
+          spots: td.spots ?? t.spots, // Берем места даты, если нет — тура
+          guide: td.guide || t.guide, // Берем гида даты, если нет — тура
+          originalTour: t,
+          isActive: td.isActive !== false
+        };
+      });
+    });
 
+    // ✅ 2. ФИЛЬТРУЕМ УЖЕ ГОТОВЫЕ ВЫЕЗДЫ ПО ДАТАМ
     const toursThisWeek = departures
-        .filter(t => {
-            if (!t.isActive || !t.date) return false;
-            const d = new Date(t.date);
-            return d >= now && d <= nextWeek;
+        .filter(d => {
+            if (!d.isActive || !d.date) return false;
+            const dt = new Date(d.date);
+            return dt >= now && dt <= nextWeek;
         })
         .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const toursThisMonth = departures
-        .filter(t => {
-            if (!t.isActive || !t.date) return false;
-            const d = new Date(t.date);
-            return d >= now && d <= nextMonth;
+        .filter(d => {
+            if (!d.isActive || !d.date) return false;
+            const dt = new Date(d.date);
+            return dt >= now && dt <= nextMonth;
         })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return { 
         newBookings, 
@@ -460,21 +470,20 @@ const loadGroupsManifest = useCallback(async () => {
     }
   };
 
-const handleSendTg = async (tourId: string, title: string) => {
-      // ✅ Заменили event_id на tourId, так как функция принимает tourId
-      const list = bookings.filter(b => b.tourId === tourId && b.status !== 'cancelled');
+  const handleSendTg = async (tourId: string, title: string) => {
+      const list = bookings.filter(b => b.event_id === tourId && b.status !== 'cancelled');
       if (list.length === 0) return showToast('Список пуст', 'error');
       
       let msg = `📋 <b>Список группы: ${title}</b>\n\n`;
       list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
       msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
       
-      const res = await sendToTelegram(msg) as AdminActionResult;
+      const res = await sendToTelegram(msg) as AdminActionResult; // <-- ИСПРАВЛЕНО
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
 
  const handleStatusChange = async (id: string, status: string) => {
-  //   ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
+  // ✅ ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
   const res = await updateBookingStatusAction({ 
     bookingId: id, 
     newStatus: status as BookingStatus 
@@ -817,6 +826,10 @@ const handleSendTg = async (tourId: string, title: string) => {
             <SmmTab />
         )}
        {activeTab === 'kayaking' && <KayakingTab />}
+        {/* --- Shop --- */}
+        {activeTab === 'shop' && (
+          <ShopTab />
+        )}
           
        </div>
   );

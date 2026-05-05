@@ -12,7 +12,10 @@ const nextConfig = {
   //   ВНЕДРЕНО: Умный Tree-shaking для тяжелых библиотек
   experimental: {
     optimizePackageImports: ['lucide-react', 'react-markdown', 'date-fns'],
+    serverActions: {
+    bodySizeLimit: '10mb',
   },
+    },
 
   images: {
     loader: 'custom',

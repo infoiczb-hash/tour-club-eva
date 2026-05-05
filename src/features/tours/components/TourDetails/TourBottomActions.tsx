@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Tour } from '@/features/tours/types';
 import { clsx } from 'clsx';
 // ✅ НОВОЕ: Добавили Loader2
@@ -45,6 +45,40 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
     }
   }, [isVisible]);
 
+  // ✅ НОВОЕ: Умная логика доступности (Global Availability)
+  const { targetDate, isGlobalSoldOut, activeSpotsLeft } = useMemo(() => {
+    if (!tour?.tourDates || tour.tourDates.length === 0) {
+      const fallbackLeft = Number(tour?.spotsLeft || 0);
+      return { targetDate: null, isGlobalSoldOut: fallbackLeft <= 0, activeSpotsLeft: fallbackLeft };
+    }
+
+    const now = new Date();
+    // Фильтруем только будущие выезды
+    const futureDates = tour.tourDates
+      .filter((d: any) => new Date(d.startDate) >= now)
+      .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+    // Ищем первую свободную дату
+    const firstFree = futureDates.find((d: any) => {
+      const capacity = d.capacity || 0;
+      const booked = d._count?.bookings || 0;
+      return (capacity - booked) > 0;
+    });
+
+    // Считаем общие остатки мест по всем будущим выездам
+    const totalLeft = futureDates.reduce((acc: number, d: any) => {
+      const capacity = d.capacity || 0;
+      const booked = d._count?.bookings || 0;
+      return acc + Math.max(0, capacity - booked);
+    }, 0);
+
+    return {
+      targetDate: firstFree || futureDates[0] || null,
+      isGlobalSoldOut: futureDates.length > 0 ? !firstFree : true,
+      activeSpotsLeft: futureDates.length > 0 ? totalLeft : 0
+    };
+  }, [tour]);
+
   if (!tour) return null;
 
   const prices = [
@@ -55,8 +89,10 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
   ].filter((p) => typeof p.value === 'number' && (p.value as number) > 0);
 
   const minPrice     = Math.min(...prices.map(p => p.value as number));
-  const isSoldOut    = (tour.spotsLeft || 0) <= 0;
-  const left         = Number(tour.spotsLeft || 0);
+  
+  // ✅ Интегрировали новые переменные вместо старой проверки
+  const isSoldOut    = isGlobalSoldOut;
+  const left         = activeSpotsLeft;
   const isLowSpots   = left > 0 && left <= 5;
 
   const hasDiscount     = Number(tour.priceOld || 0) > Number(tour.price || 0);

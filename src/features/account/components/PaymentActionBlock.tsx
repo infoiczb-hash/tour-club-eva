@@ -43,20 +43,29 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
   const isModeration = status === 'moderation';
   const isRejected = status === 'rejected';
 
-  // Обработчик загрузки файла с сайта
+// Обработчик загрузки файла с сайта
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const res = await uploadClientReceiptAction(bookingId, formData);
-    setIsUploading(false);
+      const res = await uploadClientReceiptAction(bookingId, formData);
 
-    if (!res.success) {
-      alert(res.error || 'Ошибка при загрузке чека');
+      if (!res.success) {
+        alert(res.error || 'Ошибка при загрузке чека');
+      } else {
+        alert('Чек успешно отправлен на проверку!');
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert('Внутренняя ошибка сервера. Чек не загружен.');
+    } finally {
+      setIsUploading(false); // Гарантированно "отлипаем" кнопку
+      e.target.value = ''; // Сбрасываем input, чтобы можно было выбрать тот же файл снова
     }
   };
 
@@ -162,10 +171,10 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
                    <Link href={botDeepLink} target="_blank" className="flex-1 py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-lg active:scale-95">
                       <Send size={16} /> В Telegram
                     </Link>
-                   <label className="flex-1 py-3.5 bg-ui-panel hover:bg-ui-border text-ui-base text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-ui-border shadow-lg active:scale-95">
-                      <span>{isUploading ? 'Загрузка...' : 'Загрузить чек'}</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
-                    </label>
+                   <label className="flex-1 py-3.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-teal-500 shadow-lg shadow-teal-500/30 active:scale-95">
+  <span>{isUploading ? 'Загрузка...' : 'Загрузить чек'}</span>
+  <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+</label>
                   </div>
                 </div>
               </>

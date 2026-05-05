@@ -99,8 +99,9 @@ export async function notifyWaitlistOnSpotFreed(tourId: string, tourDateId: stri
     where: {
       tourId,
       OR: [
-        { tourDateId: tourDateId }, 
-        { tourDateId: null } 
+        { tourDateId: tourDateId },
+        { tourDateId: null }
+      ]
     },
     include: { tour: true }
   });

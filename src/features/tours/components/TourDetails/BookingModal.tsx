@@ -13,6 +13,7 @@ import { createBookingAction, type BookingInput, type GuestInput } from '@/featu
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
 import { SuccessScreen } from './SuccessScreen';
 import { validatePromoCodeAction } from '@/features/tours/actions/validatePromo'; 
+import { joinWaitlistAction } from '@/features/account/actions/waitlist';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -90,7 +91,31 @@ export default function BookingModal({
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
 
   const [tickets, setTickets] = useState({ adult: 1, child: 0, member: 0, family: 0 });
-  const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
+const [guestData, setGuestData] = useState<Record<string, GuestDetails>>({});
+const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+
+const validDates = useMemo(() => {
+    if (!tour.dates) return [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return tour.dates.filter(d => {
+      const dateVal = d.startDate || d.start || d.date; // Берем правильное поле
+      return dateVal ? new Date(dateVal) >= now : true;
+    });
+  }, [tour.dates]);
+
+  // Фолбэк: если дат нет вообще (открытая дата), берем места из самого тура
+const targetDate = useMemo(() => validDates.find(d => d.id === selectedDateId), [validDates, selectedDateId]);
+  
+  // Фолбэк: если дат нет вообще (открытая дата), берем места из самого тура
+  const spotsLeft = targetDate 
+    ? (targetDate.capacity - (targetDate._count?.bookings || 0)) 
+    : (tour.spotsLeft || 0);
+
+  // Если даты есть, но мест нет -> Sold Out. Если дат нет -> смотрим на общие места тура.
+  const isSoldOut = validDates.length > 0 ? (targetDate ? spotsLeft <= 0 : false) : (tour.spotsLeft || 0) <= 0;
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [balance, setBalance] = useState<number>(0);
@@ -192,12 +217,16 @@ export default function BookingModal({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
-      if (initialDate && initialDateId) {
+    if (initialDate && initialDateId) {
          setSelectedDateStr(initialDate);
          setSelectedDateId(initialDateId);
-      } else if (tour.dates && tour.dates.length > 0) {
-         setSelectedDateId(tour.dates[0].id || null);
-         setSelectedDateStr(formatDateForDropdown(tour.dates[0]));
+     } else if (validDates.length > 0) {
+         // Ищем первую дату, где есть места
+         const firstFree = validDates.find((d: any) => (d.capacity - (d._count?.bookings || 0)) > 0);
+         const defaultDate = firstFree || validDates[0];
+
+         setSelectedDateId(defaultDate.id || null);
+         setSelectedDateStr(formatDateForDropdown(defaultDate));
       } else {
          setSelectedDateStr('Открытая дата (по согласованию)');
          setSelectedDateId(null);
@@ -329,7 +358,7 @@ export default function BookingModal({
     target.style.height = `${target.scrollHeight}px`;
   };
 
-  const handleGuestChange = (id: string, field: keyof GuestDetails, value: string) => {
+const handleGuestChange = (id: string, field: keyof GuestDetails, value: string) => {
     setGuestData(prev => ({ 
       ...prev, 
       [id]: { 
@@ -339,11 +368,26 @@ export default function BookingModal({
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setErrorMsg(null);
+    setWaitlistLoading(true);
+    setWaitlistError(null);
+    const res = await joinWaitlistAction({
+      tourId: String(tour.id),
+      tourDateId: selectedDateId || undefined,
+      name: formData.name,
+      phone: formData.phone
+    });
+    setWaitlistLoading(false);
+    if (res.success) {
+      setWaitlistDone(true);
+    } else {
+      setWaitlistError(res.error || 'Ошибка записи');
+    }
+  };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    
     const payloadGuests: GuestInput[] = expectedGuests.map((g, index) => {
       if (index === 0) {
           return {
@@ -494,8 +538,65 @@ export default function BookingModal({
             </button>
           </div>
 
-          <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar">
+         <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar">
             {step === 'form' ? (
+              waitlistDone ? (
+                 <div className="bg-teal-500/10 border border-teal-500/20 rounded-3xl p-8 text-center space-y-4">
+                    <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-teal-500/20">
+                      <CheckCircle size={32} strokeWidth={3} />
+                    </div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Вы в списке ожидания!</h3>
+                    <p className="text-slate-400 text-sm">Мы свяжемся с вами, как только освободится место на <b>{selectedDateStr}</b>.</p>
+                    <button type="button" onClick={onClose} className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-bold transition-all mt-4">Закрыть</button>
+                 </div>
+              ) : isSoldOut ? (
+                 <form onSubmit={handleWaitlistSubmit} className="space-y-6">
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 text-center">
+                      <AlertCircle size={32} className="text-amber-500 mx-auto mb-3" />
+                      <h3 className="text-lg font-black text-white uppercase mb-2">На эту дату мест нет</h3>
+                      <p className="text-slate-400 text-sm">Запишитесь в очередь, и мы сообщим, если кто-то откажется от поездки.</p>
+                    </div>
+
+                    {/* Блок выбора даты оставляем, чтобы человек мог переключиться на свободную */}
+                    <div className="space-y-2">
+                       <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-1.5">
+                         <Calendar size={12} /> Дата выезда
+                       </label>
+                       {tour.dates && tour.dates.length > 0 && (
+                          <div className="relative">
+                            <select 
+                              value={selectedDateId || ''} 
+                              onChange={(e) => {
+                                 const id = e.target.value; 
+                                 setSelectedDateId(id);
+                                 const d = tour.dates?.find(x => x.id === id);
+                                 if (d) setSelectedDateStr(formatDateForDropdown(d));
+                              }} 
+                              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 outline-none cursor-pointer"
+                            >
+                          {validDates.map((d, i) => {
+  const dSpots = d.capacity - (d._count?.bookings || 0);
+                                const labelText = dSpots <= 0 ? `${formatDateForDropdown(d)} (Мест нет)` : `${formatDateForDropdown(d)} (Осталось: ${dSpots})`;
+                                return <option key={d.id || i} value={d.id || ''}>{labelText}</option>;
+                              })}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">▼</div>
+                          </div>
+                       )}
+                    </div>
+
+                    <div className="space-y-4">
+                       <input required value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} placeholder="Ваше имя" className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-amber-500/50 outline-none transition-all text-sm" />
+                       <input required value={formData.phone} onChange={e=>setFormData({...formData, phone: e.target.value})} placeholder="Телефон" className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-4 text-white focus:border-amber-500/50 outline-none transition-all text-sm" />
+                    </div>
+                    
+                    {waitlistError && <p className="text-xs text-rose-400 font-bold">{waitlistError}</p>}
+                    
+                    <button type="submit" disabled={waitlistLoading} className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                       {waitlistLoading ? <Loader2 className="animate-spin" /> : 'Встать в очередь'}
+                    </button>
+                 </form>
+              ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 
                 {/* Honeypot */}
@@ -521,9 +622,9 @@ export default function BookingModal({
                    ) : (
                       tour.dates && tour.dates.length > 0 ? (
                         <div className="relative">
-                          <select 
+                          
+                       <select 
                             value={selectedDateId || ''} 
-                            aria-label="Выберите дату тура"
                             onChange={(e) => {
                                const id = e.target.value; 
                                setSelectedDateId(id);
@@ -532,11 +633,17 @@ export default function BookingModal({
                             }} 
                             className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 focus:outline-none cursor-pointer"
                           >
-                            {tour.dates.map((d, i) => (
-                              <option key={d.id || i} value={d.id || ''}>
-                                {formatDateForDropdown(d)}
-                              </option>
-                            ))}
+                            {validDates.map((d, i) => {
+  const dSpots = d.capacity - (d._count?.bookings || 0);
+                              const labelText = dSpots <= 0 
+                                ? `${formatDateForDropdown(d)} (Мест нет)` 
+                                : `${formatDateForDropdown(d)} (Осталось: ${dSpots})`;
+                              return (
+                                <option key={d.id || i} value={d.id || ''}>
+                                  {labelText}
+                                </option>
+                              );
+                            })}
                           </select>
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
                             ▼
@@ -1025,8 +1132,9 @@ export default function BookingModal({
                   ) : (
                     `Оформить за ${displayFinalPrice.toLocaleString()} ${tour.currency}`
                   )}
-                </button>
+               </button>
               </form>
+            )
          ) : successData ? (
                <SuccessScreen
                  bookingId={successData.bookingId} 

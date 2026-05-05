@@ -465,7 +465,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     try {
       redirectUrl = apbClient.buildPaymentUrl(
         transactionResult.apbInvoiceId,
-        transactionResult.finalPrice,
+        transactionResult.finalPrice * 100, 
         `Тур: ${data.tourTitle}`.slice(0, 255),
         30, 
       );

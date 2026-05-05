@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
@@ -17,17 +17,13 @@ interface TourSidebarProps {
 export default function TourSidebar({ tour, profile }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
-  const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily, spotsLeft } = tour;
+  const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
   
   const currentPrice = Number(price || 0);
   const oldPriceVal = Number(priceOld || 0);
-  const left = Number(spotsLeft || 0);
 
   const hasDiscount = oldPriceVal > currentPrice;
   const discountPercent = hasDiscount ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100) : 0;
-
-  const isSoldOut = left <= 0;
-  const isLowSpots = left > 0 && left <= 5;
 
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
   // ✅ НОВОЕ: Предзаполняем стейты из профиля, если он передан
@@ -36,6 +32,44 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
+
+  // ✅ НОВОЕ: Умная логика доступности (Global Availability)
+  // Считает наличие мест не только на ближайшую дату, а по всем будущим выездам
+  const { isGlobalSoldOut, activeSpotsLeft } = useMemo(() => {
+    if (!tour?.tourDates || tour.tourDates.length === 0) {
+      const fallbackLeft = Number(tour?.spotsLeft || 0);
+      return { isGlobalSoldOut: fallbackLeft <= 0, activeSpotsLeft: fallbackLeft };
+    }
+
+    const now = new Date();
+    // Фильтруем только будущие выезды
+    const futureDates = tour.tourDates
+      .filter((d: any) => new Date(d.startDate) >= now)
+      .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+    // Ищем первую свободную дату
+    const firstFree = futureDates.find((d: any) => {
+      const capacity = d.capacity || 0;
+      const booked = d._count?.bookings || 0;
+      return (capacity - booked) > 0;
+    });
+
+    // Считаем общие остатки мест по всем будущим выездам
+    const totalLeft = futureDates.reduce((acc: number, d: any) => {
+      const capacity = d.capacity || 0;
+      const booked = d._count?.bookings || 0;
+      return acc + Math.max(0, capacity - booked);
+    }, 0);
+
+    return {
+      isGlobalSoldOut: futureDates.length > 0 ? !firstFree : true,
+      activeSpotsLeft: futureDates.length > 0 ? totalLeft : 0
+    };
+  }, [tour]);
+
+  const left = activeSpotsLeft;
+  const isSoldOut = isGlobalSoldOut;
+  const isLowSpots = left > 0 && left <= 5;
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

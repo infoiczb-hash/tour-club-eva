@@ -136,7 +136,7 @@ export const NotificationTemplates = {
     switch (eventId) {
       case 'BOOKING_CREATED': {
         const paymentLabels: Record<string, string> = {
-          biletpmr: '💳 Картой онлайн (BiletPMR)',
+          biletpmr: '💳 BiletPMR',
           qr: '📱 Клевер (QR / АПБ)',
           cash: '💵 Наличными гиду',
           foreign: '🌍 Перевод из-за рубежа',

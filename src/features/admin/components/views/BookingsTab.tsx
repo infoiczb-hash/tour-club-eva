@@ -12,16 +12,52 @@ import { sendManifestToTelegramAction } from '@/features/admin/actions/manifest'
 import { broadcastToGroupAction } from '@/features/admin/actions/broadcast';
 import { updateBookingCommentAction } from '@/features/admin/actions';
 import { refundPaymentAction } from '@/features/admin/actions/refundPayment';
-import { BookingItem } from '../AdminDashboard';
 
 // --- ИНТЕРФЕЙСЫ ---
 export interface GuestItem {
   name: string;
   ticketType: 'adult' | 'child' | 'family' | 'member';
   age?: string | number;
-  jacket?: string; //   ИСПРАВЛЕНО: заменено equipment на jacket
+  jacket?: string; // ✅ ИСПРАВЛЕНО: заменено equipment на jacket
   phone?: string;     
 }
+
+export interface BookingItem {
+  id: string;
+  short_id?: number; 
+  user_name: string;
+  user_phone: string;
+  status: BookingStatus;
+  created_at: Date | string;
+  
+  tickets_adult: number;
+  tickets_child: number;
+  tickets_family: number;
+  tickets_member: number;
+  
+  total_price: number;
+  amount_paid: number;
+  source: string;
+  
+payment_method: string; 
+  discount: number;       
+  tourId: string;         
+  tourDateId?: string | null; 
+  apb_invoice_id?: string | null; // ✅ Поле из БД для работы с банком
+  refunded_amount?: number;       // ✅ Поле из БД для учета частичных возвратов   
+  
+  comment?: string | null;
+  social?: string | null;
+  tour?: { title: string; date: Date | string };
+  
+  guests?: GuestItem[] | null;
+
+  payment_proof_url?: string | null;
+  receipt_url?: string | null;
+  confirmed_by?: string | null;
+  confirmed_at?: Date | string | null;
+}
+
 // Группа для манифеста (то, что возвращает сервер)
 export interface GroupManifest {
   tourName: string;
@@ -170,7 +206,7 @@ export default function BookingsTab({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedRow, setExpandedRow] = useState<string | null>(null); 
   const { showToast } = useToast();
-  //   ДОБАВЛЕНО: Фильтруем старые брони. 
+  // ✅ ДОБАВЛЕНО: Фильтруем старые брони. 
   // При удалении даты tourDateId становится null. Мы скрываем их из активной вкладки.
   const displayBookings = useMemo(() => {
     return bookings.filter(b => {
@@ -258,7 +294,7 @@ export default function BookingsTab({
     const reason = window.prompt('Причина возврата:', 'Запрос клиента');
     if (!reason) return;
 
-    if (!window.confirm(`Вернуть ${amount} MDL на карту клиента?`)) return;
+    if (!window.confirm(`Вернуть ${amount} RUB на карту клиента?`)) return;
 
     try {
       showToast('Выполняем возврат...', 'info');
@@ -374,7 +410,7 @@ export default function BookingsTab({
                                         <div className="font-black text-slate-900 mb-1.5 text-xs">{formatTickets(b)}</div>
                                         
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-sm font-black text-slate-900">{b.total_price} MDL</span>
+                                            <span className="text-sm font-black text-slate-900">{b.total_price} RUB</span>
                                             {b.discount > 0 && <span className="text-[12px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">-{b.discount} б.</span>}
                                         </div>
                                         
@@ -439,7 +475,7 @@ export default function BookingsTab({
                                            </button>
                                         )}
                                         
-                                        {/*   КНОПКА ВОЗВРАТА */}
+                                        {/* ✅ КНОПКА ВОЗВРАТА */}
                                         {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
                                           <button 
                                               onClick={() => handleRefund(b)}
@@ -534,7 +570,7 @@ export default function BookingsTab({
                                     
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
                                       <div className="text-xs font-black text-teal-700">
-                                        {formatTickets(b)} • {b.total_price} MDL
+                                        {formatTickets(b)} • {b.total_price} RUB
                                         {b.amount_paid > 0 && <span className="ml-2 text-emerald-600 border-l border-teal-500/30 pl-2">Аванс: {b.amount_paid}</span>}
                                       </div>
                                       
@@ -565,7 +601,7 @@ export default function BookingsTab({
                                 </button>
                             )}
 
-                            {/*   КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
+                            {/* ✅ КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
                             {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
                                 <button 
                                   onClick={() => handleRefund(b)}
@@ -808,7 +844,7 @@ export default function BookingsTab({
             <div className="p-5 border-t border-slate-200 bg-white flex flex-col gap-3">
               <div className="flex justify-between items-center px-2 mb-2">
                  <span className="text-sm font-bold text-slate-700 uppercase tracking-widest">К оплате:</span>
-                 <span className="text-2xl font-black text-slate-900">{receiptModal.booking.total_price} MDL</span>
+                 <span className="text-2xl font-black text-slate-900">{receiptModal.booking.total_price} RUB</span>
               </div>
               <div className="flex gap-3">
                 <button 
@@ -821,7 +857,7 @@ export default function BookingsTab({
                   onClick={() => handleStatusChangeWithModalClose(receiptModal.booking!.id, 'confirmed')}
                   className="flex-[2] py-3.5 bg-emerald-500 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 shadow-md transition-colors"
                 >
-                    Подтвердить чек
+                  ✅ Подтвердить чек
                 </button>
               </div>
             </div>
