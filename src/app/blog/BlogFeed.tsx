@@ -8,6 +8,8 @@ import { Clock, PenLine, BookOpen, User, ArrowRight, Sparkles, Filter } from "lu
 import { Blog } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
@@ -62,8 +64,8 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedAuthor, setSelectedAuthor] = useState("all");
 
-  const formatDate = (date: Date | string) =>
-    new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+const formatDate = (date: Date | string) =>
+    format(new Date(date), 'd MMMM', { locale: ru });
 
   const displayCategories = useMemo(() => {
     const allBtn = { id: 'all', slug: 'all', label: 'Все' };

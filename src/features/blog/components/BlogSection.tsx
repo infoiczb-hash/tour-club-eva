@@ -8,6 +8,8 @@ import { ArrowRight, BookOpen, PenLine, Filter, User, Sparkles } from "lucide-re
 import { Blog } from "@prisma/client";
 import { useModalStore } from '@/shared/store/useModalStore';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 //   ДОБАВИЛИ ТИПЫ ДЛЯ НОВОЙ СТРУКТУРЫ
 interface BlogCategory {
@@ -90,9 +92,9 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
   const featuredPost = LIMITED_POSTS[0];
   const listPosts = LIMITED_POSTS.slice(1);
 
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  };
+ const formatDate = (date: Date | string) => {
+    return format(new Date(date), 'd MMMM', { locale: ru });
+};
 
   if (!posts || posts.length === 0) return null;
 

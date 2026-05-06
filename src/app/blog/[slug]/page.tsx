@@ -12,6 +12,8 @@ import sanitizeHtml from 'sanitize-html';
 import { SafeHTML } from '@/shared/ui/SafeHTML'; 
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import dynamic from 'next/dynamic';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 const PostWishlistButton = dynamic(
   () => import('@/features/blog/components/PostWishlistButton')
@@ -159,7 +161,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     }
   }
 
-  const formatDate = (date: Date) => new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const formatDate = (date: Date) => format(new Date(date), 'd MMMM yyyy', { locale: ru });
   const isoDate = new Date(post.date).toISOString();
 
   let absoluteImageUrl = post.image || '/og-default.jpg'; 

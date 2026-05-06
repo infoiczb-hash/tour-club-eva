@@ -57,11 +57,8 @@ export default async function TourPage({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
   
-  // ✅ ИСПРАВЛЕНО: Загружаем тур и профиль параллельно для скорости
-  const [tour, profile] = await Promise.all([
-    getTourBySlug(decodedSlug),
-    getMyProfileAction()
-  ]);
+ // Оставляем только тур. Профиль подтянем на клиенте!
+  const tour = await getTourBySlug(decodedSlug);
 
   if (!tour) {
     notFound();
@@ -122,11 +119,10 @@ export default async function TourPage({ params }: Props) {
       />
 
       {/* ✅ ПЕРЕДАЕМ: Теперь profile летит во Wrapper, а оттуда в Sidebar и BottomActions */}
-      <TourDetailsWrapper 
+    <TourDetailsWrapper 
         tour={tour} 
         similarToursPromise={similarToursPromise}
-        isWished={false} // Здесь можно добавить проверку из профиля, если нужно
-        profile={profile}
+        isWished={false}
       />
     </main>
   );

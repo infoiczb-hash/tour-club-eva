@@ -168,13 +168,13 @@ function OrderCard({ order, onUpdate }: { order: AdminOrder; onUpdate: (id: stri
   const Icon = cfg.icon;
   const date = new Date(order.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-  const handleAction = (newStatus: OrderStatus, note?: string) => {
-    startTransition(async () => {
-      const res = await updateShopOrderStatusAction({ orderId: order.id, newStatus, note });
-      if (res.success) { onUpdate(order.id, newStatus, note); setShowReject(false); }
-      else alert(res.error);
-    });
-  };
+const handleAction = (newStatus: 'APPROVED' | 'REJECTED' | 'DELIVERED', note?: string) => {
+  startTransition(async () => {
+    const res = await updateShopOrderStatusAction({ orderId: order.id, newStatus, note });
+    if (res.success) { onUpdate(order.id, newStatus, note); setShowReject(false); }
+    else alert(res.error);
+  });
+};
 
   return (
     <div className={`rounded-2xl p-4 border space-y-3 ${cfg.bg}`}>
@@ -274,13 +274,21 @@ export default function ShopTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleToggleActive = (item: AdminShopItem) => {
-    startTransition(async () => {
-      await updateShopItemAction({ ...item, isActive: !item.isActive });
-      setItems(prev => prev.map(i => i.id === item.id ? { ...i, isActive: !i.isActive } : i));
+const handleToggleActive = (item: AdminShopItem) => {
+  startTransition(async () => {
+    await updateShopItemAction({
+      id: item.id,
+      title: item.title,
+      description: item.description ?? undefined,
+      imageUrl: item.imageUrl ?? undefined,
+      price: item.price,
+      stock: item.stock,
+      isActive: !item.isActive,
+      sortOrder: item.sortOrder,
     });
-  };
-
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, isActive: !i.isActive } : i));
+  });
+};
   const handleOrderUpdate = (id: string, status: OrderStatus, note?: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status, note: note ?? o.note } : o));
   };

@@ -1,20 +1,18 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Loader2, Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
-import { Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
+import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 interface TourSidebarProps {
   tour: Tour;
-  // ✅ НОВОЕ: Принимаем профиль для предзаполнения
-  profile?: { name?: string | null; phone?: string | null; id?: string } | null;
 }
 
-export default function TourSidebar({ tour, profile }: TourSidebarProps) {
+export default function TourSidebar({ tour }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
   const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
@@ -26,15 +24,27 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
   const discountPercent = hasDiscount ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100) : 0;
 
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
-  // ✅ НОВОЕ: Предзаполняем стейты из профиля, если он передан
-  const [waitlistName,     setWaitlistName]     = useState(profile?.name || '');
-  const [waitlistPhone,    setWaitlistPhone]    = useState(profile?.phone || '+373 ');
+  
+  // Стейты для Листа ожидания
+  const [waitlistName,     setWaitlistName]     = useState('');
+  const [waitlistPhone,    setWaitlistPhone]    = useState('+373 ');
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
+  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false);
 
-  // ✅ НОВОЕ: Умная логика доступности (Global Availability)
-  // Считает наличие мест не только на ближайшую дату, а по всем будущим выездам
+  // ✅ Клиентская подгрузка профиля (безопасно для SSR)
+  useEffect(() => {
+    getMyProfileAction().then(p => {
+      if (p) {
+        setIsProfileLoaded(true);
+        if (p.name) setWaitlistName(p.name);
+        if (p.phone) setWaitlistPhone(p.phone);
+      }
+    }).catch(err => console.error("Ошибка загрузки профиля в сайдбаре:", err));
+  }, []);
+
+  // Умная логика доступности (Global Availability)
   const { isGlobalSoldOut, activeSpotsLeft } = useMemo(() => {
     if (!tour?.tourDates || tour.tourDates.length === 0) {
       const fallbackLeft = Number(tour?.spotsLeft || 0);
@@ -42,19 +52,16 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
     }
 
     const now = new Date();
-    // Фильтруем только будущие выезды
     const futureDates = tour.tourDates
       .filter((d: any) => new Date(d.startDate) >= now)
       .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-    // Ищем первую свободную дату
     const firstFree = futureDates.find((d: any) => {
       const capacity = d.capacity || 0;
       const booked = d._count?.bookings || 0;
       return (capacity - booked) > 0;
     });
 
-    // Считаем общие остатки мест по всем будущим выездам
     const totalLeft = futureDates.reduce((acc: number, d: any) => {
       const capacity = d.capacity || 0;
       const booked = d._count?.bookings || 0;
@@ -129,7 +136,7 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
           </div>
         </div>
 
-        {/* БЛОК 2: Доступные тарифы (если они есть) */}
+        {/* БЛОК 2: Доступные тарифы */}
         {((priceMember || 0) > 0 || (priceChild || 0) > 0 || (priceFamily || 0) > 0) && (
           <div className="space-y-3 mb-6">
             <p className="text-slate-300 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
@@ -188,8 +195,7 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
           </div>
         ) : showWaitlistForm ? (
           <form onSubmit={handleWaitlistSubmit} className="space-y-3">
-            {/* ✅ НОВОЕ: Подсказка для гостей */}
-            {!profile && (
+            {!isProfileLoaded && (
               <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 mb-2 text-xs text-slate-300">
                 💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a>, чтобы мы автоматически уведомляли вас о новых местах и других датах тура!
               </div>

@@ -7,9 +7,18 @@ export default function ParallaxBg() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let ticking = false; // Флаг-блокиратор лишних кадров
+
     const onScroll = () => {
-      if (ref.current) {
-        ref.current.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (ref.current) {
+            // Смещаем фон на 30% от величины прокрутки (эффект глубины)
+            ref.current.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+          }
+          ticking = false; // Освобождаем блокировку после отрисовки кадра
+        });
+        ticking = true; // Блокируем новые вызовы до завершения текущего кадра
       }
     };
     

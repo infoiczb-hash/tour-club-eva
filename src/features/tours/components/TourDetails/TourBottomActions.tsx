@@ -3,31 +3,41 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Tour } from '@/features/tours/types';
 import { clsx } from 'clsx';
-// ✅ НОВОЕ: Добавили Loader2
 import { X, Crown, Baby, Users, Ticket, ChevronUp, Loader2 } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
-// ✅ НОВОЕ: Импортируем экшен для списка ожидания
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
+import { getMyProfileAction } from '@/features/account/actions/getProfile'; // ✅ ДОБАВИЛИ
 
 interface TourBottomActionsProps {
   tour: Tour;
-  // ✅ НОВОЕ: Принимаем профиль для предзаполнения
-  profile?: { name?: string | null; phone?: string | null } | null;
+  // ПРОПС PROFILE УДАЛЕН
 }
 
-export default function TourBottomActions({ tour, profile }: TourBottomActionsProps) {
+export default function TourBottomActions({ tour }: TourBottomActionsProps) {
   const [isVisible, setIsVisible]   = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
-  // ✅ НОВОЕ: Стейты для Листа Ожидания
+  // Стейты для Листа Ожидания
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
-  const [waitlistName,     setWaitlistName]     = useState(profile?.name || '');
-  const [waitlistPhone,    setWaitlistPhone]    = useState(profile?.phone || '+373 ');
+  const [waitlistName,     setWaitlistName]     = useState('');
+  const [waitlistPhone,    setWaitlistPhone]    = useState('+373 ');
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
+  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false); // ✅ Флаг профиля
+
+  // ✅ Клиентская загрузка профиля
+  useEffect(() => {
+    getMyProfileAction().then(p => {
+      if (p) {
+        setIsProfileLoaded(true);
+        if (p.name) setWaitlistName(p.name);
+        if (p.phone) setWaitlistPhone(p.phone);
+      }
+    }).catch(err => console.error("Ошибка загрузки профиля в BottomActions:", err));
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,15 +47,14 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Закрываем при скролле вверх (пользователь ушёл от тура)
   useEffect(() => {
     if (!isVisible) {
       setIsExpanded(false);
-      setShowWaitlistForm(false); // Сбрасываем состояние формы
+      setShowWaitlistForm(false); 
     }
   }, [isVisible]);
 
-  // ✅ НОВОЕ: Умная логика доступности (Global Availability)
+  // Умная логика доступности (Global Availability)
   const { targetDate, isGlobalSoldOut, activeSpotsLeft } = useMemo(() => {
     if (!tour?.tourDates || tour.tourDates.length === 0) {
       const fallbackLeft = Number(tour?.spotsLeft || 0);
@@ -53,19 +62,16 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
     }
 
     const now = new Date();
-    // Фильтруем только будущие выезды
     const futureDates = tour.tourDates
       .filter((d: any) => new Date(d.startDate) >= now)
       .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-    // Ищем первую свободную дату
     const firstFree = futureDates.find((d: any) => {
       const capacity = d.capacity || 0;
       const booked = d._count?.bookings || 0;
       return (capacity - booked) > 0;
     });
 
-    // Считаем общие остатки мест по всем будущим выездам
     const totalLeft = futureDates.reduce((acc: number, d: any) => {
       const capacity = d.capacity || 0;
       const booked = d._count?.bookings || 0;
@@ -90,7 +96,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
 
   const minPrice     = Math.min(...prices.map(p => p.value as number));
   
-  // ✅ Интегрировали новые переменные вместо старой проверки
   const isSoldOut    = isGlobalSoldOut;
   const left         = activeSpotsLeft;
   const isLowSpots   = left > 0 && left <= 5;
@@ -100,7 +105,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
     ? Math.round(((Number(tour.priceOld) - Number(tour.price)) / Number(tour.priceOld)) * 100)
     : 0;
 
-  // ✅ НОВОЕ: Обработчик сабмита листа ожидания
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!waitlistName.trim()) return;
@@ -123,7 +127,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
 
   return (
     <>
-      {/* Затемнение фона при расширении */}
       {isExpanded && (
         <div
           className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm lg:hidden"
@@ -139,27 +142,23 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
         )}
         aria-label="Панель бронирования тура"
       >
-        {/* ПАНЕЛЬ */}
         <div className={clsx(
           "bg-slate-900/98 backdrop-blur-xl border-t border-white/10 transition-all duration-400 ease-in-out",
           "rounded-t-3xl shadow-2xl shadow-black/60",
         )}>
 
-          {/* ── ХЭНДЛ + КНОПКА ЗАКРЫТИЯ ── */}
           <div
             className="flex items-center justify-center pt-3 pb-1 cursor-pointer relative"
             onClick={() => {
-              if (isExpanded) setShowWaitlistForm(false); // Закрываем форму если сворачиваем
+              if (isExpanded) setShowWaitlistForm(false);
               setIsExpanded(!isExpanded);
             }}
             role="button"
             aria-label={isExpanded ? 'Свернуть панель' : 'Развернуть детали тура'}
             aria-expanded={isExpanded}
           >
-            {/* Полоска-хэндл */}
             <div className="w-10 h-1 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors" />
 
-            {/* Крестик закрытия */}
             {isExpanded && (
               <button
                 onClick={(e) => { e.stopPropagation(); setIsExpanded(false); setShowWaitlistForm(false); }}
@@ -171,14 +170,12 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
             )}
           </div>
 
-          {/* ── РАСШИРЕННЫЙ КОНТЕНТ ── */}
           <div className={clsx(
             "overflow-hidden transition-all duration-400 ease-in-out",
             isExpanded ? "max-h-[70vh] opacity-100" : "max-h-0 opacity-0"
           )}>
             <div className="px-5 pt-2 pb-4 space-y-4 overflow-y-auto max-h-[65vh]">
               
-              {/* ✅ НОВОЕ: Развилка контента. Если нажали "В очередь" — показываем форму */}
               {showWaitlistForm ? (
                 <div className="space-y-4 pt-2">
                   <div>
@@ -186,7 +183,8 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
                     <p className="text-xs text-slate-400 mt-1">Оставьте контакты, и мы сообщим, если кто-то откажется от поездки или мы добавим новые места.</p>
                   </div>
 
-                  {!profile && (
+                  {/* ✅ ИСПОЛЬЗУЕМ isProfileLoaded */}
+                  {!isProfileLoaded && (
                     <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-xs text-slate-300">
                       💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a> для авто-уведомлений о датах!
                     </div>
@@ -228,7 +226,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
                 </div>
               ) : (
                 <>
-                  {/* Старый контент: Цена со скидкой и места */}
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Стоимость участия</p>
@@ -246,7 +243,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
                       )}
                     </div>
 
-                    {/* Свободных мест */}
                     <div className="text-right">
                       <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Мест</p>
                       <span className={clsx(
@@ -261,10 +257,8 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
                     </div>
                   </div>
 
-                  {/* Разделитель */}
                   <div className="border-t border-white/5" />
 
-                  {/* Все тарифы */}
                   {prices.length > 1 && (
                     <div className="space-y-2.5">
                       <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Тарифы</p>
@@ -286,10 +280,8 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
             </div>
           </div>
 
-          {/* ── COLLAPSED BAR (всегда виден) ── */}
           <div className="px-4 pb-6 pt-3 flex items-center gap-3">
 
-            {/* Цена + стрелка-триггер */}
             <button
               onClick={() => {
                 if (isExpanded) setShowWaitlistForm(false);
@@ -307,7 +299,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
                 </div>
               </div>
 
-              {/* Стрелка */}
               <div className={clsx(
                 "w-7 h-7 rounded-full border border-white/15 flex items-center justify-center shrink-0 transition-all duration-300",
                 isExpanded
@@ -318,7 +309,6 @@ export default function TourBottomActions({ tour, profile }: TourBottomActionsPr
               </div>
             </button>
 
-            {/* ✅ НОВОЕ: Умная кнопка. Меняет цвет и действие при Sold Out */}
             <button
               onClick={() => {
                 if (isSoldOut) {

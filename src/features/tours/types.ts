@@ -102,10 +102,10 @@ export interface Tour {
   endDate?: string | Date | null; 
   dates?: {
     id?: string;            
-    start?: string | Date;         // ✅ ИЗМЕНЕНО: добавлена поддержка Date
-    startDate?: string | Date;     // ✅ ДОБАВЛЕНО: актуальное поле
-    date?: string | Date;          // ✅ ДОБАВЛЕНО: алиас даты
-    end?: string | Date;           // ✅ ИЗМЕНЕНО: добавлена поддержка Date
+    start?: string;       // ✅ ИЗМЕНЕНО: добавлена поддержка Date
+   startDate?: string;
+  date?: string;
+  end?: string;
     guide_id?: string;
     time?: string;
     capacity: number;              // ✅ ДОБАВЛЕНО: вместимость

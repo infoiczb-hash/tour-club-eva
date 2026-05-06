@@ -25,14 +25,12 @@ interface TourDetailsWrapperProps {
   tour: Tour;
   similarToursPromise: Promise<TourPreview[]>; 
   isWished: boolean;
-  profile?: { name?: string | null; phone?: string | null; id?: string } | null;
 }
 
 export default function TourDetailsWrapper({ 
   tour, 
   similarToursPromise, 
-  isWished, 
-  profile 
+  isWished 
 }: TourDetailsWrapperProps) {
   return (
     <>
@@ -70,7 +68,7 @@ export default function TourDetailsWrapper({
         {/* ПРАВАЯ КОЛОНКА (Сайдбар) */}
           <div className="hidden lg:block lg:col-span-4 relative">
             {/* ✅ ДОБАВЛЕНО: Передаем профиль в сайдбар */}
-            <TourSidebar tour={tour} profile={profile} />
+           <TourSidebar tour={tour} />
           </div>
         </div>
 
@@ -80,7 +78,7 @@ export default function TourDetailsWrapper({
         </Suspense>
       </div>
 
-     <TourBottomActions tour={tour} profile={profile} />
+     <TourBottomActions tour={tour} />
     </>
   );
 }

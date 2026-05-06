@@ -10,17 +10,24 @@ export default function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Пишем напрямую в DOM — никакого setState, никакого ре-рендера React
-    const onScroll = () => {
-      const y = window.scrollY;
+useEffect(() => {
+    let ticking = false;
 
-      if (bgRef.current) {
-        bgRef.current.style.transform = `translateY(${y * 0.3}px)`;
-      }
-      if (contentRef.current) {
-        const op = Math.max(0, 1 - y / 400);
-        contentRef.current.style.opacity = String(op);
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY;
+
+          if (bgRef.current) {
+            bgRef.current.style.transform = `translateY(${y * 0.3}px)`;
+          }
+          if (contentRef.current) {
+            const op = Math.max(0, 1 - y / 400);
+            contentRef.current.style.opacity = String(op);
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
