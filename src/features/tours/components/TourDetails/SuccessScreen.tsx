@@ -14,6 +14,7 @@ interface SuccessScreenProps {
   biletpmrLink?: string | null;
   apbQrLink?: string | null;
   apbQrImage?: string | null;
+  redirectUrl?: string | null;
   onClose: () => void;
 }
 
@@ -27,6 +28,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
   biletpmrLink,
   apbQrLink,
   apbQrImage,
+  redirectUrl,
   onClose
 }) => {
   // Настройки для Клевера (QR). Берем из пропсов тура или дефолтные из ENV
@@ -75,22 +77,22 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
         </div>
       )}
 
-      {/* 📱 СЦЕНАРИЙ 2: QR КЛЕВЕР */}
-      {paymentMethod === 'qr' && (
+      {/* 📱 СЦЕНАРИЙ 2: Карта КЛЕВЕР */}
+      {paymentMethod === 'online_card' && (
         <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <QrCode className="text-emerald-400 w-6 h-6" />
-            <h3 className="text-lg font-semibold text-white">Оплата Клевер (QR)</h3>
+            <h3 className="text-lg font-semibold text-white">Оплата картой Клевер</h3>
           </div>
           <p className="text-sm text-slate-300 leading-relaxed mb-4">
             К оплате: <strong className="text-emerald-400 text-base">{totalPrice} {currency}</strong><br/>
-            Отсканируйте QR-код через приложение вашего банка или перейдите по ссылке ниже. После оплаты <strong className="text-white">обязательно отправьте скриншот чека</strong> в нашего Telegram-бота!
+            Перейдите по ссылке для оплаты через банк, потом Вы вернетесь на сайт
           </p>
           
           <div className="flex flex-col items-center bg-white p-3 rounded-xl mb-5 w-fit mx-auto">
             <Image 
               src={finalApbImage} 
-              alt="QR код Клевер" 
+              alt="Карта Клевер" 
               width={180} 
               height={180} 
               className="rounded-lg object-contain" 
@@ -143,6 +145,62 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
           >
             <MessageCircle size={16} /> Написать менеджеру
           </Link>
+        </div>
+      )}
+
+      {/* 💳 СЦЕНАРИЙ 5: ОНЛАЙН-ОПЛАТА (АГРОПРОМБАНК) */}
+      {paymentMethod === 'online_card' && (
+        <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-3 mb-4">
+            <Globe className="text-teal-400 w-6 h-6" />
+            <h3 className="text-lg font-semibold text-white">Оплата онлайн</h3>
+          </div>
+          <p className="text-sm text-slate-300 leading-relaxed mb-6">
+            Заявка сформирована! К оплате: <strong className="text-teal-400 text-base">{totalPrice} {currency}</strong>. <br /><br />
+            Нажмите на кнопку ниже, чтобы перейти в безопасный платежный шлюз банка. Оплата зачислится автоматически, вам <strong>не нужно</strong> присылать нам чек.
+          </p>
+          
+          <div className="flex flex-col gap-3">
+            {/* ГЛАВНАЯ КНОПКА - ПЕРЕХОД В БАНК */}
+            {redirectUrl ? (
+              <Link 
+                href={redirectUrl} 
+                className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 text-sm font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] active:scale-[0.98]"
+              >
+                <Banknote size={18} /> Оплатить сейчас
+              </Link>
+            ) : (
+               <p className="text-sm text-rose-400 font-bold mb-2 text-center bg-rose-500/10 py-3 rounded-xl border border-rose-500/20">
+                 Ссылка на оплату формируется, пожалуйста, обновите страницу в личном кабинете.
+               </p>
+            )}
+
+            <div className="relative py-2 mt-2">
+               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+               <div className="relative flex justify-center text-[11px]"><span className="bg-slate-900 px-3 text-slate-400 font-medium uppercase tracking-widest">АЛЬТЕРНАТИВА</span></div>
+            </div>
+
+            {/* ВТОРОСТЕПЕННАЯ КНОПКА - ОПЛАТА ПО QR */}
+            <div className="text-center mt-2">
+              <p className="text-xs text-slate-400 mb-3">Неудобно оплачивать через шлюз? Отсканируйте наш QR-код Клевера и пришлите чек в Telegram, как обычно.</p>
+              <div className="flex gap-2">
+                <Link 
+                  href={finalApbLink} 
+                  target="_blank"
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 border border-slate-600 transition-colors"
+                >
+                  <QrCode size={16} /> QR Клевер
+                </Link>
+                <Link 
+                  href={botDeepLink} 
+                  target="_blank"
+                  className="flex-1 py-3 bg-[#2AABEE]/10 hover:bg-[#2AABEE]/20 border border-[#2AABEE]/30 text-[#2AABEE] text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Send size={16} /> Скинуть чек
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

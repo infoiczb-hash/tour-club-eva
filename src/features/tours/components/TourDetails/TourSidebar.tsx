@@ -15,11 +15,24 @@ interface TourSidebarProps {
 export default function TourSidebar({ tour }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
-  const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
+const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
   
   const currentPrice = Number(price || 0);
   const oldPriceVal = Number(priceOld || 0);
 
+  // ДОБАВЛЯЕМ ДЛЯ ЕДИНООБРАЗИЯ И ЧИСТОТЫ КОДА
+  const prices = useMemo(() => {
+    const list = [];
+    if (tour.price) list.push({ label: 'Взрослый', value: tour.price, icon: <Ticket size={14} /> });
+    if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
+    if (tour.priceChild) list.push({ label: 'Детский (до 13)', value: tour.priceChild, icon: <Baby size={14} /> });
+    if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
+    return list;
+  }, [tour]);
+
+  const minPrice = prices.length > 0 
+    ? Math.min(...prices.map(p => Number(p.value))) 
+    : currentPrice;
   const hasDiscount = oldPriceVal > currentPrice;
   const discountPercent = hasDiscount ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100) : 0;
 
@@ -45,38 +58,30 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   }, []);
 
   // Умная логика доступности (Global Availability)
-  const { isGlobalSoldOut, activeSpotsLeft } = useMemo(() => {
+  const { isGlobalSoldOut, isLowSpots } = useMemo(() => {
     if (!tour?.tourDates || tour.tourDates.length === 0) {
       const fallbackLeft = Number(tour?.spotsLeft || 0);
-      return { isGlobalSoldOut: fallbackLeft <= 0, activeSpotsLeft: fallbackLeft };
+      return { isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5 };
     }
 
     const now = new Date();
-    const futureDates = tour.tourDates
-      .filter((d: any) => new Date(d.startDate) >= now)
-      .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-
-    const firstFree = futureDates.find((d: any) => {
-      const capacity = d.capacity || 0;
-      const booked = d._count?.bookings || 0;
-      return (capacity - booked) > 0;
-    });
+    const futureDates = tour.tourDates.filter((d: any) => 
+      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
+    );
 
     const totalLeft = futureDates.reduce((acc: number, d: any) => {
-      const capacity = d.capacity || 0;
-      const booked = d._count?.bookings || 0;
-      return acc + Math.max(0, capacity - booked);
+      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
+      return acc + Math.max(0, left);
     }, 0);
 
     return {
-      isGlobalSoldOut: futureDates.length > 0 ? !firstFree : true,
-      activeSpotsLeft: futureDates.length > 0 ? totalLeft : 0
+      isGlobalSoldOut: futureDates.length > 0 ? totalLeft <= 0 : true,
+      isLowSpots: totalLeft > 0 && totalLeft <= 5
     };
   }, [tour]);
 
-  const left = activeSpotsLeft;
+  // Оставляем алиас для совместимости с нижним кодом
   const isSoldOut = isGlobalSoldOut;
-  const isLowSpots = left > 0 && left <= 5;
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,10 +112,11 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
           <div>
             <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Стоимость участия</p>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
-                {currentPrice.toLocaleString('ru-RU')}
-              </span>
-              <span className="text-sm font-bold text-teal-500">{currency}</span>
+              {prices.length > 1 && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
+  <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
+    {minPrice.toLocaleString('ru-RU')}
+  </span>
+  <span className="text-sm font-bold text-teal-500">{currency}</span>
             </div>
             
             {hasDiscount && (
@@ -124,15 +130,17 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
               </div>
             )}
           </div>
-          
-          <div className="text-right">
-              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Свободных мест</p>
-              <div className={clsx("text-2xl font-black tabular-nums", isSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-500" : "text-teal-400"))}>
-                {isSoldOut ? "0" : left}
+        <div className="text-right">
+              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Свободные места</p>
+              <div className={clsx(
+                "text-lg font-black uppercase leading-tight", 
+                isGlobalSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-500" : "text-teal-400")
+              )}>
+                {isGlobalSoldOut ? "Мест нет" : (isLowSpots ? "Мест мало" : "В наличии")}
               </div>
-              {isLowSpots && !isSoldOut && (
-                <span className="text-[12px] font-bold text-amber-500 uppercase ">Заканчиваются!</span>
-              )}
+              <p className="text-[10px] font-medium text-slate-400 mt-1.5 leading-tight max-w-[140px] ml-auto">
+                Наличие мест на даты смотрите в расписании.
+              </p>
           </div>
         </div>
 

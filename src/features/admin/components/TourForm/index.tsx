@@ -116,12 +116,24 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       additionalExpenses: initialData.additionalExpenses ?? initialData.additional_expenses ?? [],
       gallery: initialData.gallery || [],
       
-      // Даты
-      //   ИСПРАВЛЕНИЕ ДАТ: Отсекаем временную зону для <input type="date">
+      // Даты и выезды
       dates: Array.isArray(initialData.dates) ? initialData.dates.map((d: any) => ({
         ...d,
-        start: d.start ? d.start.split('T')[0] : '', 
-        end: d.end ? d.end.split('T')[0] : '',
+        // Очищаем даты от ISO формата (T00:00:00.000Z) для корректного отображения в <input type="date">
+        start: d.start ? (typeof d.start === 'string' ? d.start.split('T')[0] : new Date(d.start).toISOString().split('T')[0]) : '', 
+        end: d.end ? (typeof d.end === 'string' ? d.end.split('T')[0] : new Date(d.end).toISOString().split('T')[0]) : '',
+        
+        // ✅ ГАРАНТИРУЕМ ТИПЫ (чтобы форма видела значение, даже если в базе оно null)
+        time: d.time || '', 
+        spots: d.spots ? Number(d.spots) : 15,
+        spotsLeft: d.spotsLeft ? Number(d.spotsLeft) : (d.spots ? Number(d.spots) : 15),
+        basePrice: d.basePrice ? Number(d.basePrice) : null,
+        
+        // ✅ ПОДДЕРЖКА МАРКЕТИНГОВЫХ ПОЛЕЙ
+        discountEarlyBird: d.discountEarlyBird ? Number(d.discountEarlyBird) : null,
+        earlyBirdDeadline: d.earlyBirdDeadline ? Number(d.earlyBirdDeadline) : null,
+        surchargeLastMinute: d.surchargeLastMinute ? Number(d.surchargeLastMinute) : null,
+        lastMinuteTrigger: d.lastMinuteTrigger ? Number(d.lastMinuteTrigger) : null,
       })) : [],
     };
   }, [initialData, defaultCategoryId]); //   ДОБАВЛЕНО: defaultCategoryId в зависимости

@@ -6,6 +6,7 @@
 export interface TourDateItem {
   id: string;
   date?: string;
+  start?: string | Date;
   startDate: string | Date;       // ✅ ДОБАВЛЕНО: актуальное поле начала из Prisma
   endDate?: string | Date | null;
   time?: string | null;

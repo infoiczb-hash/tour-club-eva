@@ -28,8 +28,12 @@ const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL-5
 type DropdownDateInfo = {
   id?: string;
   start?: string | Date;
+  startDate?: string | Date; // ✅ добавили
   date?: string | Date;
   time?: string | null;
+  capacity?: number;         // ✅ добавили
+  spotsLeft?: number;        // ✅ добавили
+  _count?: { bookings: number };
 };
 
 const formatDateForDropdown = (d: DropdownDateInfo) => {
@@ -85,6 +89,7 @@ export default function BookingModal({
     apbQrLink?: string | null;
     apbQrImage?: string | null;
     paymentMethod: string;
+    redirectUrl?: string | null;
   } | null>(null);
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>('');
@@ -97,21 +102,24 @@ const [waitlistLoading, setWaitlistLoading] = useState(false);
   const [waitlistError, setWaitlistError] = useState<string | null>(null);
 
 const validDates = useMemo(() => {
-    if (!tour.dates) return [];
+     const sourceDates = (tour.tourDates && tour.tourDates.length > 0) 
+      ? tour.tourDates 
+      : (tour.dates || []);
+
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    return tour.dates.filter(d => {
-      const dateVal = d.startDate || d.start || d.date; // Берем правильное поле
+    return sourceDates.filter(d => {
+      const dateVal = d.startDate || d.start || d.date;
       return dateVal ? new Date(dateVal) >= now : true;
     });
-  }, [tour.dates]);
+  }, [tour.tourDates, tour.dates]);
 
   // Фолбэк: если дат нет вообще (открытая дата), берем места из самого тура
 const targetDate = useMemo(() => validDates.find(d => d.id === selectedDateId), [validDates, selectedDateId]);
   
-  // Фолбэк: если дат нет вообще (открытая дата), берем места из самого тура
+  // Берем готовый spotsLeft из базы. Никаких вычислений на фронтенде!
   const spotsLeft = targetDate 
-    ? (targetDate.capacity - (targetDate._count?.bookings || 0)) 
+    ? (targetDate.spotsLeft ?? targetDate.capacity) 
     : (tour.spotsLeft || 0);
 
   // Если даты есть, но мест нет -> Sold Out. Если дат нет -> смотрим на общие места тура.
@@ -221,12 +229,12 @@ const targetDate = useMemo(() => validDates.find(d => d.id === selectedDateId), 
          setSelectedDateStr(initialDate);
          setSelectedDateId(initialDateId);
      } else if (validDates.length > 0) {
-         // Ищем первую дату, где есть места
-         const firstFree = validDates.find((d: any) => (d.capacity - (d._count?.bookings || 0)) > 0);
+        const firstFree = validDates.find((d: any) => (d.spotsLeft ?? d.capacity ?? 0) > 0);
          const defaultDate = firstFree || validDates[0];
 
          setSelectedDateId(defaultDate.id || null);
          setSelectedDateStr(formatDateForDropdown(defaultDate));
+
       } else {
          setSelectedDateStr('Открытая дата (по согласованию)');
          setSelectedDateId(null);
@@ -387,8 +395,11 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMsg(null);
     
-    const payloadGuests: GuestInput[] = expectedGuests.map((g, index) => {
+   const payloadGuests: GuestInput[] = expectedGuests.map((g, index) => {
       if (index === 0) {
           return {
               isMain: true,
@@ -434,11 +445,9 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
 
       const result = await createBookingAction(bookingPayload);
 
-      if (result.success) {
-          if (result.redirectUrl) {
-              window.location.href = result.redirectUrl;
-              return;
-          }
+     if (result.success) {
+          // ✅ Убрали резкий window.location.href! 
+          // Теперь мы сохраняем redirectUrl в стейт, чтобы передать его в SuccessScreen.
           setSuccessData({
               bookingId: result.bookingId,
               shortId: result.shortId,
@@ -446,7 +455,8 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
               biletpmrLink: result.biletpmrLink,
               apbQrLink: result.apbQrLink,
               apbQrImage: result.apbQrImage,
-              paymentMethod: paymentMethod
+              paymentMethod: paymentMethod,
+              redirectUrl: result.redirectUrl 
           });
           setStep('success');
       } else {
@@ -574,12 +584,15 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
                               }} 
                               className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 outline-none cursor-pointer"
                             >
-                          {validDates.map((d, i) => {
-  const dSpots = d.capacity - (d._count?.bookings || 0);
-                                const labelText = dSpots <= 0 ? `${formatDateForDropdown(d)} (Мест нет)` : `${formatDateForDropdown(d)} (Осталось: ${dSpots})`;
-                                return <option key={d.id || i} value={d.id || ''}>{labelText}</option>;
-                              })}
-                            </select>
+   {validDates.map((d, i) => {
+   const dSpots = d.spotsLeft ?? (d.capacity ? d.capacity - (d._count?.bookings || 0) : 0);
+  
+  const labelText = dSpots <= 0 
+    ? `${formatDateForDropdown(d)} (Мест нет)` 
+    : `${formatDateForDropdown(d)} (Осталось: ${dSpots})`;
+    
+  return <option key={d.id || i} value={d.id || ''}>{labelText}</option>;
+})}                        </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">▼</div>
                           </div>
                        )}
@@ -633,17 +646,14 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
                             }} 
                             className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none focus:border-teal-500 focus:outline-none cursor-pointer"
                           >
-                            {validDates.map((d, i) => {
-  const dSpots = d.capacity - (d._count?.bookings || 0);
-                              const labelText = dSpots <= 0 
-                                ? `${formatDateForDropdown(d)} (Мест нет)` 
-                                : `${formatDateForDropdown(d)} (Осталось: ${dSpots})`;
-                              return (
-                                <option key={d.id || i} value={d.id || ''}>
-                                  {labelText}
-                                </option>
-                              );
-                            })}
+                          {validDates.map((d, i) => {
+  const dSpots = d.spotsLeft ?? (d.capacity ? d.capacity - (d._count?.bookings || 0) : 0);
+    const labelText = dSpots <= 0 
+    ? `${formatDateForDropdown(d)} (Мест нет)` 
+    : `${formatDateForDropdown(d)} (Осталось: ${dSpots})`;
+    
+  return <option key={d.id || i} value={d.id || ''}>{labelText}</option>;
+})}
                           </select>
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
                             ▼
@@ -986,7 +996,7 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
                             <span className={`text-base font-black ${paymentMethod === 'online_card' ? 'text-teal-400' : 'text-slate-300'}`}>Оплата Онлайн</span>
                             <CreditCard size={20} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-300'} />
                         </div>
-                        <span className="text-sm text-slate-300 leading-tight">Напрямую через банк</span>
+                        <span className="text-sm text-slate-300 leading-tight">Напрямую через банк по карте</span>
                     </button>
 
                     <button 

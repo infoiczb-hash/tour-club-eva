@@ -55,55 +55,50 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
   }, [isVisible]);
 
   // Умная логика доступности (Global Availability)
-  const { targetDate, isGlobalSoldOut, activeSpotsLeft } = useMemo(() => {
+  const { targetDate, isGlobalSoldOut, isLowSpots } = useMemo(() => {
     if (!tour?.tourDates || tour.tourDates.length === 0) {
       const fallbackLeft = Number(tour?.spotsLeft || 0);
-      return { targetDate: null, isGlobalSoldOut: fallbackLeft <= 0, activeSpotsLeft: fallbackLeft };
+      return { targetDate: null, isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5 };
     }
 
     const now = new Date();
-    const futureDates = tour.tourDates
-      .filter((d: any) => new Date(d.startDate) >= now)
-      .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    const futureDates = tour.tourDates.filter((d: any) => 
+      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
+    );
 
-    const firstFree = futureDates.find((d: any) => {
-      const capacity = d.capacity || 0;
-      const booked = d._count?.bookings || 0;
-      return (capacity - booked) > 0;
-    });
+    const firstFree = futureDates.find((d: any) => (d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0))) > 0);
 
     const totalLeft = futureDates.reduce((acc: number, d: any) => {
-      const capacity = d.capacity || 0;
-      const booked = d._count?.bookings || 0;
-      return acc + Math.max(0, capacity - booked);
+      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
+      return acc + Math.max(0, left);
     }, 0);
 
     return {
       targetDate: firstFree || futureDates[0] || null,
-      isGlobalSoldOut: futureDates.length > 0 ? !firstFree : true,
-      activeSpotsLeft: futureDates.length > 0 ? totalLeft : 0
+      isGlobalSoldOut: futureDates.length > 0 ? totalLeft <= 0 : true,
+      isLowSpots: totalLeft > 0 && totalLeft <= 5
     };
   }, [tour]);
 
-  if (!tour) return null;
-
-  const prices = [
-    { label: 'Взрослый', value: tour.price,        icon: <Ticket size={14} className="text-slate-300" /> },
-    { label: 'Клубная карта', value: tour.priceMember,  icon: <Crown  size={14} className="text-amber-400" /> },
-    { label: 'Детский (до 13)', value: tour.priceChild,   icon: <Baby   size={14} className="text-pink-400" /> },
-    { label: 'Семья (2+1)', value: tour.priceFamily,  icon: <Users  size={14} className="text-blue-400" /> },
-  ].filter((p) => typeof p.value === 'number' && (p.value as number) > 0);
-
-  const minPrice     = Math.min(...prices.map(p => p.value as number));
-  
-  const isSoldOut    = isGlobalSoldOut;
-  const left         = activeSpotsLeft;
-  const isLowSpots   = left > 0 && left <= 5;
+  const isSoldOut = isGlobalSoldOut;
 
   const hasDiscount     = Number(tour.priceOld || 0) > Number(tour.price || 0);
   const discountPercent = hasDiscount
     ? Math.round(((Number(tour.priceOld) - Number(tour.price)) / Number(tour.priceOld)) * 100)
     : 0;
+  
+  const prices = useMemo(() => {
+    const list = [];
+    if (tour.price) list.push({ label: 'Взрослый', value: tour.price, icon: <Ticket size={14} /> });
+    if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
+    if (tour.priceChild) list.push({ label: 'Детский (до 13)', value: tour.priceChild, icon: <Baby size={14} /> });
+    if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
+    return list;
+  }, [tour]);
+
+  const minPrice = prices.length > 0 
+    ? Math.min(...prices.map(p => Number(p.value))) 
+    : Number(tour.price || 0);
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,18 +237,17 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                         </div>
                       )}
                     </div>
-
                     <div className="text-right">
-                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Мест</p>
-                      <span className={clsx(
-                        "text-2xl font-black",
-                        isSoldOut ? "text-rose-500" : isLowSpots ? "text-amber-400" : "text-teal-400"
+                      <p className="text-[11px] uppercase font-bold text-slate-300 tracking-wider mb-1">Места</p>
+                      <div className={clsx(
+                        "text-sm font-black uppercase leading-tight",
+                        isGlobalSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-400" : "text-teal-400")
                       )}>
-                        {isSoldOut ? "0" : left}
-                      </span>
-                      {isLowSpots && !isSoldOut && (
-                        <p className="text-xs font-bold text-amber-400 uppercase">Мало!</p>
-                      )}
+                        {isGlobalSoldOut ? "Мест нет" : (isLowSpots ? "Мест мало" : "В наличии")}
+                      </div>
+                      <p className="text-[10px] font-medium text-slate-500 mt-1.5 leading-tight max-w-[120px] ml-auto">
+                        Наличие мест на даты смотрите в расписании.
+                      </p>
                     </div>
                   </div>
 

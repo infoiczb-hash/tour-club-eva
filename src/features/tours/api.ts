@@ -58,18 +58,25 @@ function getNearestFutureDate(
 // Маппер Prisma → фронтенд Tour (Полный объект) - Для страницы тура и Админки
 // ─────────────────────────────────────────────
 export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
-  const relationalDates = item.tourDates?.map(td => ({
+const relationalDates = item.tourDates?.map(td => ({
     id: td.id, 
     start: td.startDate.toISOString(),
     startDate: td.startDate.toISOString(),
     end: td.endDate ? td.endDate.toISOString() : undefined,
     endDate: td.endDate ? td.endDate.toISOString() : undefined,
     time: td.time || undefined,
-   capacity: td.spots || 0,
+    capacity: td.spots || 0,
     spots: td.spots,
     spotsLeft: td.spotsLeft,
     guide_id: td.guideId || undefined,
-    basePrice: td.basePrice,
+    
+    // ✅ ДОБАВЛЕНЫ НОВЫЕ ПОЛЯ ИЗ БД:
+    basePrice: td.basePrice ?? null,
+    discountEarlyBird: td.discountEarlyBird ?? null,
+    earlyBirdDeadline: td.earlyBirdDeadline ?? null,
+    surchargeLastMinute: td.surchargeLastMinute ?? null,
+    lastMinuteTrigger: td.lastMinuteTrigger ?? null,
+    
     _count: (td as any)._count, // Опционально
   })) || [];
 
@@ -208,19 +215,32 @@ function mapToPreview(item: any): TourPreview {
 }
 
 // ✅ СЕЛЕКТОР (Выбираем из БД только 20% веса объекта)
-const tourPreviewSelect = {
+const tourPreviewSelect: Prisma.TourSelect = {
   id: true, slug: true, title: true, subtitle: true,
   price: true, currency: true, priceOld: true, priceMember: true, priceChild: true,
   tags: true, coverImage: true, label: true,
   categoryId: true, difficulty: true, location: true, duration: true, spots: true, spotsLeft: true, isActive: true,
   category: { select: { id: true, title: true, slug: true, icon: true, color: true } },
   guide: { select: { id: true, name: true, role: true, image: true, instagram: true } },
-  tourDates: {
+tourDates: {
     orderBy: { startDate: 'asc' as const },
     take: 3,
-    select: { id: true, startDate: true, endDate: true, time: true, capacity: true, spots: true, spotsLeft: true, _count: { select: { bookings: true } } }
+    select: { 
+      id: true, 
+      startDate: true, 
+      endDate: true, 
+      time: true, 
+      spots: true, 
+      spotsLeft: true, 
+      basePrice: true,
+      discountEarlyBird: true,
+      earlyBirdDeadline: true,
+      surchargeLastMinute: true,
+      lastMinuteTrigger: true,
+      _count: { select: { bookings: true } } 
+    }
   }
-};
+  };
 
 // ─────────────────────────────────────────────
 // Публичные функции (Превью)

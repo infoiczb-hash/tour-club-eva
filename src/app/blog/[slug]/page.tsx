@@ -14,6 +14,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import dynamic from 'next/dynamic';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import AuthorBlock from '@/components/blog/AuthorBlock';
 
 const PostWishlistButton = dynamic(
   () => import('@/features/blog/components/PostWishlistButton')
@@ -274,9 +275,9 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
 
             <div className="flex items-start justify-between gap-4 mb-8 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight max-w-4xl drop-shadow-2xl text-balance">
-                    {post.title}
-                </h1>
+               <h1 className="blog-hero-title">
+    {post.title}
+</h1>
                 <div className="shrink-0 mt-1 md:mt-2">
                     <PostWishlistButton postId={post.id} initialIsFavorite={isWished} />
                 </div>
@@ -285,58 +286,18 @@ export default async function BlogPostPage({ params }: PageProps) {
          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
     
     {/* --- НОВЫЙ ИНТЕРАКТИВНЫЙ БЛОК АВТОРА --- */}
-    {post.guide?.slug ? (
-        <Link href={`/guides/${post.guide.slug}`} className="group flex items-center gap-3 cursor-pointer">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0 transition-all group-hover:border-teal-500/50 group-hover:scale-105">
-                {post.author_image ? (
-                    <Image 
-                        src={post.author_image} 
-                        alt={post.author_name || "Автор статьи"} 
-                        fill 
-                        className="object-cover object-top" 
-                        sizes="48px" 
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <User size={20}/>
-                    </div>
-                )}
-            </div>
-            <div>
-                <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px] transition-colors group-hover:text-teal-400">
-                    {post.author_name}
-                </div>
-                <div className="text-slate-300 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
-            </div>
-        </Link>
-    ) : (
-        /* Обычный блок, если статья не привязана к гиду (старые посты) */
-        <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shadow-md shrink-0">
-                {post.author_image ? (
-                    <Image 
-                        src={post.author_image} 
-                        alt={post.author_name || "Автор статьи"} 
-                        fill 
-                        className="object-cover object-top" 
-                        sizes="48px" 
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <User size={20}/>
-                    </div>
-                )}
-            </div>
-            <div>
-                <div className="text-white font-bold uppercase tracking-wider text-[12px] md:text-[13px]">
-                    {post.author_name}
-                </div>
-                <div className="text-slate-300 text-[11px] md:text-[12px]">{post.author_role || "Гид клуба"}</div>
-            </div>
-        </div>
-    )}
+<AuthorBlock 
+                    name={post.author_name || "Турклуб Эва"}
+                    role={post.author_role || "Гид клуба"}
+                    image={post.author_image}
+                    guideSlug={post.guide?.slug || null}
+                    centered={false}
+                />
+                
+                {/* Вертикальный разделитель */}
                 <div className="h-8 w-px bg-white/20 hidden md:block" />
 
+                {/* Блок с датой и временем чтения */}
                 <div className="flex items-center gap-4 text-slate-300 text-[12px] md:text-[13px] font-medium bg-slate-900/50 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/5 w-fit">
                     <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-teal-500" />
@@ -348,6 +309,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                         <span>{post.read_time} мин</span>
                     </div>
                 </div>
+                
             </div>
         </div>
       </div>
@@ -380,30 +342,44 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
 
                 {/*   ВОССТАНОВЛЕНО: Настройки безопасности SafeHTML для iframe и XSS */}
-                <SafeHTML 
-                    html={post.content}
-                    className="prose prose-base prose-invert max-w-none 
-                    [&_p:empty]:hidden [&_br]:hidden
-                    prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-white
-                    prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-2xl md:prose-h2:text-3xl
-                    prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
-                    prose-p:text-slate-300 prose-p:text-[15px] md:prose-p:text-[16px] prose-p:leading-snug prose-p:mb-4 prose-p:mt-0
-                    prose-strong:text-white prose-strong:font-bold
-                    prose-ul:my-3 prose-li:my-0.5 prose-li:text-slate-300 prose-li:text-[15px] md:prose-li:text-[16px] prose-li:leading-snug prose-li:marker:text-teal-500
-                    prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
-                    prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-blockquote:text-white prose-blockquote:my-6 prose-blockquote:font-medium"
-                    options={{
-                        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
-                        allowedAttributes: {
-                            '*': ['class', 'style'],
-                            'a': ['href', 'name', 'target'],
-                            'img': ['src', 'alt'],
-                            'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
-                        },
-                        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
-                        allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
-                    }}
-                />
+               <SafeHTML 
+    html={post.content}
+    className="
+        prose prose-invert max-w-none blog-prose
+        [&_p:empty]:hidden [&_br]:hidden
+        
+        /* Заголовки */
+        prose-headings:font-black prose-headings:tracking-tight prose-headings:text-white
+        prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-2xl md:prose-h2:text-3xl
+        prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
+        
+        /* Основной текст (улучшен контраст и межстрочный интервал) */
+        prose-p:text-slate-200 prose-p:text-[16px] md:prose-p:text-[17px] prose-p:leading-relaxed prose-p:mb-6
+        prose-strong:text-white prose-strong:font-bold
+        
+        /* Списки */
+        prose-ul:my-4 prose-li:my-1 prose-li:text-slate-200 prose-li:text-[16px] md:prose-li:text-[17px] prose-li:leading-relaxed prose-li:marker:text-teal-500
+        
+        /* Ссылки */
+        prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
+        
+        /* Цитаты (Blockquotes) */
+        prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-800/50 
+        prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic 
+        prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium
+    "
+    options={{
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
+        allowedAttributes: {
+            '*': ['class', 'style'],
+            'a': ['href', 'name', 'target'],
+            'img': ['src', 'alt'],
+            'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
+        },
+        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+        allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
+    }}
+/>
 
                 <ArticleShare title={post.title} slug={post.slug} />
 

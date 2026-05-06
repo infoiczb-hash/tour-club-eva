@@ -19,7 +19,21 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
   const [isPending, startTransition] = useTransition();
   const [wished, setWished] = useState(isWished);
 
-  const datesToRender = tour.dates || [];
+ const datesToRender = React.useMemo(() => {
+    if (!tour.dates) return [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return tour.dates
+      .filter((d: any) => {
+        const dateVal = d.startDate || d.start || d.date;
+        return dateVal ? new Date(dateVal) >= now : true; // Показываем будущие или без четкой даты
+      })
+      .sort((a: any, b: any) => {
+         const dateA = a.startDate || a.start || a.date;
+         const dateB = b.startDate || b.start || b.date;
+         return new Date(dateA).getTime() - new Date(dateB).getTime();
+      });
+  }, [tour.dates]);
 
   if (datesToRender.length === 0) {
     function handleWishlistToggle() {
