@@ -27,7 +27,10 @@ export type AppEvent =
   | 'POST_TOUR_REVIEW'
   | 'REVIEW_PUBLISHED'
   | 'WIN_BACK_OFFER'
-  | 'CROSS_SELL_OFFER';
+  | 'CROSS_SELL_OFFER'
+  | 'SHOP_ORDER_CREATED'
+  | 'SHOP_ORDER_APPROVED'
+  | 'SHOP_ORDER_REJECTED';а
 
 export interface AppEventPayloadMap {
   BOOKING_CREATED: { 
@@ -74,6 +77,7 @@ POST_TOUR_REVIEW: {
   WIN_BACK_OFFER: { lastTourTitle: string; promoCode: string; discount: number };
   CROSS_SELL_OFFER: { lastTourTitle: string; categoryTransitionText: string };
 }
+
 
 export interface NotificationContent {
   inApp: {

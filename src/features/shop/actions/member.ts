@@ -1,11 +1,13 @@
 'use server';
 
-// src/features/shop/actions/member.ts
+// src/features/shop/member.ts
+// Все действия участника в магазине баллов
+
 import { prisma } from '@/lib/prisma';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { NotificationHub } from '@/lib/notifications/hub';
-import { publishToTelegram } from '@/features/admin/actions/telegram';
+import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
 // ─────────────────────────────────────────────
@@ -33,12 +35,10 @@ export async function createShopOrderAction(itemId: string): Promise<CreateShopO
   const currentBalance = profile.balance ?? 0;
   const isPreorder = item.stock === 0;
 
-  // При обычной покупке проверяем баланс
   if (!isPreorder && currentBalance < item.price) {
     return { success: false, error: 'Недостаточно баллов' };
   }
 
-  // Нет дублирующих активных заказов
   const existing = await prisma.shopOrder.findFirst({
     where: {
       memberId: profile.id,
@@ -55,12 +55,10 @@ export async function createShopOrderAction(itemId: string): Promise<CreateShopO
       });
 
       if (!isPreorder) {
-        // Списываем баллы сразу
         await tx.memberProfile.update({
           where: { id: profile.id },
           data: { balance: { decrement: item.price } },
         });
-        // Уменьшаем сток если конечный
         if (item.stock > 0) {
           await tx.shopItem.update({
             where: { id: itemId },
@@ -79,17 +77,22 @@ export async function createShopOrderAction(itemId: string): Promise<CreateShopO
       data: { orderId: order.id, itemTitle: item.title, price: item.price, isPreorder },
     });
 
-    // Уведомление админу в Telegram с кнопками
-    const msg = isPreorder
-      ? `🛒 <b>ПРЕДЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n⚠️ Товар закончился — предзаказ`
-      : `🛒 <b>НОВЫЙ ЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n✅ Баллы списаны`;
+    // Уведомление админу — используем sendToUserTelegramAdvanced с ADMIN_CHAT_ID
+    if (env.TELEGRAM_ADMIN_CHAT_ID) {
+      const msg = isPreorder
+        ? `🛒 <b>ПРЕДЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n⚠️ Товар закончился — предзаказ`
+        : `🛒 <b>НОВЫЙ ЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n✅ Баллы списаны. Ожидает подтверждения.`;
 
-    await publishToTelegram(msg, undefined, [
-      [
-        { text: '✅ Одобрить', callback_data: `shop_approve_${order.id}` },
-        { text: '❌ Отклонить', callback_data: `shop_reject_${order.id}` },
-      ],
-    ], false, { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS });
+      await sendToUserTelegramAdvanced(
+        env.TELEGRAM_ADMIN_CHAT_ID,
+        msg,
+        [[
+          { text: '✅ Одобрить', callback_data: `shop_approve_${order.id}` },
+          { text: '❌ Отклонить', callback_data: `shop_reject_${order.id}` },
+        ]],
+        false // useAuthBot = false, используем основной бот
+      );
+    }
 
     revalidatePath('/account/shop');
     return { success: true, orderId: order.id };
