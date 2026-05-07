@@ -67,7 +67,7 @@ export default function TourDetailsWrapper({
 
         {/* ПРАВАЯ КОЛОНКА (Сайдбар) */}
           <div className="hidden lg:block lg:col-span-4 relative">
-            {/* ✅ ДОБАВЛЕНО: Передаем профиль в сайдбар */}
+            {/*   ДОБАВЛЕНО: Передаем профиль в сайдбар */}
            <TourSidebar tour={tour} />
           </div>
         </div>

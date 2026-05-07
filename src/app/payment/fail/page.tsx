@@ -7,18 +7,33 @@ import { prisma } from '@/lib/prisma';
 export default async function PaymentFailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invoiceId?: string }>;
+  searchParams: Promise<{ 
+    invoiceId?: string; 
+    InvoiceId?: string; 
+    invoiceid?: string;
+  }>;
 }) {
-  const { invoiceId } = await searchParams;
+  // 1. Распаковываем Promise параметров
+  const params = await searchParams;
+  
+  // 2. Ищем ID во всех возможных регистрах (защита от потери данных)
+  const invoiceId = params.InvoiceId || params.invoiceId || params.invoiceid;
 
-  // Пытаемся найти бронь, чтобы дать контекстный ответ
+  // Пытаемся найти бронь по apbInvoiceId
   const booking = invoiceId 
-    ? await prisma.booking.findUnique({ where: { apbInvoiceId: invoiceId }, include: { tour: true } })
+    ? await prisma.booking.findUnique({ 
+        where: { apbInvoiceId: invoiceId }, 
+        include: { tour: true } 
+      })
     : null;
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 text-center space-y-6">
+    /**
+     * ИСПРАВЛЕНО: 
+     * min-h-screen + bg-slate-950 гарантируют отсутствие белых полей вокруг контента.
+     */
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
         <div className="flex justify-center">
           <div className="w-20 h-20 bg-rose-500/20 rounded-full flex items-center justify-center text-rose-500">
             <XCircle size={48} strokeWidth={2.5} />
@@ -36,16 +51,19 @@ export default async function PaymentFailPage({
 
         {booking && (
           <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4 text-sm text-rose-200/80 italic">
-            «{booking.tour.title}» — ваша бронь #{booking.shortId} всё еще активна. Вы можете попробовать оплатить её другим способом в личном кабинете.
+            «{booking.tour.title}» — ваша бронь #{booking.shortId || booking.id.slice(-6).toUpperCase()} всё еще активна. Вы можете попробовать оплатить её другим способом.
           </div>
         )}
 
         <div className="space-y-3 pt-2">
+          {/* ИСПРАВЛЕНО: Ссылка теперь ведет прямо в карточку брони, 
+              чтобы пользователь мог сразу нажать "Оплатить" еще раз.
+          */}
           <Link 
-            href="/account/bookings"
+            href={booking ? `/account/bookings/${booking.id}` : "/account/dashboard"}
             className="w-full py-4 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 border border-white/10"
           >
-            <RefreshCcw size={18} /> Попробовать снова
+            <RefreshCcw size={18} /> Вернуться к бронированию
           </Link>
           
           <Link 

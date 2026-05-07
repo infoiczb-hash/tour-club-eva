@@ -46,7 +46,7 @@ export default function OnboardingModal() {
     }
 
     startTransition(async () => {
-      // ✅ Твоя правильная сигнатура вызова!
+      //   Твоя правильная сигнатура вызова!
       const res = await saveOnboardingDataAction(phone, name);
       
       if (res.success) {
@@ -64,7 +64,7 @@ export default function OnboardingModal() {
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      {/* ✅ ДОБАВЛЕНО: max-h-[90vh], flex-col и overflow-hidden для правильного скролла внутри окна */}
+      {/*   ДОБАВЛЕНО: max-h-[90vh], flex-col и overflow-hidden для правильного скролла внутри окна */}
       <div className="w-full max-w-md bg-ui-panel border border-ui-border rounded-[2rem] shadow-2xl relative flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
         
         {!successData && (
@@ -76,7 +76,7 @@ export default function OnboardingModal() {
           </button>
         )}
 
-        {/* ✅ ДОБАВЛЕНО: overflow-y-auto для контента. Теперь модалка скроллится на мобилках! */}
+        {/*   ДОБАВЛЕНО: overflow-y-auto для контента. Теперь модалка скроллится на мобилках! */}
         <div className="p-6 md:p-8 overflow-y-auto">
           {successData ? (
             <div className="text-center py-6 animate-in zoom-in duration-500">
@@ -117,7 +117,7 @@ export default function OnboardingModal() {
                   </label>
                   <div className="relative group">
                     <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                    {/* ✅ ИСПРАВЛЕН КОНТРАСТ: Белый фон в светлой теме, темно-серый в темной */}
+                    {/*   ИСПРАВЛЕН КОНТРАСТ: Белый фон в светлой теме, темно-серый в темной */}
                     <input
                       type="text"
                       value={name}
@@ -136,7 +136,7 @@ export default function OnboardingModal() {
                   </label>
                   <div className="relative group">
                     <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                    {/* ✅ ИСПРАВЛЕН КОНТРАСТ: Поле больше не черное на черном! */}
+                    {/*   ИСПРАВЛЕН КОНТРАСТ: Поле больше не черное на черном! */}
                     <input
                       type="tel"
                       value={phone}
@@ -148,7 +148,7 @@ export default function OnboardingModal() {
                   </div>
                 </div>
 
-                {/* ✅ ИСПРАВЛЕН БЛОК "ВАЖНЫЙ ШАГ": Высокий контраст и читаемость */}
+                {/*   ИСПРАВЛЕН БЛОК "ВАЖНЫЙ ШАГ": Высокий контраст и читаемость */}
                 <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800/50 rounded-2xl p-4 flex items-start gap-3">
                   <div className="mt-0.5 text-teal-600 dark:text-teal-400 shrink-0"><Bot size={18} /></div>
                   <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">

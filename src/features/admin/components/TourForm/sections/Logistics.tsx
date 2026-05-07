@@ -65,7 +65,7 @@ export const Logistics = ({ guides }: LogisticsProps) => {
 append({ 
   start: '', 
   end: '', 
-  time: '', // ✅ ДОБАВИЛИ ВРЕМЯ
+  time: '', //   ДОБАВИЛИ ВРЕМЯ
   guide_id: '', 
   groupChatUrl: '', 
   spots: globalSpots, 
@@ -164,7 +164,7 @@ append({
                onClick={() => {
                   const defaultGroupSize = Number(getValues('spots')) || 15;
                 append({ 
-  start: '', end: '', time: '', guide_id: '', groupChatUrl: '', // ✅ ДОБАВИЛИ time: ''
+  start: '', end: '', time: '', guide_id: '', groupChatUrl: '', //   ДОБАВИЛИ time: ''
   spots: defaultGroupSize, spotsLeft: defaultGroupSize, 
   basePrice: undefined, discountEarlyBird: undefined, 
   earlyBirdDeadline: undefined, surchargeLastMinute: undefined, lastMinuteTrigger: undefined 

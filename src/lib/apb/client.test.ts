@@ -1,16 +1,29 @@
-// src/lib/apb/client.test.ts
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import crypto from 'crypto';
 
-// Устанавливаем переменные окружения ДО импорта apbClient
-process.env.APB_MERCHANT_ID = 'TEST_MERCHANT';
-process.env.APB_IS_TEST = '1';
+// ✅ Мокируем process.env ДО импорта чего-либо
+process.env.APB_MERCHANT_ID   = 'TEST_MERCHANT';
+process.env.APB_IS_TEST       = '1';
 process.env.APB_MERCHANT_PASS = 'secret-pass-123';
 process.env.NEXT_PUBLIC_SITE_URL = 'https://evatur.club';
-process.env.APB_PAYMENT_URL = 'https://pay.apb.com/payment';
-process.env.APB_SOAP_URL = 'https://pay.apb.com/soap';
+process.env.APB_PAYMENT_URL   = 'https://pay.apb.com/payment';
+process.env.APB_SOAP_URL      = 'https://pay.apb.com/soap';
 
-// Теперь импортируем клиент (он прочитает process.env)
+// Остальные обязательные поля из схемы (чтобы Zod не упал)
+process.env.NEXT_PUBLIC_SUPABASE_URL      = 'https://test.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
+process.env.TELEGRAM_BOT_TOKEN            = 'test-token';
+process.env.TELEGRAM_AUTH_BOT             = 'test-auth-bot';
+process.env.TELEGRAM_ADMIN_CHAT_ID        = '12345';
+process.env.TELEGRAM_PUBLIC_BOT_TOKEN     = 'test-public-token';
+process.env.TELEGRAM_WEBHOOK_SECRET       = 'test-webhook-secret';
+process.env.CRON_SECRET                   = 'test-cron-secret';
+process.env.UPSTASH_REDIS_REST_URL        = 'https://test.upstash.io';
+process.env.UPSTASH_REDIS_REST_TOKEN      = 'test-redis-token';
+process.env.SUPABASE_SERVICE_ROLE_KEY     = 'test-service-role-key';
+
+// ✅ Убираем jest.mock('@/lib/env', ...) — он больше не нужен
+
 import { apbClient } from './client';
 
 describe('APB Client Utilities', () => {
@@ -42,18 +55,18 @@ describe('APB Client Utilities', () => {
 
       // URL возврата
       expect(parsedUrl.searchParams.get('SuccessURL')).toBe(
-        `https://test.com/payment/success?invoiceId=${invoiceId}`
+        `https://evatur.club/payment/success?invoiceid=${invoiceId}`
       );
       expect(parsedUrl.searchParams.get('FailURL')).toBe(
-        `https://test.com/payment/fail?invoiceId=${invoiceId}`
+        `https://evatur.club/payment/fail?invoiceid=${invoiceId}`
       );
-      expect(parsedUrl.searchParams.get('ResultURL')).toBe('https://test.com/api/webhooks/apb');
+      expect(parsedUrl.searchParams.get('ResultURL')).toBe('https://evatur.club/api/webhooks/apb');
 
       // Проверка подписи
       const signature = parsedUrl.searchParams.get('SignatureValue');
       expect(signature).toMatch(/^[a-f0-9]{32}$/);
 
-      // Вычисляем ожидаемую подпись (по правилам из client.ts)
+      // Вычисляем ожидаемую подпись
       const expectedSignature = crypto
         .createHash('md5')
         .update(
@@ -73,7 +86,6 @@ describe('APB Client Utilities', () => {
   });
 
   describe('verifyWebhookSignature', () => {
-    // Вспомогательная функция для вычисления ожидаемой подписи (как в client.ts)
     const computeExpectedSignature = (params: Record<string, string>) => {
       const { invoiceid, status, paymentsum, paymentcurrency, date } = params;
       const pass = 'secret-pass-123';

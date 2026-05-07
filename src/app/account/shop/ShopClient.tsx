@@ -2,10 +2,12 @@
 
 // src/app/account/shop/ShopClient.tsx
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useCallback, memo } from 'react';
 import Image from 'next/image';
-import { ShoppingBag, Coins, Package, Clock, CheckCircle, XCircle, Truck, Inbox, Loader } from 'lucide-react';
-import { createShopOrderAction } from '@/features/shop/actions/member';
+import {
+  ShoppingBag, Coins, Package, Clock, CheckCircle,
+  XCircle, Truck, Inbox, Loader
+} from 'lucide-react';
 
 type ShopItem = {
   id: string;
@@ -38,7 +40,20 @@ const STATUS_CONFIG = {
   DELIVERED: { label: 'Получен',     icon: Truck,        color: 'text-sky-400',    bg: 'bg-sky-500/10 border-sky-500/20' },
 };
 
-function ShopItemCard({ item, balance, onOrder }: { item: ShopItem; balance: number; onOrder: (id: string) => void }) {
+// ---- Компонент карточки товара (мемоизирован) ----
+type ShopItemCardProps = {
+  item: ShopItem;
+  balance: number;
+  onOrder: (id: string) => void;
+  priority?: boolean; // для первого изображения
+};
+
+const ShopItemCard = memo(function ShopItemCard({
+  item,
+  balance,
+  onOrder,
+  priority = false,
+}: ShopItemCardProps) {
   const [isPending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
 
@@ -48,6 +63,10 @@ function ShopItemCard({ item, balance, onOrder }: { item: ShopItem; balance: num
 
   const handleClick = () => {
     startTransition(async () => {
+      // Динамический импорт экшена — не тянет его в основной бандл
+      const { createShopOrderAction } = await import(
+        '@/features/shop/actions/member'
+      );
       const res = await createShopOrderAction(item.id);
       if (res.success) {
         setDone(true);
@@ -63,7 +82,14 @@ function ShopItemCard({ item, balance, onOrder }: { item: ShopItem; balance: num
       {/* Изображение */}
       <div className="relative h-40 bg-ui-bg flex items-center justify-center overflow-hidden">
         {item.imageUrl ? (
-          <Image src={item.imageUrl} alt={item.title} fill className="object-cover" />
+          <Image
+            src={item.imageUrl}
+            alt={item.title}
+            fill
+            className="object-cover"
+            priority={priority}
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+          />
         ) : (
           <Package size={40} className="text-ui-muted/30" />
         )}
@@ -132,9 +158,10 @@ function ShopItemCard({ item, balance, onOrder }: { item: ShopItem; balance: num
       </div>
     </div>
   );
-}
+});
 
-function OrderRow({ order }: { order: ShopOrder }) {
+// ---- Строка заказа (мемоизирована) ----
+const OrderRow = memo(function OrderRow({ order }: { order: ShopOrder }) {
   const cfg = STATUS_CONFIG[order.status];
   const Icon = cfg.icon;
   const date = new Date(order.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
@@ -170,17 +197,22 @@ function OrderRow({ order }: { order: ShopOrder }) {
       </div>
     </div>
   );
-}
+});
 
+// ---- Главный компонент (ShopClient) ----
 export default function ShopClient({ balance, items, orders }: ShopClientProps) {
   const [localBalance, setLocalBalance] = useState(balance);
 
-  const handleOrder = (itemId: string) => {
-    const item = items.find(i => i.id === itemId);
-    if (item && item.stock !== 0) {
-      setLocalBalance(prev => prev - item.price);
-    }
-  };
+  // Стабильная ссылка на колбэк
+  const handleOrder = useCallback(
+    (itemId: string) => {
+      const item = items.find((i) => i.id === itemId);
+      if (item && item.stock !== 0) {
+        setLocalBalance((prev) => prev - item.price);
+      }
+    },
+    [items],
+  );
 
   return (
     <div className="space-y-8">
@@ -211,12 +243,13 @@ export default function ShopClient({ balance, items, orders }: ShopClientProps) 
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {items.map(item => (
+          {items.map((item, index) => (
             <ShopItemCard
               key={item.id}
               item={item}
               balance={localBalance}
               onOrder={handleOrder}
+              priority={index === 0} // первый товар — LCP, загружаем приоритетно
             />
           ))}
         </div>
@@ -230,7 +263,7 @@ export default function ShopClient({ balance, items, orders }: ShopClientProps) 
             История заказов
           </h2>
           <div className="space-y-2">
-            {orders.map(order => (
+            {orders.map((order) => (
               <OrderRow key={order.id} order={order} />
             ))}
           </div>

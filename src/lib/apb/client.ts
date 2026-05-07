@@ -107,9 +107,9 @@ export const apbClient = {
       IsTest:         isTest,
       LifeTime:       lifetimeMin.toString(),
       SignatureValue: signature,
-      // URL-ы возврата клиента
-      SuccessURL:     `${baseUrl}/payment/success?invoiceId=${invoiceId}`,
-      FailURL:        `${baseUrl}/payment/fail?invoiceId=${invoiceId}`,
+      // URL-ы возврата клиента (ИСПРАВЛЕНО: invoiceId заменен на invoiceid)
+      SuccessURL:     `${baseUrl}/payment/success?invoiceid=${invoiceId}`,
+      FailURL:        `${baseUrl}/payment/fail?invoiceid=${invoiceId}`,
       ResultURL:      `${baseUrl}/api/webhooks/apb`,
     });
 

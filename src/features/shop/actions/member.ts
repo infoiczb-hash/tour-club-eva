@@ -81,13 +81,13 @@ export async function createShopOrderAction(itemId: string): Promise<CreateShopO
     if (env.TELEGRAM_ADMIN_CHAT_ID) {
       const msg = isPreorder
         ? `🛒 <b>ПРЕДЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n⚠️ Товар закончился — предзаказ`
-        : `🛒 <b>НОВЫЙ ЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n✅ Баллы списаны. Ожидает подтверждения.`;
+        : `🛒 <b>НОВЫЙ ЗАКАЗ В МАГАЗИНЕ</b>\n\n👤 ${profile.name ?? profile.phone}\n📦 «${item.title}»\n💰 ${item.price} баллов\n  Баллы списаны. Ожидает подтверждения.`;
 
       await sendToUserTelegramAdvanced(
         env.TELEGRAM_ADMIN_CHAT_ID,
         msg,
         [[
-          { text: '✅ Одобрить', callback_data: `shop_approve_${order.id}` },
+          { text: '  Одобрить', callback_data: `shop_approve_${order.id}` },
           { text: '❌ Отклонить', callback_data: `shop_reject_${order.id}` },
         ]],
         false // useAuthBot = false, используем основной бот

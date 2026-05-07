@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getTourBySlug, getTours, getSimilarTours } from '@/features/tours/api'; 
 import TourDetailsWrapper from '@/features/tours/components/TourDetails/TourDetailsWrapper';
-// ✅ ИМПОРТ: Используем твою существующую функцию получения профиля
+//   ИМПОРТ: Используем твою существующую функцию получения профиля
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
@@ -118,7 +118,7 @@ export default async function TourPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ✅ ПЕРЕДАЕМ: Теперь profile летит во Wrapper, а оттуда в Sidebar и BottomActions */}
+      {/*   ПЕРЕДАЕМ: Теперь profile летит во Wrapper, а оттуда в Sidebar и BottomActions */}
     <TourDetailsWrapper 
         tour={tour} 
         similarToursPromise={similarToursPromise}

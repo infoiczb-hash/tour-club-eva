@@ -170,7 +170,7 @@ export async function POST(req: Request) {
             await Promise.allSettled(tasks);
           }
         } else {
-          // ✅ ПРАВКА: Юридически грамотный отказ от отмены через кнопку
+          //   ПРАВКА: Юридически грамотный отказ от отмены через кнопку
           const cancelMsg = `\n\n⚠️ <b>Отмена бронирования</b>\n\nЕсли вы хотите отменить свою бронь, пожалуйста, обратитесь к нашему администратору: @romansvtirase.\n\nОбратите внимание, что условия отмены и возврата средств регламентируются нашей <a href="https://твой-сайт.рф/offer">Публичной офертой</a>.`;
           
           await editClientMessage(clientChatId, messageId, originalText + cancelMsg);
@@ -196,7 +196,7 @@ export async function POST(req: Request) {
 
           if (booking) {
             const tasks: Promise<unknown>[] = [
-              editAdminMessage(adminChatId, messageId, `✅ <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`)
+              editAdminMessage(adminChatId, messageId, `  <b>ОПЛАЧЕНО (Бронь #${booking.shortId})</b>\nПодтвердил: ${adminName}`)
             ];
 
             // Дублируем в Хаб для Email-чека
@@ -262,7 +262,7 @@ export async function POST(req: Request) {
       if (booking) {
         await prisma.review.create({ data: { tourId: booking.tourId, memberId: booking.memberId, name: booking.name, text: text, rating: 5, source: 'tg', isActive: false } });
         await redis.del(`review_state:${chatId}`);
-        await sendMessage(chatId, '✅ <b>Спасибо за ваш отзыв!</b>\nОн отправлен на модерацию. Как только администратор опубликует его, мы начислим вам бонусные баллы!\n\n<i>Если вы захотите дополнить или отредактировать отзыв, это всегда можно сделать в Личном кабинете на сайте.</i>');
+        await sendMessage(chatId, '  <b>Спасибо за ваш отзыв!</b>\nОн отправлен на модерацию. Как только администратор опубликует его, мы начислим вам бонусные баллы!\n\n<i>Если вы захотите дополнить или отредактировать отзыв, это всегда можно сделать в Личном кабинете на сайте.</i>');
 
         const adminMsg = `⭐️ <b>НОВЫЙ ОТЗЫВ (На модерации)</b>\nТур: «${booking.tour.title}»\n👤 Клиент: ${booking.name}\n\n💬 Текст: <i>${text}</i>\n\nМодерировать отзыв, чтобы начислить бонусы, можно в Админ-панели на сайте.`;
         await publishToTelegram(adminMsg, undefined, undefined, false, { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS });
@@ -315,7 +315,7 @@ export async function POST(req: Request) {
         
         await Promise.allSettled([
           sendModerationRequest(env.TELEGRAM_ADMIN_CHAT_ID, receiptUrl, caption, booking.id),
-          sendMessage(chatId, `✅ Файл чека получен!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
+          sendMessage(chatId, `  Файл чека получен!\nМы проверяем оплату для заявки <b>#${booking.shortId}</b>. Как только администратор подтвердит её, мы сразу пришлём вам уведомление.`)
         ]);
       } catch (e) { await sendMessage(chatId, '❌ Не удалось сохранить чек. Попробуйте отправить ещё раз.'); }
       return ok();
@@ -353,7 +353,7 @@ async function sendModerationRequest(adminChatId: string, fileUrl: string, capti
   const isDoc = fileUrl.toLowerCase().includes('.pdf');
   const body: any = { 
     chat_id: adminChatId, caption, parse_mode: 'HTML',
-    reply_markup: { inline_keyboard: [[{ text: '✅ Подтвердить', callback_data: `confirm_${bookingId}` }], [{ text: '❌ Отклонить', callback_data: `reject_${bookingId}` }]] }
+    reply_markup: { inline_keyboard: [[{ text: '  Подтвердить', callback_data: `confirm_${bookingId}` }], [{ text: '❌ Отклонить', callback_data: `reject_${bookingId}` }]] }
   };
   if (isDoc) body.document = fileUrl; else body.photo = fileUrl;
   const topicId = env.TELEGRAM_TOPIC_MONEY || env.TELEGRAM_TOPIC_BOOKINGS;

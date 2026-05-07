@@ -46,7 +46,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
   const [isProfileLoaded,  setIsProfileLoaded]  = useState(false);
 
-  // ✅ Клиентская подгрузка профиля (безопасно для SSR)
+  //   Клиентская подгрузка профиля (безопасно для SSR)
   useEffect(() => {
     getMyProfileAction().then(p => {
       if (p) {
@@ -110,7 +110,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
         {/* БЛОК 1: Цена и Места */}
         <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
           <div>
-            <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Стоимость участия</p>
+            <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Цена</p>
             <div className="flex items-baseline gap-1.5">
               {prices.length > 1 && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
   <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
@@ -131,7 +131,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
             )}
           </div>
         <div className="text-right">
-              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Свободные места</p>
+              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1"> Места</p>
               <div className={clsx(
                 "text-lg font-black uppercase leading-tight", 
                 isGlobalSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-500" : "text-teal-400")

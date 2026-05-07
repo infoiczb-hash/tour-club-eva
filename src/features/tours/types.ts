@@ -7,15 +7,15 @@ export interface TourDateItem {
   id: string;
   date?: string;
   start?: string | Date;
-  startDate: string | Date;       // ✅ ДОБАВЛЕНО: актуальное поле начала из Prisma
+  startDate: string | Date;       //   ДОБАВЛЕНО: актуальное поле начала из Prisma
   endDate?: string | Date | null;
   time?: string | null;
-  capacity: number;               // ✅ ДОБАВЛЕНО: вместимость
+  capacity: number;               //   ДОБАВЛЕНО: вместимость
   spots?: number;
   spotsLeft?: number;
   basePrice?: number | null;
   guideId?: string | null;
-  _count?: {                      // ✅ ДОБАВЛЕНО: счетчик связей (броней)
+  _count?: {                      //   ДОБАВЛЕНО: счетчик связей (броней)
     bookings: number;
   };
 }
@@ -103,17 +103,17 @@ export interface Tour {
   endDate?: string | Date | null; 
   dates?: {
     id?: string;            
-    start?: string;       // ✅ ИЗМЕНЕНО: добавлена поддержка Date
+    start?: string;       //   ИЗМЕНЕНО: добавлена поддержка Date
    startDate?: string;
   date?: string;
   end?: string;
     guide_id?: string;
     time?: string;
-    capacity: number;              // ✅ ДОБАВЛЕНО: вместимость
+    capacity: number;              //   ДОБАВЛЕНО: вместимость
     spots?: number; 
     spotsLeft?: number;     
     basePrice?: number | null; 
-    _count?: {                     // ✅ ДОБАВЛЕНО: счетчик броней
+    _count?: {                     //   ДОБАВЛЕНО: счетчик броней
       bookings: number;
     };
   }[];

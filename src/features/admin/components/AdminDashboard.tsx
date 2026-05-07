@@ -402,7 +402,7 @@ const now = new Date();
     const nextMonth = new Date();
     nextMonth.setMonth(now.getMonth() + 1);
     
-    // ✅ 1. РАЗВОРАЧИВАЕМ ТУРЫ В ВЫЕЗДЫ (FLAT MAP)
+    //   1. РАЗВОРАЧИВАЕМ ТУРЫ В ВЫЕЗДЫ (FLAT MAP)
     const departures: DashboardDeparture[] = tours.flatMap(t => {
       if (!t.isActive) return [];
       
@@ -424,7 +424,7 @@ const now = new Date();
       });
     });
 
-    // ✅ 2. ФИЛЬТРУЕМ УЖЕ ГОТОВЫЕ ВЫЕЗДЫ ПО ДАТАМ
+    //   2. ФИЛЬТРУЕМ УЖЕ ГОТОВЫЕ ВЫЕЗДЫ ПО ДАТАМ
     const toursThisWeek = departures
         .filter(d => {
             if (!d.isActive || !d.date) return false;
@@ -483,7 +483,7 @@ const now = new Date();
   };
 
  const handleStatusChange = async (id: string, status: string) => {
-  // ✅ ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
+  //   ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
   const res = await updateBookingStatusAction({ 
     bookingId: id, 
     newStatus: status as BookingStatus 

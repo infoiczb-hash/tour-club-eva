@@ -77,39 +77,6 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
         </div>
       )}
 
-      {/* 📱 СЦЕНАРИЙ 2: Карта КЛЕВЕР */}
-      {paymentMethod === 'online_card' && (
-        <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <QrCode className="text-emerald-400 w-6 h-6" />
-            <h3 className="text-lg font-semibold text-white">Оплата картой Клевер</h3>
-          </div>
-          <p className="text-sm text-slate-300 leading-relaxed mb-4">
-            К оплате: <strong className="text-emerald-400 text-base">{totalPrice} {currency}</strong><br/>
-            Перейдите по ссылке для оплаты через банк, потом Вы вернетесь на сайт
-          </p>
-          
-          <div className="flex flex-col items-center bg-white p-3 rounded-xl mb-5 w-fit mx-auto">
-            <Image 
-              src={finalApbImage} 
-              alt="Карта Клевер" 
-              width={180} 
-              height={180} 
-              className="rounded-lg object-contain" 
-            />
-          </div>
-          
-          <div className="flex flex-col gap-3">
-            <Link href={finalApbLink} target="_blank" className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors">
-              <LinkIcon size={18} /> Ссылка на оплату (Клевер)
-            </Link>
-            <Link href={botDeepLink} target="_blank" className="w-full py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-sm font-bold uppercase rounded-xl flex items-center justify-center gap-2 transition-colors shadow-[0_0_15px_rgba(42,171,238,0.3)]">
-              <Send size={18} /> Отправить скриншот в Telegram
-            </Link>
-          </div>
-        </div>
-      )}
-
       {/* 💵 СЦЕНАРИЙ 3: НАЛИЧНЫЕ / ТЕРМИНАЛ */}
       {paymentMethod === 'cash' && (
         <div className="w-full bg-slate-900/80 border border-slate-700/50 rounded-2xl p-5 mb-6 text-left shadow-lg">
@@ -171,8 +138,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
               </Link>
             ) : (
                <p className="text-sm text-rose-400 font-bold mb-2 text-center bg-rose-500/10 py-3 rounded-xl border border-rose-500/20">
-                 Ссылка на оплату формируется, пожалуйста, обновите страницу в личном кабинете.
-               </p>
+                 Ссылка на оплату картой Клевер </p>
             )}
 
             <div className="relative py-2 mt-2">
@@ -182,7 +148,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
 
             {/* ВТОРОСТЕПЕННАЯ КНОПКА - ОПЛАТА ПО QR */}
             <div className="text-center mt-2">
-              <p className="text-xs text-slate-400 mb-3">Неудобно оплачивать через шлюз? Отсканируйте наш QR-код Клевера и пришлите чек в Telegram, как обычно.</p>
+              <p className="text-xs text-slate-400 mb-3">Неудобно оплачивать через карту Клевер напрямую через банк ? Отсканируйте наш QR-код Клевера и пришлите чек в Telegram, как обычно.</p>
               <div className="flex gap-2">
                 <Link 
                   href={finalApbLink} 

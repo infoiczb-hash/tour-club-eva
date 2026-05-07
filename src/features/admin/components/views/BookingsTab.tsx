@@ -18,7 +18,7 @@ export interface GuestItem {
   name: string;
   ticketType: 'adult' | 'child' | 'family' | 'member';
   age?: string | number;
-  jacket?: string; // ✅ ИСПРАВЛЕНО: заменено equipment на jacket
+  jacket?: string; //   ИСПРАВЛЕНО: заменено equipment на jacket
   phone?: string;     
 }
 
@@ -43,8 +43,10 @@ payment_method: string;
   discount: number;       
   tourId: string;         
   tourDateId?: string | null; 
-  apb_invoice_id?: string | null; // ✅ Поле из БД для работы с банком
-  refunded_amount?: number;       // ✅ Поле из БД для учета частичных возвратов   
+  apb_invoice_id?: string | null; //   Поле из БД для работы с банком
+  refunded_amount?: number;       //   Поле из БД для учета частичных возвратов 
+  apbInvoiceId?: string | null;   //   Добавлено: camelCase напрямую от Prisma
+  refundedAmount?: number;        //   Добавлено: camelCase напрямую от Prisma  
   
   comment?: string | null;
   social?: string | null;
@@ -206,7 +208,7 @@ export default function BookingsTab({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedRow, setExpandedRow] = useState<string | null>(null); 
   const { showToast } = useToast();
-  // ✅ ДОБАВЛЕНО: Фильтруем старые брони. 
+  //   ДОБАВЛЕНО: Фильтруем старые брони. 
   // При удалении даты tourDateId становится null. Мы скрываем их из активной вкладки.
   const displayBookings = useMemo(() => {
     return bookings.filter(b => {
@@ -268,9 +270,10 @@ export default function BookingsTab({
     return <div className="p-10 text-center text-slate-700">Загрузка бронирований...</div>;
   }
 
-  const handleRefund = async (booking: BookingItem) => {
+ const handleRefund = async (booking: BookingItem) => {
     const paid = booking.amount_paid || booking.total_price;
-    const refunded = booking.refunded_amount || 0;
+    //  ИСПРАВЛЕНО: ищем либо camelCase, либо snake_case
+    const refunded = booking.refundedAmount ?? booking.refunded_amount ?? 0;
     const remaining = paid - refunded;
 
     if (remaining <= 0) {
@@ -475,10 +478,10 @@ export default function BookingsTab({
                                            </button>
                                         )}
                                         
-                                        {/* ✅ КНОПКА ВОЗВРАТА */}
-                                        {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
-                                          <button 
-                                              onClick={() => handleRefund(b)}
+                                        {/*   КНОПКА ВОЗВРАТА */}
+                                         {(b.apbInvoiceId || b.apb_invoice_id) && (b.total_price - (b.refundedAmount ?? b.refunded_amount ?? 0) > 0) && (
+    <button 
+        onClick={() => handleRefund(b)}
                                               className="w-full flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-colors"
                                            >
                                               <RotateCcw size={14}/> Возврат
@@ -601,10 +604,10 @@ export default function BookingsTab({
                                 </button>
                             )}
 
-                            {/* ✅ КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
-                            {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
-                                <button 
-                                  onClick={() => handleRefund(b)}
+                            {/*   КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
+                           {(b.apbInvoiceId || b.apb_invoice_id) && (b.total_price - (b.refundedAmount ?? b.refunded_amount ?? 0) > 0) && (
+      <button 
+        onClick={() => handleRefund(b)}
                                   className="w-full mt-2 flex items-center justify-center gap-2 bg-rose-50 text-rose-700 border border-rose-200 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest active:scale-[0.98] transition-all"
                                 >
                                   <RotateCcw size={16}/> Сделать возврат Клевер
@@ -857,7 +860,7 @@ export default function BookingsTab({
                   onClick={() => handleStatusChangeWithModalClose(receiptModal.booking!.id, 'confirmed')}
                   className="flex-[2] py-3.5 bg-emerald-500 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 shadow-md transition-colors"
                 >
-                  ✅ Подтвердить чек
+                    Подтвердить чек
                 </button>
               </div>
             </div>

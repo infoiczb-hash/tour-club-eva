@@ -28,11 +28,11 @@ const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL-5
 type DropdownDateInfo = {
   id?: string;
   start?: string | Date;
-  startDate?: string | Date; // ✅ добавили
+  startDate?: string | Date; //   добавили
   date?: string | Date;
   time?: string | null;
-  capacity?: number;         // ✅ добавили
-  spotsLeft?: number;        // ✅ добавили
+  capacity?: number;         //   добавили
+  spotsLeft?: number;        //   добавили
   _count?: { bookings: number };
 };
 
@@ -446,7 +446,7 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
       const result = await createBookingAction(bookingPayload);
 
      if (result.success) {
-          // ✅ Убрали резкий window.location.href! 
+          //   Убрали резкий window.location.href! 
           // Теперь мы сохраняем redirectUrl в стейт, чтобы передать его в SuccessScreen.
           setSuccessData({
               bookingId: result.bookingId,
@@ -456,7 +456,7 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
               apbQrLink: result.apbQrLink,
               apbQrImage: result.apbQrImage,
               paymentMethod: paymentMethod,
-              redirectUrl: result.redirectUrl 
+             redirectUrl: result.redirectUrl ?? null,  
           });
           setStep('success');
       } else {
@@ -1156,6 +1156,7 @@ const handleGuestChange = (id: string, field: keyof GuestDetails, value: string)
                  apbQrLink={successData.apbQrLink}
                  apbQrImage={successData.apbQrImage}
                  paymentMethod={successData.paymentMethod}
+                 redirectUrl={successData.redirectUrl} 
                  onClose={onClose}
                />
             ) : null}

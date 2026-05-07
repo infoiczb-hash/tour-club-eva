@@ -393,9 +393,9 @@ export const NotificationTemplates = {
         let buttons = [];
 
         if (isUnpaid) {
-          // ✅ ПРАВКА: Уведомляем клиента о необходимости связаться с менеджером для отмены
+          //   ПРАВКА: Уведомляем клиента о необходимости связаться с менеджером для отмены
           customText = `\n\n⚠️ <b>ФИНАЛЬНОЕ ПОДТВЕРЖДЕНИЕ:</b> Вы выбрали оплату на месте (<b>${price} ${currency}</b>). Пожалуйста, подтвердите участие прямо сейчас.\n\nЕсли ваши планы изменились, свяжитесь с менеджером. Отмена бронирования регулируется <a href="${siteUrl}/offer">офертой</a>. 👇`;
-          buttons.push([{ text: '✅ Я точно буду', callback_data: `cash_confirm_${data.bookingId}` }]);
+          buttons.push([{ text: '  Я точно буду', callback_data: `cash_confirm_${data.bookingId}` }]);
           buttons.push([{ text: '💬 Связаться с менеджером', url: managerLink }]);
         } else {
           customText = `\n\nОплата успешно подтверждена. Выспитесь и до встречи!`;
@@ -492,8 +492,8 @@ export const NotificationTemplates = {
         }
 
         if (isUnpaid) {
-          // ✅ ПРАВКА: Текст о необходимости связаться с менеджером для отмены бронирования
-          buttons.push([{ text: '✅ Подтверждаю, буду!', callback_data: `cash_confirm_${data.bookingId}` }]);
+          //   ПРАВКА: Текст о необходимости связаться с менеджером для отмены бронирования
+          buttons.push([{ text: '  Подтверждаю, буду!', callback_data: `cash_confirm_${data.bookingId}` }]);
           buttons.push([{ text: '💬 Связаться с менеджером', url: managerLink }]);
         }
 
@@ -639,10 +639,10 @@ export const NotificationTemplates = {
             link: `/account/shop`,
           },
           telegram: {
-            text: `✅ <b>Заказ одобрен!</b>\n\n«<b>${itemTitle}</b>» готовится к выдаче.\nМенеджер свяжется с вами для уточнения деталей.`,
+            text: `  <b>Заказ одобрен!</b>\n\n«<b>${itemTitle}</b>» готовится к выдаче.\nМенеджер свяжется с вами для уточнения деталей.`,
             buttons: [[{ text: '💬 Связаться с менеджером', url: 'https://t.me/romansvtirase' }]],
           },
-          push: { title: 'Заказ одобрен! ✅', body: `«${itemTitle}» готовится к выдаче` },
+          push: { title: 'Заказ одобрен!  ', body: `«${itemTitle}» готовится к выдаче` },
           email: null,
         };
       }

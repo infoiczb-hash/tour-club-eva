@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { Tour, TourPreview } from './types';
 import { cache } from 'react';
-import { unstable_cache } from 'next/cache'; // ✅ ДОБАВЛЕНО для Data Cache
+import { unstable_cache } from 'next/cache'; //   ДОБАВЛЕНО для Data Cache
 
 // ─────────────────────────────────────────────
 // Строгий тип для данных из Prisma с релейшенами
@@ -70,7 +70,7 @@ const relationalDates = item.tourDates?.map(td => ({
     spotsLeft: td.spotsLeft,
     guide_id: td.guideId || undefined,
     
-    // ✅ ДОБАВЛЕНЫ НОВЫЕ ПОЛЯ ИЗ БД:
+    //   ДОБАВЛЕНЫ НОВЫЕ ПОЛЯ ИЗ БД:
     basePrice: td.basePrice ?? null,
     discountEarlyBird: td.discountEarlyBird ?? null,
     earlyBirdDeadline: td.earlyBirdDeadline ?? null,
@@ -171,7 +171,7 @@ const relationalDates = item.tourDates?.map(td => ({
 }
 
 // ─────────────────────────────────────────────
-// ✅ ОПТИМИЗИРОВАННЫЙ МАППЕР ДЛЯ ПРЕВЬЮ
+//   ОПТИМИЗИРОВАННЫЙ МАППЕР ДЛЯ ПРЕВЬЮ
 // ─────────────────────────────────────────────
 function mapToPreview(item: any): TourPreview {
   const dates = item.tourDates?.map((td: any) => ({
@@ -214,7 +214,7 @@ function mapToPreview(item: any): TourPreview {
   };
 }
 
-// ✅ СЕЛЕКТОР (Выбираем из БД только 20% веса объекта)
+//   СЕЛЕКТОР (Выбираем из БД только 20% веса объекта)
 const tourPreviewSelect: Prisma.TourSelect = {
   id: true, slug: true, title: true, subtitle: true,
   price: true, currency: true, priceOld: true, priceMember: true, priceChild: true,
@@ -262,9 +262,9 @@ export const getTours = unstable_cache(
         take: 50,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         orderBy: { createdAt: 'desc' },
-        select: tourPreviewSelect, // ✅ ИСПОЛЬЗУЕМ SELECT
+        select: tourPreviewSelect, //   ИСПОЛЬЗУЕМ SELECT
       });
-      // ✅ БЕЗ JS-ФИЛЬТРА
+      //   БЕЗ JS-ФИЛЬТРА
       return tours.map(mapToPreview);
     } catch (error) {
       console.error('Ошибка получения туров:', error);
@@ -291,7 +291,7 @@ export const getToursByCategory = unstable_cache(
         },
         take,
         orderBy: { createdAt: 'desc' },
-        select: tourPreviewSelect, // ✅ ИСПОЛЬЗУЕМ SELECT
+        select: tourPreviewSelect, //   ИСПОЛЬЗУЕМ SELECT
       });
       return tours.map(mapToPreview);
     } catch (error) {
@@ -321,7 +321,7 @@ export const getSimilarTours = unstable_cache(
         },
         take: limit,
         orderBy: { createdAt: 'desc' },
-        select: tourPreviewSelect, // ✅ ИСПОЛЬЗУЕМ SELECT
+        select: tourPreviewSelect, //   ИСПОЛЬЗУЕМ SELECT
       });
       return tours.map(mapToPreview);
     } catch (error) {

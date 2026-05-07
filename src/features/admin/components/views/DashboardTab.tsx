@@ -15,8 +15,8 @@ interface DashboardStats {
   finishedTours: number;
   totalPosts: number;
   totalGuides: number;
-  toursThisMonth: DashboardDeparture[]; // ✅ Используем новый тип
-  allBookings: BookingItem[]; // ✅ Строгий тип для броней
+  toursThisMonth: DashboardDeparture[]; //   Используем новый тип
+  allBookings: BookingItem[]; //   Строгий тип для броней
 }
 
 interface DashboardTabProps {
@@ -143,14 +143,14 @@ export default function DashboardTab({ stats, onNavigateToBookings, onEditTour }
         {stats.toursThisMonth.length > 0 ? (
           <div className="space-y-4">
             {stats.toursThisMonth.map(departure => {
-              // ✅ Передаем ID даты и ее места в светофор
+              //   Передаем ID даты и ее места в светофор
               const { green, yellow, free } = getTourOccupancy(String(departure.id), departure.spots);
               const isBurning = new Date(departure.date).getTime() - new Date().getTime() < 48 * 60 * 60 * 1000; // Менее 48 часов
 
               return (
                 <div 
-                  key={departure.id} // ✅ Ключ теперь уникален (ID даты)
-                  onClick={() => onEditTour(departure.originalTour)} // ✅ При клике отдаем оригинальный тур
+                  key={departure.id} //   Ключ теперь уникален (ID даты)
+                  onClick={() => onEditTour(departure.originalTour)} //   При клике отдаем оригинальный тур
                   className={`bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors ${isBurning ? 'border-rose-300 dark:border-rose-900/50' : 'border-slate-200 dark:border-slate-800'}`}
                 >
                   <div className="flex items-center gap-4">

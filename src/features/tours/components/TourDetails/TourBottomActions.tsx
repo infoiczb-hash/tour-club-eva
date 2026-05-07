@@ -6,7 +6,7 @@ import { clsx } from 'clsx';
 import { X, Crown, Baby, Users, Ticket, ChevronUp, Loader2 } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
-import { getMyProfileAction } from '@/features/account/actions/getProfile'; // ✅ ДОБАВИЛИ
+import { getMyProfileAction } from '@/features/account/actions/getProfile'; //   ДОБАВИЛИ
 
 interface TourBottomActionsProps {
   tour: Tour;
@@ -26,9 +26,9 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
-  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false); // ✅ Флаг профиля
+  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false); //   Флаг профиля
 
-  // ✅ Клиентская загрузка профиля
+  //   Клиентская загрузка профиля
   useEffect(() => {
     getMyProfileAction().then(p => {
       if (p) {
@@ -178,7 +178,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                     <p className="text-xs text-slate-400 mt-1">Оставьте контакты, и мы сообщим, если кто-то откажется от поездки или мы добавим новые места.</p>
                   </div>
 
-                  {/* ✅ ИСПОЛЬЗУЕМ isProfileLoaded */}
+                  {/*   ИСПОЛЬЗУЕМ isProfileLoaded */}
                   {!isProfileLoaded && (
                     <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-xs text-slate-300">
                       💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a> для авто-уведомлений о датах!
