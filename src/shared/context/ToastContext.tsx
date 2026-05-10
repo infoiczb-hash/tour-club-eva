@@ -28,7 +28,6 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const removeToast = useCallback((id: string) => {
-    // Сначала fade-out, потом удаляем из DOM
     setToasts(prev => prev.map(t => t.id === id ? { ...t, visible: false } : t));
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
@@ -38,7 +37,6 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts(prev => [...prev, { id, message, type, visible: false }]);
-    // Trigger enter animation after mount
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setToasts(prev => prev.map(t => t.id === id ? { ...t, visible: true } : t));
@@ -55,7 +53,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto min-w-[300px] max-w-sm w-full bg-white dark:bg-slate-900 shadow-2xl rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex items-start gap-3 backdrop-blur-md transition-all duration-300 ${
+            className={`pointer-events-auto min-w-[300px] max-w-sm w-full bg-white shadow-2xl rounded-2xl border border-slate-100 p-4 flex items-start gap-3 backdrop-blur-md transition-all duration-300 ${
               toast.visible
                 ? 'opacity-100 translate-x-0 scale-100'
                 : 'opacity-0 translate-x-8 scale-95'
@@ -68,15 +66,15 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             </div>
 
             <div className="flex-1 pt-0.5">
-              <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">
+              <p className="text-sm font-bold text-slate-900 leading-tight mb-1">
                 {toast.type === 'success' ? 'Успешно' : toast.type === 'error' ? 'Ошибка' : 'Информация'}
               </p>
-              <p className="text-sm text-slate-300 leading-snug">{toast.message}</p>
+              <p className="text-sm text-slate-600 leading-snug">{toast.message}</p>
             </div>
 
             <button
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 text-slate-300 hover:text-slate-600 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/10"
+              className="shrink-0 text-slate-400 hover:text-slate-900 transition-colors p-1 rounded-md hover:bg-slate-100"
             >
               <X size={16} />
             </button>

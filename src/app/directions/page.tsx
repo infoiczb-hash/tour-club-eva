@@ -1,17 +1,13 @@
-import { Metadata } from 'next';
+import React from 'react';
 import DirectionsClient from './DirectionsClient';
-import { BASE_URL } from '@/lib/constants';
 
-export const metadata: Metadata = {
-  title: 'Направления — Сплавы, SUP, Походы | Турклуб «Эва»',
-  description: 'Все направления Турклуба Эва: сплавы на байдарках, SUP, горные походы, детские туры и корпоративные программы. Активный отдых в Приднестровье и Молдове.',
-  alternates: { canonical: `${BASE_URL}/directions` },
-  openGraph: {
-    title: 'Направления | Турклуб «Эва»',
-    url: `${BASE_URL}/directions`,
-    images: [{ url: `${BASE_URL}/og-default.jpg` }],
-  },
-};
+/**
+ * Оптимизация производительности:
+ * 1. Чистый Server Component. HTML улетает в браузер мгновенно.
+ * 2. revalidate = 86400 (ISR) — кэширует страницу на 24 часа.
+ * 3. Metadata наследуется из родительского layout.tsx (устраняем дублирование).
+ */
+export const revalidate = 86400; 
 
 export default function DirectionsPage() {
   return <DirectionsClient />;

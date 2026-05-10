@@ -49,12 +49,15 @@ function QuizModalManager() {
 
   const slug = searchParams.get('quiz');
   const ActiveModal = slug && MODAL_REGISTRY[slug] ? MODAL_REGISTRY[slug] : null;
-
-  const handleClose = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('quiz');
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  
+const handleClose = () => {
+  // Сбрасываем overflow ДО того как компонент квиза размонтируется
+  document.body.style.overflow = '';
+  
+  const params = new URLSearchParams(searchParams.toString());
+  params.delete('quiz');
+  router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+};
 
   const handleComplete = (resultText?: string) => {
     handleClose();

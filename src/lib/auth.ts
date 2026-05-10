@@ -1,5 +1,18 @@
+import { cache } from 'react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma'; // Добавили импорт Prisma для проверки базы
+
+/**
+ * Кэшированный запрос пользователя для Server Components.
+ * React cache() гарантирует, что сетевой запрос к Supabase выполнится ОДИН раз
+ * за цикл рендера страницы (например, в Header и Footer).
+ */
+export const getServerUser = cache(async () => {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  return user;
+});
 
 /**
  * Проверяет авторизацию в Server Actions.

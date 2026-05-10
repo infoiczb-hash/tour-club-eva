@@ -40,11 +40,12 @@ export default function TourDetailsWrapper({
       {/* Основной контент */}
       <div className="container relative z-10 mt-6 md:mt-10 pb-24">
         
-        {/*   ИСПРАВЛЕНО: Убрали items-start. Теперь колонки тянутся на всю высоту друг друга! */}
+        {/* ИСПРАВЛЕНО: Убрали items-start. Теперь колонки тянутся на всю высоту друг друга! */}
         <div className="grid lg:grid-cols-12 gap-8">
           
           {/* ЛЕВАЯ КОЛОНКА (Длинный контент) */}
-          <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-hidden">
+          {/* 👇 ИЗМЕНЕНИЕ: overflow-x-hidden заменен на overflow-x-clip */}
+          <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-clip">
             <TourStats tour={tour} />
             <TourLogistics tour={tour} />
             <TourDescription tour={tour} />
@@ -67,7 +68,7 @@ export default function TourDetailsWrapper({
 
         {/* ПРАВАЯ КОЛОНКА (Сайдбар) */}
           <div className="hidden lg:block lg:col-span-4 relative">
-            {/*   ДОБАВЛЕНО: Передаем профиль в сайдбар */}
+            {/* ДОБАВЛЕНО: Передаем профиль в сайдбар */}
            <TourSidebar tour={tour} />
           </div>
         </div>

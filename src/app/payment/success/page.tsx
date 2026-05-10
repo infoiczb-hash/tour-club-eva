@@ -51,7 +51,8 @@ export default async function PaymentSuccessPage({
   // 2. ЛОКАЛЬНАЯ ПРОВЕРКА ПОДПИСИ (Главный гарант)
   let isSignatureValid = false;
   // По документации АПБ SuccessURL подписывается с константой 'paid'
- const normalizedDate = date?.replace(/\./g, '') ?? '';
+// Банк присылает дату в формате DD.MM.YYYY, но MD5 требует DDMMYYYY (без точек)
+const normalizedDate = date?.replace(/\./g, '') ?? '';
 if (invoiceId && sum && curr && normalizedDate && sig && env.APB_MERCHANT_PASS) {
   const hashStr = `${invoiceId}:paid:${sum}:${curr}:${normalizedDate}:${env.APB_MERCHANT_PASS}`;
     const expectedSig = crypto.createHash('md5').update(hashStr).digest('hex');

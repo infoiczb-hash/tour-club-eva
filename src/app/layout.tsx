@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { headers } from "next/headers";
@@ -10,6 +11,7 @@ import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 import Header from "@/components/Header"; 
 import { Footer } from "@/components/layout/Footer";
 import PromoBlock from "@/components/layout/PromoBlock"; 
+import HeaderSkeleton from "@/components/layout/HeaderSkeleton";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import ModalsWrapper from "@/components/modals/ModalsWrapper";
@@ -77,17 +79,17 @@ export const metadata: Metadata = {
     google: "bQzEK-w6DrRPryfEde5_dJSFHBskbBJRcWeiPgMu0N0",
     yandex: "d9d080aa11f7b5b3",
   },
-alternates: {
-  canonical: "/",
-  languages: {
-    "ru":    "https://evatur.club",
-    "ru-MD": "https://evatur.club",
-  },
+  alternates: {
+    canonical: "/",
+    languages: {
+      "ru":    "https://evatur.club",
+      "ru-MD": "https://evatur.club",
+    },
   },
 };
 
 const organizationSchema = {
-'@context': 'https://schema.org',
+  '@context': 'https://schema.org',
   '@type': ['TravelAgency', 'LocalBusiness'],
   name: 'Турклуб «Эва»',
   alternateName: ['ТурклубЭВА', 'EvaClub', 'evatur.club'],
@@ -103,9 +105,9 @@ const organizationSchema = {
   telephone: '+37377770141',
   email: 'info@evatur.club',
   priceRange: "$$", 
- 
+  
   address: {
-   '@type': 'PostalAddress',
+    '@type': 'PostalAddress',
     streetAddress: 'ул. 9 Января, 63', // укажи реальный адрес
     addressLocality: 'Тирасполь',
     addressRegion: 'Приднестровье',
@@ -142,25 +144,41 @@ export default async function RootLayout({
 
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
-     <head>
-     {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
-      Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
-  <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
-  <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+      <head>
+        {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
+         Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
+        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
 
-  {/* Cloudinary — Hero-изображения главной страницы и статические фото. */}
-  <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
-  <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* Cloudinary — Hero-изображения главной страницы и статические фото. */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
-  {/* YouTube — превью VideoGuide на каякинге и SUP */}
-  <link rel="dns-prefetch" href="https://img.youtube.com" />
+        {/* Telegram — ускорение авторизации и виджетов (важно для /login) */}
+        <link rel="preconnect" href="https://telegram.org" />
+        <link rel="dns-prefetch" href="https://telegram.org" />
 
-  <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
-</head>
+        {/* YouTube — превью VideoGuide на каякинге и SUP */}
+        <link rel="dns-prefetch" href="https://img.youtube.com" />
+
+        <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+      </head>
       <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
-       
+        
           <ToastProvider>
-            <MainLayoutWrapper header={<Header />} footer={<Footer />} promo={<PromoBlock />}>
+            <MainLayoutWrapper 
+              header={
+                <Suspense fallback={<HeaderSkeleton />}>
+                  <Header />
+                </Suspense>
+              } 
+              footer={
+                <Suspense fallback={<div className="h-64 bg-slate-900/50 animate-pulse w-full" />}>
+                  <Footer />
+                </Suspense>
+              } 
+              promo={<PromoBlock />}
+            >
               {children}
             </MainLayoutWrapper>
           </ToastProvider>

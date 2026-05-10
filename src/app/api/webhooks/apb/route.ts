@@ -10,6 +10,7 @@ import { NotificationHub } from '@/lib/notifications/hub';
 import { revalidatePath } from 'next/cache';
 import { Resend } from 'resend';
 import { BookingTicketEmail } from '@/features/tours/emails/BookingTicketEmail';
+import { NotificationTemplates } from '@/lib/notifications/templates';
 
 // Строгий тип для брони с подгруженными связями
 type BookingWithRelations = Prisma.BookingGetPayload<{
@@ -150,6 +151,7 @@ async function handlePaymentSuccess(
   state: any,
 ) {
   try {
+    // 1. Обновляем БД
     await prisma.booking.update({
       where: { id: booking.id },
       data: {
@@ -175,7 +177,8 @@ async function handlePaymentSuccess(
       },
     });
 
-    const msg = [
+    // 2. Уведомление в Админ-чат
+    const adminMsg = [
       `🟢 <b>Онлайн-оплата подтверждена (Вебхук)</b>`,
       ``,
       `🆔 Бронь #<b>${booking.shortId}</b>`,
@@ -188,61 +191,75 @@ async function handlePaymentSuccess(
     ].filter(Boolean).join('\n');
 
     await publishToTelegram(
-      msg,
-      undefined,
-      undefined,
-      false,
-      { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS },
+      adminMsg, undefined, undefined, false, { messageThreadId: env.TELEGRAM_TOPIC_BOOKINGS }
     );
 
-    // Внутрисайтовый хаб для авторизованных
+    // ─── 3. СИСТЕМА УВЕДОМЛЕНИЙ ДЛЯ КЛИЕНТА (Telegram, Email, In-App) ───
+    
+    const eventData = {
+      bookingId:    booking.id,
+      shortId:      booking.shortId,
+      tourTitle:    booking.tour.title,
+      totalPrice:   Number(booking.totalPrice),
+      currency:     booking.tour.currency ?? 'RUB',
+      meetingPoint: booking.tourDate?.meetingPoint || booking.tour.meetingPoint,
+      meetingTime:  booking.tourDate?.time,
+      importantInfo: booking.tour.importantInfo,
+      checklist:    booking.tour.checklist as any[],
+      groupChatUrl: booking.tourDate?.groupChatUrl,
+      tourDate:     booking.tourDate?.startDate ? new Date(booking.tourDate.startDate).toLocaleDateString('ru-RU') : 'Дата уточняется'
+    };
+
+    const content = await NotificationTemplates.compile('BOOKING_CONFIRMED', eventData, { name: booking.name });
+
+    if (content) {
+      // А) TELEGRAM: Прямая отправка гостям и тем, кто нажал /start (Приоритет: payerTgChatId)
+      const targetTgId = booking.payerTgChatId;
+      if (targetTgId) {
+        try {
+          await fetch(`https://api.telegram.org/bot${env.TELEGRAM_AUTH_BOT}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: targetTgId,
+              text: content.telegram.text,
+              parse_mode: 'HTML',
+              reply_markup: content.telegram.buttons ? { inline_keyboard: content.telegram.buttons } : undefined
+            })
+          });
+        } catch (tgError) {
+          console.error(`[APB Webhook] Ошибка отправки Telegram гостю ${booking.id}:`, tgError);
+        }
+      }
+
+      // Б) EMAIL: Для всех, кто оставил почту
+      const clientEmail = booking.email || (booking.social && booking.social.includes('@') ? booking.social : null);
+      if (clientEmail && content.email) {
+        try {
+          const resend = new Resend(env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: 'Турклуб EVA <info@evatur.club>',
+            to: clientEmail,
+            subject: content.email.subject,
+            html: content.email.html
+          });
+          console.log(`[APB Webhook] Билет успешно отправлен на email: ${clientEmail}`);
+        } catch (emailError) {
+          console.error(`[APB Webhook] Ошибка отправки Email для ${booking.id}:`, emailError);
+        }
+      }
+    }
+
+    // В) HUB: Внутренние уведомления для авторизованных на сайте
     if (booking.memberId) {
       await NotificationHub.dispatch({
         eventId: 'BOOKING_CONFIRMED',
         memberId: booking.memberId,
-        data: {
-          bookingId:    booking.id,
-          shortId:      booking.shortId,
-          tourTitle:    booking.tour.title,
-          totalPrice:   booking.totalPrice,
-          currency:     booking.tour.currency,
-          meetingPoint: booking.tourDate?.meetingPoint ?? booking.tour.meetingPoint,
-          meetingTime:  booking.tourDate?.time,
-          importantInfo: booking.tour.importantInfo,
-        },
+        data: eventData
       });
     }
 
-    // ОТПРАВКА БИЛЕТА НА ПОЧТУ
-    const clientEmail = booking.email || (booking.social && booking.social.includes('@') ? booking.social : null);
-    
-    if (clientEmail) {
-      try {
-        const resend = new Resend(env.RESEND_API_KEY);
-        const ticketsCount = (booking.ticketsAdult || 0) + (booking.ticketsChild || 0) + ((booking.ticketsFamily || 0) * 3) + (booking.ticketsMember || 0);
-
-        await resend.emails.send({
-          from: 'Турклуб EVA <info@evatur.club>',
-          to: clientEmail,
-          subject: `Ваш билет: ${booking.tour.title} 🏕️`,
-          react: BookingTicketEmail({
-            name: booking.name || 'Путешественник',
-            tourTitle: booking.tour.title,
-            tourDate: booking.tourDate?.startDate ? new Date(booking.tourDate.startDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Открытая дата',
-            shortId: booking.shortId || booking.id.slice(-6).toUpperCase(),
-            totalPrice: booking.totalPrice,
-            currency: booking.tour.currency,
-            paymentMethod: booking.paymentMethod || 'online_card',
-            ticketsCount: ticketsCount > 0 ? ticketsCount : 1,
-            siteUrl: env.NEXT_PUBLIC_SITE_URL
-          })
-        });
-        console.log(`[APB Webhook] Билет успешно отправлен на email: ${clientEmail}`);
-      } catch (emailError) {
-        console.error(`[APB Webhook] Ошибка отправки Email для ${booking.id}:`, emailError);
-      }
-    }
-
+    // 4. Сброс кэша
     revalidatePath('/admin');
     revalidatePath('/account/bookings');
     revalidatePath('/account/dashboard');

@@ -129,13 +129,16 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
   const primaryType = TYPES[primary];
   const secondaryType = secondary ? TYPES[secondary] : null;
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [isOpen]);
+useEffect(() => {
+  if (isOpen) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [isOpen]);
 
   useEffect(() => {
     if (selectedValue === null) return;

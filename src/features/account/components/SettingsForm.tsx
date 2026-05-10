@@ -51,7 +51,23 @@ const inputCls = "w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-
 const selectCls = "w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 outline-none cursor-pointer transition-all";
 // ────────────────────────────────────────────────────────────────────────────
 
-export default function SettingsForm({ profile }: { profile: any }) {
+export interface SettingsProfileProps {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  telegram: string | null;
+  instagram: string | null;
+  viber: string | null;
+  foodPref: string | null;
+  shoeSize: string | null;
+  clothesSize: string | null;
+  lifeJacketSize: string | null;
+  inventory: any; // В Prisma это Json, поэтому any или string[] 
+  tgChatId: string | null;
+}
+
+export default function SettingsForm({ profile }: { profile: SettingsProfileProps }) {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 

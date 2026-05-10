@@ -1,7 +1,7 @@
 import React from 'react';
 import HeaderClient from "@/components/layout/HeaderClient"; 
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { getServerUser } from '@/lib/auth';
 
 const baseNavLinks = [
   { name: "Туры", href: "/tour" },
@@ -13,26 +13,30 @@ const baseNavLinks = [
 ];
 
 export default async function Header() {
-  // Проверяем сессию на сервере (без задержек на клиенте)
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Запрашиваем кэшированного пользователя (без повторных сетевых запросов)
+  const user = await getServerUser();
 
   let userProfile = null;
 
   if (user) {
-    // 🔥 ДОБАВИЛИ id: true в select
-    const profile = await prisma.memberProfile.findUnique({
-      where: { userId: user.id },
-      select: { id: true, name: true, phone: true }
-    });
-    
-    // Если профиль найден, прокидываем его id вместе с остальными данными
-    if (profile) {
-      userProfile = {
-        id: profile.id, // 🔥 ТЕПЕРЬ ID ПЕРЕДАЕТСЯ
-        name: profile.name || null,
-        phone: profile.phone || user.phone || null
-      };
+    try {
+      // 🔥 ДОБАВИЛИ id: true в select
+      const profile = await prisma.memberProfile.findUnique({
+        where: { userId: user.id },
+        select: { id: true, name: true, phone: true }
+      });
+      
+      // Если профиль найден, прокидываем его id вместе с остальными данными
+      if (profile) {
+        userProfile = {
+          id: profile.id, // 🔥 ТЕПЕРЬ ID ПЕРЕДАЕТСЯ (нужен колокольчику)
+          name: profile.name || null,
+          phone: profile.phone || user.phone || null
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching member profile in Header:', error);
+      // Не роняем всё приложение, если БД не ответила — просто рендерим как для обычного юзера
     }
   }
 
