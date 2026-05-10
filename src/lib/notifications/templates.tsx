@@ -27,7 +27,10 @@ export type AppEvent =
   | 'POST_TOUR_REVIEW'
   | 'REVIEW_PUBLISHED'
   | 'WIN_BACK_OFFER'
-  | 'CROSS_SELL_OFFER';
+  | 'CROSS_SELL_OFFER'
+  | 'SHOP_ORDER_CREATED'
+  | 'SHOP_ORDER_APPROVED'
+  | 'SHOP_ORDER_REJECTED';
 
 export interface AppEventPayloadMap {
   BOOKING_CREATED: { 
@@ -73,7 +76,25 @@ POST_TOUR_REVIEW: {
   REVIEW_PUBLISHED: { tourTitle: string; pointsAdded: number; newBalance: number };
   WIN_BACK_OFFER: { lastTourTitle: string; promoCode: string; discount: number };
   CROSS_SELL_OFFER: { lastTourTitle: string; categoryTransitionText: string };
+  SHOP_ORDER_CREATED: {
+    orderId: string;
+    itemTitle: string;
+    price: number;
+    isPreorder?: boolean;
+  };
+  SHOP_ORDER_APPROVED: {
+    orderId: string;
+    itemTitle: string;
+  };
+  SHOP_ORDER_REJECTED: {
+    orderId: string;
+    itemTitle: string;
+    price: number;
+    reason?: string;
+  };
 }
+
+
 
 export interface NotificationContent {
   inApp: {
@@ -136,7 +157,7 @@ export const NotificationTemplates = {
     switch (eventId) {
       case 'BOOKING_CREATED': {
         const paymentLabels: Record<string, string> = {
-          biletpmr: '💳 Картой онлайн (BiletPMR)',
+          biletpmr: '💳 BiletPMR',
           qr: '📱 Клевер (QR / АПБ)',
           cash: '💵 Наличными гиду',
           foreign: '🌍 Перевод из-за рубежа',
@@ -372,9 +393,9 @@ export const NotificationTemplates = {
         let buttons = [];
 
         if (isUnpaid) {
-          // ✅ ПРАВКА: Уведомляем клиента о необходимости связаться с менеджером для отмены
+          //   ПРАВКА: Уведомляем клиента о необходимости связаться с менеджером для отмены
           customText = `\n\n⚠️ <b>ФИНАЛЬНОЕ ПОДТВЕРЖДЕНИЕ:</b> Вы выбрали оплату на месте (<b>${price} ${currency}</b>). Пожалуйста, подтвердите участие прямо сейчас.\n\nЕсли ваши планы изменились, свяжитесь с менеджером. Отмена бронирования регулируется <a href="${siteUrl}/offer">офертой</a>. 👇`;
-          buttons.push([{ text: '✅ Я точно буду', callback_data: `cash_confirm_${data.bookingId}` }]);
+          buttons.push([{ text: '  Я точно буду', callback_data: `cash_confirm_${data.bookingId}` }]);
           buttons.push([{ text: '💬 Связаться с менеджером', url: managerLink }]);
         } else {
           customText = `\n\nОплата успешно подтверждена. Выспитесь и до встречи!`;
@@ -471,8 +492,8 @@ export const NotificationTemplates = {
         }
 
         if (isUnpaid) {
-          // ✅ ПРАВКА: Текст о необходимости связаться с менеджером для отмены бронирования
-          buttons.push([{ text: '✅ Подтверждаю, буду!', callback_data: `cash_confirm_${data.bookingId}` }]);
+          //   ПРАВКА: Текст о необходимости связаться с менеджером для отмены бронирования
+          buttons.push([{ text: '  Подтверждаю, буду!', callback_data: `cash_confirm_${data.bookingId}` }]);
           buttons.push([{ text: '💬 Связаться с менеджером', url: managerLink }]);
         }
 
@@ -583,6 +604,64 @@ export const NotificationTemplates = {
           },
           push: { title: 'Готовы к новому вызову? 🚀', body: `Мы подобрали для вас идеальный маршрут` },
           email: null
+        };
+      }
+
+     case 'SHOP_ORDER_CREATED': {
+        const { itemTitle, price, isPreorder } = data as AppEventPayloadMap['SHOP_ORDER_CREATED'];
+        return {
+          inApp: {
+            type: 'info',
+            title: isPreorder ? `Предзаказ на «${itemTitle}»` : `Заказ принят`,
+            message: isPreorder
+              ? `Когда товар появится, мы вас уведомим.`
+              : `Списано ${price} баллов. Ожидайте подтверждения.`,
+            link: `/account/shop`,
+          },
+          telegram: {
+            text: isPreorder
+              ? `📦 Предзаказ на «<b>${itemTitle}</b>» оформлен.\n\nКогда товар появится на складе, мы вас уведомим.`
+              : `🛒 Заказ на «<b>${itemTitle}</b>» принят!\n\n💰 Списано <b>${price} баллов</b>.\nОжидайте подтверждения от команды.`,
+            buttons: [[{ text: '🏪 Мои заказы', url: `${env.NEXT_PUBLIC_SITE_URL}/account/shop` }]],
+          },
+          push: { title: 'Магазин ЭВА', body: isPreorder ? `Предзаказ на «${itemTitle}» оформлен` : `Заказ на «${itemTitle}» принят` },
+          email: null,
+        };
+      }
+
+      case 'SHOP_ORDER_APPROVED': {
+        const { itemTitle } = data as AppEventPayloadMap['SHOP_ORDER_APPROVED'];
+        return {
+          inApp: {
+            type: 'success',
+            title: `Заказ одобрен!`,
+            message: `«${itemTitle}» готовится к выдаче. Ожидайте.`,
+            link: `/account/shop`,
+          },
+          telegram: {
+            text: `  <b>Заказ одобрен!</b>\n\n«<b>${itemTitle}</b>» готовится к выдаче.\nМенеджер свяжется с вами для уточнения деталей.`,
+            buttons: [[{ text: '💬 Связаться с менеджером', url: 'https://t.me/romansvtirase' }]],
+          },
+          push: { title: 'Заказ одобрен!  ', body: `«${itemTitle}» готовится к выдаче` },
+          email: null,
+        };
+      }
+
+      case 'SHOP_ORDER_REJECTED': {
+        const { itemTitle, price, reason } = data as AppEventPayloadMap['SHOP_ORDER_REJECTED'];
+        return {
+          inApp: {
+            type: 'error',
+            title: `Заказ отклонён`,
+            message: reason ? `«${itemTitle}»: ${reason}. Баллы возвращены.` : `«${itemTitle}». Баллы возвращены.`,
+            link: `/account/shop`,
+          },
+          telegram: {
+            text: `❌ <b>Заказ отклонён</b>\n\n«<b>${itemTitle}</b>»${reason ? `\n\n<b>Причина:</b> ${reason}` : ''}\n\n💰 <b>${price} баллов</b> возвращены на ваш баланс.`,
+            buttons: [[{ text: '🏪 Вернуться в магазин', url: `${env.NEXT_PUBLIC_SITE_URL}/account/shop` }]],
+          },
+          push: { title: 'Заказ отклонён', body: `Баллы за «${itemTitle}» возвращены` },
+          email: null,
         };
       }
 

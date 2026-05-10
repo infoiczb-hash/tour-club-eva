@@ -141,8 +141,7 @@ export default async function GuidePage({ params }: Props) {
             <div className="absolute inset-0 bg-slate-900" />
           )}
           {/* Градиенты для читаемости (снизу и сверху) */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-slate-950/60 to-transparent pointer-events-none" />
+         <div className="absolute inset-0 bg-black/40" />
         </div>
         
         {/* CONTENT CONTAINER */}

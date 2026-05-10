@@ -72,6 +72,12 @@ export const apbClient = {
     desc: string,
     lifetimeMin: number = 30,
   ): string {
+
+  if (!Number.isInteger(amountKop) || amountKop < 1) {
+    console.error('[APB] amountKop must be a positive integer (kopecks)', amountKop);
+    throw new Error('Сумма для АПБ должна быть целым положительным числом в копейках');
+  }
+
     const merchantId = env.APB_MERCHANT_ID;
     const isTest     = env.APB_IS_TEST;      // '0' или '1'
     const currCode   = '000';                 // Рубль ПМР по справочнику ЦБ ПМР
@@ -101,9 +107,9 @@ export const apbClient = {
       IsTest:         isTest,
       LifeTime:       lifetimeMin.toString(),
       SignatureValue: signature,
-      // URL-ы возврата клиента
-      SuccessURL:     `${baseUrl}/payment/success?invoiceId=${invoiceId}`,
-      FailURL:        `${baseUrl}/payment/fail?invoiceId=${invoiceId}`,
+      // URL-ы возврата клиента (ИСПРАВЛЕНО: invoiceId заменен на invoiceid)
+      SuccessURL:     `${baseUrl}/payment/success?invoiceid=${invoiceId}`,
+      FailURL:        `${baseUrl}/payment/fail?invoiceid=${invoiceId}`,
       ResultURL:      `${baseUrl}/api/webhooks/apb`,
     });
 

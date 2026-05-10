@@ -466,6 +466,7 @@ model MemberProfile {
   promoCode     PromoCode?
   tags          String[]  @default([])   // Сегментация: ["vip", "ambassador", "photographer"]
   balanceLogs   BalanceLog[]            // История изменений баланса
+  orders        ShopOrder[]
 
  @@index([phone])
   @@index([userId])
@@ -653,6 +654,35 @@ model BoatAssignment {
   @@index([tourDateId])
 }
 
+model ShopItem {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  imageUrl    String?
+  price       Int         // стоимость в промо-баллах
+  stock       Int         @default(-1) // -1 = безлимит, 0 = нет в наличии
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  orders      ShopOrder[]
+}
+
+model ShopOrder {
+  id        String          @id @default(cuid())
+  itemId    String
+ memberId  String   @map("member_id") @db.Uuid
+  status    ShopOrderStatus @default(PENDING)
+  note      String?         // комментарий админа при отклонении
+  isPreorder Boolean        @default(false) // true если stock = 0 при запросе
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  item      ShopItem        @relation(fields: [itemId], references: [id])
+  member    MemberProfile   @relation(fields: [memberId], references: [id])
+}
+
 // ─────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────
@@ -689,4 +719,11 @@ enum InquiryStatus {
 enum ActorType {
   ADMIN
   SYSTEM
+}
+
+enum ShopOrderStatus {
+  PENDING    // ожидает решения
+  APPROVED   // одобрено
+  REJECTED   // отклонено, баллы возвращены
+  DELIVERED  // выдано участнику
 }

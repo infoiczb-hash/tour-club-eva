@@ -1,25 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
-import { Metadata } from 'next';
 import { ArrowLeft, FileText, Scale } from 'lucide-react';
 import LegalNav from "@/components/LegalNav";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import AskQuestionButton from '@/components/AskQuestionButton';
 
-export const metadata: Metadata = {
-  title: 'Публичная Оферта | Турклуб «Эва»',
-  description: 'Официальная публичная оферта и условия оказания услуг туристического клуба «Эва». Правила бронирования, возврата средств и участия в турах.',
-  robots: { index: false, follow: false },
-  openGraph: {
-    title: 'Публичная Оферта | Турклуб «Эва»',
-    description: 'Официальные условия оказания туристических услуг.',
-    url: 'https://evatur.club/offer',
-    siteName: 'Турклуб «Эва»',
-    images: [{ url: '/og-default.jpg', width: 1200, height: 630 }],
-    locale: 'ru_RU',
-    type: 'website',
-  }
-};
+// Включаем ISR кэширование на 24 часа. 
+// Страница будет отдаваться мгновенно как статичный файл.
+export const revalidate = 86400; 
 
 export default function OfferPage() {
   return (
@@ -146,9 +134,7 @@ export default function OfferPage() {
                 <p className="text-slate-300 text-sm md:text-sm max-w-md">Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!</p>
             </div>
             
-            {/* 👇 НАШ НОВЫЙ КЛИЕНТСКИЙ ОСТРОВОК */}
             <AskQuestionButton context="Вопрос по оферте" tab="TOUR" />
-
         </div>
         
         <LegalNav currentPage="offer" />

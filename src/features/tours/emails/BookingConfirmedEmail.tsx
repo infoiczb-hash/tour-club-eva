@@ -103,25 +103,34 @@ export const BookingConfirmedEmail = ({
               )}
             </Section>
 
-            {/* Состав участников */}
-            {guests.length > 0 && (
-              <Section className="mb-8">
-                <Text className="m-0 mb-3 text-xs uppercase tracking-widest text-slate-400 font-bold">Список участников ({ticketsCount})</Text>
-                {guests.map((guest, idx) => (
-                  <div key={idx} className="flex justify-between py-2 border-b border-slate-50 last:border-0 text-sm">
-                    <span className="font-medium">{guest.name}</span>
-                    <span className="text-slate-500">{guest.type ? ticketTypeLabels[guest.type] : 'Билет'}</span>
-                  </div>
-                ))}
-              </Section>
-            )}
+          {/* Состав участников */}
+{guests.length > 0 && (
+  <Section className="mb-8">
+    <Text className="m-0 mb-3 text-xs uppercase tracking-widest text-slate-400 font-bold">
+      Список участников ({ticketsCount})
+    </Text>
+    {guests.map((guest, idx) => (
+      <div 
+        key={idx} 
+        className={`flex justify-between py-2 text-sm ${
+          idx === guests.length - 1 ? "" : "border-b border-slate-50"
+        }`}
+      >
+        <span className="font-medium">{guest.name}</span>
+        <span className="text-slate-500">
+          {guest.type ? ticketTypeLabels[guest.type] : 'Билет'}
+        </span>
+      </div>
+    ))}
+  </Section>
+)}
 
-            {/* Снаряжение (Если есть) */}
+         {/* Снаряжение (Если есть) */}
             {checklist.length > 0 && (
               <Section className="mb-8 bg-slate-50 rounded-2xl p-6">
                 <Text className="m-0 mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">Что взять с собой</Text>
                 {checklist.map((item, idx) => (
-                  <div key={idx} className="mb-3 last:mb-0">
+                  <div key={idx} className={idx === checklist.length - 1 ? "m-0" : "mb-3"}>
                     <Text className="m-0 text-[11px] font-bold text-slate-900 uppercase tracking-tight">{item.title}</Text>
                     <Text className="m-0 text-xs text-slate-600 leading-relaxed">{item.items}</Text>
                   </div>

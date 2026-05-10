@@ -129,13 +129,16 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
   const primaryType = TYPES[primary];
   const secondaryType = secondary ? TYPES[secondary] : null;
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [isOpen]);
+useEffect(() => {
+  if (isOpen) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [isOpen]);
 
   useEffect(() => {
     if (selectedValue === null) return;
@@ -213,7 +216,7 @@ export default function PsychProfileModal({ isOpen, onClose }: { isOpen: boolean
                 <Brain size={32} />
               </div>
               <h1 className="text-3xl md:text-5xl font-black text-white mb-4 uppercase tracking-tight leading-tight">
-                Кто ты<br /><span className="text-purple-400">в горах?</span>
+                Психологический профиль<br /><span className="text-purple-400">туриста</span>
               </h1>
 
               <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed mb-10 max-w-md">

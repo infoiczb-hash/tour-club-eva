@@ -1,41 +1,87 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Loader2, Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
-import { Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
+import { getMyProfileAction } from '@/features/account/actions/getProfile';
 
 interface TourSidebarProps {
   tour: Tour;
-  // ✅ НОВОЕ: Принимаем профиль для предзаполнения
-  profile?: { name?: string | null; phone?: string | null; id?: string } | null;
 }
 
-export default function TourSidebar({ tour, profile }: TourSidebarProps) {
+export default function TourSidebar({ tour }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
-  const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily, spotsLeft } = tour;
+const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
   
   const currentPrice = Number(price || 0);
   const oldPriceVal = Number(priceOld || 0);
-  const left = Number(spotsLeft || 0);
 
+  // ДОБАВЛЯЕМ ДЛЯ ЕДИНООБРАЗИЯ И ЧИСТОТЫ КОДА
+  const prices = useMemo(() => {
+    const list = [];
+    if (tour.price) list.push({ label: 'Взрослый', value: tour.price, icon: <Ticket size={14} /> });
+    if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
+    if (tour.priceChild) list.push({ label: 'Детский (до 13)', value: tour.priceChild, icon: <Baby size={14} /> });
+    if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
+    return list;
+  }, [tour]);
+
+  const minPrice = prices.length > 0 
+    ? Math.min(...prices.map(p => Number(p.value))) 
+    : currentPrice;
   const hasDiscount = oldPriceVal > currentPrice;
   const discountPercent = hasDiscount ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100) : 0;
 
-  const isSoldOut = left <= 0;
-  const isLowSpots = left > 0 && left <= 5;
-
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
-  // ✅ НОВОЕ: Предзаполняем стейты из профиля, если он передан
-  const [waitlistName,     setWaitlistName]     = useState(profile?.name || '');
-  const [waitlistPhone,    setWaitlistPhone]    = useState(profile?.phone || '+373 ');
+  
+  // Стейты для Листа ожидания
+  const [waitlistName,     setWaitlistName]     = useState('');
+  const [waitlistPhone,    setWaitlistPhone]    = useState('+373 ');
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
+  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false);
+
+  //   Клиентская подгрузка профиля (безопасно для SSR)
+  useEffect(() => {
+    getMyProfileAction().then(p => {
+      if (p) {
+        setIsProfileLoaded(true);
+        if (p.name) setWaitlistName(p.name);
+        if (p.phone) setWaitlistPhone(p.phone);
+      }
+    }).catch(err => console.error("Ошибка загрузки профиля в сайдбаре:", err));
+  }, []);
+
+  // Умная логика доступности (Global Availability)
+  const { isGlobalSoldOut, isLowSpots } = useMemo(() => {
+    if (!tour?.tourDates || tour.tourDates.length === 0) {
+      const fallbackLeft = Number(tour?.spotsLeft || 0);
+      return { isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5 };
+    }
+
+    const now = new Date();
+    const futureDates = tour.tourDates.filter((d: any) => 
+      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
+    );
+
+    const totalLeft = futureDates.reduce((acc: number, d: any) => {
+      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
+      return acc + Math.max(0, left);
+    }, 0);
+
+    return {
+      isGlobalSoldOut: futureDates.length > 0 ? totalLeft <= 0 : true,
+      isLowSpots: totalLeft > 0 && totalLeft <= 5
+    };
+  }, [tour]);
+
+  // Оставляем алиас для совместимости с нижним кодом
+  const isSoldOut = isGlobalSoldOut;
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +110,13 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
         {/* БЛОК 1: Цена и Места */}
         <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
           <div>
-            <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Стоимость участия</p>
+            <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Цена</p>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
-                {currentPrice.toLocaleString('ru-RU')}
-              </span>
-              <span className="text-sm font-bold text-teal-500">{currency}</span>
+              {prices.length > 1 && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
+  <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
+    {minPrice.toLocaleString('ru-RU')}
+  </span>
+  <span className="text-sm font-bold text-teal-500">{currency}</span>
             </div>
             
             {hasDiscount && (
@@ -83,19 +130,21 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
               </div>
             )}
           </div>
-          
-          <div className="text-right">
-              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Свободных мест</p>
-              <div className={clsx("text-2xl font-black tabular-nums", isSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-500" : "text-teal-400"))}>
-                {isSoldOut ? "0" : left}
+        <div className="text-right">
+              <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1"> Места</p>
+              <div className={clsx(
+                "text-lg font-black uppercase leading-tight", 
+                isGlobalSoldOut ? "text-rose-500" : (isLowSpots ? "text-amber-500" : "text-teal-400")
+              )}>
+                {isGlobalSoldOut ? "Мест нет" : (isLowSpots ? "Мест мало" : "В наличии")}
               </div>
-              {isLowSpots && !isSoldOut && (
-                <span className="text-[12px] font-bold text-amber-500 uppercase ">Заканчиваются!</span>
-              )}
+              <p className="text-[10px] font-medium text-slate-400 mt-1.5 leading-tight max-w-[140px] ml-auto">
+                Наличие мест на даты смотрите в расписании.
+              </p>
           </div>
         </div>
 
-        {/* БЛОК 2: Доступные тарифы (если они есть) */}
+        {/* БЛОК 2: Доступные тарифы */}
         {((priceMember || 0) > 0 || (priceChild || 0) > 0 || (priceFamily || 0) > 0) && (
           <div className="space-y-3 mb-6">
             <p className="text-slate-300 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
@@ -154,8 +203,7 @@ export default function TourSidebar({ tour, profile }: TourSidebarProps) {
           </div>
         ) : showWaitlistForm ? (
           <form onSubmit={handleWaitlistSubmit} className="space-y-3">
-            {/* ✅ НОВОЕ: Подсказка для гостей */}
-            {!profile && (
+            {!isProfileLoaded && (
               <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 mb-2 text-xs text-slate-300">
                 💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a>, чтобы мы автоматически уведомляли вас о новых местах и других датах тура!
               </div>

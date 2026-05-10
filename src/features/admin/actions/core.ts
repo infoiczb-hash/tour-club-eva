@@ -102,7 +102,7 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
     }
 
     if (filterTab === 'active') {
-      //   ФИКС: Оффлайн-брони (tourDateId: null) теперь видны в активных
+      // ФИКС: Оффлайн-брони (tourDateId: null) теперь видны в активных
       andConditions.push({
         status: { notIn: ['cancelled', 'rejected'] },
         OR: [
@@ -140,7 +140,7 @@ export const getRegistrationsAction = withAdminAuth(async (params: GetRegistrati
     ]);
 
     const data = bookingsRaw.map((item) => {
-    const actualDate = item.tourDate?.startDate || item.bookedDate || null;
+      const actualDate = item.tourDate?.startDate || item.bookedDate || null;
 
       return {
         id: item.id,
@@ -311,7 +311,7 @@ export const savePostAction = withAdminAuth(
 export const togglePostStatusAction = withAdminAuth(
   withAdminAudit({
     actionName: 'TOGGLE_POST_STATUS',
-    getTargetId: (id: string, _field: 'isActive' | 'is_trending', _value: boolean) => id, //   Добавили недостающие аргументы
+    getTargetId: (id: string, _field: 'isActive' | 'is_trending', _value: boolean) => id,
   })(async (id: string, field: 'isActive' | 'is_trending', value: boolean) => {
     try {
       const existing = field === 'isActive' 
@@ -361,17 +361,12 @@ export const deletePostAction = withAdminAuth(
 );
 
 // ==========================================
-// 4. ТУРЫ (SOFT DELETE + АУДИТ) УДАЛЕН такая функция есть tours/ts
-// ==========================================
-
-
-// ==========================================
 // 5. КОНТЕНТ-БЛОКИ И CRM (АУДИТ)
 // ==========================================
 export const saveContentBlockAction = withAdminAuth(
   withAdminAudit({
     actionName: 'SAVE_CONTENT_BLOCK',
-    getTargetId: (slug: string, _content: Prisma.InputJsonValue) => slug, //   Добавили второй аргумент
+    getTargetId: (slug: string, _content: Prisma.InputJsonValue) => slug,
   })(async (slug: string, content: Prisma.InputJsonValue) => {
     try {
       await prisma.contentBlock.upsert({
@@ -390,7 +385,7 @@ export const saveContentBlockAction = withAdminAuth(
 export const updateBookingCommentAction = withAdminAuth(
   withAdminAudit({
     actionName: 'UPDATE_BOOKING_COMMENT',
-    getTargetId: (id: string, _comment: string) => id, //   Добавили _comment
+    getTargetId: (id: string, _comment: string) => id,
   })(async (id: string, comment: string) => {
     try {
       await prisma.booking.update({ where: { id }, data: { comment } });
@@ -403,7 +398,7 @@ export const updateBookingCommentAction = withAdminAuth(
 );
 
 // ==========================================
-// 6. МАНИФЕСТЫ (ГРУППЫ) - РЕШЕНО N+1 QUERY PROBLEM
+// 6. МАНИФЕСТЫ (ГРУППЫ) - РЕШЕНО N+1 QUERY PROBLEM И БАГ ГРУППИРОВКИ
 // ==========================================
 
 export interface GetGroupsManifestParams {
@@ -423,97 +418,112 @@ export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestP
     const skip = (page - 1) * limit;
     const activeStatuses: BookingStatus[] = ['pending', 'confirmed'];
 
-    // 1. Получаем даты туров (основной запрос)
-    const tourDates = await prisma.tourDate.findMany({
-      where: {
-        bookings: { some: { status: { in: activeStatuses } } },
-        ...(search && { tour: { title: { contains: search, mode: 'insensitive' } } })
-      },
-      include: {
-        tour: { select: { id: true, title: true, slug: true } },
-      },
-      orderBy: { startDate: sortBy === 'date_asc' ? 'asc' : 'desc' },
-      skip,
-      take: limit,
-    });
+    const whereClause: Prisma.BookingWhereInput = {
+      status: { in: activeStatuses }
+    };
+    
+    if (search) {
+      whereClause.tour = { title: { contains: search, mode: 'insensitive' } };
+    }
 
-    const total = await prisma.tourDate.count({
-      where: {
-        bookings: { some: { status: { in: activeStatuses } } },
-        ...(search && { tour: { title: { contains: search, mode: 'insensitive' } } })
-      },
-    });
-
-    if (tourDates.length === 0) return { success: true, groups: [], total: 0 };
-
-    //   РЕШЕНИЕ N+1: Выгружаем все брони для выбранных дат одним запросом
-    const tourDateIds = tourDates.map(td => td.id);
+    // 1. Получаем ВООБЩЕ ВСЕ активные брони (с датами и без) одним запросом
     const allBookings = await prisma.booking.findMany({
-      where: {
-        tourDateId: { in: tourDateIds },
-        status: { in: activeStatuses },
+      where: whereClause,
+      include: {
+        tour: { select: { id: true, title: true, slug: true, dates: true } },
+        tourDate: true
       },
       orderBy: { createdAt: 'asc' }
     });
 
-    // Группируем брони по ID даты в памяти
-    const bookingsByDate = new Map<string, typeof allBookings>();
+    // 2. Группируем в памяти
+    const groupsMap = new Map<string, GroupManifest & { _dateForSort: number }>();
+
     allBookings.forEach(b => {
-      const key = b.tourDateId!;
-      if (!bookingsByDate.has(key)) bookingsByDate.set(key, []);
-      bookingsByDate.get(key)!.push(b);
-    });
+      // Ищем дату выезда: из tourDate (новая архитектура) ИЛИ bookedDate (старые брони)
+      const actualDate = b.tourDate?.startDate || b.bookedDate || null;
 
-    // 2. Формируем финальный массив групп
-    const groups = tourDates.map(td => {
-      const bookings = bookingsByDate.get(td.id) || [];
-      const totalTickets = bookings.reduce((sum, b) => 
-        sum + b.ticketsAdult + b.ticketsChild + b.ticketsMember + b.ticketsFamily * 3, 0
-      );
+      // ЖЕЛЕЗОБЕТОННЫЙ КЛЮЧ:
+      // Новые брони группируем строго по tourDateId.
+      // Старые брони (без tourDateId) группируем по tourId + timestamp даты, чтобы разные исторические выезды не слипались.
+      const dateStamp = actualDate ? new Date(actualDate).getTime() : 'nodate';
+      const groupKey = b.tourDateId 
+        ? `date_${b.tourDateId}` 
+        : `legacy_${b.tourId}_${dateStamp}`;
 
-      const participants = bookings.flatMap((b) => {
-        const guestsArray = (b.guests as unknown) as GuestJsonData[];
-        const mainGuestInfo = Array.isArray(guestsArray) ? guestsArray.find(g => g.isMain) : null;
-        
-        const mainParticipant = {
-          isMain: true,
-          bookingId: b.id,
-          shortId: b.shortId ?? b.id.substring(0, 4),
-          name: b.name,
-          ticketType: 'adult',
-          phone: b.phone,
-          social: b.social,
-          comment: b.comment,
-          status: b.status,
-          jacket: mainGuestInfo?.jacket || '', 
-        };
-        
-        const extraGuests = Array.isArray(guestsArray)
-          ? guestsArray.filter(g => !g.isMain).map(g => ({
-              isMain: false,
-              bookingId: b.id,
-              shortId: b.shortId ?? b.id.substring(0, 4),
-              name: g.name || 'Без имени',
-              ticketType: g.ticketType || 'adult',
-              age: g.age,
-              jacket: g.jacket || '', 
-              phone: g.phone,
-              status: b.status,
-            }))
-          : [];
-            
-        return [mainParticipant, ...extraGuests];
+      if (!groupsMap.has(groupKey)) {
+        let dateStr = 'Открытая дата';
+        let timeForSort = 0;
+
+        if (actualDate) {
+          const d = new Date(actualDate);
+          if (!isNaN(d.getTime())) {
+            dateStr = d.toLocaleDateString('ru-RU', {
+              day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+            timeForSort = d.getTime();
+          }
+        }
+
+        groupsMap.set(groupKey, {
+          tourName: b.tour?.title || 'Без названия',
+          date: dateStr,
+          totalTickets: 0,
+          participants: [],
+          _dateForSort: timeForSort
+        });
+      }
+
+      const group = groupsMap.get(groupKey)!;
+
+      // Считаем билеты
+      const tickets = (b.ticketsAdult || 0) + (b.ticketsChild || 0) + (b.ticketsMember || 0) + (b.ticketsFamily || 0) * 3;
+      group.totalTickets += tickets;
+
+      // Формируем список участников
+      const guestsArray = (b.guests as unknown) as GuestJsonData[] || [];
+      const mainGuestInfo = guestsArray.find(g => g.isMain);
+
+      group.participants.push({
+        isMain: true,
+        bookingId: b.id,
+        shortId: b.shortId ?? b.id.substring(0, 4),
+        name: b.name,
+        ticketType: 'adult',
+        phone: b.phone,
+        social: b.social,
+        comment: b.comment,
+        status: b.status,
+        jacket: mainGuestInfo?.jacket || '',
       });
 
-      return {
-        tourName: td.tour.title,
-        date: td.startDate.toLocaleDateString('ru-RU'),
-        totalTickets,
-        participants,
-      };
+      guestsArray.filter(g => !g.isMain).forEach(g => {
+        group.participants.push({
+          isMain: false,
+          bookingId: b.id,
+          shortId: b.shortId ?? b.id.substring(0, 4),
+          name: g.name || 'Без имени',
+          ticketType: g.ticketType || 'adult',
+          age: g.age,
+          jacket: g.jacket || '',
+          phone: g.phone,
+          status: b.status,
+        });
+      });
     });
 
-    return { success: true, groups, total };
+    // 3. Сортируем
+    let groupsArray = Array.from(groupsMap.values());
+    groupsArray.sort((a, b) => sortBy === 'date_asc' ? a._dateForSort - b._dateForSort : b._dateForSort - a._dateForSort);
+
+    // 4. Пагинация
+    const total = groupsArray.length;
+    const paginatedGroups = groupsArray.slice(skip, skip + limit).map(g => {
+      const { _dateForSort, ...rest } = g;
+      return rest;
+    });
+
+    return { success: true, groups: paginatedGroups, total };
   } catch (error) {
     console.error('[getGroupsManifest] Error:', error);
     return { success: false, error: 'Ошибка загрузки группы' };

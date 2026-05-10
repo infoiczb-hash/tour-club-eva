@@ -8,16 +8,18 @@ import DirectionBento from '@/components/directions/DirectionBento';
 import DirectionShowcase from '@/components/directions/DirectionShowcase';
 import DirectionLeadMagnet from '@/components/directions/DirectionLeadMagnet';
 
-// --- VIP-НАПРАВЛЕНИЯ ---
-import KayakingLanding from '@/features/directions/kayaking/KayakingLanding';
-import SupLanding from '@/features/directions/sup/SupLanding';
-import KidsLanding from '@/features/directions/kids/KidsLanding';
-import LocalLanding from '@/features/directions/local/LocalLanding';
-import OrganizersLanding from '@/features/directions/organizers/OrganizersLanding';
-import HikesLanding from '@/features/directions/hiking/HikesLanding';
-
 import { TourPreview } from '@/features/tours/types';
 import { getToursByCategory } from '@/features/tours/api';
+import dynamic from 'next/dynamic';
+
+// --- VIP-НАПРАВЛЕНИЯ (Ленивая загрузка) ---
+// Компонент загрузится только если slug совпадет, экономя сотни килобайт JS
+const KayakingLanding = dynamic(() => import('@/features/directions/kayaking/KayakingLanding'));
+const SupLanding = dynamic(() => import('@/features/directions/sup/SupLanding'));
+const KidsLanding = dynamic(() => import('@/features/directions/kids/KidsLanding'));
+const LocalLanding = dynamic(() => import('@/features/directions/local/LocalLanding'));
+const OrganizersLanding = dynamic(() => import('@/features/directions/organizers/OrganizersLanding'));
+const HikesLanding = dynamic(() => import('@/features/directions/hiking/HikesLanding'));
 
 // ==========================================
 // SEO: РАСШИРЕННЫЙ КОНФИГ НАПРАВЛЕНИЙ

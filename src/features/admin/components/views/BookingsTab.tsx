@@ -12,7 +12,6 @@ import { sendManifestToTelegramAction } from '@/features/admin/actions/manifest'
 import { broadcastToGroupAction } from '@/features/admin/actions/broadcast';
 import { updateBookingCommentAction } from '@/features/admin/actions';
 import { refundPaymentAction } from '@/features/admin/actions/refundPayment';
-import { BookingItem } from '../AdminDashboard';
 
 // --- ИНТЕРФЕЙСЫ ---
 export interface GuestItem {
@@ -22,6 +21,45 @@ export interface GuestItem {
   jacket?: string; //   ИСПРАВЛЕНО: заменено equipment на jacket
   phone?: string;     
 }
+
+export interface BookingItem {
+  id: string;
+  short_id?: number; 
+  user_name: string;
+  user_phone: string;
+  status: BookingStatus;
+  created_at: Date | string;
+  
+  tickets_adult: number;
+  tickets_child: number;
+  tickets_family: number;
+  tickets_member: number;
+  
+  total_price: number;
+  amount_paid: number;
+  source: string;
+  
+payment_method: string; 
+  discount: number;       
+  tourId: string;         
+  tourDateId?: string | null; 
+  apb_invoice_id?: string | null; //   Поле из БД для работы с банком
+  refunded_amount?: number;       //   Поле из БД для учета частичных возвратов 
+  apbInvoiceId?: string | null;   //   Добавлено: camelCase напрямую от Prisma
+  refundedAmount?: number;        //   Добавлено: camelCase напрямую от Prisma  
+  
+  comment?: string | null;
+  social?: string | null;
+  tour?: { title: string; date: Date | string };
+  
+  guests?: GuestItem[] | null;
+
+  payment_proof_url?: string | null;
+  receipt_url?: string | null;
+  confirmed_by?: string | null;
+  confirmed_at?: Date | string | null;
+}
+
 // Группа для манифеста (то, что возвращает сервер)
 export interface GroupManifest {
   tourName: string;
@@ -232,9 +270,10 @@ export default function BookingsTab({
     return <div className="p-10 text-center text-slate-700">Загрузка бронирований...</div>;
   }
 
-  const handleRefund = async (booking: BookingItem) => {
+ const handleRefund = async (booking: BookingItem) => {
     const paid = booking.amount_paid || booking.total_price;
-    const refunded = booking.refunded_amount || 0;
+    //  ИСПРАВЛЕНО: ищем либо camelCase, либо snake_case
+    const refunded = booking.refundedAmount ?? booking.refunded_amount ?? 0;
     const remaining = paid - refunded;
 
     if (remaining <= 0) {
@@ -258,7 +297,7 @@ export default function BookingsTab({
     const reason = window.prompt('Причина возврата:', 'Запрос клиента');
     if (!reason) return;
 
-    if (!window.confirm(`Вернуть ${amount} MDL на карту клиента?`)) return;
+    if (!window.confirm(`Вернуть ${amount} RUB на карту клиента?`)) return;
 
     try {
       showToast('Выполняем возврат...', 'info');
@@ -374,7 +413,7 @@ export default function BookingsTab({
                                         <div className="font-black text-slate-900 mb-1.5 text-xs">{formatTickets(b)}</div>
                                         
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-sm font-black text-slate-900">{b.total_price} MDL</span>
+                                            <span className="text-sm font-black text-slate-900">{b.total_price} RUB</span>
                                             {b.discount > 0 && <span className="text-[12px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">-{b.discount} б.</span>}
                                         </div>
                                         
@@ -440,9 +479,9 @@ export default function BookingsTab({
                                         )}
                                         
                                         {/*   КНОПКА ВОЗВРАТА */}
-                                        {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
-                                          <button 
-                                              onClick={() => handleRefund(b)}
+                                         {(b.apbInvoiceId || b.apb_invoice_id) && (b.total_price - (b.refundedAmount ?? b.refunded_amount ?? 0) > 0) && (
+    <button 
+        onClick={() => handleRefund(b)}
                                               className="w-full flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-colors"
                                            >
                                               <RotateCcw size={14}/> Возврат
@@ -534,7 +573,7 @@ export default function BookingsTab({
                                     
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
                                       <div className="text-xs font-black text-teal-700">
-                                        {formatTickets(b)} • {b.total_price} MDL
+                                        {formatTickets(b)} • {b.total_price} RUB
                                         {b.amount_paid > 0 && <span className="ml-2 text-emerald-600 border-l border-teal-500/30 pl-2">Аванс: {b.amount_paid}</span>}
                                       </div>
                                       
@@ -566,9 +605,9 @@ export default function BookingsTab({
                             )}
 
                             {/*   КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
-                            {b.apb_invoice_id && (b.total_price - (b.refunded_amount || 0) > 0) && (
-                                <button 
-                                  onClick={() => handleRefund(b)}
+                           {(b.apbInvoiceId || b.apb_invoice_id) && (b.total_price - (b.refundedAmount ?? b.refunded_amount ?? 0) > 0) && (
+      <button 
+        onClick={() => handleRefund(b)}
                                   className="w-full mt-2 flex items-center justify-center gap-2 bg-rose-50 text-rose-700 border border-rose-200 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest active:scale-[0.98] transition-all"
                                 >
                                   <RotateCcw size={16}/> Сделать возврат Клевер
@@ -808,7 +847,7 @@ export default function BookingsTab({
             <div className="p-5 border-t border-slate-200 bg-white flex flex-col gap-3">
               <div className="flex justify-between items-center px-2 mb-2">
                  <span className="text-sm font-bold text-slate-700 uppercase tracking-widest">К оплате:</span>
-                 <span className="text-2xl font-black text-slate-900">{receiptModal.booking.total_price} MDL</span>
+                 <span className="text-2xl font-black text-slate-900">{receiptModal.booking.total_price} RUB</span>
               </div>
               <div className="flex gap-3">
                 <button 

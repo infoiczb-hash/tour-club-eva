@@ -161,7 +161,7 @@ describe('API Route: APB Webhook (/api/webhooks/apb)', () => {
         apbRrn: 'RRN12345',
         apbAuthCode: 'AUTH99',
         amountPaid: 1500,
-        confirmedBy: 'APB_AUTO',
+       confirmedBy: 'APB_WEBHOOK_AUTO',
       }),
     });
 

@@ -63,15 +63,21 @@ export const saveTour = withAdminAuth(
       const mainGuideId = data.dates?.[0]?.guide_id || null;
 
       // Подготовка дат
-     const tourDatesData = data.dates.map((d) => ({
-        startDate: new Date(d.start),
-        endDate: d.end ? new Date(d.end) : null,
-        time: d.time || null,
-        guideId: d.guide_id || null,
-        groupChatUrl: d.groupChatUrl || null, 
-        spots: d.spots ?? data.spots,                    // ✅ Приоритет у вместимости конкретной даты
-        spotsLeft: d.spotsLeft ?? d.spots ?? data.spots, // ✅ Безопасно для нового тура: ставим полное число мест
-      }));
+   const tourDatesData = data.dates.map((d) => ({
+  startDate: new Date(d.start),
+  endDate: d.end ? new Date(d.end) : null,
+  time: d.time || null, //   Время теперь будет сохраняться
+  guideId: d.guide_id || null,
+  groupChatUrl: d.groupChatUrl || null, 
+  spots: d.spots ?? data.spots,
+  spotsLeft: d.spotsLeft ?? d.spots ?? data.spots,
+  //   ДОБАВЛЯЕМ НОВЫЕ ПОЛЯ ЦЕН:
+  basePrice: d.basePrice ?? null,
+  discountEarlyBird: d.discountEarlyBird ?? null,
+  earlyBirdDeadline: d.earlyBirdDeadline ?? null,
+  surchargeLastMinute: d.surchargeLastMinute ?? null,
+  lastMinuteTrigger: d.lastMinuteTrigger ?? null,
+}));
 
       // 3. Формируем Payload
       const prismaPayload: Prisma.TourUncheckedCreateInput = {
@@ -147,23 +153,29 @@ export const saveTour = withAdminAuth(
 
        // 4. Точечно обновляем старые и создаем новые (сохраняем tourDateId у существующих броней)
         for (const d of data.dates) {
-            // ✅ Берем вместимость конкретной даты, если нет — берем общую
+            //   Берем вместимость конкретной даты, если нет — берем общую
             const currentSpots = d.spots ?? data.spots;
 
-            const basePayload = {
-                startDate: new Date(d.start),
-                endDate: d.end ? new Date(d.end) : null,
-                time: d.time || null,
-                guideId: d.guide_id || null,
-                groupChatUrl: d.groupChatUrl || null,
-                spots: currentSpots,
-            };
+          const basePayload = {
+    startDate: new Date(d.start),
+    endDate: d.end ? new Date(d.end) : null,
+    time: d.time || null, //   Теперь время не потеряется
+    guideId: d.guide_id || null,
+    groupChatUrl: d.groupChatUrl || null,
+    spots: currentSpots,
+    //   ДОБАВЛЯЕМ ВСЕ НЕДОСТАЮЩИЕ ПОЛЯ ДЛЯ БД:
+    basePrice: d.basePrice ?? null,
+    discountEarlyBird: d.discountEarlyBird ?? null,
+    earlyBirdDeadline: d.earlyBirdDeadline ?? null,
+    surchargeLastMinute: d.surchargeLastMinute ?? null,
+    lastMinuteTrigger: d.lastMinuteTrigger ?? null,
+};
 
             if (d.id) {
                 // ⚠️ ОБНОВЛЕНИЕ СУЩЕСТВУЮЩЕЙ ДАТЫ
                 const updateData: Record<string, any> = { ...basePayload };
                 
-                // ✅ Защита от овербукинга: обновляем spotsLeft ТОЛЬКО если админ явно передал число
+                //   Защита от овербукинга: обновляем spotsLeft ТОЛЬКО если админ явно передал число
                 if (d.spotsLeft !== undefined && d.spotsLeft !== null) {
                     updateData.spotsLeft = Number(d.spotsLeft);
                 }
@@ -178,7 +190,7 @@ export const saveTour = withAdminAuth(
                     data: { 
                         ...basePayload, 
                         tourId: formData.id as string,
-                        // ✅ Новая дата: если остаток не задан, ставим его равным полной вместимости
+                        //   Новая дата: если остаток не задан, ставим его равным полной вместимости
                         spotsLeft: (d.spotsLeft !== undefined && d.spotsLeft !== null) 
                             ? Number(d.spotsLeft) 
                             : currentSpots

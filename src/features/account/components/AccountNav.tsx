@@ -12,7 +12,7 @@ import {
   LogOut,
   Compass,
   FlaskConical,
-  Bell // 🔥 ДОБАВИЛИ ИКОНКУ КОЛОКОЛЬЧИКА
+  Bell, ShoppingBag
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -32,6 +32,7 @@ const NAV_LINKS = [
   { name: 'Вишлист', href: '/account/wishlist',  icon: Heart },
   { name: 'Мои тесты', href: '/account/tests',  icon: FlaskConical },
   { name: 'Настройки', href: '/account/settings',   icon: Settings }, 
+  { name:'Магазин',  href: '/account/shop', icon: ShoppingBag }
 ];
 
 export default function AccountNav({ profile }: AccountNavProps) {

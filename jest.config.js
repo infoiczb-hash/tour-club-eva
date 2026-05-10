@@ -1,6 +1,6 @@
 const nextJest = require('next/jest');
 const createJestConfig = nextJest({ dir: './' });
-// сразу после этой строки добавь:
+
 process.env.NODE_ENV = 'test';
 
 const sharedConfig = {
@@ -8,11 +8,6 @@ const sharedConfig = {
   moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': ['@swc/jest', {}],
-  },
-  testEnvironmentOptions: {
-    env: {
-      NODE_ENV: 'test',
-    },
   },
 };
 
@@ -22,15 +17,27 @@ const customJestConfig = {
       ...sharedConfig,
       displayName: 'unit',
       testMatch: ['<rootDir>/src/**/*.test.ts'],
+      setupFiles: ['<rootDir>/jest.env.ts'],
     },
     {
       ...sharedConfig,
       displayName: 'integration',
-  testMatch: ['<rootDir>/__tests__/**/*.test.ts'],
-  setupFiles: ['<rootDir>/jest.env.ts'],       // до импортов
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+      testMatch: ['<rootDir>/__tests__/**/*.test.ts'],
+      setupFiles: ['<rootDir>/jest.env.ts'],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     },
   ],
 };
 
-module.exports = createJestConfig(customJestConfig);
+// СТАЛО: принудительно ставим наш маппер первым
+module.exports = async () => {
+  const config = await createJestConfig(customJestConfig)();
+  config.projects = config.projects.map((project) => ({
+    ...project,
+    moduleNameMapper: {
+      '^@/(.*)$': '<rootDir>/src/$1',
+      ...project.moduleNameMapper,
+    },
+  }));
+  return config;
+};

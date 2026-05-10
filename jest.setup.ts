@@ -3,6 +3,12 @@
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL!;
 process.env.DIRECT_URL = process.env.TEST_DATABASE_URL!;
 
+//   ДОБАВЛЕНО: Устанавливаем значения для топиков и секретов, чтобы в тестах они не были undefined
+if (!process.env.TELEGRAM_TOPIC_BOOKINGS) process.env.TELEGRAM_TOPIC_BOOKINGS = 'test-bookings-topic';
+if (!process.env.TELEGRAM_TOPIC_MONEY)    process.env.TELEGRAM_TOPIC_MONEY    = 'test-money-topic';
+if (!process.env.CRON_SECRET)             process.env.CRON_SECRET             = 'test-cron-secret';
+if (!process.env.TELEGRAM_WEBHOOK_SECRET) process.env.TELEGRAM_WEBHOOK_SECRET = 'test-tg-webhook-secret';
+
 import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
 import {
@@ -12,8 +18,6 @@ import {
 } from './__mocks__/external-services';
 
 // ─── 1. Мокаем Next.js APIs (cookies, headers) ───────────────────────────────
-// Эти функции не работают вне request-scope (например, в Jest).
-// Мок нужен здесь — до любых импортов экшенов.
 jest.mock('next/headers', () => ({
   cookies: jest.fn(() => ({
     get: jest.fn(() => null),
@@ -26,9 +30,11 @@ jest.mock('next/headers', () => ({
 }));
 
 // Мок next/cache — revalidatePath/revalidateTag вызываются в конце экшена
+//   ДОБАВЛЕНО: unstable_cache для тестов – просто пробрасывает оригинальную функцию
 jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
+  unstable_cache: (fn: (...args: any[]) => any) => fn,
 }));
 
 // ─── 2. Мокаем внешние сервисы ───────────────────────────────────────────────
@@ -48,8 +54,6 @@ jest.mock('@/lib/notifications/hub', () => ({
 }));
 
 // ─── 3. Мокаем Supabase SSR-клиент ───────────────────────────────────────────
-// createServerSupabaseClient вызывает cookies() внутри.
-// В тестах авторизованного пользователя нет — мокаем анонимную сессию.
 jest.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: jest.fn().mockResolvedValue({
     auth: {
@@ -65,19 +69,15 @@ jest.mock('@/lib/rate-limit-server', () => ({
 }));
 
 // ─── 5. Инфраструктура БД ────────────────────────────────────────────────────
-// В Prisma 5 клиент сам прочитает process.env.DATABASE_URL, который мы подменили выше
 const prisma = new PrismaClient();
 
-// Накатываем структуру БД один раз перед всеми тестами
 beforeAll(() => {
-  // Теперь можно передавать просто process.env, так как опасные переменные уже переопределены
   execSync('npx prisma db push --skip-generate --accept-data-loss', {
     env: { ...process.env },
     stdio: 'inherit',
   });
 });
 
-// Стираем данные перед каждым тестом — тесты не зависят друг от друга
 beforeEach(async () => {
   const tablenames = await prisma.$queryRaw<Array<{ tablename: string }>>`
     SELECT tablename FROM pg_tables

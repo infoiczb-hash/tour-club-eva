@@ -1,14 +1,13 @@
-"use client";
-
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
   Mountain, Waves, Tent, Briefcase, 
-  ArrowUpRight, Compass, Anchor, ArrowLeft, ArrowRight
+  ArrowUpRight, Compass, Anchor, ArrowLeft
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useModalStore } from '@/shared/store/useModalStore';
+// Импортируем наш новый клиентский островок
+import DirectionB2BButton from '@/components/directions/DirectionB2BButton';
 
 // --- ДАННЫЕ НАПРАВЛЕНИЙ ---
 const DIRECTIONS = [
@@ -82,8 +81,6 @@ const DIRECTIONS = [
 ];
 
 export default function DirectionsClient() {
-  const openContactModal = useModalStore((state) => state.openContactModal);
-
   return (
     <main className="min-h-screen bg-slate-950 pt-24 md:pt-32 pb-16 md:pb-24 px-4 relative overflow-hidden selection:bg-teal-500/30">
       
@@ -114,7 +111,7 @@ export default function DirectionsClient() {
         {/* --- BENTO GRID --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 auto-rows-[300px] md:auto-rows-[340px]">
             
-            {/*   ИСПРАВЛЕНО: Добавлен index для вычисления приоритета */}
+            {/* ИСПРАВЛЕНО: Добавлен index для вычисления приоритета */}
             {DIRECTIONS.map((dir, index) => {
                 const Icon = dir.icon;
                 
@@ -175,21 +172,8 @@ export default function DirectionsClient() {
                                 </p>
                             </div>
 
-                         {/* B2B Кнопка (Только для Организаторов) */}
-                            {dir.isB2B && (
-                                <div className="mt-5 pointer-events-auto relative z-30">
-                                    <button 
-                                        onClick={(e) => {
-                                            e.preventDefault(); 
-                                            e.stopPropagation();
-                                            openContactModal('Заявка на сотрудничество (от организатора)', 'B2B');
-                                        }}
-                                        className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors shadow-[0_0_20px_rgba(139,92,246,0.3)] active:scale-95 w-full sm:w-auto justify-center"
-                                    >
-                                        Оставить заявку <ArrowRight size={16} className="ml-1" />
-                                    </button>
-                                </div>
-                            )}
+                         {/* 👇 ВЫЗОВ НАШЕГО КЛИЕНТСКОГО ОСТРОВКА */}
+                            {dir.isB2B && <DirectionB2BButton />}
 
                         </div>
                     </div>

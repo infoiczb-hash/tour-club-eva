@@ -157,7 +157,7 @@ export const MainInfo = ({ categories = [] }: { categories?: CategoryOption[] })
              <FormInput 
                 name="groupInfo" 
                 label="Инфо о группе" 
-                placeholder="Напр: До 12 человек, можно с детьми" 
+                placeholder="Напр: От 7 до 20 человек" 
              />
              
              <FormTextarea 

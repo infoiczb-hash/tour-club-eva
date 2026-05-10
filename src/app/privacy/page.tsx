@@ -1,25 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
-import { Metadata } from 'next';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import LegalNav from "@/components/LegalNav"; 
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import AskQuestionButton from '@/components/AskQuestionButton';
 
-export const metadata: Metadata = {
-  title: 'Политика Конфиденциальности | Турклуб «Эва»',
-  description: 'Как мы собираем, храним и защищаем ваши персональные данные. Политика конфиденциальности туристического клуба «Эва».',
-  robots: { index: false, follow: false },
-  openGraph: {
-    title: 'Политика Конфиденциальности | Турклуб «Эва»',
-    description: 'Как мы работаем с вашими данными.',
-    url: 'https://evatur.club/privacy',
-    siteName: 'Турклуб «Эва»',
-    images: [{ url: '/og-default.jpg', width: 1200, height: 630 }],
-    locale: 'ru_RU',
-    type: 'website',
-  }
-};
+// Включаем ISR кэширование на 24 часа. 
+// Страница будет отдаваться мгновенно как статичный файл.
+export const revalidate = 86400; 
 
 export default function PrivacyPage() {
   return (

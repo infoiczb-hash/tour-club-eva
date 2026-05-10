@@ -162,17 +162,20 @@ export default function QuizTotem({ open, onClose }: Props) {
   const { saveResult } = useSaveTest();
   const { shouldRender, closing } = useModalTransition(open, 200);
 
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-      setStep(0);
-      setScores({ wolf: 0, bear: 0, eagle: 0, fox: 0 });
-      setView('question');
-      setFinalResult(null);
-    } else {
-      document.body.style.overflow = '';
-    }
-  }, [open]);
+useEffect(() => {
+  if (open) {
+    document.body.style.overflow = 'hidden';
+    setStep(0);
+    setScores({ wolf: 0, bear: 0, eagle: 0, fox: 0 });
+    setView('question');
+    setFinalResult(null);
+  } else {
+    document.body.style.overflow = '';
+  }
+  return () => {
+    document.body.style.overflow = '';
+  };
+}, [open]);
 
   const handleAnswer = (optionScore: any) => {
     const newScores = {

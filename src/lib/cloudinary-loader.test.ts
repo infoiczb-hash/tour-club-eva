@@ -24,21 +24,31 @@ describe('cloudinaryLoader', () => {
   });
 
   describe('Cloudinary Upload', () => {
-    it('добавляет легкие трансформации и запрашиваемую ширину', () => {
+    it('добавляет эконом-трансформации (eco) и точную ширину при standard quality', () => {
       const url = 'https://res.cloudinary.com/demo/image/upload/v123/sample.jpg';
-      const result = cloudinaryLoader({ src: url, width: 600, quality: 90 });
+      // quality < 85 -> включается eco режим
+      const result = cloudinaryLoader({ src: url, width: 600, quality: 80 });
       
-      // Должен вставить трансформацию сразу после /upload/
       expect(result).toContain('/upload/f_auto,q_auto:eco,w_600/v123/sample.jpg');
     });
 
-    it('ограничивает ширину хард-лимитом 1200px (защита bandwidth)', () => {
+    it('ограничивает ширину хард-лимитом 1200px (eco) при гигантских запросах', () => {
       const url = 'https://res.cloudinary.com/demo/image/upload/v123/sample.jpg';
-      const result = cloudinaryLoader({ src: url, width: 3840, quality: 90 });
+      // Запрашиваем 3840px, но при quality 80 лимит должен сработать на 1200px
+      const result = cloudinaryLoader({ src: url, width: 3840, quality: 80 });
       
-      // Несмотря на то, что Next.js запросил 3840, лоадер должен отдать w_1200
       expect(result).toContain('w_1200');
       expect(result).not.toContain('w_3840');
+    });
+
+    it('включает высокое качество (good) и расширяет лимит до 2560px при quality >= 85', () => {
+      const url = 'https://res.cloudinary.com/demo/image/upload/v123/sample.jpg';
+      // quality >= 85 -> включается good режим и лимит повышается до 2560px
+      const result = cloudinaryLoader({ src: url, width: 3840, quality: 90 });
+      
+      expect(result).toContain('/upload/f_auto,q_auto:good,w_2560/v123/sample.jpg');
+      expect(result).not.toContain('w_1200');
+      expect(result).not.toContain('w_3840'); // 3840 всё равно обрезается до 2560
     });
   });
 

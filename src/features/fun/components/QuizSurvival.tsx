@@ -170,17 +170,20 @@ export default function QuizSurvival({ open, onClose }: Props) {
   const { saveResult } = useSaveTest();
   const { shouldRender, closing } = useModalTransition(open, 200);
 
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-      setStep(0);
-      setAnswers([]);
-      setView('question');
-      setFinalResult(null);
-    } else {
-      document.body.style.overflow = '';
-    }
-  }, [open]);
+useEffect(() => {
+  if (open) {
+    document.body.style.overflow = 'hidden';
+    setStep(0);
+    setAnswers([]);
+    setView('question');
+    setFinalResult(null);
+  } else {
+    document.body.style.overflow = '';
+  }
+  return () => {
+    document.body.style.overflow = '';
+  };
+}, [open]);
 
   const handleAnswer = (value: Answer) => {
     const newAnswers = [...answers, value];

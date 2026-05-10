@@ -90,13 +90,15 @@
     border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    /* ИЗМЕНЕНО: Добавлено dark:text-slate-100 */
+    @apply bg-background text-foreground dark:text-slate-100 antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
   /* Глобальная типографика */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight text-slate-900 dark:text-white;
+    /* ИЗМЕНЕНО: Заменено dark:text-white на dark:text-slate-50 */
+    @apply font-bold tracking-tight text-slate-900 dark:text-slate-50;
   }
 }
 
@@ -296,4 +298,105 @@
 }
 .animate-float-sup {
   animation: float-sup 6s ease-in-out infinite;
+}
+/* ==========================================
+   BLOG TYPOGRAPHY & CONTRAST IMPROVEMENTS
+   ========================================== */
+
+@layer utilities {
+
+  /* Основные текстовые стили для блога */
+  .blog-text-primary {
+    @apply text-slate-100 leading-relaxed;     /* было: slate-300 */
+  }
+
+  .blog-text-secondary {
+    @apply text-slate-200;                     /* было: slate-300 */
+  }
+
+  .blog-heading {
+    @apply text-white font-bold tracking-tight;
+  }
+
+  /* Карточки */
+  .blog-card-title {
+    @apply text-lg md:text-xl font-bold text-slate-50 leading-tight;
+  }
+
+  .blog-excerpt {
+    @apply text-slate-200 text-[15px] md:text-[16px] leading-snug;
+  }
+
+  /* Hero заголовок статьи */
+  .blog-hero-title {
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter text-white;
+  }
+
+  /* Prose (текст статьи) */
+  .prose.blog-prose {
+    @apply text-slate-100;
+  }
+
+  .prose.blog-prose h2,
+  .prose.blog-prose h3 {
+    @apply text-white;
+  }
+
+  .prose.blog-prose p {
+    @apply text-slate-200;
+  }
+
+  /* Метаданные */
+  .blog-meta {
+    @apply text-slate-400 text-sm font-medium;
+  }
+
+  /* ==========================================
+     AUTHOR BLOCK — ЕДИНЫЙ СТИЛЬ
+     ========================================== */
+  .author-circle {
+    @apply relative w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden
+           border-2 border-white/20 bg-slate-800 shadow-md
+           transition-all duration-300 hover:border-teal-500/50 hover:scale-105 hover:shadow-xl;
+  }
+  .author-info {
+    @apply text-center mt-3;
+  }
+  .author-name {
+    @apply block font-bold text-slate-100 text-sm md:text-base leading-none;
+  }
+  .author-role {
+    @apply block text-teal-400 text-[11px] md:text-xs font-medium uppercase tracking-widest mt-1.5;
+  }
+  /* Вариант для компактных карточек (слева) */
+  .author-compact {
+    @apply flex items-center gap-3;
+  }
+  .author-compact .author-circle {
+    @apply w-10 h-10 md:w-11 md:h-11;
+  }
+  .author-compact .author-info {
+    @apply text-left mt-0;
+  }
+}
+
+/* ==========================================
+   MOBILE IMPROVEMENTS
+   ========================================== */
+
+@layer utilities {
+  /* Больше воздуха на мобильных */
+  .blog-mobile-padding {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+
+  /* Мягкие карточки */
+  .blog-card {
+    @apply rounded-3xl;
+  }
+
+  /* Улучшенный line-height на мобильных */
+  .blog-content p {
+    @apply leading-relaxed md:leading-normal;
+  }
 }

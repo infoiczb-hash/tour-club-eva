@@ -4,8 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { parseBookingGroup, assignBoatsWithPassengers } from '@/features/kayaking/kayakLogic';
 import { BookingGroup, Assignment, BoatPassenger, Boat } from '@/features/kayaking/types';
 import { sendManifestToTelegramAction } from './manifest';
+import { BookingStatus } from '@prisma/client';
 
 export type ActionResponse<T = any> = { success: boolean; data?: T; error?: string };
+
+// Статусы броней, которые должны попадать в байдарки (Оплачено + Ожидание оплаты)
+const ACTIVE_STATUSES: BookingStatus[] = ['confirmed', 'pending'];
 
 // 1. Получение списка будущих туров-байдарок
 export async function getKayakingTourDates() {
@@ -18,7 +22,7 @@ export async function getKayakingTourDates() {
       },
       include: {
         tour: { select: { id: true, title: true, slug: true } },
-        _count: { select: { bookings: { where: { status: 'confirmed' } } } },
+        _count: { select: { bookings: { where: { status: { in: ACTIVE_STATUSES } } } } },
       },
       orderBy: { startDate: 'asc' },
     });
@@ -35,7 +39,7 @@ export async function getBoatAssignments(tourDateId: string): Promise<ActionResp
       where: { id: tourDateId },
       include: {
         bookings: {
-          where: { status: 'confirmed' },
+          where: { status: { in: ACTIVE_STATUSES } },
           include: { member: { select: { name: true, phone: true } } },
         },
         boatAssignments: true,
@@ -50,7 +54,7 @@ export async function getBoatAssignments(tourDateId: string): Promise<ActionResp
     const groups: BookingGroup[] = tourDate.bookings.map(b => parseBookingGroup(b));
 
     // Если в базе уже сохранена ручная рассадка
- if (tourDate.boatAssignments.length > 0) {
+    if (tourDate.boatAssignments.length > 0) {
       const assignments = tourDate.boatAssignments.map(a => ({
         bookingId: a.bookingId,
         passengerId: (a as any).passengerId,
@@ -141,14 +145,13 @@ export async function saveBoatAssignments(tourDateId: string, assignments: Assig
 }
 
 // 5. Отправка манифеста + рассадки в Telegram
-// 5. Отправка манифеста + рассадки в Telegram
 export async function sendKayakingManifest(tourDateId: string, frontendBoats: Boat[]): Promise<ActionResponse> {
   try {
     const tourDate = await prisma.tourDate.findUnique({
       where: { id: tourDateId },
       include: {
         tour: true,
-        bookings: { where: { status: 'confirmed' } },
+        bookings: { where: { status: { in: ACTIVE_STATUSES } } },
       },
     });
     

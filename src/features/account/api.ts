@@ -83,7 +83,7 @@ export const getDashboardData = cache(async (userId: string): Promise<DashboardD
   const upcomingBookings = await prisma.booking.findMany({
     where: {
       memberId,
-      status: { not: 'cancelled' }, // ✅ ИСПРАВЛЕНО: Показываем всё, кроме отмененных
+      status: { not: 'cancelled' }, //   ИСПРАВЛЕНО: Показываем всё, кроме отмененных
       tourDate: { startDate: { gte: new Date() } }
     },
     include: {

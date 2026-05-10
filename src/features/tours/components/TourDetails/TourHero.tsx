@@ -84,14 +84,14 @@ export default function TourHero({ tour, isWished }: TourHeroProps) {
           src={tour.image || '/placeholder-tour.jpg'}
           alt={tour.title || "Тур"}
           fill
-          className="object-cover opacity-60"
+          className="object-cover"
           priority
           fetchPriority="high"
           quality={50} 
           // Для мобилок качаем точно по экрану, для десктопов ограничиваем ширину до 1440px
           sizes="(max-width: 768px) 100vw, (max-width: 1440px) 100vw, 1440px"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+       <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950/60 to-transparent" />
       </div>
 

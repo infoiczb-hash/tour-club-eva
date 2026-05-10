@@ -59,8 +59,9 @@ export default function TourStats({ tour }: TourStatsProps) {
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none truncate">Сложность</span>
+                {/* 👇 ИСПРАВЛЕНО: размер иконки увеличен до 16 */}
                 <Info 
-                  size={10} 
+                  size={16} 
                   className={showTooltip ? "text-teal-400" : "text-slate-400 group-hover:text-teal-400 transition-colors"} 
                 />
               </div>
@@ -70,7 +71,8 @@ export default function TourStats({ tour }: TourStatsProps) {
 
           {/* ТУЛТИП — чистый CSS без framer-motion */}
           {showTooltip && (
-            <div className="absolute bottom-full left-0 md:left-1/2 md:-translate-x-1/2 mb-3 w-[260px] md:w-72 z-50 p-4 md:p-5 bg-slate-800 border border-teal-500/30 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            // 👇 ИСПРАВЛЕНО: top-full, mt-3, slide-in-from-top-2
+            <div className="absolute top-full left-0 md:left-1/2 md:-translate-x-1/2 mt-3 w-[260px] md:w-72 z-50 p-4 md:p-5 bg-slate-800 border border-teal-500/30 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex justify-between items-start mb-2">
                 <span className="text-[12px] font-black uppercase text-teal-400 tracking-wider">О сложности</span>
                 <button
@@ -84,8 +86,8 @@ export default function TourStats({ tour }: TourStatsProps) {
               <p className="text-xs md:text-sm text-slate-200 leading-relaxed font-medium">
                 {tooltipText}
               </p>
-              {/* Хвостик */}
-              <div className="absolute -bottom-1.5 left-8 md:left-1/2 md:-translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45 border-r border-b border-teal-500/30" />
+              {/* 👇 ИСПРАВЛЕНО: Хвостик сверху, указывает вверх */}
+              <div className="absolute -top-1.5 left-8 md:left-1/2 md:-translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45 border-l border-t border-teal-500/30" />
             </div>
           )}
         </div>
