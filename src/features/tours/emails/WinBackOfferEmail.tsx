@@ -30,7 +30,7 @@ export const WinBackOfferEmail = ({ name, bonusAmount, promoCode, siteUrl }: Win
             <Text className="m-0 text-lg font-bold text-slate-900 mb-4">
               {bonusAmount ? `+${bonusAmount} баллов на счет` : `Промокод на -10%: ${promoCode}`}
             </Text>
-            <Button href={`${siteUrl}/tour`} className="bg-teal-500 text-white font-bold px-6 py-3 rounded-xl uppercase tracking-wider block w-full text-center">
+            <Button href={`${siteUrl}/tour`} className=" bg-teal-500 text-slate-950  font-bold px-6 py-3 rounded-xl uppercase tracking-wider block w-full text-center">
               Выбрать приключение
             </Button>
           </Section>

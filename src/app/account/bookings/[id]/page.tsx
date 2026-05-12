@@ -238,7 +238,7 @@ async function BookingContent({
           {/* Хедер билета */}
           <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-black text-ui-accent uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+              <div className="text-xs  font-black text-ui-accent uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-ui-accent animate-ping" />
                 Booking Ref #{displayId}
               </div>
@@ -260,12 +260,12 @@ async function BookingContent({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-ui-bg/40 backdrop-blur-sm rounded-3xl p-5 border border-white/5 group hover:border-ui-accent/30 transition-colors">
               <CalendarClock className="text-ui-accent mb-3 group-hover:scale-110 transition-transform" size={20} />
-              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Старт приключения</p>
+              <p className="text-xs  text-slate-400 uppercase font-black tracking-widest mb-1.5">Старт приключения</p>
               <p className="text-base font-bold text-ui-text">{dateStr} в {timeStr}</p>
             </div>
             <div className="bg-ui-bg/40 backdrop-blur-sm rounded-3xl p-5 border border-white/5 group hover:border-ui-accent/30 transition-colors">
               <MapPin className="text-ui-accent mb-3 group-hover:scale-110 transition-transform" size={20} />
-              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Точка сбора</p>
+              <p className="text-xs  text-slate-400 uppercase font-black tracking-widest mb-1.5">Точка сбора</p>
               <p className="text-sm font-bold text-ui-text leading-tight">{startPoint}</p>
             </div>
           </div>
@@ -338,11 +338,11 @@ async function BookingContent({
                       <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 font-black text-sm">{idx + 1}</div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-slate-100 truncate">{guest.name}</p>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">{guest.ticketType || 'Участник'}</p>
+                        <p className="text-xs  text-slate-300 font-black uppercase tracking-widest mt-1">{guest.ticketType || 'Участник'}</p>
                       </div>
                     </div>
                     {guest.equipment && (
-                      <span className="px-3 py-1.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                      <span className="px-3 py-1.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-xs  font-black uppercase tracking-widest">
                         🦺 Жилет: {guest.equipment}
                       </span>
                     )}
@@ -353,7 +353,7 @@ async function BookingContent({
                   <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 font-black text-sm">1</div>
                   <div>
                     <p className="text-sm font-bold text-white">{booking.name}</p>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Заказчик</p>
+                    <p className="text-xs  text-slate-300 font-black uppercase tracking-widest mt-1">Заказчик</p>
                   </div>
                 </div>
               )}
@@ -388,17 +388,17 @@ async function BookingContent({
             </h3>
             <div className="bg-ui-panel/80 backdrop-blur-md rounded-[2rem] p-8 border border-ui-border space-y-5 shadow-inner">
               <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-500 uppercase tracking-widest text-[10px]">Стоимость тура:</span>
+                <span className="text-slate-500 uppercase tracking-widest text-xs ">Стоимость тура:</span>
                 <span className="text-slate-100">{booking.totalPrice} {booking.tour.currency}</span>
               </div>
               {booking.discount > 0 && (
                 <div className="flex justify-between text-sm font-bold text-emerald-400">
-                  <span className="uppercase tracking-widest text-[10px]">Ваша скидка:</span>
+                  <span className="uppercase tracking-widest text-xs ">Ваша скидка:</span>
                   <span>-{booking.discount} {booking.tour.currency}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-500 uppercase tracking-widest text-[10px]">Внесено:</span>
+                <span className="text-slate-500 uppercase tracking-widest text-xs ">Внесено:</span>
                 <span className="text-emerald-500">{booking.amountPaid} {booking.tour.currency}</span>
               </div>
               <div className="h-px bg-white/5" />
@@ -439,7 +439,7 @@ async function BookingContent({
             <AlertTriangle size={24} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Возникли вопросы?</p>
+            <p className="text-xs  font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Возникли вопросы?</p>
             <p className="text-base font-black text-white uppercase tracking-tight">Служба заботы клуба</p>
           </div>
         </div>

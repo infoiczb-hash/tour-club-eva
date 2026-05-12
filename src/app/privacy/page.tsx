@@ -99,7 +99,7 @@ export default function PrivacyPage() {
                 <p className="text-slate-300 text-xs md:text-sm max-w-md">Если вы не нашли ответ на свой вопрос, напишите нам. Мы всегда на связи!</p>
             </div>
             
-            {/* 👇 НАШ НОВЫЙ КЛИЕНТСКИЙ ОСТРОВОК */}
+            {/*    НАШ НОВЫЙ КЛИЕНТСКИЙ ОСТРОВОК */}
             <AskQuestionButton context="Вопрос по политике конфиденциальности" tab="TOUR" />
 
         </div>

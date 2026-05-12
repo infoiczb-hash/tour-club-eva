@@ -821,7 +821,7 @@ const now = new Date();
         {activeTab === 'scan' && (
             <ScanTab />
         )}
-        {/* 👇 ДОБАВИЛИ РЕНДЕР ВКЛАДКИ SMM */}
+        {/*    ДОБАВИЛИ РЕНДЕР ВКЛАДКИ SMM */}
         {activeTab === 'smm' && (
             <SmmTab />
         )}

@@ -38,9 +38,9 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
          </div>
       </div>
 
-      {/* 2. ГИД */}
+ {/* 2. ГИД */}
       <div className="flex gap-4 items-center">
-         {/*   ИСПРАВЛЕНО: Добавлен класс relative для корректной работы fill */}
+         {/* Обертка уже правильная: shrink-0 не даст ей сжаться */}
          <div className="relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden bg-indigo-500/10 border border-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400">
             {guideSlug ? (
                <Link href={`/guides/${guideSlug}`} className="block w-full h-full relative">
@@ -49,6 +49,7 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
                       src={guideImage} 
                       alt={guideName} 
                       fill 
+                      unoptimized // ✅ ДОБАВЛЕНО: Защита от искажения кэша Next.js
                       loading="lazy"
                       className="object-cover object-top hover:scale-110 transition-transform duration-300"
                       sizes="40px"
@@ -59,7 +60,14 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
                </Link>
             ) : (
                guideImage ? (
-                 <Image src={guideImage} alt={guideName} fill className="object-cover object-top" sizes="40px" />
+                 <Image 
+                   src={guideImage} 
+                   alt={guideName} 
+                   fill 
+                   unoptimized // ✅ ДОБАВЛЕНО: И здесь тоже
+                   className="object-cover object-top" 
+                   sizes="40px" 
+                 />
                ) : (
                  <User size={20} />
                )
@@ -70,7 +78,6 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             <h3 className="text-[14px] font-bold text-slate-300 uppercase tracking-widest mb-1 break-words">
                {guideRole}
             </h3>
-            {/*   ИСПРАВЛЕНО: Имя теперь ссылка на /guides/[slug] */}
             {guideSlug ? (
               <Link 
                 href={`/guides/${guideSlug}`} 

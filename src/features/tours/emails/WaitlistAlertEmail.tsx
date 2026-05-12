@@ -29,12 +29,12 @@ export const WaitlistAlertEmail = ({ name, tourTitle, tourSlug, siteUrl }: Waitl
               <Button href={`${siteUrl}/tour/${tourSlug}`} className="bg-slate-900 text-white font-bold py-4 px-8 rounded-xl w-full text-center">
                 ⚡️ Забронировать место
               </Button>
-              <Text className="m-0 mt-3 text-[10px] text-teal-600 font-bold uppercase">Кто успеет первым — тот и едет</Text>
+              <Text className="m-0 mt-3 text-xs text-teal-600 font-bold uppercase">Кто успеет первым — тот и едет</Text>
             </div>
           </Section>
           <Hr className="border-slate-100 my-8" />
           <Section className="text-center">
-            <Text className="text-[10px] text-slate-300 leading-relaxed italic">
+            <Text className="text-xs text-slate-300 leading-relaxed italic">
               Турклуб ЭВА. Приключения ближе, чем кажется.
             </Text>
           </Section>

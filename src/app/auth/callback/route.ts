@@ -1,28 +1,26 @@
 // src/app/auth/callback/route.ts
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-
-// Разрешаем только относительные пути — защита от Open Redirect
-function isAllowedRedirect(path: string | null): boolean {
-  if (!path) return true;
-  return path.startsWith('/') && !path.startsWith('//');
-}
+import { sanitizeNextUrl } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
 
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/account/dashboard';
+  const rawNext = searchParams.get('next');
+  
+  // Получаем безопасный путь через централизованную функцию
+  const safeNext = sanitizeNextUrl(rawNext);
 
   // 1. Нет кода — сразу ошибка
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`);
   }
 
-  // 2. Блокируем небезопасные редиректы
-  if (!isAllowedRedirect(next)) {
-    console.warn(`[SECURITY] Blocked open redirect attempt: ${next}`);
-    return NextResponse.redirect(`${origin}/`);
+  // 2. Блокируем небезопасные редиректы И сохраняем логирование попыток взлома
+  // Если сырой next не совпадает с безопасным (значит функция его обрезала до fallback'а)
+  if (rawNext && rawNext !== safeNext) {
+    console.warn(`[SECURITY] Blocked open redirect attempt: ${rawNext}`);
   }
 
   const supabase = await createServerSupabaseClient();
@@ -33,6 +31,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`);
   }
 
-  // 3. Всё ок — редирект только на относительный путь
-  return NextResponse.redirect(`${origin}${next}`);
+  // 3. Всё ок — редирект только на проверенный относительный путь
+  return NextResponse.redirect(`${origin}${safeNext}`);
 }

@@ -220,7 +220,7 @@ export const saveTour = withAdminAuth(
         });
         savedTourId = newTour.id; 
       }
-      // 👇 НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine) 👇
+      //    НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine)   
       const hasNewDates = data.dates.some(d => !d.id);
       
       if (hasNewDates && data.isActive) {

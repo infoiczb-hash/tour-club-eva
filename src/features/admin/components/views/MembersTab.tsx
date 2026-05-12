@@ -281,7 +281,7 @@ export default function MembersTab({
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                         {member.name || 'Без имени'}
                         {member.role === 'admin' && (
-                          <span className="ml-2 text-[10px] font-black text-teal-600 bg-teal-50 dark:bg-teal-900/30 px-1.5 py-0.5 rounded">ADMIN</span>
+                          <span className="ml-2 text-xs  font-black text-teal-600 bg-teal-50 dark:bg-teal-900/30 px-1.5 py-0.5 rounded">ADMIN</span>
                         )}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -290,7 +290,7 @@ export default function MembersTab({
                           {member.level}
                         </span>
                         {member.tags.map(tag => (
-                          <span key={tag} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${TAG_STYLES[tag] || 'bg-slate-100 text-slate-800'}`}>
+                          <span key={tag} className={`text-xs  font-bold px-1.5 py-0.5 rounded ${TAG_STYLES[tag] || 'bg-slate-100 text-slate-800'}`}>
                             {tag}
                           </span>
                         ))}

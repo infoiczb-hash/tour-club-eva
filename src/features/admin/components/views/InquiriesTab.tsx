@@ -114,7 +114,7 @@ if (!res.success) showToast('Ошибка обновления', 'error');
                       
                       {/* Свитчер статуса */}
                       <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg">
-                          <button onClick={() => handleStatus(item.id, 'NEW')} title="Новое" className={`p-1.5 rounded ${item.status === 'NEW' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-800 hover:bg-slate-200'}`}><Clock size={14}/></button>
+                          <button onClick={() => handleStatus(item.id, 'NEW')} title="Новое" className={`p-1.5 rounded ${item.status === 'NEW' ? 'bg-emerald-500 text-slate-950  shadow-sm' : 'text-slate-800 hover:bg-slate-200'}`}><Clock size={14}/></button>
                           <button onClick={() => handleStatus(item.id, 'WORK')} title="В работе" className={`p-1.5 rounded ${item.status === 'WORK' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-800 hover:bg-slate-200'}`}><Eye size={14}/></button>
                           <button onClick={() => handleStatus(item.id, 'DONE')} title="Архив" className={`p-1.5 rounded ${item.status === 'DONE' ? 'bg-slate-500 text-white shadow-sm' : 'text-slate-800 hover:bg-slate-200'}`}><Archive size={14}/></button>
                       </div>

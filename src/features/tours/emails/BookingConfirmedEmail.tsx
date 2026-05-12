@@ -74,16 +74,16 @@ export const BookingConfirmedEmail = ({
               </Text>
               
               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Тур и дата</Text>
+                <Text className="m-0 mb-1 text-xs  uppercase tracking-widest text-slate-400 font-bold">Тур и дата</Text>
                 <Text className="m-0 mb-4 text-lg font-bold text-slate-900">{tourTitle} — {tourDate}</Text>
                 
                 <div className="flex gap-8">
                   <div>
-                    <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Билет</Text>
+                    <Text className="m-0 mb-1 text-xs  uppercase tracking-widest text-slate-400 font-bold">Билет</Text>
                     <Text className="m-0 text-sm font-bold text-slate-700">#{shortId}</Text>
                   </div>
                   <div>
-                    <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Оплачено</Text>
+                    <Text className="m-0 mb-1 text-xs  uppercase tracking-widest text-slate-400 font-bold">Оплачено</Text>
                     <Text className="m-0 text-sm font-bold text-teal-600">{totalPrice} {currency}</Text>
                   </div>
                 </div>
@@ -155,7 +155,7 @@ export const BookingConfirmedEmail = ({
             <Section className="text-center">
               <Link href={cancellationPolicyLink} className="text-xs text-slate-400 underline mr-4">Политика отмены</Link>
               <Link href={`${siteUrl}/faq`} className="text-xs text-slate-400 underline">Помощь</Link>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs  text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. До встречи на маршруте! 🏕️
               </Text>
             </Section>

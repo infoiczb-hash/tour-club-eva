@@ -83,7 +83,7 @@ export default function SortableBoat({ boat, onDelete }: { boat: Boat, onDelete?
         ))}
         
         {isEmpty && (
-          <div className={`h-full min-h-[100px] flex flex-col items-center justify-center border-2 border-dashed rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest gap-2 bg-white/50 ${isK3 ? 'border-teal-200 text-teal-400' : 'border-blue-200 text-blue-400'}`}>
+          <div className={`h-full min-h-[100px] flex flex-col items-center justify-center border-2 border-dashed rounded-[1.5rem] text-xs  uppercase font-black tracking-widest gap-2 bg-white/50 ${isK3 ? 'border-teal-200 text-teal-400' : 'border-blue-200 text-blue-400'}`}>
             Свободна
           </div>
         )}
@@ -93,12 +93,12 @@ export default function SortableBoat({ boat, onDelete }: { boat: Boat, onDelete?
       {(hasDog || hasChildUnder7) && !isEmpty && (
         <div className={`mt-4 pt-3 border-t flex flex-col gap-1.5 ${isK3 ? 'border-teal-200/50' : 'border-blue-200/50'}`}>
           {hasChildUnder7 && (
-            <div className="text-[10px] font-bold text-teal-800 bg-teal-100/70 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
+            <div className="text-xs  font-bold text-teal-800 bg-teal-100/70 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
               <span>👶</span> В лодке ребенок до 7 лет
             </div>
           )}
           {hasDog && (
-            <div className="text-[10px] font-bold text-amber-800 bg-amber-100/70 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
+            <div className="text-xs  font-bold text-amber-800 bg-amber-100/70 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
               <span>🐶</span> В лодке собака
             </div>
           )}

@@ -138,7 +138,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
               )}>
                 {isGlobalSoldOut ? "Мест нет" : (isLowSpots ? "Мест мало" : "В наличии")}
               </div>
-              <p className="text-[10px] font-medium text-slate-400 mt-1.5 leading-tight max-w-[140px] ml-auto">
+              <p className="text-xs font-medium text-slate-400 mt-1.5 leading-tight max-w-[140px] ml-auto">
                 Наличие мест на даты смотрите в расписании.
               </p>
           </div>

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// 👇 ВАЖНО: Проверьте пути импорта ваших компонентов TourCard и CalendarView!
+//    ВАЖНО: Проверьте пути импорта ваших компонентов TourCard и CalendarView!
 // Скорее всего они лежат в папке туров. Замените пути на свои, если они отличаются.
 import TourCard from '@/features/tours/components/TourCard'; 
 import CalendarView from '@/features/tours/components/CalendarView'; 

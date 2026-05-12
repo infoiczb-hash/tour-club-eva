@@ -1,11 +1,10 @@
 import { cache } from 'react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { prisma } from '@/lib/prisma'; // Добавили импорт Prisma для проверки базы
+import { prisma } from '@/lib/prisma';
 
 /**
  * Кэшированный запрос пользователя для Server Components.
- * React cache() гарантирует, что сетевой запрос к Supabase выполнится ОДИН раз
- * за цикл рендера страницы (например, в Header и Footer).
+ * Гарантирует ОДИН запрос к Supabase за цикл рендера.
  */
 export const getServerUser = cache(async () => {
   const supabase = await createServerSupabaseClient();
@@ -16,14 +15,30 @@ export const getServerUser = cache(async () => {
 
 /**
  * Проверяет авторизацию в Server Actions.
- * Бросает Error('Unauthorized') если пользователь не залогинен.
- * Использовать в начале каждого write-action.
+ * Бросает Error('Unauthorized'), если пользователь не залогинен.
  */
 export async function requireAuth() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
   return user;
+}
+
+/**
+ * Функция валидации параметра next (Защита от Open Redirect).
+ * Пропускает только относительные пути, начинающиеся с /
+ *
+ */
+export function sanitizeNextUrl(next: string | null): string {
+  const fallback = '/account/dashboard';
+  if (!next) return fallback;
+  
+  // Запрещаем абсолютные URL (содержащие ://) и протокол-относительные (//)
+  if (!next.startsWith('/') || next.startsWith('//') || next.includes('://')) {
+    return fallback;
+  }
+  
+  return next;
 }
 
 /**
@@ -35,27 +50,25 @@ export function withAdminAuth<TArgs extends any[], TReturn>(
 ) {
   return async (...args: TArgs): Promise<TReturn | { success: false; error: string }> => {
     try {
-      // 1. Проверяем базовую авторизацию (и сразу получаем user.id)
+      // 1. Проверяем базовую авторизацию
       const user = await requireAuth();
 
-      // 2. Достаем профиль из базы и проверяем роль
-      // ВНИМАНИЕ: Убедись, что в Prisma (модель MemberProfile) у тебя есть поле role: String!
+      // 2. Достаем профиль и проверяем роль admin
       const profile = await prisma.memberProfile.findUnique({
         where: { userId: user.id },
         select: { role: true } 
       });
 
       if (!profile || profile.role !== 'admin') {
-        console.warn(`[SECURITY] Попытка взлома админки! Пользователь: ${user.id}`);
+        console.warn(`[SECURITY] Попытка несанкционированного доступа к админке! User: ${user.id}`);
         return { success: false, error: 'Нет прав доступа. Действие заблокировано.' };
       }
 
-      // 3. Если всё ок - выполняем сам экшен
+      // 3. Выполняем экшен
       return await action(...args);
-} catch (error: unknown) {
+    } catch (error: unknown) {
       console.error('Admin Auth Error:', error);
       
-      // Сначала проверяем, что это объект Error, а затем читаем сообщение
       if (error instanceof Error && error.message === 'Unauthorized') {
         return { success: false, error: 'Пожалуйста, авторизуйтесь' };
       }

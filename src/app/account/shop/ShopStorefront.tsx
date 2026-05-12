@@ -58,9 +58,9 @@ const ShopItemCard = memo(function ShopItemCard({ item, balance, onOrder, priori
         )}
         <div className="absolute top-2 right-2">
           {isOutOfStock ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-muted border border-ui-border">Нет в наличии</span>
+            <span className="text-xs  font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-muted border border-ui-border">Нет в наличии</span>
           ) : !isUnlimited ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-text border border-ui-border">Осталось: {item.stock}</span>
+            <span className="text-xs  font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-text border border-ui-border">Осталось: {item.stock}</span>
           ) : null}
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function ShopStorefront({ balance, items }: { balance: number; it
         <div className="flex items-center gap-2 px-4 py-2.5 bg-ui-panel border border-ui-border rounded-2xl">
           <Coins size={16} className="text-amber-400" />
           <div>
-            <p className="text-[10px] text-ui-muted uppercase tracking-wider leading-none">Баланс</p>
+            <p className="text-xs  text-ui-muted uppercase tracking-wider leading-none">Баланс</p>
             <p className="text-lg font-black text-ui-text leading-tight">{localBalance}</p>
           </div>
         </div>

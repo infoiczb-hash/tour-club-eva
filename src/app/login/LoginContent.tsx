@@ -6,9 +6,23 @@ import { createClient } from '@/lib/supabase/client';
 import { Loader } from 'lucide-react';
 import TelegramLoginWidget from './TelegramLoginWidget';
 
+// Локальный санитайзер для клиента (дублирует логику из lib/auth.ts без серверных импортов)
+function sanitizeNextUrl(next: string | null): string {
+  const fallback = '/account/dashboard';
+  if (!next) return fallback;
+  // Запрещаем абсолютные ссылки (://), протокол-относительные (//) и требуем начала с /
+  if (!next.startsWith('/') || next.startsWith('//') || next.includes('://')) {
+    return fallback;
+  }
+  return next;
+}
+
 export default function LoginContent() {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') ?? '/account/dashboard';
+  
+  // 1. Сразу очищаем параметр при получении
+  const rawNext = searchParams.get('next');
+  const safeNext = sanitizeNextUrl(rawNext); //
   
   const supabase = createClient();
   const [error, setError] = useState('');
@@ -20,7 +34,8 @@ export default function LoginContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${next}`, 
+          // 2. Используем safeNext вместо необработанного параметра
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`, 
         },
       });
       if (error) {
@@ -34,8 +49,8 @@ export default function LoginContent() {
     <div className="space-y-6">
       <div className="space-y-3">
         
-        {/* Виджет Telegram */}
-        <TelegramLoginWidget next={next} />
+        {/* 3. Передаем очищенный путь в виджет Telegram */}
+        <TelegramLoginWidget next={safeNext} />
 
         {/* Разделитель */}
         <div className="relative py-2">

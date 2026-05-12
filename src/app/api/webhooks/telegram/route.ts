@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       if (callbackData.startsWith('write_review_')) {
         const bookingId = callbackData.replace('write_review_', '');
         await redis.set(`review_state:${clientChatId}`, bookingId, { ex: 3600 });
-        const newText = originalText + '\n\n👇 <b>Пожалуйста, отправьте ваш отзыв следующим текстовым сообщением прямо в этот чат.</b>';
+        const newText = originalText + '\n\n   <b>Пожалуйста, отправьте ваш отзыв следующим текстовым сообщением прямо в этот чат.</b>';
         await editClientMessage(clientChatId, messageId, newText);
         await answerClientCallbackQuery(body.callback_query.id);
         return ok();

@@ -69,10 +69,10 @@ export const TourReminderEmail = ({
               </Text>
               
               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Дата и время</Text>
+                <Text className="m-0 mb-1 text-xs uppercase tracking-widest text-slate-400 font-bold">Дата и время</Text>
                 <Text className="m-0 mb-4 text-lg font-bold text-slate-900">{tourDate || 'Ближайшие выходные'} в {meetingTime}</Text>
                 
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Место сбора</Text>
+                <Text className="m-0 mb-1 text-xs uppercase tracking-widest text-slate-400 font-bold">Место сбора</Text>
                 <Text className="m-0 text-sm font-bold text-slate-700">{meetingPoint}</Text>
               </div>
             </Section>
@@ -123,7 +123,7 @@ export const TourReminderEmail = ({
 
            {/* Основная кнопка (если не выведена кнопка подтверждения) */}
             {!(isTomorrow && isUnpaid) && (
-              <Button href={bookingLink} className="bg-teal-500 text-white font-bold px-6 py-3 rounded-xl uppercase tracking-wider block w-full text-center">
+              <Button href={bookingLink} className=" bg-teal-500 text-slate-950  font-bold px-6 py-3 rounded-xl uppercase tracking-wider block w-full text-center">
                 Открыть билет и детали
               </Button>
             )}
@@ -133,7 +133,7 @@ export const TourReminderEmail = ({
             <Section className="text-center">
               <Link href={cancellationPolicyLink} className="text-xs text-slate-400 underline mr-4">Политика отмены</Link>
               <Link href="https://t.me/romansvtirase" className="text-xs text-slate-400 underline">Написать менеджеру</Link>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. До встречи на старте! 🌲
               </Text>
             </Section>

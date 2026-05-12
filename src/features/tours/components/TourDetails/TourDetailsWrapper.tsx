@@ -44,7 +44,7 @@ export default function TourDetailsWrapper({
         <div className="grid lg:grid-cols-12 gap-8">
           
           {/* ЛЕВАЯ КОЛОНКА (Длинный контент) */}
-          {/* 👇 ИЗМЕНЕНИЕ: overflow-x-hidden заменен на overflow-x-clip */}
+          {/*    ИЗМЕНЕНИЕ: overflow-x-hidden заменен на overflow-x-clip */}
           <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-clip">
             <TourStats tour={tour} />
             <TourLogistics tour={tour} />

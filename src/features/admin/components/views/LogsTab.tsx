@@ -109,7 +109,7 @@ export const LogsTab = () => {
                       )}
                       <div>
                         <div className="font-medium text-slate-900">{log.actorName || 'System'}</div>
-                        <div className="text-[10px] text-slate-700 font-mono uppercase">{log.actorType}</div>
+                        <div className="text-xs  text-slate-700 font-mono uppercase">{log.actorType}</div>
                       </div>
                     </div>
                   </td>
@@ -201,7 +201,7 @@ export const LogsTab = () => {
               )}
             </div>
             {selectedLog.ip && (
-              <div className="p-4 border-t border-slate-100 text-[10px] text-slate-700 flex justify-between">
+              <div className="p-4 border-t border-slate-100 text-xs  text-slate-700 flex justify-between">
                 <span>IP: {selectedLog.ip}</span>
                 <span>Agent: {selectedLog.userAgent?.substring(0, 50)}...</span>
               </div>

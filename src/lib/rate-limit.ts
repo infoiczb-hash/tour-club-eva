@@ -3,43 +3,60 @@ import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 import { env } from "@/lib/env";
 
-// Инициализация Redis клиента через наши валидированные переменные
+// Инициализация Redis клиента
 const redis = new Redis({
   url: env.UPSTASH_REDIS_REST_URL,
   token: env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-// Базовый лимитер: 8 запросов в минуту (Sliding Window)
-// Подходит для форм обратной связи и бронирования
+// ====================== ОБЩИЕ ЛИМИТЕРЫ ======================
+
 export const basicRateLimit = new Ratelimit({
-  redis: redis,
+  redis,
   limiter: Ratelimit.slidingWindow(8, "1 m"),
   analytics: true,
   prefix: "evatur:ratelimit:basic",
 });
 
-// Админский лимитер: 15 запросов в минуту (Sliding Window)
-// Подходит для AI-генерации и других тяжелых задач в админке
 export const adminRateLimit = new Ratelimit({
-  redis: redis,
+  redis,
   limiter: Ratelimit.slidingWindow(15, "1 m"),
   analytics: true,
   prefix: "evatur:ratelimit:admin",
 });
 
+// ====================== СПЕЦИАЛЬНЫЕ ЛИМИТЕРЫ ======================
+
+/**
+ * 5 броней в час с одного IP — для формы бронирования
+ */
+export const bookingIpRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "60 m"),
+  analytics: true,
+  prefix: "evatur:ratelimit:booking:ip",
+});
+
+/**
+ * 2 брони за 10 минут с одного номера телефона
+ */
+export const bookingPhoneRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(2, "10 m"),
+  analytics: true,
+  prefix: "evatur:ratelimit:booking:phone",
+});
+
 /**
  * Вспомогательная функция для получения IP пользователя.
- * Адаптировано под Next.js 16+ (headers() является асинхронным).
  */
 export async function getClientIp(): Promise<string> {
   const headersList = await headers();
   
-  // x-forwarded-for может содержать цепочку IP. Нам нужен первый (исходный IP клиента)
   const forwardedFor = headersList.get("x-forwarded-for");
   if (forwardedFor) {
     return forwardedFor.split(",")[0].trim();
   }
   
-  // Fallback для некоторых прокси или локальной разработки
   return headersList.get("x-real-ip") || "127.0.0.1";
 }

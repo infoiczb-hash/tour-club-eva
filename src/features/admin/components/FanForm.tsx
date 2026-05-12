@@ -165,7 +165,7 @@ export default function FanForm({ initialData, onSuccess }: Props) {
                     onClick={() => form.setValue("category", cat)}
                     className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
                       selectedCategory === cat 
-                        ? 'bg-teal-500 text-white border-teal-600 shadow-md' 
+                        ? ' bg-teal-500 text-slate-950  border-teal-600 shadow-md' 
                         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-800 hover:border-teal-300'
                     }`}
                  >

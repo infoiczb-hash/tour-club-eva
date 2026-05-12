@@ -89,7 +89,7 @@ export const PostTourReviewEmail = ({
 
             <Section className="text-center">
               <Link href="https://t.me/romansvtirase" className="text-xs text-slate-400 underline">Связаться с руководством</Link>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. Спасибо, что путешествуете с нами. <br />
               </Text>
             </Section>

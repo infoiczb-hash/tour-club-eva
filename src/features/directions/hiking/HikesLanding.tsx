@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 import SectionErrorBoundary from '@/components/SectionErrorBoundary';
@@ -28,11 +29,22 @@ const HikesFAQ = dynamic(() => import('./HikesFAQ'), {
 
 import ToursBrowserDynamic from '@/features/tours/components/ToursBrowserDynamic';
 
-export default function HikesLanding({ tours = [] }: { tours?: TourPreview[] }) {
+async function ToursCatalog({ toursPromise }: { toursPromise: Promise<TourPreview[]> }) {
+  const tours = await toursPromise;
   return (
-    // Обертка страницы теперь темная!
+    <ToursBrowserDynamic
+      tours={tours}
+      limit={6}
+      title="Ближайшие туры"
+      subtitle="Выберите маршрут, который подходит именно вам"
+    />
+  );
+}
+
+export default function HikesLanding({ toursPromise }: { toursPromise: Promise<TourPreview[]> }) {
+  return (
     <main className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-teal-500/30">
-      
+
       {/* 1. Главный экран (LCP - без обертки) */}
       <HikesHero />
 
@@ -55,25 +67,18 @@ export default function HikesLanding({ tours = [] }: { tours?: TourPreview[] }) 
       <SectionErrorBoundary label="FAQ походы" minHeight="400px">
         <HikesFAQ />
       </SectionErrorBoundary>
-      
-      {/* Афиша реальных туров. Заменили ref на id="catalog" */}
+
+      {/* Афиша реальных туров */}
       <section id="catalog" className="py-10 md:py-14 bg-stone-950 relative overflow-hidden scroll-mt-10 border-t border-white/5">
-          {/* Декоративный элемент фона */}
-          <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
-          
-          <div className="container mx-auto px-4 relative z-10 max-w-6xl">
-              <div className="bg-stone-900/40 rounded-[2.5rem] border border-stone-800 p-4 md:p-8 backdrop-blur-sm">
-                  
-                  {/* 🔥 ToursBrowserDynamic защищен предохранителем изнутри своего файла */}
-                  <ToursBrowserDynamic 
-                      tours={tours} 
-                      limit={6}
-                      title="Ближайшие экспедиции"
-                      subtitle="Выберите маршрут, который подходит именно вам"
-                  />
-                  
-              </div>
+        <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-teal-900/10 md:blur-[150px] rounded-full pointer-events-none" />
+
+        <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+          <div className="bg-stone-900/40 rounded-[2.5rem] border border-stone-800 p-4 md:p-8 backdrop-blur-sm">
+            <Suspense fallback={<div className="min-h-[300px] bg-stone-950 animate-pulse rounded-3xl" />}>
+              <ToursCatalog toursPromise={toursPromise} />
+            </Suspense>
           </div>
+        </div>
       </section>
     </main>
   );

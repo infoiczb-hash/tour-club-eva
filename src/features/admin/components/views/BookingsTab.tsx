@@ -163,7 +163,7 @@ const Pagination = ({ page, total, limit, onPageChange }: { page: number; total:
         <button
           key={p}
           onClick={() => onPageChange(p)}
-          className={`px-3 py-1 rounded border ${p === page ? 'bg-teal-500 text-white border-teal-500' : 'border-slate-300'}`}
+          className={`px-3 py-1 rounded border ${p === page ? ' bg-teal-500 text-slate-950  border-teal-500' : 'border-slate-300'}`}
         >
           {p}
         </button>
@@ -858,7 +858,7 @@ export default function BookingsTab({
                 </button>
                 <button 
                   onClick={() => handleStatusChangeWithModalClose(receiptModal.booking!.id, 'confirmed')}
-                  className="flex-[2] py-3.5 bg-emerald-500 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 shadow-md transition-colors"
+                  className="flex-[2] py-3.5 bg-emerald-500 text-slate-950  text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 shadow-md transition-colors"
                 >
                     Подтвердить чек
                 </button>

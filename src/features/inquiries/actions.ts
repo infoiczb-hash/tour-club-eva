@@ -3,7 +3,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { InquirySchema, InquiryInput } from './schema';
-// 👇 ИЗМЕНЕНО: Импортируем publishToTelegram вместо sendToTelegram и добавляем env
+//    ИЗМЕНЕНО: Импортируем publishToTelegram вместо sendToTelegram и добавляем env
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 import { basicRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -84,7 +84,7 @@ export async function submitInquiry(data: InquiryInput) {
     }
 
     // 4. Сохранение в БД
-    // 👇 ИЗМЕНЕНО: Записываем результат в newInquiry, чтобы получить ID
+    //    ИЗМЕНЕНО: Записываем результат в newInquiry, чтобы получить ID
     const newInquiry = await prisma.inquiry.create({
       data: {
         type: validData.type,
@@ -128,10 +128,10 @@ export async function submitInquiry(data: InquiryInput) {
        tgMessage += `\n🏢 Компания: ${escapeHtml(validData.company)}`;
     }
 
-    // 👇 ИЗМЕНЕНО: Маршрутизируем в нужный топик
+    //    ИЗМЕНЕНО: Маршрутизируем в нужный топик
     const targetTopic = validData.type === 'HR' ? env.TELEGRAM_TOPIC_HR : env.TELEGRAM_TOPIC_SUPPORT;
 
-    // 👇 ИЗМЕНЕНО: Используем publishToTelegram для отправки с кнопкой "Взять в работу"
+    //    ИЗМЕНЕНО: Используем publishToTelegram для отправки с кнопкой "Взять в работу"
     const tgResult = await publishToTelegram(
       tgMessage,
       undefined,

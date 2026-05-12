@@ -172,7 +172,7 @@ export default function DirectionsClient() {
                                 </p>
                             </div>
 
-                         {/* 👇 ВЫЗОВ НАШЕГО КЛИЕНТСКОГО ОСТРОВКА */}
+                         {/*    ВЫЗОВ НАШЕГО КЛИЕНТСКОГО ОСТРОВКА */}
                             {dir.isB2B && <DirectionB2BButton />}
 
                         </div>

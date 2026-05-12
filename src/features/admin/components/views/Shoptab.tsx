@@ -149,7 +149,7 @@ function ItemForm({ initial, onClose, onSave }: { initial?: AdminShopItem; onClo
           </div>
         </div>
         <button onClick={handleSubmit} disabled={isPending}
-          className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50">
+          className="w-full flex items-center justify-center gap-2 bg-teal-600 hover: bg-teal-500 text-slate-950  font-bold py-3 rounded-xl transition-all disabled:opacity-50">
           {isPending ? <Loader size={16} className="animate-spin" /> : <Check size={16} />}
           {initial ? 'Сохранить' : 'Создать товар'}
         </button>
@@ -193,7 +193,7 @@ const handleAction = (newStatus: 'APPROVED' | 'REJECTED' | 'DELIVERED', note?: s
               <Coins size={10} /> {order.item.price} баллов
             </span>
             {order.isPreorder && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">ПРЕДЗАКАЗ</span>
+              <span className="text-xs  font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">ПРЕДЗАКАЗ</span>
             )}
           </div>
         </div>
@@ -201,7 +201,7 @@ const handleAction = (newStatus: 'APPROVED' | 'REJECTED' | 'DELIVERED', note?: s
           <div className={`flex items-center gap-1 text-xs font-bold ${cfg.color}`}>
             <Icon size={12} /> {cfg.label}
           </div>
-          <span className="text-[10px] text-slate-400">{date}</span>
+          <span className="text-xs  text-slate-400">{date}</span>
         </div>
       </div>
 
@@ -336,7 +336,7 @@ const handleToggleActive = (item: AdminShopItem) => {
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold border-b-2 transition-all ${view === tab.id ? 'border-teal-500 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
             {tab.label}
             {tab.count !== undefined && (
-              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${view === tab.id ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-500'}`}>
+              <span className={`text-xs  font-black px-1.5 py-0.5 rounded-full ${view === tab.id ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-500'}`}>
                 {tab.count}
               </span>
             )}
@@ -403,7 +403,7 @@ const handleToggleActive = (item: AdminShopItem) => {
                 <button key={tab.key} onClick={() => setOrderFilter(tab.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${orderFilter === tab.key ? 'bg-teal-600 text-white border-teal-600' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'}`}>
                   {tab.label}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${orderFilter === tab.key ? 'bg-white/20' : 'bg-slate-100'}`}>{count}</span>
+                  <span className={`text-xs  px-1.5 py-0.5 rounded-full ${orderFilter === tab.key ? 'bg-white/20' : 'bg-slate-100'}`}>{count}</span>
                 </button>
               );
             })}

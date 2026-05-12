@@ -11,6 +11,7 @@ export type BlogPreview = Prisma.BlogGetPayload<{
     read_time: true; is_trending: true; category: true; categoryId: true;
     format: true; author_name: true; author_role: true; author_image: true;
     guideId: true; isActive: true;
+    relatedTourId: true; 
     guide: {
       select: { id: true; name: true; image: true; role: true; }
     };
@@ -60,6 +61,7 @@ export const getBlogPreviews = cache(async (options?: { take?: number }): Promis
         category: true, categoryId: true, format: true,
         author_name: true, author_role: true, author_image: true,
         guideId: true, isActive: true,
+        relatedTourId: true,
         guide: {
           select: { id: true, name: true, image: true, role: true }
         },

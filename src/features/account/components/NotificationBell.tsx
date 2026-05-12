@@ -258,7 +258,7 @@ export function NotificationBell() {
           isOpen ? 'text-white' : 'text-slate-400 hover:text-white'
         )} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-0.5 text-[10px] font-black text-white bg-teal-500 border-2 border-slate-900 rounded-full">
+          <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-0.5 text-xs  font-black text-white bg-teal-500 border-2 border-slate-900 rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

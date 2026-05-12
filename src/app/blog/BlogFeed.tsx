@@ -141,13 +141,14 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           src={post.image || '/placeholder.jpg'}
           alt={post.title}
           fill
+          unoptimized
           priority={priority}
           loading={priority ? undefined : "lazy"}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
         {/* Мягкий бейдж с глассморфизмом */}
-        <div className="absolute top-4 left-4 px-3 py-1.5 bg-slate-900/70 backdrop-blur-md rounded-xl text-[10px] font-black text-white uppercase tracking-widest border border-white/10 shadow-sm pointer-events-none">
+        <div className="absolute top-4 left-4 px-3 py-1.5 bg-slate-900/70 backdrop-blur-md rounded-xl text-xs  font-black text-white uppercase tracking-widest border border-white/10 shadow-sm pointer-events-none">
           {getLabel(post)}
         </div>
       </Link>
@@ -180,7 +181,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {post.tags.slice(0, 3).map((tag: string) => (
-              <span key={tag} className="px-2.5 py-1 bg-slate-800/50 border border-slate-700/50 rounded-lg text-[10px] font-bold uppercase tracking-widest text-slate-300">
+              <span key={tag} className="px-2.5 py-1 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs  font-bold uppercase tracking-widest text-slate-300">
                 #{tag}
               </span>
             ))}

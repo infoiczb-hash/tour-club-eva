@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { TourPreview } from '@/features/tours/types';
 import dynamic from 'next/dynamic';
 
@@ -26,19 +27,23 @@ const KidsCatalog = dynamic(() => import('./KidsCatalog'), {
   loading: () => <div className="min-h-[400px] bg-slate-950" />,
 });
 
-//   Ожидаем массив туров из page.tsx
-export default function KidsLanding({ tours }: { tours: TourPreview[] }) {
+async function ToursCatalog({ toursPromise }: { toursPromise: Promise<TourPreview[]> }) {
+  const tours = await toursPromise;
+  return <KidsCatalog tours={tours} />;
+}
+
+export default function KidsLanding({ toursPromise }: { toursPromise: Promise<TourPreview[]> }) {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-amber-500/30 selection:text-white">
-      
+
       {/* 1. Эмоция и Главный экран (LCP — без обертки) */}
       <KidsHero />
-      
+
       {/* 2. Для родителей (Боли и безопасность) */}
       <SectionErrorBoundary label="Для родителей" minHeight="500px">
         <KidsParents />
       </SectionErrorBoundary>
-      
+
       {/* 3. Трансформация */}
       <SectionErrorBoundary label="Трансформация" minHeight="400px">
         <KidsTransformation />
@@ -55,13 +60,14 @@ export default function KidsLanding({ tours }: { tours: TourPreview[] }) {
       <SectionErrorBoundary label="FAQ детские туры" minHeight="400px">
         <KidsFAQ />
       </SectionErrorBoundary>
-      
+
       {/* 6. Каталог */}
-      {/*   Прокидываем туры в каталог, чтобы они отрендерились! */}
       <SectionErrorBoundary label="Каталог детских туров" minHeight="400px">
-        <KidsCatalog tours={tours} />
+        <Suspense fallback={<div className="min-h-[400px] bg-slate-950 animate-pulse" />}>
+          <ToursCatalog toursPromise={toursPromise} />
+        </Suspense>
       </SectionErrorBoundary>
-          
+
     </main>
   );
 }

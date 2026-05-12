@@ -16,14 +16,21 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import AuthorBlock from '@/components/blog/AuthorBlock';
 
+// ИМПОРТ НОВОГО КОМПОНЕНТА ПЕРЕЛИНКОВКИ
+import RelatedTour from '@/components/blog/RelatedTour';
+
+
 const PostWishlistButton = dynamic(
   () => import('@/features/blog/components/PostWishlistButton')
 );
 
+
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
+
 
 //   ОПТИМИЗАЦИЯ: Увеличиваем интервал ревалидации до 1 часа
 export const revalidate = 3600;
+
 
 export async function generateStaticParams() {
   const posts = await prisma.blog.findMany({
@@ -36,11 +43,12 @@ export async function generateStaticParams() {
   }));
 }
 
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-//   ОПТИМИЗАЦИЯ: Параллельный запуск запросов внутри getPost (добор related-статей за 1 запрос)
+
 const getPost = cache(async (slug: string) => {
   if (!slug) return null;
   const decodedSlug = decodeURIComponent(slug);
@@ -49,9 +57,24 @@ const getPost = cache(async (slug: string) => {
     prisma.blog.findUnique({
       where: { slug: decodedSlug },
       include: { 
-  blogCategory: true,
-  guide: { select: { slug: true } } // Добавляем эту строку
-} 
+        blogCategory: true,
+        guide: { 
+          select: { 
+            slug: true, 
+            name: true 
+          } 
+        },
+        // НОВОЕ: Запрашиваем связанный тур для перелинковки
+        relatedTour: {
+          select: { 
+            title: true, 
+            slug: true, 
+            coverImage: true, 
+            price: true, 
+            currency: true 
+          }
+        }
+      } 
     }),
     prisma.blog.findMany({
       where: { 
@@ -83,6 +106,7 @@ const getPost = cache(async (slug: string) => {
   return { post, relatedPosts: finalRelated };
 });
 
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPost(slug);
@@ -90,48 +114,55 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!data) return { title: "Статья не найдена | Турклуб Эва" };
   
   const post = data.post;
-  const postUrl = `${BASE_URL}/blog/${post.slug}`;
+  const canonicalUrl = `${BASE_URL}/blog/${post.slug}`;
   
+  const rawContent = String(post.excerpt || post.content || '').replace(/<[^>]+>/g, '');
+  const description = rawContent.slice(0, 155).trim();
+  const ogDesc = rawContent.slice(0, 120).trim();
+
   let imageUrl = post.image || '/og-default.jpg'; 
   if (imageUrl.startsWith('/')) {
     imageUrl = `${BASE_URL}${imageUrl}`;
   }
 
   return {
-    title: `${post.title} | Турклуб «Эва»`,
-    description: post.excerpt || `Статья от турклуба «Эва»: ${post.title}`,
+    title: `${post.title} | Полевой журнал — Турклуб Эва`,
+    description,
     alternates: {
-      canonical: postUrl, 
+      canonical: canonicalUrl, 
     },
     openGraph: {
-      title: `${post.title} | Турклуб «Эва»`,
-      description: post.excerpt || '',
-      url: postUrl,
+      title: post.title,
+      description: ogDesc,
+      url: canonicalUrl,
+      type: 'article',
       siteName: 'Турклуб «Эва»',
+      locale: 'ru_RU',
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      authors: [post.author_name || 'Турклуб Эва'],
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: post.title,
+          alt: `${post.title} — Турклуб Эва`,
         },
       ],
-      type: 'article',
-      locale: 'ru_RU',
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
-      description: post.excerpt || '',
+      description: ogDesc,
       images: [imageUrl],
     },
   };
 }
 
+
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
 
-  //   ОПТИМИЗАЦИЯ: Параллельный запуск получения данных поста и сессии Supabase
   const [data, { data: { user } }] = await Promise.all([
     getPost(slug),
     createServerSupabaseClient().then(sb => sb.auth.getUser())
@@ -163,37 +194,41 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   const formatDate = (date: Date) => format(new Date(date), 'd MMMM yyyy', { locale: ru });
-  const isoDate = new Date(post.date).toISOString();
-
+  
   let absoluteImageUrl = post.image || '/og-default.jpg'; 
   if (absoluteImageUrl.startsWith('/')) {
     absoluteImageUrl = `${BASE_URL}${absoluteImageUrl}`;
   }
 
-  //   ВОССТАНОВЛЕНО: Полный объект jsonLd с BreadcrumbList
+  const authorName = post.guide?.name || post.author_name || 'Турклуб Эва';
+  const authorUrl = post.guide?.slug ? `${BASE_URL}/guides/${post.guide.slug}` : undefined;
+  const rawContentForSchema = String(post.excerpt || post.content || '').replace(/<[^>]+>/g, '').slice(0, 155).trim();
+
+
   const jsonLd = [
     {
       '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
+      '@type': 'Article',
       mainEntityOfPage: {
         '@type': 'WebPage',
         '@id': postUrl
       },
       headline: post.title,
-      description: post.excerpt || '',
+      description: post.excerpt || rawContentForSchema,
       image: [absoluteImageUrl],
-      datePublished: isoDate,
-      dateModified: isoDate, 
+      datePublished: post.createdAt.toISOString(),
+      dateModified: post.updatedAt.toISOString(), 
       author: {
         '@type': 'Person',
-        name: post.author_name || 'Турклуб Эва',
+        name: authorName,
+        ...(authorUrl ? { url: authorUrl } : {})
       },
       publisher: {
         '@type': 'Organization',
-        name: 'Турклуб «Эва»',
+        name: 'Турклуб Эва',
         logo: {
           '@type': 'ImageObject',
-          url: `${BASE_URL}/logo.png`
+          url: `${BASE_URL}/icon.png`
         }
       }
     },
@@ -223,6 +258,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     }
   ];
 
+
   return (
     <>
       <BreadcrumbJsonLd items={[
@@ -238,10 +274,10 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
+
       {/* --- 1. HERO HEADER --- */}
       <div className="relative min-h-[75svh] md:min-h-[65vh] w-full overflow-hidden flex flex-col justify-end">
         
-        {/* ФОН */}
         <div className="absolute inset-0 z-0">
             <Image 
                 src={post.image || '/placeholder.jpg'} 
@@ -249,21 +285,21 @@ export default async function BlogPostPage({ params }: PageProps) {
                 fill 
                 className="object-cover"
                 priority
+                unoptimized
                 fetchPriority="high"
-                //   ОПТИМИЗАЦИЯ: Уменьшено качество картинки для LCP
                 quality={60}
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/80 to-slate-900/40" />
         </div>
 
-        {/* КОНТЕНТ */}
+
         <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
             
             <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-8 md:mb-10 group w-fit shadow-lg">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
             </Link>
+
 
             <div className="flex items-center gap-3 mb-4 md:mb-5">
                 <span className="text-[11px] md:text-xs font-bold text-slate-300 uppercase tracking-widest">
@@ -274,19 +310,19 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </span>
             </div>
 
+
             <div className="flex items-start justify-between gap-4 mb-8 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                <h1 className="blog-hero-title">
-    {post.title}
-</h1>
+                    {post.title}
+               </h1>
                 <div className="shrink-0 mt-1 md:mt-2">
                     <PostWishlistButton postId={post.id} initialIsFavorite={isWished} />
                 </div>
             </div>
 
-         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
-    
-    {/* --- НОВЫЙ ИНТЕРАКТИВНЫЙ БЛОК АВТОРА --- */}
-<AuthorBlock 
+
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
+                <AuthorBlock 
                     name={post.author_name || "Турклуб Эва"}
                     role={post.author_role || "Гид клуба"}
                     image={post.author_image}
@@ -294,10 +330,9 @@ export default async function BlogPostPage({ params }: PageProps) {
                     centered={false}
                 />
                 
-                {/* Вертикальный разделитель */}
                 <div className="h-8 w-px bg-white/20 hidden md:block" />
 
-                {/* Блок с датой и временем чтения */}
+
                 <div className="flex items-center gap-4 text-slate-300 text-[12px] md:text-[13px] font-medium bg-slate-900/50 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/5 w-fit">
                     <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-teal-500" />
@@ -309,7 +344,6 @@ export default async function BlogPostPage({ params }: PageProps) {
                         <span>{post.read_time} мин</span>
                     </div>
                 </div>
-                
             </div>
         </div>
       </div>
@@ -341,74 +375,73 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
-                {/*   ВОССТАНОВЛЕНО: Настройки безопасности SafeHTML для iframe и XSS */}
-               <SafeHTML 
-    html={post.content}
-    className="
-        prose prose-invert max-w-none blog-prose
-        [&_p:empty]:hidden [&_br]:hidden
-        
-        /* Заголовки */
-        prose-headings:font-black prose-headings:tracking-tight prose-headings:text-white
-        prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-2xl md:prose-h2:text-3xl
-        prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
-        
-        /* Основной текст (улучшен контраст и межстрочный интервал) */
-        prose-p:text-slate-200 prose-p:text-[16px] md:prose-p:text-[17px] prose-p:leading-relaxed prose-p:mb-6
-        prose-strong:text-white prose-strong:font-bold
-        
-        /* Списки */
-        prose-ul:my-4 prose-li:my-1 prose-li:text-slate-200 prose-li:text-[16px] md:prose-li:text-[17px] prose-li:leading-relaxed prose-li:marker:text-teal-500
-        
-        /* Ссылки */
-        prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
-        
-        /* Цитаты (Blockquotes) */
-        prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-800/50 
-        prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic 
-        prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium
-    "
-    options={{
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
-        allowedAttributes: {
-            '*': ['class', 'style'],
-            'a': ['href', 'name', 'target'],
-            'img': ['src', 'alt'],
-            'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
-        },
-        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
-        allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
-    }}
-/>
+
+                <SafeHTML 
+                    html={post.content}
+                    className="
+                        prose prose-invert max-w-none blog-prose
+                        [&_p:empty]:hidden [&_br]:hidden
+                        prose-headings:font-black prose-headings:tracking-tight prose-headings:text-white
+                        prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-2xl md:prose-h2:text-3xl
+                        prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
+                        prose-p:text-slate-200 prose-p:text-[16px] md:prose-p:text-[17px] prose-p:leading-relaxed prose-p:mb-6
+                        prose-strong:text-white prose-strong:font-bold
+                        prose-ul:my-4 prose-li:my-1 prose-li:text-slate-200 prose-li:text-[16px] md:prose-li:text-[17px] prose-li:leading-relaxed prose-li:marker:text-teal-500
+                        prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
+                        prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-800/50 
+                        prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic 
+                        prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium
+                    "
+                    options={{
+                        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
+                        allowedAttributes: {
+                            '*': ['class', 'style'],
+                            'a': ['href', 'name', 'target'],
+                            'img': ['src', 'alt'],
+                            'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
+                        },
+                        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+                        allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
+                    }}
+                />
+
+
+                {/* НОВОЕ: Блок связанного тура (Внутренняя перелинковка) */}
+                {post.relatedTour && (
+                  <RelatedTour tour={post.relatedTour} />
+                )}
+
 
                 <ArticleShare title={post.title} slug={post.slug} />
 
            </div>
 
+
             {/* SIDEBAR */}
             <aside className="lg:col-span-4 relative mt-12 lg:mt-0">
                 <div className="lg:sticky lg:top-28 space-y-6 md:space-y-8 pb-10">
                     
-                    {/* Блок "Читайте также" */}
                     <div className="p-6 md:p-8 rounded-3xl bg-slate-900/50 border border-white/5 backdrop-blur-sm shadow-xl">
                         <h2 className="text-sm md:text-base font-black uppercase tracking-widest text-white mb-6 flex items-center gap-3">   
                             <BookOpen size={18} className="text-teal-500" />
                             Читайте также 
                         </h2>
 
+
                         {relatedPosts.length > 0 ? (
                             <div className="flex flex-col gap-6">
                                 {relatedPosts.map(relPost => (
                                     <Link key={relPost.id} href={`/blog/${relPost.slug}`} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
                                         <div className="relative w-full sm:w-24 lg:w-full xl:w-24 aspect-[4/3] sm:aspect-square lg:aspect-[4/3] xl:aspect-square shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-white/5 shadow-md">
-                                         <Image
-                                            src={relPost.image || '/placeholder.jpg'}
-                                            alt={relPost.title}
-                                            fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 120px, 96px"
-                                            loading="lazy"
-                                          />
+                                            <Image
+                                              src={relPost.image || '/placeholder.jpg'}
+                                              alt={relPost.title}
+                                              fill
+                                              unoptimized
+                                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 120px, 96px"
+                                              loading="lazy"
+                                            />
                                         </div>
                                         <div className="py-1">
                                             <span className="text-[12px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">
@@ -427,6 +460,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                             </div>
                         )}
 
+
                         <div className="mt-8 pt-6 border-t border-white/5">
                             <Link href="/blog" className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-slate-800 text-white font-bold uppercase text-[13px] hover:bg-teal-500 hover:text-slate-900 transition-all border border-white/10 hover:border-teal-500 shadow-lg group">
                                 <span>Все статьи</span>
@@ -434,6 +468,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                             </Link>
                         </div>
                     </div>
+
 
                     {/* Блок "Хотите с нами?" */}
                     <div className="p-8 rounded-3xl bg-gradient-to-br from-teal-900/40 to-slate-900 border border-teal-500/20 text-center shadow-2xl relative overflow-hidden group">
@@ -450,8 +485,10 @@ export default async function BlogPostPage({ params }: PageProps) {
                         </Link>
                     </div>
 
+
                 </div>
             </aside>
+
 
         </div>
       </div>

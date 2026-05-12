@@ -103,19 +103,30 @@ export default async function GuidePage({ params }: Props) {
   const quotes       = Array.isArray(guide.quotes)       ? guide.quotes       : [];
   const achievements = Array.isArray(guide.achievements) ? guide.achievements : [];
 
+  // Расширенная E-E-A-T разметка Schema.org Person
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: guide.name,
     jobTitle: guide.role,
-    description: guide.bio,
-    image: guide.actionImage || guide.image,
-    url: `${BASE_URL}/guides/${guide.slug}` 
+    description: guide.bio ?? undefined,
+    image: guide.actionImage || guide.image || undefined,
+    url: `${BASE_URL}/guides/${guide.slug}`,
+    worksFor: {
+      '@type': 'Organization',
+      name: 'Турклуб Эва',
+      url: BASE_URL,
+    },
+    knowsAbout: tags.length > 0 ? tags : ['активный туризм', 'байдарки', 'горные походы'],
+    sameAs: [
+      guide.instagram,
+      guide.telegram,
+    ].filter(Boolean),
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-white selection:bg-teal-500/30">
-   <script
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ 
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
@@ -123,7 +134,7 @@ export default async function GuidePage({ params }: Props) {
       />
       
 
-      {/* ─── HERO ─── */}
+    {/* ─── HERO ─── */}
       <section className="relative w-full min-h-[100svh] md:min-h-[90vh] flex flex-col">
         {/* BG IMAGE */}
         <div className="absolute inset-0 z-0">
@@ -132,6 +143,7 @@ export default async function GuidePage({ params }: Props) {
               src={guide.actionImage || guide.image || ''} 
               alt={`Гид ${guide.name}`} 
               fill 
+              unoptimized // ✅ Добавили защиту от прыгающего кэша Next.js
               className="object-cover object-top md:object-[center_15%]"
               priority
               fetchPriority="high"
@@ -140,12 +152,13 @@ export default async function GuidePage({ params }: Props) {
           ) : (
             <div className="absolute inset-0 bg-slate-900" />
           )}
-          {/* Градиенты для читаемости (снизу и сверху) */}
-         <div className="absolute inset-0 bg-black/40" />
+          
+          {/* ✅ ИСПРАВЛЕНО: Плавный градиент, который затемняет только низ */}
+          <div className="absolute bottom-0 left-0 right-0 h-[70%] bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
         </div>
         
         {/* CONTENT CONTAINER */}
-        <div className="container mx-auto px-4 relative z-10 pt-28 md:pt-36 pb-12 md:pb-20 flex flex-col flex-grow">
+        <div className="container mx-auto px-4 relative z-10 pt-28 md:pt-36 pb-4 md:pb-8 flex flex-col flex-grow">
           
           {/* TOP: Back Button */}
           <div>

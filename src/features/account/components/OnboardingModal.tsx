@@ -168,7 +168,7 @@ export default function OnboardingModal() {
                   <button
                     type="submit"
                     disabled={isPending || phone.length < 10 || name.trim().length < 2}
-                    className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-teal-500/20 active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-2 bg-teal-600 hover: bg-teal-500 text-slate-950  font-black uppercase tracking-widest py-4 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-teal-500/20 active:scale-[0.98]"
                   >
                     {isPending ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

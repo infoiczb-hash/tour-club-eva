@@ -36,7 +36,7 @@ export default async function AllGuidesPage() {
     <main className="min-h-screen bg-slate-950 text-white selection:bg-teal-500/30 overflow-hidden">
       
       {/* --- PREMIUM HERO SECTION --- */}
-      <section className="relative pt-32 pb-12 md:pt-40 md:pb-20 px-4">
+      <section className="relative pt-32 pb-4 md:pt-40 md:pb-8 px-4">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-teal-500/10 md:blur-[100px] rounded-full pointer-events-none" />
         
         <div className="container mx-auto max-w-5xl relative z-10 text-center flex flex-col items-center">
@@ -46,11 +46,11 @@ export default async function AllGuidesPage() {
                Лица клуба
              </span>
           </div>
-          
-          <h1 className="animate-hero-title text-3xl md:text-6xl uppercase tracking-tighter leading-none mb-3 md:mb-4">
-            <span className="font-light text-slate-300 block md:inline">Команда </span>
-            <span className="font-black text-white">Клуба</span>
-            <span className="text-teal-500">.</span>
+       <h1 className="text-[10vw] sm:text-6xl md:text-7xl lg:text-[7rem] font-black text-white mb-6 uppercase tracking-tighter leading-none whitespace-nowrap">
+             Команда{' '}
+             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-400">
+               Клуба
+             </span>
           </h1>
           
           <p className="animate-hero-subtitle text-base md:text-xl text-slate-300 font-medium max-w-2xl leading-relaxed">
@@ -60,7 +60,7 @@ export default async function AllGuidesPage() {
       </section>
 
       {/* --- СПИСОК ГИДОВ --- */}
-      <section className="relative z-10 pb-24">
+      <section className="relative z-10 pb-24 -mt-4 md:-mt-8">
         {guides.length > 0 ? (
           <GuidesEditorialList guides={guides} />
         ) : (

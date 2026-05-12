@@ -186,7 +186,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
                          </div>
                          <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{b.tour?.title}</p>
-                            <p className="text-[10px] text-slate-700 uppercase mt-1">
+                            <p className="text-xs  text-slate-700 uppercase mt-1">
                               {new Date(b.createdAt).toLocaleDateString()} · {b.status}
                             </p>
                          </div>
@@ -245,7 +245,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
                             )}>
                               {log.changes.amount > 0 ? '+' : ''}{log.changes.amount} баллов
                             </span>
-                            <span className="text-slate-700 text-[10px]">
+                            <span className="text-slate-700 text-xs ">
                               {new Date(log.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -268,7 +268,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">{title}</h3>
+      <h3 className="text-xs  font-bold text-slate-700 uppercase tracking-widest">{title}</h3>
       {children}
     </div>
   );
@@ -277,7 +277,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoItem({ icon, label, value, link }: { icon: React.ReactNode; label: string; value: string; link?: string }) {
   return (
     <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
-      <p className="text-[10px] text-slate-700 font-bold uppercase mb-1 flex items-center gap-1">
+      <p className="text-xs  text-slate-700 font-bold uppercase mb-1 flex items-center gap-1">
         {icon} {label}
       </p>
       {link ? (
@@ -292,7 +292,7 @@ function InfoItem({ icon, label, value, link }: { icon: React.ReactNode; label: 
 function GearCard({ label, value }: { label: string; value?: string }) {
   return (
     <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-      <p className="text-[10px] text-slate-700 font-bold uppercase mb-1">{label}</p>
+      <p className="text-xs  text-slate-700 font-bold uppercase mb-1">{label}</p>
       <p className="text-lg font-black text-slate-700 dark:text-slate-700">{value || '—'}</p>
     </div>
   );
@@ -301,7 +301,7 @@ function GearCard({ label, value }: { label: string; value?: string }) {
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-      <p className="text-[10px] text-slate-700 font-bold uppercase mb-1">{label}</p>
+      <p className="text-xs  text-slate-700 font-bold uppercase mb-1">{label}</p>
       <p className="text-xl font-black text-slate-900 dark:text-white">{value}</p>
     </div>
   );

@@ -178,6 +178,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   src={featuredPost.image || '/placeholder.jpg'}
                   alt={featuredPost.title}
                   fill
+                  unoptimized
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   quality={75}
                   loading="lazy" 
@@ -198,6 +199,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                         src={featuredPost.author_image} 
                         alt={featuredPost.author_name || 'Автор'} 
                         fill 
+                        unoptimized 
                         className="object-cover object-top" 
                         sizes="40px" 
                       />
@@ -235,6 +237,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                       src={post.image || '/placeholder.jpg'}
                       alt={post.title}
                       fill
+                      unoptimized
                       sizes="96px"
                       quality={75}
                       className="object-cover group-hover:scale-110 transition-transform duration-500"

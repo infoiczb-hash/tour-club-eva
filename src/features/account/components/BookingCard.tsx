@@ -43,7 +43,7 @@ interface BookingCardProps {
   };
 }
 
-const STATUS_MAP = {
+const STATUS_MAP = { 
   pending: { label: 'Новая', color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/30', icon: Clock },
   awaiting_payment: { label: 'Ждет оплаты', color: 'text-sky-400', bg: 'bg-sky-400/10', border: 'border-sky-400/30', icon: CreditCard },
   moderation: { label: 'Проверка чека', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: Hourglass },
