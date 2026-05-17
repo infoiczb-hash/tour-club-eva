@@ -39,12 +39,14 @@ type CalendarTour = Omit<TourPreview, 'date'> & { //   ИЗМЕНЕНО: Omit и
 interface CalendarViewProps { events: TourPreview[]; }
 export default function CalendarView({ events }: CalendarViewProps) {
 const { groupedTours, tbaTours } = useMemo(() => {
-  // Удалена переменная today и фильтрация futureDates
+  // 1. Задаем начало текущего дня для честного сравнения
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const explodedEvents: CalendarTour[] = events.flatMap((tour): CalendarTour[] => {
     const datesArray = Array.isArray(tour.dates) ? tour.dates : [];
 
     if (datesArray.length > 0) {
-      // Показываем все даты без фильтрации (сервер уже отдаёт только будущие)
       return datesArray.map((dateObj, idx) => ({
         ...tour,
         date: dateObj.start || null,
@@ -59,27 +61,41 @@ const { groupedTours, tbaTours } = useMemo(() => {
     return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null, currentPrice: tour.price } as CalendarTour];
   });
 
-    const sorted = explodedEvents.sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : Infinity;
-      const dateB = b.date ? new Date(b.date).getTime() : Infinity;
-      return dateA - dateB;
-    });
+  // 2. ВОЗВРАЩАЕМ ФИЛЬТРАЦИЮ: Убираем прошедшие туры
+  const futureEvents = explodedEvents.filter(tour => {
+    if (!tour.date) return true; // Туры "Скоро" (без дат) оставляем
 
-    const groups: Record<string, CalendarTour[]> = {};
-    const tba: CalendarTour[] = [];
-    
-    sorted.forEach(tour => {
-      if (!tour.date) { tba.push(tour); return; }
-     const date = new Date(tour.date);
-const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-const monthKey = monthFormatter.format(date);
-const formattedKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
-      if (!groups[formattedKey]) groups[formattedKey] = [];
-      groups[formattedKey].push(tour);
-    });
+    // Если тур многодневный, ориентируемся на дату окончания. Если однодневный - на дату старта.
+    const referenceDateStr = tour.endDate || tour.date;
+    const referenceDate = new Date(referenceDateStr);
+    referenceDate.setHours(0, 0, 0, 0); // Сбрасываем время, чтобы тур исчезал строго на следующий день
 
-    return { groupedTours: groups, tbaTours: tba };
-  }, [events]);
+    // Оставляем только те даты, которые >= сегодняшнего дня
+    return referenceDate.getTime() >= today.getTime();
+  });
+
+  // 3. Сортируем уже ОТФИЛЬТРОВАННЫЙ массив (заменили explodedEvents на futureEvents)
+  const sorted = futureEvents.sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : Infinity;
+    const dateB = b.date ? new Date(b.date).getTime() : Infinity;
+    return dateA - dateB;
+  });
+
+  const groups: Record<string, CalendarTour[]> = {};
+  const tba: CalendarTour[] = [];
+  
+  sorted.forEach(tour => {
+    if (!tour.date) { tba.push(tour); return; }
+    const date = new Date(tour.date);
+    const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const monthKey = monthFormatter.format(date);
+    const formattedKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+    if (!groups[formattedKey]) groups[formattedKey] = [];
+    groups[formattedKey].push(tour);
+  });
+
+  return { groupedTours: groups, tbaTours: tba };
+}, [events]);
 
   const monthKeys = Object.keys(groupedTours);
 

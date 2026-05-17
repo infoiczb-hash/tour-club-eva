@@ -2,7 +2,6 @@
 import React from 'react';
 import Image from 'next/image';
 import { preload } from 'react-dom';
-import { ArrowDown } from 'lucide-react';
 
 export interface HeroContent {
   title: string;
@@ -19,23 +18,26 @@ const DEFAULT_HERO: HeroContent = {
 };
 
 export default function HeroSection({ content = DEFAULT_HERO }: { content?: HeroContent }) {
-  preload(content.bg_image, { as: 'image', fetchPriority: 'high' });
+  const mobilePreloadUrl = content.bg_image.includes('cloudinary.com')
+  ? content.bg_image.replace('/upload/', '/upload/w_828,f_auto,q_auto:good/')
+  : content.bg_image;
+
+preload(mobilePreloadUrl, { as: 'image', fetchPriority: 'high' });
 
   return (
     <section className="relative w-full h-[100dvh] flex flex-col justify-between overflow-hidden bg-slate-950">
 
       {/* Фон */}
-      <div className="absolute inset-0 z-0">
+   <div className="absolute inset-0 z-0">
         <Image
           src={content.bg_image}
           alt="Турклуб Эва — походы и путешествия"
           fill
           className="object-cover object-center"
-          unoptimized 
           priority
           fetchPriority="high"
           quality={75}
-          sizes="100vw"
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1920px"
         />
         {/* Затемнение */}
         <div className="absolute inset-0 bg-slate-950/40" />
@@ -91,11 +93,11 @@ export default function HeroSection({ content = DEFAULT_HERO }: { content?: Hero
       </div>
 
       {/* Статистика + стрелка — прижаты к низу */}
-      <div className="relative z-10 container mx-auto px-5 sm:px-8 md:px-10 pb-6 sm:pb-8">
-        <div className="flex items-center justify-between">
+      <div className="relative z-10 container mx-auto px-5 sm:px-8 md:px-10 pb-6 sm:pb-8 md:pb-12 lg:pb-16">
+      <div className="flex items-center">
 
     {/* Статы */}
-          <div className="flex items-center gap-6 sm:gap-8 md:gap-12 w-full justify-between sm:justify-start">
+          <div className="flex items-center gap-6 sm:gap-8 md:gap-12 w-full justify-start sm:justify-start">
             
             {/* 1. Участники (СКРЫВАЕМ НА МОБИЛКАХ: hidden sm:flex) */}
             <div className="hidden sm:flex items-center gap-2 sm:gap-3 shrink-0">

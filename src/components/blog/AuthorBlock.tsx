@@ -23,12 +23,11 @@ export default function AuthorBlock({
     <>
       {/* ✅ ИСПРАВЛЕНИЕ 1: Жестко фиксируем не-сжимаемость (shrink-0), overflow и relative */}
       <div className={`relative overflow-hidden rounded-full author-circle shrink-0`}>
-        {image ? (
+      {image ? (
           <Image 
              src={image} 
              alt={name} 
              fill 
-             unoptimized // ✅ ИСПРАВЛЕНИЕ 2: Отключаем лоадер Next.js для картинок Supabase
              sizes={centered ? "64px" : "44px"} 
              className="object-cover"
           />

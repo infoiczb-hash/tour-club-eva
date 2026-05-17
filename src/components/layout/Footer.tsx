@@ -52,8 +52,8 @@ export const Footer = () => {
 
             {/* Соцсети */}
             <div className="flex gap-3 mt-1">
-              <SocialLink href="https://instagram.com/evaturclub" icon={<Instagram size={18} />} label="Instagram" aria-label="Наш Instagram" />
-              <SocialLink href="https://t.me/evaturclub" icon={<Send size={18} />} label="Telegram" aria-label="Наш Telegram"/>
+           <SocialLink href="https://instagram.com/evaturclub" icon={<Instagram size={18} />} label="Турклуб Эва в Instagram" />
+<SocialLink href="https://t.me/evaturclub" icon={<Send size={18} />} label="Турклуб Эва в Telegram" />
             </div>
           </div>
 

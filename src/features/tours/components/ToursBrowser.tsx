@@ -302,9 +302,9 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                     <section aria-labelledby="scheduled-tours-heading">
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                             <Flame size={18} className="text-amber-500 animate-pulse" />
-                            <h3 id="scheduled-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
+                            <h2 id="scheduled-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
                                 Расписание
-                            </h3>
+                            </h2>
                         </div>
 
                         {/*   УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
@@ -340,9 +340,9 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                     <section aria-labelledby="soon-tours-heading">
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                             <Sparkles size={18} className="text-slate-300" />
-                            <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-300">
+                            <h2 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-300">
                                 Планируй заранее (Анонсы)
-                            </h3>
+                            </h2>
                         </div>
 
                         {/*   УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}

@@ -170,7 +170,7 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
         {/* GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
-        {/* Hero Post */}
+      {/* Hero Post */}
           {featuredPost && (
             <div className="lg:col-span-3">
               <Link href={`/blog/${featuredPost.slug}`} className="group relative block aspect-[4/3] lg:aspect-[16/9] w-full rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900 shadow-2xl hover:border-teal-500/30 transition-all duration-500">
@@ -178,7 +178,6 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   src={featuredPost.image || '/placeholder.jpg'}
                   alt={featuredPost.title}
                   fill
-                  unoptimized
                   sizes="(max-width: 1024px) 100vw, 60vw"
                   quality={75}
                   loading="lazy" 
@@ -199,7 +198,6 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                         src={featuredPost.author_image} 
                         alt={featuredPost.author_name || 'Автор'} 
                         fill 
-                        unoptimized 
                         className="object-cover object-top" 
                         sizes="40px" 
                       />
@@ -233,11 +231,10 @@ export default function BlogSection({ posts, categories = [] }: BlogSectionProps
                   className="group flex gap-4 p-3 pr-4 rounded-2xl bg-slate-900/40 hover:bg-slate-900 border border-white/5 hover:border-teal-500/30 transition-all items-center"
                 >
                   <div className="relative shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-slate-800 shadow-md">
-                    <Image
+                  <Image
                       src={post.image || '/placeholder.jpg'}
                       alt={post.title}
                       fill
-                      unoptimized
                       sizes="96px"
                       quality={75}
                       className="object-cover group-hover:scale-110 transition-transform duration-500"

@@ -1,10 +1,9 @@
 // src/app/blog/[slug]/page.tsx
-import { cache } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft, Calendar, Clock, User, ArrowRight, BookOpen } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, BookOpen, ArrowRight } from "lucide-react";
 import ArticleShare from "@/components/blog/ArticleShare";
 import { Metadata } from "next";
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
@@ -16,21 +15,19 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import AuthorBlock from '@/components/blog/AuthorBlock';
 
-// ИМПОРТ НОВОГО КОМПОНЕНТА ПЕРЕЛИНКОВКИ
-import RelatedTour from '@/components/blog/RelatedTour';
+// Импортируем оптимизированную функцию из общего API блога
+import { getBlogPostPageData } from '@/features/blog/api';
 
+// ИМПОРТ КОМПОНЕНТА ПЕРЕЛИНКОВКИ
+import RelatedTour from '@/components/blog/RelatedTour';
 
 const PostWishlistButton = dynamic(
   () => import('@/features/blog/components/PostWishlistButton')
 );
 
-
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
-
-//   ОПТИМИЗАЦИЯ: Увеличиваем интервал ревалидации до 1 часа
 export const revalidate = 3600;
-
 
 export async function generateStaticParams() {
   const posts = await prisma.blog.findMany({
@@ -43,73 +40,34 @@ export async function generateStaticParams() {
   }));
 }
 
-
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+interface RelatedPost {
+  id: string;
+  slug: string;
+  title: string;
+  image: string | null;
+  category: string | null;
+  blogCategory: { title: string } | null;
 
-const getPost = cache(async (slug: string) => {
-  if (!slug) return null;
-  const decodedSlug = decodeURIComponent(slug);
+}
 
-  const [post, relatedCandidates] = await Promise.all([
-    prisma.blog.findUnique({
-      where: { slug: decodedSlug },
-      include: { 
-        blogCategory: true,
-        guide: { 
-          select: { 
-            slug: true, 
-            name: true 
-          } 
-        },
-        // НОВОЕ: Запрашиваем связанный тур для перелинковки
-        relatedTour: {
-          select: { 
-            title: true, 
-            slug: true, 
-            coverImage: true, 
-            price: true, 
-            currency: true 
-          }
-        }
-      } 
-    }),
-    prisma.blog.findMany({
-      where: { 
-        isActive: true,
-        slug: { not: decodedSlug }
-      },
-      take: 6,
-      orderBy: { date: 'desc' },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        image: true,
-        category: true,
-        categoryId: true,
-        blogCategory: {
-          select: { title: true }
-        }
-      }
-    })
-  ]);
-  
-  if (!post) return null;
-
-  const finalRelated = [...relatedCandidates]
-    .sort((a, b) => (a.categoryId === post.categoryId ? -1 : 1))
-    .slice(0, 3);
-
-  return { post, relatedPosts: finalRelated };
-});
-
+interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  category: string | null;
+  blogCategory: { title: string } | null;
+  // Остальные поля можно не перечислять, если TS на них не ругается, 
+  // но для порядка мы укажем, что blogCategory точно есть.
+  [key: string]: any; // Оставляем гибкость для остальных полей (content, author и т.д.)
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const data = await getPost(slug);
+  const data = await getBlogPostPageData(slug);
   
   if (!data) return { title: "Статья не найдена | Турклуб Эва" };
   
@@ -138,8 +96,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'article',
       siteName: 'Турклуб «Эва»',
       locale: 'ru_RU',
-      publishedTime: post.createdAt.toISOString(),
-      modifiedTime: post.updatedAt.toISOString(),
+      // ЗАЩИТА: Явное приведение к Date перед вызовом ISO, даже если придет строка
+      publishedTime: new Date(post.createdAt).toISOString(),
+      modifiedTime: new Date(post.updatedAt).toISOString(),
       authors: [post.author_name || 'Турклуб Эва'],
       images: [
         {
@@ -159,18 +118,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
 
   const [data, { data: { user } }] = await Promise.all([
-    getPost(slug),
+    getBlogPostPageData(slug),
     createServerSupabaseClient().then(sb => sb.auth.getUser())
   ]);
 
   if (!data) notFound();
 
-  const { post, relatedPosts } = data;
+ const { post, relatedPosts } = data as { post: BlogPost, relatedPosts: RelatedPost[] };
   const postUrl = `${BASE_URL}/blog/${post.slug}`;
 
   let isWished = false;
@@ -204,7 +162,6 @@ export default async function BlogPostPage({ params }: PageProps) {
   const authorUrl = post.guide?.slug ? `${BASE_URL}/guides/${post.guide.slug}` : undefined;
   const rawContentForSchema = String(post.excerpt || post.content || '').replace(/<[^>]+>/g, '').slice(0, 155).trim();
 
-
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -216,8 +173,9 @@ export default async function BlogPostPage({ params }: PageProps) {
       headline: post.title,
       description: post.excerpt || rawContentForSchema,
       image: [absoluteImageUrl],
-      datePublished: post.createdAt.toISOString(),
-      dateModified: post.updatedAt.toISOString(), 
+      // ЗАЩИТА: Безопасное приведение дат в Schema.org
+      datePublished: new Date(post.createdAt).toISOString(),
+      dateModified: new Date(post.updatedAt).toISOString(), 
       author: {
         '@type': 'Person',
         name: authorName,
@@ -258,7 +216,6 @@ export default async function BlogPostPage({ params }: PageProps) {
     }
   ];
 
-
   return (
     <>
       <BreadcrumbJsonLd items={[
@@ -274,42 +231,54 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
-
       {/* --- 1. HERO HEADER --- */}
       <div className="relative min-h-[75svh] md:min-h-[65vh] w-full overflow-hidden flex flex-col justify-end">
         
-        <div className="absolute inset-0 z-0">
+        {/* Фоновая картинка */}
+      <div className="absolute inset-0 z-0">
             <Image 
                 src={post.image || '/placeholder.jpg'} 
                 alt={post.title} 
                 fill 
                 className="object-cover"
                 priority
-                unoptimized
                 fetchPriority="high"
                 quality={60}
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
             />
         </div>
 
+        {/* ─── GRADIENT OVERLAY ───────────────────────────────────────── */}
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background: 'linear-gradient(to top, #0B1120 0%, rgba(11,17,32,0.82) 38%, rgba(11,17,32,0.30) 65%, transparent 100%)',
+          }}
+        />
+
+        {/* Дополнительный боковой градиент слева */}
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none hidden md:block"
+          style={{
+            background: 'linear-gradient(to right, rgba(11,17,32,0.55) 0%, transparent 55%)',
+          }}
+        />
 
         <div className="relative z-10 container mx-auto px-4 pt-32 pb-8 md:pb-16 max-w-7xl mt-auto">
             
-            <Link href="/blog" className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-8 md:mb-10 group w-fit shadow-lg">
+            <Link href="/blog" prefetch={false} className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full text-slate-200 hover:text-white transition-all mb-8 md:mb-10 group w-fit shadow-lg">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-bold uppercase tracking-widest">В журнал</span>
             </Link>
 
-
             <div className="flex items-center gap-3 mb-4 md:mb-5">
-                <span className="text-[11px] md:text-xs font-bold text-slate-300 uppercase tracking-widest">
+                <span className="text-[11px] md:text-xs font-bold text-slate-300 uppercase tracking-widest blog-hero-text-shadow">
                     Рубрика:
                 </span>
                 <span className="inline-block px-3 py-1 bg-teal-500 text-slate-950 text-[11px] md:text-[13px] font-black uppercase tracking-widest rounded md:rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.4)]">
-                    {(post as any).blogCategory?.title || post.category}
+                   {post.blogCategory?.title || post.category}
                 </span>
             </div>
-
 
             <div className="flex items-start justify-between gap-4 mb-8 md:mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                <h1 className="blog-hero-title">
@@ -320,30 +289,41 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
             </div>
 
+            {/* ─── ОБЪЕДИНЁННАЯ ПАНЕЛЬ: автор + мета ───────── */}
+            <div className="animate-in fade-in duration-700 delay-150">
+              <div className="
+                inline-flex flex-col md:flex-row md:items-center gap-4 md:gap-6
+                bg-[#0B1120]/80 backdrop-blur-xl
+                p-4 md:px-5 md:py-3 rounded-2xl
+                border border-white/10
+                shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+                w-full sm:w-auto
+              ">
+                <div className="w-full md:w-auto">
+                    <AuthorBlock 
+                        name={post.author_name || "Турклуб Эва"}
+                        role={post.author_role || "Гид клуба"}
+                        image={post.author_image}
+                        guideSlug={post.guide?.slug || null}
+                        centered={false}
+                    />
+                </div>
 
-            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-sm animate-in fade-in duration-700 delay-150">
-                <AuthorBlock 
-                    name={post.author_name || "Турклуб Эва"}
-                    role={post.author_role || "Гид клуба"}
-                    image={post.author_image}
-                    guideSlug={post.guide?.slug || null}
-                    centered={false}
-                />
-                
-                <div className="h-8 w-px bg-white/20 hidden md:block" />
+                <div className="w-full h-px bg-white/10 md:hidden shrink-0" />
+                <div className="hidden md:block h-8 w-px bg-white/20 shrink-0" />
 
-
-                <div className="flex items-center gap-4 text-slate-300 text-[12px] md:text-[13px] font-medium bg-slate-900/50 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/5 w-fit">
+                <div className="flex items-center gap-4 text-white/90 text-[12px] md:text-[13px] font-medium w-full md:w-auto">
                     <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-teal-500" />
+                        <Calendar size={14} className="text-teal-400 shrink-0" />
                         <span>{formatDate(post.date)}</span>
                     </div>
-                    <div className="w-1 h-1 rounded-full bg-slate-600" />
+                    <div className="w-1 h-1 rounded-full bg-white/30 shrink-0" />
                     <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-teal-500" />
+                        <Clock size={14} className="text-teal-400 shrink-0" />
                         <span>{post.read_time} мин</span>
                     </div>
                 </div>
+              </div>
             </div>
         </div>
       </div>
@@ -375,47 +355,29 @@ export default async function BlogPostPage({ params }: PageProps) {
                     )}
                 </div>
 
+             <SafeHTML 
+                html={post.content}
+                className="prose prose-invert max-w-none blog-prose"
+                options={{ 
+                    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
+                    allowedAttributes: {
+                        '*': ['class', 'style'],
+                        'a': ['href', 'name', 'target'],
+                        'img': ['src', 'alt'],
+                        'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
+                    },
+                    allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+                    allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
+                }}
+            />
 
-                <SafeHTML 
-                    html={post.content}
-                    className="
-                        prose prose-invert max-w-none blog-prose
-                        [&_p:empty]:hidden [&_br]:hidden
-                        prose-headings:font-black prose-headings:tracking-tight prose-headings:text-white
-                        prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-2xl md:prose-h2:text-3xl
-                        prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-teal-400 prose-h3:text-xl
-                        prose-p:text-slate-200 prose-p:text-[16px] md:prose-p:text-[17px] prose-p:leading-relaxed prose-p:mb-6
-                        prose-strong:text-white prose-strong:font-bold
-                        prose-ul:my-4 prose-li:my-1 prose-li:text-slate-200 prose-li:text-[16px] md:prose-li:text-[17px] prose-li:leading-relaxed prose-li:marker:text-teal-500
-                        prose-a:text-teal-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-teal-300 transition-colors
-                        prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:bg-slate-800/50 
-                        prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic 
-                        prose-blockquote:text-white prose-blockquote:my-8 prose-blockquote:font-medium
-                    "
-                    options={{
-                        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'h1', 'h2', 'img', 'span', 'iframe' ]),
-                        allowedAttributes: {
-                            '*': ['class', 'style'],
-                            'a': ['href', 'name', 'target'],
-                            'img': ['src', 'alt'],
-                            'iframe': ['src', 'allowfullscreen', 'frameborder', 'width', 'height']
-                        },
-                        allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
-                        allowedSchemes: ['http', 'https', 'mailto', 'tel'] 
-                    }}
-                />
-
-
-                {/* НОВОЕ: Блок связанного тура (Внутренняя перелинковка) */}
                 {post.relatedTour && (
                   <RelatedTour tour={post.relatedTour} />
                 )}
 
-
                 <ArticleShare title={post.title} slug={post.slug} />
 
            </div>
-
 
             {/* SIDEBAR */}
             <aside className="lg:col-span-4 relative mt-12 lg:mt-0">
@@ -427,26 +389,24 @@ export default async function BlogPostPage({ params }: PageProps) {
                             Читайте также 
                         </h2>
 
-
                         {relatedPosts.length > 0 ? (
                             <div className="flex flex-col gap-6">
-                                {relatedPosts.map(relPost => (
-                                    <Link key={relPost.id} href={`/blog/${relPost.slug}`} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
+                              {relatedPosts.map((relPost: RelatedPost) => (
+                                    <Link key={relPost.id} href={`/blog/${relPost.slug}`} prefetch={false} className="group flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 items-start border-b border-white/5 pb-6 last:border-0 last:pb-0">
                                         <div className="relative w-full sm:w-24 lg:w-full xl:w-24 aspect-[4/3] sm:aspect-square lg:aspect-[4/3] xl:aspect-square shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-white/5 shadow-md">
-                                            <Image
+                                           <Image
                                               src={relPost.image || '/placeholder.jpg'}
                                               alt={relPost.title}
                                               fill
-                                              unoptimized
                                               className="object-cover group-hover:scale-105 transition-transform duration-500"
                                               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 120px, 96px"
                                               loading="lazy"
                                             />
                                         </div>
                                         <div className="py-1">
-                                            <span className="text-[12px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">
-                                                {(relPost as any).blogCategory?.title || relPost.category}
-                                            </span>
+                                      <span className="text-[12px] text-teal-400 font-bold uppercase tracking-widest mb-1.5 block opacity-80">
+    {relPost.blogCategory?.title || relPost.category}
+</span>
                                             <h3 className="text-sm font-bold text-slate-200 leading-snug group-hover:text-teal-400 transition-colors line-clamp-3">   
                                                 {relPost.title} 
                                             </h3>
@@ -460,17 +420,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                             </div>
                         )}
 
-
                         <div className="mt-8 pt-6 border-t border-white/5">
-                            <Link href="/blog" className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-slate-800 text-white font-bold uppercase text-[13px] hover:bg-teal-500 hover:text-slate-900 transition-all border border-white/10 hover:border-teal-500 shadow-lg group">
+                            <Link href="/blog" prefetch={false} className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-slate-800 text-white font-bold uppercase text-[13px] hover:bg-teal-500 hover:text-slate-900 transition-all border border-white/10 hover:border-teal-500 shadow-lg group">
                                 <span>Все статьи</span>
                                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>
 
-
-                    {/* Блок "Хотите с нами?" */}
                     <div className="p-8 rounded-3xl bg-gradient-to-br from-teal-900/40 to-slate-900 border border-teal-500/20 text-center shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-2xl rounded-full pointer-events-none group-hover:bg-teal-500/20 transition-colors duration-500" />
                         
@@ -480,15 +437,13 @@ export default async function BlogPostPage({ params }: PageProps) {
                         <p className="text-sm text-slate-300 mb-8 leading-relaxed font-medium relative z-10">
                             Теория — это отлично, но лучшие истории происходят на практике. Поехали с нами!
                         </p>
-                        <Link href="/tour" className="relative z-10 flex w-full justify-center items-center gap-2 py-4 rounded-xl bg-teal-500 text-slate-950 font-black uppercase text-[13px] tracking-wider hover:bg-teal-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)]">
+                        <Link href="/tour" prefetch={false} className="relative z-10 flex w-full justify-center items-center gap-2 py-4 rounded-xl bg-teal-500 text-slate-950 font-black uppercase text-[13px] tracking-wider hover:bg-teal-400 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)]">
                             Выбрать маршрут <ArrowRight size={16} />
                         </Link>
                     </div>
 
-
                 </div>
             </aside>
-
 
         </div>
       </div>

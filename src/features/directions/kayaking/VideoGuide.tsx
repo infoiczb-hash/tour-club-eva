@@ -34,13 +34,12 @@ export default function VideoGuide() {
         >
           {!isPlaying ? (
             <>
-              <Image
+             <Image
                 src={thumbnailUrl}
                 alt="Видео-инструктаж по байдаркам"
                 fill
                 className="object-cover opacity-60 group-hover:opacity-80 transition-all duration-700 group-hover:scale-105"
                 sizes="(max-width: 1024px) 100vw, 1200px"
-                unoptimized
               />
               <div className="absolute inset-0 bg-slate-950/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />

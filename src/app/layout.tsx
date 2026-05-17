@@ -152,12 +152,8 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
-         Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
-        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
-
-        {/* Cloudinary — Hero-изображения главной страницы и статические фото. */}
+        {/* ✅ ИСПРАВЛЕНО: Убран неиспользуемый preconnect к Supabase, 
+            оставлен только Cloudinary — Главный CDN для всех изображений проекта. */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 

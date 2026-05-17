@@ -133,7 +133,7 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
     feedPosts = sortedPosts;
   }
 
-  // ─── ОБНОВЛЕННАЯ КАРТОЧКА СТАТЬИ ─────────────────────────────────────────
+// ─── ОБНОВЛЕННАЯ КАРТОЧКА СТАТЬИ ─────────────────────────────────────────
   const PostCard = ({ post, priority = false }: { post: BlogPreview; priority?: boolean }) => (
     <div className="group flex flex-col bg-slate-900/60 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/80 hover:border-teal-500/30 transition-all duration-300 shadow-sm hover:shadow-xl h-full">
       <Link href={`/blog/${post.slug}`} className="relative aspect-[16/10] w-full overflow-hidden bg-slate-800 block">
@@ -141,10 +141,10 @@ export default function BlogFeed({ initialPosts = [], categories = [] }: BlogFee
           src={post.image || '/placeholder.jpg'}
           alt={post.title}
           fill
-          unoptimized
           priority={priority}
+          fetchPriority={priority ? "high" : "auto"} // Фикс LCP из прошлого шага
           loading={priority ? undefined : "lazy"}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 384px" // ✅ ИСПРАВЛЕНО: Идеальный баланс под брейкпоинты и max-w-6xl
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
         {/* Мягкий бейдж с глассморфизмом */}

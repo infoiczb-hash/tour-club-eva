@@ -33,10 +33,12 @@ export default function TelegramLoginWidget({ next }: Props) {
     containerRef.current.appendChild(script);
   }, [next]); // Добавили next в массив зависимостей, чтобы скрипт обновлялся, если путь изменится
 
-  return (
-    <div 
-      ref={containerRef} 
-      className="flex justify-center w-full bg-slate-800/50 py-3 rounded-xl border border-white/10 min-h-[50px]"
-    />
-  );
+return (
+  <div
+    ref={containerRef}
+    role="region"
+    aria-label="Войти через Telegram"
+    className="flex justify-center w-full bg-slate-800/50 py-3 rounded-xl border border-white/10 min-h-[50px]"
+  />
+);
 }

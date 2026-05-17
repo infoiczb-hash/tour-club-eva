@@ -31,16 +31,16 @@ export default function RelatedTour({ tour }: Props) {
         className="flex flex-col sm:flex-row items-start sm:items-center gap-5 md:gap-6 relative z-10"
       >
         {tour.coverImage && (
-          <div className="relative w-full sm:w-32 h-40 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-white/10 shadow-md">
+        <div className="relative w-full sm:w-32 h-40 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-white/10 shadow-md">
             <Image 
               src={tour.coverImage} 
               alt={tour.title} 
               fill 
-              unoptimized
+              sizes="(max-width: 640px) 100vw, 128px"
               className="object-cover group-hover:scale-105 transition-transform duration-500" 
             />
           </div>
-        )}
+         )}
         
         <div className="flex-1">
           <h3 className="font-bold text-lg md:text-xl text-white leading-tight mb-2 group-hover:text-teal-400 transition-colors">

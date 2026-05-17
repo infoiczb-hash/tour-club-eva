@@ -2,14 +2,9 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { Users } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { getGuidesForLanding } from '@/features/guides/api';
-
-// ЛЕНИВАЯ ЗАГРУЗКА БЛОКА С ГИДАМИ (HTML рендерится на сервере, JS загрузится позже)
-const GuidesEditorialList = dynamic(
-  () => import('@/features/guides/components/GuidesEditorialList'),
-  { ssr: true }
-);
+// ✅ ИСПРАВЛЕНО: Заменили динамический импорт на статический для устранения CLS
+import GuidesEditorialList from '@/features/guides/components/GuidesEditorialList';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://evatur.club';
 
@@ -29,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AllGuidesPage() {
-  //   ИСПОЛЬЗУЕМ КЭШИРОВАННУЮ API-ФУНКЦИЮ
+  //    ИСПОЛЬЗУЕМ КЭШИРОВАННУЮ API-ФУНКЦИЮ
   const guides = await getGuidesForLanding();
 
   return (
@@ -60,7 +55,8 @@ export default async function AllGuidesPage() {
       </section>
 
       {/* --- СПИСОК ГИДОВ --- */}
-      <section className="relative z-10 pb-24 -mt-4 md:-mt-8">
+      {/* ✅ ИСПРАВЛЕНО: Добавлен min-h-[60vh] для фиксации высоты контейнера до рендеринга карточек */}
+      <section className="relative z-10 pb-24 -mt-4 md:-mt-8 min-h-[60vh]">
         {guides.length > 0 ? (
           <GuidesEditorialList guides={guides} />
         ) : (

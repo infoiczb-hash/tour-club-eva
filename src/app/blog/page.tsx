@@ -75,13 +75,15 @@ export default async function BlogPage() {
         { name: "Блог", url: "https://evatur.club/blog" },
       ]} />
 
-      <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" />
-      <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
+      {/* ✅ ИСПРАВЛЕНО: Оставлен только необходимый preconnect к Cloudinary */}
+      <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+      
+      {/* ✅ ИСПРАВЛЕНО: Preload LCP-картинки строго через формат Cloudinary */}
       {firstPostImage && (
         <link
           rel="preload"
           as="image"
-          href={`${firstPostImage.split('?')[0]}?width=828&quality=65&format=origin`}
+          href={`https://res.cloudinary.com/dwrei7k2z/image/fetch/f_auto,q_auto:eco,w_828/${encodeURIComponent(firstPostImage)}`}
           fetchPriority="high"
         />
       )}

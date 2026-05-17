@@ -126,21 +126,29 @@ export default function ReviewFromCabinetButton({
                   ))}
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-ui-muted uppercase tracking-wider block mb-1.5">Ваш отзыв</label>
-                  <textarea
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    placeholder="Что вам больше всего понравилось?"
-                    rows={4}
-                 className="w-full bg-ui-bg border border-ui-border rounded-xl px-4 py-3 text-sm text-ui-text placeholder:text-ui-muted/50 focus:outline-none focus:border-amber-500/50 transition-all resize-none"
-                    disabled={isPending}
-                  />
-                  <div className="flex items-center justify-between mt-1">
-                    {error && <p className="text-xs text-red-400">{error}</p>}
-                    <span className="text-xs text-ui-muted/50 ml-auto">{text.length}/500</span>
-                  </div>
-                </div>
+              <div>
+  <label className="text-xs font-bold text-ui-muted uppercase tracking-wider block mb-1.5">
+    Ваш отзыв
+  </label>
+  <textarea
+    value={text}
+    onChange={e => {
+      setText(e.target.value);
+      // Магия авторасширения:
+      e.target.style.height = 'auto'; // Сбрасываем высоту
+      e.target.style.height = `${e.target.scrollHeight}px`; // Задаем новую по размеру текста
+    }}
+    placeholder="Что вам больше всего понравилось?"
+    rows={4} // Оставляем как стартовую высоту (минимум 4 строки)
+    // ДОБАВЛЕНО: overflow-hidden, чтобы при наборе текста не дергался скроллбар
+    className="w-full bg-ui-bg border border-ui-border rounded-xl px-4 py-3 text-sm text-ui-text placeholder:text-ui-muted/50 focus:outline-none focus:border-amber-500/50 transition-all resize-none overflow-hidden"
+    disabled={isPending}
+  />
+  <div className="flex items-center justify-between mt-1">
+    {error && <p className="text-xs text-red-400">{error}</p>}
+    <span className="text-xs text-ui-muted/50 ml-auto">{text.length}/500</span>
+  </div>
+</div>
 
                 <button
                   type="submit"

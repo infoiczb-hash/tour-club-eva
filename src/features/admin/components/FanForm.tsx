@@ -45,7 +45,6 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-//   ИСПРАВЛЕНО: Строгая типизация вместо any
 interface Props {
   initialData?: Partial<FunTest> | null; 
   onSuccess?: () => void; 

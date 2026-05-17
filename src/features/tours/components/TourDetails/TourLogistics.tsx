@@ -45,29 +45,27 @@ export default function TourLogistics({ tour }: TourLogisticsProps) {
             {guideSlug ? (
                <Link href={`/guides/${guideSlug}`} className="block w-full h-full relative">
                   {guideImage ? (
-                    <Image 
-                      src={guideImage} 
-                      alt={guideName} 
-                      fill 
-                      unoptimized // ✅ ДОБАВЛЕНО: Защита от искажения кэша Next.js
-                      loading="lazy"
-                      className="object-cover object-top hover:scale-110 transition-transform duration-300"
-                      sizes="40px"
-                    />
+                 <Image 
+  src={guideImage} 
+  alt={guideName} 
+  fill 
+  loading="lazy"
+  className="object-cover object-top hover:scale-110 transition-transform duration-300"
+  sizes="40px"
+/>
                   ) : (
-                    <User size={20} />
+                    <User size={20} /> 
                   )}
                </Link>
             ) : (
                guideImage ? (
-                 <Image 
-                   src={guideImage} 
-                   alt={guideName} 
-                   fill 
-                   unoptimized // ✅ ДОБАВЛЕНО: И здесь тоже
-                   className="object-cover object-top" 
-                   sizes="40px" 
-                 />
+                <Image 
+  src={guideImage} 
+  alt={guideName} 
+  fill 
+  className="object-cover object-top" 
+  sizes="40px" 
+/>
                ) : (
                  <User size={20} />
                )

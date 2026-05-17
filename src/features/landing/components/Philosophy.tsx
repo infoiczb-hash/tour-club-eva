@@ -19,7 +19,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 const directions = [
-  { id: 1, title: "Сплавы на байдарках", image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674642/kayak_p2bkyz.webp", icon: Waves, href: "/directions/kayaking" }, 
+  { id: 1, title: "Сплавы на байдарках", image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1778592690/kayaking-directionatceva_yszmnt.jpg", icon: Waves, href: "/directions/kayaking" }, 
   { id: 2, title: "SUP прогулки", image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674650/sup_zwz9yw.webp", icon: Anchor, href: "/directions/sup" },
   { id: 3, title: "Местная программа", image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674647/local_i9ul0e.webp", icon: Compass, href: "/directions/local" },
   { id: 4, title: "Горы и походы", image: "https://res.cloudinary.com/dwrei7k2z/image/upload/v1771674641/hiking_modikx.webp", icon: Mountain, href: "/directions/hiking" },

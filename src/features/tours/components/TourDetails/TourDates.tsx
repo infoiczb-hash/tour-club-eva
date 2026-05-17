@@ -165,14 +165,13 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
           }`}>
              {guideImage ? (
-             <Image 
-               src={guideImage} 
-               alt={guideName} 
-               fill 
-               unoptimized
-               className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
-               sizes="40px" 
-             />
+          <Image 
+  src={guideImage} 
+  alt={guideName} 
+  fill 
+  className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
+  sizes="40px" 
+/>
              ) : (
                <User size={20} />
              )}

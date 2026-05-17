@@ -137,13 +137,12 @@ export default async function GuidePage({ params }: Props) {
     {/* ─── HERO ─── */}
       <section className="relative w-full min-h-[100svh] md:min-h-[90vh] flex flex-col">
         {/* BG IMAGE */}
-        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0">
           {guide.actionImage || guide.image ? (
             <Image 
               src={guide.actionImage || guide.image || ''} 
               alt={`Гид ${guide.name}`} 
               fill 
-              unoptimized // ✅ Добавили защиту от прыгающего кэша Next.js
               className="object-cover object-top md:object-[center_15%]"
               priority
               fetchPriority="high"
@@ -222,9 +221,9 @@ export default async function GuidePage({ params }: Props) {
             {/* 2. Шкалы навыков */}
             {stats.length > 0 && (
               <div className="bg-slate-900/50 border border-white/5 p-6 md:p-8 rounded-[2rem]">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-6 md:mb-8">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-6 md:mb-8">
                   Навыки и специализация
-                </h3>
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 md:gap-y-8">
                   {stats.map((stat: any, i: number) => {
                     const mapping = ICON_MAP[stat.icon] || ICON_MAP['Zap'];
@@ -349,24 +348,14 @@ export default async function GuidePage({ params }: Props) {
             {(guide.instagram || guide.telegram) && (
               <div className="flex justify-center gap-4">
                 {guide.instagram && (
-                  <a
-                    href={guide.instagram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all shadow-lg"
-                  >
-                    <Instagram size={24} />
-                  </a>
+            <a href={guide.instagram} target="_blank" rel="noreferrer" aria-label={`Instagram ${guide.name}`} className="w-14 h-14 ...">
+  <Instagram size={24} />
+</a>
                 )}
                 {guide.telegram && (
-                  <a
-                    href={guide.telegram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all shadow-lg"
-                  >
-                    <Send size={24} className="ml-[-2px]" />
-                  </a>
+                <a href={guide.telegram} target="_blank" rel="noreferrer" aria-label={`Telegram ${guide.name}`} className="w-14 h-14 ...">
+  <Send size={24} className="ml-[-2px]" />
+</a>
                 )}
               </div>
             )}
