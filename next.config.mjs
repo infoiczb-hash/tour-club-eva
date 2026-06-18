@@ -28,9 +28,8 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'react-markdown', 'date-fns'],
     serverActions: {
       bodySizeLimit: '10mb',
-    },
-    browsersListForSwc: true, // ВНЕДРЕНО: Убирает лишние полифилы
-  },
+    },    
+   },
 
   images: {
     loader: 'custom',

@@ -195,7 +195,8 @@ function CtaBanner() {
             </h3>
             <p className="text-slate-300 max-w-lg text-lg">Теория — это отлично. Но настоящие ответы ждут тебя на маршруте.</p>
           </div>
-          <Link href="/tour" className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 hover:scale-105 transition-[background-color,transform] shadow-[0_0_20px_rgba(20,184,166,0.3)] whitespace-nowrap">
+          {/* 🔥 ИСПРАВЛЕНИЕ: Отключаем автоматический префетч для кнопки */}
+          <Link href="/tour" prefetch={false} className="px-8 py-4 bg-teal-500 text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:bg-teal-400 hover:scale-105 transition-[background-color,transform] shadow-[0_0_20px_rgba(20,184,166,0.3)] whitespace-nowrap">
             Смотреть все туры
           </Link>
         </div>
@@ -246,7 +247,7 @@ function QuizCard({ onClick, image, color, icon, badge, title, desc, priority, i
             fill
             priority={priority}
             loading={priority ? undefined : "lazy"}
-            sizes="(max-width: 768px) 92vw, (max-width: 1024px) 48vw, 400px"
+            sizes="(max-width: 768px) 70vw, (max-width: 1024px) 33vw, 400px"
             quality={priority ? 65 : 55}
             className="object-cover opacity-50 grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-transform duration-700"
           />

@@ -39,9 +39,37 @@ export default async function ToursBrowserWrapper({
     isActive: c.isActive,
   }));
 
+// 🔥 ВЫЧИСЛЕНИЯ НА СЕРВЕРЕ (Снимаем нагрузку с мобильного процессора)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const toursWithPrecalculatedDates = tours.map((tour: any) => {
+    const dateObj = tour.date ? new Date(tour.date) : null;
+    const isPastDate = dateObj ? dateObj.getTime() < today.getTime() : false;
+    
+    let futureCount = 0;
+    if (Array.isArray(tour.dates)) {
+      futureCount = tour.dates.filter((d: any) => {
+        const end = d.end ? new Date(d.end) : new Date(d.start);
+        end.setHours(0, 0, 0, 0);
+        return end >= today;
+      }).length;
+    }
+
+    return {
+      ...tour,
+      // Инжектим готовые строки, чтобы клиентский компонент вообще не думал
+      precalculated: {
+        dateStr: dateObj ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Скоро',
+        isPast: isPastDate,
+        hasMoreDates: futureCount > 1
+      }
+    };
+  });
+
   return (
     <ToursBrowser 
-      tours={tours} 
+      tours={toursWithPrecalculatedDates} 
       categories={lightweightCategories} 
       limit={limit} 
       title={title}

@@ -171,7 +171,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2 text-pink-400">
                   <Baby size={14} />
-                  <span>Детский (до 13)</span>
+                  <span>Детский (до 15)</span>
                 </div>
                 <span className="font-bold text-white">{priceChild?.toLocaleString()} {currency}</span>
               </div>

@@ -66,7 +66,21 @@ export default async function BlogPage() {
   ]);
 
   const categories = catRes.success ? catRes.data : [];
-  const firstPostImage = posts[0]?.image ?? null;
+
+  // 🔥 ОПТИМИЗАЦИЯ TBT: Форматируем даты на сервере, чтобы не тянуть тяжелый date-fns на клиент
+  const postsWithFormattedDates = posts.map((post) => ({
+    ...post,
+    // Используем нативный Intl вместо date-fns
+    precalculatedDate: new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(new Date(post.date || post.createdAt))
+  }));
+
+  // 🔥 ИСПРАВЛЕНИЕ LCP: Вычисляем URL для preload первой картинки 
+  // (с точным совпадением трансформаций Cloudinary: f_webp, w_640)
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dwrei7k2z';
+  const firstPostImage = posts[0]?.image;
+  const preloadHref = firstPostImage 
+    ? `https://res.cloudinary.com/${cloudName}/image/fetch/f_webp,q_auto:eco,w_640/${firstPostImage}`
+    : null;
 
   return (
     <>
@@ -75,23 +89,17 @@ export default async function BlogPage() {
         { name: "Блог", url: "https://evatur.club/blog" },
       ]} />
 
-      {/* ✅ ИСПРАВЛЕНО: Оставлен только необходимый preconnect к Cloudinary */}
       <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
       
-      {/* ✅ ИСПРАВЛЕНО: Preload LCP-картинки строго через формат Cloudinary */}
-      {firstPostImage && (
-        <link
-          rel="preload"
-          as="image"
-          href={`https://res.cloudinary.com/dwrei7k2z/image/fetch/f_auto,q_auto:eco,w_828/${encodeURIComponent(firstPostImage)}`}
-          fetchPriority="high"
-        />
+      {/* 🔥 Добавляем preload для LCP-картинки, чтобы браузер начал качать её МГНОВЕННО */}
+      {preloadHref && (
+        <link rel="preload" as="image" href={preloadHref} fetchPriority="high" />
       )}
 
       <main className="min-h-screen bg-[#0B1120]">
         
-        {/* LCP-ОПТИМИЗАЦИЯ: Серверный рендер Hero-блока */}
         <div className="relative pt-24 pb-6 md:pt-32 md:pb-8 border-b border-white/5 overflow-hidden">
+          {/* ... внутренности Hero-блока без изменений ... */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-teal-900/10 md:blur-[120px] rounded-full pointer-events-none" />
           <div className="container mx-auto max-w-5xl relative z-10 text-center px-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/20 bg-teal-950/30 backdrop-blur-md mb-6">
@@ -105,9 +113,10 @@ export default async function BlogPage() {
           </div>
         </div>
 
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 animate-pulse" />}>
-          <BlogFeed initialPosts={posts} categories={categories} />
-        </Suspense>
+        {/* ИСПРАВЛЕНИЕ LCP: Убираем Suspense. 
+            BlogFeed уже безопасно изолирует useSearchParams внутри себя. 
+            Теперь карточки будут рендериться сервером сразу, отдавая LCP-картинку мгновенно. */}
+        <BlogFeed initialPosts={postsWithFormattedDates as any} categories={categories} />
       </main> 
     </>
   );

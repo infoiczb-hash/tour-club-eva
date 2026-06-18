@@ -91,7 +91,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
     const list = [];
     if (tour.price) list.push({ label: 'Взрослый', value: tour.price, icon: <Ticket size={14} /> });
     if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
-    if (tour.priceChild) list.push({ label: 'Детский (до 13)', value: tour.priceChild, icon: <Baby size={14} /> });
+    if (tour.priceChild) list.push({ label: 'Детский (до 15)', value: tour.priceChild, icon: <Baby size={14} /> });
     if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
     return list;
   }, [tour]);

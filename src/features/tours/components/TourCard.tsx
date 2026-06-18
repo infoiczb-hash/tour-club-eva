@@ -1,7 +1,7 @@
 // src/features/tours/components/TourCard.tsx
 "use client";
 
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -39,7 +39,7 @@ const COLOR_THEMES: Record<string, { bg: string, border: string, text: string }>
 };
 
 export interface TourCardProps {
-  tour: TourPreview;
+  tour: TourPreview & { precalculated?: any };
   isHot?: boolean;
   priority?: boolean;
 }
@@ -51,32 +51,11 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     priceMember, priceChild,
     image, location, duration,
     tags, label, category,
-    dates 
+    dates, precalculated
   } = tour;
 
-  // ОПТИМИЗАЦИЯ: Мемоизируем тяжелые вычисления с датами, чтобы не грузить главный поток
-  const { dateStr, isPast, hasMoreDates } = useMemo(() => {
-    const dateObj = date ? new Date(date) : null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    const isPastDate = dateObj ? dateObj.getTime() < today.getTime() : false;
-    
-    let futureCount = 0;
-    if (Array.isArray(dates)) {
-      futureCount = dates.filter((d: any) => {
-        const end = d.end ? new Date(d.end) : new Date(d.start);
-        end.setHours(0, 0, 0, 0);
-        return end >= today;
-      }).length;
-    }
-
-    return {
-      dateStr: dateObj ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Скоро',
-      isPast: isPastDate,
-      hasMoreDates: futureCount > 1
-    };
-  }, [date, dates]);
+  const { dateStr = 'Скоро', isPast = false, hasMoreDates = false } = precalculated || {};
 
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
   const themeColor = category?.color || 'slate';

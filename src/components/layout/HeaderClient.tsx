@@ -88,6 +88,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
           {/* ЛОГОТИП */}
           <Link
             href="/"
+            prefetch={false}
             className="relative z-50 group"
             onClick={() => setIsMobileMenuOpen(false)}
           >
@@ -101,13 +102,14 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
             </div>
           </Link>
 
-          {/* ДЕСКТОП МЕНЮ */}
+         {/* ДЕСКТОП МЕНЮ */}
           <div className="hidden md:flex items-center gap-8">
             <nav className="flex items-center gap-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
+                  prefetch={false} // 🔥 Отключаем предзагрузку для навигации
                   aria-current={pathname === link.href ? 'page' : undefined}
                   className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
                 >
@@ -122,10 +124,9 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
 
             {user ? (
                <div className="flex items-center gap-5">
-                 {/* 🔥 ВСТАВИЛИ КОЛОКОЛЬЧИК (Десктоп) */}
-               <NotificationBell />
+                 <NotificationBell />
                  
-                 <Link href="/account" className="flex items-center gap-2.5 group">
+                 <Link href="/account" prefetch={false} className="flex items-center gap-2.5 group">
                    <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors text-[12px] font-black">
                       {initials}
                    </div>
@@ -133,7 +134,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
                  </Link>
                </div>
             ) : (
-               <Link href="/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors px-4 py-2 rounded-full border border-white/10 hover:border-white/30 hover:bg-white/5">
+               <Link href="/login" prefetch={false} className="text-sm font-bold text-slate-300 hover:text-white transition-colors px-4 py-2 rounded-full border border-white/10 hover:border-white/30 hover:bg-white/5">
                  Войти
                </Link>
             )}
@@ -146,7 +147,7 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
                 {/* 🔥 ВСТАВИЛИ КОЛОКОЛЬЧИК (Мобилка) */}
                  <NotificationBell />
                 
-                <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[12px] font-black">
+            <Link href="/account" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 text-[12px] font-black">
                   {initials}
                 </Link>
               </div>
@@ -168,11 +169,12 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         }`}
       >
-        <div className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 py-4">
+       <div className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 py-4">
           {navLinks.map((link, i) => (
             <Link
               key={link.name}
               href={link.href}
+              prefetch={false} // 🔥 Отключаем предзагрузку ссылок меню
               onClick={() => setIsMobileMenuOpen(false)}
               style={{ transitionDelay: `${i * 50}ms` }}
               className={`group flex items-baseline gap-4 text-4xl sm:text-5xl font-black text-white hover:text-teal-400 tracking-tight transition-all duration-300 ${
@@ -193,8 +195,9 @@ export default function HeaderClient({ navLinks, user }: { navLinks: NavLink[], 
           }`}
         >
           {/* Кнопка Личного Кабинета для мобильных */}
-          <Link
+         <Link
             href={user ? "/account" : "/login"}
+            prefetch={false} // 🔥 Отключаем предзагрузку
             onClick={() => setIsMobileMenuOpen(false)}
             className="w-full py-4 bg-slate-900 border border-white/5 text-white font-bold uppercase tracking-widest text-sm text-center rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >

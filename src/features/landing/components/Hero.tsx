@@ -1,7 +1,6 @@
 // src/features/landing/components/Hero.tsx
 import React from 'react';
 import Image from 'next/image';
-import { preload } from 'react-dom';
 
 export interface HeroContent {
   title: string;
@@ -18,12 +17,6 @@ const DEFAULT_HERO: HeroContent = {
 };
 
 export default function HeroSection({ content = DEFAULT_HERO }: { content?: HeroContent }) {
-  const mobilePreloadUrl = content.bg_image.includes('cloudinary.com')
-  ? content.bg_image.replace('/upload/', '/upload/w_828,f_auto,q_auto:good/')
-  : content.bg_image;
-
-preload(mobilePreloadUrl, { as: 'image', fetchPriority: 'high' });
-
   return (
     <section className="relative w-full h-[100dvh] flex flex-col justify-between overflow-hidden bg-slate-950">
 
