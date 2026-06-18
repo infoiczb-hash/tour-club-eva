@@ -1,11 +1,12 @@
+// src/features/admin/actions/categories.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { withAdminAuth } from '@/lib/auth';
-import { withAdminAudit } from '@/lib/audit'; //   Импортируем нашу броню аудита
+import { withAdminAudit } from '@/lib/audit';
 
-// 🔥 Заменяем any на строгие интерфейсы
+// 🔥 Строгие интерфейсы
 export interface UpsertTourCategoryInput {
   id?: string;
   title: string;
@@ -28,12 +29,20 @@ export interface UpsertBlogCategoryInput {
 // КАТЕГОРИИ ТУРОВ (TOUR CATEGORIES)
 // ==========================================
 
-// Чтение оставляем открытым (без обертки)
-export async function getTourCategoriesAction() {
-  try {
-    const categories = await prisma.tourCategory.findMany({
+// Оптимизация кэширования
+const getCachedTourCategories = unstable_cache(
+  async () => {
+    return await prisma.tourCategory.findMany({
       orderBy: { sortOrder: 'asc' }
     });
+  },
+  ['tour-categories-cache-key'],
+  { revalidate: 3600, tags: ['tour-categories'] }
+);
+
+export async function getTourCategoriesAction() {
+  try {
+    const categories = await getCachedTourCategories();
     return { success: true, data: categories };
   } catch (error) {
     console.error("Ошибка загрузки категорий туров:", error);
@@ -68,6 +77,8 @@ export const upsertTourCategoryAction = withAdminAuth(
         });
       }
 
+      // ИСПРАВЛЕНО: Добавлен второй аргумент для совместимости с новой версией Next.js
+      revalidateTag('tour-categories', { expire: 0 }); 
       revalidatePath('/admin');
       revalidatePath('/tour');
       revalidatePath('/');
@@ -91,6 +102,8 @@ export const deleteTourCategoryAction = withAdminAuth(
       }
 
       await prisma.tourCategory.delete({ where: { id } });
+      
+      revalidateTag('tour-categories', { expire: 0 }); 
       revalidatePath('/admin');
       revalidatePath('/tour');
       return { success: true };
@@ -110,6 +123,8 @@ export const toggleTourCategoryStatusAction = withAdminAuth(
         where: { id },
         data: { isActive: !currentStatus },
       });
+      
+      revalidateTag('tour-categories', { expire: 0 }); 
       revalidatePath('/admin');
       revalidatePath('/tour');
       return { success: true };
@@ -123,12 +138,19 @@ export const toggleTourCategoryStatusAction = withAdminAuth(
 // КАТЕГОРИИ БЛОГА (BLOG CATEGORIES)
 // ==========================================
 
-// Чтение оставляем открытым (без обертки)
-export async function getBlogCategoriesAction() {
-  try {
-    const categories = await prisma.blogCategory.findMany({
+const getCachedBlogCategories = unstable_cache(
+  async () => {
+    return await prisma.blogCategory.findMany({
       orderBy: { sortOrder: 'asc' }
     });
+  },
+  ['blog-categories-cache-key'],
+  { revalidate: 3600, tags: ['blog-categories'] }
+);
+
+export async function getBlogCategoriesAction() {
+  try {
+    const categories = await getCachedBlogCategories();
     return { success: true, data: categories };
   } catch (error) {
     console.error("Ошибка загрузки категорий блога:", error);
@@ -161,6 +183,7 @@ export const upsertBlogCategoryAction = withAdminAuth(
         });
       }
 
+      revalidateTag('blog-categories', { expire: 0 }); 
       revalidatePath('/admin');
       revalidatePath('/blog');
       return { success: true, data: category };
@@ -183,6 +206,8 @@ export const deleteBlogCategoryAction = withAdminAuth(
       }
 
       await prisma.blogCategory.delete({ where: { id } });
+      
+      revalidateTag('blog-categories', { expire: 0 }); 
       revalidatePath('/admin');
       revalidatePath('/blog');
       return { success: true };
@@ -202,6 +227,8 @@ export const toggleBlogCategoryStatusAction = withAdminAuth(
         where: { id },
         data: { isActive: !currentStatus },
       });
+      
+      revalidateTag('blog-categories', { expire: 0 }); 
       revalidatePath('/admin');
       revalidatePath('/blog');
       return { success: true };

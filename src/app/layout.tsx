@@ -4,7 +4,6 @@ import { Inter } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 
-
 import { ToastProvider } from "@/shared/context/ToastContext";
 import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 
@@ -15,6 +14,9 @@ import HeaderSkeleton from "@/components/layout/HeaderSkeleton";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import ModalsWrapper from "@/components/modals/ModalsWrapper";
+
+// ИМПОРТ КОНСТАНТЫ ДЛЯ СХЕМЫ И МЕТАДАННЫХ
+import { BASE_URL } from "@/lib/constants";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -38,7 +40,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://evatur.club"),
+  metadataBase: new URL(BASE_URL),
   title: {
     template: "%s | Турклуб «Эва»",
     default: "Турклуб «Эва» — Активный отдых в Приднестровье",
@@ -56,7 +58,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Турклуб «Эва» — Активный отдых в Приднестровье",
     description: "Турклуб «Эва» — сплавы на байдарках по Днестру, походы и SUP в Приднестровье и Молдове. Активный отдых каждые выходные из Тирасполя. Туры в румынские горы.",
-    url: "https://evatur.club",
+    url: BASE_URL,
     siteName: "Турклуб «Эва»",
     images: [
       {
@@ -79,36 +81,30 @@ export const metadata: Metadata = {
     google: "bQzEK-w6DrRPryfEde5_dJSFHBskbBJRcWeiPgMu0N0",
     yandex: "d9d080aa11f7b5b3",
   },
-  alternates: {
-    canonical: "/",
-    languages: {
-      "ru":    "https://evatur.club",
-      "ru-MD": "https://evatur.club",
-    },
-  },
-};
+ };
 
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': ['TravelAgency', 'LocalBusiness'],
   name: 'Турклуб «Эва»',
   alternateName: ['ТурклубЭВА', 'EvaClub', 'evatur.club'],
-  url: 'https://evatur.club',
+  url: BASE_URL,
   logo: {
     '@type': 'ImageObject',
-    url: 'https://evatur.club/icon.png', 
+    url: `${BASE_URL}/icon.png`, 
     width: 200,
     height: 200,
   },
-  image: 'https://evatur.club/og-default.jpg',
+  image: `${BASE_URL}/og-default.jpg`,
   openingHours: ['Mo-Fr 15:00-18:00', 'Sa 07:00-21:00'],
   telephone: '+37377770141',
   email: 'info@evatur.club',
   priceRange: "$$", 
+  foundingDate: '2022',
   
   address: {
     '@type': 'PostalAddress',
-    streetAddress: 'ул. 9 Января, 63', // укажи реальный адрес
+    streetAddress: 'Городской пляж', 
     addressLocality: 'Тирасполь',
     addressRegion: 'Приднестровье',
     addressCountry: 'MD',
@@ -125,13 +121,24 @@ const organizationSchema = {
     { "@type": "Place", "name": "Карпаты" },
     { "@type": "Place", "name": "Кишинев" },
     { "@type": "Place", "name": "Moldova" }
-
   ],
   geo: {
     '@type': 'GeoCoordinates',
     latitude: 46.8403,  
     longitude: 29.6433,
   },
+  sameAs: [
+    'https://www.instagram.com/evaturclub',
+    'https://t.me/evaturclub',
+    'https://www.facebook.com/evaturclub',
+    'https://www.tiktok.com/@evaturclub'
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: '+37377770141',
+    contactType: 'customer service',
+    availableLanguage: ['Russian'],
+  }
 };
 
 export default async function RootLayout({
@@ -145,12 +152,8 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`scroll-smooth ${inter.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        {/* Supabase Storage — обложки туров, фото гидов (LCP-элемент на /tour/[slug]).
-         Идёт первым: браузер прогревает соединение до парсинга остального HTML. */}
-        <link rel="preconnect" href="https://nglywosdwqxxctybwjeb.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://nglywosdwqxxctybwjeb.supabase.co" />
-
-        {/* Cloudinary — Hero-изображения главной страницы и статические фото. */}
+        {/* ✅ ИСПРАВЛЕНО: Убран неиспользуемый preconnect к Supabase, 
+            оставлен только Cloudinary — Главный CDN для всех изображений проекта. */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
@@ -161,7 +164,7 @@ export default async function RootLayout({
         {/* YouTube — превью VideoGuide на каякинге и SUP */}
         <link rel="dns-prefetch" href="https://img.youtube.com" />
 
-        <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+        <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema).replace(/</g, '\\u003c') }} />
       </head>
       <body suppressHydrationWarning={true} className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white antialiased min-h-screen flex flex-col">
         
@@ -187,5 +190,5 @@ export default async function RootLayout({
         <SpeedInsights />
       </body>
     </html>
-  );
+  ); 
 }

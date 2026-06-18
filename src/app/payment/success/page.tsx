@@ -166,17 +166,17 @@ if (invoiceId && sum && curr && normalizedDate && sig && env.APB_MERCHANT_PASS) 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-left space-y-4">
             <div className="flex justify-between items-start border-b border-white/5 pb-3">
               <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Тур</p>
+                <p className="text-xs text-slate-300 font-bold uppercase tracking-widest">Тур</p>
                 <p className="text-sm font-bold text-white line-clamp-1">{booking.tour.title}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Заказ</p>
+                <p className="text-xs text-slate-300 font-bold uppercase tracking-widest">Заказ</p>
                 <p className="text-sm font-bold text-teal-400">#{booking.shortId}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">
+                <div className="flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase tracking-widest mb-1">
                   <Calendar size={10} /> Дата
                 </div>
                 <p className="text-xs font-bold text-slate-200">
@@ -184,7 +184,7 @@ if (invoiceId && sum && curr && normalizedDate && sig && env.APB_MERCHANT_PASS) 
                 </p>
               </div>
               <div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">
+                <div className="flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase tracking-widest mb-1">
                   <CreditCard size={10} /> Сумма
                 </div>
                 <p className="text-xs font-bold text-slate-200">{booking.totalPrice} {booking.tour.currency}</p>

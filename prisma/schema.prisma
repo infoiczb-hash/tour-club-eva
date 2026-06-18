@@ -35,6 +35,9 @@ model Blog {
   guide        Guide?         @relation(fields: [guideId], references: [id])
   blogCategory BlogCategory?  @relation(fields: [categoryId], references: [id])
   favoritedBy  FavoritePost[] 
+
+  relatedTourId String? @map("related_tour_id") @db.Uuid
+  relatedTour   Tour?   @relation(fields: [relatedTourId], references: [id], onDelete: SetNull)
  
   @@index([isActive])
   @@index([categoryId])
@@ -108,6 +111,8 @@ model Tour {
   waitlists  Waitlist[]
   reviews    Review[]
   watchLists WatchList[] 
+
+  relatedBlogs Blog[] 
 
   @@index([isActive])
   @@index([categoryId])

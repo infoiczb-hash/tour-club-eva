@@ -2,27 +2,22 @@
 # FIX: убирает legacy JavaScript (14 КБ на страницу)
 # Lighthouse: "Avoid serving legacy JavaScript to modern browsers"
 #
-# Аудитория: Молдова/Приднестровье — Chrome Android доминирует
-# Источник: caniuse.com + типичная аудитория туристических сайтов СНГ
-#
-# ИЗМЕНЕНИЯ: подняли минимальные версии до уровня поддержки ES2022 Baseline
-# Array.prototype.at    → Chrome 92+, Safari 15.4+, Firefox 90+
-# Object.hasOwn         → Chrome 93+, Safari 15.4+, Firefox 92+
-# Array.prototype.flat  → Chrome 69+ (уже покрыто)
-# После этого Next.js/SWC перестанет включать полифилы для этих методов.
+# ИЗМЕНЕНИЯ: 
+# - Убрали правило "> 0.5%", так как оно тянуло старые мобильные браузеры,
+#   провоцируя SWC добавлять полифилы для Array.prototype.at и Object.hasOwn.
+# - Добавили ios_saf для явного покрытия iPhone.
 
 [production]
-Chrome >= 94
-Firefox >= 93
-Safari >= 15.4
-Edge >= 94
-Opera >= 80
-Samsung >= 17
-> 0.5%
+chrome >= 94
+firefox >= 93
+safari >= 15.4
+ios_saf >= 15.4
+edge >= 94
+samsung >= 17
 not dead
-not IE 11
+
 
 [development]
-last 1 Chrome version
-last 1 Firefox version
-last 1 Safari version
+last 1 chrome version
+last 1 firefox version
+last 1 safari version

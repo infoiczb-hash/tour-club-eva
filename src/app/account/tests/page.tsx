@@ -19,7 +19,7 @@ interface TestResultData {
   [key: string]: unknown;
 }
 
-// ─── конфиг квизов (Теперь с современными иконками) ─────────────────
+// ─── КОНФИГ КВИЗОВ ──────────────────────────────────────────────────
 const QUIZ_CONFIG: Record<string, {
   title: string;
   icon: React.ElementType;
@@ -34,214 +34,198 @@ const QUIZ_CONFIG: Record<string, {
     icon: Compass,
     description: 'Кто ты в путешествии — романтик, исследователь или организатор?',
     href: '/fun?quiz=tourist-type',
-    color: 'text-teal-400',
+    color: 'text-teal-200',
     bgColor: 'bg-teal-500/10',
     borderColor: 'border-teal-500/20',
   },
   'psych-profile': {
     title: 'Психологический профиль',
     icon: Brain,
-    description: 'Как ты реагируешь на трудности и незнакомые ситуации в дороге?',
+    description: 'Твои сильные стороны и поведение в экстремальных ситуациях.',
     href: '/fun?quiz=psych-profile',
-    color: 'text-purple-400',
+    color: 'text-purple-300',
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-500/20',
   },
-  'totem': {
-    title: 'Тотемное животное',
-    icon: PawPrint,
-    description: 'Какой дух-хранитель сопровождает тебя в походах?',
-    href: '/fun?quiz=totem',
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/20',
-  },
-  'survival': {
-    title: 'Выживание',
-    icon: Tent,
-    description: 'Насколько ты готов к нештатным ситуациям на маршруте?',
-    href: '/fun?quiz=survival',
-    color: 'text-orange-400',
+  'survival-test': {
+    title: 'Навыки выживания',
+    icon: ShieldAlert,
+    description: 'Сможешь ли ты развести костер под дождем и найти воду?',
+    href: '/fun?quiz=survival-test',
+    color: 'text-orange-300',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/20',
   },
-  'backpack': {
-    title: 'Что в рюкзаке?',
+  'hiking-ready': {
+    title: 'Готовность к походу',
     icon: Backpack,
-    description: 'Твой стиль сборов и что это говорит о характере.',
-    href: '/fun?quiz=backpack',
-    color: 'text-blue-400',
+    description: 'Проверка физической и технической подготовки к маршруту.',
+    href: '/fun?quiz=hiking-ready',
+    color: 'text-blue-300',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/20',
   },
-  'body-signals': {
-    title: 'Сигналы тела',
-    icon: Activity,
-    description: 'Уровень физической готовности к активным маршрутам.',
-    href: '/fun?quiz=body-signals',
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20',
-  },
-  'fears': {
-    title: 'Разбор страхов',
-    icon: ShieldAlert,
-    description: 'Психологический разбор твоих опасений перед походом.',
-    href: '/fun?quiz=fears',
-    color: 'text-sky-400',
-    bgColor: 'bg-sky-500/10',
-    borderColor: 'border-sky-500/20',
-  },
-  'physical': {
-    title: 'Физическая готовность',
-    icon: Dumbbell,
-    description: 'Оценка твоей выносливости и готовности к нагрузкам.',
-    href: '/fun?quiz=physical',
-    color: 'text-emerald-400',
+  'comfort-zone': {
+    title: 'Уровень комфорта',
+    icon: Tent,
+    description: 'Насколько ты готов променять отель на палатку и звездное небо?',
+    href: '/fun?quiz=comfort-zone',
+    color: 'text-emerald-300',
     bgColor: 'bg-emerald-500/10',
     borderColor: 'border-emerald-500/20',
   },
-  'signals': {
-    title: 'Анализ самочувствия',
-    icon: HeartPulse,
-    description: 'Анализ твоего самочувствия в туре.',
-    href: '/fun?quiz=signals',
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/10',
-    borderColor: 'border-rose-500/20',
+  'eco-trail': {
+    title: 'Эко-след',
+    icon: PawPrint,
+    description: 'Насколько бережно ты относишься к природе во время походов?',
+    href: '/fun?quiz=eco-trail',
+    color: 'text-green-300',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/20',
   },
-  'debrief': {
-    title: 'Рефлексия опыта',
+  'first-aid': {
+    title: 'Первая помощь',
+    icon: HeartPulse,
+    description: 'Знаешь ли ты, что делать при травмах и недомоганиях в лесу?',
+    href: '/fun?quiz=first-aid',
+    color: 'text-red-300',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/20',
+  },
+  'star-navigation': {
+    title: 'Навигация по звездам',
     icon: BookOpen,
-    description: 'Осознание того, что открыл для тебя последний поход.',
-    href: '/fun?quiz=debrief',
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-500/10',
-    borderColor: 'border-violet-500/20',
+    description: 'Сможешь ли ты найти путь домой без компаса и смартфона?',
+    href: '/fun?quiz=star-navigation',
+    color: 'text-indigo-300',
+    bgColor: 'bg-indigo-500/10',
+    borderColor: 'border-indigo-500/20',
+  },
+  'mountain-spirit': {
+    title: 'Дух гор',
+    icon: Activity,
+    description: 'Твоя психологическая совместимость с высокогорными условиями.',
+    href: '/fun?quiz=mountain-spirit',
+    color: 'text-sky-300',
+    bgColor: 'bg-sky-500/10',
+    borderColor: 'border-sky-500/20',
+  },
+  'water-master': {
+    title: 'Мастер воды',
+    icon: Dumbbell,
+    description: 'Твои знания о сплавах, байдарках и поведении на воде.',
+    href: '/fun?quiz=water-master',
+    color: 'text-cyan-300',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/20',
   },
 };
 
-// ─── загрузка данных (ОПТИМИЗИРОВАНО) ────────────────────────────────
-async function getTestResults(userId: string) {
-  // 🔥 SENIOR OPTIMIZATION: Ищем результаты напрямую, минуя запрос профиля!
-  const results = await prisma.testResult.findMany({
-    where: { member: { userId } },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  return results;
-}
-
-function formatDate(d: Date) {
-  return d.toLocaleDateString('ru-RU', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
-
-// ─── страница ────────────────────────────────────────────────────────
 export default async function TestsPage() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login?next=/account/tests');
 
-  // Теперь возвращается только готовый массив результатов
-  const results = await getTestResults(user.id);
+  if (!user) {
+    redirect('/auth/login?next=/account/tests');
+  }
 
-  const passedSlugs = new Set(results.map(r => r.testSlug));
-  const unpassedQuizzes = Object.entries(QUIZ_CONFIG).filter(
-    ([slug]) => !passedSlugs.has(slug)
-  );
+  const profile = await prisma.memberProfile.findUnique({
+    where: { userId: user.id },
+    include: {
+      testResults: {
+        orderBy: { createdAt: 'desc' }
+      }
+    }
+  });
+
+  const results = profile?.testResults || [];
+  // ИСПРАВЛЕНИЕ 1: ИСПОЛЬЗУЕМ testSlug
+  const completedQuizKeys = new Set(results.map(r => r.testSlug));
+  
+  const remainingQuizzes = Object.entries(QUIZ_CONFIG)
+    .filter(([key]) => !completedQuizKeys.has(key));
 
   return (
-    <div className="space-y-8 max-w-5xl">
-
-      {/* Заголовок */}
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* HEADER */}
       <div>
-        <h1 className="text-2xl font-black text-white mb-1">ДНК Туриста</h1>
-        <p className="text-sm text-ui-muted">
-          {results.length > 0
-            ? `Открыто ${results.length} из ${Object.keys(QUIZ_CONFIG).length} граней вашей личности`
-            : 'Пройдите тесты в Fan-секторе, чтобы собрать свой профиль'}
+        <h1 className="text-2xl md:text-3xl font-black text-white mb-2 uppercase tracking-tight">
+          Тесты и достижения
+        </h1>
+        <p className="text-sm text-ui-muted max-w-2xl">
+          Твой цифровой след в Турклубе. Проходи тесты, открывай новые грани своего туристического «Я» и сохраняй прогресс.
         </p>
       </div>
 
-      {/* ── Пройденные тесты (RPG-Витрина) ─────────────────────────── */}
+      {/* STATISTICS MINI-GRID */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-ui-panel/40 border border-white/5 rounded-2xl p-4">
+          <p className="text-[10px] uppercase tracking-widest text-ui-muted font-bold mb-1">Пройдено</p>
+          <p className="text-2xl font-black text-white">{results.length}</p>
+        </div>
+        <div className="bg-ui-panel/40 border border-white/5 rounded-2xl p-4">
+          <p className="text-[10px] uppercase tracking-widest text-ui-muted font-bold mb-1">Доступно</p>
+          <p className="text-2xl font-black text-teal-400">{remainingQuizzes.length}</p>
+        </div>
+      </div>
+
+      {/* МОИ РЕЗУЛЬТАТЫ */}
       {results.length > 0 && (
-        <section className="space-y-4">
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+              <Activity size={18} className="text-teal-400" />
+            </div>
+            <h2 className="text-lg font-black text-white uppercase tracking-tight">Мои достижения</h2>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {results.map(result => {
+            {results.map((result) => {
+              // ИСПРАВЛЕНИЕ 2: ИСПОЛЬЗУЕМ result.result И result.testSlug
+              const data = result.result as TestResultData;
               const config = QUIZ_CONFIG[result.testSlug];
               if (!config) return null;
 
-              const res = result.result as unknown as TestResultData;
-              const typeName = res.type ?? 'Результат сохранен';
               const Icon = config.icon;
 
               return (
-                <div
+                <div 
                   key={result.id}
-                  className="bg-ui-panel/60  border border-white/5 rounded-3xl p-5 flex flex-col relative overflow-hidden group hover:border-white/10 transition-colors"
+                  className="group relative bg-ui-panel/60 border border-white/5 rounded-3xl p-5 hover:bg-ui-panel/80 transition-all duration-300"
                 >
-                  {/* Фоновое свечение */}
-                  <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl opacity-20 rounded-full pointer-events-none ${config.bgColor.replace('/10', '')}`} />
-
-                  {/* Шапка карточки */}
-                  <div className="flex items-center gap-3 mb-4 relative z-10">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${config.bgColor} ${config.color}`}>
-                      <Icon size={20} />
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-2xl ${config.bgColor} border ${config.borderColor} flex items-center justify-center shrink-0 shadow-inner`}>
+                      <Icon size={24} className={config.color} />
                     </div>
-                    <div>
-                  <h3 className="text-xs font-bold text-ui-muted uppercase tracking-wider">{config.title}</h3>
-                   <p className="text-xs text-ui-muted">{formatDate(result.createdAt)} </p>
-                    </div>
-                  </div>
-
-                  {/* Главный Результат */}
-                  <div className="mb-5 relative z-10">
-                    <p className={`text-xl font-black uppercase tracking-wide ${config.color}`}>
-                      {typeName}
-                    </p>
-                    {res.badge && (
-                      <p className="text-sm text-ui-muted mt-1 font-medium">
-                        {res.badge}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="text-xs font-bold text-teal-400 uppercase tracking-widest">
+                          Результат:
+                        </p>
+                        <span className="text-[10px] text-ui-muted font-medium">
+                          {new Date(result.createdAt).toLocaleDateString('ru-RU')}
+                        </span>
+                      </div>
+                      
+                      <p className="text-lg font-black text-white truncate leading-tight mb-1">
+                        {data.type || 'Пройден'}
                       </p>
-                    )}
-                  </div>
 
-                  {/* RPG Статы (Компактные шкалы) */}
-                  {!!res.score && typeof res.score === 'object' && Object.keys(res.score).length > 0 && (
-                    <div className="mb-6 relative z-10 grid grid-cols-2 gap-x-4 gap-y-3">
-                      {Object.entries(res.score)
-                        .filter(([key]) => key.toLowerCase() !== 'total') // Прячем общий тотал, оставляем только хар-ки
-                        .slice(0, 6)
-                        .map(([key, value]) => (
-                          <div key={key} className="space-y-1.5">
-                         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-  <span className="text-ui-muted truncate pr-2">{key}</span>
-  <span className={config.color}>{value}%</span>
-</div>
-{/* Подложку бара делаем универсальной: полупрозрачный черный цвет (или ui-border) 
-    идеально ляжет на ЛЮБОЙ фон карточки, создавая эффект "вдавленности" */}
-<div className="h-1.5 bg-black/30 rounded-full overflow-hidden shadow-inner">
-  <div
-    className={`h-full rounded-full transition-all duration-1000 ${config.bgColor.replace('/10', '/60')}`}
-    style={{ width: `${Math.min(value || 0, 100)}%` }}
-  />
-</div>
-                          </div>
-                        ))}
+                      <p className="text-[10px] text-ui-muted truncate mt-0.5 uppercase tracking-wider font-semibold opacity-80">
+                        Тест: {config.title}
+                      </p>
                     </div>
-                  )}
-
-                  {/* Кнопка "Пройти заново" внизу */}
-                  <div className="mt-auto pt-4 border-t border-white/5 relative z-10">
-                    <Link
-                      href={config.href}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-xs font-bold text-ui-muted hover:text-white transition-colors border border-transparent hover:border-white/5"
-                    >
-                      <RefreshCw size={14} /> Перепройти тест
-                    </Link>
                   </div>
+
+                  <Link 
+                    href={config.href}
+                    className="absolute top-4 right-4 p-2 rounded-xl bg-white/5 opacity-0 group-hover:opacity-100 transition-all hover:bg-white/10"
+                    title="Перепройти тест"
+                  >
+                    <RefreshCw size={14} className="text-white" />
+                  </Link>
                 </div>
               );
             })}
@@ -249,31 +233,31 @@ export default async function TestsPage() {
         </section>
       )}
 
-      {/* ── Непройденные квизы ───────────────────────────────────── */}
-      {unpassedQuizzes.length > 0 && (
-        <section className="space-y-4 pt-4 border-t border-white/5">
-          <h2 className="text-sm font-bold text-ui-muted uppercase tracking-wider">
-            {results.length > 0 ? 'Ещё не пройдены' : 'Доступные тесты'}
-          </h2>
+      {/* ДОСТУПНЫЕ ТЕСТЫ */}
+      {remainingQuizzes.length > 0 && (
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+              <FlaskConical size={18} className="text-ui-muted" />
+            </div>
+            <h2 className="text-lg font-black text-white uppercase tracking-tight">Еще не пройдены</h2>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {unpassedQuizzes.map(([slug, config]) => {
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {remainingQuizzes.map(([key, config]) => {
               const Icon = config.icon;
               return (
-                <Link
-                  key={slug}
+                <Link 
+                  key={key}
                   href={config.href}
-                  className="flex items-center gap-4 bg-slate-900/40 border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all group"
+                  className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all"
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner transition-transform group-hover:scale-110 ${config.bgColor} ${config.color}`}>
-                    <Icon size={24} strokeWidth={1.5} />
+                  <div className={`w-10 h-10 rounded-xl ${config.bgColor} border ${config.borderColor} flex items-center justify-center shrink-0`}>
+                    <Icon size={20} className={config.color} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-ui-base group-hover:text-teal-400 transition-colors truncate">
+                    <p className="text-sm font-bold text-slate-100 truncate group-hover:text-white transition-colors">
                       {config.title}
-                    </p>
-                    <p className="text-xs text-ui-muted truncate mt-0.5">
-                      {config.description}
                     </p>
                   </div>
                   <ArrowRight size={16} className="text-ui-muted group-hover:text-ui-accent transition-colors shrink-0" />
@@ -298,13 +282,13 @@ export default async function TestsPage() {
           </p>
           <Link
             href="/fun"
-            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black tracking-widest uppercase px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)]"
+            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black tracking-widest uppercase px-6 py-3 rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95"
           >
-            Начать <ArrowRight size={16} />
+            В Fan-сектор
+            <ArrowRight size={18} />
           </Link>
         </div>
       )}
-
     </div>
   );
 }

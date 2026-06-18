@@ -288,7 +288,7 @@ useEffect(() => {
             <div className="shrink-0">
               <button
                 onClick={() => setStep("test")}
-                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)] active:scale-[0.98]"
+                className="w-full bg-teal-600 hover: bg-teal-500 text-slate-950  font-bold text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(13,148,136,0.3)] active:scale-[0.98]"
               >
                 Всё понятно, погнали!
               </button>

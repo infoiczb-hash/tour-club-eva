@@ -30,8 +30,9 @@ export const metadata: Metadata = {
       }
     ]
   },
+  // ИСПРАВЛЕНО: Абсолютный путь для канонического URL
   alternates: {
-    canonical: '/tour',
+    canonical: 'https://evatur.club/tour',
   }
 };
 

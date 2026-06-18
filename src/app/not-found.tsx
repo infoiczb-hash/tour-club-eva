@@ -44,7 +44,7 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link 
             href="/" 
-            className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-900/20 group"
+            className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover: bg-teal-500 text-slate-950  rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-900/20 group"
           >
             <Home size={18} />
             Вернуться в лагерь

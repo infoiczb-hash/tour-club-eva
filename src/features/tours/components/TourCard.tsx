@@ -24,7 +24,7 @@ const LABEL_CONFIG: Record<string, { bg: string, text: string, icon: LucideIcon,
   exclusive: { bg: "bg-violet-500", text: "text-white", icon: Star, label: "Эксклюзив" },
 };
 
-//   СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД)
+// СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД)
 const COLOR_THEMES: Record<string, { bg: string, border: string, text: string }> = {
   slate:   { bg: "bg-slate-800/80",   border: "border-slate-500",   text: "text-white" },
   teal:    { bg: "bg-teal-500/80",    border: "border-teal-400",    text: "text-white" },
@@ -39,7 +39,7 @@ const COLOR_THEMES: Record<string, { bg: string, border: string, text: string }>
 };
 
 export interface TourCardProps {
-  tour: TourPreview;
+  tour: TourPreview & { precalculated?: any };
   isHot?: boolean;
   priority?: boolean;
 }
@@ -51,56 +51,40 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     priceMember, priceChild,
     image, location, duration,
     tags, label, category,
-    dates 
+    dates, precalculated
   } = tour;
 
-  const dateObj = date ? new Date(date) : null;
-  const dateStr = dateObj
-    ? dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) 
-    : 'Скоро';
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const isPast = dateObj ? dateObj.getTime() < today.getTime() : false;
-  
-  const futureDatesCount = Array.isArray(dates) ? dates.filter((d: any) => {
-     const end = d.end ? new Date(d.end) : new Date(d.start);
-     end.setHours(0, 0, 0, 0);
-     return end >= today;
-  }).length : 0;
-  
-  const hasMoreDates = futureDatesCount > 1;
+  const { dateStr = 'Скоро', isPast = false, hasMoreDates = false } = precalculated || {};
+
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
-
   const themeColor = category?.color || 'slate';
   const typeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
-  
   const displayLabel = category?.title || "Тур";
 
+  // ОПТИМИЗАЦИЯ: prefetch={false} спасает от DDoS-атаки на собственный сервер при скролле
   return (
-    <Link href={`/tour/${slug}`} className="group block h-full outline-none w-full">
+    <Link href={`/tour/${slug}`} prefetch={false} className="group block h-full outline-none w-full">
       <article
         className={cn(
           "relative flex flex-col h-full rounded-[2rem] overflow-hidden transition-all duration-500",
-          "bg-[#0d131a] border-2 border-white/10", //   ИСПРАВЛЕНО: border-2 для четкого контура
+          "bg-[#0d131a] border-2 border-white/10",
           isHighlighted
             ? "shadow-[0_0_30px_rgba(245,158,11,0.1)] hover:border-amber-500/60"
-            : "hover:border-teal-500/60 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4),0_0_20px_rgba(20,184,166,0.2)]", //   ИСПРАВЛЕНО: усиленная тень и рамка при наведении
+            : "hover:border-teal-500/60 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4),0_0_20px_rgba(20,184,166,0.2)]",
           "hover:-translate-y-2"
         )}
       >
-   <div className="relative w-full aspect-[4/5] sm:aspect-[16/13] overflow-hidden bg-slate-800 shrink-0">
+       <div className="relative w-full aspect-[4/5] sm:aspect-[16/13] overflow-hidden bg-slate-800 shrink-0">
           <Image
             src={image || '/placeholder-tour.jpg'}
             alt={title}
             fill
             priority={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-            quality={55}
+            quality={60}
             className="object-cover transition-transform duration-1000 group-hover:scale-105"
           />
-          {/* Легкий градиент снизу для плавного перехода в темный блок */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d131a] via-transparent to-slate-950/40" />
   
           {/* Бейдж категории */}
@@ -109,7 +93,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
               "flex items-center px-3 py-1.5 backdrop-blur-md rounded-xl border shadow-sm min-w-0",
               typeStyle.bg, typeStyle.border
             )}>
-              {/*   ИСПРАВЛЕНО: text-xs (не менее 12px) */}
               <span className={cn("text-xs font-black uppercase tracking-wider truncate", typeStyle.text)}>
                 {displayLabel}
               </span>
@@ -121,7 +104,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
                 {!label.includes('🔥') && !label.includes('✨') && (
                   <Flame size={14} strokeWidth={2.5} />
                 )}
-                {/*   ИСПРАВЛЕНО: text-xs */}
                 <span className="text-xs font-black uppercase tracking-wider">{label}</span>
               </div>
             )}
@@ -133,11 +115,11 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
               "flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-md shadow-lg",
               isHighlighted
                 ? "bg-amber-500/20 border-amber-500/40 text-amber-400"
-                : "bg-slate-900/80 border-white/20 text-teal-400" //   ИСПРАВЛЕНО: больше контраста для бордера
+                : "bg-slate-900/80 border-white/20 text-teal-400"
             )}>
               <Calendar size={14} strokeWidth={2.5} />
               <span suppressHydrationWarning className={cn(
-                  "text-xs sm:text-sm font-black uppercase tracking-wider", //   ИСПРАВЛЕНО: text-xs минимум
+                  "text-xs sm:text-sm font-black uppercase tracking-wider",
                   isPast && "text-slate-400"
               )}>
                  {isPast ? "Завершен" : dateStr}
@@ -153,7 +135,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
        <div className="p-6 sm:p-7 flex flex-col flex-grow bg-[#0d131a]">
           
           {/* Локация и длительность */}
-          {/*   ИСПРАВЛЕНО: text-xs (вместо 11px) и text-slate-200 (вместо тусклого slate-300/400) */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">
             <div className="flex items-center gap-1.5">
               <MapPin size={12} className="text-teal-500" strokeWidth={3} />
@@ -173,7 +154,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-5">
               {tags.slice(0, 3).map((tag, i) => (
-                //   ИСПРАВЛЕНО: text-xs, контрастные рамки bg-white/10
                 <span key={i} className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-slate-200 bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
                   <Hash size={12} strokeWidth={3} /> {tag}
                 </span>
@@ -183,7 +163,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
 
           {/* Тарифы */}
           <div className={cn("flex flex-wrap gap-2 mb-6 mt-auto", (!tags || tags.length === 0) && "mt-auto")}>
-            {/*   ИСПРАВЛЕНО: text-xs вместо 11px во всех тарифах */}
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-white/20 text-xs font-bold text-slate-200 uppercase tracking-wider">
               Стандарт
             </span>
@@ -204,7 +183,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {/* Подвал с ценой и кнопкой */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              {/*   ИСПРАВЛЕНО: text-slate-300 для контраста подписи */}
               <span className="text-xs font-black text-slate-300 uppercase tracking-widest mb-1">Стоимость</span>
               <div className="flex items-baseline gap-1.5">
                 {(priceOld ?? 0) > Number(price) && (
@@ -217,7 +195,6 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
               </div>
             </div>
             
-            {/*   ИСПРАВЛЕНО: Увеличена кнопка и иконка для удобства нажатия на мобилках */}
             <div className={cn(
               "w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl group-hover:scale-110",
               isHighlighted

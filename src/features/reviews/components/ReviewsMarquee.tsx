@@ -90,8 +90,8 @@ const ReviewCard = ({ review }: { review: Review }) => {
           </div>
         </div>
 
-        {/* CATEGORY BADGE -   ИСПРАВЛЕНИЕ: text-[9px] заменен на text-[10px] md:text-xs */}
-        <div className={cn("inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] md:text-xs font-bold uppercase tracking-widest", catConfig.colorClass)}>
+        {/* CATEGORY BADGE -   ИСПРАВЛЕНИЕ: text-[9px] заменен на text-xs  md:text-xs */}
+        <div className={cn("inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs md:text-xs font-bold uppercase tracking-widest", catConfig.colorClass)}>
             <Tags size={12} strokeWidth={2.5} />
             {catConfig.label}
         </div>

@@ -44,7 +44,8 @@ jest.mock('@/lib/env', () => ({
 function generateValidHash(data: Record<string, string>, botToken: string) {
   const secretKey = crypto.createHash('sha256').update(botToken).digest();
   const dataCheckString = Object.keys(data)
-    .filter(key => data[key] !== undefined && data[key] !== 'undefined')
+    // ДОБАВЛЕНО: игнорируем кастомный параметр next при проверке подписи
+    .filter(key => data[key] !== undefined && data[key] !== 'undefined' && key !== 'next')
     .sort()
     .map(key => `${key}=${data[key]}`)
     .join('\n');
@@ -104,8 +105,10 @@ describe('GET /api/auth/telegram', () => {
     const req = new NextRequest(url);
     const res = await GET(req);
 
-    expect(res.status).toBe(307); // Next.js redirect status
-    expect(res.headers.get('location')).toBe(`${originUrl}/login?error=invalid_hash`);
+    // ИЗМЕНЕНО: теперь мы ждем 401 статус вместо редиректа
+    expect(res.status).toBe(401); 
+    const json = await res.json();
+    expect(json.error).toContain('Invalid hash signature');
     expect(mockPrismaUpsert).not.toHaveBeenCalled();
   });
 
@@ -123,8 +126,10 @@ describe('GET /api/auth/telegram', () => {
     const req = new NextRequest(url);
     const res = await GET(req);
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe(`${originUrl}/login?error=auth_expired`);
+    // ИЗМЕНЕНО: теперь мы ждем 401 статус
+    expect(res.status).toBe(401);
+    const json = await res.json();
+    expect(json.error).toContain('Auth data expired');
   });
 
   // ----------------------------------------------------
@@ -146,8 +151,11 @@ describe('GET /api/auth/telegram', () => {
     expect(mockRedisSet).toHaveBeenCalledWith(
       `tg:auth:123:${authDate}`, '1', { ex: 86400, nx: true }
     );
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe(`${originUrl}/login?error=auth_replayed`);
+    
+    // ИЗМЕНЕНО: теперь мы ждем 401 статус
+    expect(res.status).toBe(401);
+    const json = await res.json();
+    expect(json.error).toContain('Replay attack detected');
   });
 
   // ----------------------------------------------------
@@ -215,5 +223,25 @@ describe('GET /api/auth/telegram', () => {
         tgChatId: '888',
       })
     });
+  });
+
+  // ----------------------------------------------------
+  it('6. Безопасность: Open Redirect Protection корректно обрабатывает параметр next', async () => {
+    const authDate = Math.floor(Date.now() / 1000);
+    const userData = { id: '999', first_name: 'Safe', auth_date: authDate.toString() };
+    const hash = generateValidHash(userData, 'test_bot_token');
+
+    const url = new URL(baseUrl);
+    Object.entries(userData).forEach(([k, v]) => url.searchParams.set(k, v));
+    url.searchParams.set('hash', hash);
+    // Добавляем параметр next, с которым юзер пришел
+    url.searchParams.set('next', '/tour/kayaking');
+
+    const req = new NextRequest(url);
+    const res = await GET(req);
+
+    // Должен перенаправить на безопасный локальный роут, а не на fallback
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(`${originUrl}/tour/kayaking`);
   });
 });

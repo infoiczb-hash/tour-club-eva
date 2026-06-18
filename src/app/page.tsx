@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma'; // Сохранил, хотя он не используется в компоненте
 import { Metadata } from 'next';
 
+
 //   ИЗМЕНЕНО: Импортируем только нужные функции
 import { getBlogPreviews } from '@/features/blog/api'; // Облегченная версия
 import { getReviews } from '@/features/reviews/actions';
@@ -16,6 +17,44 @@ import LazyFunSector from '@/features/fun/components/LazyFunSector';
 import { TourSkeleton } from '@/features/tours/components/TourSkeleton';
 import dynamic from 'next/dynamic';
 import ToursBrowserWrapper from '@/components/ToursBrowserWrapper';
+
+export const metadata: Metadata = {
+  title: "Турклуб «Эва» — Активный отдых в Приднестровье",
+  description: "Сплавы по Днестру, туры в горы, SUP. Приключения в Приднестровье и Молдове.",
+  
+  // ИСПРАВЛЕНО: Теперь указывает полный абсолютный URL и языковые версии
+  alternates: {
+    canonical: 'https://evatur.club/',
+    languages: {
+      'ru': 'https://evatur.club/',
+      'ru-MD': 'https://evatur.club/',
+    },
+  },
+
+  // СОХРАНЕНО: Все твои настройки OpenGraph
+  openGraph: {
+    title: "Турклуб «Эва» — Приключения каждые выходные",
+    description: "Сплавы, походы и SUP в Приднестровье и Молдове.",
+    url: "https://evatur.club",
+    siteName: "Турклуб «Эва»",
+    locale: "ru_RU",
+    type: "website",
+    images: [{ 
+      url: "/og-default.jpg", 
+      width: 1200, 
+      height: 630, 
+      alt: "Турклуб Эва — сплавы и походы" 
+    }]
+  },
+
+  // СОХРАНЕНО: Все твои настройки Twitter
+  twitter: {
+    card: 'summary_large_image',
+    title: "Турклуб «Эва» — Активный отдых",
+    description: "Сплавы, походы и SUP в Приднестровье и Молдове.",
+    images: ["/og-default.jpg"],
+  }
+};
 
 // (Динамические импорты Philosophy, BlogList, LazyGuidesList, LazyReviewsMarquee остаются без изменений)
 const Philosophy = dynamic(() => import('@/features/landing/components/Philosophy'), {
@@ -35,27 +74,6 @@ const LazyReviewsMarquee = dynamic(() => import('@/features/reviews/components/R
 });
 
 export const revalidate = 3600; 
-
-export const metadata: Metadata = {
-  title: "Турклуб «Эва» — Активный отдых в Приднестровье",
-  description: "Сплавы по Днестру, туры в горы, SUP. Приключения в Приднестровье и Молдове.",
-  alternates: { canonical: '/' },
-  openGraph: {
-    title: "Турклуб «Эва» — Приключения каждые выходные",
-    description: "Сплавы, походы и SUP в Приднестровье и Молдове.",
-    url: "https://evatur.club",
-    siteName: "Турклуб «Эва»",
-    locale: "ru_RU",
-    type: "website",
-    images: [{ url: "/og-default.jpg", width: 1200, height: 630, alt: "Турклуб Эва — сплавы и походы" }]
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Турклуб «Эва» — Активный отдых",
-    description: "Сплавы, походы и SUP в Приднестровье и Молдове.",
-    images: ["/og-default.jpg"],
-  }
-};
 
 /**
  *   ВЫНЕСЕНО В ОТДЕЛЬНЫЙ КОМПОНЕНТ ДЛЯ STREAMING

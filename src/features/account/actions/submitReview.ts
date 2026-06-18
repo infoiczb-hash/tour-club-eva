@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { NotificationHub } from '@/lib/notifications/hub';
-// 👇 ДОБАВЛЕНЫ ИМПОРТЫ ДЛЯ ТЕЛЕГРАМ-ТРИГГЕРА
+//    ДОБАВЛЕНЫ ИМПОРТЫ ДЛЯ ТЕЛЕГРАМ-ТРИГГЕРА
 import { publishToTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
@@ -102,7 +102,7 @@ export async function submitReviewFromCabinet(
       data: { amount: 5 }
     });
 
-    // 👇 НАЧАЛО: ТРИГГЕР В TELEGRAM (Модерация отзывов) 👇
+    //    НАЧАЛО: ТРИГГЕР В TELEGRAM (Модерация отзывов)   
     try {
       const tourTitle = tour?.title || 'Неизвестный тур';
       const stars = '⭐️'.repeat(rating) + '☆'.repeat(5 - rating);

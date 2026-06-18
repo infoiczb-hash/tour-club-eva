@@ -77,10 +77,10 @@ export const BookingTicketEmail = ({
                 Привет, {name}! Мы получили вашу заявку на участие в приключении. Места забронированы на 48 часов до подтверждения оплаты.
               </Text>
               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Тур и дата</Text>
+                <Text className="m-0 mb-1 text-xs  uppercase tracking-widest text-slate-400 font-bold">Тур и дата</Text>
                 <Text className="m-0 mb-4 text-lg font-bold text-slate-900">{tourTitle} — {tourDate}</Text>
                 
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">К оплате</Text>
+                <Text className="m-0 mb-1 text-xs  uppercase tracking-widest text-slate-400 font-bold">К оплате</Text>
                 <Text className="m-0 text-xl font-bold text-teal-600">
                   {totalPrice} {currency} {appliedDiscount ? <span className="text-xs font-medium text-slate-400 line-through ml-2">{(totalPrice + appliedDiscount)}</span> : null}
                 </Text>
@@ -138,7 +138,7 @@ export const BookingTicketEmail = ({
             <Section className="text-center">
               <Link href={cancellationPolicyLink} className="text-xs text-slate-400 underline mr-4">Политика отмены</Link>
               <Link href={`${siteUrl}/account/bookings`} className="text-xs text-slate-400 underline">Личный кабинет</Link>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs  text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. Приключения начинаются здесь. <br/>
                 Вопросы? @romansvtirase в Telegram.
               </Text>

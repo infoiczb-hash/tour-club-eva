@@ -315,7 +315,7 @@ function BookingResultCard({ data, isCheckedIn, isCheckInLoading, onCheckIn, onN
             className={clsx(
               "w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 shadow-lg mb-4",
               !isPaid ? "bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed" :
-              isCheckedIn ? "bg-amber-500 hover:bg-amber-600 text-slate-900 shadow-amber-500/20" : "bg-teal-600 hover:bg-teal-500 text-white shadow-teal-500/20 active:scale-95"
+              isCheckedIn ? "bg-amber-500 hover:bg-amber-600 text-slate-900 shadow-amber-500/20" : "bg-teal-600 hover: bg-teal-500 text-slate-950  shadow-teal-500/20 active:scale-95"
             )}
           >
             {isCheckInLoading ? <Loader2 className="animate-spin" size={20} /> : 
@@ -344,7 +344,7 @@ function MemberResultCard({ data, onNext }: { data: ScannedMemberDTO, onNext: ()
                 {data.avatarUrl ? <img src={data.avatarUrl} alt="" className="w-full h-full object-cover" /> : <User size={40} className="text-slate-700" />}
              </div>
              
-             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
+             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full text-xs  font-bold uppercase tracking-widest mb-3">
                <Crown size={12} /> Член клуба
              </div>
 
@@ -353,15 +353,15 @@ function MemberResultCard({ data, onNext }: { data: ScannedMemberDTO, onNext: ()
 
              <div className="grid grid-cols-2 gap-4 w-full mb-8">
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col items-center">
-                   <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest mb-1">Статус</p>
+                   <p className="text-xs  font-bold text-slate-700 uppercase tracking-widest mb-1">Статус</p>
                    <p className="text-lg font-black text-amber-400 text-center">{data.level}</p>
                 </div>
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col items-center">
-                   <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest mb-1">Туров</p>
+                   <p className="text-xs  font-bold text-slate-700 uppercase tracking-widest mb-1">Туров</p>
                    <p className="text-2xl font-black text-white">{data.totalTours}</p>
                 </div>
                 <div className="col-span-2 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col items-center">
-                   <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest mb-1">Доступные бонусы</p>
+                   <p className="text-xs  font-bold text-slate-700 uppercase tracking-widest mb-1">Доступные бонусы</p>
                    <p className="text-3xl font-black text-emerald-400 flex items-center gap-2"><Zap size={20} className="text-emerald-500"/> {data.balance} ₽</p>
                 </div>
              </div>

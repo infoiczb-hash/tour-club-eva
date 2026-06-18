@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { Tour } from '@/features/tours/types'; //   ИМПОРТИРУЕМ СТРОГИЙ ТИП ТУРА
 
-//   СТРОГАЯ ТИПИЗАЦИЯ ВМЕСТО ANY
 type TabType = 'TOUR' | 'HR' | 'BLOG' | 'B2B' | 'REVIEW' | 'HELP';
 
 interface BookingModalProps {

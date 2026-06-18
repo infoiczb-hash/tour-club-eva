@@ -57,7 +57,7 @@ export const PaymentReminder24hEmail = ({
               </div>
 
               <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                <Text className="m-0 mb-1 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Сумма к оплате</Text>
+                <Text className="m-0 mb-1 text-xs uppercase tracking-widest text-slate-400 font-bold">Сумма к оплате</Text>
                 <Text className="m-0 text-xl font-bold text-teal-600">
                   {price} {currency}
                 </Text>
@@ -89,7 +89,7 @@ export const PaymentReminder24hEmail = ({
             <Section className="text-center">
               <Link href={bookingLink} className="text-xs text-slate-400 underline mr-4">Открыть билет</Link>
               <Link href={`${siteUrl}/faq`} className="text-xs text-slate-400 underline">Частые вопросы</Link>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. Ждём вас на маршруте!
               </Text>
             </Section>

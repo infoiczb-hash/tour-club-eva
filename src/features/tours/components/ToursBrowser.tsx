@@ -302,9 +302,9 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                     <section aria-labelledby="scheduled-tours-heading">
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                             <Flame size={18} className="text-amber-500 animate-pulse" />
-                            <h3 id="scheduled-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
+                            <h2 id="scheduled-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-amber-500">
                                 Расписание
-                            </h3>
+                            </h2>
                         </div>
 
                         {/*   УНИФИЦИРОВАННАЯ СЕТКА: Свайп на мобилках, 2-3-4 колонки на больших экранах */}
@@ -312,10 +312,10 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                               <div className="mb-3">
                                     <SwipeHint /> </div>
                             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                {displayScheduled.map((tour, index) => (
-                                    <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full">
-                                        <TourCard tour={tour} isHot priority={index < 4} />
-                                    </div>
+                               {displayScheduled.map((tour, index) => (
+    <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full">
+        <TourCard tour={tour} isHot priority={index === 0} />
+    </div>
                                 ))}
                             </div>
                             </div>
@@ -335,26 +335,31 @@ const { scheduledTours, tbaTours, allFilteredTours } = useMemo(() => {
                     </section>
                 )}
 
-                {/* 2. АНОНСЫ (Туры без дат) */}
+       {/* 2. АНОНСЫ (Туры без дат) */}
                 {tbaTours.length > 0 && (
                     <section aria-labelledby="soon-tours-heading">
                         <div className="flex items-center gap-4 mb-6 md:mb-8 border-b border-white/5 pb-4">
                             <Sparkles size={18} className="text-slate-300" />
-                            <h3 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-300">
+                            <h2 id="soon-tours-heading" className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-slate-300">
                                 Планируй заранее (Анонсы)
-                            </h3>
+                            </h2>
                         </div>
 
-                        {/*   УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
+                        {/* УНИФИЦИРОВАННАЯ СЕТКА АНОНСОВ */}
                         <div className="relative">
                               <div className="mb-3">
                                     <SwipeHint /> </div>
                             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                {tbaTours.map((tour) => (
-                                    <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full opacity-90 hover:opacity-100 transition-opacity">
-                                        <TourCard tour={tour} />
-                                    </div>
-                                ))}
+                                {tbaTours.map((tour, index) => {
+                                    // Даем приоритет первой карточке анонса, только если нет запланированных туров
+                                    const isFirstCardOnPage = scheduledTours.length === 0 && index === 0;
+
+                                    return (
+                                        <div key={tour.id} className="snap-center shrink-0 w-[85vw] md:w-auto h-full opacity-90 hover:opacity-100 transition-opacity">
+                                            <TourCard tour={tour} priority={isFirstCardOnPage} />
+                                        </div>
+                                    );
+                                })}
                             </div>
                             </div>
                     </section>

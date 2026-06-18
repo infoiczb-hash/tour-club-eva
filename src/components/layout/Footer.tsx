@@ -52,25 +52,25 @@ export const Footer = () => {
 
             {/* Соцсети */}
             <div className="flex gap-3 mt-1">
-              <SocialLink href="https://instagram.com/evaturclub" icon={<Instagram size={18} />} label="Instagram" aria-label="Наш Instagram" />
-              <SocialLink href="https://t.me/evaturclub" icon={<Send size={18} />} label="Telegram" aria-label="Наш Telegram"/>
+           <SocialLink href="https://instagram.com/evaturclub" icon={<Instagram size={18} />} label="Турклуб Эва в Instagram" />
+<SocialLink href="https://t.me/evaturclub" icon={<Send size={18} />} label="Турклуб Эва в Telegram" />
             </div>
           </div>
 
           {/* БЛОК 2: НАВИГАЦИЯ */}
           <div className="md:col-span-4 flex justify-start md:justify-center">
              <nav className="flex gap-x-12 gap-y-5">
-                {/* Левая колонка */}
+               {/* Левая колонка */}
                 <div className="flex flex-col gap-5">
-                    <Link href="/offer" className={linkStyles}>Оферта</Link> 
-                    <Link href="/faq" className={linkStyles}>FAQ</Link>
-                    <Link href="/privacy" className={linkStyles}>Политика конфиденциальности</Link>
+                    <Link href="/tour" prefetch={false} className={linkStyles}>Расписание туров</Link>
+                    <Link href="/about" prefetch={false} className={linkStyles}>О нашем клубе</Link>
+                    <Link href="/privacy" prefetch={false} className={linkStyles}>Политика конфиденциальности</Link>
                 </div>
-                {/* Правая колонка */}
+               {/* Правая колонка */}
                 <div className="flex flex-col gap-5">
-                    <Link href="/directions" className={linkStyles}>Направления Клуба</Link>
-                    <Link href="/fun" className={linkStyles}>Тесты и квизы</Link>
-                    <Link href="/blog" className={linkStyles}>Блог клуба</Link>
+                    <Link href="/directions" prefetch={false} className={linkStyles}>Направления Клуба</Link>
+                    <Link href="/fun" prefetch={false} className={linkStyles}>Тесты и квизы</Link>
+                    <Link href="/blog" prefetch={false} className={linkStyles}>Блог клуба</Link>
                 </div>
              </nav>
           </div>

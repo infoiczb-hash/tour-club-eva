@@ -239,7 +239,7 @@ export default function ActiveRestClient() {
             <div className="animate-hero-subtitle flex flex-col sm:flex-row gap-4">
               <a
                 href="#places"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.35)]"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover: bg-teal-500 text-slate-950  font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.35)]"
               >
                 <MapPin size={18} /> Маршруты и места
               </a>
@@ -653,7 +653,7 @@ export default function ActiveRestClient() {
                 <div className="flex flex-col gap-3 relative z-10">
                   <button
                     onClick={() => setIsContactOpen(true)}
-                    className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(20,184,166,0.25)]"
+                    className="w-full py-4 bg-teal-600 hover: bg-teal-500 text-slate-950  font-bold uppercase tracking-wider text-sm rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(20,184,166,0.25)]"
                   >
                     <MessageCircle size={18} /> Написать нам
                   </button>
@@ -684,7 +684,7 @@ export default function ActiveRestClient() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/tour"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.3)]"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover: bg-teal-500 text-slate-950  font-bold uppercase tracking-wider text-sm rounded-2xl transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(20,184,166,0.3)]"
               >
                 <Calendar size={18} /> Смотреть туры
               </Link>

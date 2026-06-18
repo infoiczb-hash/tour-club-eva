@@ -33,8 +33,9 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
         : [];
 
     return (
-        <div className="container mx-auto px-4 max-w-7xl">
-            <div className="flex flex-col gap-24 md:gap-32 pb-24">
+       <div className="container mx-auto px-4 max-w-7xl">
+            {/*    ИСПРАВЛЕНО: Уменьшили gap-24 до gap-12 (для мобилок) и pb-24 до pb-12 */}
+            <div className="flex flex-col gap-12 md:gap-32 pb-12 md:pb-24">
                 
                 {displayGuides.map((guide, index) => (
                     <EditorialGuideBlock 
@@ -45,7 +46,8 @@ export default function GuidesEditorialList({ guides = [] }: { guides: Guide[] }
                     />
                 ))}
 
-                <div className="relative mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both will-change-transform">
+                {/*  ИСПРАВЛЕНО: Убрали лишний mt-12, теперь отступ контролируется только через flex gap */}
+                <div className="relative bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 md:p-16 text-center overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both will-change-transform">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[300px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
 
                     <div className="relative z-10 flex flex-col items-center">
@@ -79,7 +81,7 @@ function EditorialGuideBlock({ guide, index, priority = false }: { guide: Guide,
 
     return (
         <div
-            className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center relative animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both will-change-transform"
+           className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-16 items-center relative animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both will-change-transform"
             style={{ animationDelay: `${Math.min(index * 150, 600)}ms` }}
         >
             <div className={cn(

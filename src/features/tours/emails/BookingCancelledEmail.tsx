@@ -71,7 +71,7 @@ export const BookingCancelledEmail = ({
                 </Link>
                 , и мы постараемся всё исправить.
               </Text>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs  text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. До новых встреч!
               </Text>
             </Section>

@@ -103,19 +103,30 @@ export default async function GuidePage({ params }: Props) {
   const quotes       = Array.isArray(guide.quotes)       ? guide.quotes       : [];
   const achievements = Array.isArray(guide.achievements) ? guide.achievements : [];
 
+  // Расширенная E-E-A-T разметка Schema.org Person
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: guide.name,
     jobTitle: guide.role,
-    description: guide.bio,
-    image: guide.actionImage || guide.image,
-    url: `${BASE_URL}/guides/${guide.slug}` 
+    description: guide.bio ?? undefined,
+    image: guide.actionImage || guide.image || undefined,
+    url: `${BASE_URL}/guides/${guide.slug}`,
+    worksFor: {
+      '@type': 'Organization',
+      name: 'Турклуб Эва',
+      url: BASE_URL,
+    },
+    knowsAbout: tags.length > 0 ? tags : ['активный туризм', 'байдарки', 'горные походы'],
+    sameAs: [
+      guide.instagram,
+      guide.telegram,
+    ].filter(Boolean),
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-white selection:bg-teal-500/30">
-   <script
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ 
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') 
@@ -123,10 +134,10 @@ export default async function GuidePage({ params }: Props) {
       />
       
 
-      {/* ─── HERO ─── */}
+    {/* ─── HERO ─── */}
       <section className="relative w-full min-h-[100svh] md:min-h-[90vh] flex flex-col">
         {/* BG IMAGE */}
-        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0">
           {guide.actionImage || guide.image ? (
             <Image 
               src={guide.actionImage || guide.image || ''} 
@@ -140,12 +151,13 @@ export default async function GuidePage({ params }: Props) {
           ) : (
             <div className="absolute inset-0 bg-slate-900" />
           )}
-          {/* Градиенты для читаемости (снизу и сверху) */}
-         <div className="absolute inset-0 bg-black/40" />
+          
+          {/* ✅ ИСПРАВЛЕНО: Плавный градиент, который затемняет только низ */}
+          <div className="absolute bottom-0 left-0 right-0 h-[70%] bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
         </div>
         
         {/* CONTENT CONTAINER */}
-        <div className="container mx-auto px-4 relative z-10 pt-28 md:pt-36 pb-12 md:pb-20 flex flex-col flex-grow">
+        <div className="container mx-auto px-4 relative z-10 pt-28 md:pt-36 pb-4 md:pb-8 flex flex-col flex-grow">
           
           {/* TOP: Back Button */}
           <div>
@@ -209,9 +221,9 @@ export default async function GuidePage({ params }: Props) {
             {/* 2. Шкалы навыков */}
             {stats.length > 0 && (
               <div className="bg-slate-900/50 border border-white/5 p-6 md:p-8 rounded-[2rem]">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-6 md:mb-8">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-300 mb-6 md:mb-8">
                   Навыки и специализация
-                </h3>
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 md:gap-y-8">
                   {stats.map((stat: any, i: number) => {
                     const mapping = ICON_MAP[stat.icon] || ICON_MAP['Zap'];
@@ -336,24 +348,14 @@ export default async function GuidePage({ params }: Props) {
             {(guide.instagram || guide.telegram) && (
               <div className="flex justify-center gap-4">
                 {guide.instagram && (
-                  <a
-                    href={guide.instagram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all shadow-lg"
-                  >
-                    <Instagram size={24} />
-                  </a>
+            <a href={guide.instagram} target="_blank" rel="noreferrer" aria-label={`Instagram ${guide.name}`} className="w-14 h-14 ...">
+  <Instagram size={24} />
+</a>
                 )}
                 {guide.telegram && (
-                  <a
-                    href={guide.telegram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 border border-white/10 hover:border-teal-500/50 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all shadow-lg"
-                  >
-                    <Send size={24} className="ml-[-2px]" />
-                  </a>
+                <a href={guide.telegram} target="_blank" rel="noreferrer" aria-label={`Telegram ${guide.name}`} className="w-14 h-14 ...">
+  <Send size={24} className="ml-[-2px]" />
+</a>
                 )}
               </div>
             )}

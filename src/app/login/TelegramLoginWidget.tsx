@@ -22,21 +22,23 @@ export default function TelegramLoginWidget({ next }: Props) {
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-radius', '12'); // Скругляем углы
     
-    // Передаем URL для callback-а на наш сервер
-    // При желании можно прокинуть параметр next в API роут, если он умеет его читать:
-    // `${window.location.origin}/api/auth/telegram?next=${encodeURIComponent(next)}`
-    script.setAttribute('data-auth-url', `${window.location.origin}/api/auth/telegram`);
+    // 🔥 ИСПРАВЛЕНИЕ: Передаем безопасный URL для callback-а с прикрепленным параметром next
+    // Используем encodeURIComponent для безопасной передачи пути через URL
+    const authUrl = `${window.location.origin}/api/auth/telegram?next=${encodeURIComponent(next)}`;
+    script.setAttribute('data-auth-url', authUrl);
     
     script.setAttribute('data-request-access', 'write');
     script.async = true;
 
     containerRef.current.appendChild(script);
-  }, [next]);
+  }, [next]); // Добавили next в массив зависимостей, чтобы скрипт обновлялся, если путь изменится
 
-  return (
-    <div 
-      ref={containerRef} 
-      className="flex justify-center w-full bg-slate-800/50 py-3 rounded-xl border border-white/10 min-h-[50px]"
-    />
-  );
+return (
+  <div
+    ref={containerRef}
+    role="region"
+    aria-label="Войти через Telegram"
+    className="flex justify-center w-full bg-slate-800/50 py-3 rounded-xl border border-white/10 min-h-[50px]"
+  />
+);
 }

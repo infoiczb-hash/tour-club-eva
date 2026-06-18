@@ -10,7 +10,7 @@ import { getLevelName, getLevelConfig, LEVELS_CONFIG   } from '@/lib/constants/l
 // ==========================================
 async function sendGuestReviewRequest(chatId: string, bookingId: string, tourTitle: string, name: string) {
     const token = env.TELEGRAM_AUTH_BOT;
-    const text = `🏕 <b>${name}, с возвращением!</b>\n\nНадеемся, наше приключение «<b>${tourTitle}</b>» прошло отлично.\n\nПомогите нам стать еще лучше — поделитесь впечатлениями о работе гида и организации. 👇`;
+    const text = `🏕 <b>${name}, с возвращением!</b>\n\nНадеемся, наше приключение «<b>${tourTitle}</b>» прошло отлично.\n\nПомогите нам стать еще лучше — поделитесь впечатлениями о работе гида и организации.   `;
     
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',

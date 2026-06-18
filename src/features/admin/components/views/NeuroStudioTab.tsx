@@ -303,7 +303,7 @@ function SavePromptModal({
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+            <label className="text-xs  font-black uppercase tracking-widest text-slate-400 mb-2 block">
               Название
             </label>
             <input
@@ -316,7 +316,7 @@ function SavePromptModal({
             />
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+            <label className="text-xs  font-black uppercase tracking-widest text-slate-400 mb-2 block">
               Промпт
             </label>
             <p className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 line-clamp-3">
@@ -326,7 +326,7 @@ function SavePromptModal({
           <button
             onClick={handleSave}
             disabled={!title.trim() || isSaving}
-            className="w-full py-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95"
+            className="w-full py-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest text-xs  flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             {isSaving ? (
               <>
@@ -593,7 +593,7 @@ export default function NeuroStudioTab() {
           <div className="text-left">
             <div
               className={clsx(
-                'text-[10px] font-black',
+                'text-xs  font-black',
                 model === m.id ? 'text-teal-600' : 'text-slate-700 dark:text-slate-300'
               )}
             >
@@ -621,7 +621,7 @@ export default function NeuroStudioTab() {
               key={tab.id}
               onClick={() => setViewMode(tab.id)}
               className={clsx(
-                'flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all',
+                'flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs  font-black uppercase tracking-widest transition-all',
                 viewMode === tab.id
                   ? 'bg-white dark:bg-slate-700 text-teal-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
@@ -629,7 +629,7 @@ export default function NeuroStudioTab() {
             >
               {tab.icon} {tab.label}
               {tab.id === 'library' && savedPrompts.length > 0 && (
-                <span className="bg-teal-500 text-white text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center">
+                <span className=" bg-teal-500 text-slate-950  text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center">
                   {savedPrompts.length > 9 ? '9+' : savedPrompts.length}
                 </span>
               )}
@@ -640,7 +640,7 @@ export default function NeuroStudioTab() {
         {gallery.length > 0 && (
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             <Layers size={13} className="text-teal-500" />
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <span className="text-xs  font-black text-slate-500 uppercase tracking-widest">
               {gallery.length} арт{gallery.length > 4 ? 'ов' : gallery.length > 1 ? 'а' : ''}
             </span>
           </div>
@@ -656,7 +656,7 @@ export default function NeuroStudioTab() {
               
               {/* 1. Источник */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     1
                   </span>
@@ -740,7 +740,7 @@ export default function NeuroStudioTab() {
 
               {/* 2. Модель */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     2
                   </span>
@@ -754,7 +754,7 @@ export default function NeuroStudioTab() {
 
               {/*   3. ФОРМАТ (Aspect Ratio) */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     3
                   </span>
@@ -781,7 +781,7 @@ export default function NeuroStudioTab() {
 
               {/*   4. ЗАГРУЗКА ФОТО (Image-to-Image) */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     4
                   </span>
@@ -791,7 +791,7 @@ export default function NeuroStudioTab() {
                 {model === 'dalle3' ? (
                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center gap-3">
                      <ZapOff className="text-amber-500 shrink-0" size={20} />
-                     <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed font-bold">
+                     <p className="text-xs  text-amber-700 dark:text-amber-400 leading-relaxed font-bold">
                        DALL-E 3 не поддерживает модификацию фото. Выберите модель Flux выше.
                      </p>
                   </div>
@@ -848,7 +848,7 @@ export default function NeuroStudioTab() {
 
               {/* 5. Стиль */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     5
                   </span>
@@ -860,7 +860,7 @@ export default function NeuroStudioTab() {
                       key={s.id}
                       onClick={() => handleStyleChange(s.id)}
                       className={clsx(
-                        'px-3 py-2 rounded-xl text-[10px] font-black border-2 transition-all',
+                        'px-3 py-2 rounded-xl text-xs  font-black border-2 transition-all',
                         style === s.id
                           ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600'
                           : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-500 hover:border-slate-200'
@@ -874,7 +874,7 @@ export default function NeuroStudioTab() {
 
               {/* 6. Улучшатель */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     6
                   </span>
@@ -900,7 +900,7 @@ export default function NeuroStudioTab() {
                     <div className="text-left">
                       <div
                         className={clsx(
-                          'text-[10px] font-black uppercase tracking-widest',
+                          'text-xs  font-black uppercase tracking-widest',
                           groqEnhance ? 'text-teal-600' : 'text-slate-500'
                         )}
                       >
@@ -931,7 +931,7 @@ export default function NeuroStudioTab() {
 
               {/* 7. Промпт */}
               <section>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <label className="block text-xs  font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[8px]">
                     7
                   </span>
@@ -964,7 +964,7 @@ export default function NeuroStudioTab() {
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating || !prompt.trim()}
-                className="w-full py-5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 shadow-xl shadow-teal-500/20 transition-all active:scale-95 disabled:active:scale-100"
+                className="w-full py-5 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs  flex items-center justify-center gap-3 shadow-xl shadow-teal-500/20 transition-all active:scale-95 disabled:active:scale-100"
               >
                 {isGenerating ? (
                   <>
@@ -1013,7 +1013,7 @@ export default function NeuroStudioTab() {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                  <h3 className="text-xs  font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                     <Layers size={14} /> Результаты сессии ({gallery.length})
                   </h3>
                   <button
@@ -1062,7 +1062,7 @@ export default function NeuroStudioTab() {
               </p>
               <button
                 onClick={() => setViewMode('studio')}
-                className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-all active:scale-95"
+                className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-2xl text-xs  font-black uppercase tracking-widest hover:bg-teal-700 transition-all active:scale-95"
               >
                 В студию
               </button>
@@ -1070,7 +1070,7 @@ export default function NeuroStudioTab() {
           ) : (
             <>
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                <h3 className="text-xs  font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                   <BookmarkPlus size={14} /> Сохранённые промпты ({savedPrompts.length})
                 </h3>
               </div>

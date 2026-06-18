@@ -32,7 +32,7 @@ function UnassignedDropArea({ children }: { children: React.ReactNode }) {
         isOver ? 'border-teal-500 bg-teal-50 scale-[1.01]' : 'border-amber-200 bg-amber-50/50'
       }`}
     >
-      <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-6 flex items-center justify-center gap-2">
+      <h4 className="text-xs  font-black uppercase tracking-widest text-amber-700 mb-6 flex items-center justify-center gap-2">
         <Map size={14} /> Берег (Нераспределенные пассажиры)
       </h4>
       <div className="flex flex-wrap gap-3 justify-center">
@@ -307,7 +307,7 @@ return (
                 <span className="text-[9px] font-black text-teal-600 uppercase tracking-widest block mb-1">Рекомендация:</span>
                 <div className="text-sm font-black text-slate-900">K3: {calculateRecommendedFleet(stats.totalPax).k3} | K2: {calculateRecommendedFleet(stats.totalPax).k2}</div>
              </div>
-             <button onClick={handleSendManifest} className="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all flex-1 sm:flex-none">
+             <button onClick={handleSendManifest} className="bg-emerald-500 text-slate-950  px-6 py-3 rounded-2xl font-black uppercase text-xs  tracking-widest hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all flex-1 sm:flex-none">
                 🚀 Манифест
              </button>
           </div>
@@ -315,15 +315,15 @@ return (
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 w-full">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-700 ml-2">Лодок K2 (Двойки)</label>
+            <label className="text-xs  font-black uppercase text-slate-700 ml-2">Лодок K2 (Двойки)</label>
             <input type="number" min="0" value={boatsK2} onChange={e => setBoatsK2(Number(e.target.value))} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-black text-lg text-slate-900 focus:border-teal-500 outline-none transition-all" />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-700 ml-2">Лодок K3 (Тройки)</label>
+            <label className="text-xs  font-black uppercase text-slate-700 ml-2">Лодок K3 (Тройки)</label>
             <input type="number" min="0" value={boatsK3} onChange={e => setBoatsK3(Number(e.target.value))} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-black text-lg text-slate-900 focus:border-teal-500 outline-none transition-all" />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-700 ml-2">Экипаж гидов</label>
+            <label className="text-xs  font-black uppercase text-slate-700 ml-2">Экипаж гидов</label>
             <select value={guidesCount} onChange={e => setGuidesCount(Number(e.target.value))} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-black text-slate-900 outline-none focus:border-teal-500 transition-all">
               <option value={1}>1 Гид</option>
               <option value={2}>2 Гида</option>
@@ -336,7 +336,7 @@ return (
         <div className="w-full max-w-full overflow-hidden border border-slate-200 rounded-3xl bg-white">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-sm min-w-[600px] sm:min-w-[700px]">
-              <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b-2 border-slate-300">
+              <thead className="bg-slate-50 text-xs  font-black uppercase tracking-widest text-slate-500 border-b-2 border-slate-300">
                 <tr>
                   <th className="p-4 text-left whitespace-nowrap">Участник / Комментарий</th>
                   <th className="p-4 text-center">Взр</th>
@@ -390,7 +390,7 @@ return (
                   <tr><td colSpan={5} className="p-8 text-center text-slate-400 font-medium">Нет подтвержденных бронирований</td></tr>
                 )}
               </tbody>
-              <tfoot className="bg-slate-900 text-white font-black uppercase text-[10px] tracking-widest">
+              <tfoot className="bg-slate-900 text-white font-black uppercase text-xs  tracking-widest">
                 <tr>
                   <td className="p-4 text-right whitespace-nowrap">Всего пассажиров: <span className="text-teal-400 text-base ml-2">{stats.totalPax}</span></td>
                   <td className="p-4 text-center text-sm">{stats.adults}</td>
@@ -421,7 +421,7 @@ return (
             <div className="p-5 bg-amber-50 border border-amber-200 rounded-3xl flex items-start gap-4 shadow-sm w-full">
                 <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
                 <div className="space-y-2 w-full">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-800">Система сообщает:</h4>
+                    <h4 className="text-xs  font-black uppercase tracking-widest text-amber-800">Система сообщает:</h4>
                     {warnings.map((w, i) => <p key={i} className="text-xs text-amber-900 font-medium leading-relaxed">{w}</p>)}
                 </div>
             </div>
@@ -446,7 +446,7 @@ return (
 
             <DragOverlay dropAnimation={null}>
                 {activePassenger && (
-                    <div className="bg-teal-500 text-white px-5 py-4 rounded-2xl font-black text-xs shadow-2xl flex items-center gap-3 rotate-3 scale-105 border-2 border-white/20">
+                    <div className=" bg-teal-500 text-slate-950  px-5 py-4 rounded-2xl font-black text-xs shadow-2xl flex items-center gap-3 rotate-3 scale-105 border-2 border-white/20">
                         {activePassenger.isChildUnder7 ? <Baby size={18}/> : <Users size={18}/>}
                         {activePassenger.name}
                     </div>
@@ -455,7 +455,7 @@ return (
         </DndContext>
 {/* Кнопка сохранения теперь в потоке документа, в самом низу */}
         <div className="mt-12 pt-8 border-t border-slate-200 flex justify-center w-full">
-            <button onClick={handleSaveAssignments} className="w-full sm:w-auto bg-teal-500 text-white px-8 sm:px-12 py-5 rounded-2xl font-black uppercase text-sm tracking-widest shadow-lg shadow-teal-500/30 border border-teal-400 hover:bg-teal-400 active:scale-95 transition-all">
+            <button onClick={handleSaveAssignments} className="w-full sm:w-auto  bg-teal-500 text-slate-950  px-8 sm:px-12 py-5 rounded-2xl font-black uppercase text-sm tracking-widest shadow-lg shadow-teal-500/30 border border-teal-400 hover:bg-teal-400 active:scale-95 transition-all">
                 Сохранить рассадку
             </button>
         </div>

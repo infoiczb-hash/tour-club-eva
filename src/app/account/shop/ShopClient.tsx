@@ -96,11 +96,11 @@ const ShopItemCard = memo(function ShopItemCard({
         {/* Бейдж остатка */}
         <div className="absolute top-2 right-2">
           {isOutOfStock ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-muted border border-ui-border">
+            <span className="text-xs  font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-muted border border-ui-border">
               Нет в наличии
             </span>
           ) : !isUnlimited ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-text border border-ui-border">
+            <span className="text-xs  font-bold px-2 py-0.5 rounded-full bg-ui-bg/80 backdrop-blur text-ui-text border border-ui-border">
               Осталось: {item.stock}
             </span>
           ) : null}
@@ -193,7 +193,7 @@ const OrderRow = memo(function OrderRow({ order }: { order: ShopOrder }) {
           <Icon size={12} />
           <span className="text-xs font-bold">{cfg.label}</span>
         </div>
-        <span className="text-[10px] text-ui-muted">{date}</span>
+        <span className="text-xs  text-ui-muted">{date}</span>
       </div>
     </div>
   );
@@ -229,7 +229,7 @@ export default function ShopClient({ balance, items, orders }: ShopClientProps) 
         <div className="flex items-center gap-2 px-4 py-2.5 bg-ui-panel border border-ui-border rounded-2xl">
           <Coins size={16} className="text-amber-400" />
           <div>
-            <p className="text-[10px] text-ui-muted uppercase tracking-wider leading-none">Баланс</p>
+            <p className="text-xs  text-ui-muted uppercase tracking-wider leading-none">Баланс</p>
             <p className="text-lg font-black text-ui-text leading-tight">{localBalance}</p>
           </div>
         </div>

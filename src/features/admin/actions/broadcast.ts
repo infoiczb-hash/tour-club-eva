@@ -9,7 +9,7 @@ import { sendToUserTelegramAdvanced } from '@/features/admin/actions/telegram';
 export const broadcastToGroupAction = withAdminAuth(
   withAdminAudit({
     actionName: 'BROADCAST_TO_GROUP',
-    // 👇 ВОТ ИСПРАВЛЕНИЕ: Даем TypeScript понять, какие аргументы ждет экшен, 
+    //    ВОТ ИСПРАВЛЕНИЕ: Даем TypeScript понять, какие аргументы ждет экшен, 
     // даже если сам ID цели нам для лога не нужен (возвращаем undefined).
     getTargetId: (_bookingIds: string[], _message: string) => undefined,
   })(async (bookingIds: string[], message: string) => {

@@ -88,7 +88,7 @@ export default function ReferralCard({
             </button>
             <button
               onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white py-2.5 px-4 rounded-xl text-sm font-medium transition-colors shadow-[0_0_15px_rgba(13,148,136,0.3)]"
+              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover: bg-teal-500 text-slate-950  py-2.5 px-4 rounded-xl text-sm font-medium transition-colors shadow-[0_0_15px_rgba(13,148,136,0.3)]"
             >
               <Share2 size={16} />
               Поделиться

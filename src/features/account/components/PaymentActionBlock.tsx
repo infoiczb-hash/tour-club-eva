@@ -171,7 +171,7 @@ export const PaymentActionBlock: React.FC<PaymentActionBlockProps> = ({
                    <Link href={botDeepLink} target="_blank" className="flex-1 py-3.5 bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-lg active:scale-95">
                       <Send size={16} /> В Telegram
                     </Link>
-                   <label className="flex-1 py-3.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-teal-500 shadow-lg shadow-teal-500/30 active:scale-95">
+                   <label className="flex-1 py-3.5 bg-teal-600 hover: bg-teal-500 text-slate-950  text-xs font-black uppercase tracking-widest rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-teal-500 shadow-lg shadow-teal-500/30 active:scale-95">
   <span>{isUploading ? 'Загрузка...' : 'Загрузить чек'}</span>
   <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
 </label>

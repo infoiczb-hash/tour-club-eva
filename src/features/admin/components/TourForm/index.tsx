@@ -56,7 +56,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
          checklist: [],
          spots: 15,
          spotsLeft: 15,
-         // 👇 Добавлено для соответствия строгой схеме Zod без ошибок:
+         //    Добавлено для соответствия строгой схеме Zod без ошибок:
          difficulty: 'medium',
          label: '',
          location: '',
@@ -260,7 +260,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
                variant="primary" 
                onClick={handleSubmit(onSubmit)} 
                disabled={isSubmitting}
-               className="bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-500/20 min-w-[180px]"
+               className="bg-teal-600 hover: bg-teal-500 text-slate-950  shadow-lg shadow-teal-500/20 min-w-[180px]"
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin mr-2" size={20} />

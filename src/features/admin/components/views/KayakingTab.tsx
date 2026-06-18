@@ -67,7 +67,7 @@ export default function KayakingTab() {
               {new Date(td.startDate).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })}
             </div>
             
-            <div className="mt-4 inline-flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">
+            <div className="mt-4 inline-flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-xl text-xs  font-black uppercase tracking-widest text-slate-700">
               Броней: <span className="text-teal-600 ml-1">{td._count?.bookings || 0}</span>
             </div>
           </div>

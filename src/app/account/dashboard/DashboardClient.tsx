@@ -114,7 +114,7 @@ export default function DashboardClient({
               <div className="relative flex items-center justify-center w-14 h-14 bg-teal-500/10 text-teal-400 rounded-2xl group-hover:bg-teal-500 group-hover:text-slate-900 transition-all duration-300 shadow-inner">
                 <Bell size={28} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-[10px] font-black text-white bg-red-500 border-2 border-slate-900 rounded-full">
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs  font-black text-white bg-red-500 border-2 border-slate-900 rounded-full">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -205,7 +205,7 @@ export default function DashboardClient({
           {upcomingBookings.length === 0 ? (
             <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-10 text-center">
               <p className="text-slate-200 text-lg mb-6">У вас пока нет запланированных туров</p>
-              <Link href="/tour" className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-8 py-4 rounded-2xl transition-all shadow-lg">
+              <Link href="/tour" className="inline-flex items-center gap-2 bg-teal-600 hover: bg-teal-500 text-slate-950  text-sm font-bold px-8 py-4 rounded-2xl transition-all shadow-lg">
                 Выбрать приключение <ArrowRight size={18} />
               </Link>
             </div>

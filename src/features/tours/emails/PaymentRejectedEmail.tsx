@@ -70,7 +70,7 @@ export const PaymentRejectedEmail = ({
                 </Link>
                 , мы разберемся в ситуации вручную.
               </Text>
-              <Text className="text-[10px] text-slate-300 mt-6 leading-relaxed">
+              <Text className="text-xs text-slate-300 mt-6 leading-relaxed">
                 Турклуб ЭВА. Мы на связи!
               </Text>
             </Section>

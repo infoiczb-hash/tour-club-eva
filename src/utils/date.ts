@@ -31,8 +31,6 @@ export function formatTourDate(date: string | Date, endDate?: string | Date | nu
   // Если месяцы разные (28 февраля — 2 марта)
   return `${ruDateFull.format(start)} — ${ruDateFull.format(end)}`;
 }
-
-//   ДОБАВЛЕНО: Строгий интерфейс вместо any
 export interface TourDurationInput {
   duration?: string | null;
   date?: string | Date | null;

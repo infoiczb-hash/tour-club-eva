@@ -63,7 +63,7 @@ export default function OrderHistory({ orders }: { orders: ShopOrder[] }) {
                   <Icon size={12} />
                   <span className="text-xs font-bold">{cfg.label}</span>
                 </div>
-                <span className="text-[10px] text-ui-muted">{date}</span>
+                <span className="text-xs  text-ui-muted">{date}</span>
               </div>
             </div>
           );

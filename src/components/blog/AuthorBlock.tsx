@@ -21,8 +21,9 @@ export default function AuthorBlock({
 }: AuthorBlockProps) {
   const content = (
     <>
-      <div className={`author-circle ${centered ? '' : 'shrink-0'}`}>
-        {image ? (
+      {/* ✅ ИСПРАВЛЕНИЕ 1: Жестко фиксируем не-сжимаемость (shrink-0), overflow и relative */}
+      <div className={`relative overflow-hidden rounded-full author-circle shrink-0`}>
+      {image ? (
           <Image 
              src={image} 
              alt={name} 
@@ -31,7 +32,7 @@ export default function AuthorBlock({
              className="object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-400">
+          <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-800">
             👤
           </div>
         )}

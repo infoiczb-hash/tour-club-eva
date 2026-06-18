@@ -1,8 +1,7 @@
 // src/app/fun/page.tsx
-import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
-import FunClient from './FunClient';
+import FunClientWrapper from './FunClientWrapper'; 
 import { Sparkles } from "lucide-react";
 
 export const revalidate = 3600;
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
     'тесты для туристов', 'какой ты турист', 'подобрать тур',
     'квиз выживание в лесу', 'туристические игры', 'турклуб Эва'
   ],
-  alternates: { canonical: '/fun' },
+  alternates: { canonical: 'https://evatur.club/fun' },
   openGraph: {
     title: 'Фан-сектор: Тесты и квизы | Турклуб «Эва»',
     description: 'Интерактивные тесты для туристов. Пройди квиз и позволь AI подобрать тебе идеальный маршрут.',
@@ -38,28 +37,17 @@ export default async function FunSectorPage() {
     orderBy: { order: 'asc' }
   });
 
-  const firstImage = tests[0]?.image;
-  
-  // Оптимизация Cloudinary для LCP
-  const imageSrcSet = firstImage 
-    ? `/_next/image?url=${encodeURIComponent(firstImage)}&w=640&q=65 640w, ` +
-      `/_next/image?url=${encodeURIComponent(firstImage)}&w=750&q=65 750w, ` +
-      `/_next/image?url=${encodeURIComponent(firstImage)}&w=828&q=65 828w, ` +
-      `/_next/image?url=${encodeURIComponent(firstImage)}&w=1080&q=65 1080w, ` +
-      `/_next/image?url=${encodeURIComponent(firstImage)}&w=1200&q=65 1200w`
-    : undefined;
-
   const serializedTests = JSON.parse(JSON.stringify(tests));
 
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 overflow-hidden relative">
-      {/* 1. СТАТИЧНЫЙ ФОН: Теперь рендерится на сервере */}
+      {/* 1. СТАТИЧНЫЙ ФОН */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="hidden md:block absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/10 md:blur-[150px] rounded-full opacity-40" />
         <div className="hidden md:block absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-teal-900/10 md:blur-[150px] rounded-full opacity-30" />
       </div>
 
-      {/* 2. HERO HEADER: Перенесен из клиентского компонента для мгновенной отрисовки H1 */}
+      {/* 2. HERO HEADER: Наш LCP-элемент. Сервер отрендерит это моментально */}
       <section className="relative pt-32 pb-12 px-4 container mx-auto text-center z-10">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-md">
           <Sparkles size={16} className="text-teal-400" />
@@ -73,11 +61,9 @@ export default async function FunSectorPage() {
         </p>
       </section>
 
-      {/* 3. ДИНАМИЧЕСКАЯ ЧАСТЬ: Загружаем только сетку тестов и модалки */}
+      {/* 3. ДИНАМИЧЕСКАЯ ЧАСТЬ: Асинхронная загрузка через обертку */}
       <div className="container mx-auto px-4 pb-24 relative z-10">
-        <Suspense fallback={<div className="min-h-[400px] animate-pulse bg-white/5 rounded-3xl" />}>
-          <FunClient activeTests={serializedTests} />
-        </Suspense>
+        <FunClientWrapper activeTests={serializedTests} />
       </div>
     </main>
   );

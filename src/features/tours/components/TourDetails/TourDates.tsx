@@ -160,31 +160,31 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                 {/* ПРАВАЯ ЧАСТЬ: ГИД И СТАТУС */}
                 <div className="flex items-center justify-between md:w-2/3 md:justify-end md:gap-8">
                     
-                    <div className="flex gap-3 items-center mr-auto md:mr-0">
-                        <div className={`relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden shrink-0 flex items-center justify-center ${
-                             isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
-                        }`}>
-                           {guideImage ? (
-                           <Image 
-                             src={guideImage} 
-                             alt={guideName} 
-                             fill 
-                             className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
-                             sizes="40px" 
-                           />
-                           ) : (
-                             <User size={20} />
-                           )}
-                        </div>
-                        <div>
-                           <h3 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-0.5 leading-none">
-                             Ведет группу
-                           </h3>
-                           <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-300' : 'text-white'}`}>
-                             {guideName}
-                           </p>
-                        </div>
-                    </div>
+                   <div className="flex gap-3 items-center mr-auto md:mr-0">
+          <div className={`relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden shrink-0 flex items-center justify-center ${
+               isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
+          }`}>
+             {guideImage ? (
+          <Image 
+  src={guideImage} 
+  alt={guideName} 
+  fill 
+  className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
+  sizes="40px" 
+/>
+             ) : (
+               <User size={20} />
+             )}
+          </div>
+          <div>
+             <h3 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-0.5 leading-none">
+               Ведет группу
+             </h3>
+             <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-300' : 'text-white'}`}>
+               {guideName}
+             </p>
+          </div>
+      </div>
 
                     <div className="flex items-center gap-4">
                         {isSoldOut ? (

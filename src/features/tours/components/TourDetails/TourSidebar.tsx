@@ -138,7 +138,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
               )}>
                 {isGlobalSoldOut ? "Мест нет" : (isLowSpots ? "Мест мало" : "В наличии")}
               </div>
-              <p className="text-[10px] font-medium text-slate-400 mt-1.5 leading-tight max-w-[140px] ml-auto">
+              <p className="text-xs font-medium text-slate-400 mt-1.5 leading-tight max-w-[140px] ml-auto">
                 Наличие мест на даты смотрите в расписании.
               </p>
           </div>
@@ -171,7 +171,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2 text-pink-400">
                   <Baby size={14} />
-                  <span>Детский (до 13)</span>
+                  <span>Детский (до 15)</span>
                 </div>
                 <span className="font-bold text-white">{priceChild?.toLocaleString()} {currency}</span>
               </div>

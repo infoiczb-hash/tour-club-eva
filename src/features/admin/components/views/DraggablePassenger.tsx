@@ -40,7 +40,7 @@ export default function DraggablePassenger({ passenger }: { passenger: BoatPasse
       <div className="flex items-center gap-3 p-2 flex-1 overflow-hidden">
         {/* АВАТАРКА */}
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-inner ${
-          isGuide ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 
+          isGuide ? 'bg-emerald-500 text-slate-950  shadow-emerald-500/20' : 
           passenger.isChildUnder7 ? 'bg-teal-500/10 text-teal-600' : 
           passenger.isChild ? 'bg-sky-500/10 text-sky-600' : 
           'bg-slate-100 text-slate-700'
@@ -59,7 +59,7 @@ export default function DraggablePassenger({ passenger }: { passenger: BoatPasse
           <div className="flex items-center gap-1.5 mt-0.5">
             {/* БЕЙДЖ С НОМЕРОМ БРОНИ */}
             {!isGuide && passenger.shortId > 0 && (
-               <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-1.5 rounded-md border border-blue-100">
+               <span className="text-xs  font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-1.5 rounded-md border border-blue-100">
                  #{passenger.shortId}
                </span>
             )}

@@ -59,7 +59,7 @@ export default function TourStats({ tour }: TourStatsProps) {
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest leading-none truncate">Сложность</span>
-                {/* 👇 ИСПРАВЛЕНО: размер иконки увеличен до 16 */}
+                {/*    ИСПРАВЛЕНО: размер иконки увеличен до 16 */}
                 <Info 
                   size={16} 
                   className={showTooltip ? "text-teal-400" : "text-slate-400 group-hover:text-teal-400 transition-colors"} 
@@ -70,15 +70,15 @@ export default function TourStats({ tour }: TourStatsProps) {
           </div>
 
           {/* ТУЛТИП — чистый CSS без framer-motion */}
-          {showTooltip && (
-            // 👇 ИСПРАВЛЕНО: top-full, mt-3, slide-in-from-top-2
-            <div className="absolute top-full left-0 md:left-1/2 md:-translate-x-1/2 mt-3 w-[260px] md:w-72 z-50 p-4 md:p-5 bg-slate-800 border border-teal-500/30 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-top-2 duration-200">
+      {showTooltip && (
+            //    ИСПРАВЛЕНО: Заменили left-0 на right-0 md:right-auto, чтобы на мобилке тултип рос влево
+            <div className="absolute top-full right-0 md:right-auto md:left-1/2 md:-translate-x-1/2 mt-3 w-[260px] md:w-72 z-50 p-4 md:p-5 bg-slate-800 border border-teal-500/30 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex justify-between items-start mb-2">
                 <span className="text-[12px] font-black uppercase text-teal-400 tracking-wider">О сложности</span>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
                   aria-label="Закрыть подсказку"
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors shrink-0 ml-2"
                 >
                   <X size={16} />
                 </button>
@@ -86,8 +86,8 @@ export default function TourStats({ tour }: TourStatsProps) {
               <p className="text-xs md:text-sm text-slate-200 leading-relaxed font-medium">
                 {tooltipText}
               </p>
-              {/* 👇 ИСПРАВЛЕНО: Хвостик сверху, указывает вверх */}
-              <div className="absolute -top-1.5 left-8 md:left-1/2 md:-translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45 border-l border-t border-teal-500/30" />
+              {/*    ИСПРАВЛЕНО: Хвостик на мобилке теперь привязан к правому краю (right-8) */}
+              <div className="absolute -top-1.5 right-8 md:right-auto md:left-1/2 md:-translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45 border-l border-t border-teal-500/30" />
             </div>
           )}
         </div>
