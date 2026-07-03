@@ -140,8 +140,9 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [groupsLimit] = useState(20);
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsSearch, setGroupsSearch] = useState('');
-  const [groupsSort, setGroupsSort] = useState<'date_asc' | 'date_desc'>('date_asc');
+  const [groupsSort, setGroupsSort] = useState<'date_asc' | 'date_desc'>('date_desc');
 
+  
   // Data State
   const [tours, setTours] = useState<Tour[]>([]);
   const [bookings, setBookings] = useState<BookingItem[]>([]);

@@ -12,6 +12,7 @@ import { sendManifestToTelegramAction } from '@/features/admin/actions/manifest'
 import { broadcastToGroupAction } from '@/features/admin/actions/broadcast';
 import { updateBookingCommentAction } from '@/features/admin/actions';
 import { refundPaymentAction } from '@/features/admin/actions/refundPayment';
+import { getPaymentMethodLabel } from '@/features/admin/lib/paymentLabels'; 
 
 // --- ИНТЕРФЕЙСЫ ---
 export interface GuestItem {
@@ -418,9 +419,9 @@ export default function BookingsTab({
                                         </div>
                                         
                                         <div className="flex items-center gap-2 mb-2">
-                                          <div className="text-[9px] font-bold uppercase text-slate-700 bg-slate-100 border border-slate-200 px-2 py-1 rounded w-fit">
-                                              {b.payment_method === 'qr' ? 'Клевер QR' : b.payment_method === 'biletpmr' ? 'BiletPMR' : 'Наличные'}
-                                          </div>
+                                         <div className="text-[9px] font-bold uppercase text-slate-700 bg-slate-100 border border-slate-200 px-2 py-1 rounded w-fit">
+    {getPaymentMethodLabel(b.payment_method)}
+</div>
                                           {b.amount_paid > 0 && <div className="text-[12px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Аванс: {b.amount_paid}</div>}
                                         </div>
 
@@ -578,9 +579,9 @@ export default function BookingsTab({
                                       </div>
                                       
                                       <div className="flex gap-1.5 items-center">
-                                        <span className="text-[9px] font-bold text-slate-700 uppercase bg-slate-200/60 px-1.5 py-0.5 rounded border border-slate-300/50">
-                                          {b.payment_method === 'qr' ? 'Клевер QR' : b.payment_method === 'biletpmr' ? 'BiletPMR' : 'Наличные'}
-                                        </span>
+                                       <span className="text-[9px] font-bold text-slate-700 uppercase bg-slate-200/60 px-1.5 py-0.5 rounded border border-slate-300/50">
+  {getPaymentMethodLabel(b.payment_method)}
+</span>
                                         {b.discount > 0 && (
                                           <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold border border-rose-200">
                                             -{b.discount} б.

@@ -414,7 +414,7 @@ export type GetGroupsManifestResult =
 
 export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestParams): Promise<GetGroupsManifestResult> => {
   try {
-    const { page, limit = 20, search, sortBy = 'date_asc' } = params;
+    const { page, limit = 20, search, sortBy = 'date_desc' } = params;
     const skip = (page - 1) * limit;
     const activeStatuses: BookingStatus[] = ['pending', 'confirmed'];
 
