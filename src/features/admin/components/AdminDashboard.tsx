@@ -115,6 +115,7 @@ export interface DashboardDeparture {
 interface GuideItem extends Omit<Guide, 'id'> {
   id: string;
 }
+
 // --- MAIN COMPONENT ---
 export default function AdminDashboard({ initialTours }: { initialTours: Tour[] }) {
   const [isAuth, setIsAuth] = useState(false);
@@ -131,6 +132,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [toursSearch, setToursSearch] = useState('');
   const [toursFilter, setToursFilter] = useState<'all' | 'upcoming' | 'past' | 'full' | 'drafts'>('upcoming');
   const [toursLoading, setToursLoading] = useState(false);
+  
   // --- Стейты для групп (манифест) ---
   const [groupsManifest, setGroupsManifest] = useState<GroupManifest[]>([]);
   const [groupsTotal, setGroupsTotal] = useState(0);
@@ -168,6 +170,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
   const [membersSortDir, setMembersSortDir] = useState<'asc' | 'desc'>('desc');
   const [membersLoading, setMembersLoading] = useState(false);
 
+  // 🚀 ИСПРАВЛЕНО: добавлен showToast в массив зависимостей
   const loadMembers = useCallback(async () => {
     setMembersLoading(true);
     const res: any = await getMembersAction({
@@ -187,7 +190,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
       showToast(res.error || 'Ошибка загрузки участников', 'error');
     }
     setMembersLoading(false);
-  }, [membersPage, membersSearch, membersLevelFilter, membersActivityFilter, membersSortBy, membersSortDir]);
+  }, [membersPage, membersSearch, membersLevelFilter, membersActivityFilter, membersSortBy, membersSortDir, showToast]);
 
   // Загружаем только когда открыта нужная вкладка, чтобы не спамить базу
   useEffect(() => {
@@ -211,30 +214,30 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
 
   const router = useRouter();
 
-// --- Загрузка групп (манифест) ---
-const loadGroupsManifest = useCallback(async () => {
-  setGroupsLoading(true);
-  try {
-    const result = await getGroupsManifest({
-      page: groupsPage,
-      limit: groupsLimit,
-      search: groupsSearch,
-      sortBy: groupsSort,
-    }) as GetGroupsManifestResult; // <-- ИСПРАВЛЕНО
+  // --- Загрузка групп (манифест) ---
+  const loadGroupsManifest = useCallback(async () => {
+    setGroupsLoading(true);
+    try {
+      const result = await getGroupsManifest({
+        page: groupsPage,
+        limit: groupsLimit,
+        search: groupsSearch,
+        sortBy: groupsSort,
+      }) as GetGroupsManifestResult;
 
-    if (result.success) {
-      setGroupsManifest(result.groups);
-      setGroupsTotal(result.total);
-    } else {
-      showToast(result.error, 'error');
+      if (result.success) {
+        setGroupsManifest(result.groups);
+        setGroupsTotal(result.total);
+      } else {
+        showToast(result.error, 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('Ошибка загрузки групп', 'error');
+    } finally {
+      setGroupsLoading(false);
     }
-  } catch (error) {
-    console.error(error);
-    showToast('Ошибка загрузки групп', 'error');
-  } finally {
-    setGroupsLoading(false);
-  }
-}, [groupsPage, groupsLimit, groupsSearch, groupsSort, showToast]);
+  }, [groupsPage, groupsLimit, groupsSearch, groupsSort, showToast]);
 
   // --- Обработчики для групп ---
   const handleGroupsSearchChange = (val: string) => {
@@ -247,29 +250,8 @@ const loadGroupsManifest = useCallback(async () => {
   };
   const handleGroupsPageChange = (page: number) => setGroupsPage(page);
 
-  // --- INIT ---
-  useEffect(() => {
-    setIsAuth(true);
-    loadAllData();
- 
-  // Обработка параметров URL для переключения вкладок (например, при сканировании)
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab') as Tab;
-    if (tabParam) {
-      setActiveTab(tabParam);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadAllData();
-  }, [bookingsPage, bookingsSearch, bookingsFilterTab]);
-
-  // Загрузка групп при изменении параметров
-  useEffect(() => {
-    loadGroupsManifest();
-  }, [loadGroupsManifest]);
-
-  const loadAllData = async () => {
+  // 🚀 ИСПРАВЛЕНО: Правильная сигнатура useCallback для loadAllData
+  const loadAllData = useCallback(async () => {
     try {
       const [bRes, gRes, pRes, rRes, inqRes, funRes, heroRes, footerRes, tCatRes, bCatRes] = await Promise.all([
         getRegistrationsAction({
@@ -305,8 +287,30 @@ const loadGroupsManifest = useCallback(async () => {
       console.error("Data load error:", error);
       showToast("Ошибка загрузки данных", "error");
     }
-  };
+  }, [bookingsPage, bookingsSearch, bookingsFilterTab, showToast]);
 
+  // --- INIT ---
+  useEffect(() => {
+    setIsAuth(true);
+    loadAllData();
+ 
+    // Обработка параметров URL...
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') as Tab;
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [loadAllData]); 
+
+  useEffect(() => {
+    loadAllData();
+  }, [bookingsPage, bookingsSearch, bookingsFilterTab, loadAllData]);
+
+  // Загрузка групп при изменении параметров
+  useEffect(() => {
+    loadGroupsManifest();
+  }, [loadGroupsManifest]);
+  
   const loadTours = useCallback(async () => {
     setToursLoading(true);
     const res = await getToursAdmin({
@@ -314,7 +318,7 @@ const loadGroupsManifest = useCallback(async () => {
       limit: 20,
       search: toursSearch,
       filter: toursFilter,
-    }) as AdminActionResult; // <-- ИСПРАВЛЕНО
+    }) as AdminActionResult; 
     if (res.success) {
       setTours(res.tours);
       setToursTotal(res.total);
@@ -333,13 +337,12 @@ const loadGroupsManifest = useCallback(async () => {
     router.refresh();
   }
 
- // ==========================================
+  // ==========================================
   // ОБРАБОТЧИКИ КАТЕГОРИЙ
   // ==========================================
   const handleSaveCategory = async (data: Record<string, unknown>) => {
     let res: AdminActionResult;
 
-    // Двойное приведение типов (as unknown as ...), чтобы обойти строгую проверку TS
     if (categoryType === 'tour') {
       res = await upsertTourCategoryAction(
         data as unknown as Parameters<typeof upsertTourCategoryAction>[0]
@@ -362,7 +365,7 @@ const loadGroupsManifest = useCallback(async () => {
   const handleDeleteCategory = async (id: string, type: 'tour' | 'blog') => {
     if (!confirm('Точно удалить эту категорию?')) return;
     const action = type === 'tour' ? deleteTourCategoryAction : deleteBlogCategoryAction;
-    const res = await action(id) as AdminActionResult; // <-- ИСПРАВЛЕНО
+    const res = await action(id) as AdminActionResult; 
     if (res.success) {
       showToast('Категория удалена', 'success');
       loadAllData();
@@ -373,7 +376,7 @@ const loadGroupsManifest = useCallback(async () => {
 
   const handleToggleCategory = async (id: string, currentStatus: boolean, type: 'tour' | 'blog') => {
     const action = type === 'tour' ? toggleTourCategoryStatusAction : toggleBlogCategoryStatusAction;
-    const res = await action(id, currentStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
+    const res = await action(id, currentStatus) as AdminActionResult; 
     if (res.success) {
       showToast('Статус обновлен', 'success');
       loadAllData();
@@ -396,35 +399,34 @@ const loadGroupsManifest = useCallback(async () => {
     const activeTours = tours.filter(t => t.isActive).length;
     const finishedTours = tours.filter(t => new Date(t.date) < new Date()).length;
     
-const now = new Date();
+    const now = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(now.getDate() + 7);
     const nextMonth = new Date();
     nextMonth.setMonth(now.getMonth() + 1);
     
-    //   1. РАЗВОРАЧИВАЕМ ТУРЫ В ВЫЕЗДЫ (FLAT MAP)
+    // 1. РАЗВОРАЧИВАЕМ ТУРЫ В ВЫЕЗДЫ (FLAT MAP)
     const departures: DashboardDeparture[] = tours.flatMap(t => {
       if (!t.isActive) return [];
       
-      // Достаем даты (маппер может отдать их как dates или tourDates)
       const dates = (t as any).dates || (t as any).tourDates || [];
       
       return dates.map((td: any) => {
         const dateVal = td.startDate || td.start || td.date;
         return {
-          id: String(td.id), // ID конкретной даты (tourDateId)
+          id: String(td.id),
           tourId: String(t.id),
           title: t.title,
           date: dateVal,
-          spots: td.spots ?? t.spots, // Берем места даты, если нет — тура
-          guide: td.guide || t.guide, // Берем гида даты, если нет — тура
+          spots: td.spots ?? t.spots,
+          guide: td.guide || t.guide,
           originalTour: t,
           isActive: td.isActive !== false
         };
       });
     });
 
-    //   2. ФИЛЬТРУЕМ УЖЕ ГОТОВЫЕ ВЫЕЗДЫ ПО ДАТАМ
+    // 2. ФИЛЬТРУЕМ УЖЕ ГОТОВЫЕ ВЫЕЗДЫ ПО ДАТАМ
     const toursThisWeek = departures
         .filter(d => {
             if (!d.isActive || !d.date) return false;
@@ -462,7 +464,7 @@ const now = new Date();
     const newStatus = !tour.isActive;
     setTours(prev => prev.map(t => t.id === tour.id ? { ...t, isActive: newStatus } : t));
 
-    const res = await updateTourStatus(String(tour.id), newStatus) as AdminActionResult; // <-- ИСПРАВЛЕНО
+    const res = await updateTourStatus(String(tour.id), newStatus) as AdminActionResult; 
 
     if(!res.success) {
         showToast("Ошибка обновления", "error");
@@ -478,12 +480,11 @@ const now = new Date();
       list.forEach((b, i) => msg += `${i+1}. ${b.user_name} (${(b.tickets_adult||0)+(b.tickets_child||0)} чел.)\n📞 ${b.user_phone}\n\n`);
       msg += `\n👥 <b>Всего: ${list.reduce((acc, b) => acc + (b.tickets_adult||0) + (b.tickets_child||0), 0)} чел.</b>`;
       
-      const res = await sendToTelegram(msg) as AdminActionResult; // <-- ИСПРАВЛЕНО
+      const res = await sendToTelegram(msg) as AdminActionResult; 
       showToast(res.success ? 'Отправлено в TG!' : 'Ошибка отправки', res.success ? 'success' : 'error');
   };
 
  const handleStatusChange = async (id: string, status: string) => {
-  //   ИСПРАВЛЕНО: Теперь передаем один объект с полями bookingId и newStatus
   const res = await updateBookingStatusAction({ 
     bookingId: id, 
     newStatus: status as BookingStatus 
@@ -514,7 +515,7 @@ const now = new Date();
       if (activeTab === 'blog') setModalState(p => ({...p, post: true}));
       if (activeTab === 'guides') setModalState(p => ({...p, guide: true}));
       if (activeTab === 'reviews') setModalState(p => ({...p, review: true}));
-   if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
+      if (activeTab === 'fun') setModalState(p => ({...p, fun: true}));
       if (activeTab === 'members') {
           showToast('Добавление участников вручную недоступно. Участники добавляются автоматически при регистрации.', 'info');
       }
@@ -750,7 +751,7 @@ const now = new Date();
             initialData={editingItem as React.ComponentProps<typeof GuideForm>['initialData']}
             onClose={() => setModalState(p => ({ ...p, guide: false }))}
             onSubmit={async (data: Record<string, unknown>) => { 
-                const res = await upsertGuideAction(data) as AdminActionResult; // <-- ИСПРАВЛЕНО
+                const res = await upsertGuideAction(data) as AdminActionResult; 
                 if (res.success) {
                     showToast('Досье гида сохранено!', 'success');
                     await loadAllData();
@@ -817,20 +818,24 @@ const now = new Date();
           onSubmit={handleSaveCategory}
         />
       )}
+      
       {/* --- 12. Сканер QR --- */}
-        {activeTab === 'scan' && (
-            <ScanTab />
-        )}
-        {/*    ДОБАВИЛИ РЕНДЕР ВКЛАДКИ SMM */}
-        {activeTab === 'smm' && (
-            <SmmTab />
-        )}
-       {activeTab === 'kayaking' && <KayakingTab />}
-        {/* --- Shop --- */}
-        {activeTab === 'shop' && (
-          <ShopTab />
-        )}
+      {activeTab === 'scan' && (
+          <ScanTab />
+      )}
+      
+      {/* ДОБАВИЛИ РЕНДЕР ВКЛАДКИ SMM */}
+      {activeTab === 'smm' && (
+          <SmmTab />
+      )}
+      
+      {activeTab === 'kayaking' && <KayakingTab />}
+      
+      {/* --- Shop --- */}
+      {activeTab === 'shop' && (
+        <ShopTab />
+      )}
           
-       </div>
+    </div>
   );
 }

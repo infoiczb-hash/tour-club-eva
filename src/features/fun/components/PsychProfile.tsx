@@ -174,7 +174,7 @@ useEffect(() => {
       }
     }, 380);
     return () => clearTimeout(timer);
-  }, [selectedValue, current, answers]);
+ }, [selectedValue, current, answers, currentStatement.id, updateProfile, saveResult]);
 
   if (!shouldRender) return null;
 

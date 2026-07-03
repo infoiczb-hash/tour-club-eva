@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useTransition } from 'react';
-import { Calendar, User, ChevronRight, Bell, BellOff, Loader2 } from 'lucide-react';
+import { Calendar, User, ChevronRight, Bell, BellOff, Loader2, Zap, Flame } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Tour } from '@/features/tours/types';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { toggleTourWishlistAction } from '@/features/account/actions/tourWishlist';
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing'; // <-- ИМПОРТ НАШЕГО КАЛЬКУЛЯТОРА
 
 interface TourDatesProps {
   tour: Tour;
@@ -123,6 +124,9 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
            const guideName = tour.guide?.name || 'Гид клуба';
            const guideImage = tour.guide?.image || null;
 
+           // ДОБАВЛЕНО: Считаем цену именно для этого выезда
+           const dynamicPricing = calculateDynamicPrice(Number(tour.price || 0), item);
+
            return (
             <div 
                key={item.id || idx} 
@@ -136,11 +140,26 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                 {/* ЛЕВАЯ ЧАСТЬ: ДАТЫ */}
                 <div className="flex justify-between items-center md:w-1/3 mb-3 md:mb-0">
                    <div className="flex flex-col">
-                       <span className={`text-lg md:text-xl font-black uppercase tracking-tight transition-colors ${
-                           isSoldOut ? 'text-slate-300' : 'text-white group-hover:text-teal-400'
-                       }`}>
-                         {dateString}
-                       </span>
+                       <div className="flex items-center gap-2">
+                         <span className={`text-lg md:text-xl font-black uppercase tracking-tight transition-colors ${
+                             isSoldOut ? 'text-slate-300' : 'text-white group-hover:text-teal-400'
+                         }`}>
+                           {dateString}
+                         </span>
+                         
+                         {/* ДОБАВЛЕНО: Маркетинговые бейджи */}
+                         {!isSoldOut && dynamicPricing.type === 'EARLY_BIRD' && (
+                            <div className="bg-teal-500/20 text-teal-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1 border border-teal-500/30">
+                              <Flame size={10} /> Раннее
+                            </div>
+                         )}
+                         {!isSoldOut && dynamicPricing.type === 'LAST_MINUTE' && (
+                            <div className="bg-rose-500/20 text-rose-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1 border border-rose-500/30">
+                              <Zap size={10} /> Горящий
+                            </div>
+                         )}
+                       </div>
+
                        {item.time && (
                           <span className="text-xs text-slate-300 mt-0.5 font-bold uppercase tracking-wider">
                               Старт в {item.time}
@@ -160,31 +179,43 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                 {/* ПРАВАЯ ЧАСТЬ: ГИД И СТАТУС */}
                 <div className="flex items-center justify-between md:w-2/3 md:justify-end md:gap-8">
                     
+                   {/* ДОБАВЛЕНО: Индивидуальная цена для даты (показываем на десктопе) */}
+                   <div className="hidden lg:flex flex-col items-end mr-2">
+                     <span className={`text-lg font-black tracking-tight ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
+                       {dynamicPricing.price.toLocaleString('ru-RU')} {tour.currency || 'RUB'}
+                     </span>
+                     {dynamicPricing.oldPrice && !isSoldOut && (
+                        <span className="text-xs text-slate-400 line-through decoration-rose-500/50">
+                          {dynamicPricing.oldPrice.toLocaleString('ru-RU')} {tour.currency || 'RUB'}
+                        </span>
+                     )}
+                   </div>
+
                    <div className="flex gap-3 items-center mr-auto md:mr-0">
-          <div className={`relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden shrink-0 flex items-center justify-center ${
-               isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
-          }`}>
-             {guideImage ? (
-          <Image 
-  src={guideImage} 
-  alt={guideName} 
-  fill 
-  className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
-  sizes="40px" 
-/>
-             ) : (
-               <User size={20} />
-             )}
-          </div>
-          <div>
-             <h3 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-0.5 leading-none">
-               Ведет группу
-             </h3>
-             <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-300' : 'text-white'}`}>
-               {guideName}
-             </p>
-          </div>
-      </div>
+                      <div className={`relative w-10 h-10 min-w-[40px] min-h-[40px] aspect-square rounded-full overflow-hidden shrink-0 flex items-center justify-center ${
+                           isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
+                      }`}>
+                         {guideImage ? (
+                      <Image 
+              src={guideImage} 
+              alt={guideName} 
+              fill 
+              className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
+              sizes="40px" 
+            />
+                         ) : (
+                           <User size={20} />
+                         )}
+                      </div>
+                      <div>
+                         <h3 className="text-[12px] font-bold text-slate-300 uppercase tracking-widest mb-0.5 leading-none">
+                           Ведет группу
+                         </h3>
+                         <p className={`text-sm font-bold leading-none ${isSoldOut ? 'text-slate-300' : 'text-white'}`}>
+                           {guideName}
+                         </p>
+                      </div>
+                  </div>
 
                     <div className="flex items-center gap-4">
                         {isSoldOut ? (

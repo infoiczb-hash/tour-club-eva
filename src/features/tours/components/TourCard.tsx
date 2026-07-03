@@ -6,12 +6,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   MapPin, Calendar, Clock, Crown, Baby,
-  ArrowRight, Flame, Sparkles, Percent, Star, Hash,
+  ArrowRight, Flame, Sparkles, Percent, Star, Hash, Zap,
   type LucideIcon
 } from 'lucide-react';
 import { TourPreview } from '@/features/tours/types';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing'; // <-- ИМПОРТ НАШЕГО КАЛЬКУЛЯТОРА
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,13 +55,36 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
     dates, precalculated
   } = tour;
 
-
   const { dateStr = 'Скоро', isPast = false, hasMoreDates = false } = precalculated || {};
 
   const isHighlighted = isHot || (label && label.toLowerCase().includes('хит'));
   const themeColor = category?.color || 'slate';
   const typeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
   const displayLabel = category?.title || "Тур";
+
+  // --- ЛОГИКА ДИНАМИЧЕСКИХ ЦЕН ---
+  const basePriceVal = Number(price || 0);
+  
+  // 1. Ищем ближайшую будущую дату тура (dates или tourDates в зависимости от того, как отдал бэкенд)
+  const allDates = (tour as any).tourDates || tour.dates || [];
+  const now = new Date();
+  
+  const futureDates = allDates.filter((d: any) => {
+    const dateVal = d.startDate || d.start || d.date;
+    return dateVal ? new Date(dateVal) >= now : false;
+  }).sort((a: any, b: any) => {
+    const dateA = new Date(a.startDate || a.start || a.date).getTime();
+    const dateB = new Date(b.startDate || b.start || b.date).getTime();
+    return dateA - dateB;
+  });
+
+  const nearestDate = futureDates.find((d: any) => (d.spotsLeft ?? 1) > 0) || futureDates[0] || null;
+
+  // 2. Рассчитываем актуальную цену
+  const dynamicPricing = calculateDynamicPrice(basePriceVal, nearestDate);
+  const displayPrice = dynamicPricing.price;
+  const displayOldPrice = dynamicPricing.oldPrice || Number(priceOld || 0);
+  // ------------------------------
 
   // ОПТИМИЗАЦИЯ: prefetch={false} спасает от DDoS-атаки на собственный сервер при скролле
   return (
@@ -183,15 +207,34 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
           {/* Подвал с ценой и кнопкой */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-black text-slate-300 uppercase tracking-widest mb-1">Стоимость</span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Стоимость</span>
+                
+                {/* МАРКЕТИНГОВЫЕ БЕЙДЖИ РЯДОМ СО СЛОВОМ "СТОИМОСТЬ" */}
+                {dynamicPricing.type === 'EARLY_BIRD' && (
+                  <span className="text-[10px] font-bold text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5 border border-teal-500/20">
+                    <Flame size={10} /> Раннее
+                  </span>
+                )}
+                {dynamicPricing.type === 'LAST_MINUTE' && (
+                  <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5 border border-rose-500/20">
+                    <Zap size={10} /> Горящий
+                  </span>
+                )}
+              </div>
+              
               <div className="flex items-baseline gap-1.5">
-                {(priceOld ?? 0) > Number(price) && (
-                  <span className="text-xs font-bold text-rose-400/80 line-through decoration-rose-400/50 mr-1">{priceOld}</span>
+                {displayOldPrice > displayPrice && (
+                  <span className="text-xs font-bold text-rose-400/80 line-through decoration-rose-400/50 mr-1">
+                    {displayOldPrice.toLocaleString('ru-RU')}
+                  </span>
                 )}
                 <span className="text-2xl sm:text-3xl font-black text-white leading-none tracking-tighter drop-shadow-md">
-                  {Number(price).toLocaleString()}
+                  {displayPrice.toLocaleString('ru-RU')}
                 </span>
-                <span className="text-xs font-black text-teal-400 uppercase tracking-wider ml-1">{currency || 'RUB'}</span>
+                <span className="text-xs font-black text-teal-400 uppercase tracking-wider ml-1">
+                  {currency || 'RUB'}
+                </span>
               </div>
             </div>
             

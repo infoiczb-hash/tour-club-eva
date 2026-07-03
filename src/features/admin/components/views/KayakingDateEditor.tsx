@@ -1,6 +1,7 @@
+// src/features/admin/components/views/KayakingDateEditor.tsx
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react'; // 👈 Добавили useCallback в импорт
 import { 
   DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor, 
   DragOverlay, DragStartEvent, DragEndEvent, useDroppable 
@@ -76,8 +77,8 @@ export default function KayakingDateEditor({ tourDateId, onRefresh }: { tourDate
     }), { adults: 0, children: 0, members: 0, families: 0, totalPax: 0 });
   }, [groups]);
 
-  // Загрузка данных с бэкенда
-  async function loadData() {
+  // 🚀 ИСПРАВЛЕНИЕ: Оборачиваем загрузчик в useCallback
+  const loadData = useCallback(async () => {
     setLoading(true);
     const res = await getBoatAssignments(tourDateId);
     
@@ -157,9 +158,10 @@ export default function KayakingDateEditor({ tourDateId, onRefresh }: { tourDate
       setBoats(newBoats);
     }
     setLoading(false);
-  }
+  }, [tourDateId]); // 👈 Зависимости: функция пересоздастся, если сменится дата тура
 
-  useEffect(() => { loadData(); }, [tourDateId]);
+  // 🚀 ИСПРАВЛЕНИЕ: Добавляем loadData в зависимости хука
+  useEffect(() => { loadData(); }, [tourDateId, loadData]);
 
   // ==========================================
   // ОБРАБОТЧИКИ СОБЫТИЙ (DND И КНОПКИ)

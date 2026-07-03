@@ -3,15 +3,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Tour } from '@/features/tours/types';
 import { clsx } from 'clsx';
-import { X, Crown, Baby, Users, Ticket, ChevronUp, Loader2 } from 'lucide-react';
+import { X, Crown, Baby, Users, Ticket, ChevronUp, Loader2, Flame, Zap } from 'lucide-react';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
-import { getMyProfileAction } from '@/features/account/actions/getProfile'; //   ДОБАВИЛИ
+import { getMyProfileAction } from '@/features/account/actions/getProfile';
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing';
 
 interface TourBottomActionsProps {
   tour: Tour;
-  // ПРОПС PROFILE УДАЛЕН
 }
+
+// Вытягиваем оба варианта дат напрямую из типа Tour, чтобы TypeScript не ругался на расхождения
+type UnifiedTourDate = NonNullable<Tour["tourDates"]>[number] | NonNullable<Tour["dates"]>[number];
 
 export default function TourBottomActions({ tour }: TourBottomActionsProps) {
   const [isVisible, setIsVisible]   = useState(false);
@@ -26,9 +29,9 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
-  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false); //   Флаг профиля
+  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false); // Флаг профиля
 
-  //   Клиентская загрузка профиля
+  // Клиентская загрузка профиля
   useEffect(() => {
     getMyProfileAction().then(p => {
       if (p) {
@@ -54,22 +57,37 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
     }
   }, [isVisible]);
 
-  // Умная логика доступности (Global Availability)
+  // Умная логика доступности (Global Availability) - Единая с сайдбаром
   const { targetDate, isGlobalSoldOut, isLowSpots } = useMemo(() => {
-    if (!tour?.tourDates || tour.tourDates.length === 0) {
+    // Явно указываем TypeScript, что массив содержит объединенный тип
+    const allDates = (tour?.dates || tour?.tourDates || []) as UnifiedTourDate[];
+    
+    if (!allDates || allDates.length === 0) {
       const fallbackLeft = Number(tour?.spotsLeft || 0);
       return { targetDate: null, isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5 };
     }
 
     const now = new Date();
-    const futureDates = tour.tourDates.filter((d: any) => 
-      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
-    );
+    now.setHours(0, 0, 0, 0); // Сбрасываем до полуночи
 
-    const firstFree = futureDates.find((d: any) => (d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0))) > 0);
+    const futureDates = allDates.filter((d: UnifiedTourDate) => {
+      const dateVal = d.startDate || d.start || d.date;
+      return dateVal ? new Date(dateVal as string | Date) >= now : true;
+    }).sort((a: UnifiedTourDate, b: UnifiedTourDate) => {
+       const dateA = a.startDate || a.start || a.date;
+       const dateB = b.startDate || b.start || b.date;
+       const timeA = dateA ? new Date(dateA as string | Date).getTime() : 0;
+       const timeB = dateB ? new Date(dateB as string | Date).getTime() : 0;
+       return timeA - timeB;
+    });
 
-    const totalLeft = futureDates.reduce((acc: number, d: any) => {
-      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
+    const firstFree = futureDates.find((d: UnifiedTourDate) => {
+      const left = d.spotsLeft ?? (d.capacity ? (d.capacity - (d._count?.bookings || 0)) : Number(tour?.spotsLeft || 0));
+      return left > 0;
+    });
+
+    const totalLeft = futureDates.reduce((acc: number, d: UnifiedTourDate) => {
+      const left = d.spotsLeft ?? (d.capacity ? (d.capacity - (d._count?.bookings || 0)) : Number(tour?.spotsLeft || 0));
       return acc + Math.max(0, left);
     }, 0);
 
@@ -82,23 +100,29 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
   const isSoldOut = isGlobalSoldOut;
 
-  const hasDiscount     = Number(tour.priceOld || 0) > Number(tour.price || 0);
+  // --- ЛОГИКА ДИНАМИЧЕСКИХ ЦЕН ---
+  const basePriceVal = Number(tour.price || 0);
+  const dynamicPricing = calculateDynamicPrice(basePriceVal, targetDate);
+  const currentPrice = dynamicPricing.price;
+  const oldPriceVal = dynamicPricing.oldPrice || Number(tour.priceOld || 0);
+
+  const hasDiscount = oldPriceVal > currentPrice;
   const discountPercent = hasDiscount
-    ? Math.round(((Number(tour.priceOld) - Number(tour.price)) / Number(tour.priceOld)) * 100)
+    ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100)
     : 0;
   
   const prices = useMemo(() => {
     const list = [];
-    if (tour.price) list.push({ label: 'Взрослый', value: tour.price, icon: <Ticket size={14} /> });
+    if (tour.price) list.push({ label: 'Взрослый', value: currentPrice, icon: <Ticket size={14} /> });
     if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
     if (tour.priceChild) list.push({ label: 'Детский (до 15)', value: tour.priceChild, icon: <Baby size={14} /> });
     if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
     return list;
-  }, [tour]);
+  }, [tour, currentPrice]);
 
   const minPrice = prices.length > 0 
     ? Math.min(...prices.map(p => Number(p.value))) 
-    : Number(tour.price || 0);
+    : currentPrice;
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,7 +202,6 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                     <p className="text-xs text-slate-400 mt-1">Оставьте контакты, и мы сообщим, если кто-то откажется от поездки или мы добавим новые места.</p>
                   </div>
 
-                  {/*   ИСПОЛЬЗУЕМ isProfileLoaded */}
                   {!isProfileLoaded && (
                     <div className="bg-slate-800/50 border border-white/5 rounded-xl p-3 text-xs text-slate-300">
                       💡 <a href="/login" className="text-teal-400 hover:underline font-bold">Войдите в кабинет</a> для авто-уведомлений о датах!
@@ -223,14 +246,28 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                 <>
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider mb-1">Стоимость участия</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Стоимость участия</p>
+                        {dynamicPricing.type === 'EARLY_BIRD' && (
+                          <span className="text-[10px] font-bold text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded uppercase flex items-center gap-1 border border-teal-500/20">
+                            <Flame size={10} /> Раннее
+                          </span>
+                        )}
+                        {dynamicPricing.type === 'LAST_MINUTE' && (
+                          <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded uppercase flex items-center gap-1 border border-rose-500/20">
+                            <Zap size={10} /> Горящий
+                          </span>
+                        )}
+                      </div>
+
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl font-black text-white">{Number(tour.price).toLocaleString('ru-RU')}</span>
+                        <span className="text-3xl font-black text-white">{currentPrice.toLocaleString('ru-RU')}</span>
                         <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
                       </div>
+                      
                       {hasDiscount && (
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-slate-300 line-through text-xs">{Number(tour.priceOld).toLocaleString()}</span>
+                          <span className="text-slate-300 line-through text-xs">{oldPriceVal.toLocaleString('ru-RU')}</span>
                           <span className="bg-rose-500/10 text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
                             −{discountPercent}%
                           </span>
@@ -263,7 +300,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                             <span>{p.label}</span>
                           </div>
                           <span className="font-bold text-white text-sm">
-                            {(p.value as number).toLocaleString()} {tour.currency}
+                            {(p.value as number).toLocaleString('ru-RU')} {tour.currency}
                           </span>
                         </div>
                       ))}
@@ -285,10 +322,16 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
               aria-label={isExpanded ? 'Свернуть детали' : 'Показать детали'}
             >
               <div className="min-w-0 text-left">
-                <p className="text-xs text-slate-300 uppercase font-bold tracking-wider mb-0.5">Стоимость</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-xs text-slate-300 uppercase font-bold tracking-wider">Стоимость</p>
+                  {/* Микро-бейджи для свернутого состояния */}
+                  {!isExpanded && dynamicPricing.type === 'EARLY_BIRD' && <Flame size={12} className="text-teal-400" />}
+                  {!isExpanded && dynamicPricing.type === 'LAST_MINUTE' && <Zap size={12} className="text-rose-400" />}
+                </div>
+                
                 <div className="flex items-baseline gap-1">
                   {prices.length > 1 && <span className="text-xs text-slate-300 font-medium">от</span>}
-                  <span className="text-xl font-black text-white">{minPrice.toLocaleString()}</span>
+                  <span className="text-xl font-black text-white">{minPrice.toLocaleString('ru-RU')}</span>
                   <span className="text-xs font-bold text-teal-500">{tour.currency || 'RUB'}</span>
                 </div>
               </div>

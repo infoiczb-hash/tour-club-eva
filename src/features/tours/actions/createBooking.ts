@@ -12,16 +12,23 @@ import { BookingTicketEmail } from '@/features/tours/emails/BookingTicketEmail';
 import { withRateLimit } from '@/lib/rate-limit-server';
 import { NotificationHub } from '@/lib/notifications/hub';
 import { publishToTelegram } from '@/features/admin/actions/telegram';
-// клиент АПБ для генерации URL оплаты
 import { apbClient } from '@/lib/apb/client';
 
-//   НОВЫЙ ИМПОРТ: берем протестированную финансовую логику
-import { calculateTotalSpots, calculateBasePrice } from '../lib/pricing';
+import { 
+  calculateTotalSpots, 
+  calculateBasePrice,
+  buildTicketBreakdown,
+  calculateTotalSpotsFromBreakdown,
+  calculateBasePriceFromBreakdown,
+  findViolatedMinQuantity,
+  mapBreakdownToLegacyTickets,
+  type TicketBreakdownItem,
+} from '../lib/pricing';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = env.NEXT_PUBLIC_SITE_URL;
 
-// Строгая схема для каждого гостя
+// Строгая схема для каждого гостя с поддержкой экипажей (Путь А)
 const GuestSchema = z.object({
   isMain: z.boolean(),
   type: z.string(),
@@ -29,6 +36,10 @@ const GuestSchema = z.object({
   phone: z.string().optional(),
   age: z.string().optional(),
   jacket: z.string().optional(),
+  
+  // Системные поля для рассадки в лодках
+  categoryId: z.string().optional(),
+  unitIndex: z.number().optional(),
 });
 
 export type GuestInput = z.infer<typeof GuestSchema>;
@@ -54,15 +65,21 @@ const BookingSchema = z.object({
 
   website: z.string().optional(), // Honeypot
 
-  ticketsAdult: z.number().int().min(0).default(1),
+  // LEGACY
+  ticketsAdult: z.number().int().min(0).default(0),
   ticketsChild: z.number().int().min(0).default(0),
   ticketsFamily: z.number().int().min(0).default(0),
   ticketsMember: z.number().int().min(0).default(0),
 
+  // НОВОЕ: Гибкий формат корзины
+  items: z.array(z.object({
+    categoryId: z.string().uuid(),
+    qty: z.number().int().min(0),
+  })).optional(),
+
   guests: z.array(GuestSchema).optional(),
 
-  currency: z.string().default('RUB'),
-
+  currency: z.string().default('MDL'),
   paymentMethod: z.enum(['biletpmr', 'qr', 'cash', 'foreign', 'online_card']).default('biletpmr'),
   useBonuses: z.boolean().default(false),
   promoCode: z.string().optional(),
@@ -72,8 +89,11 @@ const BookingSchema = z.object({
 })
 .refine(
   (data) => {
-    const total = data.ticketsAdult + data.ticketsChild + data.ticketsMember + data.ticketsFamily;
-    return total >= 1;
+    const itemsTotal = (data.items || []).reduce((sum, i) => sum + i.qty, 0);
+    if (itemsTotal > 0) return true;
+
+    const legacyTotal = data.ticketsAdult + data.ticketsChild + data.ticketsMember + data.ticketsFamily;
+    return legacyTotal >= 1;
   },
   {
     message: 'Выберите хотя бы 1 билет',
@@ -93,7 +113,7 @@ export type BookingResult =
       apbQrLink?: string | null;
       apbQrImage?: string | null;
       paymentMethod?: string;
-      redirectUrl?: string | null; // URL для редиректа на страницу оплаты АПБ
+      redirectUrl?: string | null;
     }
   | { success: false; error: string; fields?: Record<string, string> };
 
@@ -114,24 +134,55 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
 
   const data = parsed.data;
 
-  // Honeypot против ботов
+  // Honeypot
   if (data.website && data.website.length > 0) {
     console.warn('Bot detected via honeypot field');
-    return {
-      success: true,
-      bookingId: 'sp-checked',
-      shortId: '0000', // 👈 Теперь строка
-      totalPrice: 0
-    };
+    return { success: true, bookingId: 'sp-checked', shortId: '0000', totalPrice: 0 };
   }
 
-  //   ИЗМЕНЕНО: Вычисляем места через нашу чистую утилиту
-  const totalSpots = calculateTotalSpots({
-    ticketsAdult: data.ticketsAdult,
-    ticketsChild: data.ticketsChild,
-    ticketsMember: data.ticketsMember,
-    ticketsFamily: data.ticketsFamily,
-  });
+  const requestedItems = (data.items || []).filter((i) => i.qty > 0);
+  const usingCategories = requestedItems.length > 0;
+
+  let totalSpots: number;
+  let ticketBreakdown: TicketBreakdownItem[] = [];
+
+  // --- ВАЛИДАЦИЯ И ПОДСЧЕТ МЕСТ ---
+  if (usingCategories) {
+    const categoryIds = requestedItems.map((i) => i.categoryId);
+    const activeCategories = await prisma.tourPriceCategory.findMany({
+      where: { tourId: data.tourId, isActive: true },
+    });
+
+    const activeCategoryIds = new Set(activeCategories.map((c) => c.id));
+    const unknownId = categoryIds.find((id) => !activeCategoryIds.has(id));
+    if (unknownId) {
+      return { success: false, error: 'Одна из выбранных категорий цен больше не доступна. Обновите страницу и попробуйте снова.' };
+    }
+
+    const violated = findViolatedMinQuantity(activeCategories, requestedItems);
+    if (violated) {
+      return { success: false, error: `Категория "${violated.label}" обязательна: минимум ${violated.minQuantity} шт.` };
+    }
+
+    ticketBreakdown = buildTicketBreakdown(activeCategories, requestedItems);
+    totalSpots = calculateTotalSpotsFromBreakdown(ticketBreakdown);
+
+    // ЖЕСТКАЯ ПЕРЕКРЕСТНАЯ ВАЛИДАЦИЯ ГОСТЕЙ (Контроль Рассадки)
+    const guestsCount = data.guests?.length || 0;
+    if (guestsCount !== totalSpots) {
+      return { 
+        success: false, 
+        error: `Количество анкет гостей (${guestsCount}) не совпадает с забронированным количеством посадочных мест (${totalSpots}).` 
+      };
+    }
+  } else {
+    totalSpots = calculateTotalSpots({
+      ticketsAdult: data.ticketsAdult,
+      ticketsChild: data.ticketsChild,
+      ticketsMember: data.ticketsMember,
+      ticketsFamily: data.ticketsFamily,
+    });
+  }
 
   if (totalSpots <= 0) {
     return { success: false, error: 'Выберите хотя бы один билет.' };
@@ -148,15 +199,13 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
         where: { userId: user.id },
         select: { id: true }
       });
-      if (profile) {
-        currentMemberId = profile.id;
-      }
+      if (profile) currentMemberId = profile.id;
     }
   } catch (e: unknown) {
     console.error('Ошибка проверки авторизации:', e);
   }
 
-  // Защита от дублирования заявок
+  // Защита от дублей
   const existingBooking = await prisma.booking.findFirst({
     where: {
       phone: cleanPhone,
@@ -170,33 +219,17 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     const displayId = existingBooking.shortId ?? existingBooking.id.substring(0, 5).toUpperCase();
     return {
       success: false,
-      error: `У вас уже есть неоплаченная заявка (#${displayId}) на этот тур. Пожалуйста, перейдите в Личный Кабинет, чтобы изменить способ оплаты или отправить чек.`
+      error: `У вас уже есть неоплаченная заявка (#${displayId}) на этот тур. Пожалуйста, перейдите в Личный Кабинет.`
     };
   }
 
-  let transactionResult: {
-    booking: any;
-    tourSlug: string | null;
-    tourCoverImage: string | null;
-    shortId: string;
-    apbInvoiceId: string | null; 
-    paymentLinks: {
-      biletpmrLink: string | null;
-      apbQrLink: string | null;
-      apbQrImage: string | null;
-    };
-    finalPrice: number;
-    appliedDiscount: number;
-    promoOwnerIdToReward: string | null;
-    promoRewardAmount: number;
-  } | null = null;
-
+  let transactionResult: any = null;
   const MAX_RETRIES = 3;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       transactionResult = await prisma.$transaction(async (tx) => {
-        // ---------- 1. Атомарное списание мест ----------
+        // 1. Списание мест
         let priceAdult: number, priceChild: number, priceFamily: number, priceMember: number;
         let tourSlug: string | null = null, tourCoverImage: string | null = null;
         let biletpmrLink: string | null = null, apbQrLink: string | null = null, apbQrImage: string | null = null;
@@ -208,15 +241,12 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
               spotsLeft: { gte: totalSpots },
               tour: { isActive: true, deletedAt: null }
             },
-            data: {
-              spotsLeft: { decrement: totalSpots }
-            },
+            data: { spotsLeft: { decrement: totalSpots } },
             select: {
               basePrice: true,
               tour: { select: { price: true, priceChild: true, priceFamily: true, priceMember: true, slug: true, coverImage: true, biletpmrLink: true, apbQrLink: true, apbQrImage: true } }
             }
           });
-
           priceAdult = updatedTourDate.basePrice ?? updatedTourDate.tour.price;
           priceChild = updatedTourDate.tour.priceChild ?? priceAdult;
           priceFamily = updatedTourDate.tour.priceFamily ?? priceAdult;
@@ -234,9 +264,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
               deletedAt: null,
               spotsLeft: { gte: totalSpots }
             },
-            data: {
-              spotsLeft: { decrement: totalSpots }
-            },
+            data: { spotsLeft: { decrement: totalSpots } },
             select: { price: true, priceChild: true, priceFamily: true, priceMember: true, slug: true, coverImage: true, biletpmrLink: true, apbQrLink: true, apbQrImage: true }
           });
           priceAdult = updatedTour.price;
@@ -250,130 +278,86 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
           apbQrImage = updatedTour.apbQrImage;
         }
 
-        // ---------- 2. Расчёт базовой цены ----------
-        //   ИЗМЕНЕНО: Вычисляем базовую сумму через чистую утилиту
-        const baseTotalPrice = calculateBasePrice(
-          {
-            ticketsAdult: data.ticketsAdult,
-            ticketsChild: data.ticketsChild,
-            ticketsMember: data.ticketsMember,
-            ticketsFamily: data.ticketsFamily,
-          },
-          {
-            priceAdult,
-            priceChild,
-            priceFamily,
-            priceMember,
-          }
-        );
+        // 2. Расчет цены
+        let baseTotalPrice: number;
+        if (usingCategories) {
+          // Перечитываем цены внутри транзакции для надежности
+          const freshCategories = await tx.tourPriceCategory.findMany({
+            where: { id: { in: requestedItems.map((i) => i.categoryId) }, tourId: data.tourId },
+          });
+          if (freshCategories.length !== requestedItems.length) throw new Error('PRICE_CATEGORY_GONE');
+          
+          ticketBreakdown = buildTicketBreakdown(freshCategories, requestedItems);
+          baseTotalPrice = calculateBasePriceFromBreakdown(ticketBreakdown);
+        } else {
+          baseTotalPrice = calculateBasePrice(
+            { ticketsAdult: data.ticketsAdult, ticketsChild: data.ticketsChild, ticketsMember: data.ticketsMember, ticketsFamily: data.ticketsFamily },
+            { priceAdult, priceChild, priceFamily, priceMember }
+          );
+        }
 
-        // ---------- 3. Применение скидок ----------
+        // 3. Скидки и Промокоды
         let appliedDiscount = 0;
         let usedPromoCodeId: string | null = null;
         let promoOwnerIdToReward: string | null = null;
         let promoRewardAmount = 0;
 
-        // ⛔️ Авторизованный + промокод другого юзера — запрещено
         if (currentMemberId && data.promoCode) {
-          const promoCodeRaw = data.promoCode.trim().toUpperCase();
-          const promo = await tx.promoCode.findUnique({ where: { code: promoCodeRaw } });
-          if (promo && promo.memberId !== null) {
-            throw new Error('PROMO_CABINET_FORBIDDEN');
-          }
+          const promo = await tx.promoCode.findUnique({ where: { code: data.promoCode.trim().toUpperCase() } });
+          if (promo && promo.memberId !== null) throw new Error('PROMO_CABINET_FORBIDDEN');
         }
+        if (data.promoCode && data.useBonuses) throw new Error('PROMO_AND_BONUS_CONFLICT');
 
-        // ⛔️ Одновременно промокод и бонусы — запрещено
-        if (data.promoCode && data.useBonuses) {
-          throw new Error('PROMO_AND_BONUS_CONFLICT');
-        }
-
-        // Если пользователь ввел промокод (гость или авторизованный с системным)
         if (data.promoCode) {
-          const promoCodeRaw = data.promoCode.trim().toUpperCase();
-          const promo = await tx.promoCode.findUnique({ where: { code: promoCodeRaw } });
-
+          const promo = await tx.promoCode.findUnique({ where: { code: data.promoCode.trim().toUpperCase() } });
           if (!promo || !promo.isActive) throw new Error('PROMO_INVALID');
           if (promo.validUntil && promo.validUntil < new Date()) throw new Error('PROMO_EXPIRED');
 
-          if (promo.type === 'percent') {
-            appliedDiscount = Math.floor(baseTotalPrice * (promo.discount / 100));
-          } else {
-            appliedDiscount = promo.discount;
-          }
+          appliedDiscount = promo.type === 'percent' 
+            ? Math.floor(baseTotalPrice * (promo.discount / 100)) 
+            : promo.discount;
           appliedDiscount = Math.min(appliedDiscount, baseTotalPrice);
           usedPromoCodeId = promo.id;
 
-          await tx.promoCode.update({
-            where: { id: promo.id },
-            data: { usageCount: { increment: 1 } }
-          });
+          await tx.promoCode.update({ where: { id: promo.id }, data: { usageCount: { increment: 1 } } });
 
           if (promo.memberId) {
-            await tx.memberProfile.update({
-              where: { id: promo.memberId },
-              data: { balance: { increment: 10 } }
-            });
+            await tx.memberProfile.update({ where: { id: promo.memberId }, data: { balance: { increment: 10 } } });
             promoOwnerIdToReward = promo.memberId;
             promoRewardAmount = 10;
           }
-
-        // Если промокода нет, но авторизованный хочет бонусы
         } else if (currentMemberId && data.useBonuses) {
-          const profile = await tx.memberProfile.findUnique({
-            where: { id: currentMemberId },
-            select: { balance: true }
-          });
+          const profile = await tx.memberProfile.findUnique({ where: { id: currentMemberId }, select: { balance: true } });
           if (profile && profile.balance > 0) {
             const maxDiscount = Math.floor(baseTotalPrice * 0.1);
             appliedDiscount = Math.min(profile.balance, maxDiscount, baseTotalPrice);
             if (appliedDiscount > 0) {
-              await tx.memberProfile.update({
-                where: { id: currentMemberId },
-                data: { balance: { decrement: appliedDiscount } }
-              });
+              await tx.memberProfile.update({ where: { id: currentMemberId }, data: { balance: { decrement: appliedDiscount } } });
             }
           }
         }
 
         const finalPrice = baseTotalPrice - appliedDiscount;
 
-        // ---------- 4. Генерация уникального 4-значного shortId ----------
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Без 0, O, 1, I
+        // 4. Генерация shortId
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let newShortId = '';
         let isUniqueId = false;
 
         while (!isUniqueId) {
           let tempId = '';
-          for (let i = 0; i < 4; i++) {
-            tempId += chars.charAt(Math.floor(Math.random() * chars.length));
-          }
-          
-          const existing = await tx.booking.findUnique({
-            where: { shortId: tempId },
-            select: { id: true }
-          });
-          
-          if (!existing) {
-            newShortId = tempId;
-            isUniqueId = true;
-          }
+          for (let i = 0; i < 4; i++) tempId += chars.charAt(Math.floor(Math.random() * chars.length));
+          const existing = await tx.booking.findUnique({ where: { shortId: tempId }, select: { id: true } });
+          if (!existing) { newShortId = tempId; isUniqueId = true; }
         }
 
-        // ---------- 5. Определяем начальный статус ----------
-        let initialStatus: 'pending' | 'awaiting_payment' = 'pending';
-        if (['biletpmr', 'qr', 'foreign', 'online_card'].includes(data.paymentMethod)) {
-          initialStatus = 'awaiting_payment';
-        }
-
-        // ---------- 6. Генерация apbInvoiceId для online_card ----------
-        const apbInvoiceId = data.paymentMethod === 'online_card'
-          ? `EVA-${newShortId}`
-          : null;
-
-        // ---------- 7. Создаём бронь ----------
+        const initialStatus = ['biletpmr', 'qr', 'foreign', 'online_card'].includes(data.paymentMethod) ? 'awaiting_payment' : 'pending';
+        const apbInvoiceId = data.paymentMethod === 'online_card' ? `EVA-${newShortId}` : null;
+        
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const validEmail = (data.social && emailRegex.test(data.social.trim())) ? data.social.trim() : null;
 
+        // 5. Создание записи в БД
         const newBooking = await tx.booking.create({
           data: {
             shortId: newShortId,
@@ -384,11 +368,17 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
             phone: cleanPhone,
             email: validEmail,
             social: data.social || null,
-            ticketsAdult: data.ticketsAdult,
-            ticketsChild: data.ticketsChild,
-            ticketsFamily: data.ticketsFamily,
-            ticketsMember: data.ticketsMember,
-            guests: (data.guests || []) as Prisma.InputJsonValue,
+            
+            // Защита: Если items переданы, строго используем маппер для старых колонок. Иначе берем как есть.
+            ...(usingCategories ? mapBreakdownToLegacyTickets(ticketBreakdown) : {
+              ticketsAdult: data.ticketsAdult,
+              ticketsChild: data.ticketsChild,
+              ticketsFamily: data.ticketsFamily,
+              ticketsMember: data.ticketsMember,
+            }),
+            ticketBreakdown: (usingCategories ? ticketBreakdown : []) as unknown as Prisma.InputJsonValue,
+            guests: (data.guests || []) as unknown as Prisma.InputJsonValue,
+            
             comment: data.comment || null,
             hasChildUnder7: data.hasChildUnder7 || false,
             hasDog: data.hasDog || false,
@@ -420,46 +410,29 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       break;
     } catch (error: unknown) {
       const err = typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : null;
-
       if (err?.code === 'P2002' && attempt < MAX_RETRIES) {
         console.warn(`[Booking] Race condition on shortId. Retry ${attempt + 1}/${MAX_RETRIES}`);
         continue;
       }
 
       if (error instanceof Error) {
-        if (error.message === 'PROMO_AND_BONUS_CONFLICT') {
-          return { success: false, error: 'Промокод и бонусы не могут быть использованы одновременно. Пожалуйста, выберите что-то одно.' };
-        }
-        if (error.message === 'PROMO_CABINET_FORBIDDEN') {
-          return { success: false, error: 'Реферальные промокоды друзей доступны только для новых пользователей. Вы можете использовать свои бонусы или системные промокоды клуба.' };
-        }
-        if (error.message === 'PROMO_INVALID') {
-          return { success: false, error: 'Промокод недействителен.' };
-        }
-      if (error.message === 'PROMO_EXPIRED') {
-          return { success: false, error: 'Срок действия промокода истёк.' };
-        }
-       if (error.message === 'SPOTS_GONE') {
-          return { success: false, error: 'Последние места на эту дату были выкуплены прямо сейчас.' };
-        }
+        if (error.message === 'PROMO_AND_BONUS_CONFLICT') return { success: false, error: 'Промокод и бонусы не могут быть использованы одновременно.' };
+        if (error.message === 'PROMO_CABINET_FORBIDDEN') return { success: false, error: 'Реферальные промокоды друзей доступны только для новых пользователей.' };
+        if (error.message === 'PROMO_INVALID') return { success: false, error: 'Промокод недействителен.' };
+        if (error.message === 'PROMO_EXPIRED') return { success: false, error: 'Срок действия промокода истёк.' };
+        if (error.message === 'SPOTS_GONE') return { success: false, error: 'Последние места на эту дату были выкуплены прямо сейчас.' };
+        if (error.message === 'PRICE_CATEGORY_GONE') return { success: false, error: 'Выбранная категория цен была изменена. Обновите страницу.' };
       }
-      if (err?.code === 'P2025') {
-        return { success: false, error: 'Выбранная дата или тур больше не доступны.' };
-      }
+      if (err?.code === 'P2025') return { success: false, error: 'Выбранная дата или тур больше не доступны.' };
 
       console.error('Booking Transaction Error:', error);
-      return {
-        success: false,
-        error: 'Произошла ошибка при сохранении заявки. Попробуйте еще раз.'
-      };
+      return { success: false, error: 'Произошла ошибка при сохранении заявки. Попробуйте еще раз.' };
     }
   }
 
-  if (!transactionResult) {
-    return { success: false, error: 'Не удалось создать заявку из-за высокой нагрузки. Повторите попытку.' };
-  }
+  if (!transactionResult) return { success: false, error: 'Не удалось создать заявку из-за высокой нагрузки. Повторите попытку.' };
 
-  // ---------- 8. Генерация redirectUrl для online_card (вне транзакции) ----------
+  // APB URL
   let redirectUrl: string | null = null;
   if (data.paymentMethod === 'online_card' && transactionResult.apbInvoiceId) {
     try {
@@ -474,7 +447,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     }
   }
 
-  // ---------- Отправка уведомлений (вне транзакции) ----------
+  // Уведомления
   try {
     await notifyTelegram(
       data,
@@ -483,6 +456,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
       transactionResult.appliedDiscount,
       transactionResult.finalPrice,
       transactionResult.apbInvoiceId,
+      totalSpots,
     );
 
     if (transactionResult.promoOwnerIdToReward) {
@@ -538,10 +512,7 @@ export const createBookingAction = withRateLimit(async (raw: BookingInput): Prom
     console.error('Ошибка рассылки уведомлений:', notificationError);
   }
 
-  // Ревалидация кэша
-  if (transactionResult.tourSlug) {
-    revalidatePath(`/tour/${transactionResult.tourSlug}`);
-  }
+  if (transactionResult.tourSlug) revalidatePath(`/tour/${transactionResult.tourSlug}`);
   revalidatePath('/tour');
   revalidatePath('/admin');
   revalidatePath('/account/bookings');
@@ -568,23 +539,49 @@ async function notifyTelegram(
   shortId: string,
   appliedBonuses: number = 0,
   finalPrice: number,
-  apbInvoiceId: string | null = null, 
+  apbInvoiceId: string | null = null,
+  totalTickets: number = 0,
 ): Promise<void> {
-  // Вычисляем места для Телеграм-отчета с помощью константы напрямую из модуля
-  // (чтобы не дублировать SPOTS_PER_FAMILY)
-  const { SPOTS_PER_FAMILY } = await import('../lib/pricing');
-  const familySpots = data.ticketsFamily * SPOTS_PER_FAMILY;
-  const totalTickets = data.ticketsAdult + data.ticketsChild + data.ticketsMember + familySpots;
 
-  const guestsList = (data.guests || []).map((g: GuestInput, i: number) => {
-    const jacketInfo = g.jacket ? ` | 🦺 ${g.jacket}` : '';
-    const ageInfo = g.age ? ` | 👶 ${g.age} лет` : '';
-    const phoneInfo = (!g.isMain && g.phone) ? ` | 📞 ${g.phone}` : '';
-    if (g.isMain) {
-      return `${i + 1}. 👤 <b>${escapeHtml(g.name || 'Заказчик')}</b> (Заказчик)${jacketInfo}`;
+  let guestsList = '';
+  const guests = data.guests || [];
+  
+  // Проверяем, есть ли хотя бы один пассажир с переданным unitIndex (маркер экипажей)
+  const hasUnits = guests.some(g => g.unitIndex !== undefined);
+
+  if (hasUnits) {
+    // Группировка по лодкам/юнитам
+    const groups = new Map<number, GuestInput[]>();
+    guests.forEach(g => {
+      const idx = g.unitIndex ?? 0;
+      if (!groups.has(idx)) groups.set(idx, []);
+      groups.get(idx)!.push(g);
+    });
+
+    for (const [idx, groupGuests] of groups.entries()) {
+      const firstGuest = groupGuests[0];
+      const groupName = firstGuest.type || 'Экипаж';
+      guestsList += `\n🛶 <b>${groupName} (№${idx + 1})</b>\n`;
+      
+      groupGuests.forEach((g, i) => {
+        const jacketInfo = g.jacket ? ` | 🦺 ${g.jacket}` : '';
+        const ageInfo = g.age ? ` | 👶 ${g.age} лет` : '';
+        const phoneInfo = (!g.isMain && g.phone) ? ` | 📞 ${g.phone}` : '';
+        const isMainMarker = g.isMain ? ' (Заказчик)' : ' (Пассажир)';
+        const name = g.name || 'Без имени';
+        guestsList += `  ${i + 1}. 👤 ${escapeHtml(name)}${isMainMarker}${ageInfo}${phoneInfo}${jacketInfo}\n`;
+      });
     }
-    return `${i + 1}. 👤 ${escapeHtml(g.name || 'Без имени')} (${g.type})${ageInfo}${phoneInfo}${jacketInfo}`;
-  }).join('\n');
+  } else {
+    // Плоский список (Обычный тур)
+    guestsList = guests.map((g: GuestInput, i: number) => {
+      const jacketInfo = g.jacket ? ` | 🦺 ${g.jacket}` : '';
+      const ageInfo = g.age ? ` | 👶 ${g.age} лет` : '';
+      const phoneInfo = (!g.isMain && g.phone) ? ` | 📞 ${g.phone}` : '';
+      if (g.isMain) return `${i + 1}. 👤 <b>${escapeHtml(g.name || 'Заказчик')}</b> (Заказчик)${jacketInfo}`;
+      return `${i + 1}. 👤 ${escapeHtml(g.name || 'Без имени')} (${g.type})${ageInfo}${phoneInfo}${jacketInfo}`;
+    }).join('\n');
+  }
 
   const paymentLabels: Record<string, string> = {
     biletpmr:    '💳 BiletPMR',

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2, Users, ShieldCheck, Crown, Baby, Ticket, Check } from 'lucide-react';
+import { Loader2, Users, ShieldCheck, Crown, Baby, Ticket, Check, Zap, Flame } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { clsx } from 'clsx';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing'; // <-- ИМПОРТ НАШЕГО КАЛЬКУЛЯТОРА
 
 interface TourSidebarProps {
   tour: Tour;
@@ -15,20 +16,57 @@ interface TourSidebarProps {
 export default function TourSidebar({ tour }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
-const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
-  
-  const currentPrice = Number(price || 0);
-  const oldPriceVal = Number(priceOld || 0);
+  const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
+  const basePriceVal = Number(price || 0);
 
-  // ДОБАВЛЯЕМ ДЛЯ ЕДИНООБРАЗИЯ И ЧИСТОТЫ КОДА
+  // Умная логика доступности (Global Availability) + Поиск ближайшей даты
+  const { isGlobalSoldOut, isLowSpots, nearestAvailableDate } = useMemo(() => {
+    const allDates = tour?.tourDates || tour?.dates || [];
+    if (!allDates || allDates.length === 0) {
+      const fallbackLeft = Number(tour?.spotsLeft || 0);
+      return { isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5, nearestAvailableDate: null };
+    }
+
+    const now = new Date();
+    const futureDates = allDates.filter((d: any) => 
+      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
+    ).sort((a: any, b: any) => {
+       const dateA = new Date(a.startDate || a.start || a.date).getTime();
+       const dateB = new Date(b.startDate || b.start || b.date).getTime();
+       return dateA - dateB;
+    });
+
+    const totalLeft = futureDates.reduce((acc: number, d: any) => {
+      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
+      return acc + Math.max(0, left);
+    }, 0);
+
+    const nearest = futureDates.find((d: any) => (d.spotsLeft ?? 1) > 0) || futureDates[0] || null;
+
+    return {
+      isGlobalSoldOut: futureDates.length > 0 ? totalLeft <= 0 : true,
+      isLowSpots: totalLeft > 0 && totalLeft <= 5,
+      nearestAvailableDate: nearest
+    };
+  }, [tour]);
+
+  // Оставляем алиас для совместимости с нижним кодом
+  const isSoldOut = isGlobalSoldOut;
+
+  // ВЫЧИСЛЯЕМ ДИНАМИЧЕСКУЮ ЦЕНУ НА ОСНОВЕ БЛИЖАЙШЕЙ ДАТЫ
+  const dynamicPricing = calculateDynamicPrice(basePriceVal, nearestAvailableDate);
+  const currentPrice = dynamicPricing.price;
+  const oldPriceVal = dynamicPricing.oldPrice || Number(priceOld || 0);
+
+  // ДОБАВЛЯЕМ ДЛЯ ЕДИНООБРАЗИЯ И ЧИСТОТЫ КОДА (Используем currentPrice)
   const prices = useMemo(() => {
     const list = [];
-    if (tour.price) list.push({ label: 'Взрослый', value: tour.price, icon: <Ticket size={14} /> });
+    if (tour.price) list.push({ label: 'Взрослый', value: currentPrice, icon: <Ticket size={14} /> });
     if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
-    if (tour.priceChild) list.push({ label: 'Детский (до 13)', value: tour.priceChild, icon: <Baby size={14} /> });
+    if (tour.priceChild) list.push({ label: 'Детский (до 15)', value: tour.priceChild, icon: <Baby size={14} /> });
     if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
     return list;
-  }, [tour]);
+  }, [tour, currentPrice]);
 
   const minPrice = prices.length > 0 
     ? Math.min(...prices.map(p => Number(p.value))) 
@@ -57,32 +95,6 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
     }).catch(err => console.error("Ошибка загрузки профиля в сайдбаре:", err));
   }, []);
 
-  // Умная логика доступности (Global Availability)
-  const { isGlobalSoldOut, isLowSpots } = useMemo(() => {
-    if (!tour?.tourDates || tour.tourDates.length === 0) {
-      const fallbackLeft = Number(tour?.spotsLeft || 0);
-      return { isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5 };
-    }
-
-    const now = new Date();
-    const futureDates = tour.tourDates.filter((d: any) => 
-      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
-    );
-
-    const totalLeft = futureDates.reduce((acc: number, d: any) => {
-      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
-      return acc + Math.max(0, left);
-    }, 0);
-
-    return {
-      isGlobalSoldOut: futureDates.length > 0 ? totalLeft <= 0 : true,
-      isLowSpots: totalLeft > 0 && totalLeft <= 5
-    };
-  }, [tour]);
-
-  // Оставляем алиас для совместимости с нижним кодом
-  const isSoldOut = isGlobalSoldOut;
-
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!waitlistName.trim()) return;
@@ -107,16 +119,28 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
     <aside className="sticky top-24 z-30 self-start">
       <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/50 overflow-hidden relative">
         
+        {/* МАРКЕТИНГОВЫЙ БЕЙДЖ (Если сработала динамическая цена) */}
+        {dynamicPricing.type === 'EARLY_BIRD' && (
+          <div className="absolute top-0 right-0 bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1 shadow-lg">
+            <Flame size={12} /> Раннее бронирование
+          </div>
+        )}
+        {dynamicPricing.type === 'LAST_MINUTE' && (
+          <div className="absolute top-0 right-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1 shadow-lg">
+            <Zap size={12} /> Горящий тур
+          </div>
+        )}
+
         {/* БЛОК 1: Цена и Места */}
-        <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
+        <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6 mt-2">
           <div>
             <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Цена</p>
             <div className="flex items-baseline gap-1.5">
               {prices.length > 1 && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
-  <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
-    {minPrice.toLocaleString('ru-RU')}
-  </span>
-  <span className="text-sm font-bold text-teal-500">{currency}</span>
+              <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
+                {minPrice.toLocaleString('ru-RU')}
+              </span>
+              <span className="text-sm font-bold text-teal-500">{currency}</span>
             </div>
             
             {hasDiscount && (
@@ -130,7 +154,7 @@ const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily 
               </div>
             )}
           </div>
-        <div className="text-right">
+          <div className="text-right">
               <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1"> Места</p>
               <div className={clsx(
                 "text-lg font-black uppercase leading-tight", 

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from 'react';
-import { useForm, FormProvider, Resolver } from 'react-hook-form'; // 👈 ИСПРАВЛЕНО: Добавлен импорт Resolver
+import { useForm, FormProvider, Resolver } from 'react-hook-form'; 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { tourFormSchema, type TourFormValues } from './schema';
 import { saveTour } from '@/features/admin/actions/tour';
@@ -19,7 +19,7 @@ import { Lists } from './sections/Lists';
 import { SEO } from './sections/SEO';
 
 interface TourFormProps {
-  initialData?: any; // оставляем как есть
+  initialData?: any; 
   onClose: () => void;
   guides: { id: string; name: string }[];
   categories?: { id: string; title: string }[];
@@ -29,7 +29,7 @@ interface TourFormProps {
 export default function TourForm({ initialData, onClose, guides, categories = [], onSuccess }: TourFormProps) {
   const { showToast } = useToast();
   
-  //   ДОБАВЛЕНО: Умный выбор дефолтной категории
+  // Умный выбор дефолтной категории
   const defaultCategoryId = categories.length > 0 ? categories[0].id : '';
 
   // =========================================================
@@ -41,9 +41,9 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       return {
          currency: 'RUB',
          type: 'hiking',
-         categoryId: defaultCategoryId, //   ДОБАВЛЕНО: Дефолтная категория
+         categoryId: defaultCategoryId, 
          isActive: false,
-         price: 0, // Важно: для нового тура цена 0
+         price: 0, 
          dates: [],
          tags: [],
          faq: [],
@@ -56,24 +56,21 @@ export default function TourForm({ initialData, onClose, guides, categories = []
          checklist: [],
          spots: 15,
          spotsLeft: 15,
-         //    Добавлено для соответствия строгой схеме Zod без ошибок:
          difficulty: 'medium',
          label: '',
          location: '',
          duration: '1 день',
+         priceCategories: [], // <-- ДОБАВЛЕНО: Массив категорий для нового тура
       };
     }
 
     // Значения для РЕДАКТИРОВАНИЯ
     return {
       ...initialData,
-      // Приводим поля к формату схемы
       isActive: initialData.isActive ?? initialData.is_active ?? false,
       
-      categoryId: initialData.categoryId ?? initialData.categoryId ?? defaultCategoryId, //   ДОБАВЛЕНО: Маппинг категории
+      categoryId: initialData.categoryId ?? initialData.categoryId ?? defaultCategoryId, 
       
-      //   ИСПРАВЛЕНО: Принудительная конвертация в число (Number)
-      // Это решает проблему "expected number, received NaN"
       price: initialData.price ? Number(initialData.price) : 0,
       
       priceOld: (initialData.priceOld ?? initialData.price_old) 
@@ -91,8 +88,21 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       priceMember: (initialData.priceMember ?? initialData.price_member) 
         ? Number(initialData.priceMember ?? initialData.price_member) 
         : null,
+
+      // НОВОЕ: Безопасный маппинг существующих динамических тарифов из СУБД в стейт формы
+      priceCategories: Array.isArray(initialData.tourPriceCategories)
+        ? initialData.tourPriceCategories.map((c: any) => ({
+            id: c.id,
+            key: c.key,
+            label: c.label,
+            price: c.price ? Number(c.price) : 0,
+            spotsPerUnit: c.spotsPerUnit ? Number(c.spotsPerUnit) : 1,
+            minQuantity: c.minQuantity ? Number(c.minQuantity) : 0,
+            sortOrder: c.sortOrder ? Number(c.sortOrder) : 0,
+            isActive: c.isActive ?? true,
+          }))
+        : [],
       
-      // Логистика
       spots: initialData.spots ? Number(initialData.spots) : 15,
       spotsLeft: (initialData.spotsLeft ?? initialData.spots_left) 
         ? Number(initialData.spotsLeft ?? initialData.spots_left) 
@@ -101,11 +111,9 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       meetingPoint: initialData.meetingPoint ?? initialData.meeting_point ?? '',
       coverImage: initialData.coverImage ?? initialData.cover_image ?? initialData.image,
       
-      // SEO
       metaTitle: initialData.metaTitle ?? initialData.meta_title ?? '',
       metaDesc: initialData.metaDesc ?? initialData.meta_desc ?? '',
 
-      // Списки (защита от null)
       tags: initialData.tags || [],
       faq: initialData.faq || [],
       program: initialData.program || [],
@@ -116,33 +124,28 @@ export default function TourForm({ initialData, onClose, guides, categories = []
       additionalExpenses: initialData.additionalExpenses ?? initialData.additional_expenses ?? [],
       gallery: initialData.gallery || [],
       
-      // Даты и выезды
       dates: Array.isArray(initialData.dates) ? initialData.dates.map((d: any) => ({
         ...d,
-        // Очищаем даты от ISO формата (T00:00:00.000Z) для корректного отображения в <input type="date">
         start: d.start ? (typeof d.start === 'string' ? d.start.split('T')[0] : new Date(d.start).toISOString().split('T')[0]) : '', 
         end: d.end ? (typeof d.end === 'string' ? d.end.split('T')[0] : new Date(d.end).toISOString().split('T')[0]) : '',
         
-        //   ГАРАНТИРУЕМ ТИПЫ (чтобы форма видела значение, даже если в базе оно null)
         time: d.time || '', 
         spots: d.spots ? Number(d.spots) : 15,
         spotsLeft: d.spotsLeft ? Number(d.spotsLeft) : (d.spots ? Number(d.spots) : 15),
         basePrice: d.basePrice ? Number(d.basePrice) : null,
         
-        //   ПОДДЕРЖКА МАРКЕТИНГОВЫХ ПОЛЕЙ
         discountEarlyBird: d.discountEarlyBird ? Number(d.discountEarlyBird) : null,
         earlyBirdDeadline: d.earlyBirdDeadline ? Number(d.earlyBirdDeadline) : null,
         surchargeLastMinute: d.surchargeLastMinute ? Number(d.surchargeLastMinute) : null,
         lastMinuteTrigger: d.lastMinuteTrigger ? Number(d.lastMinuteTrigger) : null,
       })) : [],
     };
-  }, [initialData, defaultCategoryId]); //   ДОБАВЛЕНО: defaultCategoryId в зависимости
+  }, [initialData, defaultCategoryId]);
 
   // =========================================================
   // 2. ИНИЦИАЛИЗАЦИЯ ФОРМЫ
   // =========================================================
   const methods = useForm<TourFormValues>({
-    // 👈 ИСПРАВЛЕНО: Безопасное приведение типов для обхода конфликта Zod и RHF
     resolver: zodResolver(tourFormSchema) as unknown as Resolver<TourFormValues>, 
     defaultValues,
     mode: 'onChange' 
@@ -164,11 +167,11 @@ export default function TourForm({ initialData, onClose, guides, categories = []
     try {
       const payload = { ...data };
       
-      //   ДОБАВЛЕНО: Защита от пустой строки в UUID
       if (payload.categoryId === '') {
           delete payload.categoryId;
       }
 
+      // Отправляем монолитный payload (включая массив priceCategories) на сервер
       const res = await saveTour(payload) as { success: boolean; error?: string };
       
       if (res.success) {
@@ -219,7 +222,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
             >
                {/* 1. Главная инфо */}
                <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-                  <MainInfo categories={categories} /> {/*   ДОБАВЛЕНО: Прокидываем категории */}
+                  <MainInfo categories={categories} /> 
                </section>
 
                {/* 2. Логистика */}
@@ -227,7 +230,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
                   <Logistics guides={guides} />
                </section>
 
-               {/* 3. Финансы */}
+               {/* 3. Финансы (Здесь мы развернем UI карусели цен) */}
                <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
                   <Finance />
                </section>
@@ -260,7 +263,7 @@ export default function TourForm({ initialData, onClose, guides, categories = []
                variant="primary" 
                onClick={handleSubmit(onSubmit)} 
                disabled={isSubmitting}
-               className="bg-teal-600 hover: bg-teal-500 text-slate-950  shadow-lg shadow-teal-500/20 min-w-[180px]"
+               className="bg-teal-600 hover:bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20 min-w-[180px]"
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin mr-2" size={20} />

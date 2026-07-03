@@ -11,6 +11,17 @@ const DetailedCategorySchema = z.object({
   items: z.array(DetailedItemSchema),
 });
 
+// НОВОЕ: Схема для гибкой категории цены
+const PriceCategorySchema = z.object({
+  id: z.string().optional(),
+  key: z.string().trim().min(1, 'Укажите системный ключ').max(50).regex(/^[a-z0-9_]+$/, 'Только латиница, цифры и "_" (напр: adult, kayak_2)'),
+  label: z.string().trim().min(1, 'Укажите название').max(120),
+  price: z.coerce.number().min(0, 'Цена не может быть отрицательной'),
+  spotsPerUnit: z.coerce.number().min(0).default(1),
+  minQuantity: z.coerce.number().min(0).default(0),
+  sortOrder: z.coerce.number().default(0),
+  isActive: z.boolean().default(true),
+});
 
 export const tourFormSchema = z.object({
   id: z.string().optional(),
@@ -30,7 +41,7 @@ export const tourFormSchema = z.object({
   label: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
 
-  //   НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК (ФАЗА 1)
+  // НОВЫЕ ПОЛЯ ХАРАКТЕРИСТИК (ФАЗА 1)
   tourFormat: z.string().optional().nullable(),
   accommodation: z.string().optional().nullable(),
   groupInfo: z.string().optional().nullable(),
@@ -52,11 +63,11 @@ export const tourFormSchema = z.object({
     guide_id: z.string().uuid().optional().nullable(),
     groupChatUrl: z.string().optional().nullable(), 
     
-    //   Лимиты для конкретной даты
+    // Лимиты для конкретной даты
     spots: z.coerce.number().optional(),
     spotsLeft: z.coerce.number().optional(),
 
-    //   Динамические цены для даты (Early Bird / Last Minute)
+    // Динамические цены для даты (Early Bird / Last Minute)
     basePrice: z.coerce.number().optional().nullable(),
     discountEarlyBird: z.coerce.number().optional().nullable(),
     earlyBirdDeadline: z.coerce.number().optional().nullable(),
@@ -68,9 +79,15 @@ export const tourFormSchema = z.object({
   currency: z.string().default('RUB'),
   price: z.coerce.number().min(0, 'Цена не может быть отрицательной'),
   priceOld: z.coerce.number().optional().nullable(),
+  
+  // Устаревшие поля (оставляем для обратной совместимости старых туров)
   priceChild: z.coerce.number().optional().nullable(),
   priceFamily: z.coerce.number().optional().nullable(),
   priceMember: z.coerce.number().optional().nullable(),
+  
+  // НОВОЕ: Динамический массив категорий цен
+  priceCategories: z.array(PriceCategorySchema).default([]),
+
   biletpmrLink: z.string().optional().nullable(),
   apbQrLink: z.string().optional().nullable(),
   apbQrImage: z.string().optional().nullable(),
@@ -114,7 +131,7 @@ export const tourFormSchema = z.object({
   included: z.array(z.string()).default([]),
   additionalExpenses: z.array(z.string()).default([]),
 
-  //   НОВЫЕ: Детализированные списки (Аккордеоны)
+  // НОВЫЕ: Детализированные списки (Аккордеоны)
   includedDetailed: z.array(DetailedCategorySchema).optional().nullable(),
   excludedDetailed: z.array(DetailedCategorySchema).optional().nullable(),
 

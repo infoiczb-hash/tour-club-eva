@@ -9,18 +9,18 @@ export async function middleware(request: NextRequest) {
   // --- Генерация nonce для script-src ---
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
-  // --- CSP с nonce (без unsafe-inline и unsafe-eval) ---
+  // --- Единый CSP (объединены домены из next.config и middleware + добавлен unsafe-eval) ---
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-   img-src 'self' https://res.cloudinary.com https://*.supabase.co https://api.telegram.org https://t.me https://grainy-gradients.vercel.app https://img.youtube.com blob: data:;
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://telegram.org;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://telegram.org;
+    img-src 'self' data: blob: https://res.cloudinary.com https://*.supabase.co https://api.telegram.org https://t.me https://telegram.org https://grainy-gradients.vercel.app https://img.youtube.com https://images.unsplash.com;
     media-src 'self' https://res.cloudinary.com blob: data:;
-    connect-src 'self' https://*.supabase.co https://res.cloudinary.com https://va.vercel-scripts.com;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://res.cloudinary.com https://va.vercel-scripts.com https://*.sentry.io;
     font-src 'self' data: https://fonts.gstatic.com;
-    frame-src 'self' https://www.youtube.com https://oauth.telegram.org https://telegram.org;
+    frame-src 'self' https://www.youtube.com https://oauth.telegram.org https://telegram.org https://t.me;
     object-src 'none';
-    base-uri 'none';
+    base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
     ${isProd ? 'upgrade-insecure-requests;' : ''}

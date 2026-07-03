@@ -4,8 +4,8 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { withAdminAuth } from '@/lib/auth'; //   ИМПОРТИРУЕМ НАШУ БРОНЮ
-import { withAdminAudit } from '@/lib/audit'; //   ИМПОРТИРУЕМ ЯДРО АУДИТА
+import { withAdminAuth } from '@/lib/auth'; 
+import { withAdminAudit } from '@/lib/audit'; 
 import { publishToTelegram, publishTourToChannel, sendToUserTelegram } from '@/features/admin/actions/telegram';
 import { env } from '@/lib/env';
 
@@ -17,7 +17,7 @@ export type SaveTourPayload = Record<string, unknown> & {
 };
 
 // ==========================================
-// 1. SAVE TOUR (CREATE / UPDATE) - ЗАЩИЩЕНО + АУДИТ
+// 1. SAVE TOUR (CREATE / UPDATE) - МОНОЛИТНЫЙ ЭКШЕН
 // ==========================================
 export const saveTour = withAdminAuth(
   withAdminAudit({
@@ -25,8 +25,6 @@ export const saveTour = withAdminAuth(
     getTargetId: (formData: SaveTourPayload) => formData.id,
   })(async (formData: SaveTourPayload) => {
     try {
-      // Внутри больше нет await requireAuth(), обертка уже все проверила!
-
       // 1. Нормализуем данные
       const rawData = {
         ...formData,
@@ -45,6 +43,7 @@ export const saveTour = withAdminAuth(
         
         tags: Array.isArray(formData.tags) ? formData.tags : [],
         included: Array.isArray(formData.included) ? formData.included : [],
+        priceCategories: Array.isArray(formData.priceCategories) ? formData.priceCategories : [],
         
         dates: Array.isArray(formData.dates) ? formData.dates.map((d: any) => ({
           ...d,
@@ -52,7 +51,7 @@ export const saveTour = withAdminAuth(
         })) : [],
       };
 
-      // 2. Валидация
+      // 2. Валидация схемы
       const result = tourFormSchema.safeParse(rawData);
       if (!result.success) {
         console.error('❌ Validation Error:', result.error.flatten());
@@ -62,24 +61,29 @@ export const saveTour = withAdminAuth(
       const data: TourFormValues = result.data;
       const mainGuideId = data.dates?.[0]?.guide_id || null;
 
-      // Подготовка дат
-   const tourDatesData = data.dates.map((d) => ({
-  startDate: new Date(d.start),
-  endDate: d.end ? new Date(d.end) : null,
-  time: d.time || null, //   Время теперь будет сохраняться
-  guideId: d.guide_id || null,
-  groupChatUrl: d.groupChatUrl || null, 
-  spots: d.spots ?? data.spots,
-  spotsLeft: d.spotsLeft ?? d.spots ?? data.spots,
-  //   ДОБАВЛЯЕМ НОВЫЕ ПОЛЯ ЦЕН:
-  basePrice: d.basePrice ?? null,
-  discountEarlyBird: d.discountEarlyBird ?? null,
-  earlyBirdDeadline: d.earlyBirdDeadline ?? null,
-  surchargeLastMinute: d.surchargeLastMinute ?? null,
-  lastMinuteTrigger: d.lastMinuteTrigger ?? null,
-}));
+      // 3. Валидация дубликатов ключей (key) в категориях цен
+      const catKeys = data.priceCategories.map(c => c.key);
+      if (new Set(catKeys).size !== catKeys.length) {
+        return { success: false, error: 'Ключи категорий цен (Например: adult, kayak_2) должны быть уникальными!' };
+      }
 
-      // 3. Формируем Payload
+      // 4. Подготовка дат выездов
+      const tourDatesData = data.dates.map((d) => ({
+        startDate: new Date(d.start),
+        endDate: d.end ? new Date(d.end) : null,
+        time: d.time || null, 
+        guideId: d.guide_id || null,
+        groupChatUrl: d.groupChatUrl || null, 
+        spots: d.spots ?? data.spots,
+        spotsLeft: d.spotsLeft ?? d.spots ?? data.spots,
+        basePrice: d.basePrice ?? null,
+        discountEarlyBird: d.discountEarlyBird ?? null,
+        earlyBirdDeadline: d.earlyBirdDeadline ?? null,
+        surchargeLastMinute: d.surchargeLastMinute ?? null,
+        lastMinuteTrigger: d.lastMinuteTrigger ?? null,
+      }));
+
+      // 5. Базовый Payload (без вложенных массивов дат и цен)
       const prismaPayload: Prisma.TourUncheckedCreateInput = {
         slug: data.slug,
         title: data.title,
@@ -94,7 +98,7 @@ export const saveTour = withAdminAuth(
         distance: data.distance ?? null,
         duration: data.duration ?? null,
         meetingPoint: data.meetingPoint ?? null,
-        dates: Prisma.JsonNull,
+        dates: Prisma.JsonNull, // Legacy field fallback
         guideId: mainGuideId,
         currency: data.currency,
         price: data.price,
@@ -130,67 +134,104 @@ export const saveTour = withAdminAuth(
       let slug = data.slug;
       let savedTourId = formData.id as string;
 
-    if (formData.id) {
-        // === UPDATE ===
-        // 1. Находим ID дат, которые остались в форме (чтобы не удалить лишнее)
-        const incomingIds = data.dates.map(d => d.id).filter(Boolean) as string[];
+      if (formData.id) {
+        // ==========================================
+        // UPDATE (Сложная логика синхронизации массивов)
+        // ==========================================
         
-        // 2. Обновляем основные данные тура
+        // --- ЗАЩИТА ОТ УДАЛЕНИЯ ИСПОЛЬЗУЕМЫХ КАТЕГОРИЙ ЦЕН ---
+        const incomingCatIds = data.priceCategories.map(c => c.id).filter(Boolean) as string[];
+        const existingCats = await prisma.tourPriceCategory.findMany({ where: { tourId: formData.id as string } });
+        const catsToDelete = existingCats.filter(ec => !incomingCatIds.includes(ec.id));
+
+        for (const cat of catsToDelete) {
+          const searchJson = JSON.stringify([{ categoryId: cat.id }]);
+          const usedInBookings = await prisma.$queryRaw<{ count: bigint }[]>`
+            SELECT COUNT(*)::bigint as count
+            FROM "Booking"
+            WHERE "tourId" = ${formData.id as string} 
+            AND "ticketBreakdown" @> ${searchJson}::jsonb
+          `;
+          
+          const usageCount = Number(usedInBookings[0]?.count ?? 0);
+          if (usageCount > 0) {
+            return { 
+              success: false, 
+              error: `ОШИБКА: Вы удалили категорию «${cat.label}», по которой уже куплено билетов: ${usageCount} шт. Верните её и просто выключите тумблер "Активна", чтобы скрыть с сайта и сохранить историю.` 
+            };
+          }
+        }
+        
+        // 1. Обновляем основные данные тура
         await prisma.tour.update({
           where: { id: formData.id as string },
-          data: {
-              ...prismaPayload,
-          }, 
+          data: prismaPayload, 
         });
 
-        // 3. Удаляем только те даты, которые администратор реально удалил в интерфейсе
+        // --- УПРАВЛЕНИЕ КАТЕГОРИЯМИ ЦЕН ---
+        // Точечно создаем новые и обновляем старые
+        for (const cat of data.priceCategories) {
+          const catPayload = {
+            key: cat.key,
+            label: cat.label,
+            price: cat.price,
+            spotsPerUnit: cat.spotsPerUnit,
+            minQuantity: cat.minQuantity,
+            sortOrder: cat.sortOrder,
+            isActive: cat.isActive
+          };
+
+          if (cat.id) {
+            await prisma.tourPriceCategory.update({ where: { id: cat.id }, data: catPayload });
+          } else {
+            await prisma.tourPriceCategory.create({ data: { ...catPayload, tourId: savedTourId } });
+          }
+        }
+        
+        // Удаляем те, которые админ стер (мы уже убедились выше, что они безопасны)
+        if (catsToDelete.length > 0) {
+          await prisma.tourPriceCategory.deleteMany({
+            where: { id: { in: catsToDelete.map(c => c.id) } }
+          });
+        }
+
+        // --- УПРАВЛЕНИЕ ДАТАМИ ВЫЕЗДОВ ---
+        const incomingDateIds = data.dates.map(d => d.id).filter(Boolean) as string[];
         await prisma.tourDate.deleteMany({
             where: { 
                 tourId: formData.id as string,
-                ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {})
+                ...(incomingDateIds.length > 0 ? { id: { notIn: incomingDateIds } } : {})
             }
         });
 
-       // 4. Точечно обновляем старые и создаем новые (сохраняем tourDateId у существующих броней)
         for (const d of data.dates) {
-            //   Берем вместимость конкретной даты, если нет — берем общую
             const currentSpots = d.spots ?? data.spots;
 
-          const basePayload = {
-    startDate: new Date(d.start),
-    endDate: d.end ? new Date(d.end) : null,
-    time: d.time || null, //   Теперь время не потеряется
-    guideId: d.guide_id || null,
-    groupChatUrl: d.groupChatUrl || null,
-    spots: currentSpots,
-    //   ДОБАВЛЯЕМ ВСЕ НЕДОСТАЮЩИЕ ПОЛЯ ДЛЯ БД:
-    basePrice: d.basePrice ?? null,
-    discountEarlyBird: d.discountEarlyBird ?? null,
-    earlyBirdDeadline: d.earlyBirdDeadline ?? null,
-    surchargeLastMinute: d.surchargeLastMinute ?? null,
-    lastMinuteTrigger: d.lastMinuteTrigger ?? null,
-};
+            const basePayload = {
+              startDate: new Date(d.start),
+              endDate: d.end ? new Date(d.end) : null,
+              time: d.time || null,
+              guideId: d.guide_id || null,
+              groupChatUrl: d.groupChatUrl || null,
+              spots: currentSpots,
+              basePrice: d.basePrice ?? null,
+              discountEarlyBird: d.discountEarlyBird ?? null,
+              earlyBirdDeadline: d.earlyBirdDeadline ?? null,
+              surchargeLastMinute: d.surchargeLastMinute ?? null,
+              lastMinuteTrigger: d.lastMinuteTrigger ?? null,
+            };
 
             if (d.id) {
-                // ⚠️ ОБНОВЛЕНИЕ СУЩЕСТВУЮЩЕЙ ДАТЫ
                 const updateData: Record<string, any> = { ...basePayload };
-                
-                //   Защита от овербукинга: обновляем spotsLeft ТОЛЬКО если админ явно передал число
                 if (d.spotsLeft !== undefined && d.spotsLeft !== null) {
                     updateData.spotsLeft = Number(d.spotsLeft);
                 }
-
-                await prisma.tourDate.update({
-                    where: { id: d.id },
-                    data: updateData
-                });
+                await prisma.tourDate.update({ where: { id: d.id }, data: updateData });
             } else {
-                // ❇️ СОЗДАНИЕ НОВОЙ ДАТЫ В СТАРОМ ТУРЕ
                 await prisma.tourDate.create({
                     data: { 
                         ...basePayload, 
                         tourId: formData.id as string,
-                        //   Новая дата: если остаток не задан, ставим его равным полной вместимости
                         spotsLeft: (d.spotsLeft !== undefined && d.spotsLeft !== null) 
                             ? Number(d.spotsLeft) 
                             : currentSpots
@@ -198,8 +239,11 @@ export const saveTour = withAdminAuth(
                 });
             }
         }
+
       } else {
-        // === CREATE ===
+        // ==========================================
+        // CREATE (Создание нового тура)
+        // ==========================================
         const existing = await prisma.tour.findUnique({ where: { slug } });
         if (existing) {
           let counter = 1;
@@ -215,14 +259,27 @@ export const saveTour = withAdminAuth(
         const newTour = await prisma.tour.create({ 
             data: {
                 ...prismaPayload,
-                tourDates: { create: tourDatesData }
+                tourDates: { create: tourDatesData },
+                priceCategories: {
+                  create: data.priceCategories.map(c => ({
+                    key: c.key,
+                    label: c.label,
+                    price: c.price,
+                    spotsPerUnit: c.spotsPerUnit,
+                    minQuantity: c.minQuantity,
+                    sortOrder: c.sortOrder,
+                    isActive: c.isActive
+                  }))
+                }
             } 
         });
         savedTourId = newTour.id; 
       }
-      //    НАЧАЛО БЛОКА: ТРИГГЕР РАССЫЛКИ (LTV Engine)   
+
+      // ==========================================
+      // ТРИГГЕР РАССЫЛКИ (LTV Engine)   
+      // ==========================================
       const hasNewDates = data.dates.some(d => !d.id);
-      
       if (hasNewDates && data.isActive) {
          try {
            await notifySubscribersOnNewDates(
@@ -235,7 +292,6 @@ export const saveTour = withAdminAuth(
            console.error("Ошибка при автоматической рассылке Telegram:", notifyError);
          }
       }
-      // 👆 КОНЕЦ БЛОКА 👆
 
       revalidatePath('/admin');
       revalidatePath('/tour');
@@ -254,8 +310,6 @@ export const saveTour = withAdminAuth(
 
 // ==========================================
 // 2. GET ACTIVE GUIDES (БЕЗ ИЗМЕНЕНИЙ)
-// Эту функцию не оборачиваем, так как она только читает список,
-// и нам нужно, чтобы она возвращала массив, а не объект с ошибкой.
 // ==========================================
 export async function getActiveGuides() {
   try {
@@ -272,7 +326,7 @@ export async function getActiveGuides() {
 }
 
 // ==========================================
-// 3. DELETE TOUR - ЗАЩИЩЕНО + АУДИТ
+// 3. DELETE TOUR
 // ==========================================
 export const deleteTour = withAdminAuth(
   withAdminAudit({
@@ -301,12 +355,11 @@ export const deleteTour = withAdminAuth(
 );
 
 // ==========================================
-// 4. TOGGLE STATUS - ЗАЩИЩЕНО + АУДИТ
+// 4. TOGGLE STATUS
 // ==========================================
 export const updateTourStatus = withAdminAuth(
   withAdminAudit({
     actionName: 'UPDATE_TOUR_STATUS',
-    // ПРОСТО ДОБАВЛЯЕМ ВТОРОЙ АРГУМЕНТ СЮДА (с нижним подчеркиванием, так как он не используется для ID):
     getTargetId: (id: string, _isActive: boolean) => id,
   })(async (id: string, isActive: boolean) => {
     try {
@@ -322,12 +375,6 @@ export const updateTourStatus = withAdminAuth(
           id: true,
           slug: true, 
           title: true,
-          subtitle: true,
-          location: true,
-          duration: true,
-          price: true,
-          currency: true,
-          coverImage: true,
           categoryId: true,
           isActive: true,
         },
@@ -356,39 +403,48 @@ export const updateTourStatus = withAdminAuth(
 );
 
 // ==========================================
-// 5. ПОЛУЧЕНИЕ ТУРОВ ДЛЯ АДМИНКИ С ПАГИНАЦИЕЙ (READ-ONLY)
+// 5. ПОЛУЧЕНИЕ ТУРОВ ДЛЯ АДМИНКИ С ПАГИНАЦИЕЙ
 // ==========================================
 
 export interface GetToursAdminParams {
   page: number;
   limit?: number;
   search?: string;
-  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; //   ДОБАВИЛИ drafts
+  filter?: 'all' | 'upcoming' | 'past' | 'full' | 'drafts'; 
 }
 
 export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) => {
-  const { page, limit = 20, search, filter = 'upcoming' } = params; //   ПО УМОЛЧАНИЮ 'upcoming'
+  const { page, limit = 20, search, filter = 'upcoming' } = params;
   const skip = (page - 1) * limit;
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  const where: any = { deletedAt: null };
+  // 🚀 SENIOR FIX: Задаем строгий тип для объекта фильтрации Prisma
+  const where: Prisma.TourWhereInput = { deletedAt: null };
   if (search) {
     where.title = { contains: search, mode: 'insensitive' };
   }
   
   if (filter === 'upcoming') {
     where.isActive = true;
-    where.tourDates = { some: { startDate: { gte: now } } }; // Есть будущие даты
+    where.tourDates = { some: { startDate: { gte: now } } }; 
   } else if (filter === 'past') {
     where.isActive = true;
-    where.tourDates = { none: { startDate: { gte: now } } }; // Нет будущих дат (Архив)
+    where.tourDates = { none: { startDate: { gte: now } } }; 
   } else if (filter === 'drafts') {
-    where.isActive = false; // Черновики
+    where.isActive = false; 
   } else if (filter === 'full') {
     where.isActive = true;
-    where.tourDates = { some: { startDate: { gte: now }, spotsLeft: { lte: 0 } } }; // Места закончились
+    where.tourDates = { some: { startDate: { gte: now }, spotsLeft: { lte: 0 } } }; 
   }
+
+  // 🚀 SENIOR FIX: Выносим структуру инклуда и типизируем через константу во избежание потери вложенности
+  const tourInclude = {
+    guide: true,
+    category: true,
+    tourDates: { orderBy: { startDate: 'asc' as const }, take: 3 },
+    priceCategories: { orderBy: { sortOrder: 'asc' as const } }
+  } satisfies Prisma.TourInclude;
 
   const [toursRaw, total] = await Promise.all([
     prisma.tour.findMany({
@@ -396,18 +452,17 @@ export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) =
       orderBy: { createdAt: 'desc' },
       skip,
       take: limit,
-      include: {
-        guide: true,
-        category: true,
-        tourDates: { orderBy: { startDate: 'asc' }, take: 3 },
-      },
+      include: tourInclude,
     }),
     prisma.tour.count({ where }),
   ]);
 
-  // Используем существующий маппер из api.ts (динамический импорт, чтобы избежать циклических зависимостей)
   const { mapPrismaTourToFrontend } = await import('@/features/tours/api');
-  const tours = toursRaw.map(mapPrismaTourToFrontend);
+  
+  // 🚀 SENIOR FIX: Безопасное и строгое сопоставление типов на базе утилиты Parameters без 'any'
+  const tours = toursRaw.map((tour) => 
+    mapPrismaTourToFrontend(tour as Parameters<typeof mapPrismaTourToFrontend>[0])
+  );
 
   return { success: true, tours, total };
 });

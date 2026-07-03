@@ -12,8 +12,8 @@ interface TourGalleryProps {
 export default function TourGallery({ images = [] }: TourGalleryProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lastTap, setLastTap] = useState(0);
 
-  // 1. Оборачиваем функции в useCallback для линтера
   const closeLightbox = useCallback(() => {
     setIsOpen(false);
     document.body.style.overflow = 'auto';
@@ -35,7 +35,18 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
     document.body.style.overflow = 'hidden';
   };
 
-  // 2. useEffect стоит ДО раннего выхода
+  const handleImageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300; 
+
+    if (now - lastTap < DOUBLE_TAP_DELAY) {
+      closeLightbox();
+    } else {
+      setLastTap(now);
+    }
+  }, [lastTap, closeLightbox]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -48,10 +59,8 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeLightbox, nextImage, prevImage]);
 
-  // 3. И вот только ЗДЕСЬ мы делаем ранний выход (после всех хуков)
   if (!images || images.length === 0) return null;
 
-  // 4. Дальше идут вычисления, которые нужны только если картинки есть
   const displayedImages = images.slice(0, 5);
   const remainingCount = images.length - 5;
 
@@ -72,7 +81,6 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         </h2>
       </div>
 
-      {/*   УМНАЯ СЕТКА: Используем aspect-ratio вместо жестких пикселей */}
       <div className={clsx(
         "grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 rounded-[2rem] md:rounded-3xl overflow-hidden bg-slate-900 border border-white/5 shadow-xl",
         "md:grid-rows-2",
@@ -93,13 +101,11 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                 isMain ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : "col-span-1 row-span-1"
               )}
             >
-         <Image 
+              <Image 
                 src={img} 
                 alt={`Галерея тура фото ${index + 1}`} 
                 fill 
-                className="object-cover object-[center_20%] transition-transform duration-700 group-hover:scale-105"
-                // Главное фото в сетке занимает 100% на мобилке и 50% на десктопе. 
-                // Остальные — 50% на мобилке и 25% на десктопе.
+                className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                 sizes={isMain
                   ? "(max-width: 768px) 100vw, 50vw"
                   : "(max-width: 768px) 50vw, 25vw"
@@ -122,17 +128,15 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
         })}
       </div>
 
-      {/*   ЛАЙТБОКС: Полностью переработан UX для мобильных и десктопов */}
       {isOpen && (
         <div 
           className="fixed inset-0 z-[9999] bg-black/98 isolate backdrop-blur-xl flex flex-col items-center justify-center touch-none animate-in fade-in duration-200"
           onClick={closeLightbox}
         >
-          {/* КОНТЕЙНЕР КАРТИНКИ: Используем динамическую высоту dvh */}
           <div 
              key={currentIndex}
              className="relative w-full h-[85dvh] md:h-[90dvh] max-w-7xl mx-auto flex items-center justify-center animate-in zoom-in-95 duration-200"
-             onClick={(e) => e.stopPropagation()}
+             onClick={handleImageClick}
           >
             <Image 
                src={images[currentIndex]} 
@@ -140,13 +144,11 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
                fill 
                className="object-contain"
                sizes="100vw"
-               // Убрали priority, так как лайтбокс открывается по клику
                loading="eager" 
                quality={75}
              />
           </div>
 
-          {/* СТРЕЛКИ НАВИГАЦИИ (Только если фото больше 1) */}
           {images.length > 1 && (
             <>
               <button 
@@ -166,22 +168,20 @@ export default function TourGallery({ images = [] }: TourGalleryProps) {
             </>
           )}
 
-          {/* СЧЕТЧИК ФОТО (Перемещен выше кнопки закрытия) */}
-          <div className="absolute bottom-[max(6rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-1/2 -translate-x-1/2 px-5 py-2.5 bg-black/60 rounded-full text-white/90 font-bold text-sm backdrop-blur-md border border-white/10 shadow-lg z-[10000] pointer-events-none">
+          {/* ИСПРАВЛЕНО: Вернули iOS safe-area для счетчика снизу, чтобы не перекрывался полоской свайпа */}
+          <div className="absolute bottom-[max(2rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 px-5 py-2.5 bg-black/60 rounded-full text-white/90 font-bold text-sm backdrop-blur-md border border-white/10 shadow-lg z-[10000] pointer-events-none">
              {currentIndex + 1} / {images.length}
           </div>
 
-          {/* КНОПКА ЗАКРЫТИЯ (В зоне большого пальца по центру) */}
+          {/* ИСПРАВЛЕНО: Добавили iOS safe-area для челки (notch) сверху */}
           <button 
-            className="absolute bottom-[max(2rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white backdrop-blur-md border border-white/10 rounded-full transition-all z-[10000] shadow-xl"
+            className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 md:top-6 md:right-6 flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white backdrop-blur-md border border-white/10 rounded-full transition-all z-[10000] shadow-xl"
             aria-label="Закрыть галерею" 
             onClick={closeLightbox}
           >
-             <X size={20} />
-             <span className="text-sm font-medium">Закрыть</span>
+             <X size={20} className="md:w-6 md:h-6" />
           </button>
 
-          {/* Зоны клика для навигации на мобильных (невидимые) */}
           <div className="absolute inset-y-0 left-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); prevImage(); }} />
           <div className="absolute inset-y-0 right-0 w-1/3 z-40 md:hidden" onClick={(e) => { e.stopPropagation(); nextImage(); }} />
         </div>

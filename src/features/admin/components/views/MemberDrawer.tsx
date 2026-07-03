@@ -44,7 +44,7 @@ export default function MemberDrawer({ memberId, onClose, onRefresh }: MemberDra
       setLoading(false);
     };
     load();
-  }, [memberId]);
+  }, [memberId, onClose, showToast]); // 👈 ИСПРАВЛЕНО: Добавлены недостающие зависимости
 
   const handleAdjustBalance = async () => {
     if (!adjustAmount || !adjustReason) return;
