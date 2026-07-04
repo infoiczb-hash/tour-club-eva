@@ -32,7 +32,7 @@ interface BookingConfirmedEmailProps {
 }
 
 const ticketTypeLabels: Record<string, string> = {
-  adult:  'Взрослый',
+  adult:  'Стандарт',
   child:  'Детский',
   family: 'Семейный',
   member: 'Клубный',

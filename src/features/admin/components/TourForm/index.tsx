@@ -90,19 +90,17 @@ export default function TourForm({ initialData, onClose, guides, categories = []
         : null,
 
       // НОВОЕ: Безопасный маппинг существующих динамических тарифов из СУБД в стейт формы
-      priceCategories: Array.isArray(initialData.tourPriceCategories)
-        ? initialData.tourPriceCategories.map((c: any) => ({
-            id: c.id,
-            key: c.key,
-            label: c.label,
-            price: c.price ? Number(c.price) : 0,
-            spotsPerUnit: c.spotsPerUnit ? Number(c.spotsPerUnit) : 1,
-            minQuantity: c.minQuantity ? Number(c.minQuantity) : 0,
-            sortOrder: c.sortOrder ? Number(c.sortOrder) : 0,
-            isActive: c.isActive ?? true,
-          }))
-        : [],
-      
+     priceCategories: (initialData.priceCategories || initialData.tourPriceCategories || []).map((c: any) => ({
+        id: c.id,
+        key: c.key,
+        label: c.label,
+        price: c.price ? Number(c.price) : 0,
+        spotsPerUnit: c.spotsPerUnit ? Number(c.spotsPerUnit) : 1,
+        minQuantity: c.minQuantity ? Number(c.minQuantity) : 0,
+        sortOrder: c.sortOrder ? Number(c.sortOrder) : 0,
+        isActive: c.isActive ?? true,
+      })),
+            
       spots: initialData.spots ? Number(initialData.spots) : 15,
       spotsLeft: (initialData.spotsLeft ?? initialData.spots_left) 
         ? Number(initialData.spotsLeft ?? initialData.spots_left) 

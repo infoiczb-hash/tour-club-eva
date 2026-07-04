@@ -16,7 +16,7 @@ import { clsx } from 'clsx';
 const EMPTY_CART: Record<string, number> = {};
 
 interface Step3CheckoutProps {
-   tour: Tour & { tourPriceCategories?: any[] };
+  tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
   isLoggedIn: boolean;
   userBalance: number;
   onSuccess: (data: any) => void;
@@ -51,19 +51,29 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
   const agreedRules = watch('agreedRules');
 
   // --- Логика категорий тура ---
-  const categorySlug = tour.category?.slug?.toLowerCase() || '';
+ const categorySlug = (tour.category?.slug || '').toLowerCase();
   const isSupTour = categorySlug === 'sup';
   const isKayakingTour = ['kayaking', 'kayak'].includes(categorySlug);
   const showSpecificRules = isKayakingTour || isSupTour;
-  const specificRulesText = isKayakingTour ? "Правилами поведения на сплаве" : "Правилами для SUP туров";
-  const specificRulesLink = isKayakingTour ? "/docs/rules-kayaking" : "/docs/rules-sup";
+  
+  const specificRulesText = isKayakingTour 
+    ? "Правилами поведения на сплаве на байдарках" 
+    : "Правилами поведения для SUP туров";
+    
+  // 🚀 ФИКС ССЫЛКИ: убрали ошибочный префикс /docs/, из-за которого ссылки не работали
+  const specificRulesLink = isKayakingTour ? "/rules-kayaking" : "/rules-sup";
 
-  const isV2 = Array.isArray(tour.tourPriceCategories) && tour.tourPriceCategories.length > 0;
+  // Безопасное чтение динамических тарифов из админки
+  const priceCategories = useMemo(() => {
+    return tour.tourPriceCategories || tour.priceCategories || [];
+  }, [tour.tourPriceCategories, tour.priceCategories]);
+
+  const isV2 = Array.isArray(priceCategories) && priceCategories.length > 0;
 
   // --- ВЫЧИСЛЕНИЯ ЭКОНОМИКИ ---
   const baseTotalPrice = useMemo(() => {
     if (isV2) {
-      return (tour.tourPriceCategories || []).reduce((sum: number, cat: any) => {
+      return priceCategories.reduce((sum: number, cat: any) => {
         return sum + ((cartV2[cat.id] || 0) * cat.price);
       }, 0);
     }
@@ -71,7 +81,7 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
            (ticketsChild * (tour.priceChild || 0)) + 
            (ticketsMember * (tour.priceMember || 0)) + 
            (ticketsFamily * (tour.priceFamily || 0));
-  }, [isV2, cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, tour]);
+  }, [isV2, cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, tour, priceCategories]);
 
   const maxBonusDiscount = Math.floor(baseTotalPrice * 0.1);
   const availableBonusesToUse = Math.min(userBalance, maxBonusDiscount);
@@ -110,12 +120,11 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
     setPromoSuccess(false); setPromoInput(''); setPromoDiscount(0); setValue('promoCode', '');
   };
 
-  // --- SUBMIT ---
+  // --- ОТПРАВКА ФОРМЫ БРОНИРОВАНИЯ ---
   const onSubmit = async (data: BookingFormValues) => {
     setIsLoading(true);
     setErrorMsg(null);
     
-    // Формируем payload гостей, забирая данные из массива Step 2
     const payloadGuests: GuestInput[] = data.guests.map(g => ({
       isMain: g.isMain,
       type: g.type,
@@ -127,7 +136,6 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
       jacket: g.jacket || ''
     }));
 
-    // Формируем payload покупок (только для V2)
     const itemsPayload = isV2 
       ? Object.entries(data.cartV2).map(([categoryId, qty]) => ({ categoryId, qty })).filter(i => i.qty > 0) 
       : undefined;
@@ -140,7 +148,7 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
           tourDate: data.tourDateStr,
           name: payloadGuests[0]?.name || 'Без имени',
           phone: payloadGuests[0]?.phone || '',
-          social: (data as any).social?.trim() || undefined, // Поле social мы добавили на лету в Step2
+          social: data.social?.trim() || undefined, // 🚀 БЕЗ "as any" — теперь поле строго типизировано в схеме!
           comment: data.comment?.trim() || undefined,
           website: (data as any).website || '', // Honeypot
           
@@ -189,7 +197,7 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       
-      {/* СКИДКИ И ФИНАНСЫ */}
+      {/* БЛОК СКИДОК И БОНУСОВ */}
       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-4">
         {isLoggedIn ? (
           userBalance > 0 ? (
@@ -250,12 +258,12 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
             <span className="text-xs font-bold text-slate-400 uppercase">Итого к оплате:</span>
             <div className="text-right flex items-center gap-2">
               {appliedDiscount > 0 && <span className="text-[12px] text-slate-500 line-through font-bold">{baseTotalPrice}</span>}
-              <span className="text-2xl font-black text-teal-400">{displayFinalPrice.toLocaleString()} {tour.currency}</span>
+              <span className="text-2xl font-black text-teal-400">{displayFinalPrice.toLocaleString()} {tour.currency ?? 'RUB'}</span>
             </div>
         </div>
       </div>
 
-      {/* ВЫБОР ОПЛАТЫ */}
+      {/* ВЫБОР СПОСОБА ОПЛАТЫ */}
       <div className="space-y-3">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Способ оплаты</label>
         <div className="flex flex-col gap-2">
@@ -265,7 +273,7 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
             onClick={() => setValue('paymentMethod', 'online_card')} 
             className={clsx("w-full p-4 rounded-2xl border text-left transition-all", paymentMethod === 'online_card' ? 'bg-teal-500/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'bg-slate-950 border-white/5 hover:border-white/20')}
           >
-            <div className="flex justify-between items-center"><span className={clsx("text-sm font-bold", paymentMethod === 'online_card' ? 'text-teal-400' : 'text-white')}>Клевер (Онлайн)</span><CreditCard size={18} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-400'}/></div>
+            <div className="flex justify-between items-center"><span className={clsx("text-sm font-bold", paymentMethod === 'online_card' ? 'text-teal-400' : 'text-white')}>Клевер (Онлайн)/QR</span><CreditCard size={18} className={paymentMethod === 'online_card' ? 'text-teal-500' : 'text-slate-400'}/></div>
           </button>
           
           <button 
@@ -311,55 +319,66 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
         </div>
       )}
 
-      {/* ЮРИДИЧЕСКИЙ БЛОК */}
-      <div className="bg-slate-950/50 p-5 rounded-2xl border border-white/5 space-y-4 mt-6">
+      {/* 🚀 БЛОК СОГЛАСИЙ (100% восстановленный UI, яркий текст и рабочие ссылки) */}
+      <div className="mt-2 bg-white/5 p-5 rounded-2xl border border-white/10">
+        
+        {/* Заголовок и подсказка */}
         <div className="mb-4">
-          <p className="text-[11px] font-black text-white uppercase tracking-widest">При бронировании вы соглашаетесь с:</p>
-          <p className="text-[10px] text-amber-400/90 mt-1.5 flex items-center gap-1.5 font-bold uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            Обязательно проставьте галочки
+          <p className="text-xs font-black text-white uppercase tracking-widest">
+            При бронировании вы соглашаетесь с:
+          </p>
+          <p className="text-[12px] text-amber-400/90 mt-1.5 flex items-center gap-1.5 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+            Пожалуйста, поставьте отметку для согласия
           </p>
         </div>
         
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-            <input type="checkbox" {...register('agreedOffer')} className="peer sr-only" />
-            <div className="w-5 h-5 border-2 border-slate-600 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
-              <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
-            </div>
-          </div>
-          <span className="text-sm text-white leading-snug">
-            <a href="/offer" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40">Публичной офертой оказания услуг</a>
-          </span>
-        </label>
-        
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-            <input type="checkbox" {...register('agreedPrivacy')} className="peer sr-only" />
-            <div className="w-5 h-5 border-2 border-slate-600 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
-              <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
-            </div>
-          </div>
-          <span className="text-sm text-white leading-snug">
-            <a href="/privacy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40">Политикой обработки персональных данных</a>
-          </span>
-        </label>
-
-        {showSpecificRules && (
+        <div className="space-y-4">
+          {/* 1. Публичная оферта */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className="relative flex items-center justify-center mt-0.5 shrink-0">
-              <input type="checkbox" {...register('agreedRules', { required: true })} className="peer sr-only" />
-              <div className="w-5 h-5 border-2 border-slate-600 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+              <input type="checkbox" {...register('agreedOffer')} className="peer sr-only" />
+              {/* Фикс рамки: вернули border-slate-400 для четкой видимости */}
+              <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+                <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+              </div>
+            </div>
+            <span className="text-sm text-white leading-snug">
+              <a href="/offer" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Публичной офертой оказания услуг</a>
+            </span>
+          </label>
+
+          {/* 2. Персональные данные */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+              <input type="checkbox" {...register('agreedPrivacy')} className="peer sr-only" />
+              <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
                 <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
               </div>
             </div>
             <span className="text-sm text-white leading-snug">
-              Ознакомлен с <a href={specificRulesLink} target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40">{specificRulesText}</a>
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">Политикой обработки персональных данных</a>
             </span>
           </label>
-        )}
+
+          {/* 3. Правила сплава / SUP (Только для специфических категорий туров) */}
+          {showSpecificRules && (
+            <label className="flex items-start gap-3 cursor-pointer group animate-in fade-in slide-in-from-left-2">
+              <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+                <input type="checkbox" {...register('agreedRules', { required: true })} className="peer sr-only" />
+                <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
+                  <CheckCircle size={14} className="text-slate-950 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+                </div>
+              </div>
+              <span className="text-sm text-white leading-snug">
+                Ознакомлен с <a href={specificRulesLink} target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline underline-offset-4 decoration-teal-500/40 transition-colors">{specificRulesText}</a>
+              </span>
+            </label>
+          )}
+        </div>
       </div>
 
+      {/* Honeypot Защита от спам-ботов */}
       <input type="text" {...register('website' as any)} style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
 
       {/* ФИНАЛЬНАЯ КНОПКА ОПЛАТЫ */}
@@ -371,7 +390,7 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
         {isLoading ? (
           <Loader2 className="animate-spin" size={20} />
         ) : (
-          `Оформить за ${displayFinalPrice.toLocaleString()} ${tour.currency}`
+          `Оформить за ${displayFinalPrice.toLocaleString()} ${tour.currency ?? 'RUB'}`
         )}
       </button>
 

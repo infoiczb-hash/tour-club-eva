@@ -110,11 +110,11 @@ const formatTickets = (b: BookingItem) => {
 
 const getTicketLabel = (type: string, age?: string | number) => {
   switch(type) {
-    case 'adult': return 'Взрослый';
+    case 'adult': return 'Стандарт';
     case 'child': return age ? `Детский (${age} лет)` : 'Детский';
     case 'family': return 'Семейный';
     case 'member': return 'Член клуба';
-    default: return 'Взрослый';
+    default: return 'Стандарт';
   }
 };
 
@@ -497,7 +497,7 @@ export default function BookingsTab({
                                       <div className="flex flex-wrap gap-2">
                                         <div className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs flex flex-col gap-0.5 shadow-sm">
                                           <span className="font-black text-slate-900">{b.user_name} <span className="text-slate-800 font-medium">(Заказчик)</span></span>
-                                          <span className="text-slate-700 text-[12px] font-bold uppercase">Взрослый</span>
+                                          <span className="text-slate-700 text-[12px] font-bold uppercase">Стандарт</span>
                                         </div>
                                         {guests.map((g, i) => (
                                           <div key={i} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs flex flex-col gap-0.5 shadow-sm">
@@ -621,7 +621,7 @@ export default function BookingsTab({
                                     <div className="flex flex-col gap-1.5">
                                         <div className="text-xs flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-sm">
                                             <span className="font-bold text-slate-900">{b.user_name} <span className="text-[12px] text-slate-800 font-normal">(Заказчик)</span></span>
-                                            <span className="text-[12px] font-bold text-slate-700 uppercase">Взрослый</span>
+                                            <span className="text-[12px] font-bold text-slate-700 uppercase">Стандарт</span>
                                         </div>
                                         {guests.map((g, i) => (
                                             <div key={i} className="text-xs flex items-center justify-between bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-sm">

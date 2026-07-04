@@ -9,10 +9,12 @@ import { ActionButton } from '../ui/ActionButton';
 import { Tour } from '@/features/tours/types';
 
 interface BookingSimple {
-  event_id: string;
+  tourId: string;
   status: string;
   tickets_adult: number;
   tickets_child: number;
+  tickets_family?: number;
+  tickets_member?: number;
 }
 
 // Расширенный интерфейс с пагинацией
@@ -222,7 +224,7 @@ export default function ToursTab({
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {filteredTours.map(tour => {
-                            const booked = bookings.filter(b => b.event_id === String(tour.id) && b.status !== 'cancelled')
+                            const booked = bookings.filter(b => b.tourId === String(tour.id) && b.status !== 'cancelled')
                                                    .reduce((acc, b) => acc + (b.tickets_adult || 0) + (b.tickets_child || 0), 0);
                             const percent = Math.min((booked / (Number(tour.spots) || 1)) * 100, 100);
                             

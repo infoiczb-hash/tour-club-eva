@@ -31,7 +31,7 @@ export const Finance = () => {
           <div className="space-y-4 p-4 bg-teal-50/50 rounded-xl border border-teal-100">
             <h4 className="text-xs font-black uppercase text-teal-600 mb-2">Базовая стоимость</h4>
             <div className="grid grid-cols-2 gap-3">
-               <FormInput name="price" label="Цена (Взрослый)" type="number" placeholder="1000" />
+               <FormInput name="price" label="Цена (Стандарт)" type="number" placeholder="1000" />
                <FormSelect 
                   name="currency" 
                   label="Валюта" 

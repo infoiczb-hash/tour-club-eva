@@ -33,6 +33,7 @@ export const bookingFormSchema = z.object({
 
   // Шаг 2: Гости и специфика каякинга
   guests: z.array(guestSchema).default([]),
+  social: z.string().default(''), // 🚀 SENIOR SOLUTION: Добавили поле связи (Email/Telegram) прямо в схему, полностью убирая потребность в "as any"
   comment: z.string().optional(),
   hasChildUnder7: z.boolean().default(false),
   hasDog: z.boolean().default(false),

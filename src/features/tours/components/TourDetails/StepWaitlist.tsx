@@ -7,7 +7,6 @@ import { AlertCircle, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
 import { BookingFormValues } from './booking.schema';
-import { clsx } from 'clsx';
 
 interface StepWaitlistProps {
   tour: Tour;
@@ -16,14 +15,16 @@ interface StepWaitlistProps {
 }
 
 export default function StepWaitlist({ tour, onClose, onBack }: StepWaitlistProps) {
-  // Нам нужен watch, чтобы забрать имя/телефон, если они уже были введены (или подтянулись из профиля)
-  // Но мы не используем trigger/register, так как это отдельная логика, не требующая сложной Zod-валидации всей корзины
+  // Нам нужен watch, чтобы забрать имя/телефон, если они уже подтянулись из профиля в BookingModal
   const { watch } = useFormContext<BookingFormValues>();
 
   const selectedDateId = watch('tourDateId');
   const selectedDateStr = watch('tourDateStr');
-  const initialName = watch('guests.0.name') || ''; // Берем имя первого гостя (Заказчика), если есть
-  const initialPhone = watch('guests.0.phone') || '';
+  
+  // Безопасное извлечение данных первого гостя (Заказчика)
+  const guests = watch('guests') || [];
+  const initialName = guests[0]?.name || ''; 
+  const initialPhone = guests[0]?.phone || '';
 
   const [name, setName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);

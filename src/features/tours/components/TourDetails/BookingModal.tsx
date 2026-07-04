@@ -11,8 +11,16 @@ import { getMyProfileAction } from '@/features/account/actions/getProfile';
 import { bookingFormSchema, type BookingFormValues } from './booking.schema';
 import { SuccessScreen } from './SuccessScreen';
 
-// 🚀 SENIOR SOLUTION: Ленивая загрузка шагов (Code Splitting).
-// Браузер скачает код оплаты и анкет только когда клиент до них дойдет.
+// Вспомогательная функция форматирования дат (перенесена из OLD для автовыбора)
+const formatDateForDropdown = (d: any) => {
+  const dateVal = d.startDate || d.start || d.date;
+  if (!dateVal) return '';
+  const dateObj = new Date(dateVal);
+  const str = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return `${str}${d.time ? ` в ${d.time}` : ''}`;
+};
+
+// Ленивая загрузка шагов (Code Splitting)
 const StepLoader = () => (
   <div className="flex flex-col items-center justify-center py-24 text-slate-500 animate-in fade-in">
     <Loader2 className="animate-spin mb-4" size={32} />
@@ -38,13 +46,14 @@ export type WizardStep = 'cart' | 'guests' | 'checkout' | 'success' | 'waitlist'
 export default function BookingModal({ isOpen, onClose, tour, initialDate, initialDateId }: BookingModalProps) {
   const [step, setStep] = useState<WizardStep>('cart');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // Флаг для предотвращения мигания баннера
   const [userBalance, setUserBalance] = useState(0);
   const [successData, setSuccessData] = useState<any>(null);
   
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // 1. Инициализация формы
- const methods = useForm<BookingFormValues>({
+  // Инициализация формы дефолтными значениями
+  const methods = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema) as unknown as Resolver<BookingFormValues>,
     mode: 'onChange',
     defaultValues: {
@@ -68,46 +77,92 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     }
   });
 
-  // 🛡️ SENIOR SOLUTION: Защита от случайного закрытия
+  // Защита от случайного закрытия формы при наличии изменений
   const handleSafeClose = useCallback(() => {
-    // Проверяем, вводил ли пользователь какие-то данные (isDirty)
     const hasUnsavedChanges = Object.keys(methods.formState.dirtyFields).length > 0;
     
-    // Если он уже на этапе заполнения гостей/оплаты и форма тронута
     if (hasUnsavedChanges && (step === 'guests' || step === 'checkout')) {
       if (!window.confirm('У вас есть несохраненные данные. Точно хотите закрыть?')) {
-        return; // Отменяем закрытие
+        return;
       }
     }
     onClose();
   }, [methods.formState.dirtyFields, step, onClose]);
 
-  // 2. Жизненный цикл модалки
+  // Жизненный цикл модалки, загрузка данных ЛК и автоматическая инициализация дат
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      getMyProfileAction().then((profile) => {
-        if (profile) {
-          setIsLoggedIn(true);
-          setUserBalance(profile.balance || 0);
-        } else {
+      setIsAuthLoading(true);
+
+      // --- ИНИЦИАЛИЗАЦИЯ ДАТЫ (Исправление проблемы №4) ---
+      const sourceDates = (tour.tourDates && tour.tourDates.length > 0) ? tour.tourDates : (tour.dates || []);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      
+      const validDates = sourceDates.filter((d: any) => {
+        const dateVal = d.startDate || d.start || d.date;
+        return dateVal ? new Date(dateVal) >= now : true;
+      });
+
+      if (initialDate && initialDateId) {
+        methods.setValue('tourDateId', initialDateId);
+        methods.setValue('tourDateStr', initialDate);
+      } else if (validDates.length > 0) {
+        const firstFree = validDates.find((d: any) => (d.spotsLeft ?? d.capacity ?? 0) > 0);
+        const defaultDate = firstFree || validDates[0];
+
+        methods.setValue('tourDateId', defaultDate.id || null);
+        methods.setValue('tourDateStr', formatDateForDropdown(defaultDate));
+      } else {
+        methods.setValue('tourDateId', null);
+        methods.setValue('tourDateStr', 'Открытая дата (по согласованию)');
+      }
+
+      // --- ЗАГРУЗКА ПРОФИЛЯ ЛК (Исправление проблемы №3) ---
+      getMyProfileAction()
+        .then((profile) => {
+          if (profile) {
+            setIsLoggedIn(true);
+            setUserBalance(profile.balance || 0);
+
+            // Интеллектуальное предзаполнение полей формы значениями из личного кабинета
+            methods.setValue('guests.0.name', profile.name || '');
+            methods.setValue('guests.0.phone', profile.phone || '');
+            
+            // 🚀 БЕЗ "as any": Поле теперь официально существует в схеме формы!
+            methods.setValue('social', profile.email || profile.telegram || profile.instagram || '');
+            
+            methods.setValue('guests.0.jacket', profile.lifeJacketSize || '');
+          } else {
+            setIsLoggedIn(false);
+            setUserBalance(0);
+          }
+        })
+        .catch(() => {
           setIsLoggedIn(false);
           setUserBalance(0);
-        }
-      });
+        })
+        .finally(() => {
+          setIsAuthLoading(false); // Загрузка завершена, теперь можно безопасно рендерить баннер
+        });
+
     } else {
       document.body.style.overflow = '';
       const timer = setTimeout(() => {
         setStep('cart');
         methods.reset();
         setSuccessData(null);
+        setIsLoggedIn(false);
+        setUserBalance(0);
+        setIsAuthLoading(true);
       }, 300);
       return () => clearTimeout(timer);
     }
     return () => { document.body.style.overflow = ''; };
-  }, [isOpen, methods, initialDate, initialDateId]);
+  }, [isOpen, methods, initialDate, initialDateId, tour]);
 
-  // 3. Фокус-трап и закрытие по Escape (с защитой)
+  // Фокус-трап и закрытие по нажатию клавиши Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -155,7 +210,15 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-5 relative">
             <FormProvider {...methods}>
-              {step === 'cart' && <Step1Cart tour={tour} onNext={() => setStep('guests')} onSoldOut={() => setStep('waitlist')} isLoggedIn={isLoggedIn} />}
+              {step === 'cart' && (
+              <Step1Cart 
+                  tour={tour} 
+                  onNext={() => setStep('guests')} 
+                  onSoldOut={() => setStep('waitlist')} 
+                  onClose={onClose} // <--- ДОБАВИЛИ
+                  isLoggedIn={isLoggedIn && !isAuthLoading}
+                />
+              )}
               {step === 'guests' && <Step2Guests tour={tour} onNext={() => setStep('checkout')} />}
               {step === 'checkout' && <Step3Checkout tour={tour} isLoggedIn={isLoggedIn} userBalance={userBalance} onSuccess={(data) => { setSuccessData(data); setStep('success'); }} />}
               {step === 'waitlist' && <StepWaitlist tour={tour} onClose={onClose} onBack={() => setStep('cart')} />}

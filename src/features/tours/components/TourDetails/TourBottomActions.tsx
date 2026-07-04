@@ -10,10 +10,9 @@ import { getMyProfileAction } from '@/features/account/actions/getProfile';
 import { calculateDynamicPrice } from '@/features/tours/lib/pricing';
 
 interface TourBottomActionsProps {
-  tour: Tour;
+  tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
 }
 
-// Вытягиваем оба варианта дат напрямую из типа Tour, чтобы TypeScript не ругался на расхождения
 type UnifiedTourDate = NonNullable<Tour["tourDates"]>[number] | NonNullable<Tour["dates"]>[number];
 
 export default function TourBottomActions({ tour }: TourBottomActionsProps) {
@@ -29,9 +28,8 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
   const [waitlistDone,     setWaitlistDone]     = useState(false);
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
-  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false); // Флаг профиля
+  const [isProfileLoaded,  setIsProfileLoaded]  = useState(false);
 
-  // Клиентская загрузка профиля
   useEffect(() => {
     getMyProfileAction().then(p => {
       if (p) {
@@ -57,9 +55,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
     }
   }, [isVisible]);
 
-  // Умная логика доступности (Global Availability) - Единая с сайдбаром
   const { targetDate, isGlobalSoldOut, isLowSpots } = useMemo(() => {
-    // Явно указываем TypeScript, что массив содержит объединенный тип
     const allDates = (tour?.dates || tour?.tourDates || []) as UnifiedTourDate[];
     
     if (!allDates || allDates.length === 0) {
@@ -68,7 +64,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
     }
 
     const now = new Date();
-    now.setHours(0, 0, 0, 0); // Сбрасываем до полуночи
+    now.setHours(0, 0, 0, 0);
 
     const futureDates = allDates.filter((d: UnifiedTourDate) => {
       const dateVal = d.startDate || d.start || d.date;
@@ -100,29 +96,45 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
   const isSoldOut = isGlobalSoldOut;
 
-  // --- ЛОГИКА ДИНАМИЧЕСКИХ ЦЕН ---
+  // --- ЛОГИКА ДИНАМИЧЕСКИХ ЦЕН И АБСОЛЮТНЫХ СКИДОК ---
   const basePriceVal = Number(tour.price || 0);
   const dynamicPricing = calculateDynamicPrice(basePriceVal, targetDate);
-  const currentPrice = dynamicPricing.price;
-  const oldPriceVal = dynamicPricing.oldPrice || Number(tour.priceOld || 0);
+  const currentV1Price = dynamicPricing.price;
+  
+  const priceDelta = currentV1Price - basePriceVal;
+  
+  const priceCategories = useMemo(() => {
+    return tour.tourPriceCategories || tour.priceCategories || [];
+  }, [tour.tourPriceCategories, tour.priceCategories]);
 
-  const hasDiscount = oldPriceVal > currentPrice;
-  const discountPercent = hasDiscount
-    ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100)
+  const activeCategories = priceCategories
+    .filter((c: any) => c.isActive !== false)
+    .map((c: any) => {
+      const original = Number(c.price);
+      const current = Math.max(0, original + priceDelta);
+      return { ...c, originalPrice: original, currentPrice: current };
+    });
+
+  const isV2 = activeCategories.length > 0;
+
+  const minPrice = useMemo(() => {
+    if (isV2) return Math.min(...activeCategories.map((c: any) => c.currentPrice));
+    const p = [currentV1Price];
+    if (tour.priceMember) p.push(Number(tour.priceMember));
+    if (tour.priceChild) p.push(Number(tour.priceChild));
+    return Math.min(...p);
+  }, [isV2, activeCategories, currentV1Price, tour]);
+
+  const hasDiscount = priceDelta < 0; 
+  const headerOldPrice = isV2 
+    ? Math.min(...activeCategories.map((c: any) => c.originalPrice)) 
+    : (dynamicPricing.oldPrice || Number(tour.priceOld || 0));
+    
+  const discountPercent = hasDiscount && headerOldPrice > 0
+    ? Math.round(((headerOldPrice - minPrice) / headerOldPrice) * 100)
     : 0;
   
-  const prices = useMemo(() => {
-    const list = [];
-    if (tour.price) list.push({ label: 'Взрослый', value: currentPrice, icon: <Ticket size={14} /> });
-    if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
-    if (tour.priceChild) list.push({ label: 'Детский (до 15)', value: tour.priceChild, icon: <Baby size={14} /> });
-    if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
-    return list;
-  }, [tour, currentPrice]);
-
-  const minPrice = prices.length > 0 
-    ? Math.min(...prices.map(p => Number(p.value))) 
-    : currentPrice;
+  const showFromPrefix = isV2 ? activeCategories.length > 1 : (Number(tour.priceMember || 0) > 0 || Number(tour.priceChild || 0) > 0);
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,13 +273,14 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                       </div>
 
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl font-black text-white">{currentPrice.toLocaleString('ru-RU')}</span>
+                        {showFromPrefix && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
+                        <span className="text-3xl font-black text-white">{minPrice.toLocaleString('ru-RU')}</span>
                         <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
                       </div>
                       
                       {hasDiscount && (
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-slate-300 line-through text-xs">{oldPriceVal.toLocaleString('ru-RU')}</span>
+                          <span className="text-slate-300 line-through text-xs">{headerOldPrice.toLocaleString('ru-RU')}</span>
                           <span className="bg-rose-500/10 text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
                             −{discountPercent}%
                           </span>
@@ -290,20 +303,76 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
                   <div className="border-t border-white/5" />
 
-                  {prices.length > 1 && (
+                  {/* Рендер тарифов: Умный V1 / V2 */}
+                  {((isV2 && activeCategories.length > 0) || (!isV2 && (tour.priceMember || tour.priceChild || tour.priceFamily))) && (
                     <div className="space-y-2.5">
-                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Тарифы</p>
-                      {prices.map((p, idx) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-slate-300">
-                            {p.icon}
-                            <span>{p.label}</span>
+                      <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Доступные тарифы</p>
+                      
+                      {isV2 ? (
+                        activeCategories.map((cat: any) => (
+                          <div key={cat.id} className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                              <Ticket size={14} className="shrink-0" />
+                              <span>{cat.label}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              {hasDiscount && (
+                                <span className="text-[10px] text-slate-500 line-through leading-none mb-0.5">
+                                  {cat.originalPrice.toLocaleString('ru-RU')} {tour.currency}
+                                </span>
+                              )}
+                              <span className="font-bold text-white text-sm leading-none">
+                                {cat.currentPrice.toLocaleString('ru-RU')} {tour.currency}
+                              </span>
+                            </div>
                           </div>
-                          <span className="font-bold text-white text-sm">
-                            {(p.value as number).toLocaleString('ru-RU')} {tour.currency}
-                          </span>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                              <Ticket size={14} />
+                              <span>Стандарт</span>
+                            </div>
+                            <span className="font-bold text-white text-sm">
+                              {currentV1Price.toLocaleString('ru-RU')} {tour.currency}
+                            </span>
+                          </div>
+                          {tour.priceMember && (
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2 text-sm text-amber-400">
+                                <Crown size={14} />
+                                <span className="font-bold">Клубная карта</span>
+                              </div>
+                              <span className="font-bold text-amber-400 text-sm">
+                                {Number(tour.priceMember).toLocaleString('ru-RU')} {tour.currency}
+                              </span>
+                            </div>
+                          )}
+                          {tour.priceChild && (
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2 text-sm text-pink-400">
+                                <Baby size={14} />
+                                <span>Детский (до 15)</span>
+                              </div>
+                              <span className="font-bold text-white text-sm">
+                                {Number(tour.priceChild).toLocaleString('ru-RU')} {tour.currency}
+                              </span>
+                            </div>
+                          )}
+                          {tour.priceFamily && (
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2 text-sm text-blue-400">
+                                <Users size={14} />
+                                <span>Семья (2+1)</span>
+                              </div>
+                              <span className="font-bold text-white text-sm">
+                                {Number(tour.priceFamily).toLocaleString('ru-RU')} {tour.currency}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
                 </>
@@ -324,13 +393,12 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
               <div className="min-w-0 text-left">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <p className="text-xs text-slate-300 uppercase font-bold tracking-wider">Стоимость</p>
-                  {/* Микро-бейджи для свернутого состояния */}
                   {!isExpanded && dynamicPricing.type === 'EARLY_BIRD' && <Flame size={12} className="text-teal-400" />}
                   {!isExpanded && dynamicPricing.type === 'LAST_MINUTE' && <Zap size={12} className="text-rose-400" />}
                 </div>
                 
                 <div className="flex items-baseline gap-1">
-                  {prices.length > 1 && <span className="text-xs text-slate-300 font-medium">от</span>}
+                  {showFromPrefix && <span className="text-xs text-slate-300 font-medium">от</span>}
                   <span className="text-xl font-black text-white">{minPrice.toLocaleString('ru-RU')}</span>
                   <span className="text-xs font-bold text-teal-500">{tour.currency || 'RUB'}</span>
                 </div>

@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation';
 import { Tour } from '@/features/tours/types';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { toggleTourWishlistAction } from '@/features/account/actions/tourWishlist';
-import { calculateDynamicPrice } from '@/features/tours/lib/pricing'; // <-- ИМПОРТ НАШЕГО КАЛЬКУЛЯТОРА
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing'; 
 
 interface TourDatesProps {
-  tour: Tour;
+  tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
   isWished?: boolean;
 }
 
@@ -27,7 +27,7 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
     return tour.dates
       .filter((d: any) => {
         const dateVal = d.startDate || d.start || d.date;
-        return dateVal ? new Date(dateVal) >= now : true; // Показываем будущие или без четкой даты
+        return dateVal ? new Date(dateVal) >= now : true; 
       })
       .sort((a: any, b: any) => {
          const dateA = a.startDate || a.start || a.date;
@@ -94,6 +94,12 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
     );
   }
 
+  // Общая подготовка гибких тарифов (V2)
+  const priceCategories = tour.tourPriceCategories || tour.priceCategories || [];
+  const activeCategories = priceCategories.filter((c: any) => c.isActive !== false);
+  const isV2 = activeCategories.length > 0;
+  const showFromPrefix = isV2 ? activeCategories.length > 1 : (Number(tour.priceMember || 0) > 0 || Number(tour.priceChild || 0) > 0);
+
   return (
     <section className="scroll-mt-24 mb-12 md:mb-16" id="dates">
       {/* ЗАГОЛОВОК */}
@@ -124,8 +130,27 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
            const guideName = tour.guide?.name || 'Гид клуба';
            const guideImage = tour.guide?.image || null;
 
-           // ДОБАВЛЕНО: Считаем цену именно для этого выезда
-           const dynamicPricing = calculateDynamicPrice(Number(tour.price || 0), item);
+           // 🚀 SENIOR FIX: Считаем динамическую цену И дельту конкретно для ЭТОЙ даты
+           const basePriceVal = Number(tour.price || 0);
+           const dynamicPricing = calculateDynamicPrice(basePriceVal, item);
+           const priceDelta = dynamicPricing.price - basePriceVal;
+           const hasDiscount = priceDelta < 0;
+
+           // Умный поиск минимальной цены для этой конкретной даты
+           let minPriceForDate;
+           let oldPriceForDate;
+           
+           if (isV2) {
+             const minOriginal = Math.min(...activeCategories.map((c: any) => Number(c.price)));
+             minPriceForDate = Math.max(0, minOriginal + priceDelta);
+             oldPriceForDate = minOriginal;
+           } else {
+             const p = [dynamicPricing.price];
+             if (tour.priceMember) p.push(Number(tour.priceMember));
+             if (tour.priceChild) p.push(Number(tour.priceChild));
+             minPriceForDate = Math.min(...p);
+             oldPriceForDate = dynamicPricing.oldPrice || Number(tour.priceOld || 0);
+           }
 
            return (
             <div 
@@ -147,7 +172,7 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                            {dateString}
                          </span>
                          
-                         {/* ДОБАВЛЕНО: Маркетинговые бейджи */}
+                         {/* Маркетинговые бейджи */}
                          {!isSoldOut && dynamicPricing.type === 'EARLY_BIRD' && (
                             <div className="bg-teal-500/20 text-teal-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded flex items-center gap-1 border border-teal-500/30">
                               <Flame size={10} /> Раннее
@@ -179,14 +204,15 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                 {/* ПРАВАЯ ЧАСТЬ: ГИД И СТАТУС */}
                 <div className="flex items-center justify-between md:w-2/3 md:justify-end md:gap-8">
                     
-                   {/* ДОБАВЛЕНО: Индивидуальная цена для даты (показываем на десктопе) */}
+                   {/* 🚀 SENIOR FIX: Вывод цены с приставкой "от" и зачеркиванием старой */}
                    <div className="hidden lg:flex flex-col items-end mr-2">
-                     <span className={`text-lg font-black tracking-tight ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
-                       {dynamicPricing.price.toLocaleString('ru-RU')} {tour.currency || 'RUB'}
+                     <span className={`text-lg font-black tracking-tight flex items-baseline gap-1 ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
+                       {showFromPrefix && <span className="text-xs text-slate-400 uppercase font-bold">от</span>}
+                       {minPriceForDate.toLocaleString('ru-RU')} <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
                      </span>
-                     {dynamicPricing.oldPrice && !isSoldOut && (
+                     {hasDiscount && !isSoldOut && oldPriceForDate > 0 && (
                         <span className="text-xs text-slate-400 line-through decoration-rose-500/50">
-                          {dynamicPricing.oldPrice.toLocaleString('ru-RU')} {tour.currency || 'RUB'}
+                          {oldPriceForDate.toLocaleString('ru-RU')} {tour.currency || 'RUB'}
                         </span>
                      )}
                    </div>
@@ -196,13 +222,13 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                            isSoldOut ? 'bg-slate-800 text-slate-600' : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
                       }`}>
                          {guideImage ? (
-                      <Image 
-              src={guideImage} 
-              alt={guideName} 
-              fill 
-              className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
-              sizes="40px" 
-            />
+                            <Image 
+                              src={guideImage} 
+                              alt={guideName} 
+                              fill 
+                              className={`object-cover object-top ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
+                              sizes="40px" 
+                            />
                          ) : (
                            <User size={20} />
                          )}

@@ -7,21 +7,21 @@ export interface TourDateItem {
   id: string;
   date?: string;
   start?: string | Date;
-  startDate: string | Date;       //   ДОБАВЛЕНО: актуальное поле начала из Prisma
+  startDate: string | Date;
   endDate?: string | Date | null;
   time?: string | null;
-  capacity: number;               //   ДОБАВЛЕНО: вместимость
+  capacity: number;
   spots?: number;
   spotsLeft?: number;
   basePrice?: number | null;
   guideId?: string | null;
-  _count?: {                      //   ДОБАВЛЕНО: счетчик связей (броней)
+  _count?: {
     bookings: number;
   };
 }
 
 // ==========================================
-// 2. СТРОГИЙ ТИП ГИДА
+// 2. СТРОГИЙ ТИП ГИДА И КАТЕГОРИЙ ЦЕН
 // ==========================================
 export interface GuideInfo {
   id: string;
@@ -32,6 +32,17 @@ export interface GuideInfo {
   instagram?: string | null;
   telegram?: string | null;
   slug?: string | null;
+}
+
+export interface TourPriceCategory {
+  id?: string;
+  key: string;
+  label: string;
+  price: number;
+  spotsPerUnit?: number;
+  minQuantity?: number;
+  sortOrder?: number;
+  isActive?: boolean;
 }
 
 // ==========================================
@@ -82,16 +93,19 @@ export interface Tour {
   id: string;
   slug: string;
   title: string;
-  subtitle?: string | null;
-  description?: string | null; 
+  subtitle: string | null;
+  description: string;
 
   // === ЦЕНЫ ===
-  price: number;           
-  currency: string;        
-  priceOld?: number | null;
-  priceChild?: number | null;
-  priceFamily?: number | null;
-  priceMember?: number | null;
+  price: number;
+  currency: string;
+  priceOld: number | null;
+  priceChild: number | null;
+  priceFamily: number | null;
+  priceMember: number | null;
+  
+  priceCategories?: TourPriceCategory[];
+  tourPriceCategories?: TourPriceCategory[];
 
   biletpmrLink?: string | null;
   apbQrLink?: string | null;
@@ -103,17 +117,18 @@ export interface Tour {
   endDate?: string | Date | null; 
   dates?: {
     id?: string;            
-    start?: string;       //   ИЗМЕНЕНО: добавлена поддержка Date
-   startDate?: string;
-  date?: string;
-  end?: string;
+    start?: string;
+    startDate?: string;
+    date?: string;
+    end?: string;
     guide_id?: string;
     time?: string;
-    capacity: number;              //   ДОБАВЛЕНО: вместимость
-    spots?: number; 
-    spotsLeft?: number;     
+    capacity: number;
+    // 🚀 SENIOR FIX: Поля для поддержки обратной совместимости легаси-дат
+    spots?: number;
+    spotsLeft?: number;
     basePrice?: number | null; 
-    _count?: {                     //   ДОБАВЛЕНО: счетчик броней
+    _count?: {
       bookings: number;
     };
   }[];
@@ -136,7 +151,7 @@ export interface Tour {
   tags?: string[];         
   highlights?: TourHighlight[];      
 
-  //   НОВЫЕ ХАРАКТЕРИСТИКИ (Фаза 1)
+  // === НОВЫЕ ХАРАКТЕРИСТИКИ ===
   tourFormat?: string | null;
   accommodation?: string | null;
   groupInfo?: string | null;
@@ -168,7 +183,7 @@ export interface Tour {
   included: string[];           
   additionalExpenses: string[];  
 
-  //   НОВЫЕ ДЕТАЛИЗИРОВАННЫЕ СПИСКИ (Аккордеоны)
+  // === НОВЫЕ ДЕТАЛИЗИРОВАННЫЕ СПИСКИ ===
   includedDetailed?: any | null;
   excludedDetailed?: any | null;
 
@@ -196,11 +211,12 @@ export interface TourGuide {
 }
 
 // ==========================================
-// 5. DTO ДЛЯ КАРТОЧЕК (Облегченный тип без тяжелых текстов)
+// 5. DTO ДЛЯ КАРТОЧЕК (Облегченный тип)
 // ==========================================
 export type TourPreview = Pick<Tour,
   | 'id' | 'slug' | 'title' | 'subtitle' | 'price' | 'currency' | 'priceOld'
-  | 'priceMember' | 'priceChild' | 'tags' //   ДОБАВИЛИ ЭТИ ПОЛЯ
+  | 'priceMember' | 'priceChild' | 'tags' 
+  | 'priceCategories' | 'tourPriceCategories' 
   | 'date' | 'endDate' | 'dates' | 'image' | 'label' | 'categoryId' | 'category'
   | 'difficulty' | 'location' | 'duration' | 'spots' | 'spotsLeft' | 'isActive'
   | 'guide'

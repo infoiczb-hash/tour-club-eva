@@ -565,7 +565,7 @@ export default function AdminDashboard({ initialTours }: { initialTours: Tour[] 
             loading={toursLoading}
             searchTerm={toursSearch}
             filter={toursFilter}
-            bookings={bookings as any}
+            bookings={bookings}
             categories={tourCategories}
             onSearchChange={(val) => { setToursSearch(val); setToursPage(1); }}
             onFilterChange={(f) => { setToursFilter(f); setToursPage(1); }}

@@ -7,10 +7,10 @@ import { clsx } from 'clsx';
 import { useModalStore } from '@/shared/store/useModalStore';
 import { joinWaitlistAction } from '@/features/account/actions/waitlist';
 import { getMyProfileAction } from '@/features/account/actions/getProfile';
-import { calculateDynamicPrice } from '@/features/tours/lib/pricing'; // <-- ИМПОРТ НАШЕГО КАЛЬКУЛЯТОРА
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing';
 
 interface TourSidebarProps {
-  tour: Tour;
+  tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
 }
 
 export default function TourSidebar({ tour }: TourSidebarProps) {
@@ -19,7 +19,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
   const basePriceVal = Number(price || 0);
 
-  // Умная логика доступности (Global Availability) + Поиск ближайшей даты
+  // 1. Умная логика доступности (Global Availability)
   const { isGlobalSoldOut, isLowSpots, nearestAvailableDate } = useMemo(() => {
     const allDates = tour?.tourDates || tour?.dates || [];
     if (!allDates || allDates.length === 0) {
@@ -50,33 +50,54 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
     };
   }, [tour]);
 
-  // Оставляем алиас для совместимости с нижним кодом
   const isSoldOut = isGlobalSoldOut;
 
-  // ВЫЧИСЛЯЕМ ДИНАМИЧЕСКУЮ ЦЕНУ НА ОСНОВЕ БЛИЖАЙШЕЙ ДАТЫ
+  // 2. ВЫЧИСЛЯЕМ ДИНАМИЧЕСКУЮ ЦЕНУ (V1) И ДЕЛЬТУ
   const dynamicPricing = calculateDynamicPrice(basePriceVal, nearestAvailableDate);
-  const currentPrice = dynamicPricing.price;
-  const oldPriceVal = dynamicPricing.oldPrice || Number(priceOld || 0);
-
-  // ДОБАВЛЯЕМ ДЛЯ ЕДИНООБРАЗИЯ И ЧИСТОТЫ КОДА (Используем currentPrice)
-  const prices = useMemo(() => {
-    const list = [];
-    if (tour.price) list.push({ label: 'Взрослый', value: currentPrice, icon: <Ticket size={14} /> });
-    if (tour.priceMember) list.push({ label: 'Клубная карта', value: tour.priceMember, icon: <Crown size={14} /> });
-    if (tour.priceChild) list.push({ label: 'Детский (до 15)', value: tour.priceChild, icon: <Baby size={14} /> });
-    if (tour.priceFamily) list.push({ label: 'Семья (2+1)', value: tour.priceFamily, icon: <Users size={14} /> });
-    return list;
-  }, [tour, currentPrice]);
-
-  const minPrice = prices.length > 0 
-    ? Math.min(...prices.map(p => Number(p.value))) 
-    : currentPrice;
-  const hasDiscount = oldPriceVal > currentPrice;
-  const discountPercent = hasDiscount ? Math.round(((oldPriceVal - currentPrice) / oldPriceVal) * 100) : 0;
-
-  const [showWaitlistForm, setShowWaitlistForm] = useState(false);
+  const currentV1Price = dynamicPricing.price;
   
+  // 🚀 SENIOR FIX: Вычисляем абсолютную скидку/наценку в рублях (например, -100 RUB или +150 RUB)
+  const priceDelta = currentV1Price - basePriceVal;
+  
+  // 3. ПОДКЛЮЧАЕМ ГИБКИЕ ТАРИФЫ (V2) И ПРИМЕНЯЕМ К НИМ ДЕЛЬТУ
+  const priceCategories = useMemo(() => {
+    return tour.tourPriceCategories || tour.priceCategories || [];
+  }, [tour.tourPriceCategories, tour.priceCategories]);
+
+  const activeCategories = priceCategories
+    .filter((c: any) => c.isActive !== false)
+    .map((c: any) => {
+      const original = Number(c.price);
+      const current = Math.max(0, original + priceDelta); // Применяем скидку, но не даем уйти в минус
+      return { ...c, originalPrice: original, currentPrice: current };
+    });
+
+  const isV2 = activeCategories.length > 0;
+
+  // Умный поиск минимальной цены для шапки (от ... RUB)
+  const minPrice = useMemo(() => {
+    if (isV2) return Math.min(...activeCategories.map((c: any) => c.currentPrice));
+    
+    const p = [currentV1Price];
+    if (tour.priceMember) p.push(Number(tour.priceMember));
+    if (tour.priceChild) p.push(Number(tour.priceChild));
+    return Math.min(...p);
+  }, [isV2, activeCategories, currentV1Price, tour]);
+
+  // Логика скидок (Зачеркнутая цена в шапке)
+  const hasDiscount = priceDelta < 0; 
+  const headerOldPrice = isV2 
+    ? Math.min(...activeCategories.map((c: any) => c.originalPrice)) 
+    : (dynamicPricing.oldPrice || Number(priceOld || 0));
+    
+  const discountPercent = hasDiscount && headerOldPrice > 0
+    ? Math.round(((headerOldPrice - minPrice) / headerOldPrice) * 100) 
+    : 0;
+  
+  const showFromPrefix = isV2 ? activeCategories.length > 1 : (Number(tour.priceMember || 0) > 0 || Number(tour.priceChild || 0) > 0);
+
   // Стейты для Листа ожидания
+  const [showWaitlistForm, setShowWaitlistForm] = useState(false);
   const [waitlistName,     setWaitlistName]     = useState('');
   const [waitlistPhone,    setWaitlistPhone]    = useState('+373 ');
   const [waitlistLoading,  setWaitlistLoading]  = useState(false);
@@ -84,7 +105,6 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   const [waitlistError,    setWaitlistError]    = useState<string | null>(null);
   const [isProfileLoaded,  setIsProfileLoaded]  = useState(false);
 
-  //   Клиентская подгрузка профиля (безопасно для SSR)
   useEffect(() => {
     getMyProfileAction().then(p => {
       if (p) {
@@ -119,7 +139,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
     <aside className="sticky top-24 z-30 self-start">
       <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/50 overflow-hidden relative">
         
-        {/* МАРКЕТИНГОВЫЙ БЕЙДЖ (Если сработала динамическая цена) */}
+        {/* МАРКЕТИНГОВЫЙ БЕЙДЖ */}
         {dynamicPricing.type === 'EARLY_BIRD' && (
           <div className="absolute top-0 right-0 bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl flex items-center gap-1 shadow-lg">
             <Flame size={12} /> Раннее бронирование
@@ -136,7 +156,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
           <div>
             <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Цена</p>
             <div className="flex items-baseline gap-1.5">
-              {prices.length > 1 && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
+              {showFromPrefix && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
               <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
                 {minPrice.toLocaleString('ru-RU')}
               </span>
@@ -146,7 +166,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
             {hasDiscount && (
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-slate-300 line-through text-xs font-medium decoration-rose-500/50">
-                  {oldPriceVal.toLocaleString('ru-RU')}
+                  {headerOldPrice.toLocaleString('ru-RU')}
                 </span>
                 <span className="bg-rose-500/10 text-rose-500 text-[14px] font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
                   Выгода {discountPercent}%
@@ -168,50 +188,73 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
           </div>
         </div>
 
-        {/* БЛОК 2: Доступные тарифы */}
-        {((priceMember || 0) > 0 || (priceChild || 0) > 0 || (priceFamily || 0) > 0) && (
-          <div className="space-y-3 mb-6">
-            <p className="text-slate-300 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
-            
-            <div className="flex justify-between items-center text-sm">
-               <div className="flex items-center gap-2 text-slate-300">
-                 <Ticket size={14} className="text-slate-300"/>
-                 <span>Взрослый</span>
-               </div>
-               <span className="font-bold text-white">{currentPrice.toLocaleString()} {currency}</span>
-            </div>
-            
-            {(priceMember ?? 0) > 0 && (
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-amber-400">
-                  <Crown size={14} />
-                  <span className="font-bold">Клубная карта</span>
+        {/* БЛОК 2: Доступные тарифы (Умный рендер V1/V2) */}
+        <div className="space-y-3 mb-6">
+          <p className="text-slate-300 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
+          
+          {isV2 ? (
+            /* --- РЕЖИМ V2 --- */
+            activeCategories.map((cat: any) => (
+              <div key={cat.id} className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Ticket size={14} className="shrink-0" />
+                  <span>{cat.label}</span>
                 </div>
-                <span className="font-bold text-amber-400">{priceMember?.toLocaleString()} {currency}</span>
-              </div>
-            )}
-            
-            {(priceChild ?? 0) > 0 && (
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-pink-400">
-                  <Baby size={14} />
-                  <span>Детский (до 15)</span>
+                <div className="flex flex-col items-end">
+                  {hasDiscount && (
+                    <span className="text-[10px] text-slate-500 line-through leading-none mb-0.5">
+                      {cat.originalPrice.toLocaleString('ru-RU')} {currency}
+                    </span>
+                  )}
+                  <span className="font-bold text-white leading-none">
+                    {cat.currentPrice.toLocaleString('ru-RU')} {currency}
+                  </span>
                 </div>
-                <span className="font-bold text-white">{priceChild?.toLocaleString()} {currency}</span>
               </div>
-            )}
-            
-            {(priceFamily ?? 0) > 0 && (
+            ))
+          ) : (
+            /* --- РЕЖИМ V1 --- */
+            <>
               <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2 text-blue-400">
-                  <Users size={14} />
-                  <span>Семья (2+1)</span>
-                </div>
-                <span className="font-bold text-white">{priceFamily?.toLocaleString()} {currency}</span>
+                 <div className="flex items-center gap-2 text-slate-300">
+                   <Ticket size={14} />
+                   <span>Стандарт</span>
+                 </div>
+                 <span className="font-bold text-white">{currentV1Price.toLocaleString('ru-RU')} {currency}</span>
               </div>
-            )}
-          </div>
-        )}
+              
+              {(priceMember ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2 text-amber-400">
+                    <Crown size={14} />
+                    <span className="font-bold">Клубная карта</span>
+                  </div>
+                  <span className="font-bold text-amber-400">{priceMember?.toLocaleString('ru-RU')} {currency}</span>
+                </div>
+              )}
+              
+              {(priceChild ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2 text-pink-400">
+                    <Baby size={14} />
+                    <span>Детский (до 15)</span>
+                  </div>
+                  <span className="font-bold text-white">{priceChild?.toLocaleString('ru-RU')} {currency}</span>
+                </div>
+              )}
+              
+              {(priceFamily ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <Users size={14} />
+                    <span>Семья (2+1)</span>
+                  </div>
+                  <span className="font-bold text-white">{priceFamily?.toLocaleString('ru-RU')} {currency}</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         {/* БЛОК 3: Кнопка Бронирования / Вайтлист */}
         {!isSoldOut ? (

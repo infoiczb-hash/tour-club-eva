@@ -12,15 +12,15 @@ import { z } from 'zod';
 const EMPTY_CART: Record<string, number> = {};
 
 interface Step2GuestsProps {
-  // Расширяем тип Tour локально для этого компонента
-  tour: Tour & { tourPriceCategories?: any[] };
+  tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
   onNext: () => void;
 }
 
-const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL-5XL'];
+const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
 export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
-  const { control, register, trigger, watch, formState: { errors } } = useFormContext<BookingFormValues & { social: string }>();
+  // Поле 'social' теперь официально объявлено в схеме, убираем хаки приведения типов
+  const { control, register, trigger, watch, formState: { errors } } = useFormContext<BookingFormValues>();
 
   const { fields, replace } = useFieldArray({
     control,
@@ -39,28 +39,31 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
   const categorySlug = tour.category?.slug?.toLowerCase() || '';
   const isKayakingTour = ['kayaking', 'kayak'].includes(categorySlug);
   const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(categorySlug);
-  const isV2 = Array.isArray(tour.tourPriceCategories) && tour.tourPriceCategories.length > 0;
+  
+  // Безопасное чтение динамических тарифов
+  const priceCategories = useMemo(() => {
+    return tour.tourPriceCategories || tour.priceCategories || [];
+  }, [tour.tourPriceCategories, tour.priceCategories]);
 
-  // Чтобы не запускать эффект синхронизации бесконечно, используем ref для отслеживания текущего состояния "ожидаемых" мест
+  const isV2 = Array.isArray(priceCategories) && priceCategories.length > 0;
+
+  // Используем ref для отслеживания слепка корзины и предотвращения бесконечного ререндера useEffect
   const previousCartFingerprint = useRef('');
 
-  // 🚀 SENIOR SOLUTION: Интеллектуальное слияние (Smart Merge)
+  // Интеллектуальное слияние (Smart Merge) — генерация анкет без стирания ранее введенных имен
   useEffect(() => {
-    // Вычисляем слепок корзины, чтобы понять, изменилась ли она физически
     const cartFingerprint = isV2 
       ? JSON.stringify(cartV2) 
       : `${ticketsAdult}-${ticketsChild}-${ticketsMember}-${ticketsFamily}`;
 
-    // Если корзина не поменялась, не трогаем массив гостей
     if (cartFingerprint === previousCartFingerprint.current) return;
     previousCartFingerprint.current = cartFingerprint;
 
-    // Генерируем "Идеальный" массив на основе корзины
     const expectedGuests: z.infer<typeof guestSchema>[] = [];
     
     if (isV2) {
       let unitCounter = 0;
-      (tour.tourPriceCategories || []).forEach((cat: any) => {
+      priceCategories.forEach((cat: any) => {
         const qty = cartV2[cat.id] || 0;
         for (let i = 0; i < qty; i++) {
           const uIdx = cat.spotsPerUnit > 1 ? unitCounter++ : undefined;
@@ -80,7 +83,7 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
       });
     } else {
       let idx = 0;
-      for (let i = 0; i < ticketsAdult; i++) expectedGuests.push({ id: `v1_${idx++}`, isMain: expectedGuests.length === 0, type: 'Взрослый', name: '' });
+      for (let i = 0; i < ticketsAdult; i++) expectedGuests.push({ id: `v1_${idx++}`, isMain: expectedGuests.length === 0, type: 'Стандарт', name: '' });
       for (let i = 0; i < ticketsMember; i++) expectedGuests.push({ id: `v1_${idx++}`, isMain: expectedGuests.length === 0, type: 'Клубный', name: '' });
       for (let i = 0; i < ticketsChild; i++) expectedGuests.push({ id: `v1_${idx++}`, isMain: expectedGuests.length === 0, type: 'Детский', name: '' });
       for (let i = 0; i < ticketsFamily; i++) {
@@ -90,12 +93,12 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
       }
     }
 
-    // Сохраняем введенные данные из существующего массива (чтобы имена не стерлись при клике Назад)
+    // Восстанавливаем введенные данные из существующего массива, чтобы они не стирались при переходах назад-вперед
     const mergedGuests = expectedGuests.map((expected, index) => {
       const existing = fields[index];
       if (existing) {
         return {
-          ...expected, // Берем новую структуру (типы, лейблы)
+          ...expected,
           name: existing.name || '',
           phone: existing.phone || '',
           age: existing.age || '',
@@ -106,9 +109,9 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
     });
 
     replace(mergedGuests);
-  }, [cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, isV2, replace, tour.tourPriceCategories, fields]);
+  }, [cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, isV2, replace, priceCategories, fields]);
 
-  // Группировка для красивого вывода по лодкам
+  // Группировка экипажей (для лодок повышенной вместимости в V2)
   const groupedFields = useMemo(() => {
     const groups: { label?: string; items: { field: any, index: number }[] }[] = [];
     const map = new Map<string, { field: any, index: number }[]>();
@@ -126,16 +129,27 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
     return groups;
   }, [fields]);
 
-  // Строгая проверка валидации (Zod) перед переходом на оплату
+  // Строгая проверка Zod-валидации перед пуском на экран оплаты
   const handleProceed = async () => {
-    const isValid = await trigger(['guests', 'social' as any]);
+    const isValid = await trigger(['guests', 'social']);
     if (isValid) onNext();
   };
 
+  // 100% оригинальная логика умных плейсхолдеров из старого файла
   const getSmartPlaceholder = () => {
-    if (isWaterTour) return 'Есть ли особенности, о которых нам нужно знать?';
-    if (categorySlug === 'kids') return 'Укажите возраст детей, если они едут с вами...';
-    return 'Вопросы или пожелания организаторам...';
+    const slug = tour.category?.slug?.toLowerCase() || '';
+    const location = tour.location?.toLowerCase() || '';
+
+    if (['water', 'kayaking', 'kayak', 'sup', 'rafting'].includes(slug)) {
+      return 'Здессь можно оставить комментарий к поездке или важную информацию, пожелания';
+    }
+    if (slug === 'abroad' || location.includes('румыния')) {
+      return 'Какое снаряжение вам нужно? Есть ли у Вас действующий биометрический паспорт?';
+    }
+    if (slug === 'kids') {
+      return 'Укажите возраст детей, если они едут с вами...';
+    }
+    return 'Задайте вопрос и мы постараемся ответить на него в короткие сроки?';
   };
 
   return (
@@ -148,8 +162,8 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
             </div>
           )}
           
-          {group.items.map(({ field, index }) => {
-            const isChild = field.type.toLowerCase().includes('дет');
+    {group.items.map(({ field, index }) => {
+           const isChild = (field.type || '').toLowerCase().includes('дет');
             const errBase = errors?.guests?.[index];
 
             return (
@@ -228,30 +242,35 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
                     <div className="relative">
                       <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                       <input 
-                        {...register('social' as any, { required: 'Куда отправить электронный билет?' })}
+                        {...register('social', { required: 'Куда отправить электронный билет?' })}
                         type="text" 
                         placeholder="Email или Telegram (Сюда придет билет) *" 
                         className={clsx(
                           "w-full bg-slate-900 border rounded-xl py-2.5 pl-9 pr-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600",
-                          (errors as any)?.social ? "border-rose-500 focus:border-rose-400 focus:ring-1 focus:ring-rose-500" : "border-white/5 focus:border-teal-500/50"
+                          errors?.social ? "border-rose-500 focus:border-rose-400 focus:ring-1 focus:ring-rose-500" : "border-white/5 focus:border-teal-500/50"
                         )} 
                       />
                     </div>
-                    {(errors as any)?.social && <p className="text-[10px] text-rose-400 font-bold ml-1">{(errors as any).social.message}</p>}
+                    {errors?.social && <p className="text-[10px] text-rose-400 font-bold ml-1">{errors.social.message}</p>}
                   </div>
                 )}
 
                 {isWaterTour && (
-                  <div className="relative mt-2">
-                    <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
-                    <select 
-                      {...register(`guests.${index}.jacket`)}
-                      className="w-full bg-slate-900 border border-white/5 rounded-xl py-2.5 pl-9 pr-8 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none cursor-pointer"
-                    >
-                      <option value="" disabled>Выберите размер спасжилета...</option>
-                      {JACKET_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">▼</div>
+                  <div className="space-y-1.5 mt-3 pt-3 border-t border-white/5">
+                    <label className="text-[10px] font-bold text-teal-500 uppercase tracking-widest ml-1">
+                      Спасательный жилет
+                    </label>
+                    <div className="relative">
+                      <LifeBuoy size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                      <select 
+                        {...register(`guests.${index}.jacket`)}
+                        className="w-full bg-slate-900 border border-white/5 rounded-xl py-2.5 pl-9 pr-8 text-sm text-slate-300 focus:border-teal-500/50 outline-none transition-colors appearance-none cursor-pointer"
+                      >
+                        <option value="" disabled>Выберите размер спасжилета...</option>
+                        {JACKET_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">▼</div>
+                    </div>
                   </div>
                 )}
                 

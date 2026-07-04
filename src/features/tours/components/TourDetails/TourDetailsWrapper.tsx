@@ -46,8 +46,8 @@ export default function TourDetailsWrapper({
           {/* ЛЕВАЯ КОЛОНКА (Длинный контент) */}
           {/*    ИЗМЕНЕНИЕ: overflow-x-hidden заменен на overflow-x-clip */}
           <div className="lg:col-span-8 flex flex-col gap-8 md:gap-10 overflow-x-clip">
+              <TourStats tour={tour} />
             <TourDates tour={tour} isWished={isWished} />
-            <TourStats tour={tour} />
             <TourLogistics tour={tour} />
             <TourDescription tour={tour} />
             <TourProgram program={tour.program} />

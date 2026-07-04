@@ -6,10 +6,10 @@ import { cache } from 'react';
 import { unstable_cache } from 'next/cache'; // ДОБАВЛЕНО для Data Cache
 
 // ─────────────────────────────────────────────
-// Строгий тип для данных из Prisma с релейшенами
+// 🚀 SENIOR FIX: Добавили priceCategories в строгий тип Prisma
 // ─────────────────────────────────────────────
 type PrismaTourWithRelations = Prisma.TourGetPayload<{
-  include: { guide: true; category: true; tourDates: true };
+  include: { guide: true; category: true; tourDates: true; priceCategories: true };
 }>;
 
 // ─────────────────────────────────────────────
@@ -58,7 +58,7 @@ function getNearestFutureDate(
 // Маппер Prisma → фронтенд Tour (Полный объект) - Для страницы тура и Админки
 // ─────────────────────────────────────────────
 export function mapPrismaTourToFrontend(item: PrismaTourWithRelations): Tour {
-const relationalDates = item.tourDates?.map(td => ({
+  const relationalDates = item.tourDates?.map(td => ({
     id: td.id, 
     start: td.startDate.toISOString(),
     startDate: td.startDate.toISOString(),
@@ -136,6 +136,10 @@ const relationalDates = item.tourDates?.map(td => ({
     priceFamily: item.priceFamily ? Number(item.priceFamily) : null,
     priceMember: item.priceMember ? Number(item.priceMember) : null,
 
+    // 🚀 SENIOR FIX: Прокидываем категории цен на фронтенд (поддерживаем оба ключа)
+    priceCategories: item.priceCategories ?? [],
+    tourPriceCategories: item.priceCategories ?? [], 
+
     spots: nearestSpots,
     spotsLeft: nearestSpotsLeft,
 
@@ -196,6 +200,11 @@ function mapToPreview(item: any): TourPreview {
     priceOld: item.priceOld ? Number(item.priceOld) : null,
     priceMember: item.priceMember ? Number(item.priceMember) : null,
     priceChild: item.priceChild ? Number(item.priceChild) : null,
+    
+    // 🚀 SENIOR FIX: Прокидываем цены даже в карточки-превью, чтобы выводить "От X руб"
+    priceCategories: item.priceCategories ?? [],
+    tourPriceCategories: item.priceCategories ?? [],
+
     tags: item.tags ?? [],
     date: nearestDate?.startDate || nearestDate?.start || item.date || '',
     endDate: nearestDate?.endDate || nearestDate?.end || item.endDate || null,
@@ -222,7 +231,14 @@ const tourPreviewSelect: Prisma.TourSelect = {
   categoryId: true, difficulty: true, location: true, duration: true, spots: true, spotsLeft: true, isActive: true,
   category: { select: { id: true, title: true, slug: true, icon: true, color: true } },
   guide: { select: { id: true, name: true, role: true, image: true, instagram: true } },
-tourDates: {
+  
+  // 🚀 SENIOR FIX: Подгружаем динамические цены в легковесный селектор
+  priceCategories: {
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true, key: true, label: true, price: true, spotsPerUnit: true, minQuantity: true, sortOrder: true, isActive: true }
+  },
+
+  tourDates: {
     orderBy: { startDate: 'asc' as const },
     take: 3,
     select: { 
@@ -240,7 +256,7 @@ tourDates: {
       _count: { select: { bookings: true } } 
     }
   }
-  };
+};
 
 // ─────────────────────────────────────────────
 // Публичные функции (Превью)
@@ -337,7 +353,6 @@ export const getSimilarTours = unstable_cache(
 // Публичные функции (Полные объекты)
 // ─────────────────────────────────────────────
 
-// ИСПРАВЛЕНИЕ ЗДЕСЬ: Переводим страницу тура на глобальный Next.js Data Cache
 export const getTourBySlug = unstable_cache(
   async (slug: string): Promise<Tour | null> => {
     try {
@@ -346,6 +361,8 @@ export const getTourBySlug = unstable_cache(
         include: { 
           guide: true, 
           category: true,
+          // 🚀 SENIOR FIX: Подгружаем категории цен с правильной сортировкой
+          priceCategories: { orderBy: { sortOrder: 'asc' } },
           tourDates: { orderBy: { startDate: 'asc' } } 
         },
       });
@@ -356,7 +373,7 @@ export const getTourBySlug = unstable_cache(
       return null;
     }
   },
-  ['tour-by-slug-cache'], // Базовый ключ, unstable_cache сам подставит аргумент slug под капотом
+  ['tour-by-slug-cache'], 
   { revalidate: 3600, tags: ['tours', 'tour-details'] }
 );
 
@@ -371,6 +388,8 @@ export async function getAllTours(skip: number = 0, take: number = 50): Promise<
       include: { 
         guide: true, 
         category: true,
+        // 🚀 SENIOR FIX: Подгружаем категории для админки
+        priceCategories: { orderBy: { sortOrder: 'asc' } },
         tourDates: { orderBy: { startDate: 'asc' } } 
       },
     });

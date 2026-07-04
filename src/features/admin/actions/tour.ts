@@ -25,7 +25,7 @@ export const saveTour = withAdminAuth(
     getTargetId: (formData: SaveTourPayload) => formData.id,
   })(async (formData: SaveTourPayload) => {
     try {
-      // 1. Нормализуем данные
+      // 1. Нормализуем данные с Senior-защитой от разницы в именовании полей
       const rawData = {
         ...formData,
         categoryId: formData.categoryId ?? formData.category_id,
@@ -43,7 +43,11 @@ export const saveTour = withAdminAuth(
         
         tags: Array.isArray(formData.tags) ? formData.tags : [],
         included: Array.isArray(formData.included) ? formData.included : [],
-        priceCategories: Array.isArray(formData.priceCategories) ? formData.priceCategories : [],
+        
+        // 🚀 ПРИНЦИПИАЛЬНЫЙ ФИКС: Поддерживаем оба формата именования категорий цен, чтобы не терять массив из админки
+        priceCategories: Array.isArray(formData.priceCategories) 
+          ? formData.priceCategories 
+          : (Array.isArray(formData.tourPriceCategories) ? formData.tourPriceCategories : []),
         
         dates: Array.isArray(formData.dates) ? formData.dates.map((d: any) => ({
           ...d,
@@ -140,18 +144,18 @@ export const saveTour = withAdminAuth(
         // ==========================================
         
         // --- ЗАЩИТА ОТ УДАЛЕНИЯ ИСПОЛЬЗУЕМЫХ КАТЕГОРИЙ ЦЕН ---
-        const incomingCatIds = data.priceCategories.map(c => c.id).filter(Boolean) as string[];
+        const incomingKeys = data.priceCategories.map(c => c.key);
         const existingCats = await prisma.tourPriceCategory.findMany({ where: { tourId: formData.id as string } });
-        const catsToDelete = existingCats.filter(ec => !incomingCatIds.includes(ec.id));
+        const catsToDelete = existingCats.filter(ec => !incomingKeys.includes(ec.key));
 
         for (const cat of catsToDelete) {
           const searchJson = JSON.stringify([{ categoryId: cat.id }]);
           const usedInBookings = await prisma.$queryRaw<{ count: bigint }[]>`
-            SELECT COUNT(*)::bigint as count
-            FROM "Booking"
-            WHERE "tourId" = ${formData.id as string} 
-            AND "ticketBreakdown" @> ${searchJson}::jsonb
-          `;
+              SELECT COUNT(*)::bigint as count
+              FROM "bookings"
+              WHERE "tour_id" = ${formData.id as string}::uuid
+              AND COALESCE("ticket_breakdown", '[]'::jsonb) @> ${searchJson}::jsonb 
+            `;
           
           const usageCount = Number(usedInBookings[0]?.count ?? 0);
           if (usageCount > 0) {
@@ -161,84 +165,94 @@ export const saveTour = withAdminAuth(
             };
           }
         }
-        
-        // 1. Обновляем основные данные тура
-        await prisma.tour.update({
-          where: { id: formData.id as string },
-          data: prismaPayload, 
-        });
 
-        // --- УПРАВЛЕНИЕ КАТЕГОРИЯМИ ЦЕН ---
-        // Точечно создаем новые и обновляем старые
-        for (const cat of data.priceCategories) {
-          const catPayload = {
-            key: cat.key,
-            label: cat.label,
-            price: cat.price,
-            spotsPerUnit: cat.spotsPerUnit,
-            minQuantity: cat.minQuantity,
-            sortOrder: cat.sortOrder,
-            isActive: cat.isActive
-          };
-
-          if (cat.id) {
-            await prisma.tourPriceCategory.update({ where: { id: cat.id }, data: catPayload });
-          } else {
-            await prisma.tourPriceCategory.create({ data: { ...catPayload, tourId: savedTourId } });
+        // 🚀 SENIOR FIX: Обернули все связанные операции обновления в атомарную транзакцию базы данных
+        await prisma.$transaction(async (tx) => {
+          // 1. Удаляем категории, которые стер админ (освобождаем индексы ключей)
+          if (catsToDelete.length > 0) {
+            await tx.tourPriceCategory.deleteMany({
+              where: { id: { in: catsToDelete.map(c => c.id) } }
+            });
           }
-        }
-        
-        // Удаляем те, которые админ стер (мы уже убедились выше, что они безопасны)
-        if (catsToDelete.length > 0) {
-          await prisma.tourPriceCategory.deleteMany({
-            where: { id: { in: catsToDelete.map(c => c.id) } }
+          
+          // 2. Обновляем основные плоские данные тура
+          await tx.tour.update({
+            where: { id: formData.id as string },
+            data: prismaPayload, 
           });
-        }
 
-        // --- УПРАВЛЕНИЕ ДАТАМИ ВЫЕЗДОВ ---
-        const incomingDateIds = data.dates.map(d => d.id).filter(Boolean) as string[];
-        await prisma.tourDate.deleteMany({
-            where: { 
-                tourId: formData.id as string,
-                ...(incomingDateIds.length > 0 ? { id: { notIn: incomingDateIds } } : {})
-            }
-        });
-
-        for (const d of data.dates) {
-            const currentSpots = d.spots ?? data.spots;
-
-            const basePayload = {
-              startDate: new Date(d.start),
-              endDate: d.end ? new Date(d.end) : null,
-              time: d.time || null,
-              guideId: d.guide_id || null,
-              groupChatUrl: d.groupChatUrl || null,
-              spots: currentSpots,
-              basePrice: d.basePrice ?? null,
-              discountEarlyBird: d.discountEarlyBird ?? null,
-              earlyBirdDeadline: d.earlyBirdDeadline ?? null,
-              surchargeLastMinute: d.surchargeLastMinute ?? null,
-              lastMinuteTrigger: d.lastMinuteTrigger ?? null,
+          // 3. Точечно синхронизируем ценовые категории через безопасный upsert внутри транзакции
+          for (const cat of data.priceCategories) {
+            const catPayload = {
+              label: cat.label,
+              price: Number(cat.price || 0),
+              spotsPerUnit: Number(cat.spotsPerUnit || 1),
+              minQuantity: Number(cat.minQuantity || 0),
+              sortOrder: Number(cat.sortOrder || 0),
+              isActive: Boolean(cat.isActive)
             };
 
-            if (d.id) {
-                const updateData: Record<string, any> = { ...basePayload };
-                if (d.spotsLeft !== undefined && d.spotsLeft !== null) {
-                    updateData.spotsLeft = Number(d.spotsLeft);
+            await tx.tourPriceCategory.upsert({
+              where: {
+                tourId_key: {
+                  tourId: savedTourId,
+                  key: cat.key
                 }
-                await prisma.tourDate.update({ where: { id: d.id }, data: updateData });
-            } else {
-                await prisma.tourDate.create({
-                    data: { 
-                        ...basePayload, 
-                        tourId: formData.id as string,
-                        spotsLeft: (d.spotsLeft !== undefined && d.spotsLeft !== null) 
-                            ? Number(d.spotsLeft) 
-                            : currentSpots
-                    }
-                });
-            }
-        }
+              },
+              update: catPayload,
+              create: {
+                ...catPayload,
+                key: cat.key,
+                tourId: savedTourId
+              }
+            });
+          }
+
+          // 4. Синхронизируем даты выездов
+          const incomingDateIds = data.dates.map(d => d.id).filter(Boolean) as string[];
+          await tx.tourDate.deleteMany({
+              where: { 
+                  tourId: formData.id as string,
+                  ...(incomingDateIds.length > 0 ? { id: { notIn: incomingDateIds } } : {})
+              }
+          });
+
+          for (const d of data.dates) {
+              const currentSpots = d.spots ?? data.spots;
+
+              const basePayload = {
+                startDate: new Date(d.start),
+                endDate: d.end ? new Date(d.end) : null,
+                time: d.time || null,
+                guideId: d.guide_id || null,
+                groupChatUrl: d.groupChatUrl || null,
+                spots: currentSpots,
+                basePrice: d.basePrice ?? null,
+                discountEarlyBird: d.discountEarlyBird ?? null,
+                earlyBirdDeadline: d.earlyBirdDeadline ?? null,
+                surchargeLastMinute: d.surchargeLastMinute ?? null,
+                lastMinuteTrigger: d.lastMinuteTrigger ?? null,
+              };
+
+              if (d.id) {
+                  const updateData: Record<string, any> = { ...basePayload };
+                  if (d.spotsLeft !== undefined && d.spotsLeft !== null) {
+                      updateData.spotsLeft = Number(d.spotsLeft);
+                  }
+                  await tx.tourDate.update({ where: { id: d.id }, data: updateData });
+              } else {
+                  await tx.tourDate.create({
+                      data: { 
+                          ...basePayload, 
+                          tourId: formData.id as string,
+                          spotsLeft: (d.spotsLeft !== undefined && d.spotsLeft !== null) 
+                              ? Number(d.spotsLeft) 
+                              : currentSpots
+                      }
+                  });
+              }
+          }
+        });
 
       } else {
         // ==========================================
@@ -264,11 +278,11 @@ export const saveTour = withAdminAuth(
                   create: data.priceCategories.map(c => ({
                     key: c.key,
                     label: c.label,
-                    price: c.price,
-                    spotsPerUnit: c.spotsPerUnit,
-                    minQuantity: c.minQuantity,
-                    sortOrder: c.sortOrder,
-                    isActive: c.isActive
+                    price: Number(c.price || 0),
+                    spotsPerUnit: Number(c.spotsPerUnit || 1),
+                    minQuantity: Number(c.minQuantity || 0),
+                    sortOrder: Number(c.sortOrder || 0),
+                    isActive: Boolean(c.isActive)
                   }))
                 }
             } 
@@ -309,7 +323,7 @@ export const saveTour = withAdminAuth(
 );
 
 // ==========================================
-// 2. GET ACTIVE GUIDES (БЕЗ ИЗМЕНЕНИЙ)
+// 2. GET ACTIVE GUIDES
 // ==========================================
 export async function getActiveGuides() {
   try {
@@ -419,7 +433,6 @@ export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) =
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  // 🚀 SENIOR FIX: Задаем строгий тип для объекта фильтрации Prisma
   const where: Prisma.TourWhereInput = { deletedAt: null };
   if (search) {
     where.title = { contains: search, mode: 'insensitive' };
@@ -438,7 +451,6 @@ export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) =
     where.tourDates = { some: { startDate: { gte: now }, spotsLeft: { lte: 0 } } }; 
   }
 
-  // 🚀 SENIOR FIX: Выносим структуру инклуда и типизируем через константу во избежание потери вложенности
   const tourInclude = {
     guide: true,
     category: true,
@@ -459,7 +471,6 @@ export const getToursAdmin = withAdminAuth(async (params: GetToursAdminParams) =
 
   const { mapPrismaTourToFrontend } = await import('@/features/tours/api');
   
-  // 🚀 SENIOR FIX: Безопасное и строгое сопоставление типов на базе утилиты Parameters без 'any'
   const tours = toursRaw.map((tour) => 
     mapPrismaTourToFrontend(tour as Parameters<typeof mapPrismaTourToFrontend>[0])
   );

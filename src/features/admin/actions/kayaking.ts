@@ -173,7 +173,7 @@ export async function sendKayakingManifest(tourDateId: string, frontendBoats: Bo
         const pId = `${booking.id}-${idx}`;
         passengerJackets.set(pId, g.jacket);
         let typeShort = g.type || 'Взр';
-        if (typeShort.includes('Взрослый')) typeShort = 'Взр';
+        if (typeShort.includes('Стандарт')) typeShort = 'Взр';
         if (typeShort.includes('Детский')) typeShort = 'Дет';
         passengerTypes.set(pId, g.isMain ? 'Заказчик' : typeShort);
       });

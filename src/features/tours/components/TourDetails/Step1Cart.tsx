@@ -1,23 +1,19 @@
 // src/features/tours/components/TourDetails/Step1Cart.tsx
 "use client";
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-// ИСПРАВЛЕНИЕ: Добавили Send в общий список импорта lucide-react
-import { Calendar, Ticket, Minus, Plus, ArrowRight, LogIn, AlertCircle, Layers, Send } from 'lucide-react';
+import { Calendar, Ticket, Minus, Plus, ArrowRight, LogIn, Send } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { BookingFormValues } from './booking.schema';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
-const EMPTY_CART: Record<string, number> = {};
-
 interface Step1CartProps {
-  // ИСПРАВЛЕНИЕ: Элегантно расширили тип Tour локально через амперсанд (&).
-  // Теперь TypeScript знает, что у этого объекта есть массив категорий цен.
-  tour: Tour & { tourPriceCategories?: any[] };
+  tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
   onNext: () => void;
   onSoldOut: () => void;
+  onClose: () => void;
   isLoggedIn: boolean;
 }
 
@@ -29,21 +25,34 @@ const formatDateForDropdown = (d: any) => {
   return `${str}${d.time ? ` в ${d.time}` : ''}`;
 };
 
-export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1CartProps) {
+export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn }: Step1CartProps) {
   const { watch, setValue } = useFormContext<BookingFormValues>();
 
-  // Подписываемся на состояние корзины и выбранной даты
   const selectedDateId = watch('tourDateId');
-  const cartV2 = watch('cartV2') || EMPTY_CART;
-  const ticketsAdult = watch('ticketsAdult');
-  const ticketsChild = watch('ticketsChild');
-  const ticketsMember = watch('ticketsMember');
-  const ticketsFamily = watch('ticketsFamily');
+  const ticketsAdult = Number(watch('ticketsAdult') || 0);
+  const ticketsChild = Number(watch('ticketsChild') || 0);
+  const ticketsMember = Number(watch('ticketsMember') || 0);
+  const ticketsFamily = Number(watch('ticketsFamily') || 0);
 
-  // Определение режима (Дуализм V1/V2)
-  const isV2 = Array.isArray(tour.tourPriceCategories) && tour.tourPriceCategories.length > 0;
+  // 🚀 SENIOR FIX: Локальный стейт. Отвязываем отрисовку от "ленивого" кэша react-hook-form
+  const initialCart = watch('cartV2') || {};
+  const [localCart, setLocalCart] = useState<Record<string, number>>(initialCart);
 
-  // Фильтруем только будущие выезды
+  // Синхронизируем стейт, если вернулись со второго шага назад
+  useEffect(() => {
+    const formCart = watch('cartV2');
+    if (formCart && Object.keys(formCart).length > 0) {
+      setLocalCart(formCart);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const priceCategories = useMemo(() => {
+    return tour.tourPriceCategories || tour.priceCategories || [];
+  }, [tour.tourPriceCategories, tour.priceCategories]);
+
+  const isV2 = Array.isArray(priceCategories) && priceCategories.length > 0;
+
   const validDates = useMemo(() => {
     const sourceDates = (tour.tourDates && tour.tourDates.length > 0) ? tour.tourDates : (tour.dates || []);
     const now = new Date();
@@ -56,38 +65,48 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
 
   const targetDate = useMemo(() => validDates.find((d: any) => d.id === selectedDateId), [validDates, selectedDateId]);
   
-  // Места берём строго из базы данных
   const spotsLeft = targetDate ? (targetDate.spotsLeft ?? targetDate.capacity ?? 0) : (tour.spotsLeft || 0);
   const isDateSoldOut = validDates.length > 0 ? (targetDate ? spotsLeft <= 0 : false) : (tour.spotsLeft || 0) <= 0;
 
-  // Подсчёт суммарного количества мест в корзине
-  const totalSpotsSelected = useMemo(() => {
-    if (isV2) {
-      return (tour.tourPriceCategories || []).reduce((sum: number, cat: any) => {
-        return sum + ((cartV2[cat.id] || 0) * (cat.spotsPerUnit || 1));
-      }, 0);
-    }
-    return ticketsAdult + ticketsChild + ticketsMember + (ticketsFamily * 3);
-  }, [isV2, cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, tour.tourPriceCategories]);
+  // 🚀 SENIOR FIX: Все вычисления теперь идут строго через мгновенный localCart и с жестким кастом Number()
+  const totalSpotsSelected = isV2 
+    ? priceCategories.reduce((sum: number, cat: any) => {
+        const qty = Number(localCart[cat.id] || 0);
+        const spots = Number(cat.spotsPerUnit || 1);
+        return sum + (qty * spots);
+      }, 0)
+    : ticketsAdult + ticketsChild + ticketsMember + (ticketsFamily * 3);
 
-  // Сброс и предзаполнение гостей при изменении состава корзины
-  useEffect(() => {
-    // Автоматически подстраиваем структуру под количество мест
-    // Мы сделаем полную разметку массива гостей на следующем шаге (Step2), 
-    // здесь нам важно просто контролировать валидность перехода
-  }, [totalSpotsSelected]);
+  const currentTotalPrice = isV2 
+    ? priceCategories.reduce((sum: number, cat: any) => {
+        const qty = Number(localCart[cat.id] || 0);
+        const price = Number(cat.price || 0);
+        return sum + (qty * price);
+      }, 0)
+    : (ticketsAdult * Number(tour.price || 0)) + 
+      (ticketsChild * Number(tour.priceChild || 0)) + 
+      (ticketsMember * Number(tour.priceMember || 0)) + 
+      (ticketsFamily * Number(tour.priceFamily || 0));
 
-  // Обработчики инкремента/декремента для V2
   const handleUpdateV2 = (catId: string, minQty: number, change: number) => {
-    const current = cartV2[catId] || 0;
-    const nextValue = Math.max(minQty, current + change);
-    setValue(`cartV2.${catId}`, nextValue, { shouldValidate: true, shouldDirty: true });
+    const current = Number(localCart[catId] || 0);
+    let nextValue = current + change;
+
+    if (change > 0 && current === 0) {
+      nextValue = Math.max(minQty, 1);
+    } else if (change < 0 && nextValue < minQty) {
+      nextValue = 0;
+    }
+
+    // 🚀 SENIOR FIX: Мгновенно обновляем интерфейс и параллельно отдаем данные в форму
+    const newCart = { ...localCart, [catId]: nextValue };
+    setLocalCart(newCart); 
+    setValue('cartV2', newCart, { shouldValidate: true, shouldDirty: true });
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
       
-      {/* МАРКЕТИНГОВЫЙ БАННЕР АВТОРИЗАЦИИ */}
       {!isLoggedIn && (
         <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-start gap-4">
           <div className="p-2.5 bg-indigo-500/20 rounded-xl shrink-0">
@@ -96,10 +115,11 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
           <div>
             <h4 className="text-sm font-black text-indigo-400 mb-1">Рекомендуем войти в клуб</h4>
             <p className="text-xs text-slate-300 font-medium leading-relaxed mb-3">
-              Войдите через Telegram или Google перед бронированием. Вам откроются кэшбэк бонусами, билеты всегда под рукой и закрытые распродажи!
+              Войдите через Telegram (рекомендуем) или Google перед бронированием. Вам откроются кэшбэк бонусами, билеты всегда под рукой, промокоды и магазин товаров!
             </p>
             <Link 
               href="/login" 
+              onClick={onClose}
               className="inline-flex px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-colors items-center gap-2"
             >
               <Send size={12}/> Войти в 1 клик
@@ -108,7 +128,6 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
         </div>
       )}
 
-      {/* СЕЛЕКТ ВЫБОРА ДАТЫ */}
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
           <Calendar size={12} /> Доступные даты выезда
@@ -144,7 +163,6 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
         )}
       </div>
 
-      {/* ТАРИФЫ (УПРАВЛЕНИЕ КОРЗИНОЙ) */}
       <div className="space-y-2 pt-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
           <Ticket size={12} /> Выберите количество мест / тариф
@@ -152,9 +170,8 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
         
         <div className="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
           {isV2 ? (
-            /* --- РЕЖИМ V2 (ГИБКИЕ КАТЕГОРИИ ЦЕН ИЗ АДМИНКИ) --- */
-            (tour.tourPriceCategories || []).map((cat: any) => {
-              const currentQty = cartV2[cat.id] || 0;
+            priceCategories.map((cat: any) => {
+              const currentQty = localCart[cat.id] || 0; // 🚀 Берем цифру из мгновенного стейта
               return (
                 <div key={cat.id} className={clsx("flex items-center justify-between p-4 transition-colors", !cat.isActive && "hidden")}>
                   <div>
@@ -166,13 +183,13 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400 mt-1 font-medium">{cat.price} {tour.currency}</div>
+                    <div className="text-xs text-slate-400 mt-1 font-medium">{cat.price} {tour.currency ?? 'RUB'}</div>
                   </div>
                   
                   <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10 shrink-0">
                     <button 
                       type="button" 
-                      disabled={currentQty <= (cat.minQuantity || 0)}
+                      disabled={currentQty === 0}
                       onClick={() => handleUpdateV2(cat.id, cat.minQuantity || 0, -1)} 
                       className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30"
                     >
@@ -191,25 +208,24 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
               );
             })
           ) : (
-            /* --- РЕЖИМ V1 (LEGACY FALLBACK ТАРИФЫ ТУРА) --- */
             <>
               <div className="flex items-center justify-between p-4">
                 <div>
                   <div className="text-sm font-bold text-white">Взрослый билет</div>
-                  <div className="text-xs text-slate-400 mt-1 font-medium">{tour.price} {tour.currency}</div>
+                  <div className="text-xs text-slate-400 mt-1 font-medium">{tour.price} {tour.currency ?? 'RUB'}</div>
                 </div>
                 <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
-                  <button type="button" onClick={() => setValue('ticketsAdult', Math.max(1, ticketsAdult - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
+                  <button type="button" onClick={() => setValue('ticketsAdult', Math.max(0, ticketsAdult - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
                   <span className="text-sm font-black text-white w-4 text-center">{ticketsAdult}</span>
                   <button type="button" onClick={() => setValue('ticketsAdult', ticketsAdult + 1)} className="w-8 h-8 flex items-center justify-center text-teal-500 hover:bg-teal-500/20 rounded-lg"><Plus size={14}/></button>
                 </div>
               </div>
               
-              {tour.priceChild ? (
-                <div className="flex items-center justify-between p-4">
+              {tour.priceChild && tour.priceChild > 0 ? (
+                <div className="flex items-center justify-between p-4 border-t border-white/5">
                   <div>
                     <div className="text-sm font-bold text-white">Детский билет</div>
-                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceChild} {tour.currency}</div>
+                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceChild} {tour.currency ?? 'RUB'}</div>
                   </div>
                   <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
                     <button type="button" onClick={() => setValue('ticketsChild', Math.max(0, ticketsChild - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
@@ -218,31 +234,56 @@ export default function Step1Cart({ tour, onNext, onSoldOut, isLoggedIn }: Step1
                   </div>
                 </div>
               ) : null}
+
+              {tour.priceFamily && tour.priceFamily > 0 ? (
+                <div className="flex items-center justify-between p-4 border-t border-white/5">
+                  <div>
+                    <div className="text-sm font-bold text-white">Семейный (2 взр. + 1 реб.)</div>
+                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceFamily} {tour.currency ?? 'RUB'}</div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
+                    <button type="button" onClick={() => setValue('ticketsFamily', Math.max(0, ticketsFamily - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
+                    <span className="text-sm font-black text-white w-4 text-center">{ticketsFamily}</span>
+                    <button type="button" onClick={() => setValue('ticketsFamily', ticketsFamily + 1)} className="w-8 h-8 flex items-center justify-center text-teal-500 hover:bg-teal-500/20 rounded-lg"><Plus size={14}/></button>
+                  </div>
+                </div>
+              ) : null}
+
+              {tour.priceMember && tour.priceMember > 0 ? (
+                <div className="flex items-center justify-between p-4 border-t border-white/5">
+                  <div>
+                    <div className="text-sm font-bold text-white">По клубной карте</div>
+                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceMember} {tour.currency ?? 'RUB'}</div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
+                    <button type="button" onClick={() => setValue('ticketsMember', Math.max(0, ticketsMember - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
+                    <span className="text-sm font-black text-white w-4 text-center">{ticketsMember}</span>
+                    <button type="button" onClick={() => setValue('ticketsMember', ticketsMember + 1)} className="w-8 h-8 flex items-center justify-center text-teal-500 hover:bg-teal-500/20 rounded-lg"><Plus size={14}/></button>
+                  </div>
+                </div>
+              ) : null}
             </>
           )}
         </div>
       </div>
 
-      {/* ГЛАВНАЯ УПРАВЛЯЮЩАЯ КНОПКА ШАГА */}
       {isDateSoldOut ? (
-        /* Если места закончились, переключаем на Лист ожидания */
         <button 
           type="button" 
           onClick={onSoldOut}
           className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 mt-4 text-sm"
         >
-          <AlertCircle size={16} /> Записаться в очередь (Мест нет)
+          Записаться в очередь (Мест нет)
         </button>
       ) : (
-        /* Обычный переход на шаг ввода экипажа */
         <button 
           type="button" 
           onClick={onNext}
           disabled={totalSpotsSelected < 1}
           className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98] flex items-center justify-between px-6 shadow-lg shadow-teal-500/20 mt-4 text-sm font-bold"
         >
-          <span>Выбрано мест на воду: {totalSpotsSelected}</span>
-          <span className="flex items-center gap-2">Далее к анкетам <ArrowRight size={18}/></span>
+          <span>Выбрано мест: {totalSpotsSelected} ({currentTotalPrice.toLocaleString()} {tour.currency ?? 'RUB'})</span>
+          <span className="flex items-center gap-2">Продолжить <ArrowRight size={18}/></span>
         </button>
       )}
 
