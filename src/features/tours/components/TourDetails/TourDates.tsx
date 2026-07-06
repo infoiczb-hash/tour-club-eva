@@ -99,6 +99,7 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
   const activeCategories = priceCategories.filter((c: any) => c.isActive !== false);
   const isV2 = activeCategories.length > 0;
   const showFromPrefix = isV2 ? activeCategories.length > 1 : (Number(tour.priceMember || 0) > 0 || Number(tour.priceChild || 0) > 0);
+  const showPerPerson = isV2 && activeCategories.some((c: any) => (c.spotsPerUnit || 1) > 1);
 
   return (
     <section className="scroll-mt-24 mb-12 md:mb-16" id="dates">
@@ -136,14 +137,17 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
            const priceDelta = dynamicPricing.price - basePriceVal;
            const hasDiscount = priceDelta < 0;
 
-           // Умный поиск минимальной цены для этой конкретной даты
+           // Умный поиск минимальной цены ЗА МЕСТО для этой конкретной даты
            let minPriceForDate;
            let oldPriceForDate;
            
            if (isV2) {
-             const minOriginal = Math.min(...activeCategories.map((c: any) => Number(c.price)));
-             minPriceForDate = Math.max(0, minOriginal + priceDelta);
-             oldPriceForDate = minOriginal;
+             // 1. Ищем старую минимальную цену (за место)
+             oldPriceForDate = Math.min(...activeCategories.map((c: any) => Number(c.price) / Math.max(1, c.spotsPerUnit || 1)));
+             // 2. Применяем дельту к полной цене тарифа, а затем делим на места
+             minPriceForDate = Math.min(...activeCategories.map((c: any) => 
+               Math.max(0, (Number(c.price) + priceDelta) / Math.max(1, c.spotsPerUnit || 1))
+             ));
            } else {
              const p = [dynamicPricing.price];
              if (tour.priceMember) p.push(Number(tour.priceMember));
@@ -204,15 +208,18 @@ export default function TourDates({ tour, isWished = false }: TourDatesProps) {
                 {/* ПРАВАЯ ЧАСТЬ: ГИД И СТАТУС */}
                 <div className="flex items-center justify-between md:w-2/3 md:justify-end md:gap-8">
                     
-                   {/* 🚀 SENIOR FIX: Вывод цены с приставкой "от" и зачеркиванием старой */}
+                   {/* Вывод цены ЗА МЕСТО с приставкой "от" и зачеркиванием */}
                    <div className="hidden lg:flex flex-col items-end mr-2">
                      <span className={`text-lg font-black tracking-tight flex items-baseline gap-1 ${isSoldOut ? 'text-slate-500' : 'text-white'}`}>
                        {showFromPrefix && <span className="text-xs text-slate-400 uppercase font-bold">от</span>}
-                       {minPriceForDate.toLocaleString('ru-RU')} <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
+                       {Math.round(minPriceForDate).toLocaleString('ru-RU')} 
+                       <span className="text-sm font-bold text-teal-500">
+                         {tour.currency || 'RUB'} {showPerPerson && <span className="text-slate-400 ml-0.5 lowercase tracking-normal font-medium">/ чел.</span>}
+                       </span>
                      </span>
                      {hasDiscount && !isSoldOut && oldPriceForDate > 0 && (
                         <span className="text-xs text-slate-400 line-through decoration-rose-500/50">
-                          {oldPriceForDate.toLocaleString('ru-RU')} {tour.currency || 'RUB'}
+                          {Math.round(oldPriceForDate).toLocaleString('ru-RU')} {tour.currency || 'RUB'}
                         </span>
                      )}
                    </div>

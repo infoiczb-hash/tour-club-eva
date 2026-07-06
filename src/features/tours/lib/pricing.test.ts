@@ -55,7 +55,7 @@ describe('Pricing Utilities', () => {
   // ─────────────────────────────────────────────────────────────────────────────
   describe('Управляемые категории цен (TourPriceCategory)', () => {
     const categories = [
-      { id: 'cat-adult', key: 'adult', label: 'Взрослый', price: 1000, spotsPerUnit: 1 },
+      { id: 'cat-adult', key: 'adult', label: 'Стандарт', price: 1000, spotsPerUnit: 1 },
       { id: 'cat-k2', key: 'kayak_2', label: 'Байдарка 2-местная', price: 1800, spotsPerUnit: 2 },
       { id: 'cat-k3', key: 'kayak_3', label: 'Байдарка 3-местная', price: 2400, spotsPerUnit: 3 },
     ];

@@ -19,7 +19,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
   const basePriceVal = Number(price || 0);
 
-  // 1. Умная логика доступности (Global Availability)
+  // 1. Умная логика доступности
   const { isGlobalSoldOut, isLowSpots, nearestAvailableDate } = useMemo(() => {
     const allDates = tour?.tourDates || tour?.dates || [];
     if (!allDates || allDates.length === 0) {
@@ -55,11 +55,9 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
   // 2. ВЫЧИСЛЯЕМ ДИНАМИЧЕСКУЮ ЦЕНУ (V1) И ДЕЛЬТУ
   const dynamicPricing = calculateDynamicPrice(basePriceVal, nearestAvailableDate);
   const currentV1Price = dynamicPricing.price;
-  
-  // 🚀 SENIOR FIX: Вычисляем абсолютную скидку/наценку в рублях (например, -100 RUB или +150 RUB)
   const priceDelta = currentV1Price - basePriceVal;
   
-  // 3. ПОДКЛЮЧАЕМ ГИБКИЕ ТАРИФЫ (V2) И ПРИМЕНЯЕМ К НИМ ДЕЛЬТУ
+  // 3. ПОДКЛЮЧАЕМ ГИБКИЕ ТАРИФЫ (V2)
   const priceCategories = useMemo(() => {
     return tour.tourPriceCategories || tour.priceCategories || [];
   }, [tour.tourPriceCategories, tour.priceCategories]);
@@ -68,26 +66,31 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
     .filter((c: any) => c.isActive !== false)
     .map((c: any) => {
       const original = Number(c.price);
-      const current = Math.max(0, original + priceDelta); // Применяем скидку, но не даем уйти в минус
+      const current = Math.max(0, original + priceDelta); // Применяем скидку
       return { ...c, originalPrice: original, currentPrice: current };
     });
 
   const isV2 = activeCategories.length > 0;
+  
+  // Флаг для отображения приписки "/ чел."
+  const showPerPerson = isV2 && activeCategories.some((c: any) => (c.spotsPerUnit || 1) > 1);
 
-  // Умный поиск минимальной цены для шапки (от ... RUB)
+  // 🚀 SENIOR FIX: Умный поиск минимальной цены ЗА ОДНО МЕСТО
   const minPrice = useMemo(() => {
-    if (isV2) return Math.min(...activeCategories.map((c: any) => c.currentPrice));
-    
+    if (isV2) {
+      // Делим цену тарифа на его вместимость
+      return Math.min(...activeCategories.map((c: any) => c.currentPrice / Math.max(1, c.spotsPerUnit || 1)));
+    }
     const p = [currentV1Price];
     if (tour.priceMember) p.push(Number(tour.priceMember));
     if (tour.priceChild) p.push(Number(tour.priceChild));
     return Math.min(...p);
   }, [isV2, activeCategories, currentV1Price, tour]);
 
-  // Логика скидок (Зачеркнутая цена в шапке)
+  // Логика скидок (Зачеркнутая цена в шапке тоже делится на места)
   const hasDiscount = priceDelta < 0; 
   const headerOldPrice = isV2 
-    ? Math.min(...activeCategories.map((c: any) => c.originalPrice)) 
+    ? Math.min(...activeCategories.map((c: any) => c.originalPrice / Math.max(1, c.spotsPerUnit || 1))) 
     : (dynamicPricing.oldPrice || Number(priceOld || 0));
     
   const discountPercent = hasDiscount && headerOldPrice > 0
@@ -155,18 +158,20 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
         <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6 mt-2">
           <div>
             <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1">Цена</p>
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
               {showFromPrefix && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
               <span className="text-3xl xl:text-4xl font-black text-white tracking-tight">
-                {minPrice.toLocaleString('ru-RU')}
+                {Math.round(minPrice).toLocaleString('ru-RU')}
               </span>
-              <span className="text-sm font-bold text-teal-500">{currency}</span>
+              <span className="text-sm font-bold text-teal-500">
+                {currency} {showPerPerson && <span className="text-slate-400 ml-1 lowercase tracking-normal">/ чел.</span>}
+              </span>
             </div>
             
             {hasDiscount && (
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-slate-300 line-through text-xs font-medium decoration-rose-500/50">
-                  {headerOldPrice.toLocaleString('ru-RU')}
+                  {Math.round(headerOldPrice).toLocaleString('ru-RU')}
                 </span>
                 <span className="bg-rose-500/10 text-rose-500 text-[14px] font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
                   Выгода {discountPercent}%
@@ -174,7 +179,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
               </div>
             )}
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
               <p className="text-slate-300 text-[14px] font-bold uppercase tracking-wider mb-1"> Места</p>
               <div className={clsx(
                 "text-lg font-black uppercase leading-tight", 
@@ -193,7 +198,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
           <p className="text-slate-300 text-[14px] font-bold uppercase mb-2">Доступные тарифы</p>
           
           {isV2 ? (
-            /* --- РЕЖИМ V2 --- */
+            /* В списке выводим полные цены за лодки, чтобы клиент понимал, за что платит */
             activeCategories.map((cat: any) => (
               <div key={cat.id} className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2 text-slate-300">

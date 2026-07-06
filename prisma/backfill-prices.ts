@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     const categoriesToCreate = [
       {
         key: 'adult',
-        label: 'Взрослый',
+        label: 'Стандарт',
         price: tour.price,
         spotsPerUnit: 1,
         minQuantity: 0, // Устанавливаем 0, чтобы убрать принудительный хардкод "минимум 1"

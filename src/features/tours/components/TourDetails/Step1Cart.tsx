@@ -3,11 +3,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Calendar, Ticket, Minus, Plus, ArrowRight, LogIn, Send } from 'lucide-react';
+import { Calendar, Ticket, Minus, Plus, ArrowRight, LogIn, Send, Flame, Zap } from 'lucide-react';
 import { Tour } from '@/features/tours/types';
 import { BookingFormValues } from './booking.schema';
 import Link from 'next/link';
 import { clsx } from 'clsx';
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing';
 
 interface Step1CartProps {
   tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
@@ -34,11 +35,9 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
   const ticketsMember = Number(watch('ticketsMember') || 0);
   const ticketsFamily = Number(watch('ticketsFamily') || 0);
 
-  // 🚀 SENIOR FIX: Локальный стейт. Отвязываем отрисовку от "ленивого" кэша react-hook-form
   const initialCart = watch('cartV2') || {};
   const [localCart, setLocalCart] = useState<Record<string, number>>(initialCart);
 
-  // Синхронизируем стейт, если вернулись со второго шага назад
   useEffect(() => {
     const formCart = watch('cartV2');
     if (formCart && Object.keys(formCart).length > 0) {
@@ -46,12 +45,6 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const priceCategories = useMemo(() => {
-    return tour.tourPriceCategories || tour.priceCategories || [];
-  }, [tour.tourPriceCategories, tour.priceCategories]);
-
-  const isV2 = Array.isArray(priceCategories) && priceCategories.length > 0;
 
   const validDates = useMemo(() => {
     const sourceDates = (tour.tourDates && tour.tourDates.length > 0) ? tour.tourDates : (tour.dates || []);
@@ -68,7 +61,33 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
   const spotsLeft = targetDate ? (targetDate.spotsLeft ?? targetDate.capacity ?? 0) : (tour.spotsLeft || 0);
   const isDateSoldOut = validDates.length > 0 ? (targetDate ? spotsLeft <= 0 : false) : (tour.spotsLeft || 0) <= 0;
 
-  // 🚀 SENIOR FIX: Все вычисления теперь идут строго через мгновенный localCart и с жестким кастом Number()
+  // 🚀 SENIOR FIX: Считаем динамическую цену/скидку для выбранной даты
+  const basePriceVal = Number(tour.price || 0);
+  const dynamicPricing = calculateDynamicPrice(basePriceVal, targetDate || null);
+  const priceDelta = dynamicPricing.price - basePriceVal;
+  const hasDiscount = priceDelta < 0;
+
+  // Подключаем гибкие тарифы и применяем к ним скидку (не даем уйти в минус)
+  const priceCategories = useMemo(() => {
+    const rawCategories = tour.tourPriceCategories || tour.priceCategories || [];
+    return rawCategories.map((c: any) => {
+      const original = Number(c.price || 0);
+      return {
+        ...c,
+        originalPrice: original,
+        currentPrice: Math.max(0, original + priceDelta)
+      };
+    });
+  }, [tour.tourPriceCategories, tour.priceCategories, priceDelta]);
+
+  const isV2 = Array.isArray(priceCategories) && priceCategories.length > 0;
+
+  // Считаем актуальные цены для старой логики V1 (с учетом скидок)
+  const v1AdultPrice = Math.max(0, basePriceVal + priceDelta);
+  const v1ChildPrice = Math.max(0, Number(tour.priceChild || 0) + priceDelta);
+  const v1FamilyPrice = Math.max(0, Number(tour.priceFamily || 0) + priceDelta);
+  const v1MemberPrice = Math.max(0, Number(tour.priceMember || 0) + priceDelta);
+
   const totalSpotsSelected = isV2 
     ? priceCategories.reduce((sum: number, cat: any) => {
         const qty = Number(localCart[cat.id] || 0);
@@ -80,13 +99,12 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
   const currentTotalPrice = isV2 
     ? priceCategories.reduce((sum: number, cat: any) => {
         const qty = Number(localCart[cat.id] || 0);
-        const price = Number(cat.price || 0);
-        return sum + (qty * price);
+        return sum + (qty * cat.currentPrice);
       }, 0)
-    : (ticketsAdult * Number(tour.price || 0)) + 
-      (ticketsChild * Number(tour.priceChild || 0)) + 
-      (ticketsMember * Number(tour.priceMember || 0)) + 
-      (ticketsFamily * Number(tour.priceFamily || 0));
+    : (ticketsAdult * v1AdultPrice) + 
+      (ticketsChild * v1ChildPrice) + 
+      (ticketsMember * v1MemberPrice) + 
+      (ticketsFamily * v1FamilyPrice);
 
   const handleUpdateV2 = (catId: string, minQty: number, change: number) => {
     const current = Number(localCart[catId] || 0);
@@ -98,7 +116,6 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
       nextValue = 0;
     }
 
-    // 🚀 SENIOR FIX: Мгновенно обновляем интерфейс и параллельно отдаем данные в форму
     const newCart = { ...localCart, [catId]: nextValue };
     setLocalCart(newCart); 
     setValue('cartV2', newCart, { shouldValidate: true, shouldDirty: true });
@@ -129,8 +146,16 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
       )}
 
       <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-          <Calendar size={12} /> Доступные даты выезда
+        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between ml-1">
+          <span className="flex items-center gap-1.5"><Calendar size={12} /> Доступные даты выезда</span>
+          
+          {/* Маркетинговые бейджи над датой */}
+          {dynamicPricing.type === 'EARLY_BIRD' && (
+            <span className="text-[10px] text-teal-400 flex items-center gap-1 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20"><Flame size={10} /> Раннее</span>
+          )}
+          {dynamicPricing.type === 'LAST_MINUTE' && (
+            <span className="text-[10px] text-rose-400 flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20"><Zap size={10} /> Горящий</span>
+          )}
         </label>
         
         {tour.dates && tour.dates.length > 0 ? (
@@ -171,7 +196,7 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
         <div className="bg-white/5 rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
           {isV2 ? (
             priceCategories.map((cat: any) => {
-              const currentQty = localCart[cat.id] || 0; // 🚀 Берем цифру из мгновенного стейта
+              const currentQty = localCart[cat.id] || 0;
               return (
                 <div key={cat.id} className={clsx("flex items-center justify-between p-4 transition-colors", !cat.isActive && "hidden")}>
                   <div>
@@ -183,7 +208,13 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400 mt-1 font-medium">{cat.price} {tour.currency ?? 'RUB'}</div>
+                    {/* Вывод цены V2 со скидкой */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-sm font-bold text-teal-400">{cat.currentPrice} {tour.currency ?? 'RUB'}</span>
+                      {hasDiscount && cat.originalPrice > 0 && (
+                        <span className="text-xs text-slate-500 line-through decoration-rose-500/50">{cat.originalPrice}</span>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10 shrink-0">
@@ -209,10 +240,16 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
             })
           ) : (
             <>
+              {/* ВАРИАНТ V1: ЗАМЕНИЛИ ХАРДКОД СЛОВ НА ПРАВИЛЬНЫЕ */}
               <div className="flex items-center justify-between p-4">
                 <div>
-                  <div className="text-sm font-bold text-white">Взрослый билет</div>
-                  <div className="text-xs text-slate-400 mt-1 font-medium">{tour.price} {tour.currency ?? 'RUB'}</div>
+                  <div className="text-sm font-bold text-white">Стандарт</div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-sm font-bold text-teal-400">{v1AdultPrice} {tour.currency ?? 'RUB'}</span>
+                      {hasDiscount && basePriceVal > 0 && (
+                        <span className="text-xs text-slate-500 line-through decoration-rose-500/50">{basePriceVal}</span>
+                      )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
                   <button type="button" onClick={() => setValue('ticketsAdult', Math.max(0, ticketsAdult - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
@@ -224,8 +261,13 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
               {tour.priceChild && tour.priceChild > 0 ? (
                 <div className="flex items-center justify-between p-4 border-t border-white/5">
                   <div>
-                    <div className="text-sm font-bold text-white">Детский билет</div>
-                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceChild} {tour.currency ?? 'RUB'}</div>
+                    <div className="text-sm font-bold text-white">Детский</div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-sm font-bold text-teal-400">{v1ChildPrice} {tour.currency ?? 'RUB'}</span>
+                      {hasDiscount && (
+                        <span className="text-xs text-slate-500 line-through decoration-rose-500/50">{tour.priceChild}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
                     <button type="button" onClick={() => setValue('ticketsChild', Math.max(0, ticketsChild - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
@@ -238,8 +280,13 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
               {tour.priceFamily && tour.priceFamily > 0 ? (
                 <div className="flex items-center justify-between p-4 border-t border-white/5">
                   <div>
-                    <div className="text-sm font-bold text-white">Семейный (2 взр. + 1 реб.)</div>
-                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceFamily} {tour.currency ?? 'RUB'}</div>
+                    <div className="text-sm font-bold text-white">Семья (2+1)</div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-sm font-bold text-teal-400">{v1FamilyPrice} {tour.currency ?? 'RUB'}</span>
+                      {hasDiscount && (
+                        <span className="text-xs text-slate-500 line-through decoration-rose-500/50">{tour.priceFamily}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
                     <button type="button" onClick={() => setValue('ticketsFamily', Math.max(0, ticketsFamily - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>
@@ -252,8 +299,13 @@ export default function Step1Cart({ tour, onNext, onSoldOut, onClose, isLoggedIn
               {tour.priceMember && tour.priceMember > 0 ? (
                 <div className="flex items-center justify-between p-4 border-t border-white/5">
                   <div>
-                    <div className="text-sm font-bold text-white">По клубной карте</div>
-                    <div className="text-xs text-slate-400 mt-1 font-medium">{tour.priceMember} {tour.currency ?? 'RUB'}</div>
+                    <div className="text-sm font-bold text-white">Клубная карта</div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-sm font-bold text-teal-400">{v1MemberPrice} {tour.currency ?? 'RUB'}</span>
+                      {hasDiscount && (
+                        <span className="text-xs text-slate-500 line-through decoration-rose-500/50">{tour.priceMember}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 bg-slate-950 rounded-xl p-1 border border-white/10">
                     <button type="button" onClick={() => setValue('ticketsMember', Math.max(0, ticketsMember - 1))} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-white/10 rounded-lg"><Minus size={14}/></button>

@@ -3,16 +3,17 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Clock, ChevronRight, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
+import { MapPin, Clock, ChevronRight, Calendar as CalendarIcon, Sparkles, Flame, Zap } from 'lucide-react';
 import { TourPreview } from '@/features/tours/types';
 import { clsx } from 'clsx';
 import { twMerge } from "tailwind-merge"; 
+import { calculateDynamicPrice } from '@/features/tours/lib/pricing';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-//   СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ (Привязан к цвету из БД, а не к типу тура)
+// СЛОВАРЬ ДИЗАЙН-СИСТЕМЫ
 const COLOR_THEMES: Record<string, string> = {
   slate:   "bg-slate-500/10 border-slate-500/20 text-slate-300",
   teal:    "bg-teal-500/10 border-teal-500/20 text-teal-400",
@@ -26,20 +27,26 @@ const COLOR_THEMES: Record<string, string> = {
   amber:   "bg-amber-500/10 border-amber-500/20 text-amber-400",
 };
 
-//   ИСПРАВЛЕНО: Добавлен currentPrice для динамического ценообразования дат
-type CalendarTour = Omit<TourPreview, 'date'> & { //   ИЗМЕНЕНО: Omit из TourPreview
+// Расширяем тип TourPreview для поддержки тарифов V2
+type ExtendedTourPreview = TourPreview & { 
+  tourPriceCategories?: any[]; 
+  priceCategories?: any[]; 
+};
+
+type CalendarTour = Omit<ExtendedTourPreview, 'date'> & { 
   uniqueId: string; 
   originalId: string;
   date: string | null; 
   endDate: string | null; 
   guideId: string | null;
   currentPrice?: number | null; 
+  specificDateObj?: any; // Сохраняем оригинальный объект даты для точного расчета
 };
 
-interface CalendarViewProps { events: TourPreview[]; }
+interface CalendarViewProps { events: ExtendedTourPreview[]; }
+
 export default function CalendarView({ events }: CalendarViewProps) {
 const { groupedTours, tbaTours } = useMemo(() => {
-  // 1. Задаем начало текущего дня для честного сравнения
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -54,27 +61,33 @@ const { groupedTours, tbaTours } = useMemo(() => {
         guideId: dateObj.guide_id || null,
         originalId: tour.id,
         uniqueId: dateObj.id || `${tour.id}-${dateObj.start}-${idx}`,
-        currentPrice: dateObj.basePrice || tour.price
+        currentPrice: dateObj.basePrice || tour.price,
+        specificDateObj: dateObj
       }));
     }
 
-    return [{ ...tour, uniqueId: tour.id, originalId: tour.id, date: null, endDate: null, guideId: null, currentPrice: tour.price } as CalendarTour];
+    return [{ 
+      ...tour, 
+      uniqueId: tour.id, 
+      originalId: tour.id, 
+      date: null, 
+      endDate: null, 
+      guideId: null, 
+      currentPrice: tour.price,
+      specificDateObj: null
+    } as CalendarTour];
   });
 
-  // 2. ВОЗВРАЩАЕМ ФИЛЬТРАЦИЮ: Убираем прошедшие туры
   const futureEvents = explodedEvents.filter(tour => {
-    if (!tour.date) return true; // Туры "Скоро" (без дат) оставляем
+    if (!tour.date) return true; 
 
-    // Если тур многодневный, ориентируемся на дату окончания. Если однодневный - на дату старта.
     const referenceDateStr = tour.endDate || tour.date;
     const referenceDate = new Date(referenceDateStr);
-    referenceDate.setHours(0, 0, 0, 0); // Сбрасываем время, чтобы тур исчезал строго на следующий день
+    referenceDate.setHours(0, 0, 0, 0); 
 
-    // Оставляем только те даты, которые >= сегодняшнего дня
     return referenceDate.getTime() >= today.getTime();
   });
 
-  // 3. Сортируем уже ОТФИЛЬТРОВАННЫЙ массив (заменили explodedEvents на futureEvents)
   const sorted = futureEvents.sort((a, b) => {
     const dateA = a.date ? new Date(a.date).getTime() : Infinity;
     const dateB = b.date ? new Date(b.date).getTime() : Infinity;
@@ -151,31 +164,64 @@ const { groupedTours, tbaTours } = useMemo(() => {
 function CalendarRow({ tour, isTba = false }: { tour: CalendarTour, isTba?: boolean }) {
   const dateObj = tour.date ? new Date(tour.date) : null;
   const dayNumber = dateObj ? dateObj.getDate() : null;
-const weekdayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', timeZone: 'UTC' });
-const weekDay = dateObj ? weekdayFormatter.format(dateObj) : null;
+  const weekdayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', timeZone: 'UTC' });
+  const weekDay = dateObj ? weekdayFormatter.format(dateObj) : null;
   const endDateObj = tour.endDate ? new Date(tour.endDate) : null;
   const isMultiDay = endDateObj && dateObj && endDateObj.getTime() !== dateObj.getTime();
 
   const themeColor = tour.category?.color || 'slate';
   const badgeStyle = COLOR_THEMES[themeColor] || COLOR_THEMES.slate;
-
   const badgeLabel = tour.category?.title || 'Тур';
-  const displayPrice = tour.currentPrice ?? tour.price; // Выводим переопределенную цену
+
+  // --- УМНАЯ ЛОГИКА ЦЕН (Синхронизировано) ---
+  const basePriceVal = Number(tour.price || 0);
+  const dynamicPricing = calculateDynamicPrice(basePriceVal, tour.specificDateObj || null);
+  const currentV1Price = dynamicPricing.price;
+  const priceDelta = currentV1Price - basePriceVal;
+
+  const priceCategories = tour.tourPriceCategories || tour.priceCategories || [];
+  const activeCategories = priceCategories
+    .filter((c: any) => c.isActive !== false)
+    .map((c: any) => {
+      const original = Number(c.price);
+      const current = Math.max(0, original + priceDelta);
+      return { ...c, originalPrice: original, currentPrice: current };
+    });
+
+  const isV2 = activeCategories.length > 0;
+  const showPerPerson = isV2 && activeCategories.some((c: any) => (c.spotsPerUnit || 1) > 1);
+
+  let minPriceForDate;
+  let oldPriceForDate;
+  
+  if (isV2) {
+    minPriceForDate = Math.min(...activeCategories.map((c: any) => c.currentPrice / Math.max(1, c.spotsPerUnit || 1)));
+    oldPriceForDate = Math.min(...activeCategories.map((c: any) => c.originalPrice / Math.max(1, c.spotsPerUnit || 1)));
+  } else {
+    const p = [currentV1Price];
+    if (tour.priceMember) p.push(Number(tour.priceMember));
+    if (tour.priceChild) p.push(Number(tour.priceChild));
+    minPriceForDate = Math.min(...p);
+    oldPriceForDate = dynamicPricing.oldPrice || Number(tour.priceOld || 0);
+  }
+
+  const hasDiscount = priceDelta < 0;
+  const showFromPrefix = isV2 ? activeCategories.length > 1 : ((Number(tour.priceMember) || 0) > 0 || (Number(tour.priceChild) || 0) > 0);
 
   return (
     <Link href={`/tour/${tour.slug}`} className="group block outline-none">
       <div className={cn(
-        "relative flex items-stretch gap-3 sm:gap-5 p-3 sm:p-4 rounded-[1.5rem] transition-all duration-300",
+        "relative flex items-stretch gap-2 sm:gap-5 p-2.5 sm:p-4 rounded-[1.5rem] transition-all duration-300",
         "bg-[#0d131a] border-2 border-white/5 hover:border-teal-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:scale-[0.995]",
         isTba && "opacity-70 grayscale hover:grayscale-0 hover:opacity-100"
       )}>
-        <div className="w-16 sm:w-24 shrink-0 rounded-xl bg-slate-950/50 border border-white/5 flex flex-col items-center justify-center py-3 shadow-inner group-hover:bg-teal-500/10 group-hover:border-teal-500/20 transition-colors">
+        <div className="w-16 sm:w-24 shrink-0 rounded-xl bg-slate-950/50 border border-white/5 flex flex-col items-center justify-center py-2 sm:py-3 shadow-inner group-hover:bg-teal-500/10 group-hover:border-teal-500/20 transition-colors">
           {isTba ? (
             <Clock size={24} className="text-slate-300 group-hover:text-teal-400 transition-colors" />
           ) : (
             <>
               <span className="text-2xl sm:text-4xl font-black leading-none text-white group-hover:text-teal-400 transition-colors">{dayNumber}</span>
-              <span className="text-[12px] sm:text-xs font-bold uppercase tracking-widest text-slate-300 mt-1">{weekDay}</span>
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-300 mt-1">{weekDay}</span>
             </>
           )}
         </div>
@@ -184,10 +230,10 @@ const weekDay = dateObj ? weekdayFormatter.format(dateObj) : null;
           <Image src={tour.image || '/placeholder-tour.jpg'} alt={tour.title} fill className="object-cover group-hover:scale-110 transition-transform duration-700" sizes="150px" />
         </div>
 
-        <div className="flex flex-col justify-center flex-1 min-w-0 py-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+        <div className="flex flex-col justify-center flex-1 min-w-0 py-1 pl-1 sm:pl-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[12px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
             {badgeLabel && (
-              <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[12px]", badgeStyle)}>
+              <span className={cn("px-2 py-0.5 rounded-md border backdrop-blur-sm text-[10px] sm:text-[12px] leading-tight", badgeStyle)}>
                 {badgeLabel}
               </span>
             )}
@@ -197,26 +243,46 @@ const weekDay = dateObj ? weekdayFormatter.format(dateObj) : null;
             )}
           </div>
           
-          <h4 className="text-base sm:text-xl font-black text-white leading-tight pr-2 group-hover:text-teal-300 transition-colors mb-2">
+          <h4 className="text-sm sm:text-xl font-black text-white leading-tight pr-1 sm:pr-2 group-hover:text-teal-300 transition-colors mb-1 sm:mb-2 line-clamp-2">
             {tour.title}
           </h4>
           
-          <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-300 font-medium">
-            <MapPin size={14} className="shrink-0 text-teal-500/60" strokeWidth={2.5} />
+          <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-sm text-slate-300 font-medium">
+            <MapPin size={12} className="shrink-0 text-teal-500/60 sm:w-3.5 sm:h-3.5" strokeWidth={2.5} />
             <span className="truncate">{tour.location}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 sm:gap-6 shrink-0 pl-1 sm:pl-4">
-          <div className="hidden sm:flex flex-col items-end justify-center pr-5 border-r border-white/10 h-full">
-            <span className="text-[12px] uppercase font-bold text-slate-300 tracking-widest mb-0.5">Билет от</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-white leading-none tracking-tight">{Number(displayPrice).toLocaleString()}</span>
-              <span className="text-xs font-bold text-teal-500">{tour.currency || 'RUB'}</span>
+        {/* ПРАВЫЙ БЛОК: ЦЕНА + КНОПКА (ТЕПЕРЬ ВИДНО НА МОБИЛЬНЫХ!) */}
+        <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 pl-1 sm:pl-3">
+          <div className="flex flex-col items-end justify-center pr-2 sm:pr-4 border-r border-white/10 h-full">
+            
+            <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+               <span className="text-[9px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-widest whitespace-nowrap">
+                 {showFromPrefix ? 'Билет от' : 'Билет'}
+               </span>
+               {!isTba && dynamicPricing.type === 'EARLY_BIRD' && <Flame size={10} className="text-teal-400 shrink-0" />}
+               {!isTba && dynamicPricing.type === 'LAST_MINUTE' && <Zap size={10} className="text-rose-400 shrink-0" />}
             </div>
+            
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg sm:text-xl font-black text-white leading-none tracking-tight">
+                {Math.round(minPriceForDate).toLocaleString('ru-RU')}
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold text-teal-500 whitespace-nowrap">
+                {tour.currency || 'RUB'} {showPerPerson && <span className="text-slate-400 ml-0.5 lowercase tracking-normal">/ чел.</span>}
+              </span>
+            </div>
+            
+            {hasDiscount && oldPriceForDate > 0 && (
+               <span className="text-[9px] sm:text-[11px] text-slate-500 line-through decoration-rose-500/50 mt-0.5">
+                 {Math.round(oldPriceForDate).toLocaleString('ru-RU')} {tour.currency || 'RUB'}
+               </span>
+            )}
           </div>
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:border-teal-400 group-hover:text-slate-900 transition-all duration-300 shadow-sm">
-            <ChevronRight size={20} strokeWidth={2.5} className="group-hover:translate-x-0.5 transition-transform" />
+          
+          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:border-teal-400 group-hover:text-slate-900 transition-all duration-300 shadow-sm shrink-0">
+            <ChevronRight size={16} strokeWidth={2.5} className="group-hover:translate-x-0.5 transition-transform sm:w-5 sm:h-5" />
           </div>
         </div>
       </div>

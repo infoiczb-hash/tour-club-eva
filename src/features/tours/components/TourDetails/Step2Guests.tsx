@@ -19,7 +19,6 @@ interface Step2GuestsProps {
 const JACKET_SIZES = ['Детский', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
 export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
-  // Поле 'social' теперь официально объявлено в схеме, убираем хаки приведения типов
   const { control, register, trigger, watch, formState: { errors } } = useFormContext<BookingFormValues>();
 
   const { fields, replace } = useFieldArray({
@@ -36,21 +35,19 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
   const hasChildUnder7 = watch('hasChildUnder7');
   const hasDog = watch('hasDog');
 
+  // 🚀 Анализируем тип тура
   const categorySlug = tour.category?.slug?.toLowerCase() || '';
+  const isKidsTour = ['kids', 'academy', 'children', 'детск'].some(k => categorySlug.includes(k));
   const isKayakingTour = ['kayaking', 'kayak'].includes(categorySlug);
   const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].includes(categorySlug);
   
-  // Безопасное чтение динамических тарифов
   const priceCategories = useMemo(() => {
     return tour.tourPriceCategories || tour.priceCategories || [];
   }, [tour.tourPriceCategories, tour.priceCategories]);
 
   const isV2 = Array.isArray(priceCategories) && priceCategories.length > 0;
-
-  // Используем ref для отслеживания слепка корзины и предотвращения бесконечного ререндера useEffect
   const previousCartFingerprint = useRef('');
 
-  // Интеллектуальное слияние (Smart Merge) — генерация анкет без стирания ранее введенных имен
   useEffect(() => {
     const cartFingerprint = isV2 
       ? JSON.stringify(cartV2) 
@@ -61,6 +58,16 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
 
     const expectedGuests: z.infer<typeof guestSchema>[] = [];
     
+    // 🚀 Для детских программ ДОБАВЛЯЕМ профиль Родителя (Заказчика) ПЕРЕД списком детей
+    if (isKidsTour) {
+      expectedGuests.push({
+        id: 'customer_parent',
+        isMain: true,
+        type: 'Заказчик',
+        name: '',
+      });
+    }
+
     if (isV2) {
       let unitCounter = 0;
       priceCategories.forEach((cat: any) => {
@@ -71,7 +78,7 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
           for (let s = 0; s < spots; s++) {
             expectedGuests.push({
               id: `${cat.id}_${i}_${s}`, 
-              isMain: expectedGuests.length === 0,
+              isMain: expectedGuests.length === 0, // У детей isMain будет false
               type: spots > 1 ? `Место ${s + 1}` : cat.label,
               categoryId: cat.id,
               unitIndex: uIdx,
@@ -93,7 +100,6 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
       }
     }
 
-    // Восстанавливаем введенные данные из существующего массива, чтобы они не стирались при переходах назад-вперед
     const mergedGuests = expectedGuests.map((expected, index) => {
       const existing = fields[index];
       if (existing) {
@@ -109,9 +115,8 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
     });
 
     replace(mergedGuests);
-  }, [cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, isV2, replace, priceCategories, fields]);
+  }, [cartV2, ticketsAdult, ticketsChild, ticketsMember, ticketsFamily, isV2, replace, priceCategories, fields, isKidsTour]);
 
-  // Группировка экипажей (для лодок повышенной вместимости в V2)
   const groupedFields = useMemo(() => {
     const groups: { label?: string; items: { field: any, index: number }[] }[] = [];
     const map = new Map<string, { field: any, index: number }[]>();
@@ -129,26 +134,15 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
     return groups;
   }, [fields]);
 
-  // Строгая проверка Zod-валидации перед пуском на экран оплаты
   const handleProceed = async () => {
     const isValid = await trigger(['guests', 'social']);
     if (isValid) onNext();
   };
 
-  // 100% оригинальная логика умных плейсхолдеров из старого файла
   const getSmartPlaceholder = () => {
-    const slug = tour.category?.slug?.toLowerCase() || '';
-    const location = tour.location?.toLowerCase() || '';
-
-    if (['water', 'kayaking', 'kayak', 'sup', 'rafting'].includes(slug)) {
-      return 'Здессь можно оставить комментарий к поездке или важную информацию, пожелания';
-    }
-    if (slug === 'abroad' || location.includes('румыния')) {
-      return 'Какое снаряжение вам нужно? Есть ли у Вас действующий биометрический паспорт?';
-    }
-    if (slug === 'kids') {
-      return 'Укажите возраст детей, если они едут с вами...';
-    }
+    if (isWaterTour) return 'Здесь можно оставить комментарий к поездке или важную информацию, пожелания';
+    if (categorySlug === 'abroad' || tour.location?.toLowerCase().includes('румыния')) return 'Какое снаряжение вам нужно? Есть ли у Вас действующий биометрический паспорт?';
+    if (isKidsTour) return 'Укажите важную информацию о ребенке (аллергии, особенности здоровья)...';
     return 'Задайте вопрос и мы постараемся ответить на него в короткие сроки?';
   };
 
@@ -162,18 +156,26 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
             </div>
           )}
           
-    {group.items.map(({ field, index }) => {
-           const isChild = (field.type || '').toLowerCase().includes('дет');
+          {group.items.map(({ field, index }) => {
+            // 🚀 Идентификация профиля Заказчика vs. Участника
+            const isCustomer = field.id === 'customer_parent' || field.type === 'Заказчик';
+            const isChild = isKidsTour ? !isCustomer : (field.type || '').toLowerCase().includes('дет');
             const errBase = errors?.guests?.[index];
+
+            // 🚀 Умная генерация подписей над полями
+            let participantLabel = `Участник ${index + 1}`;
+            if (isCustomer) participantLabel = 'Заказчик (Родитель)';
+            else if (isKidsTour) participantLabel = `Ребенок ${index}`; // index работает идеально, т.к. Заказчик = 0
 
             return (
               <div key={field.id} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-teal-500 uppercase tracking-widest flex items-center gap-1.5">
                     {field.isMain ? <User size={14}/> : <Users size={14}/>} 
-                    Участник {index + 1} {field.isMain && <span className="text-white bg-white/10 px-1.5 py-0.5 rounded ml-1">Заказчик</span>}
+                    {participantLabel} 
+                    {field.isMain && !isCustomer && <span className="text-white bg-white/10 px-1.5 py-0.5 rounded ml-1">Заказчик</span>}
                   </label>
-                  {!field.isMain && (
+                  {!field.isMain && !isCustomer && (
                     <span className="text-[10px] uppercase font-bold text-slate-400 border border-slate-700 px-2 py-0.5 rounded">
                       {field.type}
                     </span>
@@ -181,12 +183,14 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
+                  
+                  {/* ИМЯ ФАМИЛИЯ (У детей в Детском Туре поле растягивается на всю ширину) */}
+                  <div className={clsx("space-y-1", isKidsTour && !isCustomer ? "sm:col-span-2" : "")}>
                     <div className="relative">
                       <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                       <input 
                         {...register(`guests.${index}.name`)}
-                        placeholder="Имя Фамилия *" 
+                        placeholder={isCustomer ? "Имя Фамилия заказчика *" : (isKidsTour ? "Имя Фамилия ребенка *" : "Имя Фамилия *")} 
                         className={clsx(
                           "w-full bg-slate-900 border rounded-xl py-2.5 pl-9 pr-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600",
                           errBase?.name ? "border-rose-500 focus:border-rose-400 focus:ring-1 focus:ring-rose-500" : "border-white/5 focus:border-teal-500/50"
@@ -197,6 +201,7 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
                   </div>
 
                   {field.isMain ? (
+                    // ТЕЛЕФОН ЗАКАЗЧИКА / ОСНОВНОГО ГОСТЯ
                     <div className="space-y-1">
                       <div className="relative">
                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
@@ -212,7 +217,34 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
                       </div>
                       {errBase?.phone && <p className="text-[10px] text-rose-400 font-bold ml-1">{errBase.phone.message}</p>}
                     </div>
+                  ) : isKidsTour ? (
+                    // 🚀 БЛОК РЕБЕНКА (ВОЗРАСТ + ТЕЛЕФОН)
+                    <>
+                      <div className="relative">
+                        <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                        <input 
+                          {...register(`guests.${index}.age`, { required: 'Укажите возраст' })}
+                          type="number" min="1" max="17" 
+                          placeholder="Возраст ребенка *" 
+                          className={clsx(
+                            "w-full bg-slate-900 border rounded-xl py-2.5 pl-9 pr-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600",
+                            errBase?.age ? "border-rose-500" : "border-white/5 focus:border-teal-500/50"
+                          )} 
+                        />
+                        {errBase?.age && <p className="absolute -bottom-4 left-1 text-[10px] text-rose-400 font-bold">{errBase.age.message}</p>}
+                      </div>
+                      <div className="relative">
+                        <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                        <input 
+                          {...register(`guests.${index}.phone`)}
+                          type="tel" 
+                          placeholder="Телефон (если есть)" 
+                          className="w-full bg-slate-900 border border-white/5 rounded-xl py-2.5 pl-9 pr-3 text-sm text-white focus:border-teal-500/50 outline-none transition-colors placeholder:text-slate-600" 
+                        />
+                      </div>
+                    </>
                   ) : (
+                    // СТАНДАРТНЫЙ БЛОК ВТОРОСТЕПЕННОГО ГОСТЯ
                     <div className="relative">
                       {isChild ? (
                         <>
@@ -237,8 +269,9 @@ export default function Step2Guests({ tour, onNext }: Step2GuestsProps) {
                   )}
                 </div>
 
+                {/* EMAIL / СОЦСЕТИ (Только для заказчика) */}
                 {field.isMain && (
-                  <div className="space-y-1">
+                  <div className="space-y-1 mt-3">
                     <div className="relative">
                       <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
                       <input 

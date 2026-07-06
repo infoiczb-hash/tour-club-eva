@@ -11,7 +11,6 @@ import { getMyProfileAction } from '@/features/account/actions/getProfile';
 import { bookingFormSchema, type BookingFormValues } from './booking.schema';
 import { SuccessScreen } from './SuccessScreen';
 
-// Вспомогательная функция форматирования дат (перенесена из OLD для автовыбора)
 const formatDateForDropdown = (d: any) => {
   const dateVal = d.startDate || d.start || d.date;
   if (!dateVal) return '';
@@ -20,7 +19,6 @@ const formatDateForDropdown = (d: any) => {
   return `${str}${d.time ? ` в ${d.time}` : ''}`;
 };
 
-// Ленивая загрузка шагов (Code Splitting)
 const StepLoader = () => (
   <div className="flex flex-col items-center justify-center py-24 text-slate-500 animate-in fade-in">
     <Loader2 className="animate-spin mb-4" size={32} />
@@ -46,13 +44,12 @@ export type WizardStep = 'cart' | 'guests' | 'checkout' | 'success' | 'waitlist'
 export default function BookingModal({ isOpen, onClose, tour, initialDate, initialDateId }: BookingModalProps) {
   const [step, setStep] = useState<WizardStep>('cart');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true); // Флаг для предотвращения мигания баннера
+  const [isAuthLoading, setIsAuthLoading] = useState(true); 
   const [userBalance, setUserBalance] = useState(0);
   const [successData, setSuccessData] = useState<any>(null);
   
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Инициализация формы дефолтными значениями
   const methods = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema) as unknown as Resolver<BookingFormValues>,
     mode: 'onChange',
@@ -77,7 +74,6 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     }
   });
 
-  // Защита от случайного закрытия формы при наличии изменений
   const handleSafeClose = useCallback(() => {
     const hasUnsavedChanges = Object.keys(methods.formState.dirtyFields).length > 0;
     
@@ -89,13 +85,11 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     onClose();
   }, [methods.formState.dirtyFields, step, onClose]);
 
-  // Жизненный цикл модалки, загрузка данных ЛК и автоматическая инициализация дат
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setIsAuthLoading(true);
 
-      // --- ИНИЦИАЛИЗАЦИЯ ДАТЫ (Исправление проблемы №4) ---
       const sourceDates = (tour.tourDates && tour.tourDates.length > 0) ? tour.tourDates : (tour.dates || []);
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -119,20 +113,14 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
         methods.setValue('tourDateStr', 'Открытая дата (по согласованию)');
       }
 
-      // --- ЗАГРУЗКА ПРОФИЛЯ ЛК (Исправление проблемы №3) ---
       getMyProfileAction()
         .then((profile) => {
           if (profile) {
             setIsLoggedIn(true);
             setUserBalance(profile.balance || 0);
-
-            // Интеллектуальное предзаполнение полей формы значениями из личного кабинета
             methods.setValue('guests.0.name', profile.name || '');
             methods.setValue('guests.0.phone', profile.phone || '');
-            
-            // 🚀 БЕЗ "as any": Поле теперь официально существует в схеме формы!
             methods.setValue('social', profile.email || profile.telegram || profile.instagram || '');
-            
             methods.setValue('guests.0.jacket', profile.lifeJacketSize || '');
           } else {
             setIsLoggedIn(false);
@@ -144,7 +132,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
           setUserBalance(0);
         })
         .finally(() => {
-          setIsAuthLoading(false); // Загрузка завершена, теперь можно безопасно рендерить баннер
+          setIsAuthLoading(false); 
         });
 
     } else {
@@ -162,7 +150,6 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     return () => { document.body.style.overflow = ''; };
   }, [isOpen, methods, initialDate, initialDateId, tour]);
 
-  // Фокус-трап и закрытие по нажатию клавиши Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -172,10 +159,18 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleSafeClose]);
 
+  // 🚀 SENIOR FIX: Умные заголовки шагов в зависимости от типа тура
   const getStepTitle = () => {
+    const categorySlug = tour.category?.slug?.toLowerCase() || '';
+    const isKidsTour = ['kids', 'academy', 'children', 'детск'].some(k => categorySlug.includes(k));
+    const isWaterTour = ['sup', 'kayaking', 'kayak', 'water', 'rafting'].some(k => categorySlug.includes(k));
+
     switch (step) {
       case 'cart': return 'Выбор тарифа';
-      case 'guests': return 'Данные экипажа';
+      case 'guests': 
+        if (isKidsTour) return 'Данные заказчика и участников';
+        if (isWaterTour) return 'Данные экипажа';
+        return 'Данные участников';
       case 'checkout': return 'Оплата билета';
       case 'waitlist': return 'Мест нет';
       case 'success': return 'ЗАЯВКА ПОЛУЧЕНА!';
@@ -215,7 +210,7 @@ export default function BookingModal({ isOpen, onClose, tour, initialDate, initi
                   tour={tour} 
                   onNext={() => setStep('guests')} 
                   onSoldOut={() => setStep('waitlist')} 
-                  onClose={onClose} // <--- ДОБАВИЛИ
+                  onClose={onClose} 
                   isLoggedIn={isLoggedIn && !isAuthLoading}
                 />
               )}

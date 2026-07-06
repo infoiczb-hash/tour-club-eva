@@ -111,14 +111,21 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
     .filter((c: any) => c.isActive !== false)
     .map((c: any) => {
       const original = Number(c.price);
-      const current = Math.max(0, original + priceDelta);
+      const current = Math.max(0, original + priceDelta); // Применяем скидку
       return { ...c, originalPrice: original, currentPrice: current };
     });
 
   const isV2 = activeCategories.length > 0;
+  
+  // Флаг для отображения приписки "/ чел."
+  const showPerPerson = isV2 && activeCategories.some((c: any) => (c.spotsPerUnit || 1) > 1);
 
+  // 🚀 SENIOR FIX: Умный поиск минимальной цены ЗА ОДНО МЕСТО
   const minPrice = useMemo(() => {
-    if (isV2) return Math.min(...activeCategories.map((c: any) => c.currentPrice));
+    if (isV2) {
+      // Делим цену тарифа на его вместимость
+      return Math.min(...activeCategories.map((c: any) => c.currentPrice / Math.max(1, c.spotsPerUnit || 1)));
+    }
     const p = [currentV1Price];
     if (tour.priceMember) p.push(Number(tour.priceMember));
     if (tour.priceChild) p.push(Number(tour.priceChild));
@@ -127,7 +134,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
   const hasDiscount = priceDelta < 0; 
   const headerOldPrice = isV2 
-    ? Math.min(...activeCategories.map((c: any) => c.originalPrice)) 
+    ? Math.min(...activeCategories.map((c: any) => c.originalPrice / Math.max(1, c.spotsPerUnit || 1))) 
     : (dynamicPricing.oldPrice || Number(tour.priceOld || 0));
     
   const discountPercent = hasDiscount && headerOldPrice > 0
@@ -272,15 +279,17 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                         )}
                       </div>
 
-                      <div className="flex items-baseline gap-1.5">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
                         {showFromPrefix && <span className="text-sm font-bold text-slate-400 uppercase">от</span>}
-                        <span className="text-3xl font-black text-white">{minPrice.toLocaleString('ru-RU')}</span>
-                        <span className="text-sm font-bold text-teal-500">{tour.currency || 'RUB'}</span>
+                        <span className="text-3xl font-black text-white">{Math.round(minPrice).toLocaleString('ru-RU')}</span>
+                        <span className="text-sm font-bold text-teal-500">
+                          {tour.currency || 'RUB'} {showPerPerson && <span className="text-slate-400 ml-1 lowercase tracking-normal font-medium">/ чел.</span>}
+                        </span>
                       </div>
                       
                       {hasDiscount && (
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-slate-300 line-through text-xs">{headerOldPrice.toLocaleString('ru-RU')}</span>
+                          <span className="text-slate-300 line-through text-xs">{Math.round(headerOldPrice).toLocaleString('ru-RU')}</span>
                           <span className="bg-rose-500/10 text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded border border-rose-500/20">
                             −{discountPercent}%
                           </span>
@@ -303,7 +312,7 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
 
                   <div className="border-t border-white/5" />
 
-                  {/* Рендер тарифов: Умный V1 / V2 */}
+                  {/* Рендер тарифов: в списке выводим ПОЛНУЮ цену за лодку */}
                   {((isV2 && activeCategories.length > 0) || (!isV2 && (tour.priceMember || tour.priceChild || tour.priceFamily))) && (
                     <div className="space-y-2.5">
                       <p className="text-xs uppercase font-bold text-slate-300 tracking-wider">Доступные тарифы</p>
@@ -399,8 +408,10 @@ export default function TourBottomActions({ tour }: TourBottomActionsProps) {
                 
                 <div className="flex items-baseline gap-1">
                   {showFromPrefix && <span className="text-xs text-slate-300 font-medium">от</span>}
-                  <span className="text-xl font-black text-white">{minPrice.toLocaleString('ru-RU')}</span>
-                  <span className="text-xs font-bold text-teal-500">{tour.currency || 'RUB'}</span>
+                  <span className="text-xl font-black text-white">{Math.round(minPrice).toLocaleString('ru-RU')}</span>
+                  <span className="text-xs font-bold text-teal-500">
+                    {tour.currency || 'RUB'} {showPerPerson && <span className="text-slate-400 ml-1 lowercase tracking-normal font-medium">/ чел.</span>}
+                  </span>
                 </div>
               </div>
 
