@@ -13,35 +13,47 @@ interface TourSidebarProps {
   tour: Tour & { tourPriceCategories?: any[]; priceCategories?: any[] };
 }
 
+// Добавляем тип для унификации как в мобилке
+type UnifiedTourDate = NonNullable<Tour["tourDates"]>[number] | NonNullable<Tour["dates"]>[number];
+
 export default function TourSidebar({ tour }: TourSidebarProps) {
   const openBookingModal = useModalStore((state) => state.openBookingModal);
 
   const { price, currency = 'RUB', priceOld, priceMember, priceChild, priceFamily } = tour;
   const basePriceVal = Number(price || 0);
 
-  // 1. Умная логика доступности
+  // 1. Умная логика доступности (СИНХРОНИЗИРОВАНО С МОБИЛКОЙ)
   const { isGlobalSoldOut, isLowSpots, nearestAvailableDate } = useMemo(() => {
-    const allDates = tour?.tourDates || tour?.dates || [];
+    const allDates = (tour?.tourDates || tour?.dates || []) as UnifiedTourDate[];
+    
     if (!allDates || allDates.length === 0) {
       const fallbackLeft = Number(tour?.spotsLeft || 0);
       return { isGlobalSoldOut: fallbackLeft <= 0, isLowSpots: fallbackLeft > 0 && fallbackLeft <= 5, nearestAvailableDate: null };
     }
 
     const now = new Date();
-    const futureDates = allDates.filter((d: any) => 
-      (d.startDate || d.start || d.date) ? new Date(d.startDate || d.start || d.date) >= now : false
-    ).sort((a: any, b: any) => {
-       const dateA = new Date(a.startDate || a.start || a.date).getTime();
-       const dateB = new Date(b.startDate || b.start || b.date).getTime();
-       return dateA - dateB;
+    now.setHours(0, 0, 0, 0); // 🚀 SENIOR FIX: Сбрасываем время, чтобы сегодня считалось будущим днем
+
+    const futureDates = allDates.filter((d: UnifiedTourDate) => {
+      const dateVal = d.startDate || d.start || d.date;
+      return dateVal ? new Date(dateVal as string | Date) >= now : true;
+    }).sort((a: UnifiedTourDate, b: UnifiedTourDate) => {
+       const dateA = a.startDate || a.start || a.date;
+       const dateB = b.startDate || b.start || b.date;
+       const timeA = dateA ? new Date(dateA as string | Date).getTime() : 0;
+       const timeB = dateB ? new Date(dateB as string | Date).getTime() : 0;
+       return timeA - timeB;
     });
 
-    const totalLeft = futureDates.reduce((acc: number, d: any) => {
-      const left = d.spotsLeft ?? (d.capacity - (d._count?.bookings || 0));
+    const totalLeft = futureDates.reduce((acc: number, d: UnifiedTourDate) => {
+      const left = d.spotsLeft ?? (d.capacity ? (d.capacity - (d._count?.bookings || 0)) : Number(tour?.spotsLeft || 0));
       return acc + Math.max(0, left);
     }, 0);
 
-    const nearest = futureDates.find((d: any) => (d.spotsLeft ?? 1) > 0) || futureDates[0] || null;
+    const nearest = futureDates.find((d: UnifiedTourDate) => {
+      const left = d.spotsLeft ?? (d.capacity ? (d.capacity - (d._count?.bookings || 0)) : Number(tour?.spotsLeft || 0));
+      return left > 0;
+    }) || futureDates[0] || null;
 
     return {
       isGlobalSoldOut: futureDates.length > 0 ? totalLeft <= 0 : true,
@@ -326,7 +338,7 @@ export default function TourSidebar({ tour }: TourSidebarProps) {
         {!isSoldOut && (
           <div className="mt-4 flex items-center justify-center gap-4 opacity-60">
               <p className="text-[12px] text-slate-300 uppercase font-bold flex items-center gap-1">
-                <ShieldCheck size={10} className="text-teal-500"/> Без предоплаты
+                <ShieldCheck size={10} className="text-teal-500"/> Прямая оплата Клевер
               </p>
               <p className="text-[12px] text-slate-300 uppercase font-bold flex items-center gap-1">
                 <Check size={10} className="text-teal-500"/>Автоматическое подтверждение в ТГ

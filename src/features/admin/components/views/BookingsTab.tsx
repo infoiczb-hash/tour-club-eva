@@ -479,7 +479,7 @@ export default function BookingsTab({
                                            </button>
                                         )}
                                         
-                                        {/*   КНОПКА ВОЗВРАТА */}
+                                        {/* КНОПКА ВОЗВРАТА */}
                                          {(b.apbInvoiceId || b.apb_invoice_id) && (b.total_price - (b.refundedAmount ?? b.refunded_amount ?? 0) > 0) && (
     <button 
         onClick={() => handleRefund(b)}
@@ -605,7 +605,7 @@ export default function BookingsTab({
                                 </button>
                             )}
 
-                            {/*   КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
+                            {/* КНОПКА ВОЗВРАТА (МОБИЛЬНАЯ) */}
                            {(b.apbInvoiceId || b.apb_invoice_id) && (b.total_price - (b.refundedAmount ?? b.refunded_amount ?? 0) > 0) && (
       <button 
         onClick={() => handleRefund(b)}
@@ -663,7 +663,7 @@ export default function BookingsTab({
       )}
 
       {/* ========================================== */}
-      {/* РЕЖИМ 2: ГРУППЫ (МАНИФЕСТ) - переделан на серверные пропсы */}
+      {/* РЕЖИМ 2: ГРУППЫ (МАНИФЕСТ) - ДОБАВЛЕНА УМНАЯ ФИЛЬТРАЦИЯ И НУМЕРАЦИЯ ЗАКАЗЧИКА */}
       {/* ========================================== */}
       {activeMode === 'groups' && (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
@@ -700,6 +700,11 @@ export default function BookingsTab({
             groupsManifest.map((group, idx) => {
               const key = `${group.tourName}_${group.date}_${idx}`;
               const isOpen = expandedGroups[key] || false;
+              
+              // ВЫЧИСЛЯЕМ РЕАЛЬНОЕ КОЛИЧЕСТВО МЕСТ:
+              // Исключаем из подсчета мест родителей, у которых id = customer_parent или type = Заказчик
+              const parentsCount = group.participants.filter((p: any) => p.id === 'customer_parent' || p.type === 'Заказчик').length;
+              const displayTotalTickets = Math.max(0, group.totalTickets - parentsCount);
 
               return (
                 <div key={key} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
@@ -713,7 +718,7 @@ export default function BookingsTab({
                         <div className="flex items-center gap-3 text-xs font-black text-slate-700 uppercase tracking-widest mt-1">
                           <span className="text-teal-700">{group.date}</span>
                           <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <span>{group.totalTickets} мест</span>
+                          <span>{displayTotalTickets} мест</span>
                         </div>
                       </div>
                     </div>
@@ -738,48 +743,72 @@ export default function BookingsTab({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200/60">
-                          {group.participants.map((p: any, index: number) => (
-                            <tr key={`${p.bookingId}-${index}`} className={clsx(
-                              "hover:bg-white transition-colors",
-                              p.isMain && "border-t-[3px] border-t-slate-200 bg-slate-100/50"
-                            )}>
-                              <td className="px-6 py-4 text-xs font-black text-slate-700">{index + 1}</td>
-                              <td className="px-6 py-4">
-                                <span className={clsx("text-xs font-black px-2 py-1 rounded", p.isMain ? "bg-indigo-100 text-indigo-800" : "text-slate-800 font-mono")}>
-                                  #{p.shortId}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 font-black text-slate-900">{p.name}</td>
-                              <td className="px-6 py-4 text-xs uppercase font-bold text-slate-800 tracking-wider">
-                                {getTicketLabel(p.ticketType, p.age)}
-                              </td>
-                              <td className="px-6 py-4">
-                                {p.jacket ? (
-                                  <span className="flex items-center w-fit gap-1 text-[12px] uppercase font-black tracking-widest bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300">
-                                    <LifeBuoy size={12}/> Жилет: {p.jacket}
+                          {group.participants.map((p: any, index: number) => {
+                            // ОПРЕДЕЛЯЕМ РОДИТЕЛЯ (ЗАКАЗЧИКА БЕЗ МЕСТА)
+                            const isCustomerParent = p.id === 'customer_parent' || p.type === 'Заказчик';
+                            
+                            // ВЫЧИСЛЯЕМ ИСТИННЫЙ ПОРЯДКОВЫЙ НОМЕР
+                            // Считаем только тех, кто идет до текущего индекса (включая его) и НЕ является родителем
+                            const currentNumber = group.participants
+                              .slice(0, index + 1)
+                              .filter((prev: any) => !(prev.id === 'customer_parent' || prev.type === 'Заказчик'))
+                              .length;
+
+                            return (
+                              <tr key={`${p.bookingId}-${index}`} className={clsx(
+                                "hover:bg-white transition-colors",
+                                p.isMain && "border-t-[3px] border-t-slate-200 bg-slate-100/50",
+                                isCustomerParent && "bg-slate-100/80" // Визуально чуть гасим строку родителя
+                              )}>
+                                <td className="px-6 py-4 text-xs font-black text-slate-700">
+                                  {isCustomerParent ? <span title="Заказчик / Контакт" className="text-lg">👤</span> : currentNumber}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={clsx("text-xs font-black px-2 py-1 rounded", p.isMain ? "bg-indigo-100 text-indigo-800" : "text-slate-800 font-mono")}>
+                                    #{p.shortId}
                                   </span>
-                                ) : <span className="text-slate-800">—</span>}
-                              </td>
-                              <td className="px-6 py-4">
-                                {p.phone && p.phone !== '—' ? (
+                                </td>
+                                <td className="px-6 py-4 font-black text-slate-900">
                                   <div className="flex items-center gap-2">
-                                    <a href={`tel:${p.phone.replace(/\s/g, '')}`} className="font-mono text-xs font-bold text-slate-700 hover:text-teal-700">{p.phone}</a>
-                                    {p.isMain && p.social && <Send size={12} className="text-sky-600"/>}
+                                    {p.name}
+                                    {isCustomerParent && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-slate-800 text-white shadow-sm">
+                                        Заказчик / Контакт
+                                      </span>
+                                    )}
                                   </div>
-                                ) : <span className="text-slate-800">—</span>}
-                              </td>
-                              <td className="px-6 py-4">
-                                {p.status === 'confirmed' ? (
-                                  <span className="text-[12px] uppercase font-black tracking-widest text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-1 rounded">Оплачено</span>
-                                ) : (
-                                  <span className="text-[12px] uppercase font-black tracking-widest text-amber-700 bg-amber-100 border border-amber-200 px-2 py-1 rounded">Ожидает</span>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 text-xs font-medium text-slate-800 whitespace-normal">
-                                {p.isMain && p.comment ? <span className="italic">«{p.comment}»</span> : null}
-                              </td>
-                            </tr>
-                          ))}
+                                </td>
+                                <td className="px-6 py-4 text-xs uppercase font-bold text-slate-800 tracking-wider">
+                                  {getTicketLabel(p.ticketType, p.age)}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {p.jacket ? (
+                                    <span className="flex items-center w-fit gap-1 text-[12px] uppercase font-black tracking-widest bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300">
+                                      <LifeBuoy size={12}/> Жилет: {p.jacket}
+                                    </span>
+                                  ) : <span className="text-slate-800">—</span>}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {p.phone && p.phone !== '—' ? (
+                                    <div className="flex items-center gap-2">
+                                      <a href={`tel:${p.phone.replace(/\s/g, '')}`} className="font-mono text-xs font-bold text-slate-700 hover:text-teal-700">{p.phone}</a>
+                                      {p.isMain && p.social && <Send size={12} className="text-sky-600"/>}
+                                    </div>
+                                  ) : <span className="text-slate-800">—</span>}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {p.status === 'confirmed' ? (
+                                    <span className="text-[12px] uppercase font-black tracking-widest text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-1 rounded">Оплачено</span>
+                                  ) : (
+                                    <span className="text-[12px] uppercase font-black tracking-widest text-amber-700 bg-amber-100 border border-amber-200 px-2 py-1 rounded">Ожидает</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 text-xs font-medium text-slate-800 whitespace-normal">
+                                  {p.isMain && p.comment ? <span className="italic">«{p.comment}»</span> : null}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                       

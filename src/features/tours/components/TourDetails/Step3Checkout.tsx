@@ -51,7 +51,8 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
   const agreedRules = watch('agreedRules');
 
   // --- Логика категорий тура ---
- const categorySlug = (tour.category?.slug || '').toLowerCase();
+  const categorySlug = (tour.category?.slug || '').toLowerCase();
+  const isKidsTour = ['kids', 'academy', 'children', 'детск'].some(k => categorySlug.includes(k));
   const isSupTour = categorySlug === 'sup';
   const isKayakingTour = ['kayaking', 'kayak'].includes(categorySlug);
   const showSpecificRules = isKayakingTour || isSupTour;
@@ -60,10 +61,8 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
     ? "Правилами поведения на сплаве на байдарках" 
     : "Правилами поведения для SUP туров";
     
-  // 🚀 ФИКС ССЫЛКИ: убрали ошибочный префикс /docs/, из-за которого ссылки не работали
   const specificRulesLink = isKayakingTour ? "/rules-kayaking" : "/rules-sup";
 
-  // Безопасное чтение динамических тарифов из админки
   const priceCategories = useMemo(() => {
     return tour.tourPriceCategories || tour.priceCategories || [];
   }, [tour.tourPriceCategories, tour.priceCategories]);
@@ -124,8 +123,19 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
   const onSubmit = async (data: BookingFormValues) => {
     setIsLoading(true);
     setErrorMsg(null);
-    
-    const payloadGuests: GuestInput[] = data.guests.map(g => ({
+
+    // 🚀 SENIOR FIX: Умное разделение гостей
+    // Ищем профиль заказчика (он всегда генерируется первым с id='customer_parent' или type='Заказчик' для детских туров)
+    const customerProfile = isKidsTour 
+        ? data.guests.find(g => g.id === 'customer_parent' || g.type === 'Заказчик') 
+        : data.guests[0];
+
+    // Фильтруем массив: отсекаем Заказчика, оставляем только реальных УЧАСТНИКОВ, которые занимают посадочные места
+    const actualParticipants = isKidsTour 
+        ? data.guests.filter(g => g.id !== 'customer_parent' && g.type !== 'Заказчик')
+        : data.guests;
+
+    const payloadGuests: GuestInput[] = actualParticipants.map(g => ({
       isMain: g.isMain,
       type: g.type,
       categoryId: g.categoryId,
@@ -146,11 +156,13 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
           tourDateId: data.tourDateId || undefined, 
           tourTitle: tour.title,
           tourDate: data.tourDateStr,
-          name: payloadGuests[0]?.name || 'Без имени',
-          phone: payloadGuests[0]?.phone || '',
-          social: data.social?.trim() || undefined, // 🚀 БЕЗ "as any" — теперь поле строго типизировано в схеме!
+          
+          // 🚀 Передаем контактные данные Заказчика в корень заказа
+          name: customerProfile?.name.trim() || 'Без имени',
+          phone: customerProfile?.phone?.trim() || '',
+          social: data.social?.trim() || undefined, 
           comment: data.comment?.trim() || undefined,
-          website: (data as any).website || '', // Honeypot
+          website: (data as any).website || '', 
           
           items: itemsPayload,
           ticketsAdult: data.ticketsAdult,
@@ -158,7 +170,9 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
           ticketsMember: data.ticketsMember,
           ticketsFamily: data.ticketsFamily, 
           
+          // 🚀 Отправляем ТОЛЬКО реальных участников
           guests: payloadGuests, 
+          
           currency: tour.currency ?? 'RUB',
           paymentMethod: data.paymentMethod, 
           useBonuses: isLoggedIn ? data.useBonuses : false,
@@ -181,7 +195,11 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
               redirectUrl: result.redirectUrl ?? null,  
           });
       } else {
-          if ('fields' in result && result.fields && Object.keys(result.fields).length > 0) {
+          // Если бэкенд ругается на количество гостей (хотя мы уже отфильтровали)
+          if (result.error?.includes('Количество анкет гостей')) {
+               setErrorMsg('Ошибка валидации мест. Попробуйте обновить страницу и забронировать заново.');
+          }
+          else if ('fields' in result && result.fields && Object.keys(result.fields).length > 0) {
               setErrorMsg(`Ошибка в полях: ${Object.values(result.fields).join(' | ')}`);
           } else {
               setErrorMsg(result.error || 'Ошибка при бронировании.');
@@ -302,7 +320,6 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
           </div>
         </div>
 
-        {/* АЛЕРТ: ПРЕДУПРЕЖДЕНИЕ О НАЛИЧНЫХ */}
         {paymentMethod === 'cash' && (
           <div className="mt-2 p-3.5 bg-orange-500/10 border border-orange-500/30 rounded-2xl flex gap-3 text-orange-400 text-xs font-medium leading-relaxed animate-in fade-in slide-in-from-top-2">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" />
@@ -311,7 +328,6 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
         )}
       </div>
 
-      {/* ОШИБКИ СЕРВЕРА */}
       {errorMsg && (
         <div role="alert" className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-bold leading-snug">
           <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -319,10 +335,9 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
         </div>
       )}
 
-      {/* 🚀 БЛОК СОГЛАСИЙ (100% восстановленный UI, яркий текст и рабочие ссылки) */}
+      {/* БЛОК СОГЛАСИЙ */}
       <div className="mt-2 bg-white/5 p-5 rounded-2xl border border-white/10">
         
-        {/* Заголовок и подсказка */}
         <div className="mb-4">
           <p className="text-xs font-black text-white uppercase tracking-widest">
             При бронировании вы соглашаетесь с:
@@ -334,11 +349,9 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
         </div>
         
         <div className="space-y-4">
-          {/* 1. Публичная оферта */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className="relative flex items-center justify-center mt-0.5 shrink-0">
               <input type="checkbox" {...register('agreedOffer')} className="peer sr-only" />
-              {/* Фикс рамки: вернули border-slate-400 для четкой видимости */}
               <div className="w-5 h-5 border-2 border-slate-400 rounded-md flex items-center justify-center bg-slate-900 peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all shadow-sm">
                 <CheckCircle size={14} className="text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
               </div>
@@ -348,7 +361,6 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
             </span>
           </label>
 
-          {/* 2. Персональные данные */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className="relative flex items-center justify-center mt-0.5 shrink-0">
               <input type="checkbox" {...register('agreedPrivacy')} className="peer sr-only" />
@@ -361,7 +373,6 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
             </span>
           </label>
 
-          {/* 3. Правила сплава / SUP (Только для специфических категорий туров) */}
           {showSpecificRules && (
             <label className="flex items-start gap-3 cursor-pointer group animate-in fade-in slide-in-from-left-2">
               <div className="relative flex items-center justify-center mt-0.5 shrink-0">
@@ -378,10 +389,8 @@ export default function Step3Checkout({ tour, isLoggedIn, userBalance, onSuccess
         </div>
       </div>
 
-      {/* Honeypot Защита от спам-ботов */}
       <input type="text" {...register('website' as any)} style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
 
-      {/* ФИНАЛЬНАЯ КНОПКА ОПЛАТЫ */}
       <button 
         type="submit" 
         disabled={isLoading || !agreedOffer || !agreedPrivacy || (showSpecificRules && !agreedRules)} 

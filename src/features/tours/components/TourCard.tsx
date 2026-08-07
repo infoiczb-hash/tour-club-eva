@@ -202,7 +202,7 @@ function TourCard({ tour, isHot = false, priority = false }: TourCardProps) {
             </div>
           </div>
 
-          <h3 className="text-lg sm:text-xl font-black text-white uppercase leading-[1.2] mb-4 group-hover:text-teal-400 transition-colors line-clamp-2">
+          <h3 className="text-lg sm:text-xl font-black text-white uppercase leading-[1.2] mb-4 group-hover:text-teal-400 transition-colors line-clamp-3 min-h-[3.6em]">
             {title}
           </h3>
 

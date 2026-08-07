@@ -8,6 +8,7 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SITE_URL:          z.string().url().default('https://evatur.club'),
   NEXT_PUBLIC_SENTRY_DSN:        z.string().url('Некорректный DSN Sentry').optional(),
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().min(1, 'Отсутствует Cloudinary Cloud Name'),
+  NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: z.string().min(1, 'Отсутствует Cloudinary Upload Preset'), 
 });
 
 // 2. Схема для СЕКРЕТНЫХ (серверных) переменных
@@ -63,6 +64,7 @@ const parsedClient = clientSchema.parse({
   NEXT_PUBLIC_SITE_URL:          process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_SENTRY_DSN:        process.env.NEXT_PUBLIC_SENTRY_DSN,
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET, 
 });
 
 const parsedServer = isServer 

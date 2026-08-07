@@ -480,6 +480,22 @@ export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestP
       const tickets = (b.ticketsAdult || 0) + (b.ticketsChild || 0) + (b.ticketsMember || 0) + (b.ticketsFamily || 0) * 3;
       group.totalTickets += tickets;
 
+      // ИНИЦИАЛИЗАЦИЯ ПУЛА БИЛЕТОВ НА ОСНОВЕ СЧЕТЧИКОВ ИЗ БАЗЫ ДАННЫХ
+      const ticketPool: string[] = [];
+      for (let i = 0; i < (b.ticketsAdult || 0); i++) ticketPool.push('adult');
+      for (let i = 0; i < (b.ticketsChild || 0); i++) ticketPool.push('child');
+      for (let i = 0; i < (b.ticketsMember || 0); i++) ticketPool.push('member');
+      for (let i = 0; i < (b.ticketsFamily || 0) * 3; i++) ticketPool.push('family');
+
+      // Вспомогательная функция безопасного извлечения билета из пула бронирования
+      const popTicketFromPool = (preferredType?: string): string => {
+        if (preferredType && ticketPool.includes(preferredType)) {
+          const index = ticketPool.indexOf(preferredType);
+          return ticketPool.splice(index, 1)[0];
+        }
+        return ticketPool.shift() || 'adult';
+      };
+
       // Формируем список участников
       const guestsArray = (b.guests as unknown) as GuestJsonData[] || [];
       const mainGuestInfo = guestsArray.find(g => g.isMain);
@@ -489,7 +505,7 @@ export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestP
         bookingId: b.id,
         shortId: b.shortId ?? b.id.substring(0, 4),
         name: b.name,
-        ticketType: 'adult',
+        ticketType: popTicketFromPool('adult'), // Главный клиент забирает первый взрослый билет
         phone: b.phone,
         social: b.social,
         comment: b.comment,
@@ -498,12 +514,20 @@ export const getGroupsManifest = withAdminAuth(async (params: GetGroupsManifestP
       });
 
       guestsArray.filter(g => !g.isMain).forEach(g => {
+        // Проверяем, является ли текущий гость Родителем-Заказчиком (актуально для детских туров)
+        const isCustomerParent = (g as any).id === 'customer_parent' || (g as any).type === 'Заказчик';
+        
+        // Если это родитель, билет из пула НЕ расходуется. Для остальных — честно забираем из пула
+        const finalTicketType = isCustomerParent ? 'adult' : popTicketFromPool(g.ticketType);
+
         group.participants.push({
+          id: (g as any).id,     // Прокидываем id гостя для условий отображения на фронтенде
+          type: (g as any).type, // Прокидываем type гостя для условий отображения на фронтенде
           isMain: false,
           bookingId: b.id,
           shortId: b.shortId ?? b.id.substring(0, 4),
           name: g.name || 'Без имени',
-          ticketType: g.ticketType || 'adult',
+          ticketType: finalTicketType,
           age: g.age,
           jacket: g.jacket || '',
           phone: g.phone,

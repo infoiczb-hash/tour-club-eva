@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Share2, Check, Gift } from "lucide-react";
+import { Copy, Share2, Check, Gift, AlertTriangle } from "lucide-react";
 
 interface ReferralCardProps {
   promoCode: string;
@@ -17,7 +17,7 @@ export default function ReferralCard({
   const [copied, setCopied] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
 
-  const shareText = `Присоединяйся к премиальному тур-клубу! Используй мой промокод ${promoCode} при бронировании и получи скидку ${friendReward} ₽ на первое приключение.`;
+  const shareText = `Присоединяйся к нашему тур-клубу! Используй мой промокод ${promoCode} при бронировании и получи скидку ${friendReward} ₽ на первое приключение.`;
 
   const showToast = () => {
     setToastVisible(true);
@@ -64,12 +64,25 @@ export default function ReferralCard({
             <Gift size={14} />
             Реферальная программа
           </div>
-         <h3 className="text-xl md:text-2xl font-bold text-ui-text">
+          <h3 className="text-xl md:text-2xl font-bold text-ui-text">
             Приглашайте друзей в первый тур с нами
           </h3>
           <p className="text-ui-muted text-sm leading-relaxed max-w-md">
             Поделитесь промокодом. Друг получит скидку <span className="text-ui-text font-medium">{friendReward} ₽</span> на первый тур, а мы начислим <span className="text-ui-accent font-medium">{rewardAmount} ₽</span> на ваш баланс после его поездки.
           </p>
+          
+          {/* Стилизованный блок предупреждения о приостановке программы */}
+          <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl max-w-md mt-2">
+            <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">
+                Внимание
+              </span>
+              <p className="text-amber-400/90 text-sm font-medium leading-relaxed">
+                Эта бонусная программа временно не работает. Ориентировочное время возобновления программы: 20.08.2026
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="w-full md:w-auto bg-ui-bg/60 rounded-2xl p-4 border border-ui-border/50 flex flex-col gap-3">
@@ -88,7 +101,7 @@ export default function ReferralCard({
             </button>
             <button
               onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover: bg-teal-500 text-slate-950  py-2.5 px-4 rounded-xl text-sm font-medium transition-colors shadow-[0_0_15px_rgba(13,148,136,0.3)]"
+              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-slate-950 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors shadow-[0_0_15px_rgba(13,148,136,0.3)]"
             >
               <Share2 size={16} />
               Поделиться
@@ -96,6 +109,6 @@ export default function ReferralCard({
           </div>
         </div>
       </div>
-      </div>
+    </div>
   );
 }

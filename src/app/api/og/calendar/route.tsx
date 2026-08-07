@@ -298,13 +298,14 @@ function renderCalendar(
   // Жестко фиксируем базовый масштаб на 1.3, чтобы всё было огромным
   let s = (width / 1080) * 1.3;
 
-  // Дополнительно раздуваем, если туров мало (как на твоем скрине их 3)
   if (events.length <= 2) {
     s *= 1.3; // Гигантские
   } else if (events.length === 3) {
-    s *= 1.15; // Очень крупные (для 3)
-  } else if (events.length > 5) {
-    s *= 0.85; // Уменьшаем, только если их больше 5, чтобы влезло
+    s *= 1.15; // Очень крупные
+  } else if (events.length === 4) {
+    s *= 0.95; // Сжимаем, чтобы уверенно влезли 4 карточки + месяцы
+  } else {
+    s *= 0.8; // Сжимаем сильнее для 5 карточек
   }
 
   const brandColorHex = COLOR_MAP[rawBrandColor] ?? COLOR_MAP['teal']!;
@@ -313,10 +314,10 @@ function renderCalendar(
   const grouped = groupByMonth(events);
   const hasMultipleMonths = grouped.size > 1;
 
-  // Динамические отступы (растягиваем по высоте)
-  const parentGap = events.length <= 3 ? 140 * s : events.length === 4 ? 80 * s : 40 * s;
-  const childGap  = events.length <= 3 ? 100 * s : events.length === 4 ? 60 * s : 30 * s;
-
+  // Динамические отступы (уменьшаем для 4 и 5 элементов)
+  const parentGap = events.length <= 3 ? 140 * s : events.length === 4 ? 60 * s : 30 * s;
+  const childGap  = events.length <= 3 ? 100 * s : events.length === 4 ? 40 * s : 20 * s;
+  
   return new ImageResponse(
     (
     <div style={{
@@ -433,13 +434,14 @@ export async function POST(request: Request) {
       body.period === 'week' || body.period === '2weeks' || body.period === 'month'
         ? body.period : 'month';
 
-    const events: CalendarEvent[] = body.events
+   const events: CalendarEvent[] = body.events
       .filter(ev => ev.title && ev.date)
       .sort((a, b) => {
         const da = new Date(a.date.includes('T') ? a.date : `${a.date}T12:00:00`).getTime();
         const db = new Date(b.date.includes('T') ? b.date : `${b.date}T12:00:00`).getTime();
         return da - db;
-      });
+      })
+      .slice(0, 5);
 
     if (events.length === 0) {
       return new Response(

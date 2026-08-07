@@ -377,12 +377,35 @@ async function getTelegramFileUrl(fileId: string): Promise<string> {
 }
 
 async function uploadToCloudinary(fileUrl: string): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', fileUrl);
-  formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
-  const data = await res.json();
-  return data.secure_url || fileUrl;
+  try {
+    // 1. Сначала сервер скачивает картинку у Telegram в память как Blob
+    const imageRes = await fetch(fileUrl);
+    const imageBlob = await imageRes.blob();
+
+    // 2. Упаковываем байты файла для отправки в Cloudinary
+    const formData = new FormData();
+    formData.append('file', imageBlob);
+    formData.append('upload_preset', env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET); // Используем Zod-схему
+
+    // 3. Отправляем физический файл напрямую в твое облако
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, 
+      { method: 'POST', body: formData }
+    );
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      console.error('[Cloudinary Upload Error]:', data.error);
+      return fileUrl; // Фолбэк на старую ссылку в случае сбоя API Cloudinary
+    }
+
+    // 4. Возвращаем вечную публичную ссылку
+    return data.secure_url || fileUrl;
+  } catch (error) {
+    console.error('[uploadToCloudinary] Критическая ошибка:', error);
+    return fileUrl; 
+  }
 }
 
 async function editClientMessage(chatId: string, messageId: number, text: string) {

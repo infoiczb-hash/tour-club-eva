@@ -62,10 +62,10 @@ export const Footer = () => {
              <nav className="flex gap-x-12 gap-y-5">
                {/* Левая колонка */}
                 <div className="flex flex-col gap-5">
-                    <Link href="/tour" prefetch={false} className={linkStyles}>Расписание туров</Link>
-                    <Link href="/about" prefetch={false} className={linkStyles}>О нашем клубе</Link>
+                   <Link href="/offer" prefetch={false} className={linkStyles}>Публичная оферта</Link> 
                     <Link href="/privacy" prefetch={false} className={linkStyles}>Политика конфиденциальности</Link>
-                </div>
+                     <Link href="/FAQ" prefetch={false} className={linkStyles}>FAQ</Link>
+               </div>
                {/* Правая колонка */}
                 <div className="flex flex-col gap-5">
                     <Link href="/directions" prefetch={false} className={linkStyles}>Направления Клуба</Link>
